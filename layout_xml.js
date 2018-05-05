@@ -28,6 +28,7 @@ var MAPPING_ANDROID = {
     },
     'SELECT': 'Spinner'
 };
+var GENERATE_ID = {};
 var PROPERTIES_ANDROID = {
     'ConstraintLayout': {
         'id': 'android:id="@+id/{0}"',
@@ -100,7 +101,7 @@ var PROPERTIES_ANDROID = {
     }
 };
 
-function getProperties(item, tagName, layout = false) {
+function getProperties(item, tagName, layout = false, subproperty = false) {
     var properties = PROPERTIES_ANDROID[tagName];
     var element = item.element;
     var result = [];
@@ -139,7 +140,7 @@ function getProperties(item, tagName, layout = false) {
     if (result.length) {
         var nextElement = element.nextElementSibling;
         if (element.tagName == 'INPUT' && element.id != '' && nextElement && element.id == nextElement.htmlFor) {
-            var subproperties = getProperties(nextElement.cacheData, MAPPING_ANDROID[nextElement.tagName]);
+            var subproperties = getProperties(nextElement.cacheData, MAPPING_ANDROID[nextElement.tagName], false, true);
             if (subproperties.length) {
                 subproperties.forEach(value => {
                     if (value != '') {
@@ -154,12 +155,25 @@ function getProperties(item, tagName, layout = false) {
             nextElement.cacheData.render = true;
         }
     }
-    if (layout || !item.siblingsWrap) {
-        if (item.rowspan > 1) {
-            result.push(`android:layout_rowSpan="${item.rowspan}"`);
+    if (!subproperty) {
+        if (layout || !item.siblingsWrap) {
+            if (item.rowspan > 1) {
+                result.push(`android:layout_rowSpan="${item.rowspan}"`);
+            }
+            if (item.colspan > 1) {
+                result.push(`android:layout_columnSpan="${item.colspan}"`);
+            }
         }
-        if (item.colspan > 1) {
-            result.push(`android:layout_columnSpan="${item.colspan}"`);
+        if (element.id == '' && (!result.length || result[0].indexOf('android:id') != 0)) {
+            tagName = tagName || item.androidTagName;
+            if (GENERATE_ID[tagName] == null) {
+                GENERATE_ID[tagName] = 1;
+            }
+            item.androidId = tagName + GENERATE_ID[tagName]++;
+            result.unshift(`android:id="id+/${item.androidId}"`);
+        }
+        else if (element.id != '') {
+            item.androidId = element.id;
         }
     }
     return result;
@@ -183,7 +197,7 @@ function getHex(n) {
 function displayProperties(properties, indent = 0) {
     return properties.map(value => `\n${setIndent(indent) + value}`).join('');
 }
-function parentRelative(item) {
+function parentConstraint(item) {
     return (item.parent && item.parent.androidTagName == DEFAULT_ANDROID.CONSTRAINT);
 }
 function getAndroidTagName(item) {
@@ -193,40 +207,46 @@ function getAndroidTagName(item) {
     }
     return result;
 }
-function getLinearTemplate(item, depth) {
+function getLinearTemplate(item, depth, parent) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.LINEAR;
+    item.renderParent = parent || { id: 0 };
     return indent + `<${DEFAULT_ANDROID.LINEAR} ID="${item.id}"` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.LINEAR}>\n`;
 }
-function getConstraintTemplate(item, depth) {
+function getConstraintTemplate(item, depth, parent) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.CONSTRAINT;
+    item.renderParent = parent;
     return indent + `<${DEFAULT_ANDROID.CONSTRAINT} ID="${item.id}"` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n`;
 }
-function getRelativeTemplate(item, depth) {
+function getRelativeTemplate(item, depth, parent) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.RELATIVE;
+    item.renderParent = parent;
     return indent + `<${DEFAULT_ANDROID.RELATIVE} ID="${item.id}"` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.RELATIVE, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.RELATIVE}>\n`;
 }
-function getGridTemplate(item, depth, columnCount = 2) {
+function getGridTemplate(item, depth, parent, columnCount = 2) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.GRID;
-    return indent + `<${DEFAULT_ANDROID.GRID} android:columnCount="${columnCount}" ID="${item.id}"` +
-                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
+    item.renderParent = parent;
+    return indent + `<${DEFAULT_ANDROID.GRID} ID="${item.id}"` +
+                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}\n` +
+           indent + `\tandroid:columnCount="${columnCount}">\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.GRID}>\n`;
 }
-function getTagTemplate(item, depth, tagName) {
+function getTagTemplate(item, depth, parent, tagName) {
     item.androidTagName = tagName || getAndroidTagName(item);
+    item.renderParent = parent;
     return `${setIndent(depth)}<${item.androidTagName} ID="${item.id}"${displayProperties(getProperties(item, item.androidTagName), depth + 1)} />\n`;
 }
 function getChildrenDepthLength(item) {
@@ -239,6 +259,13 @@ function setIndent(n, value = '\t') {
 }
 function withinRange(a, b, n = 1) {
     return (b >= (a - n) && b <= (a + n));
+}
+function resetParent(item) {
+    if (item.prevParent) {
+        item.parent = item.prevParent;
+        item.prevParent = null;
+        item.prevParentId = null;
+    }
 }
 
 var elements = document.querySelectorAll('body *');
@@ -332,8 +359,9 @@ for (var i = 0; i < mapX.length; i++) {
         for (var k = 0; k < axisY.length; k++) {
             var itemY = axisY[k];
             if (!itemY.render) {
-                var xml = '';
                 var tagName = getAndroidTagName(itemY);
+                var parentId = (itemY.parent ? itemY.parent.id : 0);
+                var xml = '';
                 if (tagName == null) {
                     if (itemY.children.length) {
                         if (itemY.children.findIndex(item => (item.depth == itemY.depth + 1) && MAPPING_ANDROID[item.tagName]) == -1) {
@@ -411,7 +439,7 @@ for (var i = 0; i < mapX.length; i++) {
                                                     itemX.children.forEach(item => item.depth -= offsetDepth);
                                                 }
                                                 itemX.prevParentId = itemX.parent.id;
-                                                itemX.parent.render = true;
+                                                itemX.parent.renderParent = itemX.parent;
                                                 itemX.parent = itemY;
                                                 itemX.columnIndex = l;
                                                 itemX.colspan = 1;
@@ -441,18 +469,16 @@ for (var i = 0; i < mapX.length; i++) {
                                     itemY.columnStart = columnStart;
                                     itemY.columnEnd = columnEnd;
                                     itemY.columnCount = columns.length;
-                                    itemY.render = true;
                                 }
                             }
                         }
-                        if (!itemY.render) {
+                        if (!itemY.renderParent) {
                             if (coordsX.length == 1 && coordsY.length == 1 && axisX.map(item => item.id).sort().join('') == axisY.map(item => item.id).sort().join('')) {
-                                xml += getLinearTemplate(itemY, itemY.depth);
+                                xml += getLinearTemplate(itemY, itemY.depth, itemY.parent);
                             }
                             else {
-                                xml += getConstraintTemplate(itemY, itemY.depth);
+                                xml += getConstraintTemplate(itemY, itemY.depth, itemY.parent);
                             }
-                            itemY.render = true;
                         }
                     }
                     else if (itemY.element.innerText.trim() != '') {
@@ -462,53 +488,48 @@ for (var i = 0; i < mapX.length; i++) {
                         continue;
                     }
                 }
-                if (!itemY.render) {
+                if (!itemY.renderParent) {
                     var element = itemY.element;
                     if (itemY.parent && itemY.parent.androidTagName == DEFAULT_ANDROID.GRID && itemY.prevParentId) {
                         var prevParent = itemY.parent.children.find(item => item.id == itemY.prevParentId);
                         if (prevParent) {
-                            var siblingsPrev = prevParent.children.filter(item => !item.render && prevParent.id == item.parent.id && item.bounds.right <= itemY.bounds.left && item.bounds.left >= itemY.parent.columnStart[itemY.columnIndex]);
-                            var siblingsNext = prevParent.children.filter(item => !item.render && prevParent.id == item.parent.id && item.bounds.left >= itemY.bounds.right && item.bounds.right <= itemY.parent.columnEnd[itemY.columnIndex]);
+                            var siblingsPrev = prevParent.children.filter(item => !item.renderParent && prevParent.id == item.parent.id && item.bounds.right <= itemY.bounds.left && item.bounds.left >= itemY.parent.columnStart[itemY.columnIndex]);
+                            var siblingsNext = prevParent.children.filter(item => !item.renderParent && prevParent.id == item.parent.id && item.bounds.left >= itemY.bounds.right && item.bounds.right <= itemY.parent.columnEnd[itemY.columnIndex]);
                             if (siblingsNext.length) {
                                 itemY.depth++;
                                 siblingsNext.unshift(itemY);
                                 var partialXml = siblingsNext.map(item => {
                                     item.depth = itemY.depth;
-                                    item.prevParentId = item.parent.id;
-                                    item.parent = itemY.parent;
-                                    item.render = true;
                                     item.siblingsWrap = (item == itemY);
+                                    item.parent = itemY.parent;
+                                    item.renderParent = itemY;
                                     if (item != itemY && item.children.length) {
-                                        return getConstraintTemplate(item, itemY.depth);
+                                        return getConstraintTemplate(item, itemY.depth, itemY);
                                     }
                                     else {
-                                        return getTagTemplate(item, itemY.depth);
+                                        return getTagTemplate(item, itemY.depth, itemY);
                                     }
+                                    return template;
                                 }).join('');
-                                xml += getConstraintTemplate(itemY, itemY.depth - 1).replace(`{${itemY.id}}`, partialXml);
+                                xml += getConstraintTemplate(itemY, itemY.depth - 1, itemY.parent).replace(`{${itemY.id}}`, partialXml);
                             }
                             siblingsPrev.forEach(item => {
                                 item.depth = itemY.depth;
                                 item.children.forEach(child => child.depth = item.depth + 1);
-                                item.prevParentId = item.parent.id;
-                                item.parent = itemY.parent;
-                                item.render = true;
                                 if (item.children.length) {
-                                    xml += getConstraintTemplate(item, item.depth);
+                                    xml += getConstraintTemplate(item, item.depth, itemY.parent);
                                 }
                                 else {
-                                    xml += getTagTemplate(item, item.depth);
+                                    xml += getTagTemplate(item, item.depth, itemY.parent);
                                 }
                             });
                         }
                     }
-                    if (!itemY.render) {
-                        xml += getTagTemplate(itemY, itemY.depth, tagName);
-                        itemY.render = true;
+                    if (!itemY.renderParent) {
+                        xml += getTagTemplate(itemY, itemY.depth, itemY.parent, tagName);
                     }
                 }
                 if (xml != '') {
-                    var parentId = (itemY.parent ? itemY.parent.id : 0);
                     if (partial[parentId] == null) {
                         partial[parentId] = '';
                     }
