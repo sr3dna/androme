@@ -423,7 +423,7 @@ for (var i = 0; i < mapX.length; i++) {
                                 if (columns.length > 1) {
                                     var columnStart = []
                                     var columnEnd = [];
-                                    xml += getGridTemplate(itemY, itemY.depth, columns.length);
+                                    xml += getGridTemplate(itemY, itemY.depth, itemY.parent, columns.length);
                                     for (var l = 0; l < columns.length; l++) {
                                         columnStart[l] = Number.MAX_VALUE;
                                         columnEnd[l] = 0;
@@ -501,8 +501,6 @@ for (var i = 0; i < mapX.length; i++) {
                                 var partialXml = siblingsNext.map(item => {
                                     item.depth = itemY.depth;
                                     item.siblingsWrap = (item == itemY);
-                                    item.parent = itemY.parent;
-                                    item.renderParent = itemY;
                                     if (item != itemY && item.children.length) {
                                         return getConstraintTemplate(item, itemY.depth, itemY);
                                     }
