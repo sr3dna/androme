@@ -2,7 +2,6 @@ var DEFAULT_ANDROID = {
     TEXT: 'TextView',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'ConstraintLayout',
-    RELATIVE: 'RelativeLayout',
     GRID: 'GridLayout'
 };
 var MAPPING_ANDROID = {
@@ -14,11 +13,10 @@ var MAPPING_ANDROID = {
     'H6': 'TextView',
     'A': 'TextView',
     'B': 'TextView',
-    'P': 'TextView',
     'LABEL': 'TextView',
-    'HR': 'View',
     'SPAN': 'TextView',
-    'BUTTON': 'Button',
+    'HR': 'View',
+    'SELECT': 'Spinner',
     'INPUT' : {
         'text': 'EditText',
         'checkbox': 'CheckBox',
@@ -26,7 +24,7 @@ var MAPPING_ANDROID = {
         'button': 'Button',
         'submit': 'Button'
     },
-    'SELECT': 'Spinner'
+    'BUTTON': 'Button'
 };
 var ELEMENT_ANDROID = {
     'ConstraintLayout': {
@@ -35,16 +33,8 @@ var ELEMENT_ANDROID = {
     'LinearLayout': {
         'id': 'android:id="@+id/{0}"',
     },
-    'RelativeLayout': {
-        'id': 'android:id="@+id/{0}"',
-    },
     'GridLayout': {
         'id': 'android:id="@+id/{0}"',
-    },
-    'Button': {
-        'id|name': 'android:id="@+id/{0}"',
-        'innerText': 'android:text="@string/{0}"',
-        'value': 'android:text="@string/{0}"'
     },
     'RadioGroup': {
         'id': 'android:id="@+id/{0}"'
@@ -81,29 +71,54 @@ var ELEMENT_ANDROID = {
     },
     'TextView': {
         'id': 'android:id="@+id/{0}"',
-        'innerText': 'android:text="@string/{0}"',
         'window.getComputedStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
             'fontSize': 'android:textSize="{0}px"',
             'fontStyle': 'android:textStyle="{0}"',
             'color': 'android:textColor="{0}"',
             'letterSpacing': 'android:letterSpacing="{0}"'
+        },
+        'window.addResourceString': {
+            'innerText': 'android:text="@string/{0}"'
         }
     },
     'EditText': {
         'id|name': 'android:id="@+id/{0}"',
-        'innerText': 'android:text="@string/{0}"',
         'window.getComputedStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
             'fontSize': 'android:textSize="{0}px"',
             'fontStyle': 'android:textStyle="{0}"',
             'color': 'android:textColor="{0}"',
             'letterSpacing': 'android:letterSpacing="{0}"'
+        },
+        'window.addResourceString': {
+            'innerText': 'android:text="@string/{0}"'
+        }
+    },
+    'Button': {
+        'id|name': 'android:id="@+id/{0}"',
+        'window.addResourceString': {
+            'innerText': 'android:text="@string/{0}"'
         }
     }
 };
 var GENERATE_ID = {};
+var RESOURCE_STRING = {};
 
+function addResourceString(element) {
+    var value = (element.innerText || element.value).trim();
+    if (value != '') {
+        for (var i in RESOURCE_STRING) {
+            if (RESOURCE_STRING[i] == value) {
+                return { innerText: i };
+            }
+        }
+        var name = value.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace('__', '_').replace(/_+$/, '').split('_').slice(0, 4).join('_');
+        RESOURCE_STRING[name] = value;
+        return { innerText: name };
+    }
+    return null;
+}
 function getProperties(item, tagName, layout = false, subproperty = false) {
     var properties = ELEMENT_ANDROID[tagName];
     var element = item.element;
@@ -129,17 +144,21 @@ function getProperties(item, tagName, layout = false, subproperty = false) {
                     }
                     if (typeof method == 'function') {
                         var data = method(element);
-                        for (var k in properties[i]) {
-                            var property = data[k];
-                            if (property != '' && property != null) {
-                                var rgb = getRGB(property);
-                                if (rgb) {
-                                    property = property.replace(rgb[0], rgb[1]);
+                        if (data != null) {
+                            for (var k in properties[i]) {
+                                var property = data[k];
+                                if (property != '' && property != null) {
+                                    if (properties[i][k].indexOf('rgb') != -1) {
+                                        var rgb = getRGB(property);
+                                        if (rgb) {
+                                            property = property.replace(rgb[0], rgb[1]);
+                                        }
+                                    }
+                                    result.push(properties[i][k].replace('{0}', property.replace(/(pt|px)$/, '')));
                                 }
-                                result.push(properties[i][k].replace('{0}', property.replace(/(pt|px)$/, '')));
                             }
+                            break;
                         }
-                        break;
                     }
                 }
             }
@@ -232,7 +251,7 @@ function getLinearTemplate(item, depth, parent, vertical) {
     return indent + `<${DEFAULT_ANDROID.LINEAR}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.LINEAR}>\n`;
+            indent + `</${DEFAULT_ANDROID.LINEAR}>\n`;
 }
 function getConstraintTemplate(item, depth, parent) {
     var indent = setIndent(depth);
@@ -243,7 +262,7 @@ function getConstraintTemplate(item, depth, parent) {
     return indent + `<${DEFAULT_ANDROID.CONSTRAINT}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n`;
+            indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n`;
 }
 function getGridTemplate(item, depth, parent, columnCount = 2) {
     var indent = setIndent(depth);
@@ -255,7 +274,7 @@ function getGridTemplate(item, depth, parent, columnCount = 2) {
     return indent + `<${DEFAULT_ANDROID.GRID}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.GRID}>\n`;
+            indent + `</${DEFAULT_ANDROID.GRID}>\n`;
 }
 function getTagTemplate(item, depth, parent, tagName, recursive) {
     var element = item.element;
@@ -284,29 +303,15 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
                     'android:checkedButton="@+id/{0}"': checked
                 });
                 xml = indent + '<RadioGroup' +
-                               `${displayProperties(getProperties({ children: result, element: { id: '' }, }, 'RadioGroup', true), depth + 1)}>\n` +
-                               xml +
-                      indent + '</RadioGroup>\n';
+                                `${displayProperties(getProperties({ children: result, element: { id: '' }, }, 'RadioGroup', true), depth + 1)}>\n` +
+                                xml +
+                        indent + '</RadioGroup>\n';
                 return xml;
             }
         }
     }
     item.renderParent = parent;
     return `${indent}<${item.androidTagName}${displayProperties(getProperties(item, item.androidTagName), depth + 1)} />\n`;
-}
-function getRelativeTemplate(item, depth, parent) {
-    var indent = setIndent(depth);
-    item.androidTagName = DEFAULT_ANDROID.RELATIVE,
-    item.renderParent = parent;
-    return indent + `<${DEFAULT_ANDROID.RELATIVE} ID="${item.id}"` +
-                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.RELATIVE, true), depth + 1)}>\n` +
-                    `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.RELATIVE}>\n`;
-}
-function getChildrenDepthLength(item) {
-    var index = {};
-    item.children.forEach(item => index[item.depth] = true);
-    return Object.keys(index).length;
 }
 function setIndent(n, value = '\t') {
     return value.repeat(n);
@@ -453,6 +458,7 @@ cache.forEach(item => {
         nextDepth.forEach(item => item.linearY = minY);
     }
 });
+
 var output = '<?xml version="1.0" encoding="utf-8"?>\n{0}';
 
 for (var i = 0; i < mapX.length; i++) {
@@ -466,8 +472,8 @@ for (var i = 0; i < mapX.length; i++) {
             var itemY = axisY[k];
             if (!itemY.renderParent) {
                 var parentId = itemY.parent.id;
-                var xml = '';
                 var tagName = getAndroidTagName(itemY);
+                var xml = '';
                 if (tagName == null) {
                     if (itemY.children.length) {
                         if (itemY.children.findIndex(item => MAPPING_ANDROID[item.tagName] && (item.depth == itemY.depth + 1)) == -1) {
@@ -662,3 +668,10 @@ for (var i = 0; i < mapX.length; i++) {
         }
     }
 }
+
+var resource_string_output = '<?xml version="1.0" encoding="utf-8"?>\n' +
+                                '<resources>\n';
+for (var i in RESOURCE_STRING) {
+    resource_string_output += `\t<string name="${i}">${RESOURCE_STRING[i]}</string>\n`;
+}
+resource_string_output += '</resources>';
