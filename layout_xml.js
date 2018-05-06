@@ -28,7 +28,7 @@ var MAPPING_ANDROID = {
     },
     'SELECT': 'Spinner'
 };
-var PROPERTIES_ANDROID = {
+var ELEMENT_ANDROID = {
     'ConstraintLayout': {
         'id': 'android:id="@+id/{0}"',
     },
@@ -47,8 +47,7 @@ var PROPERTIES_ANDROID = {
         'value': 'android:text="@string/{0}"'
     },
     'RadioGroup': {
-        'id': 'android:id="@+id/{0}"',
-        'this:checked': 'android:checkedButton="@+id/{0}"'
+        'id': 'android:id="@+id/{0}"'
     },
     'RadioButton': {
         'id': 'android:id="@+id/{0}"',
@@ -106,7 +105,7 @@ var PROPERTIES_ANDROID = {
 var GENERATE_ID = {};
 
 function getProperties(item, tagName, layout = false, subproperty = false) {
-    var properties = PROPERTIES_ANDROID[tagName];
+    var properties = ELEMENT_ANDROID[tagName];
     var element = item.element;
     var result = [];
     if (properties != null) {
@@ -143,15 +142,11 @@ function getProperties(item, tagName, layout = false, subproperty = false) {
                         break;
                     }
                 }
-                else if (j.startsWith('this:')) {
-                    var value = item[j.split(':')[1]];
-                    if (value != null && value != '') {
-                        result.push(properties[i].replace('{0}', value));
-                        break;
-                    }
-                }
             }
         }
+    }
+    for (var i in item.properties) {
+        result.push(i.replace('{0}', item.properties[i]));
     }
     if (result.length) {
         var nextElement = element.nextElementSibling;
@@ -227,10 +222,13 @@ function getAndroidTagName(item) {
     }
     return result;
 }
-function getLinearTemplate(item, depth, parent) {
+function getLinearTemplate(item, depth, parent, vertical) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.LINEAR;
-    item.renderParent = parent || { id: 0 };
+    item.renderParent = parent;
+    Object.assign(item.properties, {
+        'android:orientation="{0}"': (vertical ? "vertical" : "horizontal")
+    });
     return indent + `<${DEFAULT_ANDROID.LINEAR}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
                     `{${item.id}}` +
@@ -238,33 +236,28 @@ function getLinearTemplate(item, depth, parent) {
 }
 function getConstraintTemplate(item, depth, parent) {
     var indent = setIndent(depth);
-    item.androidTagName = DEFAULT_ANDROID.CONSTRAINT;
+    item.androidTagName = DEFAULT_ANDROID.CONSTRAINT,
     item.renderParent = parent;
+    Object.assign(item.properties, {
+    });
     return indent + `<${DEFAULT_ANDROID.CONSTRAINT}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n`;
 }
-function getRelativeTemplate(item, depth, parent) {
-    var indent = setIndent(depth);
-    item.androidTagName = DEFAULT_ANDROID.RELATIVE;
-    item.renderParent = parent;
-    return indent + `<${DEFAULT_ANDROID.RELATIVE}` +
-                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.RELATIVE, true), depth + 1)}>\n` +
-                    `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.RELATIVE}>\n`;
-}
 function getGridTemplate(item, depth, parent, columnCount = 2) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.GRID;
     item.renderParent = parent;
+    Object.assign(item.properties, {
+        'android:columnCount="{0}"': columnCount
+    });
     return indent + `<${DEFAULT_ANDROID.GRID}` +
-                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}\n` +
-           indent + `\tandroid:columnCount="${columnCount}">\n` +
+                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.GRID}>\n`;
 }
-function getTagTemplate(item, depth, parent, tagName, recursive = false) {
+function getTagTemplate(item, depth, parent, tagName, recursive) {
     var element = item.element;
     var indent = setIndent(depth);
     item.androidTagName = tagName || getAndroidTagName(item);
@@ -285,8 +278,13 @@ function getTagTemplate(item, depth, parent, tagName, recursive = false) {
                     }
                     xml += getTagTemplate(input, depth + 1, parent, tagName, true)
                 });
+                Object.assign(item.properties, {
+                    'android:layout_rowSpan="{0}"': rowspan,
+                    'android:layout_columnSpan="{0}"': colspan,
+                    'android:checkedButton="@+id/{0}"': checked
+                });
                 xml = indent + '<RadioGroup' +
-                               `${displayProperties(getProperties({ children: result, element: { id: '' }, rowspan, colspan, checked }, 'RadioGroup', true), depth + 1)}>\n` +
+                               `${displayProperties(getProperties({ children: result, element: { id: '' }, }, 'RadioGroup', true), depth + 1)}>\n` +
                                xml +
                       indent + '</RadioGroup>\n';
                 return xml;
@@ -295,6 +293,15 @@ function getTagTemplate(item, depth, parent, tagName, recursive = false) {
     }
     item.renderParent = parent;
     return `${indent}<${item.androidTagName}${displayProperties(getProperties(item, item.androidTagName), depth + 1)} />\n`;
+}
+function getRelativeTemplate(item, depth, parent) {
+    var indent = setIndent(depth);
+    item.androidTagName = DEFAULT_ANDROID.RELATIVE,
+    item.renderParent = parent;
+    return indent + `<${DEFAULT_ANDROID.RELATIVE} ID="${item.id}"` +
+                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.RELATIVE, true), depth + 1)}>\n` +
+                    `{${item.id}}` +
+           indent + `</${DEFAULT_ANDROID.RELATIVE}>\n`;
 }
 function getChildrenDepthLength(item) {
     var index = {};
@@ -315,10 +322,17 @@ function resetParent(item) {
     }
 }
 
-var elements = document.querySelectorAll('body *');
+var elements = document.querySelectorAll('body > *');
 var cache = [];
 var id = 1;
-
+var selector = 'body *';
+for (var i in elements) {
+    if (MAPPING_ANDROID[elements[i].tagName]) {
+        selector = 'body, body *';
+        break;
+    }
+}
+elements = document.querySelectorAll(selector);
 for (var i in elements) {
     var element = elements[i];
     if (element.getBoundingClientRect) {
@@ -329,8 +343,10 @@ for (var i in elements) {
                 element: element,
                 tagName: element.tagName,
                 bounds,
-                depth: 0,
                 renderParent: null,
+                depth: 0,
+                depthIndent: 0,
+                properties: {},
                 children: []
             };
             cache.push(data);
@@ -352,6 +368,9 @@ for (var i = 0; i < cache.length; i++) {
 }
 
 cache.forEach(item => {
+    if (!item.parent) {
+        item.parent = { id: 0 };
+    }
     item.children.sort((a, b) => {
         var [x, y] = [a.depth, b.depth];
         if (x == y) {
@@ -374,7 +393,8 @@ cache.sort((a, b) => {
 
 var mapX = [];
 var mapY = [];
-
+var depthX = new Set();
+var depthY = new Set();
 cache.forEach(item => {
     var x = Math.floor(item.bounds.x);
     var y = (item.parent ? item.parent.id : 0);
@@ -392,8 +412,47 @@ cache.forEach(item => {
     }
     mapX[item.depth][x].push(item);
     mapY[item.depth][y].push(item);
+    item.x = x;
+    item.y = Math.floor(item.bounds.y);
+    depthX.add(item.x);
+    depthY.add(item.y);
 });
 
+var rankX = Array.from(depthX).sort((a, b) => (a > b ? 1 : -1));
+var rankY = Array.from(depthY).sort((a, b) => (a > b ? 1 : -1));
+cache.forEach(item => {
+    item.rankX = rankX.indexOf(item.x);
+    item.rankY = rankY.indexOf(item.y);
+    var minX = null;
+    var minY = null;
+    var nextDepth = item.children.filter(child => (child.depth == item.depth + 1));
+    nextDepth.forEach(item => {
+        if (minX == null) {
+            minX = item.x;
+        }
+        else if (withinRange(minX, item.x, 3)) {
+            minX = Math.min(minX, item.x);
+        }
+        else {
+            minX = -1;
+        }
+        if (minY == null) {
+            minY = item.y;
+        }
+        else if (withinRange(minY, item.y, 3)) {
+            minY = Math.min(minY, item.y);
+        }
+        else {
+            minY = -1;
+        }
+    });
+    if (minX != -1) {
+        nextDepth.forEach(item => item.linearX = minX);
+    }
+    if (minY != -1) {
+        nextDepth.forEach(item => item.linearY = minY);
+    }
+});
 var output = '<?xml version="1.0" encoding="utf-8"?>\n{0}';
 
 for (var i = 0; i < mapX.length; i++) {
@@ -406,9 +465,9 @@ for (var i = 0; i < mapX.length; i++) {
         for (var k = 0; k < axisY.length; k++) {
             var itemY = axisY[k];
             if (!itemY.renderParent) {
-                var tagName = getAndroidTagName(itemY);
-                var parentId = (itemY.parent ? itemY.parent.id : 0);
+                var parentId = itemY.parent.id;
                 var xml = '';
+                var tagName = getAndroidTagName(itemY);
                 if (tagName == null) {
                     if (itemY.children.length) {
                         if (itemY.children.findIndex(item => MAPPING_ANDROID[item.tagName] && (item.depth == itemY.depth + 1)) == -1) {
@@ -422,7 +481,7 @@ for (var i = 0; i < mapX.length; i++) {
                                     var nextAxisX = nextMapX[nextCoordsX[l]];
                                     rightMax[l] = currentMax;
                                     for (var m = 0; m < nextAxisX.length; m++) {
-                                        if (itemY.id == nextAxisX[m].parent.parent.id) {
+                                        if (nextAxisX[m].parent.parent && itemY.id == nextAxisX[m].parent.parent.id) {
                                             if (l == 0 || nextAxisX[m].bounds.left >= (rightMax[l - 1] || currentMax)) {
                                                 if (columns[l] == null) {
                                                     columns[l] = [];
@@ -470,7 +529,7 @@ for (var i = 0; i < mapX.length; i++) {
                                 if (columns.length > 1) {
                                     var columnStart = []
                                     var columnEnd = [];
-                                    xml += getGridTemplate(itemY, itemY.depth, itemY.parent, columns.length);
+                                    xml += getGridTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, columns.length);
                                     for (var l = 0; l < columns.length; l++) {
                                         columnStart[l] = Number.MAX_VALUE;
                                         columnEnd[l] = 0;
@@ -520,11 +579,20 @@ for (var i = 0; i < mapX.length; i++) {
                             }
                         }
                         if (!itemY.renderParent) {
-                            if (coordsX.length == 1 && coordsY.length == 1 && axisX.map(item => item.id).sort().join('') == axisY.map(item => item.id).sort().join('')) {
-                                xml += getLinearTemplate(itemY, itemY.depth, itemY.parent);
+                            var linearX = itemY.children.filter(item => (item.depth == itemY.depth + 1) && item.linearX != null);
+                            var linearY = itemY.children.filter(item => (item.depth == itemY.depth + 1) && item.linearY != null);
+                            if (linearX.length || linearY.length) {
+                                if (linearX.length > 1 || linearY.length > 1) {
+                                    xml += getLinearTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, (linearX.length > linearY.length));
+                                }
+                                else {
+                                    xml += `{${itemY.id}}`;
+                                    itemY.children.forEach(item => item.depthIndent -= 1);
+                                    itemY.renderParent = true;
+                                }
                             }
                             else {
-                                xml += getConstraintTemplate(itemY, itemY.depth, itemY.parent);
+                                xml += getConstraintTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent);
                             }
                         }
                     }
@@ -552,31 +620,31 @@ for (var i = 0; i < mapX.length; i++) {
                                         item.depth = itemY.depth;
                                         item.siblingsWrap = (item == itemY);
                                         if (item != itemY && item.children.length) {
-                                            return getConstraintTemplate(item, itemY.depth, itemY);
+                                            return getConstraintTemplate(item, itemY.depth + itemY.depthIndent, itemY);
                                         }
                                         else {
-                                            return getTagTemplate(item, itemY.depth, itemY);
+                                            return getTagTemplate(item, itemY.depth + itemY.depthIndent, itemY);
                                         }
                                     }
                                     return '';
                                 }).join('');
-                                xml += getConstraintTemplate(itemY, itemY.depth - 1, itemY.parent).replace(`{${itemY.id}}`, template);
+                                xml += getConstraintTemplate(itemY, itemY.depth + itemY.depthIndent - 1, itemY.parent).replace(`{${itemY.id}}`, template);
                             }
                             siblingsPrev.forEach(item => {
                                 item.prevDepth = itemY.depth;
                                 item.depth = itemY.depth;
                                 item.children.forEach(child => child.depth = itemY.depth + 1);
                                 if (item.children.length) {
-                                    xml += getConstraintTemplate(item, item.depth, itemY.parent);
+                                    xml += getConstraintTemplate(item, item.depth + item.depthIndent, itemY.parent);
                                 }
                                 else {
-                                    xml += getTagTemplate(item, item.depth, itemY.parent);
+                                    xml += getTagTemplate(item, item.depth + item.depthIndent, itemY.parent);
                                 }
                             });
                         }
                     }
                     if (!itemY.renderParent) {
-                        xml += getTagTemplate(itemY, itemY.depth, itemY.parent, tagName);
+                        xml += getTagTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, tagName);
                     }
                 }
                 if (xml != '') {
