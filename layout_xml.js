@@ -45,8 +45,7 @@ var ELEMENT_ANDROID = {
             'fontFamily': 'android:fontFamily="{0}"',
             'fontSize': 'android:textSize="{0}px"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'letterSpacing': 'android:letterSpacing="{0}"'
+            'color': 'android:textColor="{0}"'
         }
     },
     'CheckBox': {
@@ -55,8 +54,7 @@ var ELEMENT_ANDROID = {
             'fontFamily': 'android:fontFamily="{0}"',
             'fontSize': 'android:textSize="{0}px"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'letterSpacing': 'android:letterSpacing="{0}"'
+            'color': 'android:textColor="{0}"'
         }
     },
     'Spinner': {
@@ -65,8 +63,7 @@ var ELEMENT_ANDROID = {
             'fontFamily': 'android:fontFamily="{0}"',
             'fontSize': 'android:textSize="{0}px"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'letterSpacing': 'android:letterSpacing="{0}"'
+            'color': 'android:textColor="{0}"'
         },
         'window.addResourceStringArray': {
             'entries': 'android:entries="@array/{0}"'
@@ -78,8 +75,7 @@ var ELEMENT_ANDROID = {
             'fontFamily': 'android:fontFamily="{0}"',
             'fontSize': 'android:textSize="{0}px"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'letterSpacing': 'android:letterSpacing="{0}"'
+            'color': 'android:textColor="{0}"'
         },
         'window.addResourceString': {
             'text': 'android:text="@string/{0}"'
@@ -91,8 +87,7 @@ var ELEMENT_ANDROID = {
             'fontFamily': 'android:fontFamily="{0}"',
             'fontSize': 'android:textSize="{0}px"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'letterSpacing': 'android:letterSpacing="{0}"'
+            'color': 'android:textColor="{0}"'
         },
         'window.addResourceString': {
             'text': 'android:text="@string/{0}"'
@@ -108,7 +103,7 @@ var ELEMENT_ANDROID = {
 
 var GENERATE_ID = {};
 var RESOURCE_STRING = new Map();
-var RESOURCE_STRING_ARRAY = new Map();
+var RESOURCE_ARRAY = new Map();
 
 function addResourceString(element, value) {
     if (value == null) {
@@ -129,21 +124,28 @@ function addResourceString(element, value) {
 }
 function addResourceStringArray(element) {
     var stringArray = new Map();
+    var integerArray = new Map();
     for (var i = 0; i < element.children.length; i++) {
-        var value = element.children[i].value.trim();
-        var text = element.children[i].text.trim();
+        var item = element.children[i];
+        var value = item.value.trim();
+        var text = item.text.trim();
         if (text != '') {
-            if (!/^\d+$/.test(text) || value != text) {
-                stringArray.set(value, addResourceString(null, text).text);
+            if (integerArray != null && !stringArray.size && /^\d+$/.test(text) && !/^(^0+)\d+$/.test(text)) {
+                integerArray.set(value, '');
             }
             else {
-                stringArray.set(value, '');
+                if (integerArray != null && integerArray.size) {
+                    i = -1;
+                    stringArray = new Map();
+                    continue;
+                }
+                stringArray.set(value, addResourceString(null, text).text);
             }
         }
     }
-    if (stringArray.size) {
+    if (stringArray.size || integerArray.size) {
         var name = `${element.id || element.name}_array`;
-        RESOURCE_STRING_ARRAY.set(name, stringArray);
+        RESOURCE_ARRAY.set(name, (stringArray.size ? stringArray : integerArray));
         return { entries: name };
     }
     return null;
@@ -280,7 +282,8 @@ function getLinearTemplate(item, depth, parent, vertical) {
     return indent + `<${DEFAULT_ANDROID.LINEAR}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.LINEAR}>\n`;
+           indent + `</${DEFAULT_ANDROID.LINEAR}>\n` +
+                    `{${item.id}-0}`;
 }
 function getConstraintTemplate(item, depth, parent) {
     var indent = setIndent(depth);
@@ -289,7 +292,8 @@ function getConstraintTemplate(item, depth, parent) {
     return indent + `<${DEFAULT_ANDROID.CONSTRAINT}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n`;
+           indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n` +
+                    `{${item.id}-0}`;
 }
 function getGridTemplate(item, depth, parent, columnCount = 2) {
     var indent = setIndent(depth);
@@ -301,7 +305,8 @@ function getGridTemplate(item, depth, parent, columnCount = 2) {
     return indent + `<${DEFAULT_ANDROID.GRID}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.GRID}>\n`;
+           indent + `</${DEFAULT_ANDROID.GRID}>\n` +
+                    `{${item.id}-0}`;
 }
 function getTagTemplate(item, depth, parent, tagName, recursive) {
     var element = item.element;
@@ -342,6 +347,33 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
 }
 function setIndent(n, value = '\t') {
     return value.repeat(n);
+}
+function getLinearXY(siblings) {
+    var maxLeft = Number.MIN_VALUE;
+    var minRight = Number.MAX_VALUE;
+    var maxTop = Number.MIN_VALUE;
+    var minBottom = Number.MAX_VALUE;
+    var linearBoundsX = true;
+    var linearBoundsY = true;
+    if (siblings.length > 1) {
+        siblings.sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1)).forEach(item => {
+            var bounds = item.bounds;
+            if (bounds.bottom < maxTop || bounds.top > minBottom) {
+                linearBoundsX = false;
+            }
+            maxTop = Math.max(bounds.top, maxTop);
+            minBottom = Math.min(bounds.bottom, minBottom);
+        });
+        siblings.sort((a, b) => (a.bounds.y >= b.bounds.y ? 1 : -1)).forEach(item => {
+            var bounds = item.bounds;
+            if (bounds.right < maxLeft || bounds.left > minRight) {
+                linearBoundsY = false;
+            }
+            maxLeft = Math.max(bounds.left, maxLeft);
+            minRight = Math.min(bounds.right, minRight);
+        });
+    }
+    return [linearBoundsX, linearBoundsY];
 }
 function withinRange(a, b, n = 1) {
     return (b >= (a - n) && b <= (a + n));
@@ -428,8 +460,6 @@ cache.sort((a, b) => {
 
 var mapX = [];
 var mapY = [];
-var depthX = new Set();
-var depthY = new Set();
 
 cache.forEach(item => {
     var x = Math.floor(item.bounds.x);
@@ -450,50 +480,12 @@ cache.forEach(item => {
     mapY[item.depth][y].push(item);
     item.x = x;
     item.y = Math.floor(item.bounds.y);
-    depthX.add(item.x);
-    depthY.add(item.y);
-});
-
-var rankX = Array.from(depthX).sort((a, b) => (a > b ? 1 : -1));
-var rankY = Array.from(depthY).sort((a, b) => (a > b ? 1 : -1));
-
-cache.forEach(item => {
-    item.rankX = rankX.indexOf(item.x);
-    item.rankY = rankY.indexOf(item.y);
-    var minX = null;
-    var minY = null;
-    var nextDepth = item.children.filter(child => (child.depth == item.depth + 1));
-    nextDepth.forEach(item => {
-        if (minX == null) {
-            minX = item.x;
-        }
-        else if (withinRange(minX, item.x, 3)) {
-            minX = Math.min(minX, item.x);
-        }
-        else {
-            minX = -1;
-        }
-        if (minY == null) {
-            minY = item.y;
-        }
-        else if (withinRange(minY, item.y, 3)) {
-            minY = Math.min(minY, item.y);
-        }
-        else {
-            minY = -1;
-        }
-    });
-    if (minX != -1) {
-        nextDepth.forEach(item => item.linearX = minX);
-    }
-    if (minY != -1) {
-        nextDepth.forEach(item => item.linearY = minY);
-    }
 });
 
 var output = '<?xml version="1.0" encoding="utf-8"?>\n{0}';
+var renderAfter = {};
 
-for (var i = 0; i < mapX.length; i++) {
+for (var i = 0; i < mapY.length; i++) {
     var coordsX = Object.keys(mapX[i]);
     var coordsY = Object.keys(mapY[i]);
     var partial = {};
@@ -567,15 +559,20 @@ for (var i = 0; i < mapX.length; i++) {
                                 if (columns.length > 1) {
                                     var columnStart = []
                                     var columnEnd = [];
+                                    var columnRender = [];
                                     xml += getGridTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, columns.length);
                                     for (var l = 0; l < columns.length; l++) {
                                         columnStart[l] = Number.MAX_VALUE;
                                         columnEnd[l] = 0;
                                         for (var m = 0; m < columns[l].length; m++) {
+                                            if (columnRender[m] == null) {
+                                                columnRender[m] = new Set();
+                                            }
                                             var itemX = columns[l][m];
                                             if (!itemX.spacer) {
                                                 columnStart[l] = Math.min(itemX.bounds.left, columnStart[l]);
                                                 columnEnd[l] = Math.max(itemX.bounds.right, columnEnd[l]);
+                                                columnRender[m].add(itemX.parent.id);
                                                 itemX.prevDepth = itemX.depth;
                                                 itemX.depth = itemY.depth + 1;
                                                 if (itemX.children.length) {
@@ -610,6 +607,22 @@ for (var i = 0; i < mapX.length; i++) {
                                             }
                                         }
                                     }
+                                    columnRender.forEach((item, index) => {
+                                        var minId = Array.from(item).reduce((a, b) => Math.min(a, b));
+                                        var renderId = null;
+                                        if (item.size > 1) {
+                                            for (var l = 0; l < columns.length; l++) {
+                                                if (columns[l][index].prevParentId == minId) {
+                                                    renderId = columns[l][index].id;
+                                                }
+                                            }
+                                            for (var l = 0; l < columns.length; l++) {
+                                                if (columns[l][index].id != renderId) {
+                                                    columns[l][index].renderAfter = renderId;
+                                                }
+                                            }
+                                        }
+                                    });
                                     itemY.columnStart = columnStart;
                                     itemY.columnEnd = columnEnd;
                                     itemY.columnCount = columns.length;
@@ -617,16 +630,15 @@ for (var i = 0; i < mapX.length; i++) {
                             }
                         }
                         if (!itemY.renderParent) {
-                            var linearX = itemY.children.filter(item => (item.depth == itemY.depth + 1) && item.linearX != null);
-                            var linearY = itemY.children.filter(item => (item.depth == itemY.depth + 1) && item.linearY != null);
-                            if (linearX.length || linearY.length) {
-                                if (linearX.length > 1 || linearY.length > 1) {
-                                    xml += getLinearTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, (linearX.length > linearY.length));
-                                }
-                                else {
+                            var [linearBoundsX, linearBoundsY] = getLinearXY(itemY.children.filter(item => (item.depth == itemY.depth + 1)));
+                            if (linearBoundsX || linearBoundsY) {
+                                if (linearBoundsX && linearBoundsY) {
                                     xml += `{${itemY.id}}`;
                                     itemY.children.forEach(item => item.depthIndent -= 1);
                                     itemY.renderParent = true;
+                                }
+                                else {
+                                    xml += getLinearTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, linearBoundsX);
                                 }
                             }
                             else {
@@ -689,7 +701,15 @@ for (var i = 0; i < mapX.length; i++) {
                     if (partial[parentId] == null) {
                         partial[parentId] = '';
                     }
-                    partial[parentId] += xml;
+                    if (itemY.renderAfter == null) {
+                        partial[parentId] += xml;
+                    }
+                    else {
+                        if (renderAfter[itemY.renderAfter] == null) {
+                            renderAfter[itemY.renderAfter] = ''
+                        }
+                        renderAfter[itemY.renderAfter] += xml;
+                    }
                 }
             }
         }
@@ -701,28 +721,33 @@ for (var i = 0; i < mapX.length; i++) {
     }
 }
 
+for (var i in renderAfter) {
+    output = output.replace(`{${i}-0}`, renderAfter[i]);
+}
+
+output = output.replace(/{[0-9]+-0}/g, '');
+
 RESOURCE_STRING = new Map([...RESOURCE_STRING.entries()].sort());
-RESOURCE_STRING_ARRAY = new Map([...RESOURCE_STRING_ARRAY.entries()].sort());
+RESOURCE_ARRAY = new Map([...RESOURCE_ARRAY.entries()].sort());
 
-var output_string = '<?xml version="1.0" encoding="utf-8"?>\n' +
-                    '<resources>\n';
+var output_resource_string = '<?xml version="1.0" encoding="utf-8"?>\n' +
+                             '<resources>\n';
 for (var [i, j] of RESOURCE_STRING.entries()) {
-    output_string += `\t<string name="${i}">${j}</string>\n`;
+    output_resource_string += `\t<string name="${i}">${j}</string>\n`;
 }
-output_string += '</resources>';
+output_resource_string += '</resources>';
 
-var output_string_array = '<?xml version="1.0" encoding="utf-8"?>\n' +
-                          '<resources>\n';
-for (var [i, j] of RESOURCE_STRING_ARRAY.entries()) {
-    output_string_array += `\t<string_array name="${i}">\n`;
+var output_resource_array = '<?xml version="1.0" encoding="utf-8"?>\n' +
+                            '<resources>\n';
+for (var [i, j] of RESOURCE_ARRAY.entries()) {
+    output_resource_array += `\t<array name="${i}">\n`;
     for (var [k, l] of j.entries()) {
-        if (l != '') {
-            output_string_array += `\t\t<item name="${k}">@string/${l}</item>\n`;
-        }
-        else {
-            output_string_array += `\t\t<item>${k}</item>\n`;
-        }
+        output_resource_array += `\t\t<item${(l != '' ? ` name="${k}"` : '')}>${(l != '' ? `@string/${l}` : `${k}`)}</item>\n`;
     }
-    output_string_array += '\t</string_array>\n';
+    output_resource_array += '\t</array>\n';
 }
-output_string_array += '</resources>';
+output_resource_array += '</resources>';
+
+console.log(output);
+console.log(output_resource_string);
+console.log(output_resource_array);
