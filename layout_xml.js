@@ -43,27 +43,33 @@ var ELEMENT_ANDROID = {
         'id': 'android:id="@+id/{0}"',
         'window.getComputedStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}px"',
+            'fontSize': 'android:textSize="{0}"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"'
+            'color': 'android:textColor="{0}"',
+            'backgroundColor': 'android:background="{0}"'
         }
     },
     'CheckBox': {
         'id|name': 'android:id="@+id/{0}"',
         'window.getComputedStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}px"',
+            'fontSize': 'android:textSize="{0}"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"'
+            'color': 'android:textColor="{0}"',
+            'backgroundColor': 'android:background="{0}"'
         }
     },
     'Spinner': {
         'id|name': 'android:id="@+id/{0}"',
+        'window.parseBackgroundStyle': {
+            'backgroundColor': 'android:background="@drawable/{0}"'
+        },
         'window.getComputedStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}px"',
+            'fontSize': 'android:textSize="{0}"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"'
+            'color': 'android:textColor="{0}"',
+            'backgroundColor': 'android:background="{0}"'
         },
         'window.addResourceStringArray': {
             'entries': 'android:entries="@array/{0}"'
@@ -71,11 +77,15 @@ var ELEMENT_ANDROID = {
     },
     'TextView': {
         'id': 'android:id="@+id/{0}"',
+        'window.parseBackgroundStyle': {
+            'backgroundColor': 'android:background="@drawable/{0}"'
+        },
         'window.getComputedStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}px"',
+            'fontSize': 'android:textSize="{0}"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"'
+            'color': 'android:textColor="{0}"',
+            'backgroundColor': 'android:background="{0}"'
         },
         'window.addResourceString': {
             'text': 'android:text="@string/{0}"'
@@ -83,11 +93,15 @@ var ELEMENT_ANDROID = {
     },
     'EditText': {
         'id|name': 'android:id="@+id/{0}"',
+        'window.parseBackgroundStyle': {
+            'backgroundColor': 'android:background="@drawable/{0}"'
+        },
         'window.getComputedStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}px"',
+            'fontSize': 'android:textSize="{0}"',
             'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"'
+            'color': 'android:textColor="{0}"',
+            'backgroundColor': 'android:background="{0}"'
         },
         'window.addResourceString': {
             'text': 'android:text="@string/{0}"'
@@ -95,8 +109,12 @@ var ELEMENT_ANDROID = {
     },
     'Button': {
         'id|name': 'android:id="@+id/{0}"',
+        'window.parseBackgroundStyle': {
+            'backgroundColor': 'android:background="@drawable/{0}"'
+        },
         'window.addResourceString': {
-            'text': 'android:text="@string/{0}"'
+            'text': 'android:text="@string/{0}"',
+            'backgroundColor': 'android:background="{0}"'
         }
     }
 };
@@ -104,6 +122,8 @@ var ELEMENT_ANDROID = {
 var GENERATE_ID = {};
 var RESOURCE_STRING = new Map();
 var RESOURCE_ARRAY = new Map();
+var RESOURCE_STYLE = new Map();
+var RESOURCE_SHAPE = new Map();
 
 function addResourceString(element, value) {
     if (value == null) {
@@ -122,6 +142,7 @@ function addResourceString(element, value) {
     }
     return null;
 }
+
 function addResourceStringArray(element) {
     var stringArray = new Map();
     var integerArray = new Map();
@@ -150,45 +171,181 @@ function addResourceStringArray(element) {
     }
     return null;
 }
-function getProperties(item, tagName, layout = false, subproperty = false) {
+
+function parseBackgroundStyle(element) {
+    var style = {
+        border: parseBorderStyle,
+        borderTop: parseBorderStyle,
+        borderRight: parseBorderStyle,
+        borderBottom: parseBorderStyle,
+        borderLeft: parseBorderStyle,
+        borderRadius: convertToDP,
+        borderBottomLeftRadius: convertToDP,
+        borderBottomRightRadius: convertToDP,
+        borderTopLeftRadius: convertToDP,
+        borderTopRightRadius: convertToDP,
+        backgroundColor: parseRGBA
+    };
+    var properties = getComputedStyle(element);
+    for (var i in style) {
+        style[i] = style[i](properties[i]);
+    }
+    var borderStyle = {
+        default: 'android:color="#000000"',
+        solid: `android:color="${style.border[2]}"`,
+        none: 'android:color="@android:color/transparent"',
+        dotted: 'android:dashWidth="3dp" android:dashGap="1dp"',
+        dashed: 'android:dashWidth="1dp" android:dashGap="1dp"'
+    };
+    if (style.border[1] || style.borderRadius) {
+        var defaultRadius = style.borderTopLeftRadius || style.borderTopRightRadius || style.borderBottomRightRadius || style.borderBottomLeftRadius;
+        var xml = '<?xml version="1.0" encoding="utf-8"?>\n';
+        if (style.borderRadius || defaultRadius) {
+            xml += '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n' +
+                   `\t<stroke android:width="${(style.border[1] ? style.border[1] : '1dp')}" ${borderStyle[style.border[1] || 'default']} />\n` +
+                   (style.backgroundColor ? `\t<solid android:color="${style.backgroundColor[1]}" />\n` : '') + 
+                   (style.borderRadius ? `\t<corners android:radius="${style.borderRadius}" />\n` : `\t<corners android:topLeftRadius="${style.borderTopLeftRadius || defaultRadius}" android:topRightRadius="${style.borderTopRightRadius || defaultRadius} android:bottomRightRadius="${style.borderBottomRightRadius || defaultRadius}" android:bottomLeftRadius="${style.borderBottomLeftRadius || defaultRadius}" />\n`) +
+                   '</shape>\n';
+        }
+        else if (style.border && !style.backgroundColor) {
+            xml += '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n' +
+                   `\t<stroke android:width="${style.border[1]}" ${borderStyle[style.border[0]]} />\n` +
+                   '</shape>\n';
+        }
+        else {
+            xml += '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">' +  '\n';
+            if (style.backgroundColor) {
+                xml += '\t<item>\n' +
+                       '\t\t<shape android:shape="rectangle">\n' +
+                       `\t\t\t<solid android:color="${style.backgroundColor[1]}" />\n` +
+                       '\t\t</shape>\n' +
+                       '\t</item>\n';
+            }
+            if (style.border) {
+                xml += '\t<item>\n' +
+                       '\t\t<shape android:shape="rectangle">\n' +
+                       `\t\t\t<stroke android:width="${style.border[1]}" ${borderStyle[style.border[0]]} />\n` +
+                       '\t\t</shape>\n' +
+                       '\t</item>\n';
+            }
+            else {
+                [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth].forEach((item, index) => {
+                    xml += `\t<item android:${['top', 'right', 'bottom', 'left'][index]}="${item[2]}">\n` +
+                           '\t\t<shape android:shape="rectangle">\n' +
+                           `\t\t\t<stroke android:width="${item[1]}" ${borderStyle[item[0]]} />\n` +
+                           '\t\t</shape>\n' +
+                           '\t</item>\n';
+                });
+            }
+            xml += '</layer-list>';
+        }
+        element.cacheData.drawable = xml;
+        return { backgroundColor: `${element.tagName.toLowerCase()}_{id}` };
+    }
+    return null;
+}
+
+function parseBorderStyle(value) {
+    var stroke = value.match(/(none|dotted|dashed|solid)/);
+    var width = value.match(/([0-9]+(px|pt))/);
+    var color = parseRGBA(value);
+    if (stroke) {
+        stroke = stroke[1];
+    }
+    if (width) {
+        width = width[1];
+    }
+    if (color) {
+        color = color[1];
+    }
+    return [stroke || 'solid', convertToDP(width || '1px'), color || '#000000'];
+}
+
+function parseRGBA(value) {
+    var result = value.match(/rgb(a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(([0-9]{1,3})|, ([0-9]{1,3}))\)/);
+    if (result && result.length >= 4) {
+        return [result[0], `#${getHex(result[1]) + getHex(result[2]) + getHex(result[3])}`, result[7]];
+    }
+    return null;
+}
+
+function convertToDP(value, font) {
+    if (/[0-9]+(px|pt)$/.test(value.trim())) {
+        var height = parseInt(value.replace(/[a-z]/g, ''));
+        if (height > 0) {
+            return height + (font ? 'sp' : 'dp');
+        }
+    }
+    return 0;
+}
+
+function convertToSP(value) {
+    return convertToDP(value, true);
+}
+
+function getProperties(item, tagName, layout, subproperty) {
     var properties = ELEMENT_ANDROID[tagName];
     var element = item.element;
     var result = [];
     if (properties != null) {
+        var appended = {};
         for (var i in properties) {
+            if (appended[i] != null) {
+                continue;
+            }
             var options = i.split('|');
             for (var j of options) {
                 if (element && element[j] != '' && element[j] != null) {
                     result.push(properties[i].replace('{0}', element[j]));
+                    if (j == 'id' || j == 'name') {
+                        item.androidId = element[j];
+                    }
+                    appended[i] = element[j];
                     break;
                 }
                 else if (j.indexOf('.') != -1) {
                     var objectNames = j.split('.');
                     var method = window;
+                    var methodName = null;
                     for (var k of objectNames) {
                         if (k == 'window') {
                             continue;
                         }
                         else if (method[k]) {
                             method = method[k];
+                            methodName = k;
                         }
                     }
                     if (typeof method == 'function') {
                         var data = method(element);
                         if (data != null) {
+                            var output = [];
                             for (var k in properties[i]) {
+                                if (appended[k] != null) {
+                                    continue;
+                                }
                                 var property = data[k];
                                 if (property != '' && property != null) {
                                     if (property.startsWith('rgb')) {
-                                        var rgb = getRGB(property);
+                                        var rgb = parseRGBA(property);
                                         if (rgb) {
                                             property = property.replace(rgb[0], rgb[1]);
                                         }
                                     }
-                                    result.push(properties[i][k].replace('{0}', property.replace(/(pt|px)$/, '')));
+                                    output.push(properties[i][k].replace('{0}', property));
+                                    appended[k] = property;
                                 }
                             }
-                            break;
+                            if (output.length) {
+                                if (methodName == 'getComputedStyle') {
+                                    if (!RESOURCE_STYLE.has(item.tagName)) {
+                                        RESOURCE_STYLE.set(item.tagName, []);
+                                    }
+                                    RESOURCE_STYLE.get(item.tagName).push(output);
+                                }
+                                result.push(...output);
+                                break;
+                            }
                         }
                     }
                 }
@@ -236,6 +393,7 @@ function getProperties(item, tagName, layout = false, subproperty = false) {
     }
     return result;
 }
+
 function generateAndroidId(item, tagName) {
     if (GENERATE_ID[tagName] == null) {
         GENERATE_ID[tagName] = 1;
@@ -243,13 +401,7 @@ function generateAndroidId(item, tagName) {
     item.androidId = tagName + GENERATE_ID[tagName]++;
     return item.androidId;
 }
-function getRGB(value) {
-    var result = value.match(/rgb\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})\)/);
-    if (result && result.length == 4) {
-        return [result[0], `#${getHex(result[1]) + getHex(result[2]) + getHex(result[3])}`];
-    }
-    return null;
-}
+
 function getHex(n) {
     var hex = '0123456789ABCDEF';
     n = parseInt(n);
@@ -259,12 +411,19 @@ function getHex(n) {
     n = Math.max(0, Math.min(n, 255));
     return hex.charAt((n - (n % 16)) / 16) + hex.charAt(n % 16);
 }
-function displayProperties(properties, indent = 0) {
-    return properties.map(value => `\n${setIndent(indent) + value}`).join('');
+
+function displayProperties(item, properties, indent = 0) {
+    var output = properties.map(value => `\n${setIndent(indent) + value}`).join('')
+    if (item != null) {
+        output = output.replace('{id}', item.androidId);
+    }
+    return output;
 }
+
 function parentConstraint(item) {
     return (item.parent && item.parent.androidTagName == DEFAULT_ANDROID.CONSTRAINT);
 }
+
 function getAndroidTagName(item) {
     var result = MAPPING_ANDROID[item.tagName];
     if (typeof result == 'object') {
@@ -272,6 +431,7 @@ function getAndroidTagName(item) {
     }
     return result;
 }
+
 function getLinearTemplate(item, depth, parent, vertical) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.LINEAR;
@@ -280,21 +440,23 @@ function getLinearTemplate(item, depth, parent, vertical) {
         'android:orientation="{0}"': (vertical ? "vertical" : "horizontal")
     });
     return indent + `<${DEFAULT_ANDROID.LINEAR}` +
-                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
+                    `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.LINEAR}>\n` +
                     `{${item.id}-0}`;
 }
+
 function getConstraintTemplate(item, depth, parent) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.CONSTRAINT,
     item.renderParent = parent;
     return indent + `<${DEFAULT_ANDROID.CONSTRAINT}` +
-                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
+                    `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n` +
                     `{${item.id}-0}`;
 }
+
 function getGridTemplate(item, depth, parent, columnCount = 2) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.GRID;
@@ -303,11 +465,12 @@ function getGridTemplate(item, depth, parent, columnCount = 2) {
         'android:columnCount="{0}"': columnCount
     });
     return indent + `<${DEFAULT_ANDROID.GRID}` +
-                    `${displayProperties(getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
+                    `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.GRID}>\n` +
                     `{${item.id}-0}`;
 }
+
 function getTagTemplate(item, depth, parent, tagName, recursive) {
     var element = item.element;
     var indent = setIndent(depth);
@@ -335,7 +498,7 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
                     'android:checkedButton="@+id/{0}"': checked
                 });
                 xml = indent + '<RadioGroup' +
-                               `${displayProperties(getProperties({ children: result, element: { id: '' }, }, 'RadioGroup', true), depth + 1)}>\n` +
+                               `${displayProperties(null, getProperties({ children: result, element: { id: '' }, }, 'RadioGroup', true), depth + 1)}>\n` +
                                xml +
                       indent + '</RadioGroup>\n';
                 return xml;
@@ -343,11 +506,13 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
         }
     }
     item.renderParent = parent;
-    return `${indent}<${item.androidTagName}${displayProperties(getProperties(item, item.androidTagName), depth + 1)} />\n`;
+    return `${indent}<${item.androidTagName}${displayProperties(item, getProperties(item, item.androidTagName), depth + 1)} />\n`;
 }
+
 function setIndent(n, value = '\t') {
     return value.repeat(n);
 }
+
 function getLinearXY(siblings) {
     var maxLeft = Number.MIN_VALUE;
     var minRight = Number.MAX_VALUE;
@@ -375,15 +540,54 @@ function getLinearXY(siblings) {
     }
     return [linearBoundsX, linearBoundsY];
 }
+
 function withinRange(a, b, n = 1) {
     return (b >= (a - n) && b <= (a + n));
 }
+
 function resetParent(item) {
     if (item.prevParent) {
         item.parent = item.prevParent;
         item.prevParent = null;
         item.prevParentId = null;
     }
+}
+
+function getResourceStringXML() {
+    var resource = new Map([...RESOURCE_STRING.entries()].sort());
+    var output = '<?xml version="1.0" encoding="utf-8"?>\n' +
+                 '<resources>\n';
+    for (var [i, j] of resource.entries()) {
+        output += `\t<string name="${i}">${j}</string>\n`;
+    }
+    output += '</resources>';
+    return output;
+}
+
+function getResourceArrayXML() {
+    var resource = new Map([...RESOURCE_ARRAY.entries()].sort());
+    var output = '<?xml version="1.0" encoding="utf-8"?>\n' +
+                 '<resources>\n';
+    for (var [i, j] of resource.entries()) {
+        output += `\t<array name="${i}">\n`;
+        for (var [k, l] of j.entries()) {
+            output += `\t\t<item${(l != '' ? ` name="${k}"` : '')}>${(l != '' ? `@string/${l}` : `${k}`)}</item>\n`;
+        }
+        output += '\t</array>\n';
+    }
+    output += '</resources>';
+    return output;
+}
+
+function getResourceDrawableXML() {
+    var output = '';
+    cache.forEach(item => {
+        if (item.drawable) {
+            output += `### filename: res/drawable/${item.tagName.toLowerCase()}_${item.androidId}.xml ###\n` +
+                      `${item.drawable}\n\n`;
+        }
+    })
+    return output;
 }
 
 var elements = document.querySelectorAll('body > *');
@@ -727,27 +931,7 @@ for (var i in renderAfter) {
 
 output = output.replace(/{[0-9]+-0}/g, '');
 
-RESOURCE_STRING = new Map([...RESOURCE_STRING.entries()].sort());
-RESOURCE_ARRAY = new Map([...RESOURCE_ARRAY.entries()].sort());
-
-var output_resource_string = '<?xml version="1.0" encoding="utf-8"?>\n' +
-                             '<resources>\n';
-for (var [i, j] of RESOURCE_STRING.entries()) {
-    output_resource_string += `\t<string name="${i}">${j}</string>\n`;
-}
-output_resource_string += '</resources>';
-
-var output_resource_array = '<?xml version="1.0" encoding="utf-8"?>\n' +
-                            '<resources>\n';
-for (var [i, j] of RESOURCE_ARRAY.entries()) {
-    output_resource_array += `\t<array name="${i}">\n`;
-    for (var [k, l] of j.entries()) {
-        output_resource_array += `\t\t<item${(l != '' ? ` name="${k}"` : '')}>${(l != '' ? `@string/${l}` : `${k}`)}</item>\n`;
-    }
-    output_resource_array += '\t</array>\n';
-}
-output_resource_array += '</resources>';
-
 console.log(output);
-console.log(output_resource_string);
-console.log(output_resource_array);
+console.log(getResourceStringXML());
+console.log(getResourceArrayXML());
+console.log(getResourceDrawableXML());
