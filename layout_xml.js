@@ -67,6 +67,9 @@ var ELEMENT_ANDROID = {
             'fontStyle': 'android:textStyle="{0}"',
             'color': 'android:textColor="{0}"',
             'letterSpacing': 'android:letterSpacing="{0}"'
+        },
+        'window.addResourceStringArray': {
+            'entries': 'android:entries="@array/{0}"'
         }
     },
     'TextView': {
@@ -79,7 +82,7 @@ var ELEMENT_ANDROID = {
             'letterSpacing': 'android:letterSpacing="{0}"'
         },
         'window.addResourceString': {
-            'innerText': 'android:text="@string/{0}"'
+            'text': 'android:text="@string/{0}"'
         }
     },
     'EditText': {
@@ -92,30 +95,56 @@ var ELEMENT_ANDROID = {
             'letterSpacing': 'android:letterSpacing="{0}"'
         },
         'window.addResourceString': {
-            'innerText': 'android:text="@string/{0}"'
+            'text': 'android:text="@string/{0}"'
         }
     },
     'Button': {
         'id|name': 'android:id="@+id/{0}"',
         'window.addResourceString': {
-            'innerText': 'android:text="@string/{0}"'
+            'text': 'android:text="@string/{0}"'
         }
     }
 };
-var GENERATE_ID = {};
-var RESOURCE_STRING = {};
 
-function addResourceString(element) {
-    var value = (element.innerText || element.value).trim();
+var GENERATE_ID = {};
+var RESOURCE_STRING = new Map();
+var RESOURCE_STRING_ARRAY = new Map();
+
+function addResourceString(element, value) {
+    if (value == null) {
+        value = (element.innerText || element.value).trim();
+    }
     if (value != '') {
         for (var i in RESOURCE_STRING) {
-            if (RESOURCE_STRING[i] == value) {
-                return { innerText: i };
+            var resource = RESOURCE_STRING.get(i);
+            if (resource == value) {
+                return { text: resource };
             }
         }
-        var name = value.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace('__', '_').replace(/_+$/, '').split('_').slice(0, 4).join('_');
-        RESOURCE_STRING[name] = value;
-        return { innerText: name };
+        var name = value.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
+        RESOURCE_STRING.set(name, value);
+        return { text: name };
+    }
+    return null;
+}
+function addResourceStringArray(element) {
+    var stringArray = new Map();
+    for (var i = 0; i < element.children.length; i++) {
+        var value = element.children[i].value.trim();
+        var text = element.children[i].text.trim();
+        if (text != '') {
+            if (!/^\d+$/.test(text) || value != text) {
+                stringArray.set(value, addResourceString(null, text).text);
+            }
+            else {
+                stringArray.set(value, '');
+            }
+        }
+    }
+    if (stringArray.size) {
+        var name = `${element.id || element.name}_array`;
+        RESOURCE_STRING_ARRAY.set(name, stringArray);
+        return { entries: name };
     }
     return null;
 }
@@ -148,7 +177,7 @@ function getProperties(item, tagName, layout = false, subproperty = false) {
                             for (var k in properties[i]) {
                                 var property = data[k];
                                 if (property != '' && property != null) {
-                                    if (properties[i][k].indexOf('rgb') != -1) {
+                                    if (property.startsWith('rgb')) {
                                         var rgb = getRGB(property);
                                         if (rgb) {
                                             property = property.replace(rgb[0], rgb[1]);
@@ -251,18 +280,16 @@ function getLinearTemplate(item, depth, parent, vertical) {
     return indent + `<${DEFAULT_ANDROID.LINEAR}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-            indent + `</${DEFAULT_ANDROID.LINEAR}>\n`;
+           indent + `</${DEFAULT_ANDROID.LINEAR}>\n`;
 }
 function getConstraintTemplate(item, depth, parent) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.CONSTRAINT,
     item.renderParent = parent;
-    Object.assign(item.properties, {
-    });
     return indent + `<${DEFAULT_ANDROID.CONSTRAINT}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-            indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n`;
+           indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n`;
 }
 function getGridTemplate(item, depth, parent, columnCount = 2) {
     var indent = setIndent(depth);
@@ -274,7 +301,7 @@ function getGridTemplate(item, depth, parent, columnCount = 2) {
     return indent + `<${DEFAULT_ANDROID.GRID}` +
                     `${displayProperties(getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-            indent + `</${DEFAULT_ANDROID.GRID}>\n`;
+           indent + `</${DEFAULT_ANDROID.GRID}>\n`;
 }
 function getTagTemplate(item, depth, parent, tagName, recursive) {
     var element = item.element;
@@ -303,9 +330,9 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
                     'android:checkedButton="@+id/{0}"': checked
                 });
                 xml = indent + '<RadioGroup' +
-                                `${displayProperties(getProperties({ children: result, element: { id: '' }, }, 'RadioGroup', true), depth + 1)}>\n` +
-                                xml +
-                        indent + '</RadioGroup>\n';
+                               `${displayProperties(getProperties({ children: result, element: { id: '' }, }, 'RadioGroup', true), depth + 1)}>\n` +
+                               xml +
+                      indent + '</RadioGroup>\n';
                 return xml;
             }
         }
@@ -331,13 +358,16 @@ var elements = document.querySelectorAll('body > *');
 var cache = [];
 var id = 1;
 var selector = 'body *';
+
 for (var i in elements) {
     if (MAPPING_ANDROID[elements[i].tagName]) {
         selector = 'body, body *';
         break;
     }
 }
+
 elements = document.querySelectorAll(selector);
+
 for (var i in elements) {
     var element = elements[i];
     if (element.getBoundingClientRect) {
@@ -400,6 +430,7 @@ var mapX = [];
 var mapY = [];
 var depthX = new Set();
 var depthY = new Set();
+
 cache.forEach(item => {
     var x = Math.floor(item.bounds.x);
     var y = (item.parent ? item.parent.id : 0);
@@ -425,6 +456,7 @@ cache.forEach(item => {
 
 var rankX = Array.from(depthX).sort((a, b) => (a > b ? 1 : -1));
 var rankY = Array.from(depthY).sort((a, b) => (a > b ? 1 : -1));
+
 cache.forEach(item => {
     item.rankX = rankX.indexOf(item.x);
     item.rankY = rankY.indexOf(item.y);
@@ -669,9 +701,28 @@ for (var i = 0; i < mapX.length; i++) {
     }
 }
 
-var resource_string_output = '<?xml version="1.0" encoding="utf-8"?>\n' +
-                                '<resources>\n';
-for (var i in RESOURCE_STRING) {
-    resource_string_output += `\t<string name="${i}">${RESOURCE_STRING[i]}</string>\n`;
+RESOURCE_STRING = new Map([...RESOURCE_STRING.entries()].sort());
+RESOURCE_STRING_ARRAY = new Map([...RESOURCE_STRING_ARRAY.entries()].sort());
+
+var output_string = '<?xml version="1.0" encoding="utf-8"?>\n' +
+                    '<resources>\n';
+for (var [i, j] of RESOURCE_STRING.entries()) {
+    output_string += `\t<string name="${i}">${j}</string>\n`;
 }
-resource_string_output += '</resources>';
+output_string += '</resources>';
+
+var output_string_array = '<?xml version="1.0" encoding="utf-8"?>\n' +
+                          '<resources>\n';
+for (var [i, j] of RESOURCE_STRING_ARRAY.entries()) {
+    output_string_array += `\t<string_array name="${i}">\n`;
+    for (var [k, l] of j.entries()) {
+        if (l != '') {
+            output_string_array += `\t\t<item name="${k}">@string/${l}</item>\n`;
+        }
+        else {
+            output_string_array += `\t\t<item>${k}</item>\n`;
+        }
+    }
+    output_string_array += '\t</string_array>\n';
+}
+output_string_array += '</resources>';
