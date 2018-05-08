@@ -63,12 +63,18 @@ var PROPERTY_ANDROID = {
 var WIDGET_ANDROID = {
     'ConstraintLayout': {
         'id': 'android:id="@+id/{0}"',
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'LinearLayout': {
         'id': 'android:id="@+id/{0}"',
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'GridLayout': {
         'id': 'android:id="@+id/{0}"',
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'RadioGroup': {
         'id': 'android:id="@+id/{0}"'
@@ -113,7 +119,6 @@ var WIDGET_ANDROID = {
     }
 };
 
-var GENERATE_ID = {};
 var RESOURCE_STRING = new Map();
 var RESOURCE_ARRAY = new Map();
 var RESOURCE_STYLE = new Map();
@@ -151,6 +156,7 @@ function addResourceStringArray(element) {
                 if (integerArray != null && integerArray.size) {
                     i = -1;
                     stringArray = new Map();
+                    integerArray = null;
                     continue;
                 }
                 stringArray.set(value, addResourceString(null, text).text);
@@ -179,13 +185,13 @@ function setBackgroundStyle(element) {
     for (var i in style) {
         style[i] = style[i](properties[i]);
     }
-    var borderStyle = {
-        default: 'android:color="#000"',
-        solid: `android:color="${style.border[2]}"`,
-        dotted: 'android:dashWidth="3dp" android:dashGap="1dp"',
-        dashed: 'android:dashWidth="1dp" android:dashGap="1dp"'
-    };
     if (style.border[0] != 'none' || style.borderRadius) {
+        var borderStyle = {
+            default: 'android:color="#000"',
+            solid: `android:color="${style.border[2]}"`,
+            dotted: 'android:dashWidth="3dp" android:dashGap="1dp"',
+            dashed: 'android:dashWidth="1dp" android:dashGap="1dp"'
+        };
         var xml = '<?xml version="1.0" encoding="utf-8"?>\n';
         if (style.borderRadius) {
             xml += '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n' +
@@ -247,16 +253,7 @@ function setBackgroundStyle(element) {
 }
 
 function setBoxSpacing(element) {
-    var properties = getComputedStyle(element);
-    var result = {};
-    ['padding', 'margin'].forEach(value => {
-        ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
-            var width = convertToDP(properties[`${value + side}`]);
-            if (width != 0) {
-                result[`${value + side}`] = width;
-            }
-        });
-    });
+    var result = getBoxSpacing(element);
     if (result.paddingTop != null && result.paddingTop == result.paddingBottom) {
         result.paddingVertical = result.paddingTop;
         delete result.paddingTop;
@@ -280,17 +277,32 @@ function setBoxSpacing(element) {
     return result;
 }
 
+function getBoxSpacing(element, complete) {
+    var properties = getComputedStyle(element);
+    var result = {};
+    ['padding', 'margin'].forEach(value => {
+        ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
+            var dimension = properties[`${value + side}`];
+            dimension = (complete ? parseInt(dimension) : convertToDP(dimension));
+            if (complete || dimension != 0) {
+                result[`${value + side}`] = dimension;
+            }
+        });
+    });
+    return result;
+}
+
 function parseBoxDimensions(value) {
-    var dimensions = value.match(/^([0-9]+(px|pt)) ([0-9]+(px|pt)) ([0-9]+(px|pt)) ([0-9]+(px|pt))$/);
-    if (dimensions && dimensions.length >= 5) {
-        if (dimensions[1] == dimensions[3] && dimensions[3] == dimensions[5] && dimensions[5] == dimensions[7]) {
-            return [convertToDP(dimensions[1])];
+    var box = value.match(/^([0-9]+(?:px|pt)) ([0-9]+(?:px|pt)) ([0-9]+(?:px|pt)) ([0-9]+(?:px|pt))$/);
+    if (box && box.length == 5) {
+        if (box[1] == box[2] && box[2] == box[3] && box[3] == box[4]) {
+            return [convertToDP(box[1])];
         }
-        else if (dimensions[1] == dimensions[5] && dimensions[3] == dimensions[7]) {
-            return [convertToDP(dimensions[1]), convertToDP(dimensions[3])];
+        else if (box[1] == box[3] && box[2] == box[4]) {
+            return [convertToDP(box[1]), convertToDP(box[2])];
         }
         else {
-            return [convertToDP(dimensions[1]), convertToDP(dimensions[3]), convertToDP(dimensions[5]), convertToDP(dimensions[7])];
+            return [convertToDP(box[1]), convertToDP(box[2]), convertToDP(box[3]), convertToDP(box[4])];
         }
     }
     return null;
@@ -298,7 +310,7 @@ function parseBoxDimensions(value) {
 
 function parseBorderStyle(value) {
     var stroke = value.match(/(none|dotted|dashed|solid)/);
-    var width = value.match(/([0-9]+(px|pt))/);
+    var width = value.match(/([0-9]+(?:px|pt))/);
     var color = parseRGBA(value);
     if (stroke) {
         stroke = stroke[1];
@@ -313,9 +325,9 @@ function parseBorderStyle(value) {
 }
 
 function parseRGBA(value) {
-    var result = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
-    if (result && result.length >= 4) {
-        return [result[0], `#${getHex(result[1]) + getHex(result[2]) + getHex(result[3])}`, result[4]];
+    var rgba = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
+    if (rgba && rgba.length >= 4) {
+        return [rgba[0], `#${getHex(rgba[1]) + getHex(rgba[2]) + getHex(rgba[3])}`, rgba[4]];
     }
     return null;
 }
@@ -335,19 +347,19 @@ function convertToSP(value) {
 }
 
 function getProperties(item, tagName, layout, subproperty) {
-    var properties = WIDGET_ANDROID[tagName];
+    var widget = WIDGET_ANDROID[tagName];
     var element = item.element;
     var result = [];
-    if (properties != null) {
+    if (widget != null) {
         var appended = {};
-        for (var i in properties) {
+        for (var i in widget) {
             if (appended[i] != null) {
                 continue;
             }
             var options = i.split('|');
             for (var j of options) {
                 if (element && element[j] != '' && element[j] != null) {
-                    result.push(properties[i].replace('{0}', element[j]));
+                    result.push(widget[i].replace('{0}', element[j]));
                     if (j == 'id' || j == 'name') {
                         item.androidId = element[j];
                     }
@@ -371,7 +383,7 @@ function getProperties(item, tagName, layout, subproperty) {
                         var data = method(element);
                         if (data != null) {
                             var output = [];
-                            for (var k in properties[i]) {
+                            for (var k in widget[i]) {
                                 if (appended[k] != null) {
                                     continue;
                                 }
@@ -386,7 +398,7 @@ function getProperties(item, tagName, layout, subproperty) {
                                     else if (/(px|pt)$/.test(property)) {
                                         property = convertToDP(property);
                                     }
-                                    output.push(properties[i][k].replace('{0}', property));
+                                    output.push(widget[i][k].replace('{0}', property));
                                     appended[k] = property;
                                 }
                             }
@@ -406,8 +418,18 @@ function getProperties(item, tagName, layout, subproperty) {
             }
         }
     }
-    for (var i in item.properties) {
-        result.push(i.replace('{0}', item.properties[i]));
+    for (var i in item.android) {
+        var property = item.android[i];
+        if (property != null) {
+            if (typeof property == 'object') {
+                for (var j in property) {
+                    result.push(`android:${i}="@${j}+/${property[j]}"`);
+                }
+            }
+            else {
+                result.push(`android:${i}="${property}"`);
+            }
+        }
     }
     if (result.length) {
         var nextElement = element.nextElementSibling;
@@ -428,18 +450,10 @@ function getProperties(item, tagName, layout, subproperty) {
         }
     }
     if (!subproperty) {
-        if (layout || !item.siblingsWrap) {
-            if (item.rowspan > 1) {
-                result.push(`android:layout_rowSpan="${item.rowspan}"`);
-            }
-            if (item.colspan > 1) {
-                result.push(`android:layout_columnSpan="${item.colspan}"`);
-            }
-        }
         if (element.id == '' && (!result.length || result[0].indexOf('android:id') != 0)) {
             tagName = tagName || item.androidTagName;
             generateAndroidId(item, tagName);
-            result.unshift(`android:id="id+/${item.androidId}"`);
+            result.unshift(`android:id="@id+/${item.androidId}"`);
         }
         else if (element.id != '') {
             item.androidId = element.id;
@@ -489,40 +503,39 @@ function getAndroidTagName(item) {
 function getLinearTemplate(item, depth, parent, vertical) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.LINEAR;
+    item.android.orientation = (vertical ? 'vertical' : 'horizontal');
     item.renderParent = parent;
-    Object.assign(item.properties, {
-        'android:orientation="{0}"': (vertical ? 'vertical' : 'horizontal')
-    });
-    return indent + `<${DEFAULT_ANDROID.LINEAR}` +
+    return getGridSpace(item, depth) +
+           indent + `<${DEFAULT_ANDROID.LINEAR}` +
                     `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.LINEAR}>\n` +
-                    `{${item.id}-0}`;
+                    `{:${item.id}}`;
 }
 
 function getConstraintTemplate(item, depth, parent) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.CONSTRAINT,
     item.renderParent = parent;
-    return indent + `<${DEFAULT_ANDROID.CONSTRAINT}` +
+    return getGridSpace(item, depth) +
+           indent + `<${DEFAULT_ANDROID.CONSTRAINT}` +
                     `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.CONSTRAINT}>\n` +
-                    `{${item.id}-0}`;
+                    `{:${item.id}}`;
 }
 
 function getGridTemplate(item, depth, parent, columnCount = 2) {
     var indent = setIndent(depth);
     item.androidTagName = DEFAULT_ANDROID.GRID;
+    item.android.columnCount = columnCount;
     item.renderParent = parent;
-    Object.assign(item.properties, {
-        'android:columnCount="{0}"': columnCount
-    });
-    return indent + `<${DEFAULT_ANDROID.GRID}` +
+    return getGridSpace(item, depth) +
+           indent + `<${DEFAULT_ANDROID.GRID}` +
                     `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
                     `{${item.id}}` +
            indent + `</${DEFAULT_ANDROID.GRID}>\n` +
-                    `{${item.id}-0}`;
+                    `{:${item.id}}`;
 }
 
 function getTagTemplate(item, depth, parent, tagName, recursive) {
@@ -531,36 +544,73 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
     item.androidTagName = tagName || getAndroidTagName(item);
     if (!recursive) {
         if (item.androidTagName == 'RadioButton' && element.name != '') {
-            var result = cache.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.renderParent && ((item.prevDepth || item.depth) == (input.prevDepth || input.depth))));
+            var result = cache.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.renderParent && ((item.previous.depth || item.depth) == (input.previous.depth || input.depth))));
             var xml = '';
             if (result.length > 1) {
-                var rowspan = 1;
-                var colspan = 1;
+                var data = {
+                    children: result,
+                    element: { id: '' },
+                    android: {}
+                };
                 var checked = '';
+                var rowEndId = item.id;
+                var rowSpan = 1;
+                var columnSpan = 1;
                 result.forEach(input => {
-                    rowspan += (input.rowspan || 1) - 1;
-                    colspan += (input.colspan || 1) - 1;
-                    input.siblingsWrap = true;
+                    rowSpan += (input.layout_rowSpan || 1) - 1;
+                    columnSpan += (input.layout_columnSpan || 1) - 1;
                     if (input.element.checked) {
                         checked = input.element.id || generateAndroidId(input, getAndroidTagName(item));
                     }
-                    xml += getTagTemplate(input, depth + 1, parent, tagName, true)
+                    xml += getTagTemplate(input, depth + 1, parent, tagName, true);
+                    if (input.rowEnd) {
+                        rowEndId = input.id;
+                    }
                 });
-                Object.assign(item.properties, {
-                    'android:layout_rowSpan="{0}"': rowspan,
-                    'android:layout_columnSpan="{0}"': colspan,
-                    'android:checkedButton="@+id/{0}"': checked
-                });
+                data.android.checkedButton = { id: checked };
+                if (rowSpan > 1) {
+                    data.android.layout_rowSpan = rowSpan;
+                }
+                if (columnSpan > 1) {
+                    data.android.layout_columnSpan = columnSpan;
+                }
                 xml = indent + '<RadioGroup' +
-                               `${displayProperties(null, getProperties({ children: result, element: { id: '' }, }, 'RadioGroup', true), depth + 1)}>\n` +
+                               `${displayProperties(null, getProperties(data, 'RadioGroup', true), depth + 1)}>\n` +
                                xml +
-                      indent + '</RadioGroup>\n';
+                      indent + '</RadioGroup>\n' +
+                               `{:${rowEndId}}`;
                 return xml;
             }
         }
     }
     item.renderParent = parent;
-    return `${indent}<${item.androidTagName}${displayProperties(item, getProperties(item, item.androidTagName), depth + 1)} />\n`;
+    return getGridSpace(item, depth) + 
+           indent + `<${item.androidTagName}${displayProperties(item, getProperties(item, item.androidTagName), depth + 1)} />\n` +
+                    (!item.siblingWrap ? `{:${item.id}}` : '');
+}
+
+function getGridSpace(item, depth) {
+    var indent = setIndent(depth);
+    var xml = '';
+    if (item.previous.parent && item.previous.parent.invisible) {
+        var dimensions = getBoxSpacing(item.previous.parent.element, true);
+        if (item.rowEnd) {
+            var heightBottom =  dimensions.marginBottom + dimensions.paddingBottom + (!item.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
+            if (heightBottom > 0) {
+                if (RENDER_AFTER[item.id] == null) {
+                    RENDER_AFTER[item.id]  = '';
+                }
+                RENDER_AFTER[item.id] += indent + `<Space android:layout_width="match_parent" android:layout_height="${heightBottom}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
+            }
+        }
+        if (item.gridFirst) {
+            var heightTop = dimensions.paddingTop + dimensions.marginTop;
+            if (heightTop > 0) {
+                xml += indent + `<Space android:layout_width="match_parent" android:layout_height="${heightTop}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
+            }
+        }
+    }
+    return xml;
 }
 
 function setIndent(n, value = '\t') {
@@ -601,38 +651,38 @@ function withinRange(a, b, n = 1) {
 
 function getResourceStringXML() {
     var resource = new Map([...RESOURCE_STRING.entries()].sort());
-    var output = '<?xml version="1.0" encoding="utf-8"?>\n' +
-                 '<resources>\n';
+    var xml = '<?xml version="1.0" encoding="utf-8"?>\n' +
+              '<resources>\n';
     for (var [i, j] of resource.entries()) {
-        output += `\t<string name="${i}">${j}</string>\n`;
+        xml += `\t<string name="${i}">${j}</string>\n`;
     }
-    output += '</resources>';
-    return output;
+    xml += '</resources>';
+    return xml;
 }
 
 function getResourceArrayXML() {
     var resource = new Map([...RESOURCE_ARRAY.entries()].sort());
-    var output = '<?xml version="1.0" encoding="utf-8"?>\n' +
-                 '<resources>\n';
+    var xml = '<?xml version="1.0" encoding="utf-8"?>\n' +
+              '<resources>\n';
     for (var [i, j] of resource.entries()) {
-        output += `\t<array name="${i}">\n`;
+        xml += `\t<array name="${i}">\n`;
         for (var [k, l] of j.entries()) {
-            output += `\t\t<item${(l != '' ? ` name="${k}"` : '')}>${(l != '' ? `@string/${l}` : `${k}`)}</item>\n`;
+            xml += `\t\t<item${(l != '' ? ` name="${k}"` : '')}>${(l != '' ? `@string/${l}` : `${k}`)}</item>\n`;
         }
-        output += '\t</array>\n';
+        xml += '\t</array>\n';
     }
-    output += '</resources>';
-    return output;
+    xml += '</resources>';
+    return xml;
 }
 
 function getResourceDrawableXML() {
     var output = '';
     cache.forEach(item => {
         if (item.drawable) {
-            output += `### filename: res/drawable/${item.tagName.toLowerCase()}_${item.androidId}.xml ###\n` +
-                      `${item.drawable}\n\n`;
+            output += `${item.drawable}\n` +
+                      `<!-- filename: res/drawable/${item.tagName.toLowerCase()}_${item.androidId}.xml -->\n\n`;
         }
-    })
+    });
     return output;
 }
 
@@ -663,7 +713,8 @@ for (var i in elements) {
                 renderParent: null,
                 depth: 0,
                 depthIndent: 0,
-                properties: {},
+                android: {},
+                previous: {},
                 children: []
             };
             cache.push(data);
@@ -733,7 +784,8 @@ cache.forEach(item => {
 });
 
 var output = '<?xml version="1.0" encoding="utf-8"?>\n{0}';
-var renderAfter = {};
+var RENDER_AFTER = {};
+var GENERATE_ID = {};
 
 for (var i = 0; i < mapY.length; i++) {
     var coordsX = Object.keys(mapX[i]);
@@ -812,6 +864,8 @@ for (var i = 0; i < mapY.length; i++) {
                                     var columnRender = [];
                                     xml += getGridTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, columns.length);
                                     for (var l = 0; l < columns.length; l++) {
+                                        var rowStart = false;
+                                        var spacer = 0;
                                         columnStart[l] = Number.MAX_VALUE;
                                         columnEnd[l] = 0;
                                         for (var m = 0; m < columns[l].length; m++) {
@@ -823,30 +877,33 @@ for (var i = 0; i < mapY.length; i++) {
                                                 columnStart[l] = Math.min(itemX.bounds.left, columnStart[l]);
                                                 columnEnd[l] = Math.max(itemX.bounds.right, columnEnd[l]);
                                                 columnRender[m].add(itemX.parent.id);
-                                                itemX.prevDepth = itemX.depth;
+                                                itemX.previous.depth = itemX.depth;
                                                 itemX.depth = itemY.depth + 1;
                                                 if (itemX.children.length) {
-                                                    var offsetDepth = itemX.prevDepth - itemX.depth;
+                                                    var offsetDepth = itemX.previous.depth - itemX.depth;
                                                     itemX.children.forEach(item => item.depth -= offsetDepth);
                                                 }
-                                                itemX.prevParentId = itemX.parent.id;
+                                                itemX.previous.parent = itemX.parent;
+                                                itemX.previous.parentId = itemX.parent.id;
                                                 itemX.parent.renderParent = itemX.parent;
+                                                itemX.parent.invisible = true;
                                                 itemX.parent = itemY;
                                                 itemX.columnIndex = l;
-                                                itemX.colspan = 1;
+                                                var rowSpan = 1;
+                                                var columnSpan = 1 + spacer;
                                                 for (var n = l + 1; n < columns.length; n++) {
                                                     if (columns[n][m].spacer == 1) {
-                                                        itemX.colspan++;
+                                                        columnSpan++;
                                                         columns[n][m].spacer = 2;
                                                     }
                                                     else {
                                                         break;
                                                     }
                                                 }
-                                                if (itemX.colspan == 1) {
+                                                if (columnSpan == 1) {
                                                     for (var n = m + 1; n < columns[l].length; n++) {
                                                         if (columns[l][n].spacer == 1) {
-                                                            itemX.rowspan++;
+                                                            rowSpan++;
                                                             columns[l][n].spacer = 2;
                                                         }
                                                         else {
@@ -854,6 +911,23 @@ for (var i = 0; i < mapY.length; i++) {
                                                         }
                                                     }
                                                 }
+                                                if (rowSpan > 1) {
+                                                    itemX.android.layout_rowSpan = rowSpan;
+                                                }
+                                                if (columnSpan > 1) {
+                                                    itemX.android.layout_columnSpan = columnSpan;
+                                                }
+                                                if (!rowStart) {
+                                                    itemX.rowStart = true;
+                                                    rowStart = true;
+                                                }
+                                                itemX.rowEnd = (columnSpan + l == columns.length);
+                                                itemX.gridFirst = (itemX.rowStart && itemX.columnIndex == 0);
+                                                itemX.gridLast = (itemX.rowEnd && m == columns[l].length - 1);
+                                                spacer = 0;
+                                            }
+                                            else if (itemX.spacer == 1) {
+                                                spacer++;
                                             }
                                         }
                                     }
@@ -862,7 +936,7 @@ for (var i = 0; i < mapY.length; i++) {
                                         var renderId = null;
                                         if (item.size > 1) {
                                             for (var l = 0; l < columns.length; l++) {
-                                                if (columns[l][index].prevParentId == minId) {
+                                                if (columns[l][index].previous.parentId == minId) {
                                                     renderId = columns[l][index].id;
                                                 }
                                             }
@@ -888,7 +962,7 @@ for (var i = 0; i < mapY.length; i++) {
                                     itemY.renderParent = true;
                                 }
                                 else {
-                                    xml += getLinearTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, linearBoundsX);
+                                    xml += getLinearTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, linearBoundsY);
                                 }
                             }
                             else {
@@ -905,20 +979,25 @@ for (var i = 0; i < mapY.length; i++) {
                 }
                 if (!itemY.renderParent) {
                     var element = itemY.element;
-                    if (itemY.parent && itemY.parent.androidTagName == DEFAULT_ANDROID.GRID && itemY.prevParentId) {
-                        var prevParent = itemY.parent.children.find(item => item.id == itemY.prevParentId);
+                    if (itemY.parent && itemY.parent.androidTagName == DEFAULT_ANDROID.GRID && itemY.previous.parentId) {
+                        var prevParent = itemY.parent.children.find(item => item.id == itemY.previous.parentId);
                         if (prevParent) {
                             var siblingsPrev = prevParent.children.filter(item => !item.renderParent && prevParent.id == item.parent.id && item.bounds.right <= itemY.bounds.left && item.bounds.left >= itemY.parent.columnStart[itemY.columnIndex]);
                             var siblingsNext = prevParent.children.filter(item => !item.renderParent && prevParent.id == item.parent.id && item.bounds.left >= itemY.bounds.right && item.bounds.right <= itemY.parent.columnEnd[itemY.columnIndex]);
                             if (siblingsNext.length) {
-                                itemY.prevDepth = itemY.depth;
+                                itemY.previous.depth = itemY.depth;
                                 itemY.depth++;
                                 siblingsNext.unshift(itemY);
+                                var rowEnd = false;
                                 var template = siblingsNext.map(item => {
                                     if (!item.renderParent) {
-                                        item.prevDepth = itemY.depth;
+                                        item.previous.depth = itemY.depth;
                                         item.depth = itemY.depth;
-                                        item.siblingsWrap = (item == itemY);
+                                        item.siblingWrap = true;
+                                        if (item.rowEnd) {
+                                            item.rowEnd = false;
+                                            rowEnd = true;
+                                        }
                                         if (item != itemY && item.children.length) {
                                             return getConstraintTemplate(item, itemY.depth + itemY.depthIndent, itemY);
                                         }
@@ -928,11 +1007,15 @@ for (var i = 0; i < mapY.length; i++) {
                                     }
                                     return '';
                                 }).join('');
+                                if (rowEnd) {
+                                    itemY.rowEnd = true;
+                                }
                                 xml += getConstraintTemplate(itemY, itemY.depth + itemY.depthIndent - 1, itemY.parent).replace(`{${itemY.id}}`, template);
                             }
                             siblingsPrev.forEach(item => {
-                                item.prevDepth = itemY.depth;
+                                item.previous.depth = itemY.depth;
                                 item.depth = itemY.depth;
+                                item.siblingWrap = true;
                                 item.children.forEach(child => child.depth = itemY.depth + 1);
                                 if (item.children.length) {
                                     xml += getConstraintTemplate(item, item.depth + item.depthIndent, itemY.parent);
@@ -955,10 +1038,10 @@ for (var i = 0; i < mapY.length; i++) {
                         partial[parentId] += xml;
                     }
                     else {
-                        if (renderAfter[itemY.renderAfter] == null) {
-                            renderAfter[itemY.renderAfter] = ''
+                        if (RENDER_AFTER[itemY.renderAfter] == null) {
+                            RENDER_AFTER[itemY.renderAfter] = ''
                         }
-                        renderAfter[itemY.renderAfter] += xml;
+                        RENDER_AFTER[itemY.renderAfter] += xml;
                     }
                 }
             }
@@ -971,11 +1054,11 @@ for (var i = 0; i < mapY.length; i++) {
     }
 }
 
-for (var i in renderAfter) {
-    output = output.replace(`{${i}-0}`, renderAfter[i]);
+for (var i in RENDER_AFTER) {
+    output = output.replace(`{:${i}}`, RENDER_AFTER[i]);
 }
 
-output = output.replace(/{[0-9]+-0}/g, '');
+output = output.replace(/{:[0-9]+}/g, '');
 
 console.log(output);
 console.log(getResourceStringXML());
