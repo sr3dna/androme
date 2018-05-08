@@ -26,7 +26,41 @@ var MAPPING_ANDROID = {
     },
     'BUTTON': 'Button'
 };
-var ELEMENT_ANDROID = {
+var PROPERTY_ANDROID = {
+    'backgroundStyle': {
+        'backgroundColor': 'android:background="@drawable/{0}"'
+    },
+    'computedStyle': {
+        'fontFamily': 'android:fontFamily="{0}"',
+        'fontSize': 'android:textSize="{0}"',
+        'fontStyle': 'android:textStyle="{0}"',
+        'color': 'android:textColor="{0}"',
+        'backgroundColor': 'android:background="{0}"'
+    },
+    'boxSpacing': {
+        'margin': 'android:layout_margin="{0}"',
+        'marginTop': 'android:layout_marginTop="{0}"',
+        'marginRight': 'android:layout_marginRight="{0}"',
+        'marginBottom': 'android:layout_marginBottom="{0}"',
+        'marginLeft': 'android:layout_marginLeft="{0}"',
+        'marginHorizontal': 'android:layout_marginHorizontal="{0}"',
+        'marginVertical': 'android:layout_marginVertical="{0}"',
+        'padding': 'android:layout_padding="{0}"',
+        'paddingTop': 'android:layout_paddingTop="{0}"',
+        'paddingRight': 'android:layout_paddingRight="{0}"',
+        'paddingBottom': 'android:layout_paddingBottom="{0}"',
+        'paddingLeft': 'android:layout_paddingLeft="{0}"',
+        'paddingHorizontal': 'android:layout_paddingHorizontal="{0}"',
+        'paddingVertical': 'android:layout_paddingVertical="{0}"'
+    },
+    'resourceString': {
+        'text': 'android:text="@string/{0}"'
+    },
+    'resourceStringArray': {
+        'entries': 'android:entries="@array/{0}"'
+    }
+};
+var WIDGET_ANDROID = {
     'ConstraintLayout': {
         'id': 'android:id="@+id/{0}"',
     },
@@ -41,81 +75,41 @@ var ELEMENT_ANDROID = {
     },
     'RadioButton': {
         'id': 'android:id="@+id/{0}"',
-        'window.getComputedStyle': {
-            'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}"',
-            'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'backgroundColor': 'android:background="{0}"'
-        }
+        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'CheckBox': {
         'id|name': 'android:id="@+id/{0}"',
-        'window.getComputedStyle': {
-            'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}"',
-            'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'backgroundColor': 'android:background="{0}"'
-        }
+        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'Spinner': {
         'id|name': 'android:id="@+id/{0}"',
-        'window.parseBackgroundStyle': {
-            'backgroundColor': 'android:background="@drawable/{0}"'
-        },
-        'window.getComputedStyle': {
-            'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}"',
-            'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'backgroundColor': 'android:background="{0}"'
-        },
-        'window.addResourceStringArray': {
-            'entries': 'android:entries="@array/{0}"'
-        }
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
+        'window.addResourceStringArray': PROPERTY_ANDROID['resourceStringArray']
     },
     'TextView': {
         'id': 'android:id="@+id/{0}"',
-        'window.parseBackgroundStyle': {
-            'backgroundColor': 'android:background="@drawable/{0}"'
-        },
-        'window.getComputedStyle': {
-            'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}"',
-            'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'backgroundColor': 'android:background="{0}"'
-        },
-        'window.addResourceString': {
-            'text': 'android:text="@string/{0}"'
-        }
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
+        'window.addResourceString': PROPERTY_ANDROID['resourceString']
     },
     'EditText': {
         'id|name': 'android:id="@+id/{0}"',
-        'window.parseBackgroundStyle': {
-            'backgroundColor': 'android:background="@drawable/{0}"'
-        },
-        'window.getComputedStyle': {
-            'fontFamily': 'android:fontFamily="{0}"',
-            'fontSize': 'android:textSize="{0}"',
-            'fontStyle': 'android:textStyle="{0}"',
-            'color': 'android:textColor="{0}"',
-            'backgroundColor': 'android:background="{0}"'
-        },
-        'window.addResourceString': {
-            'text': 'android:text="@string/{0}"'
-        }
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
+        'window.addResourceString': PROPERTY_ANDROID['resourceString']
     },
     'Button': {
         'id|name': 'android:id="@+id/{0}"',
-        'window.parseBackgroundStyle': {
-            'backgroundColor': 'android:background="@drawable/{0}"'
-        },
-        'window.addResourceString': {
-            'text': 'android:text="@string/{0}"',
-            'backgroundColor': 'android:background="{0}"'
-        }
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
+        'window.addResourceString': PROPERTY_ANDROID['resourceString']
     }
 };
 
@@ -123,7 +117,6 @@ var GENERATE_ID = {};
 var RESOURCE_STRING = new Map();
 var RESOURCE_ARRAY = new Map();
 var RESOURCE_STYLE = new Map();
-var RESOURCE_SHAPE = new Map();
 
 function addResourceString(element, value) {
     if (value == null) {
@@ -172,18 +165,14 @@ function addResourceStringArray(element) {
     return null;
 }
 
-function parseBackgroundStyle(element) {
+function setBackgroundStyle(element) {
     var style = {
         border: parseBorderStyle,
         borderTop: parseBorderStyle,
         borderRight: parseBorderStyle,
         borderBottom: parseBorderStyle,
         borderLeft: parseBorderStyle,
-        borderRadius: convertToDP,
-        borderBottomLeftRadius: convertToDP,
-        borderBottomRightRadius: convertToDP,
-        borderTopLeftRadius: convertToDP,
-        borderTopRightRadius: convertToDP,
+        borderRadius: parseBoxDimensions,
         backgroundColor: parseRGBA
     };
     var properties = getComputedStyle(element);
@@ -191,20 +180,32 @@ function parseBackgroundStyle(element) {
         style[i] = style[i](properties[i]);
     }
     var borderStyle = {
-        default: 'android:color="#000000"',
+        default: 'android:color="#000"',
         solid: `android:color="${style.border[2]}"`,
-        none: 'android:color="@android:color/transparent"',
         dotted: 'android:dashWidth="3dp" android:dashGap="1dp"',
         dashed: 'android:dashWidth="1dp" android:dashGap="1dp"'
     };
-    if (style.border[1] || style.borderRadius) {
-        var defaultRadius = style.borderTopLeftRadius || style.borderTopRightRadius || style.borderBottomRightRadius || style.borderBottomLeftRadius;
+    if (style.border[0] != 'none' || style.borderRadius) {
         var xml = '<?xml version="1.0" encoding="utf-8"?>\n';
-        if (style.borderRadius || defaultRadius) {
+        if (style.borderRadius) {
             xml += '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n' +
-                   `\t<stroke android:width="${(style.border[1] ? style.border[1] : '1dp')}" ${borderStyle[style.border[1] || 'default']} />\n` +
-                   (style.backgroundColor ? `\t<solid android:color="${style.backgroundColor[1]}" />\n` : '') + 
-                   (style.borderRadius ? `\t<corners android:radius="${style.borderRadius}" />\n` : `\t<corners android:topLeftRadius="${style.borderTopLeftRadius || defaultRadius}" android:topRightRadius="${style.borderTopRightRadius || defaultRadius} android:bottomRightRadius="${style.borderBottomRightRadius || defaultRadius}" android:bottomLeftRadius="${style.borderBottomLeftRadius || defaultRadius}" />\n`) +
+                   `\t<stroke android:width="${style.border[1] || '1dp'}" ${borderStyle[style.border[1] || 'default']} />\n` +
+                   (style.backgroundColor ? `\t<solid android:color="${style.backgroundColor[1]}" />\n` : '');
+            if (style.borderRadius.length == 1) {
+                xml += `\t<corners android:radius="${style.borderRadius[0]}" />\n`;
+            }
+            else {
+                if (style.borderRadius.length == 2) {
+                    style.borderRadius.push(...style.borderRadius.slice());
+                }
+                xml += '\t<corners';
+                style.borderRadius.forEach((value, index) => {
+                    if (value) {
+                        xml += ` android:${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius="${value}"`;
+                    }
+                });
+            }
+            xml += ' />\n' +
                    '</shape>\n';
         }
         else if (style.border && !style.backgroundColor) {
@@ -245,6 +246,56 @@ function parseBackgroundStyle(element) {
     return null;
 }
 
+function setBoxSpacing(element) {
+    var properties = getComputedStyle(element);
+    var result = {};
+    ['padding', 'margin'].forEach(value => {
+        ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
+            var width = convertToDP(properties[`${value + side}`]);
+            if (width != 0) {
+                result[`${value + side}`] = width;
+            }
+        });
+    });
+    if (result.paddingTop != null && result.paddingTop == result.paddingBottom) {
+        result.paddingVertical = result.paddingTop;
+        delete result.paddingTop;
+        delete result.paddingBottom;
+    }
+    if (result.paddingLeft != null && result.paddingLeft == result.paddingRight) {
+        result.paddingHorizontal = result.paddingLeft;
+        delete result.paddingLeft;
+        delete result.paddingRight;
+    }
+    if (result.marginTop != null && result.marginTop == result.marginBottom) {
+        result.marginVertical = result.marginTop;
+        delete result.marginTop;
+        delete result.marginBottom;
+    }
+    if (result.marginLeft != null && result.marginLeft == result.marginRight) {
+        result.marginHorizontal = result.marginLeft;
+        delete result.marginLeft;
+        delete result.marginRight;
+    }
+    return result;
+}
+
+function parseBoxDimensions(value) {
+    var dimensions = value.match(/^([0-9]+(px|pt)) ([0-9]+(px|pt)) ([0-9]+(px|pt)) ([0-9]+(px|pt))$/);
+    if (dimensions && dimensions.length >= 5) {
+        if (dimensions[1] == dimensions[3] && dimensions[3] == dimensions[5] && dimensions[5] == dimensions[7]) {
+            return [convertToDP(dimensions[1])];
+        }
+        else if (dimensions[1] == dimensions[5] && dimensions[3] == dimensions[7]) {
+            return [convertToDP(dimensions[1]), convertToDP(dimensions[3])];
+        }
+        else {
+            return [convertToDP(dimensions[1]), convertToDP(dimensions[3]), convertToDP(dimensions[5]), convertToDP(dimensions[7])];
+        }
+    }
+    return null;
+}
+
 function parseBorderStyle(value) {
     var stroke = value.match(/(none|dotted|dashed|solid)/);
     var width = value.match(/([0-9]+(px|pt))/);
@@ -258,13 +309,13 @@ function parseBorderStyle(value) {
     if (color) {
         color = color[1];
     }
-    return [stroke || 'solid', convertToDP(width || '1px'), color || '#000000'];
+    return [stroke || 'solid', convertToDP(width || '1px'), color || '#000'];
 }
 
 function parseRGBA(value) {
-    var result = value.match(/rgb(a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(([0-9]{1,3})|, ([0-9]{1,3}))\)/);
+    var result = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
     if (result && result.length >= 4) {
-        return [result[0], `#${getHex(result[1]) + getHex(result[2]) + getHex(result[3])}`, result[7]];
+        return [result[0], `#${getHex(result[1]) + getHex(result[2]) + getHex(result[3])}`, result[4]];
     }
     return null;
 }
@@ -284,7 +335,7 @@ function convertToSP(value) {
 }
 
 function getProperties(item, tagName, layout, subproperty) {
-    var properties = ELEMENT_ANDROID[tagName];
+    var properties = WIDGET_ANDROID[tagName];
     var element = item.element;
     var result = [];
     if (properties != null) {
@@ -331,6 +382,9 @@ function getProperties(item, tagName, layout, subproperty) {
                                         if (rgb) {
                                             property = property.replace(rgb[0], rgb[1]);
                                         }
+                                    }
+                                    else if (/(px|pt)$/.test(property)) {
+                                        property = convertToDP(property);
                                     }
                                     output.push(properties[i][k].replace('{0}', property));
                                     appended[k] = property;
@@ -398,7 +452,7 @@ function generateAndroidId(item, tagName) {
     if (GENERATE_ID[tagName] == null) {
         GENERATE_ID[tagName] = 1;
     }
-    item.androidId = tagName + GENERATE_ID[tagName]++;
+    item.androidId = tagName.toLowerCase() + GENERATE_ID[tagName]++;
     return item.androidId;
 }
 
@@ -437,7 +491,7 @@ function getLinearTemplate(item, depth, parent, vertical) {
     item.androidTagName = DEFAULT_ANDROID.LINEAR;
     item.renderParent = parent;
     Object.assign(item.properties, {
-        'android:orientation="{0}"': (vertical ? "vertical" : "horizontal")
+        'android:orientation="{0}"': (vertical ? 'vertical' : 'horizontal')
     });
     return indent + `<${DEFAULT_ANDROID.LINEAR}` +
                     `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
@@ -477,7 +531,7 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
     item.androidTagName = tagName || getAndroidTagName(item);
     if (!recursive) {
         if (item.androidTagName == 'RadioButton' && element.name != '') {
-            var result = cache.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.parentRender && ((item.prevDepth || item.depth) == (input.prevDepth || input.depth))));
+            var result = cache.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.renderParent && ((item.prevDepth || item.depth) == (input.prevDepth || input.depth))));
             var xml = '';
             if (result.length > 1) {
                 var rowspan = 1;
@@ -543,14 +597,6 @@ function getLinearXY(siblings) {
 
 function withinRange(a, b, n = 1) {
     return (b >= (a - n) && b <= (a + n));
-}
-
-function resetParent(item) {
-    if (item.prevParent) {
-        item.parent = item.prevParent;
-        item.prevParent = null;
-        item.prevParentId = null;
-    }
 }
 
 function getResourceStringXML() {
