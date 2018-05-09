@@ -62,56 +62,56 @@ var PROPERTY_ANDROID = {
 };
 var WIDGET_ANDROID = {
     'ConstraintLayout': {
-        'id': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'LinearLayout': {
-        'id': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'GridLayout': {
-        'id': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'RadioGroup': {
-        'id': 'android:id="@+id/{0}"'
+        'androidId': 'android:id="@+id/{0}"'
     },
     'RadioButton': {
-        'id': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'CheckBox': {
-        'id|name': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'Spinner': {
-        'id|name': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceStringArray': PROPERTY_ANDROID['resourceStringArray']
     },
     'TextView': {
-        'id': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceString': PROPERTY_ANDROID['resourceString']
     },
     'EditText': {
-        'id|name': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceString': PROPERTY_ANDROID['resourceString']
     },
     'Button': {
-        'id|name': 'android:id="@+id/{0}"',
+        'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
@@ -119,6 +119,7 @@ var WIDGET_ANDROID = {
     }
 };
 
+var GENERATE_ID = {};
 var RESOURCE_STRING = new Map();
 var RESOURCE_ARRAY = new Map();
 var RESOURCE_STYLE = new Map();
@@ -164,9 +165,9 @@ function addResourceStringArray(element) {
         }
     }
     if (stringArray.size || integerArray.size) {
-        var name = `${element.id || element.name}_array`;
-        RESOURCE_ARRAY.set(name, (stringArray.size ? stringArray : integerArray));
-        return { entries: name };
+        var resourceName = `${element.cacheData.androidId}_array`;
+        RESOURCE_ARRAY.set(resourceName, (stringArray.size ? stringArray : integerArray));
+        return { entries: resourceName };
     }
     return null;
 }
@@ -254,6 +255,21 @@ function setBackgroundStyle(element) {
 
 function setBoxSpacing(element) {
     var result = getBoxSpacing(element);
+    var grid = element.cacheData.grid;
+    if (grid) {
+        if (grid.paddingTop) {
+            result.paddingTop = `${(parseInt(result.paddingTop) || 0) + grid.paddingTop}dp`;
+        }
+        if (grid.paddingBottom) {
+            result.paddingBottom = `${(parseInt(result.paddingBottom) || 0) + grid.paddingBottom}dp`;
+        }
+        if (grid.paddingLeft) {
+            result.paddingLeft = `${(parseInt(result.paddingLeft) || 0) + grid.paddingLeft}dp`;
+        }
+        if (grid.paddingRight) {
+            result.paddingRight = `${(parseInt(result.paddingRight) || 0) + grid.paddingRight}dp`;
+        }
+    }
     if (result.paddingTop != null && result.paddingTop == result.paddingBottom) {
         result.paddingVertical = result.paddingTop;
         delete result.paddingTop;
@@ -356,62 +372,54 @@ function getProperties(item, tagName, layout, subproperty) {
             if (appended[i] != null) {
                 continue;
             }
-            var options = i.split('|');
-            for (var j of options) {
-                if (element && element[j] != '' && element[j] != null) {
-                    result.push(widget[i].replace('{0}', element[j]));
-                    if (j == 'id' || j == 'name') {
-                        item.androidId = element[j];
+            if (item[i] != null) {
+                result.push(widget[i].replace('{0}', item[i]));
+                appended[i] = item[i];
+            }
+            else if (i.indexOf('.') != -1) {
+                var objectNames = i.split('.');
+                var method = window;
+                var methodName = null;
+                for (var j of objectNames) {
+                    if (j == 'window') {
+                        continue;
                     }
-                    appended[i] = element[j];
-                    break;
+                    else if (method[j]) {
+                        method = method[j];
+                        methodName = j;
+                    }
                 }
-                else if (j.indexOf('.') != -1) {
-                    var objectNames = j.split('.');
-                    var method = window;
-                    var methodName = null;
-                    for (var k of objectNames) {
-                        if (k == 'window') {
-                            continue;
-                        }
-                        else if (method[k]) {
-                            method = method[k];
-                            methodName = k;
-                        }
-                    }
-                    if (typeof method == 'function') {
-                        var data = method(element);
-                        if (data != null) {
-                            var output = [];
-                            for (var k in widget[i]) {
-                                if (appended[k] != null) {
-                                    continue;
-                                }
-                                var property = data[k];
-                                if (property != '' && property != null) {
-                                    if (property.startsWith('rgb')) {
-                                        var rgb = parseRGBA(property);
-                                        if (rgb) {
-                                            property = property.replace(rgb[0], rgb[1]);
-                                        }
-                                    }
-                                    else if (/(px|pt)$/.test(property)) {
-                                        property = convertToDP(property);
-                                    }
-                                    output.push(widget[i][k].replace('{0}', property));
-                                    appended[k] = property;
-                                }
+                if (typeof method == 'function') {
+                    var data = method(element);
+                    if (data != null) {
+                        var output = [];
+                        for (var j in widget[i]) {
+                            if (appended[j] != null) {
+                                continue;
                             }
-                            if (output.length) {
-                                if (methodName == 'getComputedStyle') {
-                                    if (!RESOURCE_STYLE.has(item.tagName)) {
-                                        RESOURCE_STYLE.set(item.tagName, []);
+                            var property = data[j];
+                            if (property != '' && property != null) {
+                                if (property.startsWith('rgb')) {
+                                    var rgb = parseRGBA(property);
+                                    if (rgb) {
+                                        property = property.replace(rgb[0], rgb[1]);
                                     }
-                                    RESOURCE_STYLE.get(item.tagName).push(output);
                                 }
-                                result.push(...output);
-                                break;
+                                else if (/(px|pt)$/.test(property)) {
+                                    property = convertToDP(property);
+                                }
+                                output.push(widget[i][j].replace('{0}', property));
+                                appended[j] = property;
                             }
+                        }
+                        if (output.length) {
+                            if (methodName == 'getComputedStyle') {
+                                if (!RESOURCE_STYLE.has(item.tagName)) {
+                                    RESOURCE_STYLE.set(item.tagName, []);
+                                }
+                                RESOURCE_STYLE.get(item.tagName).push(output);
+                            }
+                            result.push(...output);
                         }
                     }
                 }
@@ -449,25 +457,7 @@ function getProperties(item, tagName, layout, subproperty) {
             nextElement.cacheData.renderParent = true;
         }
     }
-    if (!subproperty) {
-        if (element.id == '' && (!result.length || result[0].indexOf('android:id') != 0)) {
-            tagName = tagName || item.androidTagName;
-            generateAndroidId(item, tagName);
-            result.unshift(`android:id="@id+/${item.androidId}"`);
-        }
-        else if (element.id != '') {
-            item.androidId = element.id;
-        }
-    }
     return result;
-}
-
-function generateAndroidId(item, tagName) {
-    if (GENERATE_ID[tagName] == null) {
-        GENERATE_ID[tagName] = 1;
-    }
-    item.androidId = tagName.toLowerCase() + GENERATE_ID[tagName]++;
-    return item.androidId;
 }
 
 function getHex(n) {
@@ -481,7 +471,7 @@ function getHex(n) {
 }
 
 function displayProperties(item, properties, indent = 0) {
-    var output = properties.map(value => `\n${setIndent(indent) + value}`).join('')
+    var output = properties.map(value => `\n${setIndent(indent) + value}`).join('');
     if (item != null) {
         output = output.replace('{id}', item.androidId);
     }
@@ -492,20 +482,27 @@ function parentConstraint(item) {
     return (item.parent && item.parent.androidTagName == DEFAULT_ANDROID.CONSTRAINT);
 }
 
-function getAndroidTagName(item) {
-    var result = MAPPING_ANDROID[item.tagName];
-    if (typeof result == 'object') {
-        result = result[item.element.type];
+function setAndroidProperties(item, tagName) {
+    var element = item.element;
+    if (tagName == null) {
+        tagName = MAPPING_ANDROID[item.tagName];
+        if (typeof tagName == 'object') {
+            tagName = tagName[element.type];
+        }
     }
-    return result;
+    if (GENERATE_ID[tagName] == null) {
+        GENERATE_ID[tagName] = 1;
+    }
+    item.androidTagName = tagName;
+    item.androidId = element.id || element.name || (tagName.toLowerCase() + GENERATE_ID[tagName]++);
 }
 
 function getLinearTemplate(item, depth, parent, vertical) {
     var indent = setIndent(depth);
-    item.androidTagName = DEFAULT_ANDROID.LINEAR;
+    setAndroidProperties(item, DEFAULT_ANDROID.LINEAR);
     item.android.orientation = (vertical ? 'vertical' : 'horizontal');
     item.renderParent = parent;
-    return getGridSpace(item, depth) +
+    return getGridSpacing(item, depth) +
            indent + `<${DEFAULT_ANDROID.LINEAR}` +
                     `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.LINEAR, true), depth + 1)}>\n` +
                     `{${item.id}}` +
@@ -515,9 +512,9 @@ function getLinearTemplate(item, depth, parent, vertical) {
 
 function getConstraintTemplate(item, depth, parent) {
     var indent = setIndent(depth);
-    item.androidTagName = DEFAULT_ANDROID.CONSTRAINT,
+    setAndroidProperties(item, DEFAULT_ANDROID.CONSTRAINT);
     item.renderParent = parent;
-    return getGridSpace(item, depth) +
+    return getGridSpacing(item, depth) +
            indent + `<${DEFAULT_ANDROID.CONSTRAINT}` +
                     `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.CONSTRAINT, true), depth + 1)}>\n` +
                     `{${item.id}}` +
@@ -527,10 +524,10 @@ function getConstraintTemplate(item, depth, parent) {
 
 function getGridTemplate(item, depth, parent, columnCount = 2) {
     var indent = setIndent(depth);
-    item.androidTagName = DEFAULT_ANDROID.GRID;
+    setAndroidProperties(item, DEFAULT_ANDROID.GRID);
     item.android.columnCount = columnCount;
     item.renderParent = parent;
-    return getGridSpace(item, depth) +
+    return getGridSpacing(item, depth) +
            indent + `<${DEFAULT_ANDROID.GRID}` +
                     `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
                     `{${item.id}}` +
@@ -541,7 +538,7 @@ function getGridTemplate(item, depth, parent, columnCount = 2) {
 function getTagTemplate(item, depth, parent, tagName, recursive) {
     var element = item.element;
     var indent = setIndent(depth);
-    item.androidTagName = tagName || getAndroidTagName(item);
+    setAndroidProperties(item);
     if (!recursive) {
         if (item.androidTagName == 'RadioButton' && element.name != '') {
             var result = cache.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.renderParent && ((item.previous.depth || item.depth) == (input.previous.depth || input.depth))));
@@ -556,15 +553,15 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
                 var rowEndId = item.id;
                 var rowSpan = 1;
                 var columnSpan = 1;
-                result.forEach(input => {
-                    rowSpan += (input.layout_rowSpan || 1) - 1;
-                    columnSpan += (input.layout_columnSpan || 1) - 1;
-                    if (input.element.checked) {
-                        checked = input.element.id || generateAndroidId(input, getAndroidTagName(item));
+                result.forEach(radio => {
+                    rowSpan += (radio.layout_rowSpan || 1) - 1;
+                    columnSpan += (radio.layout_columnSpan || 1) - 1;
+                    if (radio.element.checked) {
+                        checked = radio.androidId;
                     }
-                    xml += getTagTemplate(input, depth + 1, parent, tagName, true);
-                    if (input.rowEnd) {
-                        rowEndId = input.id;
+                    xml += getTagTemplate(radio, depth + 1, parent, tagName, true);
+                    if (radio.rowEnd) {
+                        rowEndId = radio.id;
                     }
                 });
                 data.android.checkedButton = { id: checked };
@@ -584,24 +581,31 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
         }
     }
     item.renderParent = parent;
-    return getGridSpace(item, depth) + 
+    return getGridSpacing(item, depth) + 
            indent + `<${item.androidTagName}${displayProperties(item, getProperties(item, item.androidTagName), depth + 1)} />\n` +
                     (!item.siblingWrap ? `{:${item.id}}` : '');
 }
 
-function getGridSpace(item, depth) {
+function getGridSpacing(item, depth) {
     var indent = setIndent(depth);
     var xml = '';
     if (item.previous.parent && item.previous.parent.invisible) {
         var dimensions = getBoxSpacing(item.previous.parent.element, true);
+        item.grid = {};
+        if (item.rowStart) {
+            item.grid.paddingLeft = dimensions.marginLeft + dimensions.paddingLeft;
+            item.grid.paddingRight = dimensions.marginRight + dimensions.paddingRight;
+        }
         if (item.rowEnd) {
             var heightBottom =  dimensions.marginBottom + dimensions.paddingBottom + (!item.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             if (heightBottom > 0) {
                 if (RENDER_AFTER[item.id] == null) {
-                    RENDER_AFTER[item.id]  = '';
+                    RENDER_AFTER[item.id]  = [];
                 }
-                RENDER_AFTER[item.id] += indent + `<Space android:layout_width="match_parent" android:layout_height="${heightBottom}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
+                RENDER_AFTER[item.id].push(indent + `<Space android:layout_width="match_parent" android:layout_height="${heightBottom}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`);
             }
+            item.grid.paddingTop = dimensions.marginTop + dimensions.paddingTop;
+            item.grid.paddingBottom = dimensions.marginBottom + dimensions.paddingBottom;
         }
         if (item.gridFirst) {
             var heightTop = dimensions.paddingTop + dimensions.marginTop;
@@ -785,7 +789,6 @@ cache.forEach(item => {
 
 var output = '<?xml version="1.0" encoding="utf-8"?>\n{0}';
 var RENDER_AFTER = {};
-var GENERATE_ID = {};
 
 for (var i = 0; i < mapY.length; i++) {
     var coordsX = Object.keys(mapX[i]);
@@ -798,7 +801,7 @@ for (var i = 0; i < mapY.length; i++) {
             var itemY = axisY[k];
             if (!itemY.renderParent) {
                 var parentId = itemY.parent.id;
-                var tagName = getAndroidTagName(itemY);
+                var tagName = MAPPING_ANDROID[itemY.tagName];
                 var xml = '';
                 if (tagName == null) {
                     if (itemY.children.length) {
@@ -862,12 +865,12 @@ for (var i = 0; i < mapY.length; i++) {
                                     var columnStart = []
                                     var columnEnd = [];
                                     var columnRender = [];
+                                    var rowStart = [];
                                     xml += getGridTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, columns.length);
-                                    for (var l = 0; l < columns.length; l++) {
-                                        var rowStart = false;
-                                        var spacer = 0;
+                                    for (var l = 0, count = 0; l < columns.length; l++) {
                                         columnStart[l] = Number.MAX_VALUE;
-                                        columnEnd[l] = 0;
+                                        columnEnd[l] = Number.MIN_VALUE;
+                                        var spacer = 0;
                                         for (var m = 0; m < columns[l].length; m++) {
                                             if (columnRender[m] == null) {
                                                 columnRender[m] = new Set();
@@ -917,13 +920,13 @@ for (var i = 0; i < mapY.length; i++) {
                                                 if (columnSpan > 1) {
                                                     itemX.android.layout_columnSpan = columnSpan;
                                                 }
-                                                if (!rowStart) {
-                                                    itemX.rowStart = true;
-                                                    rowStart = true;
-                                                }
                                                 itemX.rowEnd = (columnSpan + l == columns.length);
-                                                itemX.gridFirst = (itemX.rowStart && itemX.columnIndex == 0);
+                                                itemX.gridFirst = (count++ == 0);
                                                 itemX.gridLast = (itemX.rowEnd && m == columns[l].length - 1);
+                                                if (rowStart[m] == null) {
+                                                    itemX.rowStart = true;
+                                                    rowStart[m] = itemX;
+                                                }
                                                 spacer = 0;
                                             }
                                             else if (itemX.spacer == 1) {
@@ -942,7 +945,7 @@ for (var i = 0; i < mapY.length; i++) {
                                             }
                                             for (var l = 0; l < columns.length; l++) {
                                                 if (columns[l][index].id != renderId) {
-                                                    columns[l][index].renderAfter = renderId;
+                                                    columns[l][index].renderAfterId = renderId;
                                                 }
                                             }
                                         }
@@ -1032,16 +1035,16 @@ for (var i = 0; i < mapY.length; i++) {
                 }
                 if (xml != '') {
                     if (partial[parentId] == null) {
-                        partial[parentId] = '';
+                        partial[parentId] = [];
                     }
-                    if (itemY.renderAfter == null) {
-                        partial[parentId] += xml;
+                    if (itemY.renderAfterId == null) {
+                        partial[parentId].push(xml);
                     }
                     else {
-                        if (RENDER_AFTER[itemY.renderAfter] == null) {
-                            RENDER_AFTER[itemY.renderAfter] = ''
+                        if (RENDER_AFTER[itemY.renderAfterId] == null) {
+                            RENDER_AFTER[itemY.renderAfterId] = []
                         }
-                        RENDER_AFTER[itemY.renderAfter] += xml;
+                        RENDER_AFTER[itemY.renderAfterId].push(xml);
                     }
                 }
             }
@@ -1049,18 +1052,13 @@ for (var i = 0; i < mapY.length; i++) {
     }
     for (var id in partial) {
         if (partial[id] != '') {
-            output = output.replace(`{${id}}`, partial[id]);
+            output = output.replace(`{${id}}`, partial[id].join(''));
         }
     }
 }
 
 for (var i in RENDER_AFTER) {
-    output = output.replace(`{:${i}}`, RENDER_AFTER[i]);
+    output = output.replace(`{:${i}}`, RENDER_AFTER[i].join(''));
 }
 
 output = output.replace(/{:[0-9]+}/g, '');
-
-console.log(output);
-console.log(getResourceStringXML());
-console.log(getResourceArrayXML());
-console.log(getResourceDrawableXML());
