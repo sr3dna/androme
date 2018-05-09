@@ -123,6 +123,7 @@ var GENERATE_ID = {};
 var RESOURCE_STRING = new Map();
 var RESOURCE_ARRAY = new Map();
 var RESOURCE_STYLE = new Map();
+var RESOURCE_COLOR = new Map();
 
 function addResourceString(element, value) {
     if (value == null) {
@@ -172,6 +173,37 @@ function addResourceStringArray(element) {
     return null;
 }
 
+function addResourceColor(value) {
+    value = value.toUpperCase().trim();
+    if (value != '') {
+        var colorName = '';
+        if (!RESOURCE_COLOR.has(value)) {
+            var color = getNearestColor(value);
+            if (color) {
+                if (value.toUpperCase().trim() == color.hex) {
+                    colorName = color.name;
+                }
+                else {
+                    if (GENERATE_ID[color.name] == null) {
+                        GENERATE_ID[color.name] = 1;
+                    }
+                    colorName = color.name + GENERATE_ID[color.name]++;
+                }
+            }
+            if (colorName != '') {
+                RESOURCE_COLOR.set(value, colorName);
+            }
+        }
+        else {
+            colorName = RESOURCE_COLOR.get(value);
+        }
+        if (colorName != '') {
+            return `@color/${colorName}`;
+        }
+    }
+    return value;
+}
+
 function setBackgroundStyle(element) {
     var style = {
         border: parseBorderStyle,
@@ -187,8 +219,10 @@ function setBackgroundStyle(element) {
         style[i] = style[i](properties[i]);
     }
     if (style.border[0] != 'none' || style.borderRadius) {
+        style.border[2] = addResourceColor(style.border[2]);
+        style.backgroundColor[1] = addResourceColor(style.backgroundColor[1]);
         var borderStyle = {
-            default: 'android:color="#000"',
+            default: 'android:color="@android:color/black"',
             solid: `android:color="${style.border[2]}"`,
             dotted: 'android:dashWidth="3dp" android:dashGap="1dp"',
             dashed: 'android:dashWidth="1dp" android:dashGap="1dp"'
@@ -343,7 +377,7 @@ function parseBorderStyle(value) {
 function parseRGBA(value) {
     var rgba = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
     if (rgba && rgba.length >= 4) {
-        return [rgba[0], `#${getHex(rgba[1]) + getHex(rgba[2]) + getHex(rgba[3])}`, rgba[4]];
+        return [rgba[0], `#${convertRGBtoHex(rgba[1]) + convertRGBtoHex(rgba[2]) + convertRGBtoHex(rgba[3])}`, rgba[4]];
     }
     return null;
 }
@@ -402,7 +436,7 @@ function getProperties(item, tagName, layout, subproperty) {
                                 if (property.startsWith('rgb')) {
                                     var rgb = parseRGBA(property);
                                     if (rgb) {
-                                        property = property.replace(rgb[0], rgb[1]);
+                                        property = addResourceColor(property.replace(rgb[0], rgb[1]));
                                     }
                                 }
                                 else if (/(px|pt)$/.test(property)) {
@@ -458,16 +492,6 @@ function getProperties(item, tagName, layout, subproperty) {
         }
     }
     return result;
-}
-
-function getHex(n) {
-    var hex = '0123456789ABCDEF';
-    n = parseInt(n);
-    if (isNaN(n)) {
-        return '00'
-    };
-    n = Math.max(0, Math.min(n, 255));
-    return hex.charAt((n - (n % 16)) / 16) + hex.charAt(n % 16);
 }
 
 function displayProperties(item, properties, indent = 0) {
@@ -596,13 +620,14 @@ function getGridSpacing(item, depth) {
             item.grid.paddingLeft = dimensions.marginLeft + dimensions.paddingLeft;
             item.grid.paddingRight = dimensions.marginRight + dimensions.paddingRight;
         }
+        var spaceXml = `${indent}<Space android:layout_width="match_parent" android:layout_height="{0}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
         if (item.rowEnd) {
             var heightBottom =  dimensions.marginBottom + dimensions.paddingBottom + (!item.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             if (heightBottom > 0) {
                 if (RENDER_AFTER[item.id] == null) {
                     RENDER_AFTER[item.id]  = [];
                 }
-                RENDER_AFTER[item.id].push(indent + `<Space android:layout_width="match_parent" android:layout_height="${heightBottom}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`);
+                RENDER_AFTER[item.id].push(formatString(spaceXml, heightBottom));
             }
             item.grid.paddingTop = dimensions.marginTop + dimensions.paddingTop;
             item.grid.paddingBottom = dimensions.marginBottom + dimensions.paddingBottom;
@@ -610,11 +635,18 @@ function getGridSpacing(item, depth) {
         if (item.gridFirst) {
             var heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                xml += indent + `<Space android:layout_width="match_parent" android:layout_height="${heightTop}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
+                xml += formatString(spaceXml, heightTop);
             }
         }
     }
     return xml;
+}
+
+function formatString(value, ...params) {
+    for (var i = 0; i < params.length; i++) {
+        value = value.replace(`{${i}}`, params[i]);
+    }
+    return value;
 }
 
 function setIndent(n, value = '\t') {
@@ -1062,3 +1094,8 @@ for (var i in RENDER_AFTER) {
 }
 
 output = output.replace(/{:[0-9]+}/g, '');
+
+console.log(output);
+console.log(getResourceStringXML());
+console.log(getResourceArrayXML());
+console.log(getResourceDrawableXML());
