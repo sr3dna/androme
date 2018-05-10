@@ -5,26 +5,25 @@ var DEFAULT_ANDROID = {
     GRID: 'GridLayout'
 };
 var MAPPING_ANDROID = {
-    'H1': 'TextView',
-    'H2': 'TextView',
-    'H3': 'TextView',
-    'H4': 'TextView',
-    'H5': 'TextView',
-    'H6': 'TextView',
+    'SPAN': 'TextView',
+    'LABEL': 'TextView',
     'A': 'TextView',
     'B': 'TextView',
-    'LABEL': 'TextView',
-    'SPAN': 'TextView',
+    'I': 'TextView',
+    'PRE': 'TextView',
     'HR': 'View',
     'SELECT': 'Spinner',
     'INPUT' : {
         'text': 'EditText',
+        'password': 'EditText',
         'checkbox': 'CheckBox',
         'radio': 'RadioButton',
         'button': 'Button',
         'submit': 'Button'
     },
-    'BUTTON': 'Button'
+    'BUTTON': 'Button',
+    'TEXTAREA': 'EditText',
+    'IMG': 'ImageView'
 };
 var PROPERTY_ANDROID = {
     'backgroundStyle': {
@@ -33,6 +32,7 @@ var PROPERTY_ANDROID = {
     'computedStyle': {
         'fontFamily': 'android:fontFamily="{0}"',
         'fontSize': 'android:textSize="{0}"',
+        'fontWeight': 'android:fontWeight="{0}"',
         'fontStyle': 'android:textStyle="{0}"',
         'color': 'android:textColor="{0}"',
         'backgroundColor': 'android:background="{0}"'
@@ -116,17 +116,26 @@ var WIDGET_ANDROID = {
         'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceString': PROPERTY_ANDROID['resourceString']
+    },
+    'ImageView': {
+        'androidId': 'android:id="@+id/{0}"',
+        'androidSrc': 'android:src="@drawable/{0}"',
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
+        'window.addResourceString': PROPERTY_ANDROID['resourceString']
     }
 };
 
 var NODE_CACHE = [];
 var RENDER_AFTER = {};
-var GENERATE_ID = {};
+var GENERATE_ID = { '__current': [] };
 
 var RESOURCE_STRING = new Map();
 var RESOURCE_ARRAY = new Map();
 var RESOURCE_STYLE = new Map();
 var RESOURCE_COLOR = new Map();
+var RESOURCE_IMAGE = new Map();
 
 function getResourceStringXML() {
     var resource = new Map([...RESOURCE_STRING.entries()].sort());
@@ -198,27 +207,41 @@ function getResourceDrawableXML() {
 }
 
 function addResourceString(element, value) {
-    var name = '';
+    var name = value;
     if (value == null) {
         if (element.tagName == 'INPUT') {
+            name = element.value;
             value = element.value;
-            name = value;
         }
         else {
-            value = element.innerHTML.trim();
             name = element.innerText.trim();
+            value = element.innerHTML.trim();
         }
     }
     if (value != '') {
-        for (var i in RESOURCE_STRING) {
-            var resource = RESOURCE_STRING.get(i);
-            if (resource == value) {
-                return { text: resource };
+        if (element) {
+            if (element.cacheData.androidTagName == 'TextView') {
+                var match = getComputedStyle(element).textDecoration.match(/(underline|line-through)/);
+                if (match) {
+                    switch (match[0]) {
+                        case 'underline':
+                            value = `<u>${value}</u>`;
+                            break;
+                        case 'line-through':
+                            value = `<strike>${value}</strike>`;
+                            break;
+                    }
+                }
+            }
+        }
+        for (var [i, j] in RESOURCE_STRING.entries()) {
+            if (j == value) {
+                return { text: i };
             }
         }
         name = name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-        RESOURCE_STRING.set(name, value);
-        return { text: name };
+        var resourceName = insertResourceAsset(RESOURCE_STRING, name, value);
+        return { text: resourceName };
     }
     return null;
 }
@@ -246,8 +269,7 @@ function addResourceStringArray(element) {
         }
     }
     if (stringArray.size || integerArray.size) {
-        var resourceName = `${element.cacheData.androidId}_array`;
-        RESOURCE_ARRAY.set(resourceName, (stringArray.size ? stringArray : integerArray));
+        var resourceName = insertResourceAsset(RESOURCE_ARRAY, `${element.cacheData.androidId}_array`, (stringArray.size ? stringArray : integerArray));
         return { entries: resourceName };
     }
     return null;
@@ -265,10 +287,11 @@ function addResourceColor(value) {
                     colorName = color.name;
                 }
                 else {
-                    if (GENERATE_ID[color.name] == null) {
-                        GENERATE_ID[color.name] = 1;
+                    var className = `__color${color.name}`;
+                    if (GENERATE_ID[className] == null) {
+                        GENERATE_ID[className] = 1;
                     }
-                    colorName = color.name + GENERATE_ID[color.name]++;
+                    colorName = color.name + GENERATE_ID[className]++;
                 }
             }
             if (colorName != '') {
@@ -382,16 +405,16 @@ function setBoxSpacing(element) {
     var grid = element.cacheData.grid;
     if (grid) {
         if (grid.paddingTop) {
-            result.paddingTop = `${(parseInt(result.paddingTop) || 0) + convertToDP(grid.paddingTop)}dp`;
+            result.paddingTop = `${(parseInt(result.paddingTop) || 0) + grid.paddingTop}dp`;
         }
         if (grid.paddingBottom) {
-            result.paddingBottom = `${(parseInt(result.paddingBottom) || 0) + convertToDP(grid.paddingBottom)}dp`;
+            result.paddingBottom = `${(parseInt(result.paddingBottom) || 0) + grid.paddingBottom}dp`;
         }
         if (grid.paddingLeft) {
-            result.paddingLeft = `${(parseInt(result.paddingLeft) || 0) + convertToDP(grid.paddingLeft)}dp`;
+            result.paddingLeft = `${(parseInt(result.paddingLeft) || 0) + grid.paddingLeft}dp`;
         }
         if (grid.paddingRight) {
-            result.paddingRight = `${(parseInt(result.paddingRight) || 0) + convertToDP(grid.paddingRight)}dp`;
+            result.paddingRight = `${(parseInt(result.paddingRight) || 0) + grid.paddingRight}dp`;
         }
     }
     if (result.paddingTop != null && result.paddingTop == result.paddingBottom) {
@@ -424,7 +447,7 @@ function getBoxSpacing(element, complete) {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
             var dimension = properties[`${style + side}`];
             dimension = (complete ? parseInt(dimension) : convertToDP(dimension));
-            if (complete || dimension != 0) {
+            if (complete || (dimension != 0 && dimension != '0dp')) {
                 result[`${style + side}`] = dimension;
             }
         });
@@ -566,7 +589,7 @@ function getProperties(item, tagName, layout, subproperty) {
     if (result.length) {
         var nextElement = element.nextElementSibling;
         if (element.tagName == 'INPUT' && element.id != '' && nextElement && nextElement.htmlFor == element.id) {
-            var properties = getProperties(nextElement.cacheData, MAPPING_ANDROID[nextElement.tagName], false, true);
+            var properties = getProperties(nextElement.cacheData, getTagName(nextElement.cacheData), false, true);
             if (properties.length) {
                 for (var value of properties) {
                     if (value != '') {
@@ -592,30 +615,45 @@ function displayProperties(item, properties, indent = 0) {
     return output;
 }
 
+function getTagName(item) {
+    var tagName = MAPPING_ANDROID[item.tagName];
+    if (typeof tagName == 'object') {
+        tagName = tagName[item.element.type];
+    }
+    return tagName;
+}
+
 function setAndroidProperties(item, tagName) {
     var element = item.element;
     if (tagName == null) {
-        tagName = MAPPING_ANDROID[item.tagName];
-        if (typeof tagName == 'object') {
-            tagName = tagName[element.type];
-        }
+        tagName = getTagName(item);
     }
     if (GENERATE_ID[tagName] == null) {
         GENERATE_ID[tagName] = 1;
     }
     item.androidTagName = tagName;
-    item.androidId = element.id || element.name || (tagName.toLowerCase() + GENERATE_ID[tagName]++);
+    do {
+        item.androidId = (item.androidId != -1 ? element.id || element.name : (tagName.toLowerCase() + GENERATE_ID[tagName]++));
+        if (GENERATE_ID['__current'].includes(item.androidId)) {
+            item.androidId = -1;
+        }
+        else {
+            GENERATE_ID['__current'].push(item.androidId);
+        }
+    }
+    while (!item.androidId || item.androidId == -1)
 }
 
 function createTemplate(item, depth, parent, tagName) {
     var indent = setIndent(depth);
-    setAndroidProperties(item, DEFAULT_ANDROID.GRID);
+    setAndroidDimensions(item);
+    setAndroidProperties(item, tagName);
     item.renderParent = parent;
     return getGridSpacing(item, depth) +
-           indent + `<${DEFAULT_ANDROID.GRID}` +
-                    `${displayProperties(item, getProperties(item, DEFAULT_ANDROID.GRID, true), depth + 1)}>\n` +
+           indent + `<${tagName}` +
+                    `${displayProperties(item, getProperties(item, tagName, true), depth + 1)}>\n` +
                     `{${item.id}}` +
-           indent + `</${DEFAULT_ANDROID.GRID}>\n` +
+           indent + `</${tagName}>\n` +
                     `{:${item.id}}`;
 }
 
@@ -633,12 +671,48 @@ function getGridTemplate(item, depth, parent, columnCount = 2) {
     return createTemplate(item, depth, parent, DEFAULT_ANDROID.GRID);
 }
 
+function setAndroidDimensions(item) {
+    var element = item.element;
+    var parent = element.parentNode;
+    var parentStyle = getComputedStyle(parent);
+    var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
+    var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
+    var elementStyle = getComputedStyle(element);
+    var elementWidth = element.offsetWidth + parseInt(elementStyle.marginLeft) + parseInt(elementStyle.marginLeft);
+    var elementHeight = element.offsetHeight + parseInt(elementStyle.marginTop) + parseInt(elementStyle.marginBottom);
+    if (withinRange(parentWidth, elementWidth, 3)) {
+        item.android.layout_width = 'match_parent';
+    }
+    else {
+        item.android.layout_width = 'wrap_content';
+    }
+    if (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight) {
+        item.android.layout_height = 'match_parent';
+    }
+    else {
+        item.android.layout_height = 'wrap_content';
+    }
+    if (MAPPING_ANDROID[element.tagName]) {
+        switch (elementStyle.display) {
+            case 'line-item':
+            case 'block':
+            case 'inherit':
+                item.android.layout_width = 'match_parent';
+                if (elementStyle.float == 'right') {
+                    item.android.layout_alignParentRight = 'true';
+                }
+                break;
+        }
+    }
+}
+
 function getTagTemplate(item, depth, parent, tagName, recursive) {
     var element = item.element;
     var indent = setIndent(depth);
-    setAndroidProperties(item);
+    setAndroidDimensions(item);
+    setAndroidProperties(item, tagName);
     if (!recursive) {
-        if (item.androidTagName == 'RadioButton' && element.name != '') {
+        if (element.type == 'radio') {
             var result = NODE_CACHE.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.renderParent && ((item.previous.depth || item.depth) == (input.previous.depth || input.depth))));
             var xml = '';
             if (result.length > 1) {
@@ -677,11 +751,49 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
                 return xml;
             }
         }
+        else if (element.type == 'password') {
+            item.android.inputType = 'textPassword';
+        }
+        else if (element.tagName == 'IMG') {
+            var image = element.src.substring(element.src.lastIndexOf('/') + 1);
+            var format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
+            var src = image.replace(/.\w+$/, '');
+            switch (format) {
+                case 'bmp':
+                case 'gif':
+                case 'jpg':
+                case 'png':
+                case 'webp':
+                    insertResourceAsset(RESOURCE_IMAGE, src, element.src);
+                    break;
+                default:
+                    src = `(UNSUPPORTED: ${image})`;
+                break;
+            }
+            item.androidSrc = src;
+        }
     }
     item.renderParent = parent;
     return getGridSpacing(item, depth) + 
            indent + `<${item.androidTagName}${displayProperties(item, getProperties(item, item.androidTagName), depth + 1)} />\n` +
                     (!item.siblingWrap ? `{:${item.id}}` : '');
+}
+
+function insertResourceAsset(resource, name, value) {
+    var resourceName = null;
+    var i = 0;
+    do {
+        resourceName = name;
+        if (i > 0) {
+            resourceName += i;
+        }
+        if (!resource.has(resourceName)) {
+            resource.set(resourceName, value);
+        }
+        i++;
+    }
+    while (resource.has(resourceName) && resource.get(resourceName) != value)
+    return resourceName;
 }
 
 function getGridSpacing(item, depth) {
@@ -1065,11 +1177,11 @@ function parseDocument() {
                 var itemY = axisY[k];
                 if (!itemY.renderParent) {
                     var parentId = itemY.parent.id;
-                    var tagName = MAPPING_ANDROID[itemY.tagName];
+                    var tagName = getTagName(itemY);
                     var xml = '';
                     if (tagName == null) {
                         if (itemY.children.length) {
-                            if (itemY.children.findIndex(item => MAPPING_ANDROID[item.tagName] && (item.depth == itemY.depth + 1)) == -1) {
+                            if (itemY.children.findIndex(item => getTagName(item) && (item.depth == itemY.depth + 1)) == -1) {
                                 var nextMapX = mapX[itemY.depth + 2];
                                 var nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
                                 if (nextCoordsX.length > 1) {
@@ -1223,7 +1335,7 @@ function parseDocument() {
                             if (!itemY.renderParent) {
                                 var [linearBoundsX, linearBoundsY] = getLinearXY(itemY.children.filter(item => (item.depth == itemY.depth + 1)));
                                 if (linearBoundsX || linearBoundsY) {
-                                    if (linearBoundsX && linearBoundsY) {
+                                    if (itemY.children.length > 1 && linearBoundsX && linearBoundsY) {
                                         xml += `{${itemY.id}}`;
                                         itemY.children.forEach(item => item.depthIndent -= 1);
                                         itemY.renderParent = true;
@@ -1294,7 +1406,6 @@ function parseDocument() {
                             }
                         }
                         if (!itemY.renderParent) {
-                            itemY.children.forEach(item => item.renderParent = itemY);
                             xml += getTagTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, tagName);
                         }
                     }
