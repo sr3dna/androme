@@ -28,8 +28,6 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 <LinearLayout
 	android:id="@+id/linearlayout1"
 	android:layout_marginTop="20dp"
-	android:layout_paddingHorizontal="5dp"
-	android:layout_paddingVertical="5dp"
 	android:orientation="vertical"
 	android:layout_width="wrap_content"
 	android:layout_height="match_parent">
@@ -71,7 +69,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_marginRight="5dp"
 				android:layout_paddingTop="3dp"
 				android:text="@string/order"
-				android:layout_width="match_parent"
+				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
 			<EditText
 				android:id="@+id/order"
@@ -79,7 +77,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				style="@style/Input_1.Input_2.Input_4"
 				android:layout_paddingTop="1dp"
 				android:layout_paddingBottom="7dp"
-				android:layout_width="wrap_content"
+				android:layout_width="40dp"
 				android:layout_height="match_parent" />
 			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 			<TextView
@@ -88,11 +86,12 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_marginRight="5dp"
 				android:layout_paddingTop="3dp"
 				android:text="@string/date_add"
-				android:layout_width="match_parent"
+				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
-			<ConstraintLayout
-				android:id="@+id/constraintlayout1"
+			<LinearLayout
+				android:id="@+id/linearlayout2"
 				android:layout_paddingBottom="6dp"
+				android:orientation="horizontal"
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent">
 				<Spinner
@@ -122,7 +121,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 					android:entries="@array/year0_array"
 					android:layout_width="wrap_content"
 					android:layout_height="match_parent" />
-			</ConstraintLayout>
+			</LinearLayout>
 			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 			<TextView
 				android:id="@+id/textview5"
@@ -130,11 +129,11 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_marginRight="5dp"
 				android:layout_paddingTop="3dp"
 				android:text="@string/time"
-				android:layout_width="match_parent"
+				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
 			<ConstraintLayout
-				android:id="@+id/constraintlayout2"
-				android:background="@drawable/select_constraintlayout2"
+				android:id="@+id/constraintlayout1"
+				android:background="@drawable/select_constraintlayout1"
 				android:layout_paddingTop="1dp"
 				android:layout_paddingBottom="8dp"
 				android:layout_width="wrap_content"
@@ -165,7 +164,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_marginRight="5dp"
 				android:layout_paddingTop="3dp"
 				android:text="@string/type"
-				android:layout_width="match_parent"
+				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
 			<Spinner
 				android:id="@+id/typeofentry"
@@ -183,10 +182,10 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_marginRight="5dp"
 				android:layout_paddingTop="3dp"
 				android:text="@string/topic_add"
-				android:layout_width="match_parent"
+				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
 			<LinearLayout
-				android:id="@+id/linearlayout2"
+				android:id="@+id/linearlayout3"
 				android:layout_paddingBottom="6dp"
 				android:orientation="horizontal"
 				android:layout_width="wrap_content"
@@ -197,7 +196,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 					style="@style/Input_1.Input_2.Input_4"
 					android:layout_marginRight="5dp"
 					android:layout_paddingVertical="1dp"
-					android:layout_width="wrap_content"
+					android:layout_width="130dp"
 					android:layout_height="match_parent" />
 				<Spinner
 					android:id="@+id/prominence0"
@@ -216,7 +215,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_marginRight="5dp"
 				android:layout_paddingTop="3dp"
 				android:text="@string/series"
-				android:layout_width="match_parent"
+				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
 			<Spinner
 				android:id="@+id/series"
@@ -234,7 +233,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_marginRight="5dp"
 				android:layout_paddingTop="3dp"
 				android:text="@string/subset"
-				android:layout_width="match_parent"
+				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
 			<Spinner
 				android:id="@+id/subset"
@@ -252,7 +251,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_marginRight="5dp"
 				android:layout_paddingTop="3dp"
 				android:text="@string/active"
-				android:layout_width="match_parent"
+				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
 			<Spinner
 				android:id="@+id/entryactive"
@@ -286,7 +285,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/series"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<Spinner
 			android:id="@+id/spinner1"
@@ -305,7 +304,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/subset"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<Spinner
 			android:id="@+id/spinner2"
@@ -324,7 +323,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/entries"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<Spinner
 			android:id="@+id/spinner3"
@@ -332,7 +331,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			style="@style/Select_1"
 			android:layout_paddingTop="1dp"
 			android:layout_paddingBottom="2dp"
-			android:layout_width="wrap_content"
+			android:layout_width="400dp"
 			android:layout_height="match_parent" />
 		<Button
 			android:id="@+id/button3"
@@ -360,7 +359,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/mode"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<Spinner
 			android:id="@+id/mode"
@@ -379,7 +378,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/style"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<Spinner
 			android:id="@+id/style"
@@ -398,7 +397,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/calendar"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<Spinner
 			android:id="@+id/calendar"
@@ -417,11 +416,11 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/version"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<ConstraintLayout
-			android:id="@+id/constraintlayout3"
-			android:background="@drawable/select_constraintlayout3"
+			android:id="@+id/constraintlayout2"
+			android:background="@drawable/select_constraintlayout2"
 			android:layout_paddingTop="1dp"
 			android:layout_paddingBottom="8dp"
 			android:layout_columnSpan="3"
@@ -463,11 +462,11 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/branch"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<ConstraintLayout
-			android:id="@+id/constraintlayout4"
-			android:background="@drawable/select_constraintlayout4"
+			android:id="@+id/constraintlayout3"
+			android:background="@drawable/select_constraintlayout3"
 			android:layout_paddingTop="1dp"
 			android:layout_paddingBottom="8dp"
 			android:layout_columnSpan="3"
@@ -518,10 +517,10 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/custom_add"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<LinearLayout
-			android:id="@+id/linearlayout3"
+			android:id="@+id/linearlayout4"
 			android:layout_paddingBottom="6dp"
 			android:layout_columnSpan="3"
 			android:orientation="horizontal"
@@ -533,7 +532,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				style="@style/Input_1.Input_2.Input_4"
 				android:layout_marginRight="5dp"
 				android:layout_paddingVertical="1dp"
-				android:layout_width="wrap_content"
+				android:layout_width="130dp"
 				android:layout_height="match_parent" />
 			<Spinner
 				android:id="@+id/custommonth0"
@@ -558,7 +557,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:background="@drawable/input_customyear0"
 				style="@style/Input_1.Input_2.Input_4"
 				android:layout_paddingVertical="1dp"
-				android:layout_width="wrap_content"
+				android:layout_width="40dp"
 				android:layout_height="match_parent" />
 		</LinearLayout>
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="4" />
@@ -568,11 +567,11 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
 			android:text="@string/conclusion"
-			android:layout_width="match_parent"
+			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<ConstraintLayout
-			android:id="@+id/constraintlayout6"
-			android:background="@drawable/select_constraintlayout6"
+			android:id="@+id/constraintlayout5"
+			android:background="@drawable/select_constraintlayout5"
 			android:layout_paddingTop="1dp"
 			android:layout_paddingBottom="8dp"
 			android:layout_columnSpan="3"
@@ -589,7 +588,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent" />
 			<ConstraintLayout
-				android:id="@+id/constraintlayout5"
+				android:id="@+id/constraintlayout4"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content">
 				<RadioGroup

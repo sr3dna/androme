@@ -457,7 +457,7 @@ function convertRGBtoHex(n) {
     return hex.charAt((n - (n % 16)) / 16) + hex.charAt(n % 16);
 }
 
-function getNearestColor(value) {
+function findNearestColor(value) {
     var hsl = convertHextoHSL(value);
     if (hsl) {
         var result = COLOR_SORT_HSL.slice();
@@ -516,4 +516,17 @@ function convertRGBtoHSL(r, g, b) {
         h /= 6;
     }
     return { h: (h * 360), s: (s * 100), l: (l * 100) };
+}
+
+function getColorByName(value) {
+    for (var color in COLOR_X11_CSS3) {
+        if (color.toLowerCase() == value.toLowerCase()) {
+            return COLOR_X11_CSS3[color];
+        }
+    }
+    return null;
+}
+
+function convertColorToRGB({ rgb }) {
+    return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 }

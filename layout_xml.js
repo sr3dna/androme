@@ -287,7 +287,7 @@ function addResourceColor(value) {
     if (value != '') {
         var colorName = '';
         if (!RESOURCE_COLOR.has(value)) {
-            var color = getNearestColor(value);
+            var color = findNearestColor(value);
             if (color != null) {
                 color.name = cameltoLowerCase(color.name);
                 if (value.toUpperCase().trim() == color.hex) {
@@ -538,7 +538,7 @@ function setProperties(item, tagName, actions) {
                                     var rgb = parseRGBA(property);
                                     if (k == 'backgroundColor') {
                                         var backgroundParent = [];
-                                        if (element.parentNode) {
+                                        if (element.parentNode != null) {
                                             backgroundParent = parseRGBA(getComputedStyle(element.parentNode)['backgroundColor']);
                                         }
                                         if (backgroundParent[0] == rgb[0]) {
@@ -626,14 +626,6 @@ function writeProperties(item, properties, indent = 0) {
     return output;
 }
 
-function getTagName(item) {
-    var tagName = MAPPING_ANDROID[item.tagName];
-    if (typeof tagName == 'object') {
-        tagName = tagName[item.element.type];
-    }
-    return tagName;
-}
-
 function setAndroidProperties(item, tagName) {
     var element = item.element;
     if (!tagName) {
@@ -684,33 +676,41 @@ function writeGridTemplate(item, depth, parent, columnCount = 2) {
 
 function setAndroidDimensions(item) {
     var element = item.element;
-    var parent = element.parentNode;
-    var parentStyle = getComputedStyle(parent);
-    var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
-    var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
     var elementStyle = getComputedStyle(element);
     var elementWidth = element.offsetWidth + parseInt(elementStyle.marginLeft) + parseInt(elementStyle.marginLeft);
     var elementHeight = element.offsetHeight + parseInt(elementStyle.marginTop) + parseInt(elementStyle.marginBottom);
-    if (withinRange(parentWidth, elementWidth, 3)) {
-        item.android.layout_width = 'match_parent';
+    var parent = element.parentNode;
+    var parentStyle = getComputedStyle(element.parentNode);
+    var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
+    var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
+    if (item.styleMap.width != null) {
+        item.android.layout_width = convertToDP(item.styleMap.width);
     }
     else {
-        item.android.layout_width = 'wrap_content';
+        if (withinRange(parentWidth, elementWidth, 3)) {
+            item.android.layout_width = 'match_parent';
+        }
+        else {
+            item.android.layout_width = 'wrap_content';
+        }
+        if (MAPPING_ANDROID[element.tagName] != null) {
+            switch (elementStyle.display) {
+                case 'line-item':
+                case 'block':
+                case 'inherit':
+                    item.android.layout_width = 'match_parent';
+                    break;
+            }
+        }
     }
-    if (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight) {
+    if (item.styleMap.height != null) {
+        item.android.layout_height = convertToDP(item.styleMap.height);
+    }
+    else if (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight) {
         item.android.layout_height = 'match_parent';
     }
     else {
         item.android.layout_height = 'wrap_content';
-    }
-    if (MAPPING_ANDROID[element.tagName]) {
-        switch (elementStyle.display) {
-            case 'line-item':
-            case 'block':
-            case 'inherit':
-                item.android.layout_width = 'match_parent';
-                break;
-        }
     }
 }
 
@@ -786,6 +786,14 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
     return getGridSpacing(item, depth) +
            indent + `<${item.androidTagName}${writeProperties(item, setProperties(item, item.androidTagName), depth + 1)} />\n` +
                     (!item.siblingWrap ? `{:${item.id}}` : '');
+}
+
+function getTagName(item) {
+    var tagName = MAPPING_ANDROID[item.tagName];
+    if (typeof tagName == 'object') {
+        tagName = tagName[item.element.type];
+    }
+    return tagName;
 }
 
 function insertResourceAsset(resource, name, value = '') {
@@ -883,6 +891,17 @@ function cameltoLowerCase(value) {
     return value;
 }
 
+function hyphenToCamelCase(value) {
+    value = value.replace(/$-+/, '');
+    var result = value.match(/(-{1}[a-z]{1})/g);
+    if (result != null) {
+        for (var match of result) {
+            value = value.replace(match, match[1].toUpperCase());
+        }
+    }
+    return value;
+}
+
 function setIndent(n, value = '\t') {
     return value.repeat(n);
 }
@@ -924,6 +943,42 @@ function deleteStyleProperty(sorted, cacheIds, property) {
                         delete sorted[index][key];
                     }
                     break;
+                }
+            }
+        }
+    }
+}
+
+function setStyleMap() {
+    for (var styleSheet of document.styleSheets) {
+        for (var rule of styleSheet.rules) {
+            var elements = document.querySelectorAll(rule.selectorText);
+            var properties = new Set();
+            for (var i of rule.styleMap) {
+                properties.add(hyphenToCamelCase(i[0]));
+            }
+            for (var element of elements) {
+                if (element.cacheData != null) {
+                    for (var i of element.style) {
+                        properties.add(hyphenToCamelCase(i));
+                    }
+                    var id = element.cacheData.id;
+                    var style = getComputedStyle(element);
+                    var styleMap = element.cacheData.styleMap;
+                    for (var property of properties) {
+                        if (property.toLowerCase().indexOf('color') != -1) {
+                            var color = getColorByName(rule.style[property]);
+                            if (color != null) {
+                                rule.style[property] = convertColorToRGB(color);
+                            }
+                        }
+                        if (element.style[property] != null && element.style[property] != '') {
+                            styleMap[property] = element.style[property];
+                        }
+                        else if (style[property] == rule.style[property]) {
+                            styleMap[property] = style[property];
+                        }
+                    }
                 }
             }
         }
@@ -1095,15 +1150,12 @@ function setResourceStyle(xml) {
     return xml;
 }
 
-function parseDocument() {
+function createNodeCache() {
     var elements = document.querySelectorAll('body > *');
     var selector = 'body *';
-    var output = '<?xml version="1.0" encoding="utf-8"?>\n{0}';
-    var mapX = [];
-    var mapY = [];
     var id = 1;
     for (var i in elements) {
-        if (MAPPING_ANDROID[elements[i].tagName]) {
+        if (MAPPING_ANDROID[elements[i].tagName] != null) {
             selector = 'body, body *';
             break;
         }
@@ -1122,6 +1174,7 @@ function parseDocument() {
                     renderParent: null,
                     depth: 0,
                     depthIndent: 0,
+                    styleMap: {},
                     android: {},
                     previous: {},
                     children: []
@@ -1162,6 +1215,14 @@ function parseDocument() {
         }
         return (x >= y ? 1 : -1);
     });
+}
+
+function parseDocument() {
+    var output = '<?xml version="1.0" encoding="utf-8"?>\n{0}';
+    var mapX = [];
+    var mapY = [];
+    createNodeCache();
+    setStyleMap();
     for (var item of NODE_CACHE) {
         var x = Math.floor(item.bounds.x);
         var y = (item.parent ? item.parent.id : 0);
