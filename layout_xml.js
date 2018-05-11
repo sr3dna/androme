@@ -184,7 +184,7 @@ function writeResourceStyleXML() {
     return xml.join('\n');
 }
 
-function writetResourceColorXML() {
+function writeResourceColorXML() {
     var resource = new Map([...RESOURCE_COLOR.entries()].sort());
     var xml = ['<?xml version="1.0" encoding="utf-8"?>',
                '<resources>'];
