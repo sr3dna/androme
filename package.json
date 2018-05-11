@@ -1,0 +1,35 @@
+{
+  "name": "chrome-mobile-layouts",
+  "version": "1.0.0",
+  "description": "Converts HTML pages by auto-generating XML into Android constraint layouts using a Chrome browser plugin. iOS and Xamarin Forms are also to be supported.",
+  "main": "layout_xml.js",
+  "scripts": {
+    "test": "parseDocument()"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anpham6/chrome-mobile-layouts.git"
+  },
+  "keywords": [
+    "Android",
+    "iOS",
+    "Xamarin",
+    "Chrome",
+    "Mobile",
+    "Phone",
+    "Javascript",
+    "HTML5",
+    "CSS3",
+    "XML"
+  ],
+  "author": {
+    "name": "An Pham",
+    "email": "anpham6@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/anpham6/chrome-mobile-layouts/issues"
+  },
+  "homepage": "https://github.com/anpham6/chrome-mobile-layouts#readme"
+}
+s
