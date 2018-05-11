@@ -121,9 +121,7 @@ var WIDGET_ANDROID = {
         'androidId': 'android:id="@+id/{0}"',
         'androidSrc': 'android:src="@drawable/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
-        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
-        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
-        'window.addResourceString': PROPERTY_ANDROID['resourceString']
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     }
 };
 
@@ -139,71 +137,77 @@ var RESOURCE_IMAGE = new Map();
 
 function getResourceStringXML() {
     var resource = new Map([...RESOURCE_STRING.entries()].sort());
-    var xml = '<?xml version="1.0" encoding="utf-8"?>\n' +
-              '<resources>\n';
+    var xml = ['<?xml version="1.0" encoding="utf-8"?>',
+               '<resources>'];
     for (var [i, j] of resource.entries()) {
-        xml += `\t<string name="${i}">${j}</string>\n`;
+        xml.push(`\t<string name="${i}">${j}</string>`);
     }
-    xml += '</resources>\n' +
-           `<!-- filename: res/values/string.xml -->\n\n`;
-    return xml;
+    xml.push('</resources>',
+             `<!-- filename: res/values/string.xml -->\n`);
+    return xml.join('\n');
 }
 
 function getResourceArrayXML() {
     var resource = new Map([...RESOURCE_ARRAY.entries()].sort());
-    var xml = '<?xml version="1.0" encoding="utf-8"?>\n' +
-              '<resources>\n';
+    var xml = ['<?xml version="1.0" encoding="utf-8"?>',
+               '<resources>'];
     for (var [i, j] of resource.entries()) {
-        xml += `\t<array name="${i}">\n`;
+        xml.push(`\t<array name="${i}">`);
         for (var [k, l] of j.entries()) {
-            xml += `\t\t<item${(l != '' ? ` name="${k}"` : '')}>${(l != '' ? `@string/${l}` : `${k}`)}</item>\n`;
+            xml.push(`\t\t<item${(l != '' ? ` name="${k}"` : '')}>${(l != '' ? `@string/${l}` : `${k}`)}</item>`);
         }
-        xml += '\t</array>\n';
+        xml.push('\t</array>');
     }
-    xml += '</resources>\n' +
-           `<!-- filename: res/values/string_array.xml -->\n\n`;
-    return xml;
+    xml.push('</resources>',
+             `<!-- filename: res/values/string_array.xml -->\n`);
+    return xml.join('\n');
 }
 
 function getResourceStyleXML() {
-    var xml = '<?xml version="1.0" encoding="utf-8"?>\n' +
-              '<resources>\n';
+    var xml = ['<?xml version="1.0" encoding="utf-8"?>',
+               '<resources>'];
     for (var i in RESOURCE_STYLE) {
         for (var j of RESOURCE_STYLE[i]) {
-            xml += `\t<style name="${j.name}">\n`;
+            xml.push(`\t<style name="${j.name}">`);
             j.properties.split(';').forEach(value => {
                 var [property, setting] = value.split('=');
-                xml += `\t\t<item name="${property}">${setting.replace(/"/g, '')}</item>\n`;
+                xml.push(`\t\t<item name="${property}">${setting.replace(/"/g, '')}</item>`);
             });
-            xml += `\t<style>\n`;
+            xml.push('\t<style>');
         }
     }
-    xml += '</resources>\n' +
-           `<!-- filename: res/values/styles.xml -->\n\n`;
-    return xml;
+    xml.push('</resources>',
+             '<!-- filename: res/values/styles.xml -->\n');
+    return xml.join('\n');
 }
 
 function getResourceColorXML() {
     var resource = new Map([...RESOURCE_COLOR.entries()].sort());
-    var xml = '<?xml version="1.0" encoding="utf-8"?>\n' +
-              '<resources>\n';
+    var xml = ['<?xml version="1.0" encoding="utf-8"?>',
+               '<resources>'];
     for (var [i, j] of resource.entries()) {
-        xml += `\t<color name="${i}">${j}</color>\n`;
+        xml.push(`\t<color name="${i}">${j}</color>`);
     }
-    xml += '</resources>\n' +
-           `<!-- filename: res/values/colors.xml -->\n\n`;
-    return xml;
+    xml.push('</resources>',
+             '<!-- filename: res/values/colors.xml -->\n');
+    return xml.join('\n');
 }
 
 function getResourceDrawableXML() {
-    var output = '';
+    var xml = [];
     for (var item of NODE_CACHE) {
         if (item.drawable) {
-            output += `${item.drawable}\n` +
-                      `<!-- filename: res/drawable/${item.tagName.toLowerCase()}_${item.androidId}.xml -->\n\n`;
+            xml.push(`${item.drawable}`,
+                     `<!-- filename: res/drawable/${item.tagName.toLowerCase()}_${item.androidId}.xml -->\n`);
         }
     }
-    return output;
+    if (RESOURCE_IMAGE.size) {
+        for (var [i, j] of RESOURCE_IMAGE.entries()) {
+            xml.push(`<!-- image: ${j} -->`,
+                     `<!-- filename: res/drawable/${i + j.substring(j.lastIndexOf('.'))} -->\n`);
+        }
+    }
+    return xml.join('\n');
 }
 
 function addResourceString(element, value) {
@@ -530,8 +534,6 @@ function getProperties(item, tagName, layout, subproperty) {
                             if (appended[j] != null) {
                                 continue;
                             }
-                            if (methodName == 'getComputedStyle') {
-                            }
                             var property = data[j];
                             if (property != '' && property != null) {
                                 if (property.startsWith('rgb')) {
@@ -575,7 +577,7 @@ function getProperties(item, tagName, layout, subproperty) {
     }
     for (var i in item.android) {
         var property = item.android[i];
-        if (property != null) {
+        if (property != null && property != '') {
             if (typeof property == 'object') {
                 for (var j in property) {
                     result.push(`android:${i}="@${j}+/${property[j]}"`);
@@ -586,18 +588,16 @@ function getProperties(item, tagName, layout, subproperty) {
             }
         }
     }
-    if (result.length) {
+    if (element.tagName == 'INPUT' && element.id != '') {
         var nextElement = element.nextElementSibling;
-        if (element.tagName == 'INPUT' && element.id != '' && nextElement && nextElement.htmlFor == element.id) {
+        if (nextElement && nextElement.htmlFor == element.id) {
             var properties = getProperties(nextElement.cacheData, getTagName(nextElement.cacheData), false, true);
-            if (properties.length) {
-                for (var value of properties) {
-                    if (value != '') {
-                        var property = value.substring(0, value.indexOf('='));
-                        var index = result.findIndex(value => value.indexOf(property) != -1);
-                        if (index != 1) {
-                            result[index] = value;
-                        }
+            for (var value of properties) {
+                if (value != '') {
+                    var property = value.substring(0, value.indexOf('='));
+                    var index = result.findIndex(value => value.indexOf(property) != -1);
+                    if (index != 1) {
+                        result[index] = value;
                     }
                 }
             }
@@ -698,11 +698,14 @@ function setAndroidDimensions(item) {
             case 'block':
             case 'inherit':
                 item.android.layout_width = 'match_parent';
-                if (elementStyle.float == 'right') {
-                    item.android.layout_alignParentRight = 'true';
-                }
                 break;
         }
+    }
+    if (elementStyle.float == 'left') {
+        item.android.layout_alignParentLeft = 'true';
+    }
+    else if (elementStyle.float == 'right') {
+        item.android.layout_alignParentRight = 'true';
     }
 }
 
@@ -764,7 +767,7 @@ function getTagTemplate(item, depth, parent, tagName, recursive) {
                 case 'jpg':
                 case 'png':
                 case 'webp':
-                    insertResourceAsset(RESOURCE_IMAGE, src, element.src);
+                    src = insertResourceAsset(RESOURCE_IMAGE, src, element.src);
                     break;
                 default:
                     src = `(UNSUPPORTED: ${image})`;
@@ -966,13 +969,18 @@ function setResourceStyle(xml) {
                         }
                     }
                     var combined = {};
-                    var deleteKeys = [];
+                    var deleteKeys = new Set();
                     for (var l in filtered) {
                         for (var m in filtered) {
                             if (l != m && filtered[l].join('') == filtered[m].join('')) {
-                                var merged = Array.from(new Set([...l.split(';'), ...m.split(';')]));
-                                combined[merged.sort().join(';')] = filtered[l].slice();
-                                deleteKeys.push(l);
+                                var shared = filtered[l].join(',');
+                                if (combined[shared] != null) {
+                                    combined[shared] = new Set([...combined[shared], ...m.split(';')]);
+                                }
+                                else {
+                                    combined[shared] = new Set([...l.split(';'), ...m.split(';')]);
+                                }
+                                deleteKeys.add(l).add(m);
                             }
                         }
                     }
@@ -982,8 +990,10 @@ function setResourceStyle(xml) {
                         style[i][l] = filtered[l];
                     }
                     for (var l in combined) {
-                        deleteStyleProperty(sorted, combined[l], l);
-                        style[i][l] = combined[l];
+                        var ids = l.split(',').map(m => parseInt(m));
+                        var property = Array.from(combined[l]).sort().join(';');
+                        deleteStyleProperty(sorted, ids, property);
+                        style[i][property] = ids;
                     }
                 }
                 var combined = Object.keys(styleKey);
@@ -1394,7 +1404,6 @@ function parseDocument() {
                                 for (var item of siblingsPrev) {
                                     item.previous.depth = itemY.depth;
                                     item.depth = itemY.depth;
-                                    item.siblingWrap = true;
                                     item.children.forEach(child => child.depth = itemY.depth + 1);
                                     if (item.children.length) {
                                         xml += getConstraintTemplate(item, item.depth + item.depthIndent, itemY.parent);
