@@ -128,6 +128,17 @@ var WIDGET_ANDROID = {
     }
 };
 
+var DENSITY_ANDROID = {
+    LDPI: 120,
+    MDPI: 160,
+    HDPI: 240,
+    XHDPI: 320,
+    XXHDPI: 480,
+    XXXHDPI: 640
+};
+
+var DENSITY_CURRENT = DENSITY_ANDROID.MDPI;
+
 var NODE_CACHE = [];
 var RENDER_AFTER = {};
 var GENERATE_ID = { '__current': [] };
@@ -550,7 +561,7 @@ function setProperties(item, tagName, actions) {
                                     }
                                 }
                                 else if (/(px|pt)$/.test(property)) {
-                                    property = convertToDP(property);
+                                    property = (property.toLowerCase().indexOf('font') != -1 ? convertToSP(property) : convertToDP(property));
                                 }
                                 output.push(widget[i][k].replace('{0}', property));
                             }
@@ -589,13 +600,13 @@ function setProperties(item, tagName, actions) {
         if (element.tagName == 'INPUT' && element.id != '') {
             var nextElement = element.nextElementSibling;
             if (nextElement && nextElement.htmlFor == element.id) {
-                var properties = setProperties(nextElement.cacheData, getTagName(nextElement.cacheData), [2, 5]);
+                var properties = setProperties(nextElement.cacheData, getTagName(nextElement.cacheData), [4]);
                 if (item.androidTagName == 'RadioButton') {
                     nextElement.cacheData.depthIndent++;
                 }
                 for (var name in properties) {
                     var value = properties[name];
-                    if (value != '') {
+                    if (result[name] == null && value != '') {
                         result[name] = value;
                     }
                 }
@@ -635,16 +646,18 @@ function setAndroidProperties(item, tagName) {
         GENERATE_ID[tagName] = 1;
     }
     item.androidTagName = tagName;
-    do {
-        item.androidId = (item.androidId != -1 ? element.id || element.name : (tagName.toLowerCase() + GENERATE_ID[tagName]++));
-        if (GENERATE_ID['__current'].includes(item.androidId)) {
-            item.androidId = -1;
+    if (item.androidId == null) {
+        do {
+            item.androidId = (item.androidId != -1 ? element.id || element.name : (tagName.toLowerCase() + GENERATE_ID[tagName]++));
+            if (GENERATE_ID['__current'].includes(item.androidId)) {
+                item.androidId = -1;
+            }
+            else {
+                GENERATE_ID['__current'].push(item.androidId);
+            }
         }
-        else {
-            GENERATE_ID['__current'].push(item.androidId);
-        }
+        while (!item.androidId || item.androidId == -1)
     }
-    while (!item.androidId || item.androidId == -1)
 }
 
 function writeTemplate(item, depth, parent, tagName) {
@@ -736,7 +749,14 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                 for (var input of result) {
                     rowSpan += (input.layout_rowSpan || 1) - 1;
                     columnSpan += (input.layout_columnSpan || 1) - 1;
+                    if (input != item) {
+                        input.previous.parent = input.parent;
+                        input.previous.depth = input.depth;
+                        input.parent = item.parent;
+                        input.depth = item.depth;
+                    }
                     input.depthIndent++;
+                    input.siblingWrap = true;
                     if (input.element.checked) {
                         checked = input.androidId;
                     }
@@ -907,9 +927,24 @@ function setIndent(n, value = '\t') {
 }
 
 function convertToDP(value, font = false) {
-    value = parseInt(value);
-    if (!isNaN(value)) {
-        return value + (font ? 'sp' : 'dp');
+    if (typeof value == 'string') {
+        var match = value.match(/(px|pt)/);
+        value = parseInt(value);
+        if (match != null) {
+            if (match[0] == 'pt') {
+                value *= (4 / 3);
+            }
+            value = (value / (DENSITY_CURRENT / 160));
+            if (value >= 1) {
+                value = Math.floor(value);
+            }
+            else if (value > 0) {
+                value = value.toFixed(2);
+            }
+        }
+        if (!isNaN(value)) {
+            return value + (font ? 'sp' : 'dp');
+        }
     }
     return 0;
 }
@@ -1020,9 +1055,15 @@ function setResourceStyle(xml) {
                 for (var k = 0; k < sorted.length; k++) {
                     var filtered = {};
                     for (var l in sorted[k]) {
+                        if (sorted[k] == null) {
+                            continue;
+                        }
                         var property = sorted[k][l];
                         var revalidate = false;
-                        if (property.length == j.length) {
+                        if (property == null) {
+                            continue;
+                        }
+                        else if (property.length == j.length) {
                             styleKey[l] = property;
                             sorted[k] = null;
                             revalidate = true;
@@ -1437,17 +1478,34 @@ function parseDocument() {
                         var element = itemY.element;
                         if (itemY.parent && itemY.parent.androidTagName == DEFAULT_ANDROID.GRID && itemY.previous.parentId) {
                             var prevParent = itemY.parent.children.find(item => item.id == itemY.previous.parentId);
-                            if (prevParent) {
-                                var siblingsPrev = prevParent.children.filter(item => !item.renderParent && prevParent.id == item.parent.id && item.bounds.right <= itemY.bounds.left && item.bounds.left >= itemY.parent.columnStart[itemY.columnIndex]);
-                                var siblingsNext = prevParent.children.filter(item => !item.renderParent && prevParent.id == item.parent.id && item.bounds.left >= itemY.bounds.right && item.bounds.right <= itemY.parent.columnEnd[itemY.columnIndex]);
-                                if (siblingsNext.length > 0) {
+                            if (prevParent != null) {
+                                var siblings = prevParent.children.filter(item => !item.renderParent && item.bounds.left >= itemY.bounds.right && item.bounds.right <= itemY.parent.columnEnd[itemY.columnIndex]).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
+                                if (siblings.length > 0) {
                                     itemY.previous.depth = itemY.depth;
                                     itemY.depth++;
-                                    siblingsNext.unshift(itemY);
+                                    siblings.unshift(itemY);
                                     var rowEnd = false;
-                                    var template = siblingsNext.map(item => {
+                                    var template = siblings.map(item => {
                                         if (!item.renderParent) {
-                                            item.previous.depth = itemY.depth;
+                                            var children = item.element.children;
+                                            var invisible = false;
+                                            if (children.length > 0) {
+                                                invisible = true;
+                                                for (var l = 0; l < children.length; l++) {
+                                                    if (!siblings.includes(children[l].cacheData)) {
+                                                        invisible = false;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            if (invisible) {
+                                                item.invisible = true;
+                                                item.renderParent = true;
+                                                return '';
+                                            }
+                                            item.previous.parent = item.parent;
+                                            item.previous.depth = item.depth;
+                                            item.parent = itemY;
                                             item.depth = itemY.depth;
                                             item.siblingWrap = true;
                                             if (item.rowEnd) {
@@ -1467,17 +1525,6 @@ function parseDocument() {
                                         itemY.rowEnd = true;
                                     }
                                     xml += writeConstraintTemplate(itemY, itemY.depth + itemY.depthIndent - 1, itemY.parent).replace(`{${itemY.id}}`, template);
-                                }
-                                for (var item of siblingsPrev) {
-                                    item.previous.depth = itemY.depth;
-                                    item.depth = itemY.depth;
-                                    item.children.forEach(child => child.depth = itemY.depth + 1);
-                                    if (item.children.length > 0) {
-                                        xml += writeConstraintTemplate(item, item.depth + item.depthIndent, itemY.parent);
-                                    }
-                                    else {
-                                        xml += writeTagTemplate(item, item.depth + item.depthIndent, itemY.parent);
-                                    }
                                 }
                             }
                         }

@@ -74,7 +74,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			<EditText
 				android:id="@+id/order"
 				android:background="@drawable/input_order"
-				style="@style/Input_1.Input_2.Input_4"
+				style="@style/Input_1.Input_3"
 				android:layout_paddingTop="1dp"
 				android:layout_paddingBottom="7dp"
 				android:layout_width="40dp"
@@ -132,10 +132,10 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
 			<ConstraintLayout
-				android:id="@+id/constraintlayout1"
-				android:background="@drawable/select_constraintlayout1"
+				android:id="@+id/hour"
+				android:background="@drawable/select_hour"
 				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="8dp"
+				android:layout_paddingBottom="2dp"
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent">
 				<Spinner
@@ -157,7 +157,6 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 					android:layout_width="wrap_content"
 					android:layout_height="match_parent" />
 			</ConstraintLayout>
-			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 			<TextView
 				android:id="@+id/textview6"
 				style="@style/Label_1"
@@ -193,7 +192,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				<EditText
 					android:id="@+id/topic0"
 					android:background="@drawable/input_topic0"
-					style="@style/Input_1.Input_2.Input_4"
+					style="@style/Input_1.Input_3"
 					android:layout_marginRight="5dp"
 					android:layout_paddingVertical="1dp"
 					android:layout_width="130dp"
@@ -267,7 +266,8 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 		<Button
 			android:id="@+id/button1"
 			android:background="@drawable/input_button1"
-			style="@style/Input_1.Input_6"
+			style="@style/Input_1.Input_2"
+			android:textSize="12dp"
 			android:layout_paddingHorizontal="6dp"
 			android:layout_paddingVertical="1dp"
 			android:text="@string/add"
@@ -334,18 +334,18 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_width="400dp"
 			android:layout_height="match_parent" />
 		<Button
-			android:id="@+id/button3"
-			android:background="@drawable/input_button3"
-			style="@style/Input_1.Input_3.Input_7"
+			android:id="@+id/button2"
+			android:background="@drawable/input_button2"
+			style="@style/Input_1.Input_5"
 			android:layout_paddingHorizontal="6dp"
 			android:layout_paddingVertical="1dp"
 			android:text="@string/open"
 			android:layout_width="wrap_content"
 			android:layout_height="match_parent" />
 		<Button
-			android:id="@+id/button4"
-			android:background="@drawable/input_button4"
-			style="@style/Input_1.Input_3.Input_7"
+			android:id="@+id/button3"
+			android:background="@drawable/input_button3"
+			style="@style/Input_1.Input_5"
 			android:layout_paddingTop="1dp"
 			android:layout_paddingBottom="7dp"
 			android:layout_paddingHorizontal="6dp"
@@ -381,12 +381,12 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<Spinner
-			android:id="@+id/style"
-			android:background="@drawable/select_style"
+			android:id="@+id/style1"
+			android:background="@drawable/select_style1"
 			style="@style/Select_1"
 			android:layout_paddingTop="1dp"
 			android:layout_paddingBottom="8dp"
-			android:entries="@array/style_array"
+			android:entries="@array/style1_array"
 			android:layout_columnSpan="3"
 			android:layout_width="wrap_content"
 			android:layout_height="match_parent" />
@@ -419,10 +419,10 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<ConstraintLayout
-			android:id="@+id/constraintlayout2"
-			android:background="@drawable/select_constraintlayout2"
+			android:id="@+id/version"
+			android:background="@drawable/select_version"
 			android:layout_paddingTop="1dp"
-			android:layout_paddingBottom="8dp"
+			android:layout_paddingBottom="2dp"
 			android:layout_columnSpan="3"
 			android:layout_width="wrap_content"
 			android:layout_height="match_parent">
@@ -446,16 +446,15 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent" />
 			<Button
-				android:id="@+id/button5"
-				android:background="@drawable/input_button5"
-				style="@style/Input_1.Input_3.Input_5"
+				android:id="@+id/button4"
+				android:background="@drawable/input_button4"
+				style="@style/Input_1.Input_2"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
 				android:text="@string/update"
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent" />
 		</ConstraintLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="4" />
 		<TextView
 			android:id="@+id/textview18"
 			style="@style/Label_1"
@@ -465,10 +464,10 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<ConstraintLayout
-			android:id="@+id/constraintlayout3"
-			android:background="@drawable/select_constraintlayout3"
+			android:id="@+id/branch"
+			android:background="@drawable/select_branch"
 			android:layout_paddingTop="1dp"
-			android:layout_paddingBottom="8dp"
+			android:layout_paddingBottom="2dp"
 			android:layout_columnSpan="3"
 			android:layout_width="wrap_content"
 			android:layout_height="match_parent">
@@ -492,25 +491,24 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent" />
 			<Button
-				android:id="@+id/button6"
-				android:background="@drawable/input_button6"
-				style="@style/Input_1.Input_3.Input_5"
+				android:id="@+id/button5"
+				android:background="@drawable/input_button5"
+				style="@style/Input_1.Input_2"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
 				android:text="@string/update"
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent" />
 			<Button
-				android:id="@+id/button7"
-				android:background="@drawable/input_button7"
-				style="@style/Input_1.Input_3.Input_5"
+				android:id="@+id/button6"
+				android:background="@drawable/input_button6"
+				style="@style/Input_1.Input_2"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
 				android:text="@string/clone"
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent" />
 		</ConstraintLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="4" />
 		<TextView
 			android:id="@+id/textview19"
 			style="@style/Label_1"
@@ -529,7 +527,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			<EditText
 				android:id="@+id/customname0"
 				android:background="@drawable/input_customname0"
-				style="@style/Input_1.Input_2.Input_4"
+				style="@style/Input_1.Input_3"
 				android:layout_marginRight="5dp"
 				android:layout_paddingVertical="1dp"
 				android:layout_width="130dp"
@@ -555,7 +553,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			<EditText
 				android:id="@+id/customyear0"
 				android:background="@drawable/input_customyear0"
-				style="@style/Input_1.Input_2.Input_4"
+				style="@style/Input_1.Input_3"
 				android:layout_paddingVertical="1dp"
 				android:layout_width="40dp"
 				android:layout_height="match_parent" />
@@ -570,10 +568,10 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_width="100dp"
 			android:layout_height="wrap_content" />
 		<ConstraintLayout
-			android:id="@+id/constraintlayout5"
-			android:background="@drawable/select_constraintlayout5"
+			android:id="@+id/person"
+			android:background="@drawable/select_person"
 			android:layout_paddingTop="1dp"
-			android:layout_paddingBottom="8dp"
+			android:layout_paddingBottom="2dp"
 			android:layout_columnSpan="3"
 			android:layout_width="wrap_content"
 			android:layout_height="match_parent">
@@ -587,49 +585,46 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:layout_columnSpan="3"
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent" />
-			<ConstraintLayout
-				android:id="@+id/constraintlayout4"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content">
-				<RadioGroup
-					android:checkedButton="@id+/c2">
-					<RadioButton
-						android:id="@+id/radiobutton1"
-						style="@style/Label_1"
-						android:layout_marginTop="3dp"
-						android:layout_marginRight="3dp"
-						android:layout_marginLeft="5dp"
-						android:layout_width="wrap_content"
-						android:layout_height="match_parent" />
-					<RadioButton
-						android:id="@+id/c3"
-						style="@style/Label_1"
-						android:layout_marginTop="3dp"
-						android:layout_marginRight="3dp"
-						android:layout_marginLeft="5dp"
-						android:layout_width="wrap_content"
-						android:layout_height="match_parent" />
-				</RadioGroup>
-				<CheckBox
-					android:id="@+id/c4"
-					style="@style/Label_1"
+			<RadioGroup
+				android:checkedButton="@id+/c2">
+				<RadioButton
+					android:id="@+id/c2"
+					style="@style/Input_1.Input_4"
+					android:layout_marginTop="3dp"
 					android:layout_marginRight="3dp"
-					android:layout_marginLeft="4dp"
-					android:layout_marginVertical="3dp"
+					android:layout_marginLeft="5dp"
 					android:layout_width="wrap_content"
-					android:layout_height="match_parent" />
-			</ConstraintLayout>
+					android:layout_height="match_parent"
+					android:text="@string/birth" />
+				<RadioButton
+					android:id="@+id/c3"
+					style="@style/Input_1.Input_4"
+					android:layout_marginTop="3dp"
+					android:layout_marginRight="3dp"
+					android:layout_marginLeft="5dp"
+					android:layout_width="wrap_content"
+					android:layout_height="match_parent"
+					android:text="@string/death" />
+			</RadioGroup>
+			<CheckBox
+				android:id="@+id/c4"
+				style="@style/Input_1.Input_4"
+				android:layout_marginRight="3dp"
+				android:layout_marginLeft="4dp"
+				android:layout_marginVertical="3dp"
+				android:layout_width="wrap_content"
+				android:layout_height="match_parent"
+				android:text="@string/none" />
 			<Button
-				android:id="@+id/button8"
-				android:background="@drawable/input_button8"
-				style="@style/Input_1.Input_3.Input_5"
+				android:id="@+id/button7"
+				android:background="@drawable/input_button7"
+				style="@style/Input_1.Input_2"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
 				android:text="@string/update"
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent" />
 		</ConstraintLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="4" />
 	</GridLayout>
 </LinearLayout>
 ```
