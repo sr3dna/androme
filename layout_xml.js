@@ -2,7 +2,8 @@ var DEFAULT_ANDROID = {
     TEXT: 'TextView',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'ConstraintLayout',
-    GRID: 'GridLayout'
+    GRID: 'GridLayout',
+    RADIO: 'RadioGroup'
 };
 
 var MAPPING_ANDROID = {
@@ -667,7 +668,7 @@ function writeTemplate(item, depth, parent, tagName) {
     item.renderParent = parent;
     return getGridSpacing(item, depth) +
            indent + `<${tagName}` +
-                    `${writeProperties(item, setProperties(item, tagName), depth + 1)}>\n` +
+                    `${writeProperties(item, setProperties(item, tagName), depth + 1)}{#${item.id}}>\n` +
                     `{${item.id}}` +
            indent + `</${tagName}>\n` +
                     `{:${item.id}}`;
@@ -738,14 +739,23 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
             var xml = '';
             if (result.length > 1) {
                 var data = {
+                    id: NODE_CACHE.length,
                     children: result,
+                    depth: parent.depth,
+                    depthIndent: parent.depthIndent,
+                    parent: parent,
+                    renderParent: parent,
                     element: { id: '' },
                     android: {}
                 };
+                NODE_CACHE.push(data);
+                setAndroidProperties(data, DEFAULT_ANDROID.RADIO);
                 var checked = '';
                 var rowEndId = item.id;
                 var rowSpan = 1;
                 var columnSpan = 1;
+                item.radioGroupId = data.id;
+                item.radioGroup = [];  
                 for (var input of result) {
                     rowSpan += (input.layout_rowSpan || 1) - 1;
                     columnSpan += (input.layout_columnSpan || 1) - 1;
@@ -754,6 +764,7 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                         input.previous.depth = input.depth;
                         input.parent = item.parent;
                         input.depth = item.depth;
+                        item.radioGroup.push(input);
                     }
                     input.depthIndent++;
                     input.siblingWrap = true;
@@ -772,10 +783,10 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                 if (columnSpan > 1) {
                     data.android.layout_columnSpan = columnSpan;
                 }
-                xml = indent + '<RadioGroup' +
-                               `${writeProperties(null, setProperties(data, 'RadioGroup'), depth + 1)}>\n` +
+                xml = indent + `<${DEFAULT_ANDROID.RADIO}` +
+                               `${writeProperties(null, setProperties(data, DEFAULT_ANDROID.RADIO), depth + 1)}{#${data.id}}>\n` +
                                xml +
-                      indent + '</RadioGroup>\n' +
+                      indent + `</${DEFAULT_ANDROID.RADIO}>\n` +
                                `{:${rowEndId}}`;
                 return xml;
             }
@@ -804,7 +815,7 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
     }
     item.renderParent = parent;
     return getGridSpacing(item, depth) +
-           indent + `<${item.androidTagName}${writeProperties(item, setProperties(item, item.androidTagName), depth + 1)} />\n` +
+           indent + `<${item.androidTagName}${writeProperties(item, setProperties(item, item.androidTagName), depth + 1)}{#${item.id}} />\n` +
                     (!item.siblingWrap ? `{:${item.id}}` : '');
 }
 
@@ -1558,7 +1569,7 @@ function parseDocument() {
     for (var i in RENDER_AFTER) {
         output = output.replace(`{:${i}}`, RENDER_AFTER[i].join(''));
     }
-    output = output.replace(/{:[0-9]+}/g, '');
     output = setResourceStyle(output);
+    output = output.replace(/{[:@#]{1}[0-9]+}/g, '');
     return output;
 }
