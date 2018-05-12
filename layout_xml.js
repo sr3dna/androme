@@ -158,7 +158,7 @@ function writeResourceStringXML() {
         xml.push(`\t<string name="${i}">${j}</string>`);
     }
     xml.push('</resources>',
-             `<!-- filename: res/values/string.xml -->\n`);
+             '<!-- filename: res/values/string.xml -->\n');
     return xml.join('\n');
 }
 
@@ -174,7 +174,7 @@ function writeResourceArrayXML() {
         xml.push('\t</array>');
     }
     xml.push('</resources>',
-             `<!-- filename: res/values/string_array.xml -->\n`);
+             '<!-- filename: res/values/string_array.xml -->\n');
     return xml.join('\n');
 }
 
@@ -239,8 +239,9 @@ function addResourceString(element, value) {
     }
     if (value != '') {
         if (element != null) {
-            if (element.cacheData.androidTagName == 'TextView') {
-                var match = getComputedStyle(element).textDecoration.match(/(underline|line-through)/);
+            var item = element.cacheData;
+            if (item.androidTagName == 'TextView') {
+                var match = item.style.textDecoration.match(/(underline|line-through)/);
                 if (match) {
                     switch (match[0]) {
                         case 'underline':
@@ -327,8 +328,8 @@ function addResourceColor(value) {
     return value;
 }
 
-function setBackgroundStyle(element) {
-    var style = {
+function setBackgroundStyle(element) {element.cacheData
+    var properties = {
         border: parseBorderStyle,
         borderTop: parseBorderStyle,
         borderRight: parseBorderStyle,
@@ -337,69 +338,69 @@ function setBackgroundStyle(element) {
         borderRadius: parseBoxDimensions,
         backgroundColor: parseRGBA
     };
-    var properties = getComputedStyle(element);
     var backgroundParent = [];
     if (element.parentNode != null) {
-        backgroundParent = parseRGBA(getComputedStyle(element.parentNode)['backgroundColor']);
+        backgroundParent = parseRGBA(getElementStyle(element.parentNode).backgroundColor);
     }
-    for (var i in style) {
-        style[i] = style[i](properties[i]);
+    var style = getElementStyle(element);
+    for (var i in properties) {
+        properties[i] = properties[i](style[i]);
     }
-    if (style.border[0] != 'none' || style.borderRadius != null) {
-        style.border[2] = addResourceColor(style.border[2]);
-        if (backgroundParent[0] == style.backgroundColor[0] || style.backgroundColor[4] == 0) {
-            style.backgroundColor = null;
+    if (properties.border[0] != 'none' || properties.borderRadius != null) {
+        properties.border[2] = addResourceColor(properties.border[2]);
+        if (backgroundParent[0] == properties.backgroundColor[0] || properties.backgroundColor[4] == 0) {
+            properties.backgroundColor = null;
         }
         else {
-            style.backgroundColor[1] = addResourceColor(style.backgroundColor[1]);
+            properties.backgroundColor[1] = addResourceColor(properties.backgroundColor[1]);
         }
         var borderStyle = {
             default: 'android:color="@android:color/black"',
-            solid: `android:color="${style.border[2]}"`,
+            solid: `android:color="${properties.border[2]}"`,
             dotted: 'android:dashWidth="3dp" android:dashGap="1dp"',
             dashed: 'android:dashWidth="1dp" android:dashGap="1dp"'
         };
         var xml = '<?xml version="1.0" encoding="utf-8"?>\n';
-        if (style.borderRadius != null) {
+        if (properties.borderRadius != null) {
             xml += '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n' +
-                   `\t<stroke android:width="${style.border[1] || '1dp'}" ${borderStyle[style.border[1] || 'default']} />\n` +
-                   (style.backgroundColor ? `\t<solid android:color="${style.backgroundColor[1]}" />\n` : '');
-            if (style.borderRadius.length == 1) {
-                xml += `\t<corners android:radius="${style.borderRadius[0]}" />\n`;
+                   `\t<stroke android:width="${properties.border[1] || '1dp'}" ${borderStyle[properties.border[1] || 'default']} />\n` +
+                   (properties.backgroundColor ? `\t<solid android:color="${properties.backgroundColor[1]}" />\n` : '');
+            if (properties.borderRadius.length == 1) {
+                xml += `\t<corners android:radius="${properties.borderRadius[0]}" />\n`;
             }
             else {
-                if (style.borderRadius.length == 2) {
-                    style.borderRadius.push(...style.borderRadius.slice());
+                if (properties.borderRadius.length == 2) {
+                    properties.borderRadius.push(...properties.borderRadius.slice());
                 }
                 xml += '\t<corners';
-                style.borderRadius.forEach((value, index) => xml += ` android:${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius="${value}"`);
+                properties.borderRadius.forEach((value, index) => xml += ` android:${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius="${value}"`);
             }
             xml += ' />\n' +
                    '</shape>';
         }
-        else if (style.border[0] != 'none' && style.backgroundColor == null) {
+        else if (properties.border[0] != 'none' && properties.backgroundColor == null) {
             xml += '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">\n' +
-                   `\t<stroke android:width="${style.border[1]}" ${borderStyle[style.border[0]]} />\n` +
+                   `\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]]} />\n` +
                    '</shape>';
         }
         else {
-            xml += '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">' +  '\n';
-            if (style.backgroundColor != null) {
+            xml += '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">\n';
+            if (properties.backgroundColor != null) {
                 xml += '\t<item>\n' +
                        '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<solid android:color="${style.backgroundColor[1]}" />\n` +
+                       `\t\t\t<solid android:color="${properties.backgroundColor[1]}" />\n` +
                        '\t\t</shape>\n' +
                        '\t</item>\n';
             }
-            if (style.border[0] != 'none') {
+            if (properties.border[0] != 'none') {
                 xml += '\t<item>\n' +
                        '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<stroke android:width="${style.border[1]}" ${borderStyle[style.border[0]]} />\n` +
+                       `\t\t\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]]} />\n` +
                        '\t\t</shape>\n' +
                        '\t</item>\n';
             }
             else {
-                [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth].forEach((item, index) => {
+                [properties.borderTopWidth, properties.borderRightWidth, properties.borderBottomWidth, properties.borderLeftWidth].forEach((item, index) => {
                     xml += `\t<item android:${['top', 'right', 'bottom', 'left'][index]}="${item[2]}">\n` +
                            '\t\t<shape android:shape="rectangle">\n' +
                            `\t\t\t<stroke android:width="${item[1]}" ${borderStyle[item[0]]} />\n` +
@@ -409,7 +410,9 @@ function setBackgroundStyle(element) {
             }
             xml += '</layer-list>';
         }
-        element.cacheData.drawable = xml;
+        var item = element.cacheData;
+        item.drawable = xml;
+        GENERATE_ID['__current'].push(`${item.tagName.toLowerCase()}_${item.androidId}`);
         return { backgroundColor: `${element.tagName.toLowerCase()}_{id}` };
     }
     return null;
@@ -456,14 +459,14 @@ function setBoxSpacing(element) {
 }
 
 function getBoxSpacing(element, complete) {
-    var properties = getComputedStyle(element);
     var result = {};
-    ['padding', 'margin'].forEach(style => {
+    ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
-            var dimension = properties[`${style + side}`];
+            var property = `${border + side}`;
+            var dimension = getElementStyle(element)[property];
             dimension = (complete ? parseInt(dimension) : convertToDP(dimension));
             if (complete || (dimension != 0 && dimension != '0dp')) {
-                result[`${style + side}`] = dimension;
+                result[property] = dimension;
             }
         });
     });
@@ -471,16 +474,16 @@ function getBoxSpacing(element, complete) {
 }
 
 function parseBoxDimensions(value) {
-    var box = value.match(/^([0-9]+(?:px|pt)) ([0-9]+(?:px|pt)) ([0-9]+(?:px|pt)) ([0-9]+(?:px|pt))$/);
-    if (box && box.length == 5) {
-        if (box[1] == box[2] && box[2] == box[3] && box[3] == box[4]) {
-            return [convertToDP(box[1])];
+    var match = value.match(/^([0-9]+(?:px|pt)) ([0-9]+(?:px|pt)) ([0-9]+(?:px|pt)) ([0-9]+(?:px|pt))$/);
+    if (match != null && match.length == 5) {
+        if (match[1] == match[2] && match[2] == match[3] && match[3] == match[4]) {
+            return [convertToDP(match[1])];
         }
-        else if (box[1] == box[3] && box[2] == box[4]) {
-            return [convertToDP(box[1]), convertToDP(box[2])];
+        else if (match[1] == match[3] && match[2] == match[4]) {
+            return [convertToDP(match[1]), convertToDP(match[2])];
         }
         else {
-            return [convertToDP(box[1]), convertToDP(box[2]), convertToDP(box[3]), convertToDP(box[4])];
+            return [convertToDP(match[1]), convertToDP(match[2]), convertToDP(match[3]), convertToDP(match[4])];
         }
     }
     return null;
@@ -490,22 +493,22 @@ function parseBorderStyle(value) {
     var stroke = value.match(/(none|dotted|dashed|solid)/);
     var width = value.match(/([0-9]+(?:px|pt))/);
     var color = parseRGBA(value);
-    if (stroke) {
+    if (stroke != null) {
         stroke = stroke[1];
     }
-    if (width) {
+    if (width != null) {
         width = width[1];
     }
-    if (color) {
+    if (color != null) {
         color = color[1];
     }
     return [stroke || 'solid', convertToDP(width || 1), color || '#000'];
 }
 
 function parseRGBA(value) {
-    var rgba = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
-    if (rgba && rgba.length >= 4) {
-        return [rgba[0], `#${convertRGBtoHex(rgba[1]) + convertRGBtoHex(rgba[2]) + convertRGBtoHex(rgba[3])}`, parseInt((rgba[4] != null ? rgba[4] : 1))];
+    var match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
+    if (match != null && match.length >= 4) {
+        return [match[0], `#${convertRGBtoHex(match[1]) + convertRGBtoHex(match[2]) + convertRGBtoHex(match[3])}`, parseInt((match[4] != null ? match[4] : 1))];
     }
     return null;
 }
@@ -551,13 +554,13 @@ function setProperties(item, tagName, actions) {
                                     if (k == 'backgroundColor') {
                                         var backgroundParent = [];
                                         if (element.parentNode != null) {
-                                            backgroundParent = parseRGBA(getComputedStyle(element.parentNode)['backgroundColor']);
+                                            backgroundParent = parseRGBA(getElementStyle(element.parentNode).backgroundColor);
                                         }
                                         if (backgroundParent[0] == rgb[0]) {
                                             continue;
                                         }
                                     }
-                                    if (rgb) {
+                                    if (rgb != null) {
                                         property = addResourceColor(property.replace(rgb[0], rgb[1]));
                                     }
                                 }
@@ -666,7 +669,7 @@ function writeTemplate(item, depth, parent, tagName) {
     setAndroidDimensions(item);
     setAndroidProperties(item, tagName);
     item.renderParent = parent;
-    return getGridSpacing(item, depth) +
+    return setGridSpacing(item, depth) +
            indent + `<${tagName}` +
                     `${writeProperties(item, setProperties(item, tagName), depth + 1)}{#${item.id}}>\n` +
                     `{${item.id}}` +
@@ -688,13 +691,17 @@ function writeGridTemplate(item, depth, parent, columnCount = 2) {
     return writeTemplate(item, depth, parent, DEFAULT_ANDROID.GRID);
 }
 
+function getElementStyle(element) {
+    return (element.cacheData != null ? element.cacheData.style : getComputedStyle(element));
+}
+
 function setAndroidDimensions(item) {
     var element = item.element;
-    var elementStyle = getComputedStyle(element);
+    var elementStyle = getElementStyle(element);
     var elementWidth = element.offsetWidth + parseInt(elementStyle.marginLeft) + parseInt(elementStyle.marginLeft);
     var elementHeight = element.offsetHeight + parseInt(elementStyle.marginTop) + parseInt(elementStyle.marginBottom);
     var parent = element.parentNode;
-    var parentStyle = getComputedStyle(element.parentNode);
+    var parentStyle = getElementStyle(parent);
     var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
     var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
     if (item.styleMap.width != null) {
@@ -755,7 +762,7 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                 var rowSpan = 1;
                 var columnSpan = 1;
                 item.radioGroupId = data.id;
-                item.radioGroup = [];  
+                item.radioGroup = [];
                 for (var input of result) {
                     rowSpan += (input.layout_rowSpan || 1) - 1;
                     columnSpan += (input.layout_columnSpan || 1) - 1;
@@ -808,13 +815,12 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     break;
                 default:
                     src = `(UNSUPPORTED: ${image})`;
-                break;
             }
             item.androidSrc = src;
         }
     }
     item.renderParent = parent;
-    return getGridSpacing(item, depth) +
+    return setGridSpacing(item, depth) +
            indent + `<${item.androidTagName}${writeProperties(item, setProperties(item, item.androidTagName), depth + 1)}{#${item.id}} />\n` +
                     (!item.siblingWrap ? `{:${item.id}}` : '');
 }
@@ -844,7 +850,7 @@ function insertResourceAsset(resource, name, value = '') {
     return resourceName;
 }
 
-function getGridSpacing(item, depth = 0) {
+function setGridSpacing(item, depth = 0) {
     var indent = setIndent(depth);
     var xml = '';
     if (item.previous.parent != null && item.previous.parent.invisible) {
@@ -854,14 +860,14 @@ function getGridSpacing(item, depth = 0) {
             item.grid.paddingLeft = dimensions.marginLeft + dimensions.paddingLeft;
             item.grid.paddingRight = dimensions.marginRight + dimensions.paddingRight;
         }
-        var spaceXml = `${indent}<Space android:layout_width="match_parent" android:layout_height="{0}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
+        var template = `${indent}<Space android:layout_width="match_parent" android:layout_height="{0}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
         if (item.rowEnd) {
             var heightBottom =  dimensions.marginBottom + dimensions.paddingBottom + (!item.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             if (heightBottom > 0) {
                 if (RENDER_AFTER[item.id] == null) {
                     RENDER_AFTER[item.id] = [];
                 }
-                RENDER_AFTER[item.id].push(formatString(spaceXml, heightBottom));
+                RENDER_AFTER[item.id].push(formatString(template, heightBottom));
             }
             item.grid.paddingTop = dimensions.marginTop + dimensions.paddingTop;
             item.grid.paddingBottom = dimensions.marginBottom + dimensions.paddingBottom;
@@ -869,14 +875,14 @@ function getGridSpacing(item, depth = 0) {
         if (item.gridFirst) {
             var heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                xml += formatString(spaceXml, heightTop);
+                xml += formatString(template, heightTop);
             }
         }
     }
     return xml;
 }
 
-function getLinearXY(siblings) {
+function isLinearXY(siblings) {
     var maxLeft = Number.MIN_VALUE;
     var minRight = Number.MAX_VALUE;
     var maxTop = Number.MIN_VALUE;
@@ -1004,28 +1010,26 @@ function setStyleMap() {
                 properties.add(hyphenToCamelCase(i[0]));
             }
             for (var element of elements) {
-                if (element.cacheData != null) {
-                    for (var i of element.style) {
-                        properties.add(hyphenToCamelCase(i));
+                for (var i of element.style) {
+                    properties.add(hyphenToCamelCase(i));
+                }
+                var style = getElementStyle(element);
+                var styleMap = {};
+                for (var property of properties) {
+                    if (property.toLowerCase().indexOf('color') != -1) {
+                        var color = getColorByName(rule.style[property]);
+                        if (color != null) {
+                            rule.style[property] = convertColorToRGB(color);
+                        }
                     }
-                    var id = element.cacheData.id;
-                    var style = getComputedStyle(element);
-                    var styleMap = element.cacheData.styleMap;
-                    for (var property of properties) {
-                        if (property.toLowerCase().indexOf('color') != -1) {
-                            var color = getColorByName(rule.style[property]);
-                            if (color != null) {
-                                rule.style[property] = convertColorToRGB(color);
-                            }
-                        }
-                        if (element.style[property] != null && element.style[property] != '') {
-                            styleMap[property] = element.style[property];
-                        }
-                        else if (style[property] == rule.style[property]) {
-                            styleMap[property] = style[property];
-                        }
+                    if (element.style[property] != null && element.style[property] != '') {
+                        styleMap[property] = element.style[property];
+                    }
+                    else if (style[property] == rule.style[property]) {
+                        styleMap[property] = style[property];
                     }
                 }
+                element.styleMap = styleMap;
             }
         }
     }
@@ -1046,7 +1050,7 @@ function setResourceStyle(xml) {
             }
         }
         style[i] = {};
-        layout[i] = {}
+        layout[i] = {};
         do {
             if (sorted.length == 1) {
                 for (var k in sorted[0]) {
@@ -1202,7 +1206,7 @@ function setResourceStyle(xml) {
     return xml;
 }
 
-function createNodeCache() {
+function setNodeCache() {
     var elements = document.querySelectorAll('body > *');
     var selector = 'body *';
     var id = 1;
@@ -1215,34 +1219,74 @@ function createNodeCache() {
     elements = document.querySelectorAll(selector);
     for (var i in elements) {
         var element = elements[i];
-        if (element.getBoundingClientRect) {
+        if (typeof element.getBoundingClientRect == 'function') {
             var bounds = element.getBoundingClientRect();
             if (bounds.width != 0 && bounds.height != 0) {
+                var style = getComputedStyle(element);
+                var styleMap = element.styleMap || {};
+                var overflow = ((style.overflow == 'auto' || style.overflow == 'scroll') && (element.clientHeight != element.scrollHeight || element.clientWidth != element.scrollWidth) ? style.overflow : '');
                 var data = {
                     id: id++,
                     element: element,
                     tagName: element.tagName,
-                    bounds,
                     renderParent: null,
                     depth: 0,
                     depthIndent: 0,
-                    styleMap: {},
+                    style,
+                    styleMap,
                     android: {},
                     previous: {},
-                    children: []
+                    children: [],
+                    scroll: {
+                        width: styleMap.width || '',
+                        height: styleMap.height || '',
+                        overflow,
+                        bottom: bounds.bottom + (overflow != '' ? (element.scrollHeight - element.offsetHeight) : 0),
+                        right: bounds.right + (overflow != '' ? (element.scrollWidth - element.offsetWidth) : 0)
+                    }
                 };
-                NODE_CACHE.push(data);
                 element.cacheData = data;
+                NODE_CACHE.push(data);
             }
         }
     }
-    for (var parent of NODE_CACHE) {
-        for (var child of NODE_CACHE) {
-            if (parent != child && child.bounds.x >= parent.bounds.x && child.bounds.right <= parent.bounds.right && child.bounds.y >= parent.bounds.y && child.bounds.bottom <= parent.bounds.bottom) {
-                child.parent = parent;
-                child.depth = parent.depth + 1;
-                parent.children.push(child);
+    for (var item of NODE_CACHE) {
+        if (item.scroll.overflow != '') {
+            if (item.scroll.width != '') {
+                item.element.style.width = '';
             }
+            if (item.scroll.height != '') {
+                item.element.style.height = '';
+            }
+            item.element.style.overflow = 'visible';
+        }
+    }
+    for (var parent of NODE_CACHE) {
+        if (parent.bounds == null) {
+            parent.bounds = parent.element.getBoundingClientRect();
+        }
+        for (var child of NODE_CACHE) {
+            if (parent != child) {
+                if (child.bounds == null) {
+                    child.bounds = child.element.getBoundingClientRect();
+                }
+                if (child.bounds.left >= parent.bounds.left && child.bounds.right <= parent.bounds.right && child.bounds.top >= parent.bounds.top && child.bounds.bottom <= parent.bounds.bottom) {
+                    child.parent = parent;
+                    child.depth = parent.depth + 1;
+                    parent.children.push(child);
+                }
+            }
+        }
+    }
+    for (var item of NODE_CACHE) {
+        if (item.scroll.overflow != '') {
+            if (item.scroll.width != '') {
+                item.element.style.width = item.scroll.width;
+            }
+            if (item.scroll.height != '') {
+                item.element.style.height = item.scroll.height;
+            }
+            item.element.style.overflow = item.scroll.overflow;
         }
     }
     for (var item of NODE_CACHE) {
@@ -1273,8 +1317,8 @@ function parseDocument() {
     var output = '<?xml version="1.0" encoding="utf-8"?>\n{0}';
     var mapX = [];
     var mapY = [];
-    createNodeCache();
     setStyleMap();
+    setNodeCache();
     for (var item of NODE_CACHE) {
         var x = Math.floor(item.bounds.x);
         var y = (item.parent ? item.parent.id : 0);
@@ -1292,8 +1336,6 @@ function parseDocument() {
         }
         mapX[item.depth][x].push(item);
         mapY[item.depth][y].push(item);
-        item.x = x;
-        item.y = Math.floor(item.bounds.y);
     }
     for (var i = 0; i < mapY.length; i++) {
         var coordsX = Object.keys(mapX[i]);
@@ -1349,7 +1391,6 @@ function parseDocument() {
                                         var y = -1;
                                         for (var m = 0; m < columns.length; m++) {
                                             var itemX = columns[m][l];
-                                            var valid = true;
                                             if (itemX != null) {
                                                 if (y == -1) {
                                                     y = itemX.bounds.y;
@@ -1462,7 +1503,7 @@ function parseDocument() {
                                 }
                             }
                             if (!itemY.renderParent) {
-                                var [linearBoundsX, linearBoundsY] = getLinearXY(itemY.children.filter(item => (item.depth == itemY.depth + 1)));
+                                var [linearBoundsX, linearBoundsY] = isLinearXY(itemY.children.filter(item => (item.depth == itemY.depth + 1)));
                                 if (linearBoundsX || linearBoundsY) {
                                     if (itemY.children.length > 1 && linearBoundsX && linearBoundsY) {
                                         xml += `{${itemY.id}}`;
@@ -1552,7 +1593,7 @@ function parseDocument() {
                         }
                         else {
                             if (RENDER_AFTER[itemY.renderAfterId] == null) {
-                                RENDER_AFTER[itemY.renderAfterId] = []
+                                RENDER_AFTER[itemY.renderAfterId] = [];
                             }
                             RENDER_AFTER[itemY.renderAfterId].push(xml);
                         }
