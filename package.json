@@ -1,10 +1,10 @@
 {
   "name": "chrome-mobile-layouts",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Converts HTML pages by auto-generating it into XML using Android constraint layouts. iOS and Xamarin Forms are also to be supported.",
   "main": "layout_xml.js",
   "scripts": {
-    "test": "parseDocument()"
+    "test": "parseDocument"
   },
   "repository": {
     "type": "git",

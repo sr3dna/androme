@@ -39,230 +39,235 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 		android:text="@string/entry"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content" />
-	<LinearLayout
-		android:id="@+id/entry"
-		android:background="@drawable/form_entry"
-		android:layout_paddingHorizontal="10dp"
-		android:layout_paddingVertical="10dp"
-		android:orientation="vertical"
+	<ScrollView
+		android:id="@+id/scrollview1"
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content">
-		<GridLayout
-			android:id="@+id/gridlayout1"
-			android:columnCount="2"
+		android:layout_height="230dp">
+		<LinearLayout
+			android:id="@+id/entry"
+			android:background="@drawable/form_entry"
+			android:layout_paddingHorizontal="10dp"
+			android:layout_paddingVertical="10dp"
+			android:orientation="vertical"
 			android:layout_width="match_parent"
-			android:layout_height="wrap_content">
-			<TextView
-				android:id="@+id/textview2"
-				style="@style/Label_1"
-				android:layout_marginRight="5dp"
-				android:layout_paddingTop="3dp"
-				android:text="@string/order"
-				android:layout_width="100dp"
-				android:layout_height="wrap_content" />
-			<EditText
-				android:id="@+id/order"
-				android:background="@drawable/input_order"
-				style="@style/Input_1.Input_3"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="7dp"
-				android:layout_width="40dp"
-				android:layout_height="match_parent" />
-			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
-			<TextView
-				android:id="@+id/textview3"
-				style="@style/Label_1"
-				android:layout_marginRight="5dp"
-				android:layout_paddingTop="3dp"
-				android:text="@string/date_add"
-				android:layout_width="100dp"
-				android:layout_height="wrap_content" />
-			<LinearLayout
-				android:id="@+id/linearlayout2"
-				android:layout_paddingBottom="6dp"
-				android:orientation="horizontal"
+			android:layout_height="match_parent">
+			<GridLayout
+				android:id="@+id/gridlayout1"
+				android:columnCount="2"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent">
-				<Spinner
-					android:id="@+id/month0"
-					android:background="@drawable/select_month0"
-					style="@style/Select_1"
+				android:layout_height="wrap_content">
+				<TextView
+					android:id="@+id/textview2"
+					style="@style/Label_1"
+					android:layout_marginRight="5dp"
+					android:layout_paddingTop="3dp"
+					android:text="@string/order"
+					android:layout_width="100dp"
+					android:layout_height="wrap_content" />
+				<EditText
+					android:id="@+id/order"
+					android:background="@drawable/input_order"
+					style="@style/Input_1.Input_3"
 					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
-					android:entries="@array/month0_array"
-					android:layout_width="wrap_content"
+					android:layout_paddingBottom="7dp"
+					android:layout_width="40dp"
 					android:layout_height="match_parent" />
-				<Spinner
-					android:id="@+id/day0"
-					android:background="@drawable/select_day0"
-					style="@style/Select_1"
-					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
-					android:entries="@array/day0_array"
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<TextView
+					android:id="@+id/textview3"
+					style="@style/Label_1"
+					android:layout_marginRight="5dp"
+					android:layout_paddingTop="3dp"
+					android:text="@string/date_add"
+					android:layout_width="100dp"
+					android:layout_height="wrap_content" />
+				<LinearLayout
+					android:id="@+id/linearlayout2"
+					android:layout_paddingBottom="6dp"
+					android:orientation="horizontal"
 					android:layout_width="wrap_content"
-					android:layout_height="match_parent" />
-				<Spinner
-					android:id="@+id/year0"
-					android:background="@drawable/select_year0"
-					style="@style/Select_1"
-					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
-					android:entries="@array/year0_array"
-					android:layout_width="wrap_content"
-					android:layout_height="match_parent" />
-			</LinearLayout>
-			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
-			<TextView
-				android:id="@+id/textview4"
-				style="@style/Label_1"
-				android:layout_marginRight="5dp"
-				android:layout_paddingTop="3dp"
-				android:text="@string/time"
-				android:layout_width="100dp"
-				android:layout_height="wrap_content" />
-			<ConstraintLayout
-				android:id="@+id/hour"
-				android:background="@drawable/select_hour"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="2dp"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent">
-				<Spinner
+					android:layout_height="match_parent">
+					<Spinner
+						android:id="@+id/month0"
+						android:background="@drawable/select_month0"
+						style="@style/Select_1"
+						android:layout_paddingTop="1dp"
+						android:layout_paddingBottom="2dp"
+						android:entries="@array/month0_array"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent" />
+					<Spinner
+						android:id="@+id/day0"
+						android:background="@drawable/select_day0"
+						style="@style/Select_1"
+						android:layout_paddingTop="1dp"
+						android:layout_paddingBottom="2dp"
+						android:entries="@array/day0_array"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent" />
+					<Spinner
+						android:id="@+id/year0"
+						android:background="@drawable/select_year0"
+						style="@style/Select_1"
+						android:layout_paddingTop="1dp"
+						android:layout_paddingBottom="2dp"
+						android:entries="@array/year0_array"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent" />
+				</LinearLayout>
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<TextView
+					android:id="@+id/textview4"
+					style="@style/Label_1"
+					android:layout_marginRight="5dp"
+					android:layout_paddingTop="3dp"
+					android:text="@string/time"
+					android:layout_width="100dp"
+					android:layout_height="wrap_content" />
+				<ConstraintLayout
 					android:id="@+id/hour"
 					android:background="@drawable/select_hour"
-					style="@style/Select_1"
 					android:layout_paddingTop="1dp"
 					android:layout_paddingBottom="2dp"
-					android:entries="@array/hour_array"
 					android:layout_width="wrap_content"
-					android:layout_height="match_parent" />
-				<Spinner
-					android:id="@+id/minute"
-					android:background="@drawable/select_minute"
-					style="@style/Select_1"
-					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
-					android:entries="@array/minute_array"
-					android:layout_width="wrap_content"
-					android:layout_height="match_parent" />
-			</ConstraintLayout>
-			<TextView
-				android:id="@+id/textview5"
-				style="@style/Label_1"
-				android:layout_marginRight="5dp"
-				android:layout_paddingTop="3dp"
-				android:text="@string/type"
-				android:layout_width="100dp"
-				android:layout_height="wrap_content" />
-			<Spinner
-				android:id="@+id/typeofentry"
-				android:background="@drawable/select_typeofentry"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="8dp"
-				android:entries="@array/typeofentry_array"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
-			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
-			<TextView
-				android:id="@+id/textview6"
-				style="@style/Label_1"
-				android:layout_marginRight="5dp"
-				android:layout_paddingTop="3dp"
-				android:text="@string/topic_add"
-				android:layout_width="100dp"
-				android:layout_height="wrap_content" />
-			<LinearLayout
-				android:id="@+id/linearlayout3"
-				android:layout_paddingBottom="6dp"
-				android:orientation="horizontal"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent">
-				<EditText
-					android:id="@+id/topic0"
-					android:background="@drawable/input_topic0"
-					style="@style/Input_1.Input_3"
+					android:layout_height="match_parent">
+					<Spinner
+						android:id="@+id/hour"
+						android:background="@drawable/select_hour"
+						style="@style/Select_1"
+						android:layout_paddingTop="1dp"
+						android:layout_paddingBottom="2dp"
+						android:entries="@array/hour_array"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent" />
+					<Spinner
+						android:id="@+id/minute"
+						android:background="@drawable/select_minute"
+						style="@style/Select_1"
+						android:layout_paddingTop="1dp"
+						android:layout_paddingBottom="2dp"
+						android:entries="@array/minute_array"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent" />
+				</ConstraintLayout>
+				<TextView
+					android:id="@+id/textview5"
+					style="@style/Label_1"
 					android:layout_marginRight="5dp"
-					android:layout_paddingVertical="1dp"
-					android:layout_width="130dp"
-					android:layout_height="match_parent" />
+					android:layout_paddingTop="3dp"
+					android:text="@string/type"
+					android:layout_width="100dp"
+					android:layout_height="wrap_content" />
 				<Spinner
-					android:id="@+id/prominence0"
-					android:background="@drawable/select_prominence0"
+					android:id="@+id/typeofentry"
+					android:background="@drawable/select_typeofentry"
 					style="@style/Select_1"
 					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
-					android:entries="@array/prominence0_array"
+					android:layout_paddingBottom="8dp"
+					android:entries="@array/typeofentry_array"
 					android:layout_width="wrap_content"
 					android:layout_height="match_parent" />
-			</LinearLayout>
-			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
-			<TextView
-				android:id="@+id/textview7"
-				style="@style/Label_1"
-				android:layout_marginRight="5dp"
-				android:layout_paddingTop="3dp"
-				android:text="@string/series"
-				android:layout_width="100dp"
-				android:layout_height="wrap_content" />
-			<Spinner
-				android:id="@+id/series"
-				android:background="@drawable/select_series"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="8dp"
-				android:entries="@array/series_array"
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<TextView
+					android:id="@+id/textview6"
+					style="@style/Label_1"
+					android:layout_marginRight="5dp"
+					android:layout_paddingTop="3dp"
+					android:text="@string/topic_add"
+					android:layout_width="100dp"
+					android:layout_height="wrap_content" />
+				<LinearLayout
+					android:id="@+id/linearlayout3"
+					android:layout_paddingBottom="6dp"
+					android:orientation="horizontal"
+					android:layout_width="wrap_content"
+					android:layout_height="match_parent">
+					<EditText
+						android:id="@+id/topic0"
+						android:background="@drawable/input_topic0"
+						style="@style/Input_1.Input_3"
+						android:layout_marginRight="5dp"
+						android:layout_paddingVertical="1dp"
+						android:layout_width="130dp"
+						android:layout_height="match_parent" />
+					<Spinner
+						android:id="@+id/prominence0"
+						android:background="@drawable/select_prominence0"
+						style="@style/Select_1"
+						android:layout_paddingTop="1dp"
+						android:layout_paddingBottom="2dp"
+						android:entries="@array/prominence0_array"
+						android:layout_width="wrap_content"
+						android:layout_height="match_parent" />
+				</LinearLayout>
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<TextView
+					android:id="@+id/textview7"
+					style="@style/Label_1"
+					android:layout_marginRight="5dp"
+					android:layout_paddingTop="3dp"
+					android:text="@string/series"
+					android:layout_width="100dp"
+					android:layout_height="wrap_content" />
+				<Spinner
+					android:id="@+id/series"
+					android:background="@drawable/select_series"
+					style="@style/Select_1"
+					android:layout_paddingTop="1dp"
+					android:layout_paddingBottom="8dp"
+					android:entries="@array/series_array"
+					android:layout_width="wrap_content"
+					android:layout_height="match_parent" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<TextView
+					android:id="@+id/textview8"
+					style="@style/Label_1"
+					android:layout_marginRight="5dp"
+					android:layout_paddingTop="3dp"
+					android:text="@string/subset"
+					android:layout_width="100dp"
+					android:layout_height="wrap_content" />
+				<Spinner
+					android:id="@+id/subset"
+					android:background="@drawable/select_subset"
+					style="@style/Select_1"
+					android:layout_paddingTop="1dp"
+					android:layout_paddingBottom="8dp"
+					android:entries="@array/subset_array"
+					android:layout_width="wrap_content"
+					android:layout_height="match_parent" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<TextView
+					android:id="@+id/textview9"
+					style="@style/Label_1"
+					android:layout_marginRight="5dp"
+					android:layout_paddingTop="3dp"
+					android:text="@string/active"
+					android:layout_width="100dp"
+					android:layout_height="wrap_content" />
+				<Spinner
+					android:id="@+id/entryactive"
+					android:background="@drawable/select_entryactive"
+					style="@style/Select_1"
+					android:layout_paddingTop="1dp"
+					android:layout_paddingBottom="8dp"
+					android:entries="@array/entryactive_array"
+					android:layout_width="wrap_content"
+					android:layout_height="match_parent" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+			</GridLayout>
+			<Button
+				android:id="@+id/button1"
+				android:background="@drawable/input_button1"
+				style="@style/Input_1.Input_2"
+				android:textSize="12dp"
+				android:layout_paddingHorizontal="6dp"
+				android:layout_paddingVertical="1dp"
+				android:text="@string/add"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
-			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
-			<TextView
-				android:id="@+id/textview8"
-				style="@style/Label_1"
-				android:layout_marginRight="5dp"
-				android:layout_paddingTop="3dp"
-				android:text="@string/subset"
-				android:layout_width="100dp"
 				android:layout_height="wrap_content" />
-			<Spinner
-				android:id="@+id/subset"
-				android:background="@drawable/select_subset"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="8dp"
-				android:entries="@array/subset_array"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
-			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
-			<TextView
-				android:id="@+id/textview9"
-				style="@style/Label_1"
-				android:layout_marginRight="5dp"
-				android:layout_paddingTop="3dp"
-				android:text="@string/active"
-				android:layout_width="100dp"
-				android:layout_height="wrap_content" />
-			<Spinner
-				android:id="@+id/entryactive"
-				android:background="@drawable/select_entryactive"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="8dp"
-				android:entries="@array/entryactive_array"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
-			<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
-		</GridLayout>
-		<Button
-			android:id="@+id/button1"
-			android:background="@drawable/input_button1"
-			style="@style/Input_1.Input_2"
-			android:textSize="12dp"
-			android:layout_paddingHorizontal="6dp"
-			android:layout_paddingVertical="1dp"
-			android:text="@string/add"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" />
-	</LinearLayout>
+		</LinearLayout>
+	</ScrollView>
 	<GridLayout
 		android:id="@+id/gridlayout2"
 		android:columnCount="3"
@@ -383,7 +388,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			style="@style/Select_1"
 			android:layout_paddingTop="1dp"
 			android:layout_paddingBottom="8dp"
-			android:entries="@array/style1_array"
+			android:entries="@array/style_array"
 			android:layout_columnSpan="2"
 			android:layout_width="wrap_content"
 			android:layout_height="match_parent" />

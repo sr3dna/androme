@@ -3,6 +3,9 @@ var DEFAULT_ANDROID = {
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'ConstraintLayout',
     GRID: 'GridLayout',
+    SCROLL_VERTICAL: 'ScrollView',
+    SCROLL_HORIZONTAL: 'HorizontalScrollView',
+    SCROLL_NESTED: 'NestedScrollView',
     RADIO: 'RadioGroup'
 };
 
@@ -79,6 +82,15 @@ var WIDGET_ANDROID = {
         'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
+    },
+    'ScrollView': {
+        'androidId': 'android:id="@+id/{0}"'
+    },
+    'HorizonatalView': {
+        'androidId': 'android:id="@+id/{0}"'
+    },
+    'NestedScrollView': {
+        'androidId': 'android:id="@+id/{0}"'
     },
     'RadioGroup': {
         'androidId': 'android:id="@+id/{0}"'
@@ -635,9 +647,7 @@ function writeProperties(item, properties, indent = 0) {
         }
     }
     var output = result.map(value => `\n${setIndent(indent) + value}`).join('');
-    if (item != null) {
-        output = output.replace('{id}', item.androidId);
-    }
+    output = output.replace('{id}', item.androidId);
     return output;
 }
 
@@ -666,15 +676,32 @@ function setAndroidProperties(item, tagName) {
 
 function writeTemplate(item, depth, parent, tagName) {
     var indent = setIndent(depth);
-    setAndroidDimensions(item);
     setAndroidProperties(item, tagName);
+    setAndroidDimensions(item);
     item.renderParent = parent;
+    var beforeXml = '';
+    var afterXml = '';
+    if (item.scroll.overflow) {
+        item.depthIndent++;
+        item.children.forEach(item => item.depthIndent++);
+        var node = createNode(parent, item, [item]);
+        var scrollView = (isHorizontalScroll(item) ? DEFAULT_ANDROID.SCROLL_HORIZONTAL : (item.scroll.nested ? DEFAULT_ANDROID.SCROLL_NESTED : DEFAULT_ANDROID.SCROLL_VERTICAL));
+        setAndroidProperties(node, scrollView);
+        setAndroidDimensions({ element: item.element, styleMap: item.styleMap, android: node.android, scroll: {} });
+        beforeXml = indent + `<${scrollView}` +
+                             `${writeProperties(node, setProperties(node, scrollView), depth + 1)}{#${node.id}}>\n`;
+        afterXml =  indent + `</${scrollView}>\n`;
+        depth++;
+    }
+    indent = setIndent(depth);
     return setGridSpacing(item, depth) +
+           beforeXml +
            indent + `<${tagName}` +
                     `${writeProperties(item, setProperties(item, tagName), depth + 1)}{#${item.id}}>\n` +
                     `{${item.id}}` +
            indent + `</${tagName}>\n` +
-                    `{:${item.id}}`;
+                    `{:${item.id}}` +
+           afterXml;
 }
 
 function writeLinearTemplate(item, depth, parent, vertical) {
@@ -691,77 +718,23 @@ function writeGridTemplate(item, depth, parent, columnCount = 2) {
     return writeTemplate(item, depth, parent, DEFAULT_ANDROID.GRID);
 }
 
-function getElementStyle(element) {
-    return (element.cacheData != null ? element.cacheData.style : getComputedStyle(element));
-}
-
-function setAndroidDimensions(item) {
-    var element = item.element;
-    var elementStyle = getElementStyle(element);
-    var elementWidth = element.offsetWidth + parseInt(elementStyle.marginLeft) + parseInt(elementStyle.marginLeft);
-    var elementHeight = element.offsetHeight + parseInt(elementStyle.marginTop) + parseInt(elementStyle.marginBottom);
-    var parent = element.parentNode;
-    var parentStyle = getElementStyle(parent);
-    var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
-    var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
-    if (item.styleMap.width != null) {
-        item.android.layout_width = convertToDP(item.styleMap.width);
-    }
-    else {
-        if (withinRange(parentWidth, elementWidth, 3)) {
-            item.android.layout_width = 'match_parent';
-        }
-        else {
-            item.android.layout_width = 'wrap_content';
-        }
-        if (MAPPING_ANDROID[element.tagName] != null) {
-            switch (elementStyle.display) {
-                case 'line-item':
-                case 'block':
-                case 'inherit':
-                    item.android.layout_width = 'match_parent';
-                    break;
-            }
-        }
-    }
-    if (item.styleMap.height != null) {
-        item.android.layout_height = convertToDP(item.styleMap.height);
-    }
-    else if (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight) {
-        item.android.layout_height = 'match_parent';
-    }
-    else {
-        item.android.layout_height = 'wrap_content';
-    }
-}
-
 function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) {
     var element = item.element;
     var indent = setIndent(depth);
-    setAndroidDimensions(item);
     setAndroidProperties(item, tagName);
+    setAndroidDimensions(item);
     if (!recursive) {
         if (element.type == 'radio') {
             var result = NODE_CACHE.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.renderParent && ((item.previous.depth || item.depth) == (input.previous.depth || input.depth))));
             var xml = '';
             if (result.length > 1) {
-                var data = {
-                    id: NODE_CACHE.length,
-                    children: result,
-                    depth: parent.depth,
-                    depthIndent: parent.depthIndent,
-                    parent: parent,
-                    renderParent: parent,
-                    element: { id: '' },
-                    android: {}
-                };
-                NODE_CACHE.push(data);
-                setAndroidProperties(data, DEFAULT_ANDROID.RADIO);
+                var node = createNode(parent, item.element, result);
+                setAndroidProperties(node, DEFAULT_ANDROID.RADIO);
                 var checked = '';
                 var rowEndId = item.id;
                 var rowSpan = 1;
                 var columnSpan = 1;
-                item.radioGroupId = data.id;
+                item.radioGroupId = node.id;
                 item.radioGroup = [];
                 for (var input of result) {
                     rowSpan += (input.layout_rowSpan || 1) - 1;
@@ -783,15 +756,15 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                         rowEndId = input.id;
                     }
                 }
-                data.android.checkedButton = { id: checked };
+                node.android.checkedButton = { id: checked };
                 if (rowSpan > 1) {
-                    data.android.layout_rowSpan = rowSpan;
+                    node.android.layout_rowSpan = rowSpan;
                 }
                 if (columnSpan > 1) {
-                    data.android.layout_columnSpan = columnSpan;
+                    node.android.layout_columnSpan = columnSpan;
                 }
                 xml = indent + `<${DEFAULT_ANDROID.RADIO}` +
-                               `${writeProperties(null, setProperties(data, DEFAULT_ANDROID.RADIO), depth + 1)}{#${data.id}}>\n` +
+                               `${writeProperties(node, setProperties(node, DEFAULT_ANDROID.RADIO), depth + 1)}{#${node.id}}>\n` +
                                xml +
                       indent + `</${DEFAULT_ANDROID.RADIO}>\n` +
                                `{:${rowEndId}}`;
@@ -818,11 +791,82 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
             }
             item.androidSrc = src;
         }
+        if (item.androidTagName == 'TextView' && item.scroll.overflow) {
+            item.android.scrollbars = (isHorizontalScroll(item) ? 'horizontal' : 'vertical');
+        }
     }
     item.renderParent = parent;
     return setGridSpacing(item, depth) +
            indent + `<${item.androidTagName}${writeProperties(item, setProperties(item, item.androidTagName), depth + 1)}{#${item.id}} />\n` +
                     (!item.siblingWrap ? `{:${item.id}}` : '');
+}
+
+function getElementStyle(element) {
+    return (element.cacheData != null ? element.cacheData.style : getComputedStyle(element));
+}
+
+function setAndroidDimensions(item) {
+    var element = item.element;
+    var elementStyle = getElementStyle(element);
+    var elementWidth = element.offsetWidth + parseInt(elementStyle.marginLeft) + parseInt(elementStyle.marginLeft);
+    var elementHeight = element.offsetHeight + parseInt(elementStyle.marginTop) + parseInt(elementStyle.marginBottom);
+    var parent = element.parentNode;
+    var parentStyle = getElementStyle(parent);
+    var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
+    var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
+    if (item.androidTagName != 'TextView' && item.scroll.overflow) {
+        item.android.layout_width = 'match_parent';
+    }
+    else if (item.styleMap.width != null) {
+        item.android.layout_width = convertToDP(item.styleMap.width);
+    }
+    else {
+        if (withinRange(parentWidth, elementWidth, 3)) {
+            item.android.layout_width = 'match_parent';
+        }
+        else {
+            item.android.layout_width = 'wrap_content';
+        }
+        if (MAPPING_ANDROID[element.tagName] != null) {
+            switch (elementStyle.display) {
+                case 'line-item':
+                case 'block':
+                case 'inherit':
+                    item.android.layout_width = 'match_parent';
+                    break;
+            }
+        }
+    }
+    if (item.androidTagName != 'TextView' && item.scroll.overflow) {
+        item.android.layout_height = 'match_parent';
+    }
+    else if (item.styleMap.height != null) {
+        item.android.layout_height = convertToDP(item.styleMap.height);
+    }
+    else if (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight) {
+        item.android.layout_height = 'match_parent';
+    }
+    else {
+        item.android.layout_height = 'wrap_content';
+    }
+}
+
+function createNode(parent, element, children) {
+    var data = {
+        id: NODE_CACHE.length,
+        element: { id: '' },
+        container: element,
+        children,
+        depth: parent.depth,
+        depthIndent: parent.depthIndent,
+        parent: parent,
+        renderParent: parent,
+        styleMap: element.styleMap,
+        android: {},
+        scroll: {}
+    };
+    NODE_CACHE.push(data);
+    return data;
 }
 
 function getTagName(item) {
@@ -831,6 +875,10 @@ function getTagName(item) {
         tagName = tagName[item.element.type];
     }
     return tagName;
+}
+
+function isHorizontalScroll({ styleMap }) {
+    return (styleMap.width && styleMap.overflowX == 'auto' || styleMap.overflowX == 'scroll');
 }
 
 function insertResourceAsset(resource, name, value = '') {
@@ -1225,6 +1273,9 @@ function setNodeCache() {
                 var style = getComputedStyle(element);
                 var styleMap = element.styleMap || {};
                 var overflow = ((style.overflow == 'auto' || style.overflow == 'scroll') && (element.clientHeight != element.scrollHeight || element.clientWidth != element.scrollWidth) ? style.overflow : '');
+                for (var i of element.style) {
+                    styleMap[hyphenToCamelCase(i)] = element.style[i];
+                }
                 var data = {
                     id: id++,
                     element: element,
@@ -1242,7 +1293,8 @@ function setNodeCache() {
                         height: styleMap.height || '',
                         overflow,
                         bottom: bounds.bottom + (overflow != '' ? (element.scrollHeight - element.offsetHeight) : 0),
-                        right: bounds.right + (overflow != '' ? (element.scrollWidth - element.offsetWidth) : 0)
+                        right: bounds.right + (overflow != '' ? (element.scrollWidth - element.offsetWidth) : 0),
+                        nested: false
                     }
                 };
                 element.cacheData = data;
@@ -1259,6 +1311,7 @@ function setNodeCache() {
                 item.element.style.height = '';
             }
             item.element.style.overflow = 'visible';
+            item.children.forEach(item => item.scroll.nested = (item.scroll.overflow != ''));
         }
     }
     for (var parent of NODE_CACHE) {
