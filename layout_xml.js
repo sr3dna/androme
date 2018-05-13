@@ -1,7 +1,8 @@
-var DEFAULT_ANDROID = {
+var LAYOUT_ANDROID = {
     TEXT: 'TextView',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'ConstraintLayout',
+    RELATIVE: 'RelativeLayout',
     GRID: 'GridLayout',
     SCROLL_VERTICAL: 'ScrollView',
     SCROLL_HORIZONTAL: 'HorizontalScrollView',
@@ -240,13 +241,13 @@ function writeResourceDrawableXML() {
 function addResourceString(element, value) {
     var name = value;
     if (value == null) {
-        if (element.tagName == 'INPUT') {
+        if (element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') {
             name = element.value;
             value = element.value;
         }
         else {
-            name = element.innerText.trim();
-            value = element.innerHTML.trim();
+            name = element.innerText;
+            value = element.innerHTML;
         }
     }
     if (value != '') {
@@ -340,7 +341,7 @@ function addResourceColor(value) {
     return value;
 }
 
-function setBackgroundStyle(element) {element.cacheData
+function setBackgroundStyle(element) {
     var properties = {
         border: parseBorderStyle,
         borderTop: parseBorderStyle,
@@ -432,21 +433,6 @@ function setBackgroundStyle(element) {element.cacheData
 
 function setBoxSpacing(element) {
     var result = getBoxSpacing(element);
-    var grid = element.cacheData.grid;
-    if (grid != null) {
-        if (grid.paddingTop > 0) {
-            result.paddingTop = `${(parseInt(result.paddingTop) || 0) + grid.paddingTop}dp`;
-        }
-        if (grid.paddingBottom > 0) {
-            result.paddingBottom = `${(parseInt(result.paddingBottom) || 0) + grid.paddingBottom}dp`;
-        }
-        if (grid.paddingLeft > 0) {
-            result.paddingLeft = `${(parseInt(result.paddingLeft) || 0) + grid.paddingLeft}dp`;
-        }
-        if (grid.paddingRight > 0) {
-            result.paddingRight = `${(parseInt(result.paddingRight) || 0) + grid.paddingRight}dp`;
-        }
-    }
     if (result.paddingTop != null && result.paddingTop == result.paddingBottom) {
         result.paddingVertical = result.paddingTop;
         delete result.paddingTop;
@@ -531,6 +517,9 @@ function setProperties(item, tagName, actions) {
     var result = {};
     if (widget != null) {
         var j = 0;
+        if (actions == null && item.properties != null) {
+            actions = item.properties;
+        }
         for (var i in widget) {
             if (result[i] != null || (actions != null && !actions.includes(j++))) {
                 continue;
@@ -599,21 +588,19 @@ function setProperties(item, tagName, actions) {
             }
         }
     }
-    if (actions == null) {
-        for (var i in item.android) {
-            var property = item.android[i];
-            if (property != null && property != '') {
-                if (typeof property == 'object') {
-                    for (var j in property) {
-                        result[j] = `android:${i}="@${j}+/${property[j]}"`;
-                    }
-                }
-                else {
-                    result[i] = `android:${i}="${property}"`;
-                }
+    for (var i in item.android) {
+    var property = item.android[i];
+    if (property != null && property != '') {
+        if (typeof property == 'object') {
+            for (var j in property) {
+                result[j] = `android:${i}="@${j}+/${property[j]}"`;
             }
         }
-        if (element.tagName == 'INPUT' && element.id != '') {
+        else {
+            result[i] = `android:${i}="${property}"`;
+        }
+    }
+    if (element.tagName == 'INPUT' && element.id != '') {
             var nextElement = element.nextElementSibling;
             if (nextElement && nextElement.htmlFor == element.id) {
                 var properties = setProperties(nextElement.cacheData, getTagName(nextElement.cacheData), [4]);
@@ -677,7 +664,9 @@ function setAndroidProperties(item, tagName) {
 function writeTemplate(item, depth, parent, tagName) {
     var indent = setIndent(depth);
     setAndroidProperties(item, tagName);
-    setAndroidDimensions(item);
+    if (item.container == null) {
+        setAndroidDimensions(item);
+    }
     item.renderParent = parent;
     var beforeXml = '';
     var afterXml = '';
@@ -685,37 +674,35 @@ function writeTemplate(item, depth, parent, tagName) {
         item.depthIndent++;
         item.children.forEach(item => item.depthIndent++);
         var node = createNode(parent, item, [item]);
-        var scrollView = (isHorizontalScroll(item) ? DEFAULT_ANDROID.SCROLL_HORIZONTAL : (item.scroll.nested ? DEFAULT_ANDROID.SCROLL_NESTED : DEFAULT_ANDROID.SCROLL_VERTICAL));
+        var scrollView = (isHorizontalScroll(item) ? LAYOUT_ANDROID.SCROLL_HORIZONTAL : (item.scroll.nested ? LAYOUT_ANDROID.SCROLL_NESTED : LAYOUT_ANDROID.SCROLL_VERTICAL));
         setAndroidProperties(node, scrollView);
         setAndroidDimensions({ element: item.element, styleMap: item.styleMap, android: node.android, scroll: {} });
         beforeXml = indent + `<${scrollView}` +
                              `${writeProperties(node, setProperties(node, scrollView), depth + 1)}{#${node.id}}>\n`;
         afterXml =  indent + `</${scrollView}>\n`;
         depth++;
+        indent = setIndent(depth);
     }
-    indent = setIndent(depth);
-    return setGridSpacing(item, depth) +
-           beforeXml +
+    return setGridSpacing(item, depth) + beforeXml +
            indent + `<${tagName}` +
                     `${writeProperties(item, setProperties(item, tagName), depth + 1)}{#${item.id}}>\n` +
                     `{${item.id}}` +
            indent + `</${tagName}>\n` +
-                    `{:${item.id}}` +
-           afterXml;
+                    `{:${item.id}}` + afterXml;
 }
 
 function writeLinearTemplate(item, depth, parent, vertical) {
     item.android.orientation = (vertical ? 'vertical' : 'horizontal');
-    return writeTemplate(item, depth, parent, DEFAULT_ANDROID.LINEAR);
+    return writeTemplate(item, depth, parent, LAYOUT_ANDROID.LINEAR);
 }
 
 function writeConstraintTemplate(item, depth, parent) {
-    return writeTemplate(item, depth, parent, DEFAULT_ANDROID.CONSTRAINT);
+    return writeTemplate(item, depth, parent, LAYOUT_ANDROID.CONSTRAINT);
 }
 
 function writeGridTemplate(item, depth, parent, columnCount = 2) {
     item.android.columnCount = columnCount;
-    return writeTemplate(item, depth, parent, DEFAULT_ANDROID.GRID);
+    return writeTemplate(item, depth, parent, LAYOUT_ANDROID.GRID);
 }
 
 function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) {
@@ -724,75 +711,96 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
     setAndroidProperties(item, tagName);
     setAndroidDimensions(item);
     if (!recursive) {
-        if (element.type == 'radio') {
-            var result = NODE_CACHE.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.renderParent && ((item.previous.depth || item.depth) == (input.previous.depth || input.depth))));
-            var xml = '';
-            if (result.length > 1) {
-                var node = createNode(parent, item.element, result);
-                setAndroidProperties(node, DEFAULT_ANDROID.RADIO);
-                var checked = '';
-                var rowEndId = item.id;
-                var rowSpan = 1;
-                var columnSpan = 1;
-                item.radioGroupId = node.id;
-                item.radioGroup = [];
-                for (var input of result) {
-                    rowSpan += (input.layout_rowSpan || 1) - 1;
-                    columnSpan += (input.layout_columnSpan || 1) - 1;
-                    if (input != item) {
-                        input.previous.parent = input.parent;
-                        input.previous.depth = input.depth;
-                        input.parent = item.parent;
-                        input.depth = item.depth;
-                        item.radioGroup.push(input);
+        switch (element.type) {
+            case 'radio':
+                var result = NODE_CACHE.filter(input => (input.element.tagName == 'INPUT' && input.element.type == 'radio' && input.element.name == element.name && !input.renderParent && ((item.previous.depth || item.depth) == (input.previous.depth || input.depth))));
+                var xml = '';
+                if (result.length > 1) {
+                    var rowSpan = 1;
+                    var columnSpan = 1;
+                    var rowEndId = item.id;
+                    var checked = '';
+                    var node = createNode(parent, item.element, result);
+                    setAndroidProperties(node, LAYOUT_ANDROID.RADIO);
+                    item.radioGroupId = node.id;
+                    item.radioGroup = [];
+                    for (var input of result) {
+                        rowSpan += (input.layout_rowSpan || 1) - 1;
+                        columnSpan += (input.layout_columnSpan || 1) - 1;
+                        if (input != item) {
+                            input.previous.parent = input.parent;
+                            input.previous.depth = input.depth;
+                            input.parent = item.parent;
+                            input.depth = item.depth;
+                            item.radioGroup.push(input);
+                        }
+                        input.depthIndent++;
+                        input.siblingWrap = true;
+                        if (input.element.checked) {
+                            checked = input.androidId;
+                        }
+                        xml += writeTagTemplate(input, depth + 1, parent, tagName, true);
+                        if (input.rowEnd) {
+                            rowEndId = input.id;
+                        }
                     }
-                    input.depthIndent++;
-                    input.siblingWrap = true;
-                    if (input.element.checked) {
-                        checked = input.androidId;
+                    node.android.checkedButton = { id: checked };
+                    if (rowSpan > 1) {
+                        node.android.layout_rowSpan = rowSpan;
                     }
-                    xml += writeTagTemplate(input, depth + 1, parent, tagName, true);
-                    if (input.rowEnd) {
-                        rowEndId = input.id;
+                    if (columnSpan > 1) {
+                        node.android.layout_columnSpan = columnSpan;
                     }
+                    xml = indent + `<${LAYOUT_ANDROID.RADIO}` +
+                                   `${writeProperties(node, setProperties(node, LAYOUT_ANDROID.RADIO), depth + 1)}{#${node.id}}>\n` +
+                                   xml +
+                          indent + `</${LAYOUT_ANDROID.RADIO}>\n` +
+                                   `{:${rowEndId}}`;
+                    return xml;
                 }
-                node.android.checkedButton = { id: checked };
-                if (rowSpan > 1) {
-                    node.android.layout_rowSpan = rowSpan;
+                break;
+            case 'password':
+                item.android.inputType = 'textPassword';
+                break;
+        }
+        switch (element.tagName) {
+            case 'IMG':
+                var image = element.src.substring(element.src.lastIndexOf('/') + 1);
+                var format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
+                var src = image.replace(/.\w+$/, '');
+                switch (format) {
+                    case 'bmp':
+                    case 'gif':
+                    case 'jpg':
+                    case 'png':
+                    case 'webp':
+                        src = insertResourceAsset(RESOURCE_IMAGE, src, element.src);
+                        break;
+                    default:
+                        src = `(UNSUPPORTED: ${image})`;
                 }
-                if (columnSpan > 1) {
-                    node.android.layout_columnSpan = columnSpan;
+                item.androidSrc = src;
+                break;
+            case 'TEXTAREA':
+                item.android.minLines = 2;
+                if (element.rows > 2) {
+                    item.android.maxLines = element.rows;
                 }
-                xml = indent + `<${DEFAULT_ANDROID.RADIO}` +
-                               `${writeProperties(node, setProperties(node, DEFAULT_ANDROID.RADIO), depth + 1)}{#${node.id}}>\n` +
-                               xml +
-                      indent + `</${DEFAULT_ANDROID.RADIO}>\n` +
-                               `{:${rowEndId}}`;
-                return xml;
+                if (element.maxlength) {
+                    item.android.maxLength = element.maxlength;
+                }
+                item.android.hint = element.placeholder;
+                item.android.scrollbars = 'vertical'
+                item.android.inputType = 'textMultiLine';
+                if (item.styleMap.overflowX == 'scroll') {
+                    item.android.scrollHorizontally = 'true';
+                }
+                break;
+        }
+        if (item.androidTagName == 'TextView') {
+            if (item.scroll.overflow) {
+                item.android.scrollbars = (isHorizontalScroll(item) ? 'horizontal' : 'vertical');
             }
-        }
-        else if (element.type == 'password') {
-            item.android.inputType = 'textPassword';
-        }
-        else if (element.tagName == 'IMG') {
-            var image = element.src.substring(element.src.lastIndexOf('/') + 1);
-            var format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
-            var src = image.replace(/.\w+$/, '');
-            switch (format) {
-                case 'bmp':
-                case 'gif':
-                case 'jpg':
-                case 'png':
-                case 'webp':
-                    src = insertResourceAsset(RESOURCE_IMAGE, src, element.src);
-                    break;
-                default:
-                    src = `(UNSUPPORTED: ${image})`;
-            }
-            item.androidSrc = src;
-        }
-        if (item.androidTagName == 'TextView' && item.scroll.overflow) {
-            item.android.scrollbars = (isHorizontalScroll(item) ? 'horizontal' : 'vertical');
         }
     }
     item.renderParent = parent;
@@ -807,55 +815,58 @@ function getElementStyle(element) {
 
 function setAndroidDimensions(item) {
     var element = item.element;
-    var elementStyle = getElementStyle(element);
-    var elementWidth = element.offsetWidth + parseInt(elementStyle.marginLeft) + parseInt(elementStyle.marginLeft);
-    var elementHeight = element.offsetHeight + parseInt(elementStyle.marginTop) + parseInt(elementStyle.marginBottom);
-    var parent = element.parentNode;
-    var parentStyle = getElementStyle(parent);
-    var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
-    var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
-    if (item.androidTagName != 'TextView' && item.scroll.overflow) {
-        item.android.layout_width = 'match_parent';
-    }
-    else if (item.styleMap.width != null) {
-        item.android.layout_width = convertToDP(item.styleMap.width);
-    }
-    else {
-        if (withinRange(parentWidth, elementWidth, 3)) {
+    if (element != null) {
+        var elementStyle = getElementStyle(element);
+        var elementWidth = element.offsetWidth + parseInt(elementStyle.marginLeft) + parseInt(elementStyle.marginLeft);
+        var elementHeight = element.offsetHeight + parseInt(elementStyle.marginTop) + parseInt(elementStyle.marginBottom);
+        var parent = element.parentNode;
+        var parentStyle = getElementStyle(parent);
+        var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
+        var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
+        if (item.androidTagName != 'TextView' && item.scroll.overflow) {
             item.android.layout_width = 'match_parent';
         }
-        else {
-            item.android.layout_width = 'wrap_content';
+        else if (item.styleMap.width != null) {
+            item.android.layout_width = convertToDP(item.styleMap.width);
         }
-        if (MAPPING_ANDROID[element.tagName] != null) {
-            switch (elementStyle.display) {
-                case 'line-item':
-                case 'block':
-                case 'inherit':
-                    item.android.layout_width = 'match_parent';
-                    break;
+        else {
+            if (withinRange(parentWidth, elementWidth, 3)) {
+                item.android.layout_width = 'match_parent';
+            }
+            else {
+                item.android.layout_width = 'wrap_content';
+            }
+            if (MAPPING_ANDROID[element.tagName] != null) {
+                switch (elementStyle.display) {
+                    case 'line-item':
+                    case 'block':
+                    case 'inherit':
+                        item.android.layout_width = 'match_parent';
+                        break;
+                }
             }
         }
-    }
-    if (item.androidTagName != 'TextView' && item.scroll.overflow) {
-        item.android.layout_height = 'match_parent';
-    }
-    else if (item.styleMap.height != null) {
-        item.android.layout_height = convertToDP(item.styleMap.height);
-    }
-    else if (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight) {
-        item.android.layout_height = 'match_parent';
-    }
-    else {
-        item.android.layout_height = 'wrap_content';
+        if (item.androidTagName != 'TextView' && item.scroll.overflow) {
+            item.android.layout_height = 'match_parent';
+        }
+        else if (item.styleMap.height != null) {
+            item.android.layout_height = convertToDP(item.styleMap.height);
+        }
+        else if (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight) {
+            item.android.layout_height = 'match_parent';
+        }
+        else {
+            item.android.layout_height = 'wrap_content';
+        }
     }
 }
 
-function createNode(parent, element, children) {
+function createNode(parent, element, children, properties) {
     var data = {
         id: NODE_CACHE.length,
         element: { id: '' },
         container: element,
+        properties,
         children,
         depth: parent.depth,
         depthIndent: parent.depthIndent,
@@ -863,7 +874,8 @@ function createNode(parent, element, children) {
         renderParent: parent,
         styleMap: element.styleMap,
         android: {},
-        scroll: {}
+        scroll: {},
+        previous: {}
     };
     NODE_CACHE.push(data);
     return data;
@@ -938,7 +950,8 @@ function isLinearXY(siblings) {
     var linearBoundsX = true;
     var linearBoundsY = true;
     if (siblings.length > 1) {
-        siblings.sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1)).forEach(item => {
+        var elements = siblings.slice();
+        elements.sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1)).forEach(item => {
             var bounds = item.bounds;
             if (bounds.bottom < maxTop || bounds.top > minBottom) {
                 linearBoundsX = false;
@@ -946,7 +959,7 @@ function isLinearXY(siblings) {
             maxTop = Math.max(bounds.top, maxTop);
             minBottom = Math.min(bounds.bottom, minBottom);
         });
-        siblings.sort((a, b) => (a.bounds.y >= b.bounds.y ? 1 : -1)).forEach(item => {
+        elements.sort((a, b) => (a.bounds.y >= b.bounds.y ? 1 : -1)).forEach(item => {
             var bounds = item.bounds;
             if (bounds.right < maxLeft || bounds.left > minRight) {
                 linearBoundsY = false;
@@ -1280,14 +1293,14 @@ function setNodeCache() {
                     id: id++,
                     element: element,
                     tagName: element.tagName,
-                    renderParent: null,
                     depth: 0,
+                    children: [],
+                    renderParent: null,
                     depthIndent: 0,
                     style,
                     styleMap,
                     android: {},
                     previous: {},
-                    children: [],
                     scroll: {
                         width: styleMap.width || '',
                         height: styleMap.height || '',
@@ -1405,7 +1418,7 @@ function parseDocument() {
                     var xml = '';
                     if (tagName == null) {
                         if (itemY.children.length > 0) {
-                            if (itemY.children.findIndex(item => getTagName(item) && (item.depth == itemY.depth + 1)) == -1) {
+                            if (itemY.children.findIndex(item => getTagName(item) != null && (item.depth == itemY.depth + 1)) == -1) {
                                 var nextMapX = mapX[itemY.depth + 2];
                                 var nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
                                 if (nextCoordsX.length > 1) {
@@ -1573,7 +1586,7 @@ function parseDocument() {
                             }
                         }
                         else if (itemY.element.innerText.trim() != '') {
-                            tagName = DEFAULT_ANDROID.TEXT;
+                            tagName = LAYOUT_ANDROID.TEXT;
                         }
                         else {
                             continue;
@@ -1581,7 +1594,7 @@ function parseDocument() {
                     }
                     if (!itemY.renderParent) {
                         var element = itemY.element;
-                        if (itemY.parent && itemY.parent.androidTagName == DEFAULT_ANDROID.GRID && itemY.previous.parentId) {
+                        if (itemY.parent && itemY.parent.androidTagName == LAYOUT_ANDROID.GRID && itemY.previous.parentId) {
                             var prevParent = itemY.parent.children.find(item => item.id == itemY.previous.parentId);
                             if (prevParent != null) {
                                 var siblings = prevParent.children.filter(item => !item.renderParent && item.bounds.left >= itemY.bounds.right && item.bounds.right <= itemY.parent.columnEnd[itemY.columnIndex]).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
@@ -1589,6 +1602,19 @@ function parseDocument() {
                                     itemY.previous.depth = itemY.depth;
                                     itemY.depth++;
                                     siblings.unshift(itemY);
+                                    var [linearBoundsX, linearBoundsY] = isLinearXY(siblings);
+                                    var node = createNode(itemY.parent, itemY, siblings, [0]);
+                                    setAndroidProperties(node, (linearBoundsX || linearBoundsY ? LAYOUT_ANDROID.LINEAR : LAYOUT_ANDROID.CONSTRAINT));
+                                    node.android.layout_width = 'wrap_content';
+                                    node.android.layout_height = 'wrap_content';
+                                    if (itemY.android.layout_rowSpan > 1) {
+                                        node.android.layout_rowSpan = itemY.android.layout_rowSpan;
+                                        delete itemY.android.layout_rowSpan;
+                                    }
+                                    if (itemY.android.layout_columnSpan > 1) {
+                                        node.android.layout_columnSpan = itemY.android.layout_columnSpan;
+                                        delete itemY.android.layout_columnSpan;
+                                    }
                                     var rowEnd = false;
                                     var template = siblings.map(item => {
                                         if (!item.renderParent) {
@@ -1610,18 +1636,18 @@ function parseDocument() {
                                             }
                                             item.previous.parent = item.parent;
                                             item.previous.depth = item.depth;
-                                            item.parent = itemY;
+                                            item.parent = node;
                                             item.depth = itemY.depth;
                                             item.siblingWrap = true;
                                             if (item.rowEnd) {
                                                 item.rowEnd = false;
                                                 rowEnd = true;
                                             }
-                                            if (item != itemY && item.children.length > 0) {
-                                                return writeConstraintTemplate(item, itemY.depth + itemY.depthIndent, itemY);
+                                            if (item.children.length > 0) {
+                                                return writeConstraintTemplate(item, itemY.depth + itemY.depthIndent, node);
                                             }
                                             else {
-                                                return writeTagTemplate(item, itemY.depth + itemY.depthIndent, itemY);
+                                                return writeTagTemplate(item, itemY.depth + itemY.depthIndent, node);
                                             }
                                         }
                                         return '';
@@ -1629,7 +1655,13 @@ function parseDocument() {
                                     if (rowEnd) {
                                         itemY.rowEnd = true;
                                     }
-                                    xml += writeConstraintTemplate(itemY, itemY.depth + itemY.depthIndent - 1, itemY.parent).replace(`{${itemY.id}}`, template);
+                                    if (false) {
+                                        xml += writeLinearTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent, linearBoundsY);
+                                    }
+                                    else {
+                                        xml += writeConstraintTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent);
+                                    }
+                                    xml = xml.replace(`{${node.id}}`, template);
                                 }
                             }
                         }
