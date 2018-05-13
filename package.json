@@ -1,6 +1,6 @@
 {
   "name": "chrome-mobile-layouts",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Converts HTML pages by auto-generating it into XML using the various Android layouts. iOS and Xamarin Forms are also to be supported.",
   "main": "layout_xml.js",
   "scripts": {

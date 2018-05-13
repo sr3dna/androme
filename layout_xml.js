@@ -152,6 +152,7 @@ var DENSITY_ANDROID = {
 };
 
 var DENSITY_CURRENT = DENSITY_ANDROID.MDPI;
+var LAYOUT_DEFAULT = LAYOUT_ANDROID.CONSTRAINT;
 
 var NODE_CACHE = [];
 var RENDER_AFTER = {};
@@ -691,9 +692,22 @@ function writeTemplate(item, depth, parent, tagName) {
                     `{:${item.id}}` + afterXml;
 }
 
+function writeDefaultTemplate() {
+    switch (LAYOUT_DEFAULT) {
+        case LAYOUT_ANDROID.CONSTRAINT:
+            return writeConstraintTemplate.apply(null, arguments);
+        case LAYOUT_ANDROID.RELATIVE:
+            return writeRelativeTemplate.apply(null, arguments);
+    }
+}
+
 function writeLinearTemplate(item, depth, parent, vertical) {
     item.android.orientation = (vertical ? 'vertical' : 'horizontal');
     return writeTemplate(item, depth, parent, LAYOUT_ANDROID.LINEAR);
+}
+
+function writeRelativeTemplate(item, depth, parent) {
+    return writeTemplate(item, depth, parent, LAYOUT_ANDROID.RELATIVE);
 }
 
 function writeConstraintTemplate(item, depth, parent) {
@@ -1581,7 +1595,7 @@ function parseDocument() {
                                     }
                                 }
                                 else {
-                                    xml += writeConstraintTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent);
+                                    xml += writeDefaultTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent);
                                 }
                             }
                         }
@@ -1644,7 +1658,7 @@ function parseDocument() {
                                                 rowEnd = true;
                                             }
                                             if (item.children.length > 0) {
-                                                return writeConstraintTemplate(item, itemY.depth + itemY.depthIndent, node);
+                                                return writeDefaultTemplate(item, itemY.depth + itemY.depthIndent, node);
                                             }
                                             else {
                                                 return writeTagTemplate(item, itemY.depth + itemY.depthIndent, node);
@@ -1655,11 +1669,11 @@ function parseDocument() {
                                     if (rowEnd) {
                                         itemY.rowEnd = true;
                                     }
-                                    if (false) {
+                                    if (linearBoundsX || linearBoundsY) {
                                         xml += writeLinearTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent, linearBoundsY);
                                     }
                                     else {
-                                        xml += writeConstraintTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent);
+                                        xml += writeDefaultTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent);
                                     }
                                     xml = xml.replace(`{${node.id}}`, template);
                                 }
