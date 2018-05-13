@@ -815,6 +815,32 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
             if (item.scroll.overflow) {
                 item.android.scrollbars = (isHorizontalScroll(item) ? 'horizontal' : 'vertical');
             }
+            if (item.styleMap.textAlign || item.styleMap.verticalAlign) {
+                var gravity = '';
+                switch (item.style.textAlign) {
+                    case 'right':
+                        gravity += 'end';
+                        break;
+                    case 'center':
+                        gravity += 'center_horizontal';
+                        break;
+                    default:
+                        gravity += 'start';
+                }
+                gravity += '|';
+                switch (item.style.verticalAlign) {
+                    case 'middle':
+                        gravity += 'center_vertical';
+                        break;
+                    case 'bottom':
+                    case 'text-bottom':
+                        gravity += 'bottom';
+                        break;
+                    default:
+                        gravity += 'top';
+                }
+                item.android.gravity = gravity;
+            }
         }
     }
     item.renderParent = parent;
@@ -837,6 +863,8 @@ function setAndroidDimensions(item) {
         var parentStyle = getElementStyle(parent);
         var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
         var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
+        var parentScrollable = (parent.cacheData && parent.cacheData.scroll.overflow != '');
+        var parentGridLayout = (item.parent && item.parent.androidTagName == LAYOUT_ANDROID.GRID);
         if (item.androidTagName != 'TextView' && item.scroll.overflow) {
             item.android.layout_width = 'match_parent';
         }
@@ -844,19 +872,19 @@ function setAndroidDimensions(item) {
             item.android.layout_width = convertToDP(item.styleMap.width);
         }
         else {
-            if (withinRange(parentWidth, elementWidth, 3)) {
+            if (!parentScrollable && !parentGridLayout && withinRange(parentWidth, elementWidth, 3)) {
                 item.android.layout_width = 'match_parent';
             }
             else {
                 item.android.layout_width = 'wrap_content';
-            }
-            if (MAPPING_ANDROID[element.tagName] != null) {
-                switch (elementStyle.display) {
-                    case 'line-item':
-                    case 'block':
-                    case 'inherit':
-                        item.android.layout_width = 'match_parent';
-                        break;
+                if (MAPPING_ANDROID[element.tagName] != null && !parentGridLayout) {
+                    switch (elementStyle.display) {
+                        case 'line-item':
+                        case 'block':
+                        case 'inherit':
+                            item.android.layout_width = 'match_parent';
+                            break;
+                    }
                 }
             }
         }
@@ -866,7 +894,7 @@ function setAndroidDimensions(item) {
         else if (item.styleMap.height != null) {
             item.android.layout_height = convertToDP(item.styleMap.height);
         }
-        else if (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight) {
+        else if (!parentScrollable && !parentGridLayout && (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight)) {
             item.android.layout_height = 'match_parent';
         }
         else {
@@ -957,32 +985,26 @@ function setGridSpacing(item, depth = 0) {
 }
 
 function isLinearXY(siblings) {
-    var maxLeft = Number.MIN_VALUE;
-    var minRight = Number.MAX_VALUE;
-    var maxTop = Number.MIN_VALUE;
-    var minBottom = Number.MAX_VALUE;
-    var linearBoundsX = true;
-    var linearBoundsY = true;
+    var linearX = true;
+    var linearY = true;
     if (siblings.length > 1) {
         var elements = siblings.slice();
-        elements.sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1)).forEach(item => {
-            var bounds = item.bounds;
-            if (bounds.bottom < maxTop || bounds.top > minBottom) {
-                linearBoundsX = false;
+        var minBottom = elements.reduce((a, b) => Math.min(a, b.bounds.bottom), Number.MAX_VALUE);
+        elements.some(item => {
+            if (item.bounds.top >= minBottom) {
+                linearX = false;
+                return true;
             }
-            maxTop = Math.max(bounds.top, maxTop);
-            minBottom = Math.min(bounds.bottom, minBottom);
         });
-        elements.sort((a, b) => (a.bounds.y >= b.bounds.y ? 1 : -1)).forEach(item => {
-            var bounds = item.bounds;
-            if (bounds.right < maxLeft || bounds.left > minRight) {
-                linearBoundsY = false;
+        var minRight = elements.reduce((a, b) => Math.min(a, b.bounds.right), Number.MAX_VALUE);
+        elements.some(item => {
+            if (item.bounds.left >= minRight) {
+                linearY = false;
+                return true;
             }
-            maxLeft = Math.max(bounds.left, maxLeft);
-            minRight = Math.min(bounds.right, minRight);
         });
     }
-    return [linearBoundsX, linearBoundsY];
+    return [linearX, linearY];
 }
 
 function formatString(value, ...params) {
@@ -1583,15 +1605,15 @@ function parseDocument() {
                                 }
                             }
                             if (!itemY.renderParent) {
-                                var [linearBoundsX, linearBoundsY] = isLinearXY(itemY.children.filter(item => (item.depth == itemY.depth + 1)));
-                                if (linearBoundsX || linearBoundsY) {
-                                    if (itemY.children.length > 1 && linearBoundsX && linearBoundsY) {
+                                var [linearX, linearY] = isLinearXY(itemY.children.filter(item => (item.depth == itemY.depth + 1)));
+                                if (linearX || linearY) {
+                                    if (itemY.children.length > 1 && linearX && linearY) {
                                         xml += `{${itemY.id}}`;
                                         itemY.children.forEach(item => item.depthIndent -= 1);
                                         itemY.renderParent = true;
                                     }
                                     else {
-                                        xml += writeLinearTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, linearBoundsY);
+                                        xml += writeLinearTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, linearY);
                                     }
                                 }
                                 else {
@@ -1616,11 +1638,9 @@ function parseDocument() {
                                     itemY.previous.depth = itemY.depth;
                                     itemY.depth++;
                                     siblings.unshift(itemY);
-                                    var [linearBoundsX, linearBoundsY] = isLinearXY(siblings);
+                                    var [linearX, linearY] = isLinearXY(siblings);
                                     var node = createNode(itemY.parent, itemY, siblings, [0]);
-                                    setAndroidProperties(node, (linearBoundsX || linearBoundsY ? LAYOUT_ANDROID.LINEAR : LAYOUT_ANDROID.CONSTRAINT));
-                                    node.android.layout_width = 'wrap_content';
-                                    node.android.layout_height = 'wrap_content';
+                                    setAndroidProperties(node, (linearX || linearY ? LAYOUT_ANDROID.LINEAR : LAYOUT_ANDROID.CONSTRAINT));
                                     if (itemY.android.layout_rowSpan > 1) {
                                         node.android.layout_rowSpan = itemY.android.layout_rowSpan;
                                         delete itemY.android.layout_rowSpan;
@@ -1669,8 +1689,10 @@ function parseDocument() {
                                     if (rowEnd) {
                                         itemY.rowEnd = true;
                                     }
-                                    if (linearBoundsX || linearBoundsY) {
-                                        xml += writeLinearTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent, linearBoundsY);
+                                    node.android.layout_width = 'wrap_content';
+                                    if (linearX || linearY) {
+                                        node.android.layout_height = 'wrap_content';
+                                        xml += writeLinearTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent, linearY);
                                     }
                                     else {
                                         xml += writeDefaultTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent);
