@@ -127,6 +127,11 @@ var WIDGET_ANDROID = {
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceString': PROPERTY_ANDROID['resourceString']
     },
+    'View': {
+        'androidId': 'android:id="@+id/{0}"',
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
+    },
     'Button': {
         'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
@@ -151,8 +156,11 @@ var DENSITY_ANDROID = {
     XXXHDPI: 640
 };
 
-var DENSITY_CURRENT = DENSITY_ANDROID.MDPI;
-var LAYOUT_DEFAULT = LAYOUT_ANDROID.CONSTRAINT;
+var SETTINGS = {
+    density: DENSITY_ANDROID.MDPI,
+    defaultLayout: LAYOUT_ANDROID.CONSTRAINT,
+    showAttributes: true
+};
 
 var NODE_CACHE = [];
 var RENDER_AFTER = {};
@@ -198,9 +206,9 @@ function writeResourceStyleXML() {
     for (var i in RESOURCE_STYLE) {
         for (var j of RESOURCE_STYLE[i]) {
             xml.push(`\t<style name="${j.name}">`);
-            j.properties.split(';').forEach(value => {
-                var [property, setting] = value.split('=');
-                xml.push(`\t\t<item name="${property}">${setting.replace(/"/g, '')}</item>`);
+            j.attributes.split(';').forEach(value => {
+                var [attr, setting] = value.split('=');
+                xml.push(`\t\t<item name="${attr}">${setting.replace(/"/g, '')}</item>`);
             });
             xml.push('\t<style>');
         }
@@ -371,8 +379,8 @@ function setBackgroundStyle(element) {
         var borderStyle = {
             default: 'android:color="@android:color/black"',
             solid: `android:color="${properties.border[2]}"`,
-            dotted: 'android:dashWidth="3dp" android:dashGap="1dp"',
-            dashed: 'android:dashWidth="1dp" android:dashGap="1dp"'
+            dotted: `android:color="${properties.border[2]}" android:dashWidth="3dp" android:dashGap="1dp"`,
+            dashed: `android:color="${properties.border[2]}" android:dashWidth="1dp" android:dashGap="1dp"`
         };
         var xml = '<?xml version="1.0" encoding="utf-8"?>\n';
         if (properties.borderRadius != null) {
@@ -461,11 +469,11 @@ function getBoxSpacing(element, complete) {
     var result = {};
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
-            var property = `${border + side}`;
-            var dimension = getElementStyle(element)[property];
+            var prop = `${border + side}`;
+            var dimension = getElementStyle(element)[prop];
             dimension = (complete ? parseInt(dimension) : convertToDP(dimension));
             if (complete || (dimension != 0 && dimension != '0dp')) {
-                result[property] = dimension;
+                result[prop] = dimension;
             }
         });
     });
@@ -512,14 +520,14 @@ function parseRGBA(value) {
     return null;
 }
 
-function setProperties(item, tagName, actions) {
+function setXmlAttributes(item, tagName, depth, actions) {
     var widget = WIDGET_ANDROID[tagName];
     var element = item.element;
     var result = {};
     if (widget != null) {
         var j = 0;
-        if (actions == null && item.properties != null) {
-            actions = item.properties;
+        if (actions == null && item.actions != null) {
+            actions = item.actions;
         }
         for (var i in widget) {
             if (result[i] != null || (actions != null && !actions.includes(j++))) {
@@ -549,10 +557,10 @@ function setProperties(item, tagName, actions) {
                             if (result[k] != null) {
                                 continue;
                             }
-                            var property = data[k];
-                            if (property != null && property != '') {
-                                if (property.startsWith('rgb')) {
-                                    var rgb = parseRGBA(property);
+                            var attr = data[k];
+                            if (attr != null && attr != '') {
+                                if (attr.startsWith('rgb')) {
+                                    var rgb = parseRGBA(attr);
                                     if (k == 'backgroundColor') {
                                         var backgroundParent = [];
                                         if (element.parentNode != null) {
@@ -563,13 +571,13 @@ function setProperties(item, tagName, actions) {
                                         }
                                     }
                                     if (rgb != null) {
-                                        property = addResourceColor(property.replace(rgb[0], rgb[1]));
+                                        attr = addResourceColor(attr.replace(rgb[0], rgb[1]));
                                     }
                                 }
-                                else if (/(px|pt)$/.test(property)) {
-                                    property = (property.toLowerCase().indexOf('font') != -1 ? convertToSP(property) : convertToDP(property));
+                                else if (/(px|pt)$/.test(attr)) {
+                                    attr = (attr.toLowerCase().indexOf('font') != -1 ? convertToSP(attr) : convertToDP(attr));
                                 }
-                                output.push(widget[i][k].replace('{0}', property));
+                                output.push(widget[i][k].replace('{0}', attr));
                             }
                         }
                         if (output.length > 0) {
@@ -577,8 +585,7 @@ function setProperties(item, tagName, actions) {
                                 if (!RESOURCE_STYLE.has(item.tagName)) {
                                     RESOURCE_STYLE.set(item.tagName, []);
                                 }
-                                RESOURCE_STYLE.get(item.tagName).push({ id: item.id, properties: output });
-                                result[i] = `{@${item.id}}`;
+                                RESOURCE_STYLE.get(item.tagName).push({ id: item.id, attributes: output });
                             }
                             else {
                                 result[i] = output;
@@ -590,56 +597,62 @@ function setProperties(item, tagName, actions) {
         }
     }
     for (var i in item.android) {
-    var property = item.android[i];
-    if (property != null && property != '') {
-        if (typeof property == 'object') {
-            for (var j in property) {
-                result[j] = `android:${i}="@${j}+/${property[j]}"`;
+        var attr = item.android[i];
+        if (attr != null && attr != '') {
+            if (typeof attr == 'object') {
+                for (var j in attr) {
+                    result[j] = `android:${i}="@${j}+/${attr[j]}"`;
+                }
             }
-        }
-        else {
-            result[i] = `android:${i}="${property}"`;
+            else {
+                result[i] = `android:${i}="${attr}"`;
+            }
         }
     }
     if (element.tagName == 'INPUT' && element.id != '') {
-            var nextElement = element.nextElementSibling;
-            if (nextElement && nextElement.htmlFor == element.id) {
-                var properties = setProperties(nextElement.cacheData, getTagName(nextElement.cacheData), [4]);
-                if (item.androidTagName == 'RadioButton') {
-                    nextElement.cacheData.depthIndent++;
-                }
-                for (var name in properties) {
-                    var value = properties[name];
-                    if (result[name] == null && value != '') {
-                        result[name] = value;
-                    }
-                }
-                nextElement.cacheData.renderParent = true;
+        var nextElement = element.nextElementSibling;
+        if (nextElement && nextElement.htmlFor == element.id) {
+            var itemNext = nextElement.cacheData;
+            setXmlAttributes(itemNext, getTagName(itemNext), depth, [4]);
+            if (item.androidTagName == 'RadioButton') {
+                itemNext.depthIndent++;
             }
+            var attributes = itemNext.attributes;
+            for (var name in attributes) {
+                var value = attributes[name];
+                if (result[name] == null && value != '') {
+                    result[name] = value;
+                }
+            }
+            itemNext.invisible = true;
+            itemNext.renderParent = true;
         }
     }
-    return result;
-}
-
-function writeProperties(item, properties, indent = 0) {
-    var result = [];
-    for (var name in properties) {
-        var value = properties[name];
+    for (var attr in result) {
+        var value = result[attr];
         if (value != '') {
             if (Array.isArray(value)) {
-                result.push(...value);
+                item.attributes.push(...value);
             }
             else {
-                result.push(value);
+                item.attributes.push(value);
             }
         }
     }
-    var output = result.map(value => `\n${setIndent(indent) + value}`).join('');
-    output = output.replace('{id}', item.androidId);
-    return output;
+    item.depthAttribute = depth;
 }
 
-function setAndroidProperties(item, tagName) {
+function writeAttributes(xml) {
+    for (var item of NODE_CACHE) {
+        if (item.attributes.length > 0) {
+            var output = item.attributes.sort().map(value => `\n${setIndent(item.depthAttribute) + value}`).join('').replace('{id}', item.androidId);
+            xml = xml.replace(`{@${item.id}}`, output);
+        }
+    }
+    return xml;
+}
+
+function setAndroidAttributes(item, tagName) {
     var element = item.element;
     if (!tagName) {
         tagName = getTagName(item);
@@ -664,7 +677,7 @@ function setAndroidProperties(item, tagName) {
 
 function writeTemplate(item, depth, parent, tagName) {
     var indent = setIndent(depth);
-    setAndroidProperties(item, tagName);
+    setAndroidAttributes(item, tagName);
     if (item.container == null) {
         setAndroidDimensions(item);
     }
@@ -674,26 +687,28 @@ function writeTemplate(item, depth, parent, tagName) {
     if (item.scroll.overflow) {
         item.depthIndent++;
         item.children.forEach(item => item.depthIndent++);
-        var node = createNode(parent, item, [item]);
+        var node = insertNode(item.element, parent, [item]);
         var scrollView = (isHorizontalScroll(item) ? LAYOUT_ANDROID.SCROLL_HORIZONTAL : (item.scroll.nested ? LAYOUT_ANDROID.SCROLL_NESTED : LAYOUT_ANDROID.SCROLL_VERTICAL));
-        setAndroidProperties(node, scrollView);
+        setAndroidAttributes(node, scrollView);
         setAndroidDimensions({ element: item.element, styleMap: item.styleMap, android: node.android, scroll: {} });
-        beforeXml = indent + `<${scrollView}` +
-                             `${writeProperties(node, setProperties(node, scrollView), depth + 1)}{#${node.id}}>\n`;
+        setXmlAttributes(node, scrollView, depth + 1);
+        node.renderParent = parent;
+        beforeXml = indent + `<${scrollView}{@${node.id}}{#${node.id}}>\n`;
         afterXml =  indent + `</${scrollView}>\n`;
-        depth++;
-        indent = setIndent(depth);
+        indent = setIndent(++depth);
     }
-    return setGridSpacing(item, depth) + beforeXml +
-           indent + `<${tagName}` +
-                    `${writeProperties(item, setProperties(item, tagName), depth + 1)}{#${item.id}}>\n` +
-                    `{${item.id}}` +
-           indent + `</${tagName}>\n` +
-                    `{:${item.id}}` + afterXml;
+    setXmlAttributes(item, tagName, depth + 1);
+    return setGridSpacing(item, depth) +
+           beforeXml +
+               indent + `<${tagName}{@${item.id}}{#${item.id}}>\n` +
+                        `{${item.id}}` +
+               indent + `</${tagName}>\n` +
+                        `{:${item.id}}` +
+           afterXml;
 }
 
 function writeDefaultTemplate() {
-    switch (LAYOUT_DEFAULT) {
+    switch (SETTINGS.defaultLayout) {
         case LAYOUT_ANDROID.CONSTRAINT:
             return writeConstraintTemplate.apply(null, arguments);
         case LAYOUT_ANDROID.RELATIVE:
@@ -722,7 +737,7 @@ function writeGridTemplate(item, depth, parent, columnCount = 2) {
 function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) {
     var element = item.element;
     var indent = setIndent(depth);
-    setAndroidProperties(item, tagName);
+    setAndroidAttributes(item, tagName);
     setAndroidDimensions(item);
     if (!recursive) {
         switch (element.type) {
@@ -734,8 +749,8 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     var columnSpan = 1;
                     var rowEndId = item.id;
                     var checked = '';
-                    var node = createNode(parent, item.element, result);
-                    setAndroidProperties(node, LAYOUT_ANDROID.RADIO);
+                    var node = insertNode(item.element, parent, result);
+                    setAndroidAttributes(node, LAYOUT_ANDROID.RADIO);
                     item.radioGroupId = node.id;
                     item.radioGroup = [];
                     for (var input of result) {
@@ -765,8 +780,9 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     if (columnSpan > 1) {
                         node.android.layout_columnSpan = columnSpan;
                     }
-                    xml = indent + `<${LAYOUT_ANDROID.RADIO}` +
-                                   `${writeProperties(node, setProperties(node, LAYOUT_ANDROID.RADIO), depth + 1)}{#${node.id}}>\n` +
+                    setXmlAttributes(node, LAYOUT_ANDROID.RADIO, depth + 1);
+                    node.renderParent = parent;
+                    xml = indent + `<${LAYOUT_ANDROID.RADIO}{@${node.id}}{#${node.id}}>\n` +
                                    xml +
                           indent + `</${LAYOUT_ANDROID.RADIO}>\n` +
                                    `{:${rowEndId}}`;
@@ -810,7 +826,7 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     item.android.scrollHorizontally = 'true';
                 }
                 break;
-        }
+         }
         if (item.androidTagName == 'TextView') {
             if (item.scroll.overflow) {
                 item.android.scrollbars = (isHorizontalScroll(item) ? 'horizontal' : 'vertical');
@@ -843,10 +859,10 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
             }
         }
     }
+    setXmlAttributes(item, item.androidTagName, depth + 1);
     item.renderParent = parent;
-    return setGridSpacing(item, depth) +
-           indent + `<${item.androidTagName}${writeProperties(item, setProperties(item, item.androidTagName), depth + 1)}{#${item.id}} />\n` +
-                    (!item.siblingWrap ? `{:${item.id}}` : '');
+    return setGridSpacing(item, depth) + `${indent}<${item.androidTagName}{@${item.id}}{#${item.id}} />\n` +
+                                         (!item.siblingWrap ? `{:${item.id}}` : '');
 }
 
 function getElementStyle(element) {
@@ -903,19 +919,20 @@ function setAndroidDimensions(item) {
     }
 }
 
-function createNode(parent, element, children, properties) {
+function insertNode(element, parent, children, actions) {
     var data = {
-        id: NODE_CACHE.length,
+        id: NODE_CACHE.length + 1,
         element: { id: '' },
         container: element,
-        properties,
+        actions,
         children,
         depth: parent.depth,
         depthIndent: parent.depthIndent,
         parent: parent,
-        renderParent: parent,
+        renderParent: null,
         styleMap: element.styleMap,
         android: {},
+        attributes: [],
         scroll: {},
         previous: {}
     };
@@ -989,16 +1006,16 @@ function isLinearXY(siblings) {
     var linearY = true;
     if (siblings.length > 1) {
         var elements = siblings.slice();
-        var minBottom = elements.reduce((a, b) => Math.min(a, b.bounds.bottom), Number.MAX_VALUE);
+        var minBottom = elements.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
         elements.some(item => {
-            if (item.bounds.top >= minBottom) {
+            if (item.linear.top >= minBottom) {
                 linearX = false;
                 return true;
             }
         });
-        var minRight = elements.reduce((a, b) => Math.min(a, b.bounds.right), Number.MAX_VALUE);
+        var minRight = elements.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
         elements.some(item => {
-            if (item.bounds.left >= minRight) {
+            if (item.linear.left >= minRight) {
                 linearY = false;
                 return true;
             }
@@ -1048,7 +1065,7 @@ function convertToDP(value, font = false) {
             if (match[0] == 'pt') {
                 value *= (4 / 3);
             }
-            value = (value / (DENSITY_CURRENT / 160));
+            value = (value / (SETTINGS.density / 160));
             if (value >= 1) {
                 value = Math.floor(value);
             }
@@ -1071,15 +1088,15 @@ function withinRange(a, b, n = 1) {
     return (b >= (a - n) && b <= (a + n));
 }
 
-function deleteStyleProperty(sorted, cacheIds, property) {
-    var properties = property.split(';');
-    for (var property of properties) {
+function deleteStyleAttribute(sorted, cacheIds, attribute) {
+    var attributes = attribute.split(';');
+    for (var attr of attributes) {
         for (var j = 0; j < sorted.length; j++) {
             if (sorted[j] != null) {
                 var index = -1;
                 var key = null;
                 for (var k in sorted[j]) {
-                    if (k == property) {
+                    if (k == attr) {
                         index = j;
                         key = k;
                         j = sorted.length;
@@ -1102,28 +1119,28 @@ function setStyleMap() {
     for (var styleSheet of document.styleSheets) {
         for (var rule of styleSheet.rules) {
             var elements = document.querySelectorAll(rule.selectorText);
-            var properties = new Set();
+            var attributes = new Set();
             for (var i of rule.styleMap) {
-                properties.add(hyphenToCamelCase(i[0]));
+                attributes.add(hyphenToCamelCase(i[0]));
             }
             for (var element of elements) {
                 for (var i of element.style) {
-                    properties.add(hyphenToCamelCase(i));
+                    attributes.add(hyphenToCamelCase(i));
                 }
                 var style = getElementStyle(element);
                 var styleMap = {};
-                for (var property of properties) {
-                    if (property.toLowerCase().indexOf('color') != -1) {
-                        var color = getColorByName(rule.style[property]);
+                for (var attr of attributes) {
+                    if (attr.toLowerCase().indexOf('color') != -1) {
+                        var color = getColorByName(rule.style[attr]);
                         if (color != null) {
-                            rule.style[property] = convertColorToRGB(color);
+                            rule.style[attr] = convertColorToRGB(color);
                         }
                     }
-                    if (element.style[property] != null && element.style[property] != '') {
-                        styleMap[property] = element.style[property];
+                    if (element.style[attr] != null && element.style[attr] != '') {
+                        styleMap[attr] = element.style[attr];
                     }
-                    else if (style[property] == rule.style[property]) {
-                        styleMap[property] = style[property];
+                    else if (style[attr] == rule.style[attr]) {
+                        styleMap[attr] = style[attr];
                     }
                 }
                 element.styleMap = styleMap;
@@ -1132,18 +1149,18 @@ function setStyleMap() {
     }
 }
 
-function setResourceStyle(xml) {
+function setResourceStyle() {
     var style = {};
     var layout = {};
     for (var [i, j] of RESOURCE_STYLE.entries()) {
-        var sorted = Array.from({ length: j.reduce((a, b) => Math.max(a, b.properties.length), 0) }, v => v = {});
+        var sorted = Array.from({ length: j.reduce((a, b) => Math.max(a, b.attributes.length), 0) }, v => v = {});
         for (var k of j) {
-            for (var l = 0; l < k.properties.length; l++) {
-                var property = k.properties[l];
-                if (sorted[l][property] == null) {
-                    sorted[l][property] = [];
+            for (var l = 0; l < k.attributes.length; l++) {
+                var attr = k.attributes[l];
+                if (sorted[l][attr] == null) {
+                    sorted[l][attr] = [];
                 }
-                sorted[l][property].push(k.id);
+                sorted[l][attr].push(k.id);
             }
         }
         style[i] = {};
@@ -1151,12 +1168,12 @@ function setResourceStyle(xml) {
         do {
             if (sorted.length == 1) {
                 for (var k in sorted[0]) {
-                    var property = sorted[0][k];
-                    if (property.length > 2) {
-                        style[i][k] = property;
+                    var attr = sorted[0][k];
+                    if (attr.length > 2) {
+                        style[i][k] = attr;
                     }
                     else {
-                        layout[i][k] = property;
+                        layout[i][k] = attr;
                     }
                 }
                 sorted.length = 0;
@@ -1170,18 +1187,18 @@ function setResourceStyle(xml) {
                         if (sorted[k] == null) {
                             continue;
                         }
-                        var property = sorted[k][l];
+                        var attr = sorted[k][l];
                         var revalidate = false;
-                        if (property == null) {
+                        if (attr == null) {
                             continue;
                         }
-                        else if (property.length == j.length) {
-                            styleKey[l] = property;
+                        else if (attr.length == j.length) {
+                            styleKey[l] = attr;
                             sorted[k] = null;
                             revalidate = true;
                         }
-                        else if (property.length == 1) {
-                            layoutKey[l] = property;
+                        else if (attr.length == 1) {
+                            layoutKey[l] = attr;
                             sorted[k] = null;
                             revalidate = true;
                         }
@@ -1191,12 +1208,12 @@ function setResourceStyle(xml) {
                                 if (k != m) {
                                     for (var n in sorted[m]) {
                                         var compare = sorted[m][n];
-                                        for (var o = 0; o < property.length; o++) {
-                                            if (compare.includes(property[o])) {
+                                        for (var o = 0; o < attr.length; o++) {
+                                            if (compare.includes(attr[o])) {
                                                 if (found[n] == null) {
                                                     found[n] = [];
                                                 }
-                                                found[n].push(property[o]);
+                                                found[n].push(attr[o]);
                                             }
                                         }
                                     }
@@ -1227,14 +1244,14 @@ function setResourceStyle(xml) {
                     }
                     deleteKeys.forEach(value => delete filtered[value]);
                     for (var l in filtered) {
-                        deleteStyleProperty(sorted, filtered[l], l);
+                        deleteStyleAttribute(sorted, filtered[l], l);
                         style[i][l] = filtered[l];
                     }
                     for (var l in combined) {
                         var ids = l.split(',').map(m => parseInt(m));
-                        var property = Array.from(combined[l]).sort().join(';');
-                        deleteStyleProperty(sorted, ids, property);
-                        style[i][property] = ids;
+                        var attr = Array.from(combined[l]).sort().join(';');
+                        deleteStyleAttribute(sorted, ids, attr);
+                        style[i][attr] = ids;
                     }
                 }
                 var combined = Object.keys(styleKey);
@@ -1257,13 +1274,13 @@ function setResourceStyle(xml) {
     var resource = {};
     for (var tag in style) {
         resource[tag] = [];
-        for (var properties in style[tag]) {
-            resource[tag].push({ properties, ids: style[tag][properties]});
+        for (var attributes in style[tag]) {
+            resource[tag].push({ attributes, ids: style[tag][attributes]});
         }
         resource[tag].sort((a, b) => {
             var [c, d] = [a.ids.length, b.ids.length];
             if (c == d) {
-                [c, d] = [a.properties.split(';').length, b.properties.split(';').length];
+                [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
             }
             return (c >= d ? -1 : 1);
         });
@@ -1274,9 +1291,6 @@ function setResourceStyle(xml) {
         var tagName = item.tagName;
         var styleTag = resource[tagName];
         var layoutTag = layout[tagName];
-        var styleXml = '';
-        var layoutXml = '';
-        var indent = setIndent(item.depth + item.depthIndent + 1);
         if (styleTag != null) {
             var styles = [];
             for (var tag of styleTag) {
@@ -1286,27 +1300,45 @@ function setResourceStyle(xml) {
             }
             item.androidStyle = styles.join('.');
             if (item.androidStyle != '') {
-                styleXml = `${indent}style="@style/${item.androidStyle}"\n`;
+                item.attributes.push(`style="@style/${item.androidStyle}"`);
             }
         }
         if (layoutTag != null) {
             for (var tag in layoutTag) {
                 if (layoutTag[tag].includes(item.id)) {
-                    layoutXml += `${indent + tag}\n`;
+                    item.attributes.push(tag);
                 }
             }
         }
-        if (styleXml != '' || layoutXml != '') {
-            xml = xml.replace(new RegExp(`\t*{@${item.id}}\n*`), styleXml + layoutXml);
-        }
     }
-    return xml;
+}
+
+function setLinearRect(item) {
+    var bounds = item.bounds;
+    var linear = {
+        top: bounds.top,
+        right: bounds.right,
+        bottom: bounds.bottom,
+        left: bounds.left
+    };
+    if (item.style.marginTop != '0px') {
+        linear.top -= parseInt(item.style.marginTop);
+    }
+    if (item.style.marginBottom != '0px') {
+        linear.bottom += parseInt(item.style.marginBottom);
+    }
+    if (item.style.marginLeft != '0px') {
+        linear.left -= parseInt(item.style.marginLeft);
+    }
+    if (item.style.marginRight != '0px') {
+        linear.right += parseInt(item.style.marginRight);
+    }
+    item.linear = linear;
 }
 
 function setNodeCache() {
     var elements = document.querySelectorAll('body > *');
     var selector = 'body *';
-    var id = 1;
     for (var i in elements) {
         if (MAPPING_ANDROID[elements[i].tagName] != null) {
             selector = 'body, body *';
@@ -1326,16 +1358,17 @@ function setNodeCache() {
                     styleMap[hyphenToCamelCase(i)] = element.style[i];
                 }
                 var data = {
-                    id: id++,
+                    id: NODE_CACHE.length + 1,
                     element: element,
                     tagName: element.tagName,
-                    depth: 0,
                     children: [],
                     renderParent: null,
+                    depth: 0,
                     depthIndent: 0,
                     style,
                     styleMap,
                     android: {},
+                    attributes: [],
                     previous: {},
                     scroll: {
                         width: styleMap.width || '',
@@ -1366,11 +1399,13 @@ function setNodeCache() {
     for (var parent of NODE_CACHE) {
         if (parent.bounds == null) {
             parent.bounds = parent.element.getBoundingClientRect();
+            setLinearRect(parent);
         }
         for (var child of NODE_CACHE) {
             if (parent != child) {
                 if (child.bounds == null) {
                     child.bounds = child.element.getBoundingClientRect();
+                    setLinearRect(child);
                 }
                 if (child.bounds.left >= parent.bounds.left && child.bounds.right <= parent.bounds.right && child.bounds.top >= parent.bounds.top && child.bounds.bottom <= parent.bounds.bottom) {
                     child.parent = parent;
@@ -1639,8 +1674,8 @@ function parseDocument() {
                                     itemY.depth++;
                                     siblings.unshift(itemY);
                                     var [linearX, linearY] = isLinearXY(siblings);
-                                    var node = createNode(itemY.parent, itemY, siblings, [0]);
-                                    setAndroidProperties(node, (linearX || linearY ? LAYOUT_ANDROID.LINEAR : LAYOUT_ANDROID.CONSTRAINT));
+                                    var node = insertNode(itemY.element, itemY.parent, siblings, [0]);
+                                    setAndroidAttributes(node, (linearX || linearY ? LAYOUT_ANDROID.LINEAR : LAYOUT_ANDROID.CONSTRAINT));
                                     if (itemY.android.layout_rowSpan > 1) {
                                         node.android.layout_rowSpan = itemY.android.layout_rowSpan;
                                         delete itemY.android.layout_rowSpan;
@@ -1731,7 +1766,10 @@ function parseDocument() {
     for (var i in RENDER_AFTER) {
         output = output.replace(`{:${i}}`, RENDER_AFTER[i].join(''));
     }
-    output = setResourceStyle(output);
+    setResourceStyle();
+    if (SETTINGS.showAttributes) {
+        output = writeAttributes(output);
+    }
     output = output.replace(/{[:@#]{1}[0-9]+}/g, '');
     return output;
 }

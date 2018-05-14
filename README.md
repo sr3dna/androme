@@ -27,588 +27,588 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	android:id="@+id/linearlayout1"
+	android:layout_height="match_parent"
 	android:layout_marginTop="20dp"
-	android:orientation="vertical"
 	android:layout_width="wrap_content"
-	android:layout_height="match_parent">
+	android:orientation="vertical">
 	<TextView
 		android:id="@+id/textview1"
-		style="@style/H2_1"
+		android:layout_height="wrap_content"
 		android:layout_paddingHorizontal="8dp"
 		android:layout_paddingVertical="5dp"
-		android:text="@string/entry"
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content" />
+		android:text="@string/entry"
+		style="@style/H2_1" />
 	<ScrollView
 		android:id="@+id/scrollview1"
-		android:layout_width="match_parent"
-		android:layout_height="255dp">
+		android:layout_height="255dp"
+		android:layout_width="match_parent">
 		<LinearLayout
-			android:id="@+id/entry"
 			android:background="@drawable/form_entry"
+			android:id="@+id/entry"
+			android:layout_height="match_parent"
 			android:layout_paddingHorizontal="10dp"
 			android:layout_paddingVertical="10dp"
-			android:orientation="vertical"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent">
+			android:orientation="vertical">
 			<GridLayout
-				android:id="@+id/gridlayout1"
 				android:columnCount="2"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content">
+				android:id="@+id/gridlayout1"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content">
 				<TextView
 					android:id="@+id/textview2"
-					style="@style/Label_1"
+					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
 					android:layout_paddingTop="3dp"
-					android:text="@string/order"
 					android:layout_width="100dp"
-					android:layout_height="wrap_content" />
+					android:text="@string/order"
+					style="@style/Label_1" />
 				<EditText
-					android:id="@+id/order"
 					android:background="@drawable/input_order"
-					style="@style/Input_1.Input_3"
+					android:id="@+id/order"
+					android:layout_height="wrap_content"
 					android:layout_paddingVertical="1dp"
 					android:layout_width="40dp"
-					android:layout_height="wrap_content" />
+					style="@style/Input_1.Input_3" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview3"
-					style="@style/Label_1"
+					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
 					android:layout_paddingTop="3dp"
-					android:text="@string/date_add"
 					android:layout_width="100dp"
-					android:layout_height="wrap_content" />
+					android:text="@string/date_add"
+					style="@style/Label_1" />
 				<ConstraintLayout
 					android:id="@+id/constraintlayout1"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content">
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content">
 					<Spinner
-						android:id="@+id/month0"
 						android:background="@drawable/select_month0"
-						style="@style/Select_1"
-						android:layout_paddingTop="1dp"
-						android:layout_paddingBottom="2dp"
 						android:entries="@array/month0_array"
+						android:id="@+id/month0"
+						android:layout_height="wrap_content"
+						android:layout_paddingBottom="2dp"
+						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
-						android:layout_height="wrap_content" />
+						style="@style/Select_1" />
 					<Spinner
-						android:id="@+id/year0"
 						android:background="@drawable/select_year0"
-						style="@style/Select_1"
-						android:layout_marginTop="4dp"
-						android:layout_paddingTop="1dp"
-						android:layout_paddingBottom="2dp"
 						android:entries="@array/year0_array"
-						android:layout_width="wrap_content"
-						android:layout_height="wrap_content" />
-					<Spinner
-						android:id="@+id/day0"
-						android:background="@drawable/select_day0"
-						style="@style/Select_1"
-						android:layout_paddingTop="1dp"
+						android:id="@+id/year0"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="4dp"
 						android:layout_paddingBottom="2dp"
-						android:entries="@array/day0_array"
+						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
-						android:layout_height="wrap_content" />
+						style="@style/Select_1" />
+					<Spinner
+						android:background="@drawable/select_day0"
+						android:entries="@array/day0_array"
+						android:id="@+id/day0"
+						android:layout_height="wrap_content"
+						android:layout_paddingBottom="2dp"
+						android:layout_paddingTop="1dp"
+						android:layout_width="wrap_content"
+						style="@style/Select_1" />
 				</ConstraintLayout>
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview4"
-					style="@style/Label_1"
+					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
 					android:layout_paddingTop="3dp"
-					android:text="@string/time"
 					android:layout_width="100dp"
-					android:layout_height="wrap_content" />
+					android:text="@string/time"
+					style="@style/Label_1" />
 				<LinearLayout
 					android:id="@+id/linearlayout2"
-					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
 					android:orientation="horizontal">
 					<Spinner
-						android:id="@+id/hour"
 						android:background="@drawable/select_hour"
-						style="@style/Select_1"
-						android:layout_paddingTop="1dp"
-						android:layout_paddingBottom="2dp"
 						android:entries="@array/hour_array"
-						android:layout_width="wrap_content"
-						android:layout_height="match_parent" />
-					<Spinner
-						android:id="@+id/minute"
-						android:background="@drawable/select_minute"
-						style="@style/Select_1"
-						android:layout_paddingTop="1dp"
+						android:id="@+id/hour"
+						android:layout_height="match_parent"
 						android:layout_paddingBottom="2dp"
-						android:entries="@array/minute_array"
+						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
-						android:layout_height="match_parent" />
+						style="@style/Select_1" />
+					<Spinner
+						android:background="@drawable/select_minute"
+						android:entries="@array/minute_array"
+						android:id="@+id/minute"
+						android:layout_height="match_parent"
+						android:layout_paddingBottom="2dp"
+						android:layout_paddingTop="1dp"
+						android:layout_width="wrap_content"
+						style="@style/Select_1" />
 				</LinearLayout>
 				<TextView
 					android:id="@+id/textview5"
-					style="@style/Label_1"
+					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
 					android:layout_paddingTop="3dp"
-					android:text="@string/type"
 					android:layout_width="100dp"
-					android:layout_height="wrap_content" />
+					android:text="@string/type"
+					style="@style/Label_1" />
 				<Spinner
-					android:id="@+id/typeofentry"
 					android:background="@drawable/select_typeofentry"
-					style="@style/Select_1"
-					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
 					android:entries="@array/typeofentry_array"
+					android:id="@+id/typeofentry"
+					android:layout_height="wrap_content"
+					android:layout_paddingBottom="2dp"
+					android:layout_paddingTop="1dp"
 					android:layout_width="wrap_content"
-					android:layout_height="wrap_content" />
+					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview6"
-					style="@style/Label_1"
+					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
 					android:layout_paddingTop="3dp"
-					android:text="@string/topic_add"
 					android:layout_width="100dp"
-					android:layout_height="wrap_content" />
+					android:text="@string/topic_add"
+					style="@style/Label_1" />
 				<LinearLayout
 					android:id="@+id/linearlayout3"
-					android:orientation="horizontal"
+					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:layout_height="wrap_content">
+					android:orientation="horizontal">
 					<EditText
-						android:id="@+id/topic0"
 						android:background="@drawable/input_topic0"
-						style="@style/Input_1.Input_3"
+						android:id="@+id/topic0"
+						android:layout_height="match_parent"
 						android:layout_marginRight="5dp"
 						android:layout_paddingVertical="1dp"
 						android:layout_width="130dp"
-						android:layout_height="match_parent" />
+						style="@style/Input_1.Input_3" />
 					<Spinner
-						android:id="@+id/prominence0"
 						android:background="@drawable/select_prominence0"
-						style="@style/Select_1"
-						android:layout_paddingTop="1dp"
-						android:layout_paddingBottom="2dp"
 						android:entries="@array/prominence0_array"
+						android:id="@+id/prominence0"
+						android:layout_height="match_parent"
+						android:layout_paddingBottom="2dp"
+						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
-						android:layout_height="match_parent" />
+						style="@style/Select_1" />
 				</LinearLayout>
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview7"
-					style="@style/Label_1"
+					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
 					android:layout_paddingTop="3dp"
-					android:text="@string/series"
 					android:layout_width="100dp"
-					android:layout_height="wrap_content" />
+					android:text="@string/series"
+					style="@style/Label_1" />
 				<Spinner
-					android:id="@+id/series"
 					android:background="@drawable/select_series"
-					style="@style/Select_1"
-					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
 					android:entries="@array/series_array"
+					android:id="@+id/series"
+					android:layout_height="wrap_content"
+					android:layout_paddingBottom="2dp"
+					android:layout_paddingTop="1dp"
 					android:layout_width="wrap_content"
-					android:layout_height="wrap_content" />
+					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview8"
-					style="@style/Label_1"
+					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
 					android:layout_paddingTop="3dp"
-					android:text="@string/subset"
 					android:layout_width="100dp"
-					android:layout_height="wrap_content" />
+					android:text="@string/subset"
+					style="@style/Label_1" />
 				<Spinner
-					android:id="@+id/subset"
 					android:background="@drawable/select_subset"
-					style="@style/Select_1"
-					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
 					android:entries="@array/subset_array"
+					android:id="@+id/subset"
+					android:layout_height="wrap_content"
+					android:layout_paddingBottom="2dp"
+					android:layout_paddingTop="1dp"
 					android:layout_width="wrap_content"
-					android:layout_height="wrap_content" />
+					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview9"
-					style="@style/Label_1"
+					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
 					android:layout_paddingTop="3dp"
-					android:text="@string/active"
 					android:layout_width="100dp"
-					android:layout_height="wrap_content" />
+					android:text="@string/active"
+					style="@style/Label_1" />
 				<Spinner
-					android:id="@+id/entryactive"
 					android:background="@drawable/select_entryactive"
-					style="@style/Select_1"
-					android:layout_paddingTop="1dp"
-					android:layout_paddingBottom="2dp"
 					android:entries="@array/entryactive_array"
+					android:id="@+id/entryactive"
+					android:layout_height="wrap_content"
+					android:layout_paddingBottom="2dp"
+					android:layout_paddingTop="1dp"
 					android:layout_width="wrap_content"
-					android:layout_height="wrap_content" />
+					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 			</GridLayout>
 			<Button
-				android:id="@+id/button1"
 				android:background="@drawable/input_button1"
-				style="@style/Input_1.Input_2"
-				android:textSize="12dp"
+				android:id="@+id/button1"
+				android:layout_height="wrap_content"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
-				android:text="@string/add"
 				android:layout_width="wrap_content"
-				android:layout_height="wrap_content" />
+				android:text="@string/add"
+				android:textSize="12dp"
+				style="@style/Input_1.Input_2" />
 		</LinearLayout>
 	</ScrollView>
 	<GridLayout
-		android:id="@+id/gridlayout2"
 		android:columnCount="3"
-		android:layout_width="500dp"
-		android:layout_height="wrap_content">
+		android:id="@+id/gridlayout2"
+		android:layout_height="wrap_content"
+		android:layout_width="500dp">
 		<TextView
 			android:id="@+id/textview10"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/series"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/series"
+			style="@style/Label_1" />
 		<Spinner
-			android:id="@+id/spinner1"
 			android:background="@drawable/select_spinner1"
-			style="@style/Select_1"
-			android:layout_paddingTop="1dp"
-			android:layout_paddingBottom="2dp"
 			android:entries="@array/spinner1_array"
+			android:id="@+id/spinner1"
 			android:layout_columnSpan="2"
+			android:layout_height="wrap_content"
+			android:layout_paddingBottom="2dp"
+			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" />
+			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview11"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/subset"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/subset"
+			style="@style/Label_1" />
 		<Spinner
-			android:id="@+id/spinner2"
 			android:background="@drawable/select_spinner2"
-			style="@style/Select_1"
-			android:layout_paddingTop="1dp"
-			android:layout_paddingBottom="2dp"
 			android:entries="@array/spinner2_array"
+			android:id="@+id/spinner2"
 			android:layout_columnSpan="2"
+			android:layout_height="wrap_content"
+			android:layout_paddingBottom="2dp"
+			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" />
+			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview12"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/entries"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/entries"
+			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout4"
 			android:layout_columnSpan="2"
-			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
-				android:id="@+id/spinner3"
 				android:background="@drawable/select_spinner3"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
+				android:id="@+id/spinner3"
+				android:layout_height="match_parent"
 				android:layout_paddingBottom="2dp"
+				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				style="@style/Select_1" />
 			<Button
-				android:id="@+id/button2"
 				android:background="@drawable/input_button2"
-				style="@style/Input_1.Input_5"
+				android:id="@+id/button2"
+				android:layout_height="match_parent"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
+				android:layout_width="wrap_content"
 				android:text="@string/open"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				style="@style/Input_1.Input_5" />
 			<Button
-				android:id="@+id/button3"
 				android:background="@drawable/input_button3"
-				style="@style/Input_1.Input_5"
+				android:id="@+id/button3"
+				android:layout_height="match_parent"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
-				android:text="@string/all"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				android:text="@string/all"
+				style="@style/Input_1.Input_5" />
 		</LinearLayout>
 		<TextView
 			android:id="@+id/textview13"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/mode"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/mode"
+			style="@style/Label_1" />
 		<Spinner
-			android:id="@+id/mode"
 			android:background="@drawable/select_mode"
-			style="@style/Select_1"
-			android:layout_paddingTop="1dp"
-			android:layout_paddingBottom="2dp"
 			android:entries="@array/mode_array"
+			android:id="@+id/mode"
 			android:layout_columnSpan="2"
+			android:layout_height="wrap_content"
+			android:layout_paddingBottom="2dp"
+			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" />
+			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview14"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/style"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/style"
+			style="@style/Label_1" />
 		<Spinner
-			android:id="@+id/style"
-			android:background="@drawable/select_style"
-			style="@style/Select_1"
-			android:layout_paddingTop="1dp"
-			android:layout_paddingBottom="2dp"
-			android:entries="@array/style_array"
+			android:background="@drawable/select_style1"
+			android:entries="@array/style1_array"
+			android:id="@+id/style1"
 			android:layout_columnSpan="2"
+			android:layout_height="wrap_content"
+			android:layout_paddingBottom="2dp"
+			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" />
+			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview15"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/calendar"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/calendar"
+			style="@style/Label_1" />
 		<Spinner
-			android:id="@+id/calendar"
 			android:background="@drawable/select_calendar"
-			style="@style/Select_1"
-			android:layout_paddingTop="1dp"
-			android:layout_paddingBottom="2dp"
 			android:entries="@array/calendar_array"
+			android:id="@+id/calendar"
 			android:layout_columnSpan="2"
+			android:layout_height="wrap_content"
+			android:layout_paddingBottom="2dp"
+			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" />
+			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview16"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/version"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/version"
+			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout5"
 			android:layout_columnSpan="2"
-			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
-				android:id="@+id/version"
 				android:background="@drawable/select_version"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="2dp"
 				android:entries="@array/version_array"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
-			<Spinner
-				android:id="@+id/version_update"
-				android:background="@drawable/select_version_update"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
+				android:id="@+id/version"
+				android:layout_height="match_parent"
 				android:layout_paddingBottom="2dp"
-				android:entries="@array/version_update_array"
+				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				style="@style/Select_1" />
+			<Spinner
+				android:background="@drawable/select_version_update"
+				android:entries="@array/version_update_array"
+				android:id="@+id/version_update"
+				android:layout_height="match_parent"
+				android:layout_paddingBottom="2dp"
+				android:layout_paddingTop="1dp"
+				android:layout_width="wrap_content"
+				style="@style/Select_1" />
 			<Button
-				android:id="@+id/button4"
 				android:background="@drawable/input_button4"
-				style="@style/Input_1.Input_2"
+				android:id="@+id/button4"
+				android:layout_height="match_parent"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
-				android:text="@string/update"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				android:text="@string/update"
+				style="@style/Input_1.Input_2" />
 		</LinearLayout>
 		<TextView
 			android:id="@+id/textview17"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/branch"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/branch"
+			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout6"
 			android:layout_columnSpan="2"
-			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
-				android:id="@+id/branch"
 				android:background="@drawable/select_branch"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="2dp"
 				android:entries="@array/branch_array"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
-			<Spinner
-				android:id="@+id/branch_update"
-				android:background="@drawable/select_branch_update"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
+				android:id="@+id/branch"
+				android:layout_height="match_parent"
 				android:layout_paddingBottom="2dp"
+				android:layout_paddingTop="1dp"
+				android:layout_width="wrap_content"
+				style="@style/Select_1" />
+			<Spinner
+				android:background="@drawable/select_branch_update"
 				android:entries="@array/branch_update_array"
+				android:id="@+id/branch_update"
+				android:layout_height="match_parent"
+				android:layout_paddingBottom="2dp"
+				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				style="@style/Select_1" />
 			<Button
-				android:id="@+id/button5"
 				android:background="@drawable/input_button5"
-				style="@style/Input_1.Input_2"
+				android:id="@+id/button5"
+				android:layout_height="match_parent"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
+				android:layout_width="wrap_content"
 				android:text="@string/update"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				style="@style/Input_1.Input_2" />
 			<Button
-				android:id="@+id/button6"
 				android:background="@drawable/input_button6"
-				style="@style/Input_1.Input_2"
+				android:id="@+id/button6"
+				android:layout_height="match_parent"
 				android:layout_paddingHorizontal="6dp"
 				android:layout_paddingVertical="1dp"
-				android:text="@string/clone"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				android:text="@string/clone"
+				style="@style/Input_1.Input_2" />
 		</LinearLayout>
 		<TextView
 			android:id="@+id/textview18"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/custom_add"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/custom_add"
+			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout7"
 			android:layout_columnSpan="2"
-			android:orientation="horizontal"
+			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content">
+			android:orientation="horizontal">
 			<EditText
-				android:id="@+id/customname0"
 				android:background="@drawable/input_customname0"
-				style="@style/Input_1.Input_3"
+				android:id="@+id/customname0"
+				android:layout_height="match_parent"
 				android:layout_marginRight="5dp"
 				android:layout_paddingVertical="1dp"
 				android:layout_width="130dp"
-				android:layout_height="match_parent" />
+				style="@style/Input_1.Input_3" />
 			<Spinner
-				android:id="@+id/custommonth0"
 				android:background="@drawable/select_custommonth0"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="2dp"
 				android:entries="@array/custommonth0_array"
-				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
-			<Spinner
-				android:id="@+id/customday0"
-				android:background="@drawable/select_customday0"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
+				android:id="@+id/custommonth0"
+				android:layout_height="match_parent"
 				android:layout_paddingBottom="2dp"
-				android:entries="@array/customday0_array"
+				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				style="@style/Select_1" />
+			<Spinner
+				android:background="@drawable/select_customday0"
+				android:entries="@array/customday0_array"
+				android:id="@+id/customday0"
+				android:layout_height="match_parent"
+				android:layout_paddingBottom="2dp"
+				android:layout_paddingTop="1dp"
+				android:layout_width="wrap_content"
+				style="@style/Select_1" />
 			<EditText
-				android:id="@+id/customyear0"
 				android:background="@drawable/input_customyear0"
-				style="@style/Input_1.Input_3"
+				android:id="@+id/customyear0"
+				android:layout_height="match_parent"
 				android:layout_paddingVertical="1dp"
 				android:layout_width="40dp"
-				android:layout_height="match_parent" />
+				style="@style/Input_1.Input_3" />
 		</LinearLayout>
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview19"
-			style="@style/Label_1"
+			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
 			android:layout_paddingTop="3dp"
-			android:text="@string/conclusion"
 			android:layout_width="100dp"
-			android:layout_height="wrap_content" />
+			android:text="@string/conclusion"
+			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout8"
-			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
-				android:id="@+id/person"
 				android:background="@drawable/select_person"
-				style="@style/Select_1"
-				android:layout_paddingTop="1dp"
-				android:layout_paddingBottom="2dp"
 				android:entries="@array/person_array"
+				android:id="@+id/person"
+				android:layout_height="match_parent"
+				android:layout_paddingBottom="2dp"
+				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
-				android:layout_height="match_parent" />
+				style="@style/Select_1" />
 			<RadioGroup
-				android:id="@+id/radiogroup1"
-				android:checkedButton="@id+/c2">
+				android:checkedButton="@id+/c2"
+				android:id="@+id/radiogroup1">
 				<RadioButton
 					android:id="@+id/c2"
-					style="@style/Input_1.Input_4"
-					android:layout_marginTop="3dp"
-					android:layout_marginRight="3dp"
+					android:layout_height="match_parent"
 					android:layout_marginLeft="5dp"
+					android:layout_marginRight="3dp"
+					android:layout_marginTop="3dp"
 					android:layout_width="wrap_content"
 					android:text="@string/birth"
-					android:layout_height="match_parent" />
+					style="@style/Input_1.Input_4" />
 				<RadioButton
 					android:id="@+id/c3"
-					style="@style/Input_1.Input_4"
-					android:layout_marginTop="3dp"
-					android:layout_marginRight="3dp"
+					android:layout_height="match_parent"
 					android:layout_marginLeft="5dp"
+					android:layout_marginRight="3dp"
+					android:layout_marginTop="3dp"
 					android:layout_width="wrap_content"
 					android:text="@string/death"
-					android:layout_height="match_parent" />
+					style="@style/Input_1.Input_4" />
 			</RadioGroup>
 			<CheckBox
 				android:id="@+id/c4"
-				style="@style/Input_1.Input_4"
-				android:layout_marginRight="3dp"
+				android:layout_height="match_parent"
 				android:layout_marginLeft="4dp"
+				android:layout_marginRight="3dp"
 				android:layout_marginVertical="3dp"
 				android:layout_width="wrap_content"
 				android:text="@string/none"
-				android:layout_height="match_parent" />
+				style="@style/Input_1.Input_4" />
 		</LinearLayout>
 		<Button
-			android:id="@+id/button7"
 			android:background="@drawable/input_button7"
-			style="@style/Input_1.Input_2"
+			android:id="@+id/button7"
+			android:layout_height="wrap_content"
 			android:layout_paddingHorizontal="6dp"
 			android:layout_paddingVertical="1dp"
-			android:text="@string/update"
 			android:layout_width="wrap_content"
-			android:layout_height="wrap_content" />
+			android:text="@string/update"
+			style="@style/Input_1.Input_2" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 	</GridLayout>
 </LinearLayout>
