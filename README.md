@@ -1,6 +1,6 @@
 ## chrome-mobile-layouts
 
-The program can convert moderately complex HTML pages into XML layouts for Android. ConstraintLayout or RelativeLayout for positional layouts can be generated into the XML based on your preference. iOS and Xamarin Forms can also be supported on request. Ideally it is supposed to be hosted inside a Chrome browser plugin. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. ConstraintLayout or RelativeLayout for positional views can be generated into the XML based on your preference. iOS and Xamarin Forms can also be supported on request once the Android version is stable. Ideally it will be hosted inside a Chrome browser plugin. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
 
 Some modification might be necessary to use these scripts in your webpage. I have only tested it with the latest Chrome.
 
@@ -34,9 +34,9 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 	<TextView
 		android:id="@+id/textview1"
 		android:layout_height="wrap_content"
-		android:layout_paddingHorizontal="8dp"
-		android:layout_paddingVertical="5dp"
 		android:layout_width="match_parent"
+		android:paddingHorizontal="8dp"
+		android:paddingVertical="5dp"
 		android:text="@string/entry"
 		style="@style/H2_1" />
 	<ScrollView
@@ -44,132 +44,143 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 		android:layout_height="255dp"
 		android:layout_width="match_parent">
 		<LinearLayout
-			android:background="@drawable/form_entry"
 			android:id="@+id/entry"
+			android:background="@drawable/form_entry"
 			android:layout_height="match_parent"
-			android:layout_paddingHorizontal="10dp"
-			android:layout_paddingVertical="10dp"
 			android:layout_width="match_parent"
-			android:orientation="vertical">
+			android:orientation="vertical"
+			android:paddingHorizontal="10dp"
+			android:paddingVertical="10dp">
 			<GridLayout
-				android:columnCount="2"
 				android:id="@+id/gridlayout1"
+				android:columnCount="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content">
 				<TextView
 					android:id="@+id/textview2"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_paddingTop="3dp"
 					android:layout_width="100dp"
+					android:paddingTop="3dp"
 					android:text="@string/order"
 					style="@style/Label_1" />
 				<EditText
-					android:background="@drawable/input_order"
 					android:id="@+id/order"
+					android:background="@drawable/input_order"
 					android:layout_height="wrap_content"
-					android:layout_paddingVertical="1dp"
 					android:layout_width="40dp"
+					android:paddingVertical="1dp"
 					style="@style/Input_1.Input_3" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview3"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_paddingTop="3dp"
 					android:layout_width="100dp"
+					android:paddingTop="3dp"
 					android:text="@string/date_add"
 					style="@style/Label_1" />
-				<ConstraintLayout
-					android:id="@+id/constraintlayout1"
+				<RelativeLayout
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content">
 					<Spinner
+						android:id="@+id/month0"
 						android:background="@drawable/select_month0"
 						android:entries="@array/month0_array"
-						android:id="@+id/month0"
 						android:layout_height="wrap_content"
-						android:layout_paddingBottom="2dp"
-						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
-						style="@style/Select_1" />
+						android:paddingBottom="2dp"
+						android:paddingTop="1dp"
+						style="@style/Select_1"
+						android:layout_above="@+id/year0"
+						android:layout_alignParentStart="true"
+						android:layout_alignParentTop="true"
+						android:layout_alignStart="@+id/year0"
+						android:layout_alignTop="@+id/day0"
+						android:layout_toStartOf="@+id/day0" />
 					<Spinner
-						android:background="@drawable/select_year0"
-						android:entries="@array/year0_array"
-						android:id="@+id/year0"
-						android:layout_height="wrap_content"
-						android:layout_marginTop="4dp"
-						android:layout_paddingBottom="2dp"
-						android:layout_paddingTop="1dp"
-						android:layout_width="wrap_content"
-						style="@style/Select_1" />
-					<Spinner
+						android:id="@+id/day0"
 						android:background="@drawable/select_day0"
 						android:entries="@array/day0_array"
-						android:id="@+id/day0"
 						android:layout_height="wrap_content"
-						android:layout_paddingBottom="2dp"
-						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
-						style="@style/Select_1" />
-				</ConstraintLayout>
+						android:paddingBottom="2dp"
+						android:paddingTop="1dp"
+						style="@style/Select_1"
+						android:layout_above="@+id/year0"
+						android:layout_alignParentTop="true"
+						android:layout_alignTop="@+id/month0"
+						android:layout_toEndOf="@+id/month0" />
+					<Spinner
+						android:id="@+id/year0"
+						android:background="@drawable/select_year0"
+						android:entries="@array/year0_array"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="4dp"
+						android:layout_width="wrap_content"
+						android:paddingBottom="2dp"
+						android:paddingTop="1dp"
+						style="@style/Select_1"
+						android:layout_alignParentBottom="true"
+						android:layout_alignParentStart="true"
+						android:layout_alignStart="@+id/month0"
+						android:layout_below="@+id/month0" />
+				</RelativeLayout>
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview4"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_paddingTop="3dp"
 					android:layout_width="100dp"
+					android:paddingTop="3dp"
 					android:text="@string/time"
 					style="@style/Label_1" />
 				<LinearLayout
 					android:id="@+id/linearlayout2"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
 					android:orientation="horizontal">
 					<Spinner
+						android:id="@+id/hour"
 						android:background="@drawable/select_hour"
 						android:entries="@array/hour_array"
-						android:id="@+id/hour"
 						android:layout_height="wrap_content"
-						android:layout_paddingBottom="2dp"
-						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
+						android:paddingBottom="2dp"
+						android:paddingTop="1dp"
 						style="@style/Select_1" />
 					<Spinner
+						android:id="@+id/minute"
 						android:background="@drawable/select_minute"
 						android:entries="@array/minute_array"
-						android:id="@+id/minute"
 						android:layout_height="wrap_content"
-						android:layout_paddingBottom="2dp"
-						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
+						android:paddingBottom="2dp"
+						android:paddingTop="1dp"
 						style="@style/Select_1" />
 				</LinearLayout>
 				<TextView
 					android:id="@+id/textview5"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_paddingTop="3dp"
 					android:layout_width="100dp"
+					android:paddingTop="3dp"
 					android:text="@string/type"
 					style="@style/Label_1" />
 				<Spinner
+					android:id="@+id/typeofentry"
 					android:background="@drawable/select_typeofentry"
 					android:entries="@array/typeofentry_array"
-					android:id="@+id/typeofentry"
 					android:layout_height="wrap_content"
-					android:layout_paddingBottom="2dp"
-					android:layout_paddingTop="1dp"
 					android:layout_width="wrap_content"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
 					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview6"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_paddingTop="3dp"
 					android:layout_width="100dp"
+					android:paddingTop="3dp"
 					android:text="@string/topic_add"
 					style="@style/Label_1" />
 				<LinearLayout
@@ -178,21 +189,21 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 					android:layout_width="wrap_content"
 					android:orientation="horizontal">
 					<EditText
-						android:background="@drawable/input_topic0"
 						android:id="@+id/topic0"
+						android:background="@drawable/input_topic0"
 						android:layout_height="wrap_content"
 						android:layout_marginRight="5dp"
-						android:layout_paddingVertical="1dp"
 						android:layout_width="130dp"
+						android:paddingVertical="1dp"
 						style="@style/Input_1.Input_3" />
 					<Spinner
+						android:id="@+id/prominence0"
 						android:background="@drawable/select_prominence0"
 						android:entries="@array/prominence0_array"
-						android:id="@+id/prominence0"
 						android:layout_height="wrap_content"
-						android:layout_paddingBottom="2dp"
-						android:layout_paddingTop="1dp"
 						android:layout_width="wrap_content"
+						android:paddingBottom="2dp"
+						android:paddingTop="1dp"
 						style="@style/Select_1" />
 				</LinearLayout>
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
@@ -200,150 +211,148 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 					android:id="@+id/textview7"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_paddingTop="3dp"
 					android:layout_width="100dp"
+					android:paddingTop="3dp"
 					android:text="@string/series"
 					style="@style/Label_1" />
 				<Spinner
+					android:id="@+id/series"
 					android:background="@drawable/select_series"
 					android:entries="@array/series_array"
-					android:id="@+id/series"
 					android:layout_height="wrap_content"
-					android:layout_paddingBottom="2dp"
-					android:layout_paddingTop="1dp"
 					android:layout_width="wrap_content"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
 					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview8"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_paddingTop="3dp"
 					android:layout_width="100dp"
+					android:paddingTop="3dp"
 					android:text="@string/subset"
 					style="@style/Label_1" />
 				<Spinner
+					android:id="@+id/subset"
 					android:background="@drawable/select_subset"
 					android:entries="@array/subset_array"
-					android:id="@+id/subset"
 					android:layout_height="wrap_content"
-					android:layout_paddingBottom="2dp"
-					android:layout_paddingTop="1dp"
 					android:layout_width="wrap_content"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
 					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 				<TextView
 					android:id="@+id/textview9"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_paddingTop="3dp"
 					android:layout_width="100dp"
+					android:paddingTop="3dp"
 					android:text="@string/active"
 					style="@style/Label_1" />
 				<Spinner
+					android:id="@+id/entryactive"
 					android:background="@drawable/select_entryactive"
 					android:entries="@array/entryactive_array"
-					android:id="@+id/entryactive"
 					android:layout_height="wrap_content"
-					android:layout_paddingBottom="2dp"
-					android:layout_paddingTop="1dp"
 					android:layout_width="wrap_content"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
 					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
 			</GridLayout>
 			<Button
-				android:background="@drawable/input_button1"
 				android:id="@+id/button1"
+				android:background="@drawable/input_button1"
 				android:layout_height="wrap_content"
-				android:layout_paddingHorizontal="6dp"
-				android:layout_paddingVertical="1dp"
 				android:layout_width="wrap_content"
+				android:paddingHorizontal="6dp"
+				android:paddingVertical="1dp"
 				android:text="@string/add"
 				android:textSize="12dp"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
 	</ScrollView>
 	<GridLayout
-		android:columnCount="3"
 		android:id="@+id/gridlayout2"
+		android:columnCount="3"
 		android:layout_height="wrap_content"
-		android:layout_width="500dp">
+		android:layout_width="match_parent">
 		<TextView
 			android:id="@+id/textview10"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/series"
 			style="@style/Label_1" />
 		<Spinner
+			android:id="@+id/spinner1"
 			android:background="@drawable/select_spinner1"
 			android:entries="@array/spinner1_array"
-			android:id="@+id/spinner1"
 			android:layout_columnSpan="2"
 			android:layout_height="wrap_content"
-			android:layout_paddingBottom="2dp"
-			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
+			android:paddingBottom="2dp"
+			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview11"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/subset"
 			style="@style/Label_1" />
 		<Spinner
+			android:id="@+id/spinner2"
 			android:background="@drawable/select_spinner2"
 			android:entries="@array/spinner2_array"
-			android:id="@+id/spinner2"
 			android:layout_columnSpan="2"
 			android:layout_height="wrap_content"
-			android:layout_paddingBottom="2dp"
-			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
+			android:paddingBottom="2dp"
+			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview12"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/entries"
 			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout4"
 			android:layout_columnSpan="2"
-			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
-				android:background="@drawable/select_spinner3"
 				android:id="@+id/spinner3"
+				android:background="@drawable/select_spinner3"
 				android:layout_height="wrap_content"
-				android:layout_paddingBottom="2dp"
-				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
-				android:background="@drawable/input_button2"
 				android:id="@+id/button2"
+				android:background="@drawable/input_button2"
 				android:layout_height="wrap_content"
-				android:layout_paddingHorizontal="6dp"
-				android:layout_paddingVertical="1dp"
 				android:layout_width="wrap_content"
+				android:paddingHorizontal="6dp"
+				android:paddingVertical="1dp"
 				android:text="@string/open"
 				style="@style/Input_1.Input_5" />
 			<Button
-				android:background="@drawable/input_button3"
 				android:id="@+id/button3"
+				android:background="@drawable/input_button3"
 				android:layout_height="wrap_content"
-				android:layout_paddingHorizontal="6dp"
-				android:layout_paddingVertical="1dp"
 				android:layout_width="wrap_content"
+				android:paddingHorizontal="6dp"
+				android:paddingVertical="1dp"
 				android:text="@string/all"
 				style="@style/Input_1.Input_5" />
 		</LinearLayout>
@@ -351,98 +360,96 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:id="@+id/textview13"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/mode"
 			style="@style/Label_1" />
 		<Spinner
+			android:id="@+id/mode"
 			android:background="@drawable/select_mode"
 			android:entries="@array/mode_array"
-			android:id="@+id/mode"
 			android:layout_columnSpan="2"
 			android:layout_height="wrap_content"
-			android:layout_paddingBottom="2dp"
-			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
+			android:paddingBottom="2dp"
+			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview14"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/style"
 			style="@style/Label_1" />
 		<Spinner
+			android:id="@+id/style"
 			android:background="@drawable/select_style"
 			android:entries="@array/style_array"
-			android:id="@+id/style"
 			android:layout_columnSpan="2"
 			android:layout_height="wrap_content"
-			android:layout_paddingBottom="2dp"
-			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
+			android:paddingBottom="2dp"
+			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview15"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/calendar"
 			style="@style/Label_1" />
 		<Spinner
+			android:id="@+id/calendar"
 			android:background="@drawable/select_calendar"
 			android:entries="@array/calendar_array"
-			android:id="@+id/calendar"
 			android:layout_columnSpan="2"
 			android:layout_height="wrap_content"
-			android:layout_paddingBottom="2dp"
-			android:layout_paddingTop="1dp"
 			android:layout_width="wrap_content"
+			android:paddingBottom="2dp"
+			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
 		<TextView
 			android:id="@+id/textview16"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/version"
 			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout5"
 			android:layout_columnSpan="2"
-			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
+				android:id="@+id/version"
 				android:background="@drawable/select_version"
 				android:entries="@array/version_array"
-				android:id="@+id/version"
 				android:layout_height="wrap_content"
-				android:layout_paddingBottom="2dp"
-				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Spinner
+				android:id="@+id/version_update"
 				android:background="@drawable/select_version_update"
 				android:entries="@array/version_update_array"
-				android:id="@+id/version_update"
 				android:layout_height="wrap_content"
-				android:layout_paddingBottom="2dp"
-				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
-				android:background="@drawable/input_button4"
 				android:id="@+id/button4"
+				android:background="@drawable/input_button4"
 				android:layout_height="wrap_content"
-				android:layout_paddingHorizontal="6dp"
-				android:layout_paddingVertical="1dp"
 				android:layout_width="wrap_content"
+				android:paddingHorizontal="6dp"
+				android:paddingVertical="1dp"
 				android:text="@string/update"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
@@ -450,50 +457,48 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:id="@+id/textview17"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/branch"
 			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout6"
 			android:layout_columnSpan="2"
-			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
+				android:id="@+id/branch"
 				android:background="@drawable/select_branch"
 				android:entries="@array/branch_array"
-				android:id="@+id/branch"
 				android:layout_height="wrap_content"
-				android:layout_paddingBottom="2dp"
-				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Spinner
+				android:id="@+id/branch_update"
 				android:background="@drawable/select_branch_update"
 				android:entries="@array/branch_update_array"
-				android:id="@+id/branch_update"
 				android:layout_height="wrap_content"
-				android:layout_paddingBottom="2dp"
-				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
-				android:background="@drawable/input_button5"
 				android:id="@+id/button5"
+				android:background="@drawable/input_button5"
 				android:layout_height="wrap_content"
-				android:layout_paddingHorizontal="6dp"
-				android:layout_paddingVertical="1dp"
 				android:layout_width="wrap_content"
+				android:paddingHorizontal="6dp"
+				android:paddingVertical="1dp"
 				android:text="@string/update"
 				style="@style/Input_1.Input_2" />
 			<Button
-				android:background="@drawable/input_button6"
 				android:id="@+id/button6"
+				android:background="@drawable/input_button6"
 				android:layout_height="wrap_content"
-				android:layout_paddingHorizontal="6dp"
-				android:layout_paddingVertical="1dp"
 				android:layout_width="wrap_content"
+				android:paddingHorizontal="6dp"
+				android:paddingVertical="1dp"
 				android:text="@string/clone"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
@@ -501,8 +506,8 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:id="@+id/textview18"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/custom_add"
 			style="@style/Label_1" />
 		<LinearLayout
@@ -512,37 +517,37 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<EditText
-				android:background="@drawable/input_customname0"
 				android:id="@+id/customname0"
+				android:background="@drawable/input_customname0"
 				android:layout_height="wrap_content"
 				android:layout_marginRight="5dp"
-				android:layout_paddingVertical="1dp"
 				android:layout_width="130dp"
+				android:paddingVertical="1dp"
 				style="@style/Input_1.Input_3" />
 			<Spinner
+				android:id="@+id/custommonth0"
 				android:background="@drawable/select_custommonth0"
 				android:entries="@array/custommonth0_array"
-				android:id="@+id/custommonth0"
 				android:layout_height="wrap_content"
-				android:layout_paddingBottom="2dp"
-				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Spinner
+				android:id="@+id/customday0"
 				android:background="@drawable/select_customday0"
 				android:entries="@array/customday0_array"
-				android:id="@+id/customday0"
 				android:layout_height="wrap_content"
-				android:layout_paddingBottom="2dp"
-				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<EditText
-				android:background="@drawable/input_customyear0"
 				android:id="@+id/customyear0"
+				android:background="@drawable/input_customyear0"
 				android:layout_height="wrap_content"
-				android:layout_paddingVertical="1dp"
 				android:layout_width="40dp"
+				android:paddingVertical="1dp"
 				style="@style/Input_1.Input_3" />
 		</LinearLayout>
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
@@ -550,27 +555,25 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:id="@+id/textview19"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_paddingTop="3dp"
 			android:layout_width="100dp"
+			android:paddingTop="3dp"
 			android:text="@string/conclusion"
 			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout8"
-			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
+				android:id="@+id/person"
 				android:background="@drawable/select_person"
 				android:entries="@array/person_array"
-				android:id="@+id/person"
 				android:layout_height="wrap_content"
-				android:layout_paddingBottom="2dp"
-				android:layout_paddingTop="1dp"
 				android:layout_width="wrap_content"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<RadioGroup
-				android:checkedButton="@id+/c2"
-				android:id="@+id/radiogroup1">
+				android:id="@+id/radiogroup1"
+				android:checkedButton="@id+/c2">
 				<RadioButton
 					android:id="@+id/c2"
 					android:layout_height="wrap_content"
@@ -601,12 +604,12 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				style="@style/Input_1.Input_4" />
 		</LinearLayout>
 		<Button
-			android:background="@drawable/input_button7"
 			android:id="@+id/button7"
+			android:background="@drawable/input_button7"
 			android:layout_height="wrap_content"
-			android:layout_paddingHorizontal="6dp"
-			android:layout_paddingVertical="1dp"
 			android:layout_width="wrap_content"
+			android:paddingHorizontal="6dp"
+			android:paddingVertical="1dp"
 			android:text="@string/update"
 			style="@style/Input_1.Input_2" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="3" />
