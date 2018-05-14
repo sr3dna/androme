@@ -94,7 +94,8 @@ var WIDGET_ANDROID = {
         'androidId': 'android:id="@+id/{0}"'
     },
     'RadioGroup': {
-        'androidId': 'android:id="@+id/{0}"'
+        'androidId': 'android:id="@+id/{0}"',
+        'androidCheckedButton': 'android:checkedButton="@id+/{0}"'
     },
     'RadioButton': {
         'androidId': 'android:id="@+id/{0}"',
@@ -207,8 +208,8 @@ function writeResourceStyleXML() {
         for (var j of RESOURCE_STYLE[i]) {
             xml.push(`\t<style name="${j.name}">`);
             j.attributes.split(';').forEach(value => {
-                var [attr, setting] = value.split('=');
-                xml.push(`\t\t<item name="${attr}">${setting.replace(/"/g, '')}</item>`);
+                var [name, setting] = value.split('=');
+                xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
             });
             xml.push('\t<style>');
         }
@@ -533,13 +534,13 @@ function setXmlAttributes(item, tagName, depth, actions) {
             if (result[i] != null || (actions != null && !actions.includes(j++))) {
                 continue;
             }
-            if (item[i] != null) {
+            if (hasValue(item[i])) {
                 result[i] = widget[i].replace('{0}', item[i]);
             }
             else if (i.indexOf('.') != -1) {
                 var objectNames = i.split('.');
                 var method = window;
-                var methodName = null;
+                var methodName = '';
                 for (var k of objectNames) {
                     if (k == 'window') {
                         continue;
@@ -557,10 +558,10 @@ function setXmlAttributes(item, tagName, depth, actions) {
                             if (result[k] != null) {
                                 continue;
                             }
-                            var attr = data[k];
-                            if (attr != null && attr != '') {
-                                if (attr.startsWith('rgb')) {
-                                    var rgb = parseRGBA(attr);
+                            var value = data[k];
+                            if (hasValue(value)) {
+                                if (value.startsWith('rgb')) {
+                                    var rgb = parseRGBA(value);
                                     if (k == 'backgroundColor') {
                                         var backgroundParent = [];
                                         if (element.parentNode != null) {
@@ -571,13 +572,13 @@ function setXmlAttributes(item, tagName, depth, actions) {
                                         }
                                     }
                                     if (rgb != null) {
-                                        attr = addResourceColor(attr.replace(rgb[0], rgb[1]));
+                                        value = addResourceColor(value.replace(rgb[0], rgb[1]));
                                     }
                                 }
-                                else if (/(px|pt)$/.test(attr)) {
-                                    attr = (attr.toLowerCase().indexOf('font') != -1 ? convertToSP(attr) : convertToDP(attr));
+                                else if (/(px|pt)$/.test(value)) {
+                                    value = (value.toLowerCase().indexOf('font') != -1 ? convertToSP(value) : convertToDP(value));
                                 }
-                                output.push(widget[i][k].replace('{0}', attr));
+                                output.push(widget[i][k].replace('{0}', value));
                             }
                         }
                         if (output.length > 0) {
@@ -597,16 +598,9 @@ function setXmlAttributes(item, tagName, depth, actions) {
         }
     }
     for (var i in item.android) {
-        var attr = item.android[i];
-        if (attr != null && attr != '') {
-            if (typeof attr == 'object') {
-                for (var j in attr) {
-                    result[j] = `android:${i}="@${j}+/${attr[j]}"`;
-                }
-            }
-            else {
-                result[i] = `android:${i}="${attr}"`;
-            }
+        var value = item.android[i];
+        if (hasValue(value)) {
+            result[i] = `android:${i}="${value}"`;
         }
     }
     if (element.tagName == 'INPUT' && element.id != '') {
@@ -620,7 +614,7 @@ function setXmlAttributes(item, tagName, depth, actions) {
             var attributes = itemNext.attributes;
             for (var name in attributes) {
                 var value = attributes[name];
-                if (result[name] == null && value != '') {
+                if (result[name] == null && hasValue(value)) {
                     result[name] = value;
                 }
             }
@@ -628,9 +622,9 @@ function setXmlAttributes(item, tagName, depth, actions) {
             itemNext.renderParent = true;
         }
     }
-    for (var attr in result) {
-        var value = result[attr];
-        if (value != '') {
+    for (var i in result) {
+        var value = result[i];
+        if (hasValue(value)) {
             if (Array.isArray(value)) {
                 item.attributes.push(...value);
             }
@@ -640,6 +634,10 @@ function setXmlAttributes(item, tagName, depth, actions) {
         }
     }
     item.depthAttribute = depth;
+}
+
+function hasValue(value) {
+    return (value != null && value != '');
 }
 
 function writeAttributes(xml) {
@@ -698,13 +696,7 @@ function writeTemplate(item, depth, parent, tagName) {
         indent = setIndent(++depth);
     }
     setXmlAttributes(item, tagName, depth + 1);
-    return setGridSpacing(item, depth) +
-           beforeXml +
-               indent + `<${tagName}{@${item.id}}{#${item.id}}>\n` +
-                        `{${item.id}}` +
-               indent + `</${tagName}>\n` +
-                        `{:${item.id}}` +
-           afterXml;
+    return setGridSpacing(item, depth) + beforeXml + getEnclosingTag(indent, tagName, item.id, `{${item.id}}`) + afterXml;
 }
 
 function writeDefaultTemplate() {
@@ -773,7 +765,7 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                             rowEndId = input.id;
                         }
                     }
-                    node.android.checkedButton = { id: checked };
+                    node.androidCheckedButton = checked;
                     if (rowSpan > 1) {
                         node.android.layout_rowSpan = rowSpan;
                     }
@@ -782,11 +774,7 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     }
                     setXmlAttributes(node, LAYOUT_ANDROID.RADIO, depth + 1);
                     node.renderParent = parent;
-                    xml = indent + `<${LAYOUT_ANDROID.RADIO}{@${node.id}}{#${node.id}}>\n` +
-                                   xml +
-                          indent + `</${LAYOUT_ANDROID.RADIO}>\n` +
-                                   `{:${rowEndId}}`;
-                    return xml;
+                    return getEnclosingTag(indent, LAYOUT_ANDROID.RADIO, node.id, xml);
                 }
                 break;
             case 'password':
@@ -816,8 +804,8 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                 if (element.rows > 2) {
                     item.android.maxLines = element.rows;
                 }
-                if (element.maxlength) {
-                    item.android.maxLength = element.maxlength;
+                if (element.maxlength != null) {
+                    item.android.maxLength = parseInt(element.maxlength);
                 }
                 item.android.hint = element.placeholder;
                 item.android.scrollbars = 'vertical'
@@ -826,43 +814,64 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     item.android.scrollHorizontally = 'true';
                 }
                 break;
-         }
-        if (item.androidTagName == 'TextView') {
-            if (item.scroll.overflow) {
-                item.android.scrollbars = (isHorizontalScroll(item) ? 'horizontal' : 'vertical');
-            }
-            if (item.styleMap.textAlign || item.styleMap.verticalAlign) {
-                var gravity = '';
-                switch (item.style.textAlign) {
-                    case 'right':
-                        gravity += 'end';
-                        break;
-                    case 'center':
-                        gravity += 'center_horizontal';
-                        break;
-                    default:
-                        gravity += 'start';
+        }
+        switch (item.androidTagName) {
+            case 'TextView':
+                if (item.scroll.overflow) {
+                    item.android.scrollbars = (isHorizontalScroll(item) ? 'horizontal' : 'vertical');
                 }
-                gravity += '|';
-                switch (item.style.verticalAlign) {
-                    case 'middle':
-                        gravity += 'center_vertical';
-                        break;
-                    case 'bottom':
-                    case 'text-bottom':
-                        gravity += 'bottom';
-                        break;
-                    default:
-                        gravity += 'top';
+            case 'EditText':
+                var textAlign = item.styleMap.textAlign;
+                var verticalAlign = item.styleMap.verticalAlign;
+                if (item.parent.androidTagName == LAYOUT_ANDROID.GRID) {
+                    var container = item.previous.parent || item.parent;
+                    if (textAlign == null) {
+                        textAlign = container.styleMap.textAlign;
+                    }
+                    if (verticalAlign == null) {
+                        verticalAlign = container.styleMap.verticalAlign;
+                    }
                 }
-                item.android.gravity = gravity;
-            }
+                if (textAlign || verticalAlign) {
+                    var gravity = '';
+                    switch (textAlign) {
+                        case 'right':
+                            gravity += 'end';
+                            break;
+                        case 'center':
+                            gravity += 'center_horizontal';
+                            break;
+                        default:
+                            gravity += 'start';
+                    }
+                    gravity += '|';
+                    switch (verticalAlign) {
+                        case 'middle':
+                            gravity += 'center_vertical';
+                            break;
+                        case 'bottom':
+                        case 'text-bottom':
+                            gravity += 'bottom';
+                            break;
+                        default:
+                            gravity += 'top';
+                    }
+                    item.android.gravity = gravity;
+                }
+                break;
         }
     }
     setXmlAttributes(item, item.androidTagName, depth + 1);
     item.renderParent = parent;
     return setGridSpacing(item, depth) + `${indent}<${item.androidTagName}{@${item.id}}{#${item.id}} />\n` +
                                          (!item.siblingWrap ? `{:${item.id}}` : '');
+}
+
+function getEnclosingTag(indent, tagName, id, content = '') {
+    return indent + `<${tagName}{@${id}}{#${id}}>\n` +
+                    content +
+           indent + `</${tagName}>\n` +
+                    `{:${id}}`;
 }
 
 function getElementStyle(element) {
@@ -872,9 +881,9 @@ function getElementStyle(element) {
 function setAndroidDimensions(item) {
     var element = item.element;
     if (element != null) {
-        var elementStyle = getElementStyle(element);
-        var elementWidth = element.offsetWidth + parseInt(elementStyle.marginLeft) + parseInt(elementStyle.marginLeft);
-        var elementHeight = element.offsetHeight + parseInt(elementStyle.marginTop) + parseInt(elementStyle.marginBottom);
+        var style = getElementStyle(element);
+        var width = element.offsetWidth + parseInt(style.marginLeft) + parseInt(style.marginLeft);
+        var height = element.offsetHeight + parseInt(style.marginTop) + parseInt(style.marginBottom);
         var parent = element.parentNode;
         var parentStyle = getElementStyle(parent);
         var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
@@ -888,20 +897,28 @@ function setAndroidDimensions(item) {
             item.android.layout_width = convertToDP(item.styleMap.width);
         }
         else {
-            if (!parentScrollable && !parentGridLayout && withinRange(parentWidth, elementWidth, 3)) {
-                item.android.layout_width = 'match_parent';
-            }
-            else {
-                item.android.layout_width = 'wrap_content';
-                if (MAPPING_ANDROID[element.tagName] != null && !parentGridLayout) {
-                    switch (elementStyle.display) {
-                        case 'line-item':
-                        case 'block':
-                        case 'inherit':
-                            item.android.layout_width = 'match_parent';
-                            break;
+            switch (item.tagName) {
+                case 'INPUT':
+                case 'SELECT':
+                case 'BUTTON':
+                    item.android.layout_width = 'wrap_content';
+                    break;
+                default:
+                    if (!parentScrollable && !parentGridLayout && withinRange(parentWidth, width, 3)) {
+                        item.android.layout_width = 'match_parent';
                     }
-                }
+                    else {
+                        item.android.layout_width = 'wrap_content';
+                        if (MAPPING_ANDROID[element.tagName] != null && !parentGridLayout) {
+                            switch (style.display) {
+                                case 'line-item':
+                                case 'block':
+                                case 'inherit':
+                                    item.android.layout_width = 'match_parent';
+                                    break;
+                            }
+                        }
+                    }
             }
         }
         if (item.androidTagName != 'TextView' && item.scroll.overflow) {
@@ -910,11 +927,21 @@ function setAndroidDimensions(item) {
         else if (item.styleMap.height != null) {
             item.android.layout_height = convertToDP(item.styleMap.height);
         }
-        else if (!parentScrollable && !parentGridLayout && (withinRange(parentHeight, elementHeight, 3) || elementHeight > parentHeight)) {
-            item.android.layout_height = 'match_parent';
-        }
         else {
-            item.android.layout_height = 'wrap_content';
+            switch (item.tagName) {
+                case 'INPUT':
+                case 'SELECT':
+                case 'BUTTON':
+                    item.android.layout_height = 'wrap_content';
+                    break;
+                default:
+                    if (!parentScrollable && !parentGridLayout && (withinRange(parentHeight, height, 3) || height > parentHeight)) {
+                        item.android.layout_height = 'match_parent';
+                    }
+                    else {
+                        item.android.layout_height = 'wrap_content';
+                    }
+            }
         }
     }
 }
@@ -973,13 +1000,13 @@ function setGridSpacing(item, depth = 0) {
     var indent = setIndent(depth);
     var xml = '';
     if (item.previous.parent != null && item.previous.parent.invisible) {
+        var template = `${indent}<Space android:layout_width="match_parent" android:layout_height="{0}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
         var dimensions = getBoxSpacing(item.previous.parent.element, true);
         item.grid = {};
         if (item.rowStart) {
             item.grid.paddingLeft = dimensions.marginLeft + dimensions.paddingLeft;
             item.grid.paddingRight = dimensions.marginRight + dimensions.paddingRight;
         }
-        var template = `${indent}<Space android:layout_width="match_parent" android:layout_height="{0}dp" android:layout_columnSpan="${item.renderParent.columnCount}" />\n`;
         if (item.rowEnd) {
             var heightBottom =  dimensions.marginBottom + dimensions.paddingBottom + (!item.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             if (heightBottom > 0) {
@@ -1088,15 +1115,14 @@ function withinRange(a, b, n = 1) {
     return (b >= (a - n) && b <= (a + n));
 }
 
-function deleteStyleAttribute(sorted, cacheIds, attribute) {
-    var attributes = attribute.split(';');
-    for (var attr of attributes) {
+function deleteStyleAttribute(sorted, attributes, nodeIds) {
+    attributes.split(';').forEach(value => {
         for (var j = 0; j < sorted.length; j++) {
             if (sorted[j] != null) {
                 var index = -1;
-                var key = null;
+                var key = '';
                 for (var k in sorted[j]) {
-                    if (k == attr) {
+                    if (k == value) {
                         index = j;
                         key = k;
                         j = sorted.length;
@@ -1104,7 +1130,7 @@ function deleteStyleAttribute(sorted, cacheIds, attribute) {
                     }
                 }
                 if (index != -1) {
-                    sorted[index][key] = sorted[index][key].filter(value => !cacheIds.includes(value));
+                    sorted[index][key] = sorted[index][key].filter(value => !nodeIds.includes(value));
                     if (sorted[index][key].length == 0) {
                         delete sorted[index][key];
                     }
@@ -1112,7 +1138,7 @@ function deleteStyleAttribute(sorted, cacheIds, attribute) {
                 }
             }
         }
-    }
+    });
 }
 
 function setStyleMap() {
@@ -1129,18 +1155,18 @@ function setStyleMap() {
                 }
                 var style = getElementStyle(element);
                 var styleMap = {};
-                for (var attr of attributes) {
-                    if (attr.toLowerCase().indexOf('color') != -1) {
-                        var color = getColorByName(rule.style[attr]);
+                for (var name of attributes) {
+                    if (name.toLowerCase().indexOf('color') != -1) {
+                        var color = getColorByName(rule.style[name]);
                         if (color != null) {
-                            rule.style[attr] = convertColorToRGB(color);
+                            rule.style[name] = convertColorToRGB(color);
                         }
                     }
-                    if (element.style[attr] != null && element.style[attr] != '') {
-                        styleMap[attr] = element.style[attr];
+                    if (element.style[name] != null && element.style[name] != '') {
+                        styleMap[name] = element.style[name];
                     }
-                    else if (style[attr] == rule.style[attr]) {
-                        styleMap[attr] = style[attr];
+                    else if (style[name] == rule.style[name]) {
+                        styleMap[name] = style[name];
                     }
                 }
                 element.styleMap = styleMap;
@@ -1156,11 +1182,11 @@ function setResourceStyle() {
         var sorted = Array.from({ length: j.reduce((a, b) => Math.max(a, b.attributes.length), 0) }, v => v = {});
         for (var k of j) {
             for (var l = 0; l < k.attributes.length; l++) {
-                var attr = k.attributes[l];
-                if (sorted[l][attr] == null) {
-                    sorted[l][attr] = [];
+                var name = k.attributes[l];
+                if (sorted[l][name] == null) {
+                    sorted[l][name] = [];
                 }
-                sorted[l][attr].push(k.id);
+                sorted[l][name].push(k.id);
             }
         }
         style[i] = {};
@@ -1168,12 +1194,12 @@ function setResourceStyle() {
         do {
             if (sorted.length == 1) {
                 for (var k in sorted[0]) {
-                    var attr = sorted[0][k];
-                    if (attr.length > 2) {
-                        style[i][k] = attr;
+                    var value = sorted[0][k];
+                    if (value.length > 2) {
+                        style[i][k] = value;
                     }
                     else {
-                        layout[i][k] = attr;
+                        layout[i][k] = value;
                     }
                 }
                 sorted.length = 0;
@@ -1187,18 +1213,18 @@ function setResourceStyle() {
                         if (sorted[k] == null) {
                             continue;
                         }
-                        var attr = sorted[k][l];
+                        var ids = sorted[k][l];
                         var revalidate = false;
-                        if (attr == null) {
+                        if (ids == null) {
                             continue;
                         }
-                        else if (attr.length == j.length) {
-                            styleKey[l] = attr;
+                        else if (ids.length == j.length) {
+                            styleKey[l] = ids;
                             sorted[k] = null;
                             revalidate = true;
                         }
-                        else if (attr.length == 1) {
-                            layoutKey[l] = attr;
+                        else if (ids.length == 1) {
+                            layoutKey[l] = ids;
                             sorted[k] = null;
                             revalidate = true;
                         }
@@ -1208,12 +1234,12 @@ function setResourceStyle() {
                                 if (k != m) {
                                     for (var n in sorted[m]) {
                                         var compare = sorted[m][n];
-                                        for (var o = 0; o < attr.length; o++) {
-                                            if (compare.includes(attr[o])) {
+                                        for (var o = 0; o < ids.length; o++) {
+                                            if (compare.includes(ids[o])) {
                                                 if (found[n] == null) {
                                                     found[n] = [];
                                                 }
-                                                found[n].push(attr[o]);
+                                                found[n].push(ids[o]);
                                             }
                                         }
                                     }
@@ -1244,14 +1270,14 @@ function setResourceStyle() {
                     }
                     deleteKeys.forEach(value => delete filtered[value]);
                     for (var l in filtered) {
-                        deleteStyleAttribute(sorted, filtered[l], l);
+                        deleteStyleAttribute(sorted, l, filtered[l]);
                         style[i][l] = filtered[l];
                     }
                     for (var l in combined) {
-                        var ids = l.split(',').map(m => parseInt(m));
                         var attr = Array.from(combined[l]).sort().join(';');
-                        deleteStyleAttribute(sorted, ids, attr);
-                        style[i][attr] = ids;
+                        var nodeIds = l.split(',').map(m => parseInt(m));
+                        deleteStyleAttribute(sorted, attr, nodeIds);
+                        style[i][attr] = nodeIds;
                     }
                 }
                 var combined = Object.keys(styleKey);
