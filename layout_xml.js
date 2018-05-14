@@ -627,6 +627,7 @@ function setXmlAttributes(item, tagName, depth, actions) {
                     result[name] = value;
                 }
             }
+            item.label = itemNext;
             itemNext.invisible = true;
             itemNext.renderParent = true;
         }
@@ -703,7 +704,7 @@ function writeAttributes(output) {
 function writeTemplate(item, depth, parent, tagName) {
     var indent = setIndent(depth);
     setAndroidAttributes(item, tagName);
-    if (item.container == null) {
+    if (item.wrapper == null) {
         setAndroidDimensions(item);
     }
     item.renderParent = parent;
@@ -712,7 +713,8 @@ function writeTemplate(item, depth, parent, tagName) {
     if (item.scroll.overflow) {
         item.depthIndent++;
         item.children.forEach(item => item.depthIndent++);
-        var node = insertNode(item.element, parent, [item]);
+        item.scrollView = true;
+        var node = insertNode(item, parent, [item]);
         var scrollView = (isHorizontalScroll(item) ? LAYOUT_ANDROID.SCROLL_HORIZONTAL : (item.scroll.nested ? LAYOUT_ANDROID.SCROLL_NESTED : LAYOUT_ANDROID.SCROLL_VERTICAL));
         setAndroidAttributes(node, scrollView);
         setAndroidDimensions({ element: item.element, styleMap: item.styleMap, android: node.android, scroll: {} });
@@ -809,6 +811,9 @@ function writeRelativeLayout(output) {
                         }
                         if (withinRange(i.linear.right, j.linear.left, SETTINGS.whitespaceOffset)) {
                             addNodeLayout('layout_toStartOf', i.id, j.androidId);
+                            if (i.linear.right != j.linear.left) {
+                                replaceAttribute(i, 'android:layout_marginRight', convertToDP(j.linear.left - i.linear.right), true);
+                            }
                         }
                         else if (withinRange(i.linear.left, j.linear.right, SETTINGS.whitespaceOffset)) {
                             addNodeLayout('layout_toEndOf', i.id, j.androidId);
@@ -837,12 +842,37 @@ function writeRelativeLayout(output) {
     return output;
 }
 
+function replaceAttribute(item, name, value, merge = false) {
+    var index = -1;
+    for (var i = 0; i < item.attributes.length; i++) {
+        var attr = item.attributes[i];
+        if (attr.startsWith(name)) {
+            if (merge && !isNaN(parseInt(value))) {
+                var match = attr.match(/([0-9]+)([a-zA-Z]+)/);
+                if (match != null) {
+                    value = `${parseInt(match[1]) + parseInt(value)}${match[2]}`;
+                }
+            }
+            index = i;
+            break;
+        }
+    }
+    var attribute = `${name}="${value}"`;
+    if (index != -1) {
+        item.attributes[i] = attribute;
+    }
+    else {
+        item.attributes.push(attribute);
+    }
+}
+
 function writeConstraintTemplate(item, depth, parent) {
     return writeTemplate(item, depth, parent, LAYOUT_ANDROID.CONSTRAINT);
 }
 
 function writeGridTemplate(item, depth, parent, columnCount = 2) {
     item.android.columnCount = columnCount;
+    parent.gridLayout = item;
     return writeTemplate(item, depth, parent, LAYOUT_ANDROID.GRID);
 }
 
@@ -861,7 +891,8 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     var columnSpan = 1;
                     var rowEndId = item.id;
                     var checked = '';
-                    var node = insertNode(item.element, parent, result);
+                    var node = insertNode(item, parent, result);
+                    node.linearSkip = true;
                     setAndroidAttributes(node, LAYOUT_ANDROID.RADIO_GROUP);
                     item.radioGroupId = node.id;
                     item.radioGroup = [];
@@ -1066,22 +1097,24 @@ function setAndroidDimensions(item) {
     }
 }
 
-function insertNode(element, parent, children, actions) {
+function insertNode(item, parent, children, actions) {
     var data = {
         id: NODE_CACHE.length + 1,
         element: { id: '' },
-        container: element,
-        actions,
+        wrapper: item,
         children,
+        bounds: item.bounds,
         depth: parent.depth,
         depthIndent: parent.depthIndent,
         parent: parent,
         renderParent: null,
-        styleMap: element.styleMap,
+        styleMap: item.styleMap,
+        linear: item.linear,
         android: {},
         attributes: [],
         scroll: {},
-        previous: {}
+        previous: {},
+        actions
     };
     NODE_CACHE.push(data);
     return data;
@@ -1205,7 +1238,10 @@ function setIndent(n, value = '\t') {
 }
 
 function convertToDP(value, font = false) {
-    if (typeof value == 'string') {
+    if (value != null) {
+        if (typeof value == 'number') {
+            value += 'px';
+        }
         var match = value.match(/(px|pt)/);
         value = parseInt(value);
         if (match != null) {
@@ -1224,7 +1260,7 @@ function convertToDP(value, font = false) {
             return value + (font ? 'sp' : 'dp');
         }
     }
-    return 0;
+    return '0dp';
 }
 
 function convertToSP(value) {
@@ -1480,6 +1516,49 @@ function setLinearRect(item) {
         linear.right += parseInt(item.style.marginRight);
     }
     item.linear = linear;
+}
+
+function setLinearMargins() {
+    for (var item of NODE_CACHE) {
+        if (isView(item, LAYOUT_ANDROID.LINEAR)) {
+            var children = NODE_CACHE.filter(node => (node.renderParent == item && !node.scrollView && !node.linearSkip));
+            if (item.android.orientation == 'vertical') {
+                var current = item.bounds.top + (item.style != null ? parseInt(item.style.paddingTop) : 0);
+                children.sort((a, b) => (a.bounds.top > b.bounds.top ? 1 : -1)).forEach(node => {
+                    var height = node.bounds.top - current;
+                    if (height > 0) {
+                        if (node.invisible && node.gridLayout != null) {
+                            node = node.gridLayout;
+                        }
+                        replaceAttribute(node, 'android:layout_marginTop', convertToDP(height));
+                    }
+                    if (node.style == null) {
+                        node = node.wrapper;
+                    }
+                    current = node.bounds.bottom + parseInt(node.style.marginBottom);
+                });
+            }
+            else {
+                var current = item.bounds.left + (item.style != null ? parseInt(item.style.paddingLeft) : 0);
+                children.sort((a, b) => (a.bounds.left > b.bounds.left ? 1 : -1)).forEach(node => {
+                    var width = node.bounds.left - current;
+                    if (width > 0) {
+                        if (node.invisible && node.gridLayout != null) {
+                            node = node.gridLayout;
+                        }
+                        replaceAttribute(node, 'android:layout_marginLeft', convertToDP(width));
+                    }
+                    if (node.label != null) {
+                        node = node.label;
+                    }
+                    else if (node.style == null) {
+                        node = node.wrapper;
+                    }
+                    current = node.bounds.right + (node.style != null ? parseInt(node.style.marginRight) : 0);
+                });
+            }
+        }
+    }
 }
 
 function setNodeCache() {
@@ -1792,7 +1871,8 @@ function parseDocument() {
                                     if (itemY.children.length > 1 && linearX && linearY) {
                                         xml += `{${itemY.id}}`;
                                         itemY.children.forEach(item => item.depthIndent -= 1);
-                                        itemY.renderParent = true;
+                                        itemY.invisible = true;
+                                        itemY.renderParent = itemY.parent;
                                     }
                                     else {
                                         xml += writeLinearTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, linearY);
@@ -1817,11 +1897,9 @@ function parseDocument() {
                             if (prevParent != null) {
                                 var siblings = prevParent.children.filter(item => !item.renderParent && item.bounds.left >= itemY.bounds.right && item.bounds.right <= itemY.parent.gridColumnEnd[itemY.gridIndex]).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
                                 if (siblings.length > 0) {
-                                    itemY.previous.depth = itemY.depth;
-                                    itemY.depth++;
                                     siblings.unshift(itemY);
                                     var [linearX, linearY] = isLinearXY(siblings);
-                                    var node = insertNode(itemY.element, itemY.parent, siblings, [0]);
+                                    var node = insertNode(itemY, itemY.parent, siblings, [0]);
                                     setAndroidAttributes(node, (linearX || linearY ? LAYOUT_ANDROID.LINEAR : LAYOUT_ANDROID.CONSTRAINT));
                                     if (itemY.android.layout_rowSpan > 1) {
                                         node.android.layout_rowSpan = itemY.android.layout_rowSpan;
@@ -1850,10 +1928,8 @@ function parseDocument() {
                                                 item.renderParent = true;
                                                 return '';
                                             }
-                                            item.previous.parent = item.parent;
-                                            item.previous.depth = item.depth;
                                             item.parent = node;
-                                            item.depth = itemY.depth;
+                                            item.depthIndent++;
                                             item.siblingWrap = true;
                                             if (item.gridRowEnd) {
                                                 item.gridRowEnd = false;
@@ -1872,10 +1948,10 @@ function parseDocument() {
                                         itemY.gridRowEnd = true;
                                     }
                                     if (linearX || linearY) {
-                                        xml += writeLinearTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent, linearY);
+                                        xml += writeLinearTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.previous.parent, linearY);
                                     }
                                     else {
-                                        xml += writeDefaultTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.parent);
+                                        xml += writeDefaultTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.previous.parent);
                                     }
                                     xml = xml.replace(`{${node.id}}`, template);
                                 }
@@ -1912,11 +1988,12 @@ function parseDocument() {
         output = output.replace(`{:${i}}`, RENDER_AFTER[i].join(''));
     }
     setResourceStyle();
-    if (SETTINGS.showAttributes) {
-        output = writeAttributes(output);
-    }
     if (SETTINGS.defaultLayout == LAYOUT_ANDROID.RELATIVE) {
         output = writeRelativeLayout(output);
+    }
+    setLinearMargins();
+    if (SETTINGS.showAttributes) {
+        output = writeAttributes(output);
     }
     output = output.replace(/{[:@#]{1}[0-9]+}/g, '');
     return output;
