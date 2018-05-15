@@ -999,6 +999,21 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                                          (!item.siblingWrap ? `{:${item.id}}` : '');
 }
 
+function replaceGridStatus(layout, item) {
+    if (item.gridFirst) {
+        layout.gridFirst = true;
+        item.gridFirst = false;
+    }
+    if (item.gridRowStart) {
+        layout.gridRowStart = true;
+        item.gridRowStart = false;
+    }
+    if (item.gridRowEnd) {
+        layout.gridRowEnd = true;
+        item.gridRowEnd = false;
+    }
+}
+
 function getEnclosingTag(indent, tagName, id, content = '') {
     return indent + `<${tagName}{@${id}}{#${id}}>\n` +
                     content +
@@ -1040,93 +1055,68 @@ function getElementStyle(element) {
 
 function setAndroidDimensions(item) {
     var element = item.element;
-    if (element != null) {
-        var style = getElementStyle(element);
-        var width = element.offsetWidth + parseInt(style.marginLeft) + parseInt(style.marginLeft);
-        var height = element.offsetHeight + parseInt(style.marginTop) + parseInt(style.marginBottom);
-        var parent = element.parentNode;
-        var parentStyle = getElementStyle(parent);
-        var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
-        var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
-        var parentScrollable = (parent.cacheData && parent.cacheData.scroll.overflow != '');
-        var parentGridLayout = (item.parent && isView(item.parent, LAYOUT_ANDROID.GRID));
-        if (!isView(item, LAYOUT_ANDROID.TEXT) && item.scroll.overflow) {
-            item.android.layout_width = 'match_parent';
-        }
-        else if (item.styleMap.width != null) {
-            item.android.layout_width = convertToDP(item.styleMap.width);
-        }
-        else {
-            switch (item.tagName) {
-                case 'INPUT':
-                case 'SELECT':
-                case 'BUTTON':
+    var style = getElementStyle(element);
+    var width = element.offsetWidth + parseInt(style.marginLeft) + parseInt(style.marginLeft);
+    var height = element.offsetHeight + parseInt(style.marginTop) + parseInt(style.marginBottom);
+    var parent = element.parentNode;
+    var parentStyle = getElementStyle(parent);
+    var parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight));
+    var parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom));
+    var parentScrollable = (parent.cacheData && parent.cacheData.scroll.overflow != '');
+    var parentGridLayout = (item.parent && isView(item.parent, LAYOUT_ANDROID.GRID));
+    if (!isView(item, LAYOUT_ANDROID.TEXT) && item.scroll.overflow) {
+        item.android.layout_width = 'match_parent';
+    }
+    else if (item.styleMap.width != null) {
+        item.android.layout_width = convertToDP(item.styleMap.width);
+    }
+    else {
+        switch (item.tagName) {
+            case 'INPUT':
+            case 'SELECT':
+            case 'BUTTON':
+                item.android.layout_width = 'wrap_content';
+                break;
+            default:
+                if (!parentScrollable && !parentGridLayout && withinRange(parentWidth, width, SETTINGS.boundsOffset)) {
+                    item.android.layout_width = 'match_parent';
+                }
+                else {
                     item.android.layout_width = 'wrap_content';
-                    break;
-                default:
-                    if (!parentScrollable && !parentGridLayout && withinRange(parentWidth, width, SETTINGS.boundsOffset)) {
-                        item.android.layout_width = 'match_parent';
-                    }
-                    else {
-                        item.android.layout_width = 'wrap_content';
-                        if (MAPPING_ANDROID[element.tagName] != null && !parentGridLayout) {
-                            switch (style.display) {
-                                case 'line-item':
-                                case 'block':
-                                case 'inherit':
-                                    item.android.layout_width = 'match_parent';
-                                    break;
-                            }
+                    if (MAPPING_ANDROID[element.tagName] != null && !parentGridLayout) {
+                        switch (style.display) {
+                            case 'line-item':
+                            case 'block':
+                            case 'inherit':
+                                item.android.layout_width = 'match_parent';
+                                break;
                         }
                     }
-            }
-        }
-        if (!isView(item, LAYOUT_ANDROID.TEXT) && item.scroll.overflow) {
-            item.android.layout_height = 'match_parent';
-        }
-        else if (item.styleMap.height != null) {
-            item.android.layout_height = convertToDP(item.styleMap.height);
-        }
-        else {
-            switch (item.tagName) {
-                case 'INPUT':
-                case 'SELECT':
-                case 'BUTTON':
-                    item.android.layout_height = 'wrap_content';
-                    break;
-                default:
-                    if (!parentScrollable && !parentGridLayout && (withinRange(parentHeight, height, SETTINGS.boundsOffset) || height > parentHeight)) {
-                        item.android.layout_height = 'match_parent';
-                    }
-                    else {
-                        item.android.layout_height = 'wrap_content';
-                    }
-            }
+                }
         }
     }
-}
-
-function insertNode(item, parent, children, actions) {
-    var data = {
-        id: NODE_CACHE.length + 1,
-        element: { id: '' },
-        wrapper: item,
-        children,
-        bounds: item.bounds,
-        depth: parent.depth,
-        depthIndent: parent.depthIndent,
-        parent: parent,
-        renderParent: null,
-        styleMap: item.styleMap,
-        linear: item.linear,
-        android: {},
-        attributes: [],
-        scroll: {},
-        previous: item.previous,
-        actions
-    };
-    NODE_CACHE.push(data);
-    return data;
+    if (!isView(item, LAYOUT_ANDROID.TEXT) && item.scroll.overflow) {
+        item.android.layout_height = 'match_parent';
+    }
+    else if (item.styleMap.height != null) {
+        item.android.layout_height = convertToDP(item.styleMap.height);
+    }
+    else {
+        switch (item.tagName) {
+            case 'INPUT':
+            case 'SELECT':
+            case 'BUTTON':
+                item.android.layout_height = 'wrap_content';
+                break;
+            default:
+                if (!parentScrollable && !parentGridLayout && (withinRange(parentHeight, height, SETTINGS.boundsOffset) || height > parentHeight)) {
+                    item.android.layout_height = 'match_parent';
+                }
+                else {
+                    item.android.layout_height = 'wrap_content';
+                }
+        }
+    }
 }
 
 function getTagName(item) {
@@ -1184,21 +1174,6 @@ function setGridSpacing(item, depth = 0) {
         }
     }
     return xml;
-}
-
-function replaceGridStatus(layout, item) {
-    if (item.gridFirst) {
-        layout.gridFirst = true;
-        item.gridFirst = false;
-    }
-    if (item.gridRowStart) {
-        layout.gridRowStart = true;
-        item.gridRowStart = false;
-    }
-    if (item.gridRowEnd) {
-        layout.gridRowEnd = true;
-        item.gridRowEnd = false;
-    }
 }
 
 function getSpaceXML(indent, width, height, columnCount) {
@@ -1597,6 +1572,29 @@ function setLinearMargins() {
     }
 }
 
+function insertNode(item, parent, children, actions = null) {
+    var data = {
+        id: NODE_CACHE.length + 1,
+        element: { id: '' },
+        wrapper: item,
+        children,
+        bounds: item.bounds,
+        depth: parent.depth,
+        depthIndent: parent.depthIndent,
+        parent: parent,
+        renderParent: null,
+        styleMap: item.styleMap,
+        linear: item.linear,
+        android: {},
+        attributes: [],
+        previous: item.previous,
+        scroll: {},
+        actions
+    };
+    NODE_CACHE.push(data);
+    return data;
+}
+
 function setNodeCache() {
     var elements = document.querySelectorAll('body > *');
     var selector = 'body *';
@@ -1623,9 +1621,9 @@ function setNodeCache() {
                     element: element,
                     tagName: element.tagName,
                     children: [],
-                    renderParent: null,
                     depth: 0,
                     depthIndent: 0,
+                    renderParent: null,
                     style,
                     styleMap,
                     android: {},
@@ -1756,27 +1754,23 @@ function parseDocument() {
                                 var nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
                                 if (nextCoordsX.length > 1) {
                                     var columns = [];
-                                    var leftMin = [];
-                                    var rightMax = [];
-                                    var currentMax = 0;
+                                    var columnLeft = [];
+                                    var columnRight = [];
                                     for (var l = 0; l < nextCoordsX.length; l++) {
                                         var nextAxisX = nextMapX[nextCoordsX[l]];
-                                        leftMin[l] = Number.MAX_VALUE;
-                                        rightMax[l] = currentMax;
+                                        columnLeft[l] = parseInt(nextCoordsX[l]);
+                                        columnRight[l] = (l == 0 ? Number.MIN_VALUE : columnRight[l - 1]);
                                         for (var m = 0; m < nextAxisX.length; m++) {
-                                            if (nextAxisX[m].id == 49) {
-                                                nextAxisX[m];
-                                            }
                                             if (nextAxisX[m].parent.parent && itemY.id == nextAxisX[m].parent.parent.id) {
-                                                if (l == 0 || nextAxisX[m].bounds.left >= (rightMax[l - 1] || currentMax)) {
+                                                var bounds = nextAxisX[m].bounds;
+                                                if (l == 0 || bounds.left > columnRight[l - 1]) {
                                                     if (columns[l] == null) {
                                                         columns[l] = [];
                                                     }
                                                     columns[l].push(nextAxisX[m]);
                                                 }
-                                                leftMin[l] = Math.min(nextAxisX[m].bounds.left, leftMin[l]);
-                                                rightMax[l] = Math.max(nextAxisX[m].bounds.right, rightMax[l]);
-                                                currentMax = Math.max(rightMax[l], currentMax);
+                                                columnLeft[l] = Math.max(nextAxisX[m].bounds.left, columnLeft[l]);
+                                                columnRight[l] = Math.max(nextAxisX[m].bounds.right, columnRight[l]);
                                             }
                                         }
                                     }
@@ -1852,10 +1846,7 @@ function parseDocument() {
                                                     var spaceSpan = 0;
                                                     for (var n = l + 1; n < columns.length; n++) {
                                                         if (columns[n][m].spacer == 1) {
-                                                            if (itemX.bounds.right == rightMax[l] && (leftMin[n] != Number.MAX_VALUE && itemX.bounds.right < leftMin[n])) {
-                                                                spaceSpan++;
-                                                            }
-                                                            else if (itemX.bounds.right == rightMax[l] && itemX.bounds.left == leftMin[l]) {
+                                                            if (itemX.bounds.right == columnRight[l] && itemX.bounds.right < columnLeft[n]) {
                                                                 spaceSpan++;
                                                             }
                                                             else {
@@ -1915,6 +1906,7 @@ function parseDocument() {
                                                 }
                                             }
                                         });
+                                        columnEnd[columnEnd.length - 1] = columnRight[columnRight.length - 1];
                                         itemY.gridColumnStart = columnStart;
                                         itemY.gridColumnEnd = columnEnd;
                                         itemY.gridColumnCount = columns.length;
