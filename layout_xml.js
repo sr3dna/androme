@@ -151,7 +151,8 @@ var WIDGET_ANDROID = {
 };
 
 var STRING_ANDROID = {
-    XMLNS: 'xmlns:android="http://schemas.android.com/apk/res/android"'
+    XMLNS: 'xmlns:android="http://schemas.android.com/apk/res/android"',
+    SPACE: '<Space android:layout_width="{0}" android:layout_height="{1}" android:layout_columnSpan="{2}" />'
 };
 
 var DENSITY_ANDROID = {
@@ -889,7 +890,6 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                 if (result.length > 1) {
                     var rowSpan = 1;
                     var columnSpan = 1;
-                    var rowEndId = item.id;
                     var checked = '';
                     var node = insertNode(item, parent, result);
                     node.linearSkip = true;
@@ -912,9 +912,7 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                             checked = input.androidId;
                         }
                         xml += writeTagTemplate(input, depth + 1, parent, tagName, true);
-                        if (input.gridRowEnd) {
-                            rowEndId = input.id;
-                        }
+                        replaceGridStatus(node, input);
                     }
                     node.androidCheckedButton = checked;
                     if (rowSpan > 1) {
@@ -925,7 +923,7 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     }
                     setXmlAttributes(node, LAYOUT_ANDROID.RADIO_GROUP, depth + 1);
                     node.renderParent = parent;
-                    return getEnclosingTag(indent, LAYOUT_ANDROID.RADIO_GROUP, node.id, xml);
+                    return setGridSpacing(node, depth) + getEnclosingTag(indent, LAYOUT_ANDROID.RADIO_GROUP, node.id, xml);
                 }
                 break;
             case 'password':
@@ -984,32 +982,15 @@ function writeTagTemplate(item, depth, parent, tagName = '', recursive = false) 
                     }
                 }
                 if (textAlign || verticalAlign) {
-                    var gravity = '';
-                    switch (textAlign) {
-                        case 'right':
-                            gravity += 'end';
-                            break;
-                        case 'center':
-                            gravity += 'center_horizontal';
-                            break;
-                        default:
-                            gravity += 'start';
-                    }
-                    gravity += '|';
-                    switch (verticalAlign) {
-                        case 'middle':
-                            gravity += 'center_vertical';
-                            break;
-                        case 'bottom':
-                        case 'text-bottom':
-                            gravity += 'bottom';
-                            break;
-                        default:
-                            gravity += 'top';
-                    }
-                    item.android.gravity = gravity;
+                    item.android.gravity = getAndroidGravity(textAlign, verticalAlign);
                 }
                 break;
+        }
+        if (isView(parent, LAYOUT_ANDROID.GRID)) {
+            var styleMap = item.previous.parent.styleMap;
+            if (styleMap.textAlign || styleMap.verticalAlign) {
+                item.android.layout_gravity = getAndroidGravity(styleMap.textAlign, styleMap.verticalAlign, true);
+            }
         }
     }
     setXmlAttributes(item, item.androidTagName, depth + 1);
@@ -1023,6 +1004,34 @@ function getEnclosingTag(indent, tagName, id, content = '') {
                     content +
            indent + `</${tagName}>\n` +
                     `{:${id}}`;
+}
+
+function getAndroidGravity(textAlign, verticalAlign, layout = false) {
+    var gravity = [];
+    switch (verticalAlign) {
+        case 'top':
+            gravity.push('top');
+        case 'middle':
+            gravity.push('center_vertical');
+            break;
+        case 'bottom':
+        case 'text-bottom':
+            gravity.push('bottom');
+            break;
+        default:
+            gravity.push((layout ? 'center_vertical' : 'top'));
+    }
+    switch (textAlign) {
+        case 'right':
+            gravity.push('end');
+            break;
+        case 'center':
+            gravity.push('center_horizontal');
+            break;
+        default:
+            gravity.push('start');
+    }
+    return gravity.join('|');
 }
 
 function getElementStyle(element) {
@@ -1113,7 +1122,7 @@ function insertNode(item, parent, children, actions) {
         android: {},
         attributes: [],
         scroll: {},
-        previous: {},
+        previous: item.previous,
         actions
     };
     NODE_CACHE.push(data);
@@ -1153,7 +1162,6 @@ function setGridSpacing(item, depth = 0) {
     var indent = setIndent(depth);
     var xml = '';
     if (item.previous.parent != null && item.previous.parent.invisible) {
-        var template = `${indent}<Space android:layout_width="match_parent" android:layout_height="{0}dp" android:layout_columnSpan="${item.renderParent.gridColumnCount}" />\n`;
         var dimensions = getBoxSpacing(item.previous.parent.element, true);
         item.grid = {};
         if (item.gridRowStart) {
@@ -1163,10 +1171,7 @@ function setGridSpacing(item, depth = 0) {
         if (item.gridRowEnd) {
             var heightBottom =  dimensions.marginBottom + dimensions.paddingBottom + (!item.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             if (heightBottom > 0) {
-                if (RENDER_AFTER[item.id] == null) {
-                    RENDER_AFTER[item.id] = [];
-                }
-                RENDER_AFTER[item.id].push(formatString(template, heightBottom));
+                addRenderAfter(item.id, getSpaceXML(indent, 'match_parent', convertToDP(heightBottom), item.renderParent.gridColumnCount));
             }
             item.grid.paddingTop = dimensions.marginTop + dimensions.paddingTop;
             item.grid.paddingBottom = dimensions.marginBottom + dimensions.paddingBottom;
@@ -1174,11 +1179,42 @@ function setGridSpacing(item, depth = 0) {
         if (item.gridFirst) {
             var heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                xml += formatString(template, heightTop);
+                xml += getSpaceXML(indent, 'match_parent', convertToDP(heightTop), item.renderParent.gridColumnCount);
             }
         }
     }
     return xml;
+}
+
+function replaceGridStatus(layout, item) {
+    if (item.gridFirst) {
+        layout.gridFirst = true;
+        item.gridFirst = false;
+    }
+    if (item.gridRowStart) {
+        layout.gridRowStart = true;
+        item.gridRowStart = false;
+    }
+    if (item.gridRowEnd) {
+        layout.gridRowEnd = true;
+        item.gridRowEnd = false;
+    }
+}
+
+function getSpaceXML(indent, width, height, columnCount) {
+    return `${indent + formatString(STRING_ANDROID.SPACE, width, `${height}`, columnCount)}\n`;
+}
+
+function addRenderAfter(id, xml, index = '-1') {
+    if (RENDER_AFTER[id] == null) {
+        RENDER_AFTER[id] = [];
+    }
+    if (index != -1 && index < RENDER_AFTER[id].length) {
+        RENDER_AFTER[id].splice(index, 0, xml);
+    }
+    else {
+        RENDER_AFTER[id].push(xml);
+    }
 }
 
 function isLinearXY(siblings) {
@@ -1720,12 +1756,17 @@ function parseDocument() {
                                 var nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
                                 if (nextCoordsX.length > 1) {
                                     var columns = [];
+                                    var leftMin = [];
                                     var rightMax = [];
                                     var currentMax = 0;
                                     for (var l = 0; l < nextCoordsX.length; l++) {
                                         var nextAxisX = nextMapX[nextCoordsX[l]];
+                                        leftMin[l] = Number.MAX_VALUE;
                                         rightMax[l] = currentMax;
                                         for (var m = 0; m < nextAxisX.length; m++) {
+                                            if (nextAxisX[m].id == 49) {
+                                                nextAxisX[m];
+                                            }
                                             if (nextAxisX[m].parent.parent && itemY.id == nextAxisX[m].parent.parent.id) {
                                                 if (l == 0 || nextAxisX[m].bounds.left >= (rightMax[l - 1] || currentMax)) {
                                                     if (columns[l] == null) {
@@ -1733,6 +1774,7 @@ function parseDocument() {
                                                     }
                                                     columns[l].push(nextAxisX[m]);
                                                 }
+                                                leftMin[l] = Math.min(nextAxisX[m].bounds.left, leftMin[l]);
                                                 rightMax[l] = Math.max(nextAxisX[m].bounds.right, rightMax[l]);
                                                 currentMax = Math.max(rightMax[l], currentMax);
                                             }
@@ -1746,22 +1788,26 @@ function parseDocument() {
                                             if (x == y) {
                                                 [x, y] = [a.id, b.id];
                                             }
-                                            return (x >= y ? 1 : -1);
+                                            return (x > y ? 1 : -1);
                                         });
                                         columnLength = Math.max(item.length, columnLength);
                                     }
                                     for (var l = 0; l < columnLength; l++) {
-                                        var y = -1;
+                                        var y = null;
                                         for (var m = 0; m < columns.length; m++) {
                                             var itemX = columns[m][l];
                                             if (itemX != null) {
-                                                if (y == -1) {
+                                                if (y == null) {
                                                     y = itemX.bounds.y;
                                                 }
                                                 else if (!withinRange(y, itemX.bounds.y, SETTINGS.boundsOffset)) {
                                                     var nextRowX = columns[m - 1][l + 1];
-                                                    if (columns[m][l + 1] == null || (nextRowX && withinRange(nextRowX.bounds.y, itemX.bounds.y, SETTINGS.boundsOffset))) {
+                                                    if (columns[m][l - 1] == null || nextRowX && withinRange(nextRowX.bounds.y, itemX.bounds.y, SETTINGS.boundsOffset)) {
                                                         columns[m].splice(l, 0, { spacer: 1 });
+                                                    }
+                                                    else if (columns[m][l + 1] == null) {
+                                                        columns[m][l + 1] = itemX;
+                                                        columns[m][l] = { spacer: 1 };
                                                     }
                                                 }
                                             }
@@ -1803,16 +1849,25 @@ function parseDocument() {
                                                     itemX.gridIndex = l;
                                                     var rowSpan = 1;
                                                     var columnSpan = 1 + spacer;
+                                                    var spaceSpan = 0;
                                                     for (var n = l + 1; n < columns.length; n++) {
                                                         if (columns[n][m].spacer == 1) {
-                                                            columnSpan++;
+                                                            if (itemX.bounds.right == rightMax[l] && (leftMin[n] != Number.MAX_VALUE && itemX.bounds.right < leftMin[n])) {
+                                                                spaceSpan++;
+                                                            }
+                                                            else if (itemX.bounds.right == rightMax[l] && itemX.bounds.left == leftMin[l]) {
+                                                                spaceSpan++;
+                                                            }
+                                                            else {
+                                                                columnSpan++;
+                                                            }
                                                             columns[n][m].spacer = 2;
                                                         }
                                                         else {
                                                             break;
                                                         }
                                                     }
-                                                    if (columnSpan == 1) {
+                                                    if (columnSpan + spaceSpan == 1) {
                                                         for (var n = m + 1; n < columns[l].length; n++) {
                                                             if (columns[l][n].spacer == 1) {
                                                                 rowSpan++;
@@ -1829,7 +1884,8 @@ function parseDocument() {
                                                     if (columnSpan > 1) {
                                                         itemX.android.layout_columnSpan = columnSpan;
                                                     }
-                                                    itemX.gridRowEnd = (columnSpan + l == columns.length);
+                                                    itemX.spaceSpan = spaceSpan;
+                                                    itemX.gridRowEnd = (columnSpan + spaceSpan + l == columns.length);
                                                     itemX.gridFirst = (count++ == 0);
                                                     itemX.gridLast = (itemX.gridRowEnd && m == columns[l].length - 1);
                                                     if (rowStart[m] == null) {
@@ -1848,20 +1904,20 @@ function parseDocument() {
                                             var renderId = null;
                                             if (item.size > 1) {
                                                 for (var l = 0; l < columns.length; l++) {
-                                                    if (columns[l][index].previous.parentId == minId) {
+                                                    if (!columns[l][index].spacer && columns[l][index].previous.parentId == minId) {
                                                         renderId = columns[l][index].id;
                                                     }
                                                 }
                                                 for (var l = 0; l < columns.length; l++) {
-                                                    if (columns[l][index].id != renderId) {
+                                                    if (!columns[l][index].spacer && columns[l][index].id != renderId) {
                                                         columns[l][index].renderAfterId = renderId;
                                                     }
                                                 }
                                             }
                                         });
-                                        itemY.gridColumnCount = columns.length;
                                         itemY.gridColumnStart = columnStart;
                                         itemY.gridColumnEnd = columnEnd;
+                                        itemY.gridColumnCount = columns.length;
                                     }
                                 }
                             }
@@ -1909,7 +1965,7 @@ function parseDocument() {
                                         node.android.layout_columnSpan = itemY.android.layout_columnSpan;
                                         delete itemY.android.layout_columnSpan;
                                     }
-                                    var rowEnd = false;
+                                    var renderParent = itemY.parent;
                                     var template = siblings.map(item => {
                                         if (!item.renderParent) {
                                             var children = item.element.children;
@@ -1931,10 +1987,7 @@ function parseDocument() {
                                             item.parent = node;
                                             item.depthIndent++;
                                             item.siblingWrap = true;
-                                            if (item.gridRowEnd) {
-                                                item.gridRowEnd = false;
-                                                rowEnd = true;
-                                            }
+                                            replaceGridStatus(node, item);
                                             if (item.children.length > 0) {
                                                 return writeDefaultTemplate(item, itemY.depth + itemY.depthIndent, node);
                                             }
@@ -1944,14 +1997,11 @@ function parseDocument() {
                                         }
                                         return '';
                                     }).join('');
-                                    if (rowEnd) {
-                                        itemY.gridRowEnd = true;
-                                    }
                                     if (linearX || linearY) {
-                                        xml += writeLinearTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.previous.parent, linearY);
+                                        xml += writeLinearTemplate(node, itemY.depth + itemY.depthIndent - 1, renderParent, linearY);
                                     }
                                     else {
-                                        xml += writeDefaultTemplate(node, itemY.depth + itemY.depthIndent - 1, itemY.previous.parent);
+                                        xml += writeDefaultTemplate(node, itemY.depth + itemY.depthIndent - 1, renderParent);
                                     }
                                     xml = xml.replace(`{${node.id}}`, template);
                                 }
@@ -1961,6 +2011,9 @@ function parseDocument() {
                             xml += writeTagTemplate(itemY, itemY.depth + itemY.depthIndent, itemY.parent, tagName);
                         }
                     }
+                    if (itemY.spaceSpan > 0) {
+                        addRenderAfter(itemY.id, getSpaceXML(setIndent(itemY.depth + itemY.depthIndent), 'wrap_content', 'wrap_content', itemY.spaceSpan), 0);
+                    }
                     if (xml != '') {
                         if (partial[parentId] == null) {
                             partial[parentId] = [];
@@ -1969,10 +2022,7 @@ function parseDocument() {
                             partial[parentId].push(xml);
                         }
                         else {
-                            if (RENDER_AFTER[itemY.renderAfterId] == null) {
-                                RENDER_AFTER[itemY.renderAfterId] = [];
-                            }
-                            RENDER_AFTER[itemY.renderAfterId].push(xml);
+                            addRenderAfter(itemY.renderAfterId, xml);
                         }
                     }
                 }
