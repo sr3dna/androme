@@ -5,16 +5,18 @@ This program can convert moderately complex HTML pages into the standard XML lay
 Some modification might be necessary to use these scripts in your webpage. I have only tested it with the latest Chrome.
 
 ```xml
+<script src="utils.js"></script>
 <script src="color.js"></script>
-<script src="layout_xml.js"></script>
+<script src="node.js"></script>
+<script src="layout.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         console.log(parseDocument());
-        console.log(writeResourceStringXML());
-        console.log(writeResourceArrayXML());
-        console.log(writeResourceStyleXML());
-        console.log(writeResourceColorXML());
-        console.log(writeResourceDrawableXML());
+        console.log(writeResourceStringXml());
+        console.log(writeResourceArrayXml());
+        console.log(writeResourceStyleXml());
+        console.log(writeResourceColorXml());
+        console.log(writeResourceDrawableXml());
     });
 </script>
 ```
