@@ -314,7 +314,7 @@ class Node {
         }
         const attribute = `${name}="${value}"`;
         if (index != -1) {
-            this.attributes[i] = attribute;
+            this.attributes[index] = attribute;
         }
         else {
             this.attributes.push(attribute);
