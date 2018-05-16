@@ -1,4 +1,3 @@
-
 class Node {
     constructor(id, element, options = {}) {
         let style = {};
@@ -23,12 +22,12 @@ class Node {
         this.children = [];
         this.style = style;
         this.styleMap = styleMap;
-        this.depth = 0;
         this.depthIndent = 0;
+        this.invisible = false;
         this.renderParent = null;
         this.android = {};
         this.attributes = [];
-        this.previous = {};
+        this.original = {};
         this.scroll = {};
         if (bounds != null) {
             Object.assign(this.scroll, {
@@ -48,22 +47,22 @@ class Node {
         const element = this.element;
         const result = {};
         if (widget != null) {
-            let j = -1;
+            let i = -1;
             if (this.actions != null) {
                 actions = this.actions;
             }
-            for (const i in widget) {
-                j++;
-                if (result[i] != null || (actions != null && actions.length > 0 && !actions.includes(j))) {
+            for (const action in widget) {
+                i++;
+                if (result[action] != null || (actions != null && actions.length > 0 && !actions.includes(i))) {
                     continue;
                 }
-                if (Utils.hasValue(this[i])) {
-                    result[i] = widget[i].replace('{0}', this[i]);
+                if (Utils.hasValue(this[action])) {
+                    result[action] = widget[action].replace('{0}', this[action]);
                 }
-                else if (i.indexOf('.') != -1) {
+                else if (action.indexOf('.') != -1) {
                     let method = window;
                     let methodName = '';
-                    i.split('.').forEach(value => {
+                    action.split('.').forEach(value => {
                         if (value == 'window') {
                             return true;
                         }
@@ -76,15 +75,15 @@ class Node {
                         const data = method(element);
                         if (data != null) {
                             const output = [];
-                            for (const k in widget[i]) {
-                                if (result[k] != null) {
+                            for (const j in widget[action]) {
+                                if (result[j] != null) {
                                     continue;
                                 }
-                                let value = data[k];
+                                let value = data[j];
                                 if (Utils.hasValue(value)) {
                                     if (value.startsWith('rgb')) {
                                         const rgb = Color.parseRGBA(value);
-                                        if (k == 'backgroundColor') {
+                                        if (j == 'backgroundColor') {
                                             let backgroundParent = [];
                                             if (element.parentNode != null) {
                                                 backgroundParent = Color.parseRGBA(Node.getElementStyle(element.parentNode).backgroundColor);
@@ -100,7 +99,7 @@ class Node {
                                     else if (/(px|pt)$/.test(value)) {
                                         value = (value.toLowerCase().indexOf('font') != -1 ? Utils.convertToSP(value) : Utils.convertToDP(value));
                                     }
-                                    output.push(widget[i][k].replace('{0}', value));
+                                    output.push(widget[action][j].replace('{0}', value));
                                 }
                             }
                             if (output.length > 0) {
@@ -119,10 +118,10 @@ class Node {
                 }
             }
         }
-        for (const i in this.android) {
-            const value = this.android[i];
+        for (const name in this.android) {
+            const value = this.android[name];
             if (Utils.hasValue(value)) {
-                result[i] = `android:${i}="${value}"`;
+                result[name] = `android:${name}="${value}"`;
             }
         }
         if (element.tagName == 'INPUT' && element.id != '') {
@@ -235,7 +234,7 @@ class Node {
                                 this.attr('layout_width', 'wrap_content');
                                 if (style != null && MAPPING_ANDROID[element.tagName] != null) {
                                     switch (style.display) {
-                                        case 'line-this':
+                                        case 'line-item':
                                         case 'block':
                                         case 'inherit':
                                             this.attr('layout_width', 'match_parent');
@@ -335,7 +334,7 @@ class Node {
         return [maxRight - minLeft, maxBottom - minTop];
     }    
     isHorizontalScroll() {
-        return (this.styleMap.width && this.styleMap.overflowX == 'auto' || this.styleMap.overflowX == 'scroll');
+        return (this.styleMap.width != null && (this.styleMap.overflowX == 'auto' || this.styleMap.overflowX == 'scroll'));
     }
     isView(viewName) {
         return (this.androidWidgetName == viewName);
@@ -361,6 +360,25 @@ class Node {
             widgetName = widgetName[this.element.type];
         }
         return widgetName;
+    }
+    set parent(value) {
+        if (this._parent != null && this.original.parent == null) {
+            this.original.parent = this._parent;
+            this.original.parentId = this._parent.id;
+        }
+        this._parent = value;
+    }
+    get parent() {
+        return (this._parent != null ? this._parent : new Node(0));
+    }
+    set depth(value) {
+        if (this._depth != null && this.original.depth == null) {
+            this.original.depth = this._depth;
+        }
+        this._depth = value;
+    }
+    get depth() {
+        return (this._depth != null ? this._depth : 0);
     }
     get marginTop() {
         if (this.style.marginTop != null) {
@@ -421,7 +439,7 @@ class Node {
             bounds: node.bounds,
             styleMap: node.styleMap,
             linear: node.linear,
-            previous: node.previous,
+            original: node.original,
             actions
         };
         const wrapper = new Node(cache.length + 1, null, options);

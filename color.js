@@ -445,13 +445,6 @@ const Color = (function() {
             n = Math.max(0, Math.min(n, 255));
             return hex.charAt((n - (n % 16)) / 16) + hex.charAt(n % 16);
         },
-        parseRGBA: function(value) {
-            const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
-            if (match != null && match.length >= 4) {
-                return [match[0], `#${Color.convertRGBtoHex(match[1])}${Color.convertRGBtoHex(match[2])}${Color.convertRGBtoHex(match[3])}`, parseInt((match[4] != null ? match[4] : 1))];
-            }
-            return null;
-        },
         findNearestColor: function(value) {
             const hsl = Color.convertHextoHSL(value);
             if (hsl) {
@@ -519,6 +512,13 @@ const Color = (function() {
         },
         convertColorToRGB: function({ rgb }) {
             return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+        },
+        parseRGBA: function(value) {
+            const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
+            if (match != null && match.length >= 4) {
+                return [match[0], `#${Color.convertRGBtoHex(match[1])}${Color.convertRGBtoHex(match[2])}${Color.convertRGBtoHex(match[3])}`, parseInt((match[4] != null ? match[4] : 1))];
+            }
+            return null;
         }
     };
     
