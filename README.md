@@ -7,6 +7,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 ```xml
 <script src="utils.js"></script>
 <script src="color.js"></script>
+<script src="constants.js"></script>
 <script src="node.js"></script>
 <script src="layout.js"></script>
 <script>

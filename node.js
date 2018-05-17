@@ -44,121 +44,7 @@ class Node {
         Object.assign(this, options);
     }
 
-    setAttributes(depth, actions = []) {
-        if (depth == null) {
-            depth = this.depth + this.depthIndent + 1;
-        }
-        const widget = WIDGET_ANDROID[this.androidWidgetName];
-        const element = this.element;
-        const result = {};
-        if (widget != null) {
-            let i = -1;
-            if (this.actions != null) {
-                actions = this.actions;
-            }
-            for (const action in widget) {
-                i++;
-                if (result[action] != null || (actions != null && actions.length > 0 && !actions.includes(i))) {
-                    continue;
-                }
-                if (Utils.hasValue(this[action])) {
-                    result[action] = widget[action].replace('{0}', this[action]);
-                }
-                else if (action.indexOf('.') != -1) {
-                    let method = window;
-                    let methodName = '';
-                    action.split('.').forEach(value => {
-                        if (value == 'window') {
-                            return true;
-                        }
-                        else if (method[value] != null) {
-                            method = method[value];
-                            methodName = value;
-                        }
-                    });
-                    if (typeof method == 'function') {
-                        const data = method(element);
-                        if (data != null) {
-                            const output = [];
-                            for (const j in widget[action]) {
-                                if (result[j] != null) {
-                                    continue;
-                                }
-                                let value = data[j];
-                                if (Utils.hasValue(value)) {
-                                    if (value.startsWith('rgb')) {
-                                        const rgb = Color.parseRGBA(value);
-                                        if (j == 'backgroundColor') {
-                                            let backgroundParent = [];
-                                            if (element.parentNode != null) {
-                                                backgroundParent = Color.parseRGBA(Node.getElementStyle(element.parentNode).backgroundColor);
-                                            }
-                                            if (backgroundParent[0] == rgb[0]) {
-                                                continue;
-                                            }
-                                        }
-                                        if (rgb != null) {
-                                            value = addResourceColor(value.replace(rgb[0], rgb[1]));
-                                        }
-                                    }
-                                    else if (/(px|pt|em)$/.test(value)) {
-                                        value = (j.toLowerCase().indexOf('font') != -1 ? Utils.convertToSP(value) : Utils.convertToPX(value));
-                                    }
-                                    output.push(widget[action][j].replace('{0}', value));
-                                }
-                            }
-                            if (output.length > 0) {
-                                if (methodName == 'getComputedStyle') {
-                                    if (!RESOURCE_STYLE.has(this.tagName)) {
-                                        RESOURCE_STYLE.set(this.tagName, []);
-                                    }
-                                    RESOURCE_STYLE.get(this.tagName).push({ id: this.id, attributes: output });
-                                }
-                                else {
-                                    result[i] = output;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        for (const name in this.android) {
-            const value = this.android[name];
-            if (Utils.hasValue(value)) {
-                result[name] = `android:${name}="${value}"`;
-            }
-        }
-        if (element.tagName == 'INPUT' && element.id != '') {
-            const nextElement = element.nextElementSibling;
-            if (nextElement && nextElement.htmlFor == element.id) {
-                const nodeNext = nextElement.androidNode;
-                nodeNext.setAndroidAttributes(LAYOUT_ANDROID.TEXT);
-                nodeNext.setAttributes(depth, [4]);
-                if (this.isView(LAYOUT_ANDROID.RADIO)) {
-                    nodeNext.depthIndent++;
-                }
-                const attributes = nodeNext.attributes;
-                for (const name in attributes) {
-                    const value = attributes[name];
-                    if (result[name] == null && Utils.hasValue(value)) {
-                        result[name] = value;
-                    }
-                }
-                this.label = nodeNext;
-                nodeNext.visible = false;
-                nodeNext.renderParent = true;
-            }
-        }
-        for (const i in result) {
-            const value = result[i];
-            if (Utils.hasValue(value)) {
-                this.appendAttributes(value);
-            }
-        }
-        this.depthAttribute = depth;
-    }
-    setAndroidAttributes(widgetName) {
+    setAndroidId(widgetName) {
         const element = this.element;
         if (widgetName == null) {
             widgetName = this.widgetName;
@@ -287,15 +173,7 @@ class Node {
             bottom: bounds.bottom - (parseInt(style.paddingBottom) + parseInt(style.borderBottomWidth))
         };
     }
-    attr(name, value) { 
-        if (Utils.hasValue(value)) {
-            this.android[name] = value;
-        }
-        else {
-            return this.android[name];
-        }
-    }
-    addAttribute(name, value) {
+    setAttribute(name, value) {
         if (Utils.hasValue(value)) {
             this.attributes.push(`android:${name}="${value}"`);
         }
@@ -330,20 +208,24 @@ class Node {
                 if (merge && !isNaN(parseInt(value))) {
                     const match = attr.match(/([0-9]+)(px)/);
                     if (match != null) {
-                        let result = parseInt(match[1]) + parseInt(value);
-                        value = result + match[2];
+                        value = parseInt(value) + parseInt(match[1]) + match[2];
                     }
                 }
                 index = i;
                 break;
             }
         }
-        const attribute = `${property}="${value}"`;
-        if (index != -1) {
-            this.attributes[index] = attribute;
+        if (Utils.hasValue(value)) {
+            const attribute = `${property}="${value}"`;
+            if (index != -1) {
+                this.attributes[index] = attribute;
+            }
+            else {
+                this.attributes.push(attribute);
+            }
         }
-        else {
-            this.attributes.push(attribute);
+        else if (index != -1) {
+            this.attributes.splice(index, 1);
         }
     }
     appendAttributes(value) {
@@ -353,6 +235,120 @@ class Node {
         else {
             this.attributes.push(value);
         }
+    }
+    processAttributes(depth, actions = []) {
+        if (depth == null) {
+            depth = this.depth + this.depthIndent + 1;
+        }
+        const widget = WIDGET_ANDROID[this.androidWidgetName];
+        const element = this.element;
+        const result = {};
+        if (widget != null) {
+            let i = -1;
+            if (this.actions != null) {
+                actions = this.actions;
+            }
+            for (const action in widget) {
+                i++;
+                if (result[action] != null || (actions != null && actions.length > 0 && !actions.includes(i))) {
+                    continue;
+                }
+                if (Utils.hasValue(this[action])) {
+                    result[action] = widget[action].replace('{0}', this[action]);
+                }
+                else if (action.indexOf('.') != -1) {
+                    let method = window;
+                    let methodName = '';
+                    action.split('.').forEach(value => {
+                        if (value == 'window') {
+                            return true;
+                        }
+                        else if (method[value] != null) {
+                            method = method[value];
+                            methodName = value;
+                        }
+                    });
+                    if (typeof method == 'function') {
+                        const data = method(element);
+                        if (data != null) {
+                            const output = [];
+                            for (const j in widget[action]) {
+                                if (result[j] != null) {
+                                    continue;
+                                }
+                                let value = data[j];
+                                if (Utils.hasValue(value)) {
+                                    if (value.startsWith('rgb')) {
+                                        const rgb = Color.parseRGBA(value);
+                                        if (j == 'backgroundColor') {
+                                            let backgroundParent = [];
+                                            if (element.parentNode != null) {
+                                                backgroundParent = Color.parseRGBA(Node.getElementStyle(element.parentNode).backgroundColor);
+                                            }
+                                            if (backgroundParent[0] == rgb[0]) {
+                                                continue;
+                                            }
+                                        }
+                                        if (rgb != null) {
+                                            value = addResourceColor(value.replace(rgb[0], rgb[1]));
+                                        }
+                                    }
+                                    else if (/(px|pt|em)$/.test(value)) {
+                                        value = (j.toLowerCase().indexOf('font') != -1 ? Utils.convertToSP(value) : Utils.convertToPX(value));
+                                    }
+                                    output.push(widget[action][j].replace('{0}', value));
+                                }
+                            }
+                            if (output.length > 0) {
+                                if (methodName == 'getComputedStyle') {
+                                    if (!RESOURCE['style'].has(this.tagName)) {
+                                        RESOURCE['style'].set(this.tagName, []);
+                                    }
+                                    RESOURCE['style'].get(this.tagName).push({ id: this.id, attributes: output });
+                                }
+                                else {
+                                    result[i] = output;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (const name in this.android) {
+            const value = this.android[name];
+            if (Utils.hasValue(value)) {
+                result[name] = `android:${name}="${value}"`;
+            }
+        }
+        if (element.tagName == 'INPUT' && element.id != '') {
+            const nextElement = element.nextElementSibling;
+            if (nextElement && nextElement.htmlFor == element.id) {
+                const nextNode = nextElement.androidNode;
+                nextNode.setAndroidId(LAYOUT_ANDROID.TEXT);
+                nextNode.processAttributes(depth, [4]);
+                if (this.isView(LAYOUT_ANDROID.RADIO)) {
+                    nextNode.depthIndent++;
+                }
+                const attributes = nextNode.attributes;
+                for (const name in attributes) {
+                    const value = attributes[name];
+                    if (result[name] == null && Utils.hasValue(value)) {
+                        result[name] = value;
+                    }
+                }
+                this.label = nextNode;
+                nextNode.visible = false;
+                nextNode.renderParent = true;
+            }
+        }
+        for (const i in result) {
+            const value = result[i];
+            if (Utils.hasValue(value)) {
+                this.appendAttributes(value);
+            }
+        }
+        this.depthAttribute = depth;
     }
     getChildDimensions() {
         let minLeft = Number.MAX_VALUE;
@@ -374,7 +370,7 @@ class Node {
     isView(viewName) {
         return (this.androidWidgetName == viewName);
     }
-    inheritGridStatus(node) {
+    inheritGrid(node) {
         if (node.gridFirst) {
             this.gridFirst = true;
             node.gridFirst = false;
@@ -386,6 +382,14 @@ class Node {
         if (node.gridRowEnd) {
             this.gridRowEnd = true;
             node.gridRowEnd = false;
+        }
+    }
+    attr(name, value) { 
+        if (Utils.hasValue(value)) {
+            this.android[name] = value;
+        }
+        else {
+            return this.android[name];
         }
     }
     css(name) {
@@ -539,9 +543,6 @@ class Node {
         }
         return [linearX, linearY];
     }
-    static getElementStyle(element) {
-        return (element.androidNode != null ? element.androidNode.style : window.getComputedStyle(element));
-    }
     static getOuterNodes(nodes) {
         let top = [nodes[0]];
         let right = [nodes[0]];
@@ -575,5 +576,8 @@ class Node {
             }
         }
         return { top, right, bottom, left };
+    }
+    static getElementStyle(element) {
+        return (element.androidNode != null ? element.androidNode.style : window.getComputedStyle(element));
     }
 }

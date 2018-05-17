@@ -75,13 +75,16 @@ const Utils = (function() {
             return Utils.convertToDP(value, unit, true);
         },
         parseUnit(value) {
-            if (this.hasValue(value)) {
+            if (Utils.hasValue(value)) {
                 const match = value.match(/"([0-9]+)(?:(px|pt|em|dp|sp))"/);
                 if (match != null) {
                     return parseFloat(match[1]);
                 }
             }
             return 0;
+        },
+        parseToDP(xml) {
+            return xml.replace(/"[0-9\.]+px"/g, match => `"${Utils.convertToDP(Utils.parseUnit(match))}"`);
         },
         withinRange: function(a, b, n = 1) {
             return (b >= (a - n) && b <= (a + n));
