@@ -1,8 +1,8 @@
 {
   "name": "chrome-mobile-layouts",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Converts and optimizes HTML based pages into the various standard Android layouts in XML. Resources and drawables are also auto-generated. iOS and Xamarin Forms are to be supported someday.",
-  "main": "layout.js",
+  "main": "sample.html",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/anpham6/chrome-mobile-layouts.git"

@@ -2,7 +2,7 @@
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. ConstraintLayout or RelativeLayout for positional views can be generated into the XML based on your preference. iOS and Xamarin Forms can also be supported on request once the Android version is stable. Ideally it will be hosted inside a Chrome browser plugin. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
 
-Some modification might be necessary to use these scripts in your webpage. I have only tested it with the latest Chrome.
+Some modification might be necessary to use these scripts in your webpage. You can preview the library with the sample.html file which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 
 ```xml
 <script src="utils.js"></script>
@@ -29,9 +29,9 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	android:id="@+id/linearlayout1"
-	android:layout_height="match_parent"
-	android:layout_marginTop="20dp"
-	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_marginTop="10dp"
+	android:layout_width="500dp"
 	android:orientation="vertical">
 	<TextView
 		android:id="@+id/textview1"
@@ -49,6 +49,7 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:id="@+id/entry"
 			android:background="@drawable/form_entry"
 			android:layout_height="match_parent"
+			android:layout_marginBottom="12dp"
 			android:layout_width="match_parent"
 			android:orientation="vertical"
 			android:paddingHorizontal="10dp"
@@ -181,7 +182,6 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				<Spinner
 					android:id="@+id/typeofentry"
 					android:background="@drawable/select_typeofentry"
-					android:entries="@array/typeofentry_array"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
@@ -302,7 +302,8 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 		android:id="@+id/gridlayout2"
 		android:columnCount="2"
 		android:layout_height="wrap_content"
-		android:layout_marginTop="28dp"
+		android:layout_marginBottom="12dp"
+		android:layout_marginTop="14dp"
 		android:layout_width="match_parent"
 		android:paddingHorizontal="10dp"
 		android:paddingVertical="10dp">
@@ -421,9 +422,8 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			android:text="@string/style"
 			style="@style/Label_1" />
 		<Spinner
-			android:id="@+id/style"
-			android:background="@drawable/select_style"
-			android:entries="@array/style_array"
+			android:id="@+id/style1"
+			android:background="@drawable/select_style1"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
@@ -624,9 +624,8 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 			<Spinner
 				android:id="@+id/person"
 				android:background="@drawable/select_person"
-				android:entries="@array/person_array"
 				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
+				android:layout_width="133dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -922,127 +921,331 @@ Partial output of the drawable resources.
 
 ## user written html
 
-The DIV and FORM tag are not required for mobile devices which sometimes causes additional Linear layouts to be auto-generated.  Most of the android attributes were auto-generated from CSS and were not included with the sample HTML.
+The DIV and FORM tag are not required for mobile devices which sometimes causes additional Linear layouts to be auto-generated. You can use the sample.html file provided to generate the layout XML and resources.
 
 ```xml
 <html>
 <head></head>
 <body>
-<div>
-    <h2>Entry</h2>
-    <form name="entry" autocomplete="off">
-        <ul>
-            <li>
-                <label>Order:</label>
-                <input type="text" name="order" class="null-allowed" />
-            </li>
-            <li>
-                <label>Date (<a href="javascript://">Add</a>):</label>
-                <div class="entry-date">
-                    <select name="month0"></select>
-                    <select name="day0"></select>
-                    <select name="year0"></select>
-                </div>
-            </li>
-            <li>
-                <label>Time:</label>
-                <select name="hour" class="null-allowed"></select>
-                <select name="minute"></select>
-            </li>
-            <li>
-                <label>Type:</label>
-                <select name="typeofentry"></select>
-            </li>
-            <li>
-                <label>Topic (<a href="javascript://">Add</a>):</label>
-                <div class="entry-topic">
-                    <input type="text" name="topic0" />
-                    <select name="prominence0"></select>
-                </div>
-            </li>
-            <li>
-                <label>Series:</label>
-                <select name="series"></select>
-            </li>
-            <li>
-                <label>Subset:</label>
-                <select name="subset"></select>
-            </li>
-            <li>
-                <label>Active:</label>
-                <select name="entryactive"></select>
-            </li>
-        </ul>
-        <br />
-        <input type="button" value="Add" />
-    </form>
-    <br />
-    <br />
-    <form name="itemofentry" action="/admin/itemofentry" method="post" autocomplete="off">
-        <ul>
-            <li>
-                <label>Series:</label>
-                <select name="series" class="req-pageurl-4"></select>
-            </li>
-            <li>
-                <label>Subset:</label>
-                <select name="subset" class="req-pageurl-5"></select>
-            </li>
-            <li>
-                <label>Entries:</label>
-                <select name="entry" class="req-pageurl-0"></select>
-                <input type="button" value="Open" disabled="disabled" target="_blank" />
-                <input type="button" value="All" disabled="disabled" target="_blank" />
-            </li>
-            <li>
-                <label>Mode:</label>
-                <select name="mode" class="req-pageurl-1"></select>
-            </li>
-            <li>
-                <label>Style:</label>
-                <select name="style" class="req-pageurl-2"></select>
-            </li>
-            <li>
-                <label>Calendar:</label>
-                <select name="calendar" class="req-pageurl-3"></select>
-            </li>
-            <li>
-                <label>Version:</label>
-                <select name="version" class="req-pageurl-6"></select>
-                <select name="version_update" class="null-allowed"></select>
-                <input type="button" value="Update" />
-            </li>
-            <li>
-                <label>Branch:</label>
-                <select name="branch" class="req-pageurl-7"></select>
-                <select name="branch_update" class="null-allowed"></select>
-                <input type="button" value="Update" />
-                <input type="button" value="Clone" />
-            </li>
-            <li>
-                <label>Custom (<a href="javascript://">Add</a>):</label>
-                <div class="entry-custom">
-                    <input type="text" name="customname0" class="null-allowed" />
-                    <select name="custommonth0" class="null-allowed"></select>
-                    <select name="customday0" class="null-allowed"></select>
-                    <input type="text" name="customyear0" class="null-allowed" />
-                </div>
-            </li>
-            <li>
-                <label>Conclusion:</label>
-                <select name="person" class="null-allowed"></select>
-                <div>
-                    <input id="c2" type="radio" name="personbirth" value="1" checked="checked" />
-                    <label for="c2">Birth</label>
-                    <input id="c3" type="radio" name="personbirth" value="0" />
-                    <label for="c3">Death</label>
-                    <input id="c4" type="checkbox" name="conclusionnone" value="1" />
-                    <label for="c4">None</label>
-                </div>
-                <input type="button" value="Update" />
-            </li>
-        </ul>
-    </form>
+<div style="width: 500px;">
+	<h2>Entry</h2>
+	<form name="entry" autocomplete="off" style="height: 255px; overflow: auto;">
+		<ul>
+			<li>
+				<label>Order:</label>
+				<input type="text" name="order" class="null-allowed" />
+			</li>
+			<li>
+				<label>Date (<a href="#">Add</a>):</label>
+				<div class="entry-date">
+					<select name="month0">
+						<option value="1">01</option>
+						<option value="2">02</option>
+						<option value="3">03</option>
+						<option value="4">04</option>
+						<option value="5">05</option>
+						<option value="6">06</option>
+						<option value="7">07</option>
+						<option value="8">08</option>
+						<option value="9">09</option>
+						<option value="10">10</option>
+						<option value="11">11</option>
+						<option value="12">12</option>
+					</select>
+					<select name="day0">
+						<option value="1">01</option>
+						<option value="2">02</option>
+						<option value="3">03</option>
+						<option value="4">04</option>
+						<option value="5">05</option>
+						<option value="6">06</option>
+						<option value="7">07</option>
+						<option value="8">08</option>
+						<option value="9">09</option>
+						<option value="10">10</option>
+						<option value="11">11</option>
+						<option value="12">12</option>
+						<option value="13">13</option>
+						<option value="14">14</option>
+						<option value="15">15</option>
+						<option value="16">16</option>
+						<option value="17">17</option>
+						<option value="18">18</option>
+						<option value="19">19</option>
+						<option value="20">20</option>
+						<option value="21">21</option>
+						<option value="22">22</option>
+						<option value="23">23</option>
+						<option value="24">24</option>
+						<option value="25">25</option>
+						<option value="26">26</option>
+						<option value="27">27</option>
+						<option value="28">28</option>
+						<option value="29">29</option>
+						<option value="30">30</option>
+						<option value="31">31</option>
+					</select>
+					<br />
+					<select name="year0" style="margin-top: 4px;">
+						<option value="2001">2001</option>
+						<option value="2002">2002</option>
+						<option value="2003">2003</option>
+						<option value="2004">2004</option>
+						<option value="2005">2005</option>
+						<option value="2006">2006</option>
+						<option value="2007">2007</option>
+						<option value="2008">2008</option>
+						<option value="2009">2009</option>
+						<option value="2010">2010</option>
+						<option value="2011">2011</option>
+						<option value="2012">2012</option>
+						<option value="2013">2013</option>
+						<option value="2014">2014</option>
+						<option value="2015">2015</option>
+						<option value="2016">2016</option>
+						<option value="2017">2017</option>
+						<option value="2018" selected="selected">2018</option>
+					</select>
+				</div>
+			</li>
+			<li>
+				<label>Time:</label>
+				<select name="hour" class="null-allowed">
+					<option value="0">00</option>
+					<option value="1">01</option>
+					<option value="2">02</option>
+					<option value="3">03</option>
+					<option value="4">04</option>
+					<option value="5">05</option>
+					<option value="6">06</option>
+					<option value="7">07</option>
+					<option value="8">08</option>
+					<option value="9">09</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+					<option value="14">14</option>
+					<option value="15">15</option>
+					<option value="16">16</option>
+					<option value="17">17</option>
+					<option value="18">18</option>
+					<option value="19">19</option>
+					<option value="20">20</option>
+					<option value="21">21</option>
+					<option value="22">22</option>
+					<option value="23">23</option>
+				</select>
+				<select name="minute">
+					<option value="00">00</option>
+					<option value="15">15</option>
+					<option value="30">30</option>
+					<option value="45">45</option>
+				</select>
+			</li>
+			<li>
+				<label>Type:</label>
+				<select name="typeofentry" style="width: 159px;"></select>
+			</li>
+			<li>
+				<label>Topic (<a href="#">Add</a>):</label>
+				<div class="entry-topic">
+					<input type="text" name="topic0" />
+					<select name="prominence0">
+						<option value="0">0</option>
+						<option value="1">1</option>
+					</select>
+				</div>
+			</li>
+			<li>
+				<label>Series:</label>
+				<select name="series" style="width: 203px;">
+					<option value="0">00 - Inactive</option>
+					<option value="1">01 - Active</option>
+				</select>
+			</li>
+			<li>
+				<label>Subset:</label>
+				<select name="subset">
+					<option value="0">0</option>
+					<option value="1">1</option>
+				</select>
+			</li>
+			<li>
+				<label>Active:</label>
+				<select name="entryactive">
+					<option value="1">Yes</option>
+					<option value="0">No</option>
+				</select>
+			</li>
+		</ul>
+		<br />
+		<input type="button" value="Add" />
+	</form>
+	<br />
+	<form name="itemofentry" action="/admin/itemofentry" method="post" autocomplete="off">
+		<ul>
+			<li>
+				<label>Series:</label>
+				<select name="series" class="req-pageurl-4" style="width: 203px;">
+					<option value="0">00 - Inactive</option>
+					<option value="1">01 - Active</option>
+				</select>
+			</li>
+			<li>
+				<label>Subset:</label>
+				<select name="subset" class="req-pageurl-5" onchange="US.ADMIN.Entry.updateEntries();">
+					<option value="0">0</option>
+					<option value="1">1</option>
+				</select>
+			</li>
+			<li>
+				<label>Entries:</label>
+				<select name="entry" class="req-pageurl-0" style="width: 277px;">
+					<option value=""></option>
+				</select>
+				<input type="button" value="Open" disabled="disabled" target="_blank" />
+				<input type="button" value="All" disabled="disabled" target="_blank" />
+			</li>
+			<li>
+				<label>Mode:</label>
+				<select name="mode" class="req-pageurl-1">
+					<option value="1">Variant</option>
+					<option value="2">Predefined</option>
+				</select>
+			</li>
+			<li>
+				<label>Style:</label>
+				<select name="style1" class="req-pageurl-2"></select>
+			</li>
+			<li>
+				<label>Calendar:</label>
+				<select name="calendar" class="req-pageurl-3">
+					<option value="1">Birth</option>
+					<option value="2">Death</option>
+				</select>
+			</li>
+			<li>
+				<label>Version:</label>
+				<select name="version" class="req-pageurl-6">
+					<option value="0">0</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+				</select>
+				<select name="version_update" class="null-allowed">
+					<option value=""></option>
+					<option value="0">0</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+				</select>
+				<input type="button" value="Update" />
+			</li>
+			<li>
+				<label>Branch:</label>
+				<select name="branch" class="req-pageurl-7">
+					<option value="0">0</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+				</select>
+				<select name="branch_update" class="null-allowed">
+					<option value=""></option>
+					<option value="0">0</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5</option>
+					<option value="6">6</option>
+					<option value="7">7</option>
+					<option value="8">8</option>
+					<option value="9">9</option>
+					<option value="10">10</option>
+					<option value="11">11</option>
+					<option value="12">12</option>
+					<option value="13">13</option>
+				</select>
+				<input type="button" value="Update" />
+				<input type="button" value="Clone" />
+			</li>
+			<li>
+				<label>Custom (<a href="#">Add</a>):</label>
+				<div class="entry-custom">
+					<input type="text" name="customname0" class="null-allowed" />
+					<select name="custommonth0" class="null-allowed">
+						<option value=""></option>
+						<option value="1">01</option>
+						<option value="2">02</option>
+						<option value="3">03</option>
+						<option value="4">04</option>
+						<option value="5">05</option>
+						<option value="6">06</option>
+						<option value="7">07</option>
+						<option value="8">08</option>
+						<option value="9">09</option>
+						<option value="10">10</option>
+						<option value="11">11</option>
+						<option value="12">12</option>
+					</select>
+					<select name="customday0" class="null-allowed">
+						<option value=""></option>
+						<option value="1">01</option>
+						<option value="2">02</option>
+						<option value="3">03</option>
+						<option value="4">04</option>
+						<option value="5">05</option>
+						<option value="6">06</option>
+						<option value="7">07</option>
+						<option value="8">08</option>
+						<option value="9">09</option>
+						<option value="10">10</option>
+						<option value="11">11</option>
+						<option value="12">12</option>
+						<option value="13">13</option>
+						<option value="14">14</option>
+						<option value="15">15</option>
+						<option value="16">16</option>
+						<option value="17">17</option>
+						<option value="18">18</option>
+						<option value="19">19</option>
+						<option value="20">20</option>
+						<option value="21">21</option>
+						<option value="22">22</option>
+						<option value="23">23</option>
+						<option value="24">24</option>
+						<option value="25">25</option>
+						<option value="26">26</option>
+						<option value="27">27</option>
+						<option value="28">28</option>
+						<option value="29">29</option>
+						<option value="30">30</option>
+						<option value="31">31</option>
+					</select>
+					<input type="text" name="customyear0" class="null-allowed" />
+				</div>
+			</li>
+			<li>
+				<label>Conclusion:</label>
+				<select name="person" class="null-allowed" style="width: 133px;"></select>
+				<div>
+					<input id="c2" type="radio" name="personbirth" value="1" checked="checked" />
+					<label for="c2">Birth</label>
+					<input id="c3" type="radio" name="personbirth" value="0" />
+					<label for="c3">Death</label>
+					<input id="c4" type="checkbox" name="conclusionnone" value="1" />
+					<label for="c4">None</label>
+				</div>
+				<input type="button" value="Update" />
+			</li>
+		</ul>
+	</form>
 </div>
 </body>
 </html>
