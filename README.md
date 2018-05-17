@@ -2,9 +2,25 @@
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. ConstraintLayout or RelativeLayout for positional views can be generated into the XML based on your preference. iOS and Xamarin Forms can also be supported on request once the Android version is stable. Ideally it will be hosted inside a Chrome browser plugin. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
 
-Some modification might be necessary to use these scripts in your webpage. You can preview the library with the sample.html file which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
+These settings are available in layout.xml to customize your desired XML structure. 
 
-```xml
+```javascript
+const SETTINGS = {
+    density: DENSITY_ANDROID.MDPI,
+    defaultLayout: LAYOUT_ANDROID.RELATIVE,
+    showAndroidXmlNamespace: false,
+    showAndroidAttributes: true,
+    useGridLayout: true,
+    useVerticalHorizontal: true,
+    useUnitDP: true,
+    boundsOffset: 2,
+    whitespaceOffset: 4
+};
+```
+
+You can preview the library with the sample.html file which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
+
+```javascript
 <script src="utils.js"></script>
 <script src="color.js"></script>
 <script src="constants.js"></script>
@@ -72,12 +88,12 @@ Some modification might be necessary to use these scripts in your webpage. You c
 				<EditText
 					android:id="@+id/order"
 					android:background="@drawable/input_order"
-					android:layout_columnWeight="0"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:paddingVertical="1dp"
 					style="@style/Input_1.Input_3" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
 					android:id="@+id/textview3"
 					android:layout_columnWeight="0"
@@ -88,9 +104,9 @@ Some modification might be necessary to use these scripts in your webpage. You c
 					android:text="@string/date_add"
 					style="@style/Label_1" />
 				<RelativeLayout
-					android:layout_columnWeight="0"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content">
+					android:layout_width="0dp">
 					<Spinner
 						android:id="@+id/month0"
 						android:background="@drawable/select_month0"
@@ -134,7 +150,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 						android:layout_alignStart="@+id/month0"
 						android:layout_below="@+id/month0" />
 				</RelativeLayout>
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
 					android:id="@+id/textview4"
 					android:layout_columnWeight="0"
@@ -170,7 +186,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 						android:paddingTop="1dp"
 						style="@style/Select_1" />
 				</LinearLayout>
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
 					android:id="@+id/textview5"
 					android:layout_columnWeight="0"
@@ -183,13 +199,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 				<Spinner
 					android:id="@+id/typeofentry"
 					android:background="@drawable/select_typeofentry"
-					android:layout_columnWeight="0"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
 					android:id="@+id/textview6"
 					android:layout_columnWeight="0"
@@ -201,9 +217,9 @@ Some modification might be necessary to use these scripts in your webpage. You c
 					style="@style/Label_1" />
 				<LinearLayout
 					android:id="@+id/linearlayout3"
-					android:layout_columnWeight="0"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:orientation="horizontal">
 					<EditText
 						android:id="@+id/topic0"
@@ -224,7 +240,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 						android:paddingTop="1dp"
 						style="@style/Select_1" />
 				</LinearLayout>
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
 					android:id="@+id/textview7"
 					android:layout_columnWeight="0"
@@ -238,13 +254,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 					android:id="@+id/series"
 					android:background="@drawable/select_series"
 					android:entries="@array/series_array"
-					android:layout_columnWeight="0"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
 					android:id="@+id/textview8"
 					android:layout_columnWeight="0"
@@ -258,13 +274,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 					android:id="@+id/subset"
 					android:background="@drawable/select_subset"
 					android:entries="@array/subset_array"
-					android:layout_columnWeight="0"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
 					android:id="@+id/textview9"
 					android:layout_columnWeight="0"
@@ -278,13 +294,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 					android:id="@+id/entryactive"
 					android:background="@drawable/select_entryactive"
 					android:entries="@array/entryactive_array"
-					android:layout_columnWeight="0"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 			</GridLayout>
 			<Button
 				android:id="@+id/button1"
@@ -321,13 +337,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 			android:id="@+id/spinner1"
 			android:background="@drawable/select_spinner1"
 			android:entries="@array/spinner1_array"
-			android:layout_columnWeight="0"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview11"
 			android:layout_columnWeight="0"
@@ -341,13 +357,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 			android:id="@+id/spinner2"
 			android:background="@drawable/select_spinner2"
 			android:entries="@array/spinner2_array"
-			android:layout_columnWeight="0"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview12"
 			android:layout_columnWeight="0"
@@ -392,7 +408,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 				android:text="@string/all"
 				style="@style/Input_1.Input_5" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview13"
 			android:layout_columnWeight="0"
@@ -406,13 +422,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 			android:id="@+id/mode"
 			android:background="@drawable/select_mode"
 			android:entries="@array/mode_array"
-			android:layout_columnWeight="0"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview14"
 			android:layout_columnWeight="0"
@@ -425,13 +441,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 		<Spinner
 			android:id="@+id/style1"
 			android:background="@drawable/select_style1"
-			android:layout_columnWeight="0"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview15"
 			android:layout_columnWeight="0"
@@ -445,13 +461,13 @@ Some modification might be necessary to use these scripts in your webpage. You c
 			android:id="@+id/calendar"
 			android:background="@drawable/select_calendar"
 			android:entries="@array/calendar_array"
-			android:layout_columnWeight="0"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview16"
 			android:layout_columnWeight="0"
@@ -497,7 +513,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 				android:text="@string/update"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview17"
 			android:layout_columnWeight="0"
@@ -553,7 +569,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 				android:text="@string/clone"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview18"
 			android:layout_columnWeight="0"
@@ -565,9 +581,9 @@ Some modification might be necessary to use these scripts in your webpage. You c
 			style="@style/Label_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout7"
-			android:layout_columnWeight="0"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<EditText
 				android:id="@+id/customname0"
@@ -606,7 +622,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 				android:paddingVertical="1dp"
 				style="@style/Input_1.Input_3" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
 			android:id="@+id/textview19"
 			android:layout_columnWeight="0"
@@ -673,7 +689,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 				android:text="@string/update"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" />
+		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 	</GridLayout>
 </LinearLayout>
 ```

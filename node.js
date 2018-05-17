@@ -98,7 +98,7 @@ class Node {
         }
         else {
             if (parentGridLayout) {
-                this.attr('layout_columnWeight', (this.parent.gridColumnWeight[this.gridIndex] ? 0 : 1));
+                this.attr('layout_columnWeight', (this.gridColumnWeight ? 0 : 1));
                 this.attr('layout_width', (this.attr('layout_columnWeight') == 1 ? '0px' : 'wrap_content'));
             }
             else {

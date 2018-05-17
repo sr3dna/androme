@@ -3,6 +3,7 @@ const SETTINGS = {
     defaultLayout: LAYOUT_ANDROID.RELATIVE,
     showAndroidXmlNamespace: false,
     showAndroidAttributes: true,
+    useGridLayout: true,
     useVerticalHorizontal: true,
     useUnitDP: true,
     boundsOffset: 2,
@@ -438,14 +439,9 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                             if (item.parent != node.parent) {
                                 item.parent = node.parent;
                             }
-                            if (item.depth != node.depth) {
-                                item.depth = node.depth;
-                            }
-                        }
-                        else {
-                            item.depthIndent--;
                         }
                         node.radioGroup.push(item);
+                        item.depthIndent = (depth + 1) - item.depth;
                         item.autoWrap = true;
                         if (item.element.checked) {
                             checked = item.androidId;
@@ -728,8 +724,8 @@ function getAndroidGravity(textAlign, verticalAlign, layout = false) {
     return gravity.join('|');
 }
 
-function getSpaceXml(indent, width, height, columnCount) {
-    return `${indent + (SETTINGS.showAndroidAttributes ? Utils.formatString(STRING_ANDROID.SPACE, width, `${height}`, columnCount) : '<Space />')}\n`;
+function getSpaceXml(indent, width, height, columnCount, columnWeight = 0) {
+    return `${indent + (SETTINGS.showAndroidAttributes ? Utils.formatString(STRING_ANDROID.SPACE, width, `${height}`, columnCount, columnWeight) : '<Space />')}\n`;
 }
 
 function addRenderAppend(id, xml, index = -1) {
@@ -1245,14 +1241,14 @@ function parseDocument() {
                     let xml = '';
                     if (tagName == null) {
                         if (nodeY.children.length > 0) {
-                            if (nodeY.children.findIndex(item => item.widgetName != null && (item.depth == nodeY.depth + 1)) == -1) {
+                            if (SETTINGS.useGridLayout && nodeY.children.findIndex(item => item.widgetName != null && (item.depth == nodeY.depth + 1)) == -1) {
                                 const nextMapX = mapX[nodeY.depth + 2];
                                 const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
                                 if (nextCoordsX.length > 1) {
                                     const columnLeft = [];
                                     const columnRight = [];
-                                    const columnWeight = [];
                                     let columns = [];
+                                    let columnSymmetry = [];
                                     for (let l = 0; l < nextCoordsX.length; l++) {
                                         const nextAxisX = nextMapX[nextCoordsX[l]];
                                         columnLeft[l] = parseInt(nextCoordsX[l]);
@@ -1264,19 +1260,19 @@ function parseDocument() {
                                                     if (columns[l] == null) {
                                                         columns[l] = [];
                                                     }
+                                                    if (columnSymmetry[l] == null) {
+                                                        columnSymmetry[l] = [];
+                                                    }
                                                     columns[l].push(nextAxisX[m]);
+                                                    columnSymmetry[l].push(nextAxisX[m].bounds.right);
                                                 }
                                                 columnLeft[l] = Math.max(nextAxisX[m].bounds.left, columnLeft[l]);
                                                 columnRight[l] = Math.max(nextAxisX[m].bounds.right, columnRight[l]);
                                             }
                                         }
                                     }
-                                    for (let l = 0; l < columns.length; l++) {
-                                        if (columns[l] != null) {
-                                            columnWeight.push((columns[l + (l < columns.length - 1 ? 1 : -1)] != null));
-                                        }
-                                    }
                                     columns = columns.filter(nodes => nodes);
+                                    columnSymmetry = columnSymmetry.filter(item => item).map(item => (item.length == 1 || new Set(item).size == 1));
                                     const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                                     for (let l = 0; l < columnLength; l++) {
                                         let y = null;
@@ -1307,6 +1303,7 @@ function parseDocument() {
                                         const columnEnd = [];
                                         const columnRender = [];
                                         const rowStart = [];
+                                        const columnWeightExclude = {};
                                         xml += writeGridLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, columns.length);
                                         for (let l = 0, count = 0; l < columns.length; l++) {
                                             columnStart[l] = Number.MAX_VALUE;
@@ -1330,6 +1327,7 @@ function parseDocument() {
                                                     nodeX.parent.renderParent = true;
                                                     nodeX.parent = nodeY;
                                                     nodeX.gridIndex = l;
+                                                    nodeX.gridColumnWeight = columnSymmetry[l];
                                                     let rowSpan = 1;
                                                     let columnSpan = 1 + spacer;
                                                     let spaceSpan = 0;
@@ -1337,6 +1335,9 @@ function parseDocument() {
                                                         if (columns[n][m].spacer == 1) {
                                                             if (nodeX.bounds.right == columnRight[l] && nodeX.bounds.right < columnLeft[n]) {
                                                                 spaceSpan++;
+                                                                if (nodeX.spaceSpanColumnWeight == null || nodeX.spaceSpanColumnWeight == true) {
+                                                                    nodeX.spaceSpanColumnWeight = columnSymmetry[n];
+                                                                }
                                                             }
                                                             else {
                                                                 columnSpan++;
@@ -1398,7 +1399,6 @@ function parseDocument() {
                                         columnEnd[columnEnd.length - 1] = columnRight[columnRight.length - 1];
                                         nodeY.gridColumnStart = columnStart;
                                         nodeY.gridColumnEnd = columnEnd;
-                                        nodeY.gridColumnWeight = columnWeight;
                                         nodeY.gridColumnCount = columns.length;
                                     }
                                 }
@@ -1497,7 +1497,7 @@ function parseDocument() {
                         }
                     }
                     if (nodeY.spaceSpan > 0) {
-                        addRenderAppend(nodeY.id, getSpaceXml(Utils.setIndent(nodeY.depth + nodeY.depthIndent), 'wrap_content', 'wrap_content', nodeY.spaceSpan), 0);
+                        addRenderAppend(nodeY.id, getSpaceXml(Utils.setIndent(nodeY.depth + nodeY.depthIndent), (nodeY.spaceSpanColumnWeight ? 'wrap_content' : '0dp'), 'wrap_content', nodeY.spaceSpan, (nodeY.spaceSpanColumnWeight ? 0 : 1)), 0);
                     }
                     if (xml != '') {
                         if (partial[parentId] == null) {

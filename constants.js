@@ -149,7 +149,7 @@ const WIDGET_ANDROID = {
 const STRING_ANDROID = {
     XML_DECLARATION: '<?xml version="1.0" encoding="utf-8"?>',
     XMLNS: 'xmlns:android="http://schemas.android.com/apk/res/android"',
-    SPACE: '<Space android:layout_width="{0}" android:layout_height="{1}" android:layout_columnSpan="{2}" />'
+    SPACE: '<Space android:layout_width="{0}" android:layout_height="{1}" android:layout_columnSpan="{2}" android:layout_columnWeight="{3}" />'
 };
 
 const DENSITY_ANDROID = {
