@@ -46,7 +46,7 @@ You can preview the library with the sample.html file which should generate the 
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	android:id="@+id/linearlayout1"
-	android:layout_height="wrap_content"
+	android:layout_height="match_parent"
 	android:layout_marginTop="10dp"
 	android:layout_width="500dp"
 	android:orientation="vertical">
@@ -104,6 +104,7 @@ You can preview the library with the sample.html file which should generate the 
 					android:text="@string/date_add"
 					style="@style/Label_1" />
 				<RelativeLayout
+					android:id="@+id/relativelayout1"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
 					android:layout_width="0dp">

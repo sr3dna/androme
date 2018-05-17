@@ -35,6 +35,9 @@ const MAPPING_ANDROID = {
 };
 
 const PROPERTY_ANDROID = {
+    'gravity': {
+        'gravity': 'android:gravity="{0}"'
+    },
     'backgroundStyle': {
         'backgroundColor': 'android:background="@drawable/{0}"'
     },
@@ -67,12 +70,18 @@ const PROPERTY_ANDROID = {
 };
 
 const WIDGET_ANDROID = {
-    'ConstraintLayout': {
+    'LinearLayout': {
+        'androidId': 'android:id="@+id/{0}"',
+        'window.setGravity': PROPERTY_ANDROID['gravity'],
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
+    },
+    'RelativeLayout': {
         'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
-    'LinearLayout': {
+    'ConstraintLayout': {
         'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
@@ -97,32 +106,34 @@ const WIDGET_ANDROID = {
     },
     'RadioButton': {
         'androidId': 'android:id="@+id/{0}"',
-        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'CheckBox': {
         'androidId': 'android:id="@+id/{0}"',
-        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
     'Spinner': {
         'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
-        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceStringArray': PROPERTY_ANDROID['resourceStringArray']
     },
     'TextView': {
         'androidId': 'android:id="@+id/{0}"',
+        'window.setGravity': PROPERTY_ANDROID['gravity'],
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
-        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceString': PROPERTY_ANDROID['resourceString']
     },
     'EditText': {
         'androidId': 'android:id="@+id/{0}"',
+        'window.setGravity': PROPERTY_ANDROID['gravity'],
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
-        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceString': PROPERTY_ANDROID['resourceString']
     },
@@ -134,7 +145,7 @@ const WIDGET_ANDROID = {
     'Button': {
         'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
-        'window.getComputedStyle': PROPERTY_ANDROID['computedStyle'],
+        'window.setComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
         'window.addResourceString': PROPERTY_ANDROID['resourceString']
     },

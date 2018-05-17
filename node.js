@@ -8,7 +8,7 @@ class Node {
             style = window.getComputedStyle(element);
             styleMap = element.styleMap || {};
             bounds = element.getBoundingClientRect();
-            overflow = ((style.overflow == 'auto' || style.overflow == 'scroll') && (element.clientHeight != element.scrollHeight || element.clientWidth != element.scrollWidth) ? style.overflow : '');
+            overflow = ((style.overflow == 'auto' || style.overflow == 'scroll') && (element.clientHeight != element.scrollHeight || element.clientWidth != element.scrollWidth) ? style.overflow : null);
             for (const i of element.style) {
                 styleMap[Utils.hyphenToCamelCase(i)] = element.style[i];
             }
@@ -29,18 +29,10 @@ class Node {
         this.android = {};
         this.attributes = [];
         this.original = {};
-        this.scroll = {};
         this.boxRefit = {};
-        if (bounds != null) {
-            Object.assign(this.scroll, {
-                width: styleMap.width || '',
-                height: styleMap.height || '',
-                overflow,
-                bottom: bounds.bottom + (overflow != '' ? (element.scrollHeight - element.offsetHeight) : 0),
-                right: bounds.right + (overflow != '' ? (element.scrollWidth - element.offsetWidth) : 0),
-                nested: false
-            });
-        }
+        this.preAlignment = {};
+        this.scrollOverflow = overflow;
+        this.scrollNested = false;
         Object.assign(this, options);
     }
 
@@ -90,9 +82,9 @@ class Node {
         const parentStyle = Node.getElementStyle(parent);
         const parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight) + parseInt(parentStyle.borderLeftWidth) + parseInt(parentStyle.borderRightWidth));
         const parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom) + parseInt(parentStyle.borderTopWidth) + parseInt(parentStyle.borderBottomWidth));
-        const parentScrollView = (parent.androidNode && parent.androidNode.scroll.overflow != '');
+        const parentScrollView = (parent.androidNode && parent.androidNode.scrollOverflow != null);
         const parentGridLayout = (this.parent.id != 0 && this.parent.isView(LAYOUT_ANDROID.GRID));
-        if (Utils.hasValue(this.scroll.overflow) && !this.isView(LAYOUT_ANDROID.TEXT)) {
+        if (this.scrollOverflow != null && !this.isView(LAYOUT_ANDROID.TEXT)) {
             this.attr('layout_width', 'match_parent');
             this.attr('layout_height', 'match_parent');
         }
@@ -269,7 +261,7 @@ class Node {
                         }
                     });
                     if (typeof method == 'function') {
-                        const data = method(element);
+                        const data = method(this);
                         if (data != null) {
                             const output = [];
                             for (const j in widget[action]) {
@@ -300,7 +292,7 @@ class Node {
                                 }
                             }
                             if (output.length > 0) {
-                                if (methodName == 'getComputedStyle') {
+                                if (methodName == 'setComputedStyle') {
                                     if (!RESOURCE['style'].has(this.tagName)) {
                                         RESOURCE['style'].set(this.tagName, []);
                                     }
@@ -326,7 +318,7 @@ class Node {
             if (nextElement && nextElement.htmlFor == element.id) {
                 const nextNode = nextElement.androidNode;
                 nextNode.setAndroidId(LAYOUT_ANDROID.TEXT);
-                nextNode.processAttributes(depth, [4]);
+                nextNode.processAttributes(depth, [5]);
                 if (this.isView(LAYOUT_ANDROID.RADIO)) {
                     nextNode.depthIndent++;
                 }
@@ -578,6 +570,6 @@ class Node {
         return { top, right, bottom, left };
     }
     static getElementStyle(element) {
-        return (element.androidNode != null ? element.androidNode.style : window.getComputedStyle(element));
+        return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
     }
 }
