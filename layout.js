@@ -19,6 +19,7 @@ const RESOURCE = {
     array: new Map(),
     color: new Map(),
     image: new Map(),
+    drawable: new Map(),
     style: new Map()
 };
 
@@ -82,11 +83,9 @@ function writeResourceColorXml() {
 
 function writeResourceDrawableXml() {
     let xml = [];
-    for (const item of NODE_CACHE) {
-        if (item.drawable) {
-            xml.push(`${item.drawable}`,
-                     `<!-- filename: res/drawable/${item.tagName.toLowerCase()}_${item.androidId}.xml -->\n`);
-        }
+    for (const [i, j] of RESOURCE['drawable'].entries()) {
+        xml.push(j,
+                 `<!-- filename: res/drawable/${i}.xml -->\n`);
     }
     if (RESOURCE['image'].size) {
         for (const [i, j] of RESOURCE['image'].entries()) {
@@ -308,9 +307,20 @@ function setBackgroundStyle(element) {
             xml += '</layer-list>';
         }
         const node = element.androidNode;
-        node.drawable = xml;
-        GENERATE_ID['__current'].push(`${node.tagName.toLowerCase()}_${node.androidId}`);
-        return { backgroundColor: `${element.tagName.toLowerCase()}_{id}` };
+        let drawableName = '';
+        for (const [i, j] of RESOURCE['drawable'].entries()) {
+            if (j == xml) {
+                drawableName = i;
+                break;
+            }
+        }
+        if (drawableName == '') {
+            drawableName = `${node.tagName.toLowerCase()}_${node.androidId}`
+            RESOURCE['drawable'].set(drawableName, xml);
+            GENERATE_ID['__current'].push(drawableName);
+        }
+        node.drawable = drawableName;
+        return { backgroundColor: drawableName };
     }
     return null;
 }
@@ -659,9 +669,9 @@ function processRelativeLayout(output) {
 }
 
 function setGridSpacing(node, depth = 0) {
-    const indent = Utils.setIndent(depth);
     let xml = '';
     if (node.parent.isView(LAYOUT_ANDROID.GRID)) {
+        const indent = Utils.setIndent(depth);
         const dimensions = getBoxSpacing(node.original.parent.element, true);
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;

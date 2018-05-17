@@ -2,7 +2,7 @@
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. ConstraintLayout or RelativeLayout for positional views can be generated into the XML based on your preference. iOS and Xamarin Forms can also be supported on request once the Android version is stable. Ideally it will be hosted inside a Chrome browser plugin. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
 
-These settings are available in layout.xml to customize your desired XML structure. 
+These settings are available in layout.js to customize your desired XML structure. 
 
 ```javascript
 const SETTINGS = {
@@ -109,7 +109,7 @@ You can preview the library with the sample.html file which should generate the 
 					android:layout_width="0dp">
 					<Spinner
 						android:id="@+id/month0"
-						android:background="@drawable/select_month0"
+						android:background="@drawable/select_hour"
 						android:entries="@array/month0_array"
 						android:layout_height="wrap_content"
 						android:layout_width="wrap_content"
@@ -124,7 +124,7 @@ You can preview the library with the sample.html file which should generate the 
 						android:layout_toStartOf="@+id/day0" />
 					<Spinner
 						android:id="@+id/day0"
-						android:background="@drawable/select_day0"
+						android:background="@drawable/select_hour"
 						android:entries="@array/day0_array"
 						android:layout_height="wrap_content"
 						android:layout_width="wrap_content"
@@ -137,7 +137,7 @@ You can preview the library with the sample.html file which should generate the 
 						android:layout_toEndOf="@+id/month0" />
 					<Spinner
 						android:id="@+id/year0"
-						android:background="@drawable/select_year0"
+						android:background="@drawable/select_hour"
 						android:entries="@array/year0_array"
 						android:layout_height="wrap_content"
 						android:layout_marginTop="4dp"
@@ -177,7 +177,7 @@ You can preview the library with the sample.html file which should generate the 
 						style="@style/Select_1" />
 					<Spinner
 						android:id="@+id/minute"
-						android:background="@drawable/select_minute"
+						android:background="@drawable/select_hour"
 						android:entries="@array/minute_array"
 						android:layout_height="wrap_content"
 						android:layout_marginLeft="3dp"
@@ -198,7 +198,7 @@ You can preview the library with the sample.html file which should generate the 
 					style="@style/Label_1" />
 				<Spinner
 					android:id="@+id/typeofentry"
-					android:background="@drawable/select_typeofentry"
+					android:background="@drawable/select_hour"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
 					android:layout_width="0dp"
@@ -223,7 +223,7 @@ You can preview the library with the sample.html file which should generate the 
 					android:orientation="horizontal">
 					<EditText
 						android:id="@+id/topic0"
-						android:background="@drawable/input_topic0"
+						android:background="@drawable/input_order"
 						android:layout_height="wrap_content"
 						android:layout_marginRight="5dp"
 						android:layout_width="130dp"
@@ -231,7 +231,7 @@ You can preview the library with the sample.html file which should generate the 
 						style="@style/Input_1.Input_3" />
 					<Spinner
 						android:id="@+id/prominence0"
-						android:background="@drawable/select_prominence0"
+						android:background="@drawable/select_hour"
 						android:entries="@array/prominence0_array"
 						android:layout_height="wrap_content"
 						android:layout_marginLeft="3dp"
@@ -252,7 +252,7 @@ You can preview the library with the sample.html file which should generate the 
 					style="@style/Label_1" />
 				<Spinner
 					android:id="@+id/series"
-					android:background="@drawable/select_series"
+					android:background="@drawable/select_hour"
 					android:entries="@array/series_array"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
@@ -272,7 +272,7 @@ You can preview the library with the sample.html file which should generate the 
 					style="@style/Label_1" />
 				<Spinner
 					android:id="@+id/subset"
-					android:background="@drawable/select_subset"
+					android:background="@drawable/select_hour"
 					android:entries="@array/subset_array"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
@@ -292,7 +292,7 @@ You can preview the library with the sample.html file which should generate the 
 					style="@style/Label_1" />
 				<Spinner
 					android:id="@+id/entryactive"
-					android:background="@drawable/select_entryactive"
+					android:background="@drawable/select_hour"
 					android:entries="@array/entryactive_array"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
@@ -335,7 +335,7 @@ You can preview the library with the sample.html file which should generate the 
 			style="@style/Label_1" />
 		<Spinner
 			android:id="@+id/spinner1"
-			android:background="@drawable/select_spinner1"
+			android:background="@drawable/select_hour"
 			android:entries="@array/spinner1_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
@@ -355,7 +355,7 @@ You can preview the library with the sample.html file which should generate the 
 			style="@style/Label_1" />
 		<Spinner
 			android:id="@+id/spinner2"
-			android:background="@drawable/select_spinner2"
+			android:background="@drawable/select_hour"
 			android:entries="@array/spinner2_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
@@ -381,7 +381,7 @@ You can preview the library with the sample.html file which should generate the 
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/spinner3"
-				android:background="@drawable/select_spinner3"
+				android:background="@drawable/select_hour"
 				android:layout_height="wrap_content"
 				android:layout_width="277dp"
 				android:paddingBottom="2dp"
@@ -389,7 +389,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Select_1" />
 			<Button
 				android:id="@+id/button2"
-				android:background="@drawable/input_button2"
+				android:background="@drawable/input_button1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -399,7 +399,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Input_1.Input_5" />
 			<Button
 				android:id="@+id/button3"
-				android:background="@drawable/input_button3"
+				android:background="@drawable/input_button1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -420,7 +420,7 @@ You can preview the library with the sample.html file which should generate the 
 			style="@style/Label_1" />
 		<Spinner
 			android:id="@+id/mode"
-			android:background="@drawable/select_mode"
+			android:background="@drawable/select_hour"
 			android:entries="@array/mode_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
@@ -440,7 +440,7 @@ You can preview the library with the sample.html file which should generate the 
 			style="@style/Label_1" />
 		<Spinner
 			android:id="@+id/style1"
-			android:background="@drawable/select_style1"
+			android:background="@drawable/select_hour"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
 			android:layout_width="0dp"
@@ -459,7 +459,7 @@ You can preview the library with the sample.html file which should generate the 
 			style="@style/Label_1" />
 		<Spinner
 			android:id="@+id/calendar"
-			android:background="@drawable/select_calendar"
+			android:background="@drawable/select_hour"
 			android:entries="@array/calendar_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
@@ -485,7 +485,7 @@ You can preview the library with the sample.html file which should generate the 
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/version"
-				android:background="@drawable/select_version"
+				android:background="@drawable/select_hour"
 				android:entries="@array/version_array"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -494,7 +494,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Select_1" />
 			<Spinner
 				android:id="@+id/version_update"
-				android:background="@drawable/select_version_update"
+				android:background="@drawable/select_hour"
 				android:entries="@array/version_update_array"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
@@ -504,7 +504,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Select_1" />
 			<Button
 				android:id="@+id/button4"
-				android:background="@drawable/input_button4"
+				android:background="@drawable/input_button1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -531,7 +531,7 @@ You can preview the library with the sample.html file which should generate the 
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/branch"
-				android:background="@drawable/select_branch"
+				android:background="@drawable/select_hour"
 				android:entries="@array/branch_array"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -540,7 +540,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Select_1" />
 			<Spinner
 				android:id="@+id/branch_update"
-				android:background="@drawable/select_branch_update"
+				android:background="@drawable/select_hour"
 				android:entries="@array/branch_update_array"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
@@ -550,7 +550,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Select_1" />
 			<Button
 				android:id="@+id/button5"
-				android:background="@drawable/input_button5"
+				android:background="@drawable/input_button1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -560,7 +560,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Input_1.Input_2" />
 			<Button
 				android:id="@+id/button6"
-				android:background="@drawable/input_button6"
+				android:background="@drawable/input_button1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -587,7 +587,7 @@ You can preview the library with the sample.html file which should generate the 
 			android:orientation="horizontal">
 			<EditText
 				android:id="@+id/customname0"
-				android:background="@drawable/input_customname0"
+				android:background="@drawable/input_order"
 				android:layout_height="wrap_content"
 				android:layout_marginRight="5dp"
 				android:layout_width="130dp"
@@ -595,7 +595,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Input_1.Input_3" />
 			<Spinner
 				android:id="@+id/custommonth0"
-				android:background="@drawable/select_custommonth0"
+				android:background="@drawable/select_hour"
 				android:entries="@array/custommonth0_array"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
@@ -605,7 +605,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Select_1" />
 			<Spinner
 				android:id="@+id/customday0"
-				android:background="@drawable/select_customday0"
+				android:background="@drawable/select_hour"
 				android:entries="@array/customday0_array"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
@@ -615,7 +615,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Select_1" />
 			<EditText
 				android:id="@+id/customyear0"
-				android:background="@drawable/input_customyear0"
+				android:background="@drawable/input_order"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="40dp"
@@ -640,7 +640,7 @@ You can preview the library with the sample.html file which should generate the 
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/person"
-				android:background="@drawable/select_person"
+				android:background="@drawable/select_hour"
 				android:layout_height="wrap_content"
 				android:layout_width="133dp"
 				android:paddingBottom="2dp"
@@ -680,7 +680,7 @@ You can preview the library with the sample.html file which should generate the 
 				style="@style/Input_1.Input_4" />
 			<Button
 				android:id="@+id/button7"
-				android:background="@drawable/input_button7"
+				android:background="@drawable/input_button1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -900,11 +900,30 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 
 ## auto-generated drawable resources
 
-Partial output of the drawable resources.
-
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<shape android:shape="rectangle">
+	<stroke android:width="1dp" android:color="@color/light_gray1" />
+</shape>
+<!-- filename: res/drawable/form_entry.xml -->
+
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list>
+	<item>
+		<shape android:shape="rectangle">
+			<solid android:color="@color/white_smoke1" />
+		</shape>
+	</item>
+	<item>
+		<shape android:shape="rectangle">
+			<stroke android:width="2dp" android:color="@color/white_smoke1" />
+		</shape>
+	</item>
+</layer-list>
+<!-- filename: res/drawable/input_button1.xml -->
+
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list>
 	<item>
 		<shape android:shape="rectangle">
 			<solid android:color="@color/white" />
@@ -917,11 +936,9 @@ Partial output of the drawable resources.
 	</item>
 </layer-list>
 <!-- filename: res/drawable/input_order.xml -->
-```
 
-```xml
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<layer-list>
 	<item>
 		<shape android:shape="rectangle">
 			<solid android:color="@color/white" />
@@ -938,7 +955,7 @@ Partial output of the drawable resources.
 
 ## user written html
 
-The DIV and FORM tag are not required for mobile devices which sometimes causes additional Linear layouts to be auto-generated. You can use the sample.html file provided to generate the layout XML and resources.
+The DIV and FORM tag are not required for mobile devices which sometimes causes additional Linear layouts to be auto-generated. You can use the sample.html file provided to generate the same layout XML and resources.
 
 ```xml
 <html>
