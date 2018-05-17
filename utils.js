@@ -27,12 +27,12 @@ const Utils = (function() {
             return value;
         },
         hasValue: function(value) {
-            return (value != null && value !== '');
+            return (typeof value !== 'undefined' && value !== null && value !== '');
         },
         setIndent: function(n, value = '\t') {
             return value.repeat(n);
         },
-        convertToDP: function(value, font = false) {
+        convertToDP: function(value, unit = true, font = false) {
             if (value != null) {
                 if (typeof value == 'number') {
                     value += 'px';
@@ -44,21 +44,30 @@ const Utils = (function() {
                         value *= (4 / 3);
                     }
                     value = (value / (SETTINGS.density / 160));
-                    if (value >= 1) {
-                        value = Math.floor(value);
+                    if (value < 1) {
+                        value = parseFloat(value.toFixed(2));
                     }
-                    else if (value > 0) {
-                        value = value.toFixed(2);
+                    else {
+                        value = Math.floor(value);
                     }
                 }
                 if (!isNaN(value)) {
-                    return value + (font ? 'sp' : 'dp');
+                    return value + (unit ? (font ? 'sp' : 'dp') : 0);
                 }
             }
-            return '0dp';
+            return (unit ? '0dp' : 0);
         },
-        convertToSP: function(value) {
-            return Utils.convertToDP(value, true);
+        convertToSP: function(value, unit = true) {
+            return Utils.convertToDP(value, unit, true);
+        },
+        parseDP(value) {
+            if (this.hasValue(value)) {
+                const match = value.match(/"([0-9]+)dp"/);
+                if (match != null) {
+                    return parseFloat(match[1]);
+                }
+            }
+            return 0;
         },
         withinRange: function(a, b, n = 1) {
             return (b >= (a - n) && b <= (a + n));

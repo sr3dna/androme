@@ -57,7 +57,6 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				android:id="@+id/gridlayout1"
 				android:columnCount="2"
 				android:layout_height="wrap_content"
-				android:layout_marginTop="1dp"
 				android:layout_width="wrap_content">
 				<TextView
 					android:id="@+id/textview2"
@@ -95,7 +94,6 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 						android:background="@drawable/select_month0"
 						android:entries="@array/month0_array"
 						android:layout_height="wrap_content"
-						android:layout_marginRight="3dp"
 						android:layout_width="wrap_content"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
@@ -305,7 +303,9 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 		android:columnCount="2"
 		android:layout_height="wrap_content"
 		android:layout_marginTop="28dp"
-		android:layout_width="match_parent">
+		android:layout_width="match_parent"
+		android:paddingHorizontal="10dp"
+		android:paddingVertical="10dp">
 		<TextView
 			android:id="@+id/textview10"
 			android:layout_columnWeight="0"
@@ -632,7 +632,8 @@ Some modification might be necessary to use these scripts in your webpage. I hav
 				style="@style/Select_1" />
 			<RadioGroup
 				android:id="@+id/radiogroup1"
-				android:checkedButton="@id+/c2">
+				android:checkedButton="@id+/c2"
+				android:orientation="horizontal">
 				<RadioButton
 					android:id="@+id/c2"
 					android:layout_height="wrap_content"
