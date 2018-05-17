@@ -166,6 +166,7 @@ const SETTINGS = {
     showAndroidAttributes: true,
     showAndroidXmlNamespace: false,
     useVerticalHorizontal: true,
+    useUnitDP: true,
     boundsOffset: 2,
     whitespaceOffset: 4
 };
@@ -408,8 +409,8 @@ function setBackgroundStyle(element) {
         const borderStyle = {
             default: 'android:color="@android:color/black"',
             solid: `android:color="${properties.border[2]}"`,
-            dotted: `android:color="${properties.border[2]}" android:dashWidth="3dp" android:dashGap="1dp"`,
-            dashed: `android:color="${properties.border[2]}" android:dashWidth="1dp" android:dashGap="1dp"`
+            dotted: `android:color="${properties.border[2]}" android:dashWidth="3px" android:dashGap="1px"`,
+            dashed: `android:color="${properties.border[2]}" android:dashWidth="1px" android:dashGap="1px"`
         };
         let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
         if (properties.borderRadius != null) {
@@ -470,7 +471,11 @@ function setBackgroundStyle(element) {
 }
 
 function setBoxSpacing(element) {
-    return getBoxSpacing(element);
+    const result = getBoxSpacing(element);
+    for (const i in result) {
+        result[i] += 'px';
+    }
+    return result;
 }
 
 function getBoxSpacing(element, complete) {
@@ -479,10 +484,9 @@ function getBoxSpacing(element, complete) {
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
             const property = `${border + side}`;
-            let dimension = node.css(property);
-            dimension = (complete ? parseInt(dimension) : Utils.convertToDP(dimension));
-            if (complete || (dimension != 0 && dimension != '0dp')) {
-                result[property] = dimension;
+            let value = parseInt(node.css(property)) || 0;
+            if (complete || value != 0) {
+                result[property] = value;
             }
         });
     });
@@ -491,31 +495,31 @@ function getBoxSpacing(element, complete) {
 
 function parseBorderStyle(value) {
     let stroke = value.match(/(none|dotted|dashed|solid)/);
-    let width = value.match(/([0-9]+(?:px|pt))/);
+    let width = value.match(/([0-9\.]+(?:px|pt|em))/);
     let color = Color.parseRGBA(value);
     if (stroke != null) {
         stroke = stroke[1];
     }
     if (width != null) {
-        width = width[1];
+        width = Utils.convertToPX(width[1]);
     }
     if (color != null) {
         color = color[1];
     }
-    return [stroke || 'solid', Utils.convertToDP(width || 1), color || '#000'];
+    return [stroke || 'solid', width || '1px', color || '#000'];
 }
 
 function parseBoxDimensions(value) {
-    const match = value.match(/^([0-9]+(?:px|pt)) ([0-9]+(?:px|pt)) ([0-9]+(?:px|pt)) ([0-9]+(?:px|pt))$/);
+    const match = value.match(/^([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em))$/);
     if (match != null && match.length == 5) {
         if (match[1] == match[2] && match[2] == match[3] && match[3] == match[4]) {
-            return [Utils.convertToDP(match[1])];
+            return [Utils.onvertToPX(match[1])];
         }
         else if (match[1] == match[3] && match[2] == match[4]) {
-            return [Utils.convertToDP(match[1]), Utils.convertToDP(match[2])];
+            return [Utils.convertToPX(match[1]), Utils.convertToPX(match[2])];
         }
         else {
-            return [Utils.convertToDP(match[1]), Utils.convertToDP(match[2]), Utils.convertToDP(match[3]), Utils.convertToDP(match[4])];
+            return [Utils.convertToPX(match[1]), Utils.convertToPX(match[2]), Utils.convertToPX(match[3]), Utils.convertToPX(match[4])];
         }
     }
     return null;
@@ -857,23 +861,23 @@ function setGridSpacing(node, depth = 0) {
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                xml += getSpaceXml(indent, 'match_parent', Utils.convertToDP(heightTop), node.renderParent.gridColumnCount);
+                xml += getSpaceXml(indent, 'match_parent', Utils.convertToPX(heightTop), node.renderParent.gridColumnCount);
             }
         }
         if (node.gridRowStart) {
             const paddingLeft = dimensions.marginLeft + dimensions.paddingLeft;
             if (paddingLeft > 0) {
-                node.replaceAttribute('paddingLeft', Utils.convertToDP(paddingLeft), true);
+                node.replaceAttribute('paddingLeft', Utils.convertToPX(paddingLeft), true);
             }
         }
         if (node.gridRowEnd) {
             const heightBottom =  dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             const paddingRight = dimensions.marginRight + dimensions.paddingRight;
             if (heightBottom > 0) {
-                addRenderAfter(node.id, getSpaceXml(indent, 'match_parent', Utils.convertToDP(heightBottom), node.renderParent.gridColumnCount));
+                addRenderAfter(node.id, getSpaceXml(indent, 'match_parent', Utils.convertToPX(heightBottom), node.renderParent.gridColumnCount));
             }
             if (paddingRight > 0) {
-                node.replaceAttribute('paddingRight', Utils.convertToDP(paddingRight), true);
+                node.replaceAttribute('paddingRight', Utils.convertToPX(paddingRight), true);
             }
         }
     }
@@ -1131,7 +1135,7 @@ function setMarginPadding() {
                     if (height > 0) {
                         const nodeVisible = (item.visible ? item : item.firstChild);
                         if (nodeVisible != null) {
-                            nodeVisible.replaceAttribute('layout_marginTop', Utils.convertToDP(height), item.visible);
+                            nodeVisible.replaceAttribute('layout_marginTop', Utils.convertToPX(height), !item.visible);
                             nodeVisible.boxRefit.layout_marginTop = true;
                         }
                     }
@@ -1148,7 +1152,7 @@ function setMarginPadding() {
                     if (width > 0) {
                         const nodeVisible = (item.visible ? item : item.firstChild);
                         if (nodeVisible != null) {
-                            nodeVisible.replaceAttribute('layout_marginLeft', Utils.convertToDP(width), item.visible);
+                            nodeVisible.replaceAttribute('layout_marginLeft', Utils.convertToPX(width), item.visible);
                             nodeVisible.boxRefit.layout_marginLeft = true;
                         }
                     }
@@ -1165,14 +1169,14 @@ function setMarginPadding() {
         if (node.children.length > 0 && !node.parent.isView(LAYOUT_ANDROID.GRID)) {
             if (node.wrapped == null && !node.visible) {
                 const box = {
-                    layout_marginTop: Utils.convertToDP(node.marginTop, false),
-                    layout_marginRight: Utils.convertToDP(node.marginRight, false),
-                    layout_marginBottom: Utils.convertToDP(node.marginBottom, false),
-                    layout_marginLeft: Utils.convertToDP(node.marginLeft, false),
-                    paddingTop: Utils.convertToDP(node.paddingTop, false),
-                    paddingRight: Utils.convertToDP(node.paddingRight, false),
-                    paddingBottom: Utils.convertToDP(node.paddingBottom, false),
-                    paddingLeft: Utils.convertToDP(node.paddingLeft, false)
+                    layout_marginTop: Utils.convertToPX(node.marginTop, false),
+                    layout_marginRight: Utils.convertToPX(node.marginRight, false),
+                    layout_marginBottom: Utils.convertToPX(node.marginBottom, false),
+                    layout_marginLeft: Utils.convertToPX(node.marginLeft, false),
+                    paddingTop: Utils.convertToPX(node.paddingTop, false),
+                    paddingRight: Utils.convertToPX(node.paddingRight, false),
+                    paddingBottom: Utils.convertToPX(node.paddingBottom, false),
+                    paddingLeft: Utils.convertToPX(node.paddingLeft, false)
                 };
                 const nextDepth = node.children.filter(item => (item.visible && (item.original.depth || item.depth) == node.depth + 1));
                 const outerNodes = Node.getOuterNodes(nextDepth);
@@ -1188,7 +1192,7 @@ function setMarginPadding() {
                         paddingLeft: 0
                     };
                     for (const i in childBox) {
-                        childBox[i] = Utils.parseDP(item.getAttribute(i));
+                        childBox[i] = Utils.parseUnit(item.getAttribute(i));
                     }
                     for (const side in outerNodes) {
                         if (outerNodes[side].includes(item)) {
@@ -1204,34 +1208,34 @@ function setMarginPadding() {
                             switch (side) {
                                 case 'top':
                                     if (childBox.layout_marginTop > 0) {
-                                        item.replaceAttribute('layout_marginTop', `${childBox.layout_marginTop}dp`);
+                                        item.replaceAttribute('layout_marginTop', `${childBox.layout_marginTop}px`);
                                     }
                                     if (childBox.paddingTop > 0) {
-                                        item.replaceAttribute('paddingTop', `${childBox.paddingTop}dp`);
+                                        item.replaceAttribute('paddingTop', `${childBox.paddingTop}px`);
                                     }
                                     break;
                                 case 'right':
                                     if (childBox.layout_marginRight > 0) {
-                                        item.replaceAttribute('layout_marginRight', `${childBox.layout_marginRight}dp`);
+                                        item.replaceAttribute('layout_marginRight', `${childBox.layout_marginRight}px`);
                                     }
                                     if (childBox.paddingRight > 0) {
-                                        item.replaceAttribute('paddingRight', `${childBox.paddingRight}dp`);
+                                        item.replaceAttribute('paddingRight', `${childBox.paddingRight}px`);
                                     }
                                     break;
                                 case 'bottom':
                                     if (childBox.layout_marginBottom > 0) {
-                                        item.replaceAttribute('layout_marginBottom', `${childBox.layout_marginBottom}dp`);
+                                        item.replaceAttribute('layout_marginBottom', `${childBox.layout_marginBottom}px`);
                                     }
                                     if (childBox.paddingBottom > 0) {
-                                        item.replaceAttribute('paddingBottom', `${childBox.paddingBottom}dp`);
+                                        item.replaceAttribute('paddingBottom', `${childBox.paddingBottom}px`);
                                     }
                                     break;
                                 case 'left':
                                     if (childBox.layout_marginLeft > 0) {
-                                        item.replaceAttribute('layout_marginLeft', `${childBox.layout_marginLeft}dp`);
+                                        item.replaceAttribute('layout_marginLeft', `${childBox.layout_marginLeft}px`);
                                     }
                                     if (childBox.paddingLeft > 0) {
-                                        item.replaceAttribute('paddingLeft', `${childBox.paddingLeft}dp`);
+                                        item.replaceAttribute('paddingLeft', `${childBox.paddingLeft}px`);
                                     }
                                     break;
                             }
@@ -1246,28 +1250,28 @@ function setMarginPadding() {
 function mergeMarginPadding() {
     for (const node of NODE_CACHE) {
         if (node.visible && node.attributes.length > 0) {
-            const marginTop = Utils.parseDP(node.getAttribute('layout_marginTop'));
-            const marginRight = Utils.parseDP(node.getAttribute('layout_marginRight'));
-            const marginBottom = Utils.parseDP(node.getAttribute('layout_marginBottom'));
-            const marginLeft = Utils.parseDP(node.getAttribute('layout_marginLeft'));
+            const marginTop = Utils.parseUnit(node.getAttribute('layout_marginTop'));
+            const marginRight = Utils.parseUnit(node.getAttribute('layout_marginRight'));
+            const marginBottom = Utils.parseUnit(node.getAttribute('layout_marginBottom'));
+            const marginLeft = Utils.parseUnit(node.getAttribute('layout_marginLeft'));
             if (marginTop != 0 && marginTop == marginBottom) {
-                node.addAttribute('layout_marginVertical', `${marginTop}dp`);
+                node.addAttribute('layout_marginVertical', `${marginTop}px`);
                 node.deleteAttribute('layout_marginTop', 'layout_marginBottom');
             }
             if (marginLeft != 0 && marginLeft == marginRight) {
-                node.addAttribute('layout_marginHorizontal', `${marginLeft}dp`);
+                node.addAttribute('layout_marginHorizontal', `${marginLeft}px`);
                 node.deleteAttribute('layout_marginLeft', 'layout_marginRight');
             }
-            const paddingTop = Utils.parseDP(node.getAttribute('paddingTop'));
-            const paddingRight = Utils.parseDP(node.getAttribute('paddingRight'));
-            const paddingBottom = Utils.parseDP(node.getAttribute('paddingBottom'));
-            const paddingLeft = Utils.parseDP(node.getAttribute('paddingLeft'));
+            const paddingTop = Utils.parseUnit(node.getAttribute('paddingTop'));
+            const paddingRight = Utils.parseUnit(node.getAttribute('paddingRight'));
+            const paddingBottom = Utils.parseUnit(node.getAttribute('paddingBottom'));
+            const paddingLeft = Utils.parseUnit(node.getAttribute('paddingLeft'));
             if (paddingTop != 0 && paddingTop == paddingBottom) {
-                node.addAttribute('paddingVertical', `${paddingTop}dp`);
+                node.addAttribute('paddingVertical', `${paddingTop}px`);
                 node.deleteAttribute('paddingTop', 'paddingBottom');
             }
             if (paddingLeft != 0 && paddingLeft == paddingRight) {
-                node.addAttribute('paddingHorizontal', `${paddingLeft}dp`);
+                node.addAttribute('paddingHorizontal', `${paddingLeft}px`);
                 node.deleteAttribute('paddingLeft', 'paddingRight');
             }
         }
@@ -1686,6 +1690,9 @@ function parseDocument() {
             mergeMarginPadding();
         }
         output = writeNodeAttributes(output);
+    }
+    if (SETTINGS.useUnitDP) {
+        output = output.replace(/"[0-9\.]+px"/g, (match, capture) => `"${Utils.convertToDP(Utils.parseUnit(match))}"`);
     }
     output = output.replace(/{[:@#]{1}[0-9]+}/g, '');
     return output;

@@ -32,24 +32,38 @@ const Utils = (function() {
         setIndent: function(n, value = '\t') {
             return value.repeat(n);
         },
-        convertToDP: function(value, unit = true, font = false) {
-            if (value != null) {
+        convertToPX: function(value, unit = true) {
+            if (Utils.hasValue(value)) {
                 if (typeof value == 'number') {
                     value += 'px';
                 }
-                const match = value.match(/(px|pt)/);
+                const match = value.match(/(px|pt|em)/);
                 value = parseInt(value);
                 if (match != null) {
-                    if (match[0] == 'pt') {
-                        value *= (4 / 3);
+                    switch (match[0]) {
+                        case 'pt':
+                            value *= (4 / 3);
+                            break
+                        case 'em':
+                            value * 16;
+                            break;
                     }
-                    value = (value / (SETTINGS.density / 160));
-                    if (value < 1) {
-                        value = parseFloat(value.toFixed(2));
-                    }
-                    else {
-                        value = Math.floor(value);
-                    }
+                }
+                if (!isNaN(value)) {
+                    return (unit ? `${value}px` : value);
+                }
+            }
+            return (unit ? '0px' : 0);
+        },
+        convertToDP: function(value, unit = true, font = false) {
+            if (Utils.hasValue(value)) {
+                value = Utils.convertToPX(value, false);
+                value = value / (SETTINGS.density / 160);
+                if (value < 1) {
+                    value = parseFloat(value.toFixed(2));
+                }
+                else {
+                    value = Math.floor(value);
                 }
                 if (!isNaN(value)) {
                     return value + (unit ? (font ? 'sp' : 'dp') : 0);
@@ -60,9 +74,9 @@ const Utils = (function() {
         convertToSP: function(value, unit = true) {
             return Utils.convertToDP(value, unit, true);
         },
-        parseDP(value) {
+        parseUnit(value) {
             if (this.hasValue(value)) {
-                const match = value.match(/"([0-9]+)dp"/);
+                const match = value.match(/"([0-9]+)(?:(px|pt|em|dp|sp))"/);
                 if (match != null) {
                     return parseFloat(match[1]);
                 }

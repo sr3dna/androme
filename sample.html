@@ -279,7 +279,7 @@
                 </li>
                 <li>
                     <label>Subset:</label>
-                    <select name="subset" class="req-pageurl-5" onchange="US.ADMIN.Entry.updateEntries();">
+                    <select name="subset" class="req-pageurl-5">
                         <option value="0">0</option>
                         <option value="1">1</option>
                     </select>
@@ -420,12 +420,9 @@
                     <label>Conclusion:</label>
                     <select name="person" class="null-allowed" style="width: 133px;"></select>
                     <div>
-                        <input id="c2" type="radio" name="personbirth" value="1" checked="checked" />
-                        <label for="c2">Birth</label>
-                        <input id="c3" type="radio" name="personbirth" value="0" />
-                        <label for="c3">Death</label>
-                        <input id="c4" type="checkbox" name="conclusionnone" value="1" />
-                        <label for="c4">None</label>
+                        <input id="c2" type="radio" name="personbirth" value="1" checked="checked" /><label for="c2">Birth</label>
+                        <input id="c3" type="radio" name="personbirth" value="0" /><label for="c3">Death</label>
+                        <input id="c4" type="checkbox" name="conclusionnone" value="1" /><label for="c4">None</label>
                     </div>
                     <input type="button" value="Update" />
                 </li>

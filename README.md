@@ -294,7 +294,7 @@ Some modification might be necessary to use these scripts in your webpage. You c
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
 				android:text="@string/add"
-				android:textSize="12dp"
+				android:textSize="12sp"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
 	</ScrollView>
@@ -797,7 +797,7 @@ Styles are grouped by HTML element name and then by common properties.  These st
 <resources>
 	<style name="H2_1">
 		<item name="android:fontFamily">Arial, Helvetica, Tahoma</item>
-		<item name="android:textSize">14dp</item>
+		<item name="android:textSize">14sp</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
 		<item name="android:textColor">@color/white</item>
@@ -805,7 +805,7 @@ Styles are grouped by HTML element name and then by common properties.  These st
 	<style>
 	<style name="A_1">
 		<item name="android:fontFamily">Arial, Helvetica, Tahoma</item>
-		<item name="android:textSize">12dp</item>
+		<item name="android:textSize">12sp</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
 		<item name="android:textColor">@color/blue</item>
@@ -816,44 +816,44 @@ Styles are grouped by HTML element name and then by common properties.  These st
 	<style name="Input_2">
 		<item name="android:fontWeight">400</item>
 		<item name="android:textColor">@color/black</item>
-		<item name="android:textSize">13dp</item>
+		<item name="android:textSize">13sp</item>
 		<item name="android:textStyle">normal</item>
 	<style>
 	<style name="Input_3">
 		<item name="android:background">@color/white_smoke1</item>
 		<item name="android:fontWeight">400</item>
-		<item name="android:textSize">11dp</item>
+		<item name="android:textSize">11sp</item>
 		<item name="android:textStyle">normal</item>
 	<style>
 	<style name="Input_4">
 		<item name="android:background">@color/white</item>
-		<item name="android:textSize">13dp</item>
+		<item name="android:textSize">13sp</item>
 	<style>
 	<style name="Input_5">
 		<item name="android:textColor">@color/black</item>
-		<item name="android:textSize">11dp</item>
+		<item name="android:textSize">11sp</item>
 	<style>
 	<style name="Input_6">
 		<item name="android:background">@color/white_smoke1</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textColor">@color/black</item>
-		<item name="android:textSize">12dp</item>
+		<item name="android:textSize">12sp</item>
 		<item name="android:textStyle">normal</item>
 	<style>
 	<style name="Input_7">
 		<item name="android:textColor">@color/gray</item>
-		<item name="android:textSize">11dp</item>
+		<item name="android:textSize">11sp</item>
 	<style>
 	<style name="Label_1">
 		<item name="android:fontFamily">Arial, Helvetica, Tahoma</item>
-		<item name="android:textSize">12dp</item>
+		<item name="android:textSize">12sp</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
 		<item name="android:textColor">@color/black</item>
 	<style>
 	<style name="Select_1">
 		<item name="android:fontFamily">Arial</item>
-		<item name="android:textSize">12dp</item>
+		<item name="android:textSize">12sp</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
 		<item name="android:textColor">@color/black</item>
@@ -1094,7 +1094,7 @@ The DIV and FORM tag are not required for mobile devices which sometimes causes 
 			</li>
 			<li>
 				<label>Subset:</label>
-				<select name="subset" class="req-pageurl-5" onchange="US.ADMIN.Entry.updateEntries();">
+				<select name="subset" class="req-pageurl-5">
 					<option value="0">0</option>
 					<option value="1">1</option>
 				</select>
@@ -1235,12 +1235,9 @@ The DIV and FORM tag are not required for mobile devices which sometimes causes 
 				<label>Conclusion:</label>
 				<select name="person" class="null-allowed" style="width: 133px;"></select>
 				<div>
-					<input id="c2" type="radio" name="personbirth" value="1" checked="checked" />
-					<label for="c2">Birth</label>
-					<input id="c3" type="radio" name="personbirth" value="0" />
-					<label for="c3">Death</label>
-					<input id="c4" type="checkbox" name="conclusionnone" value="1" />
-					<label for="c4">None</label>
+					<input id="c2" type="radio" name="personbirth" value="1" checked="checked" /><label for="c2">Birth</label>
+					<input id="c3" type="radio" name="personbirth" value="0" /><label for="c3">Death</label>
+					<input id="c4" type="checkbox" name="conclusionnone" value="1" /><label for="c4">None</label>
 				</div>
 				<input type="button" value="Update" />
 			</li>

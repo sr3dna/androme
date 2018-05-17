@@ -101,8 +101,8 @@ class Node {
                                             value = addResourceColor(value.replace(rgb[0], rgb[1]));
                                         }
                                     }
-                                    else if (/(px|pt)$/.test(value)) {
-                                        value = (value.toLowerCase().indexOf('font') != -1 ? Utils.convertToSP(value) : Utils.convertToDP(value));
+                                    else if (/(px|pt|em)$/.test(value)) {
+                                        value = (j.toLowerCase().indexOf('font') != -1 ? Utils.convertToSP(value) : Utils.convertToPX(value));
                                     }
                                     output.push(widget[action][j].replace('{0}', value));
                                 }
@@ -213,11 +213,11 @@ class Node {
         else {
             if (parentGridLayout) {
                 this.attr('layout_columnWeight', (this.parent.gridColumnWeight[this.gridIndex] ? 0 : 1));
-                this.attr('layout_width', (this.attr('layout_columnWeight') == 1 ? '0dp' : 'wrap_content'));
+                this.attr('layout_width', (this.attr('layout_columnWeight') == 1 ? '0px' : 'wrap_content'));
             }
             else {
                 if (styleMap.width != null) {
-                    this.attr('layout_width', Utils.convertToDP(styleMap.width));
+                    this.attr('layout_width', Utils.convertToPX(styleMap.width));
                 }
                 else {
                     switch (this.tagName) {
@@ -246,7 +246,7 @@ class Node {
                 }
             }
             if (styleMap.height != null) {
-                this.attr('layout_height', Utils.convertToDP(styleMap.height));
+                this.attr('layout_height', Utils.convertToPX(styleMap.height));
             }
             else {
                 switch (this.tagName) {
@@ -310,7 +310,7 @@ class Node {
             }
             return value;
         }
-        return '';
+        return null;
     }
     deleteAttribute(...names) {
         names.forEach(name => {
@@ -328,16 +328,10 @@ class Node {
             const attr = this.attributes[i];
             if (attr.startsWith(property)) {
                 if (merge && !isNaN(parseInt(value))) {
-                    const match = attr.match(/([0-9]+)([a-zA-Z]+)/);
+                    const match = attr.match(/([0-9]+)(px)/);
                     if (match != null) {
-                        let result = parseFloat(match[1]) + parseFloat(value);
-                        if (result < 1) {
-                            result = result.toFixed(2);
-                        }
-                        else {
-                            result = Math.floor(result);
-                        }
-                        value = `${result}${match[2]}`;
+                        let result = parseInt(match[1]) + parseInt(value);
+                        value = result + match[2];
                     }
                 }
                 index = i;
