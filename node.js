@@ -25,6 +25,7 @@ class Node {
         this.depthIndent = 0;
         this.visible = true;
         this.linearExclude = false;
+        this.renderId = null;
         this.renderParent = null;
         this.android = {};
         this.androidAttributes = [];
@@ -392,11 +393,16 @@ class Node {
     }
 
     get widgetName() {
-        let widgetName = MAPPING_ANDROID[this.tagName];
-        if (typeof widgetName == 'object') {
-            widgetName = widgetName[this.element.type];
+        if (this.androidWidgetName != null) {
+            return this.androidWidgetName;
         }
-        return widgetName;
+        else {
+            let widgetName = MAPPING_ANDROID[this.tagName];
+            if (typeof widgetName == 'object') {
+                widgetName = widgetName[this.element.type];
+            }
+            return widgetName;
+        }
     }
     set parent(value) {
         if (this._parent != null && this.original.parent == null) {

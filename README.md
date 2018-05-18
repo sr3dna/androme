@@ -2,6 +2,36 @@
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. ConstraintLayout or RelativeLayout for positional views can be generated into the XML based on your preference. iOS and Xamarin Forms can also be supported on request once the Android version is stable. Ideally it will be hosted inside a Chrome browser plugin. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
 
+https://www.w3.org/TR/html401/struct/global.html#h-7.5.3
+
+If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text will be collapsed into a TextView rather than a LinearLayout. Try to enclose everything inside an HTML container otherwise the text might be discarded.
+
+RECOMMENDED
+```xml
+<div>
+	<span>abcde</span>
+	<span>fghij</span>
+	<span>klmno</span>
+</div>
+
+<LinearLayout android:orientation="horizontal">
+	<TextView android:text="abcde" />
+	<TextView android:text="fghij" />
+	<TextView android:text="klmno" />
+</LinearLayout>
+```
+
+NOT RECOMMENDED
+```xml
+<span>
+	abcde
+	<div>fghij</div>
+	klmno
+</span>
+
+<TextView android:text="abcde fghij klmno" />
+```
+
 These settings are available in layout.js to customize your desired XML structure. 
 
 ```javascript
@@ -18,7 +48,7 @@ const SETTINGS = {
 };
 ```
 
-You can preview the library with the sample.html file which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
+You can preview the library with the provided sample.html file which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 
 ```javascript
 <script src="utils.js"></script>

@@ -113,7 +113,7 @@ function addResourceString(node, value) {
             value = element.innerHTML;
         }
     }
-    if (value != '') {
+    if (Utils.hasValue(value)) {
         if (node != null) {
             if (node.isView(LAYOUT_ANDROID.TEXT)) {
                 const match = node.style.textDecoration.match(/(underline|line-through)/);
@@ -147,8 +147,14 @@ function addResourceStringArray(node) {
     let integerArray = new Map();
     for (let i = 0; i < element.children.length; i++) {
         const item = element.children[i];
-        const value = item.value.trim();
-        const text = item.text.trim();
+        let value = item.value.trim();
+        let text = item.text.trim();
+        if (text == '') {
+            text = value;
+        }
+        if (value == '') {
+            value = text;
+        }
         if (text != '') {
             if (integerArray != null && !stringArray.size && /^\d+$/.test(text) && !/^(^0+)\d+$/.test(text)) {
                 integerArray.set(value, '');
@@ -513,7 +519,7 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                 }
                 break;
         }
-        switch (node.androidWidgetName) {
+        switch (node.widgetName) {
             case LAYOUT_ANDROID.TEXT:
                 if (node.scrollOverflow != null) {
                     node.attr('scrollbars', (node.isHorizontalScroll() ? 'horizontal' : 'vertical'));
@@ -529,7 +535,7 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
     }
     node.processAttributes(depth + 1);
     node.renderParent = parent;
-    return setGridSpacing(node, depth) + `${indent}<${node.androidWidgetName}{@${node.id}}{#${node.id}} />\n` +
+    return setGridSpacing(node, depth) + `${indent}<${node.widgetName}{@${node.id}}{#${node.id}} />\n` +
                                          (!node.autoWrap ? `{:${node.id}}` : '');
 }
 
@@ -660,7 +666,11 @@ function setGridSpacing(node, depth = 0) {
     let xml = '';
     if (node.parent.isView(LAYOUT_ANDROID.GRID)) {
         const indent = Utils.setIndent(depth);
-        const dimensions = getBoxSpacing(node.original.parent, true);
+        let container = node.original.parent;
+        if (node.renderId != null) {
+            container = container.original.parent;
+        }
+        const dimensions = getBoxSpacing(container, true);
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
@@ -1028,83 +1038,81 @@ function setMarginPadding() {
                 });
             }
         }
-        if (node.children.length > 0 && !node.parent.isView(LAYOUT_ANDROID.GRID)) {
-            if (node.wrapped == null && !node.visible) {
-                const box = {
-                    layout_marginTop: Utils.convertToPX(node.marginTop, false),
-                    layout_marginRight: Utils.convertToPX(node.marginRight, false),
-                    layout_marginBottom: Utils.convertToPX(node.marginBottom, false),
-                    layout_marginLeft: Utils.convertToPX(node.marginLeft, false),
-                    paddingTop: Utils.convertToPX(node.paddingTop, false),
-                    paddingRight: Utils.convertToPX(node.paddingRight, false),
-                    paddingBottom: Utils.convertToPX(node.paddingBottom, false),
-                    paddingLeft: Utils.convertToPX(node.paddingLeft, false)
+        if (!node.visible && node.wrapped == null && node.children.length > 0 && (!node.parent.isView(LAYOUT_ANDROID.GRID) || typeof node.renderParent == 'object')) {
+            const box = {
+                layout_marginTop: Utils.convertToPX(node.marginTop, false),
+                layout_marginRight: Utils.convertToPX(node.marginRight, false),
+                layout_marginBottom: Utils.convertToPX(node.marginBottom, false),
+                layout_marginLeft: Utils.convertToPX(node.marginLeft, false),
+                paddingTop: Utils.convertToPX(node.paddingTop, false),
+                paddingRight: Utils.convertToPX(node.paddingRight, false),
+                paddingBottom: Utils.convertToPX(node.paddingBottom, false),
+                paddingLeft: Utils.convertToPX(node.paddingLeft, false)
+            };
+            const children = node.children.filter(item => (item.visible && (item.original.depth || item.depth) == ((node.original.depth || node.depth) + 1)));
+            const outerNodes = Node.getOuterNodes(children);
+            children.forEach(item => {
+                const childBox = {
+                    layout_marginTop: 0,
+                    layout_marginRight: 0,
+                    layout_marginBottom: 0,
+                    layout_marginLeft: 0,
+                    paddingTop: 0,
+                    paddingRight: 0,
+                    paddingBottom: 0,
+                    paddingLeft: 0
                 };
-                const children = node.children.filter(item => (item.visible && (item.original.depth || item.depth) == node.depth + 1));
-                const outerNodes = Node.getOuterNodes(children);
-                children.forEach(item => {
-                    const childBox = {
-                        layout_marginTop: 0,
-                        layout_marginRight: 0,
-                        layout_marginBottom: 0,
-                        layout_marginLeft: 0,
-                        paddingTop: 0,
-                        paddingRight: 0,
-                        paddingBottom: 0,
-                        paddingLeft: 0
-                    };
-                    for (const i in childBox) {
-                        childBox[i] = Utils.parseUnit(item.getAttribute(i));
+                for (const i in childBox) {
+                    childBox[i] = Utils.parseUnit(item.getAttribute(i));
+                }
+                for (const side in outerNodes) {
+                    if (outerNodes[side].includes(item)) {
+                        for (const i in childBox) {
+                            if (i.toLowerCase().indexOf(side) != -1 && !item.boxRefit[i]) {
+                                childBox[i] += box[i];
+                            }
+                        }
                     }
-                    for (const side in outerNodes) {
-                        if (outerNodes[side].includes(item)) {
-                            for (const i in childBox) {
-                                if (i.toLowerCase().indexOf(side) != -1 && !item.boxRefit[i]) {
-                                    childBox[i] += box[i];
+                }
+                for (const side in outerNodes) {
+                    if (outerNodes[side].includes(item)) {
+                        switch (side) {
+                            case 'top':
+                                if (childBox.layout_marginTop > 0) {
+                                    item.replaceAttribute('layout_marginTop', `${childBox.layout_marginTop}px`);
                                 }
-                            }
+                                if (childBox.paddingTop > 0) {
+                                    item.replaceAttribute('paddingTop', `${childBox.paddingTop}px`);
+                                }
+                                break;
+                            case 'right':
+                                if (childBox.layout_marginRight > 0) {
+                                    item.replaceAttribute('layout_marginRight', `${childBox.layout_marginRight}px`);
+                                }
+                                if (childBox.paddingRight > 0) {
+                                    item.replaceAttribute('paddingRight', `${childBox.paddingRight}px`);
+                                }
+                                break;
+                            case 'bottom':
+                                if (childBox.layout_marginBottom > 0) {
+                                    item.replaceAttribute('layout_marginBottom', `${childBox.layout_marginBottom}px`);
+                                }
+                                if (childBox.paddingBottom > 0) {
+                                    item.replaceAttribute('paddingBottom', `${childBox.paddingBottom}px`);
+                                }
+                                break;
+                            case 'left':
+                                if (childBox.layout_marginLeft > 0) {
+                                    item.replaceAttribute('layout_marginLeft', `${childBox.layout_marginLeft}px`);
+                                }
+                                if (childBox.paddingLeft > 0) {
+                                    item.replaceAttribute('paddingLeft', `${childBox.paddingLeft}px`);
+                                }
+                                break;
                         }
                     }
-                    for (const side in outerNodes) {
-                        if (outerNodes[side].includes(item)) {
-                            switch (side) {
-                                case 'top':
-                                    if (childBox.layout_marginTop > 0) {
-                                        item.replaceAttribute('layout_marginTop', `${childBox.layout_marginTop}px`);
-                                    }
-                                    if (childBox.paddingTop > 0) {
-                                        item.replaceAttribute('paddingTop', `${childBox.paddingTop}px`);
-                                    }
-                                    break;
-                                case 'right':
-                                    if (childBox.layout_marginRight > 0) {
-                                        item.replaceAttribute('layout_marginRight', `${childBox.layout_marginRight}px`);
-                                    }
-                                    if (childBox.paddingRight > 0) {
-                                        item.replaceAttribute('paddingRight', `${childBox.paddingRight}px`);
-                                    }
-                                    break;
-                                case 'bottom':
-                                    if (childBox.layout_marginBottom > 0) {
-                                        item.replaceAttribute('layout_marginBottom', `${childBox.layout_marginBottom}px`);
-                                    }
-                                    if (childBox.paddingBottom > 0) {
-                                        item.replaceAttribute('paddingBottom', `${childBox.paddingBottom}px`);
-                                    }
-                                    break;
-                                case 'left':
-                                    if (childBox.layout_marginLeft > 0) {
-                                        item.replaceAttribute('layout_marginLeft', `${childBox.layout_marginLeft}px`);
-                                    }
-                                    if (childBox.paddingLeft > 0) {
-                                        item.replaceAttribute('paddingLeft', `${childBox.paddingLeft}px`);
-                                    }
-                                    break;
-                            }
-                        }
-                    }
-                });
-            }
+                }
+            });
         }
     }
 }
@@ -1358,8 +1366,8 @@ function parseDocument() {
                                                         if (columns[n][m].spacer == 1) {
                                                             if (nodeX.bounds.right == columnRight[l] && nodeX.bounds.right < columnLeft[n]) {
                                                                 spaceSpan++;
-                                                                if (nodeX.spaceSpanColumnWeight == null || nodeX.spaceSpanColumnWeight == true) {
-                                                                    nodeX.spaceSpanColumnWeight = columnSymmetry[n];
+                                                                if (nodeX.gridSpaceSpanColumnWeight == null || nodeX.gridSpaceSpanColumnWeight == true) {
+                                                                    nodeX.gridSpaceSpanColumnWeight = columnSymmetry[n];
                                                                 }
                                                             }
                                                             else {
@@ -1388,7 +1396,7 @@ function parseDocument() {
                                                     if (columnSpan > 1) {
                                                         nodeX.android.layout_columnSpan = columnSpan;
                                                     }
-                                                    nodeX.spaceSpan = spaceSpan;
+                                                    nodeX.gridSpaceSpan = spaceSpan;
                                                     nodeX.gridRowEnd = (columnSpan + spaceSpan + l == columns.length);
                                                     nodeX.gridFirst = (count++ == 0);
                                                     nodeX.gridLast = (nodeX.gridRowEnd && m == columns[l].length - 1);
@@ -1429,9 +1437,20 @@ function parseDocument() {
                             if (!nodeY.renderParent) {
                                 const [linearX, linearY] = Node.isLinearXY(nodeY.children.filter(item => (item.depth == nodeY.depth + 1)));
                                 if (linearX || linearY) {
-                                    if (nodeY.children.length > 1 && linearX && linearY) {
-                                        xml += `{${nodeY.id}}`;
+                                    if (linearX && linearY) {
+                                        if (nodeY.parent.isView(LAYOUT_ANDROID.GRID) && nodeY.children.length == 1) {
+                                            const nodeChild = nodeY.children[0];
+                                            nodeChild.parent = nodeY.parent;
+                                            nodeChild.renderId = nodeY.id;
+                                            for (const l in nodeY) {
+                                                if (l.startsWith('grid')) {
+                                                    nodeChild[l] = nodeY[l];
+                                                }
+                                            }
+                                            nodeY.androidWidgetName = LAYOUT_ANDROID.GRID;
+                                        }
                                         nodeY.children.forEach(item => item.depthIndent -= 1);
+                                        xml += `{${nodeY.id}}`;
                                         nodeY.visible = false;
                                         nodeY.renderParent = nodeY.parent;
                                     }
@@ -1518,15 +1537,16 @@ function parseDocument() {
                             xml += writeViewTag(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, tagName);
                         }
                     }
-                    if (nodeY.spaceSpan > 0) {
-                        addRenderAppend(nodeY.id, getSpaceXml(Utils.setIndent(nodeY.depth + nodeY.depthIndent), (nodeY.spaceSpanColumnWeight ? 'wrap_content' : '0dp'), 'wrap_content', nodeY.spaceSpan, (nodeY.spaceSpanColumnWeight ? 0 : 1)), 0);
+                    if (nodeY.gridSpaceSpan > 0) {
+                        addRenderAppend(nodeY.id, getSpaceXml(Utils.setIndent(nodeY.depth + nodeY.depthIndent), (nodeY.gridSpaceSpanColumnWeight ? 'wrap_content' : '0dp'), 'wrap_content', nodeY.gridSpaceSpan, (nodeY.gridSpaceSpanColumnWeight ? 0 : 1)), 0);
                     }
                     if (xml != '') {
-                        if (partial[parentId] == null) {
-                            partial[parentId] = [];
+                        const renderId = nodeY.renderId || parentId;
+                        if (partial[renderId] == null) {
+                            partial[renderId] = [];
                         }
                         if (nodeY.renderAppendId == null) {
-                            partial[parentId].push(xml);
+                            partial[renderId].push(xml);
                         }
                         else {
                             addRenderAppend(nodeY.renderAppendId, xml);
