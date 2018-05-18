@@ -321,7 +321,6 @@ You can preview the library with the sample.html file which should generate the 
 		android:columnCount="2"
 		android:layout_height="wrap_content"
 		android:layout_marginBottom="12dp"
-		android:layout_marginTop="14dp"
 		android:layout_width="match_parent"
 		android:paddingHorizontal="10dp"
 		android:paddingVertical="10dp">

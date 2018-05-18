@@ -27,7 +27,7 @@ class Node {
         this.linearExclude = false;
         this.renderParent = null;
         this.android = {};
-        this.attributes = [];
+        this.androidAttributes = [];
         this.original = {};
         this.boxRefit = {};
         this.preAlignment = {};
@@ -47,12 +47,12 @@ class Node {
         this.androidWidgetName = widgetName;
         if (this.androidId == null) {
             do {
-                this.androidId = (this.androidId != -1 ? element.id || element.name : (widgetName.toLowerCase() + GENERATE_ID[widgetName]++));
-                if (GENERATE_ID['__current'].includes(this.androidId)) {
+                this.androidId = (this.androidId != -1 ? element.id || element.name : widgetName.toLowerCase() + GENERATE_ID[widgetName]++);
+                if (GENERATE_ID['__id'].includes(this.androidId)) {
                     this.androidId = -1;
                 }
                 else {
-                    GENERATE_ID['__current'].push(this.androidId);
+                    GENERATE_ID['__id'].push(this.androidId);
                 }
             }
             while (!this.androidId || this.androidId == -1)
@@ -90,8 +90,8 @@ class Node {
         }
         else {
             if (parentGridLayout) {
-                this.attr('layout_columnWeight', (this.gridColumnWeight ? 0 : 1));
-                this.attr('layout_width', (this.attr('layout_columnWeight') == 1 ? '0px' : 'wrap_content'));
+                this.attr('layout_columnWeight', (this.gridColumnWeight ? '0' : '1'));
+                this.attr('layout_width', (this.gridColumnWeight ? 'wrap_content' : '0px'));
             }
             else {
                 if (styleMap.width != null) {
@@ -167,16 +167,16 @@ class Node {
     }
     setAttribute(name, value) {
         if (Utils.hasValue(value)) {
-            this.attributes.push(`android:${name}="${value}"`);
+            this.androidAttributes.push(`android:${name}="${value}"`);
         }
     }
     getAttribute(name, remove = false) {
         const property = `android:${name}`;
-        const index = this.attributes.findIndex(value => value.startsWith(property));
+        const index = this.androidAttributes.findIndex(value => value.startsWith(property));
         if (index != -1) {
-            const value = this.attributes[index];
+            const value = this.androidAttributes[index];
             if (remove) {
-                this.attributes.splice(index, 1);
+                this.androidAttributes.splice(index, 1);
             }
             return value;
         }
@@ -185,17 +185,17 @@ class Node {
     deleteAttribute(...names) {
         names.forEach(name => {
             const property = `android:${name}`;
-            const index = this.attributes.findIndex(value => value.startsWith(property));
+            const index = this.androidAttributes.findIndex(value => value.startsWith(property));
             if (index != -1) {
-                this.attributes.splice(index, 1);
+                this.androidAttributes.splice(index, 1);
             }
         });
     }
     replaceAttribute(name, value, merge = false) {
         let index = -1;
         const property = `android:${name}`;
-        for (let i = 0; i < this.attributes.length; i++) {
-            const attr = this.attributes[i];
+        for (let i = 0; i < this.androidAttributes.length; i++) {
+            const attr = this.androidAttributes[i];
             if (attr.startsWith(property)) {
                 if (merge && !isNaN(parseInt(value))) {
                     const match = attr.match(/([0-9]+)(px)/);
@@ -210,22 +210,22 @@ class Node {
         if (Utils.hasValue(value)) {
             const attribute = `${property}="${value}"`;
             if (index != -1) {
-                this.attributes[index] = attribute;
+                this.androidAttributes[index] = attribute;
             }
             else {
-                this.attributes.push(attribute);
+                this.androidAttributes.push(attribute);
             }
         }
         else if (index != -1) {
-            this.attributes.splice(index, 1);
+            this.androidAttributes.splice(index, 1);
         }
     }
     appendAttributes(value) {
         if (Array.isArray(value)) {
-            this.attributes.push(...value);
+            this.androidAttributes.push(...value);
         }
         else {
-            this.attributes.push(value);
+            this.androidAttributes.push(value);
         }
     }
     processAttributes(depth, actions = []) {
@@ -322,7 +322,7 @@ class Node {
                 if (this.isView(LAYOUT_ANDROID.RADIO)) {
                     nextNode.depthIndent++;
                 }
-                const attributes = nextNode.attributes;
+                const attributes = nextNode.androidAttributes;
                 for (const name in attributes) {
                     const value = attributes[name];
                     if (result[name] == null && Utils.hasValue(value)) {
@@ -439,60 +439,28 @@ class Node {
         return (nodes.length > 0 ? nodes[0] : null);
     }
     get marginTop() {
-        const value = this.css('marginTop');
-        if (value != '') {
-            return parseInt(value);
-        }
-        return 0;
+        return parseInt(this.css('marginTop'));
     }
     get marginBottom() {
-        const value = this.css('marginBottom');
-        if (value != '') {
-            return parseInt(value);
-        }
-        return 0;
+        return parseInt(this.css('marginBottom'));
     }
     get marginLeft() {
-        const value = this.css('marginLeft');
-        if (value != '') {
-            return parseInt(value);
-        }
-        return 0;
+        return parseInt(this.css('marginLeft'));
     }
     get marginRight() {
-        const value = this.css('marginRight');
-        if (value != '') {
-            return parseInt(value);
-        }
-        return 0;
+        return parseInt(this.css('marginRight'));
     }
     get paddingTop() {
-        const value = this.css('paddingTop');
-        if (value != '') {
-            return parseInt(value);
-        }
-        return 0;
+        return parseInt(this.css('paddingTop'));
     }
     get paddingBottom() {
-        const value = this.css('paddingBottom');
-        if (value != '') {
-            return parseInt(value);
-        }
-        return 0;
+        return parseInt(this.css('paddingBottom'));
     }
     get paddingLeft() {
-        const value = this.css('paddingLeft');
-        if (value != '') {
-            return parseInt(value);
-        }
-        return 0;
+        return parseInt(this.css('paddingLeft'));
     }
     get paddingRight() {
-        const value = this.css('paddingRight');
-        if (value != '') {
-            return parseInt(value);
-        }
-        return 0;
+        return parseInt(this.css('paddingRight'));
     }
 
     static insertWrapper(cache, node, parent, children, actions = null) {
@@ -517,16 +485,15 @@ class Node {
         let linearX = true;
         let linearY = true;
         if (nodes.length > 1) {
-            const elements = nodes.slice();
-            const minBottom = elements.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
-            elements.some(item => {
+            const minBottom = nodes.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
+            nodes.some(item => {
                 if (item.linear.top >= minBottom) {
                     linearX = false;
                     return true;
                 }
             });
-            const minRight = elements.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
-            elements.some(item => {
+            const minRight = nodes.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
+            nodes.some(item => {
                 if (item.linear.left >= minRight) {
                     linearY = false;
                     return true;
@@ -571,5 +538,15 @@ class Node {
     }
     static getElementStyle(element) {
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
+    }
+    static orderDefault(a, b) {
+        let [c, d] = [a.depth, b.depth];
+        if (c == d) {
+            [c, d] = [a.bounds.x, b.bounds.x];
+            if (c == d) {
+                [c, d] = [a.id, b.id];
+            }
+        }
+        return (c > d ? 1 : -1);
     }
 }

@@ -12,7 +12,7 @@ const SETTINGS = {
 
 const NODE_CACHE = [];
 const RENDER_APPEND = {};
-const GENERATE_ID = { '__current': [] };
+const GENERATE_ID = { '__id': [] };
 
 const RESOURCE = {
     string: new Map(),
@@ -316,9 +316,8 @@ function setBackgroundStyle(node) {
             }
         }
         if (drawableName == '') {
-            drawableName = `${node.tagName.toLowerCase()}_${node.androidId}`
+            drawableName = `${node.tagName.toLowerCase()}_${node.androidId}`;
             RESOURCE['drawable'].set(drawableName, xml);
-            GENERATE_ID['__current'].push(drawableName);
         }
         node.drawable = drawableName;
         return { backgroundColor: drawableName };
@@ -545,12 +544,12 @@ function writeDefaultLayout() {
 
 function processAndroidAttributes(output) {
     for (const node of NODE_CACHE) {
-        const attrs = node.attributes;
-        if (attrs.length > 0) {
-            attrs.sort();
-            for (let i = 0; i < attrs.length; i++) {
-                if (attrs[i].startsWith('android:id=')) {
-                    attrs.unshift(...attrs.splice(i, 1));
+        const attributes = node.androidAttributes;
+        if (attributes.length > 0) {
+            attributes.sort();
+            for (let i = 0; i < attributes.length; i++) {
+                if (attributes[i].startsWith('android:id=')) {
+                    attributes.unshift(...attributes.splice(i, 1));
                     break;
                 }
             }
@@ -558,7 +557,7 @@ function processAndroidAttributes(output) {
             if (SETTINGS.showAndroidXmlNamespace) {
                 xml += ` ${STRING_ANDROID.XMLNS}`;
             }
-            xml += attrs.map(value => `\n${Utils.setIndent(node.depthAttribute) + value}`).join('').replace('{id}', node.androidId);
+            xml += attributes.map(value => `\n${Utils.setIndent(node.depthAttribute) + value}`).join('').replace('{id}', node.androidId);
             output = output.replace(`{@${node.id}}`, xml);
         }
     }
@@ -1006,12 +1005,17 @@ function setMarginPadding() {
             else {
                 let current = node.box.left + node.paddingLeft;
                 children.sort((a, b) => (a.linear.left > b.linear.left ? 1 : -1)).forEach(item => {
-                    const width = item.linear.left - current;
-                    if (width > 0) {
-                        const visible = (item.visible ? item : item.firstChild);
-                        if (visible != null) {
-                            visible.replaceAttribute('layout_marginLeft', Utils.convertToPX(width), item.visible);
-                            visible.boxRefit.layout_marginLeft = true;
+                    if (item.visible && item.style.float == 'right') {
+                        item.replaceAttribute('layout_gravity', getAndroidGravity('right', item.style.verticalAlign));
+                    }
+                    else {
+                        const width = item.linear.left - current;
+                        if (width > 0) {
+                            const visible = (item.visible ? item : item.firstChild);
+                            if (visible != null) {
+                                visible.replaceAttribute('layout_marginLeft', Utils.convertToPX(width), item.visible);
+                                visible.boxRefit.layout_marginLeft = true;
+                            }
                         }
                     }
                     if (item.label != null) {
@@ -1107,7 +1111,7 @@ function setMarginPadding() {
 
 function mergeMarginPadding() {
     for (const node of NODE_CACHE) {
-        if (node.visible && node.attributes.length > 0) {
+        if (node.visible && node.androidAttributes.length > 0) {
             const marginTop = Utils.parseUnit(node.getAttribute('layout_marginTop'));
             const marginRight = Utils.parseUnit(node.getAttribute('layout_marginRight'));
             const marginBottom = Utils.parseUnit(node.getAttribute('layout_marginBottom'));
@@ -1201,7 +1205,7 @@ function setNodeCache() {
                     child.setBounds();
                     child.setLinearBoxRect();
                 }
-                if (child.box.left >= parent.box.left && child.box.right <= parent.box.right && child.box.top >= parent.box.top && child.box.bottom <= parent.box.bottom) {
+                if (parent.element == child.element.parentNode || (child.box.left >= parent.box.left && child.box.right <= parent.box.right && child.box.top >= parent.box.top && child.box.bottom <= parent.box.bottom)) {
                     parentNodes[child.id] = parent;
                     parent.children.push(child);
                 }
@@ -1214,24 +1218,9 @@ function setNodeCache() {
             node.element.style[property] = node.preAlignment[property];
         }
     }
-    NODE_CACHE.sort((a, b) => {
-        let [c, d] = [a.depth, b.depth];
-        if (c == d) {
-            [c, d] = [a.bounds.x, b.bounds.x];
-            if (c == d) {
-                [c, d] = [a.id, b.id];
-            }
-        }
-        return (c >= d ? 1 : -1);
-    });
+    NODE_CACHE.sort(Node.orderDefault);
     for (const node of NODE_CACHE) {
-        node.children.sort((a, b) => {
-            let [c, d] = [a.depth, b.depth];
-            if (c == d) {
-                [c, d] = [a.id, b.id];
-            }
-            return (c >= d ? 1 : -1);
-        });
+        node.children.sort(Node.orderDefault);
     }
 }
 
@@ -1273,7 +1262,7 @@ function parseDocument() {
                     const parentId = nodeY.parent.id;
                     let tagName = nodeY.widgetName;
                     let xml = '';
-                    if (tagName == null) {
+                    if (tagName == null || (nodeY.children.length > 0 && !Utils.hasFreeFormText(nodeY.element))) {
                         if (nodeY.children.length > 0) {
                             if (SETTINGS.useGridLayout && nodeY.children.findIndex(item => item.widgetName != null && (item.depth == nodeY.depth + 1)) == -1) {
                                 const nextMapX = mapX[nodeY.depth + 2];
@@ -1463,7 +1452,6 @@ function parseDocument() {
                         }
                     }
                     if (!nodeY.renderParent) {
-                        const element = nodeY.element;
                         if (nodeY.parent.isView(LAYOUT_ANDROID.GRID)) {
                             const original = nodeY.parent.children.find(item => item.id == nodeY.original.parentId);
                             if (original != null) {

@@ -32,6 +32,16 @@ const Utils = (function() {
         setIndent: function(n, value = '\t') {
             return value.repeat(n);
         },
+        hasFreeFormText(element) {
+            let result = false;
+            Array.from(element.childNodes).some(item => {
+                if (item.nodeName == '#text' && item.wholeText.trim() != '') {
+                    result = true;
+                    return true;
+                }
+            });
+            return result;
+        },
         convertToPX: function(value, unit = true) {
             if (Utils.hasValue(value)) {
                 if (typeof value == 'number') {
