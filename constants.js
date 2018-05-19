@@ -1,4 +1,4 @@
-const LAYOUT_ANDROID = {
+const WIDGET_ANDROID = {
     TEXT: 'TextView',
     EDIT: 'EditText',
     LINEAR: 'LinearLayout',
@@ -69,7 +69,7 @@ const PROPERTY_ANDROID = {
     }
 };
 
-const WIDGET_ANDROID = {
+const ACTION_ANDROID = {
     'LinearLayout': {
         'androidId': 'android:id="@+id/{0}"',
         'window.setGravity': PROPERTY_ANDROID['gravity'],

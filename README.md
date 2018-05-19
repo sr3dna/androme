@@ -37,11 +37,12 @@ These settings are available in layout.js to customize your desired XML structur
 ```javascript
 const SETTINGS = {
     density: DENSITY_ANDROID.MDPI,
-    defaultLayout: LAYOUT_ANDROID.RELATIVE,
+    defaultLayout: WIDGET_ANDROID.RELATIVE,
     showAndroidXmlNamespace: false,
     showAndroidAttributes: true,
     useGridLayout: true,
     useVerticalHorizontal: true,
+    useColumnWeight: true,
     useUnitDP: true,
     boundsOffset: 2,
     whitespaceOffset: 4
@@ -75,13 +76,13 @@ You can preview the library with the provided sample.html file which should gene
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-	android:id="@+id/linearlayout1"
-	android:layout_height="match_parent"
+	android:id="@+id/linearlayout_1"
+	android:layout_height="wrap_content"
 	android:layout_marginTop="10dp"
 	android:layout_width="500dp"
 	android:orientation="vertical">
 	<TextView
-		android:id="@+id/textview1"
+		android:id="@+id/textview_1"
 		android:layout_height="wrap_content"
 		android:layout_width="match_parent"
 		android:paddingHorizontal="8dp"
@@ -89,7 +90,7 @@ You can preview the library with the provided sample.html file which should gene
 		android:text="@string/entry"
 		style="@style/H2_1" />
 	<ScrollView
-		android:id="@+id/scrollview1"
+		android:id="@+id/scrollview_1"
 		android:layout_height="255dp"
 		android:layout_width="match_parent">
 		<LinearLayout
@@ -102,16 +103,17 @@ You can preview the library with the provided sample.html file which should gene
 			android:paddingHorizontal="10dp"
 			android:paddingVertical="10dp">
 			<GridLayout
-				android:id="@+id/gridlayout1"
+				android:id="@+id/gridlayout_1"
 				android:columnCount="2"
 				android:layout_height="wrap_content"
+				android:layout_weight="1"
 				android:layout_width="wrap_content">
 				<TextView
-					android:id="@+id/textview2"
+					android:id="@+id/textview_2"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_width="wrap_content"
+					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/order"
 					style="@style/Label_1" />
@@ -125,19 +127,19 @@ You can preview the library with the provided sample.html file which should gene
 					style="@style/Input_1.Input_3" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
-					android:id="@+id/textview3"
+					android:id="@+id/textview_3"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_width="wrap_content"
+					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/date_add"
 					style="@style/Label_1" />
 				<RelativeLayout
-					android:id="@+id/relativelayout1"
+					android:id="@+id/relativelayout_1"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="0dp">
+					android:layout_width="wrap_content">
 					<Spinner
 						android:id="@+id/month0"
 						android:background="@drawable/select_hour"
@@ -183,24 +185,24 @@ You can preview the library with the provided sample.html file which should gene
 				</RelativeLayout>
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
-					android:id="@+id/textview4"
+					android:id="@+id/textview_4"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_width="wrap_content"
+					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/time"
 					style="@style/Label_1" />
 				<LinearLayout
-					android:id="@+id/linearlayout2"
-					android:layout_columnWeight="1"
+					android:id="@+id/linearlayout_2"
 					android:layout_height="wrap_content"
-					android:layout_width="0dp"
+					android:layout_width="wrap_content"
 					android:orientation="horizontal">
 					<Spinner
 						android:id="@+id/hour"
 						android:background="@drawable/select_hour"
 						android:entries="@array/hour_array"
+						android:layout_columnWeight="1"
 						android:layout_height="wrap_content"
 						android:layout_width="wrap_content"
 						android:paddingBottom="2dp"
@@ -219,11 +221,11 @@ You can preview the library with the provided sample.html file which should gene
 				</LinearLayout>
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
-					android:id="@+id/textview5"
+					android:id="@+id/textview_5"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_width="wrap_content"
+					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/type"
 					style="@style/Label_1" />
@@ -238,19 +240,19 @@ You can preview the library with the provided sample.html file which should gene
 					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
-					android:id="@+id/textview6"
+					android:id="@+id/textview_6"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_width="wrap_content"
+					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/topic_add"
 					style="@style/Label_1" />
 				<LinearLayout
-					android:id="@+id/linearlayout3"
+					android:id="@+id/linearlayout_3"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="0dp"
+					android:layout_width="wrap_content"
 					android:orientation="horizontal">
 					<EditText
 						android:id="@+id/topic0"
@@ -273,11 +275,11 @@ You can preview the library with the provided sample.html file which should gene
 				</LinearLayout>
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
-					android:id="@+id/textview7"
+					android:id="@+id/textview_7"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_width="wrap_content"
+					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/series"
 					style="@style/Label_1" />
@@ -293,11 +295,11 @@ You can preview the library with the provided sample.html file which should gene
 					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
-					android:id="@+id/textview8"
+					android:id="@+id/textview_8"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_width="wrap_content"
+					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/subset"
 					style="@style/Label_1" />
@@ -307,17 +309,17 @@ You can preview the library with the provided sample.html file which should gene
 					android:entries="@array/subset_array"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="0dp"
+					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 				<TextView
-					android:id="@+id/textview9"
+					android:id="@+id/textview_9"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_marginRight="5dp"
-					android:layout_width="wrap_content"
+					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/active"
 					style="@style/Label_1" />
@@ -327,17 +329,18 @@ You can preview the library with the provided sample.html file which should gene
 					android:entries="@array/entryactive_array"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="0dp"
+					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
 				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 			</GridLayout>
 			<Button
-				android:id="@+id/button1"
-				android:background="@drawable/input_button1"
+				android:id="@+id/button_1"
+				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginTop="20dp"
+				android:layout_weight="1"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -347,26 +350,27 @@ You can preview the library with the provided sample.html file which should gene
 		</LinearLayout>
 	</ScrollView>
 	<GridLayout
-		android:id="@+id/gridlayout2"
+		android:id="@+id/gridlayout_2"
 		android:columnCount="2"
 		android:layout_height="wrap_content"
 		android:layout_marginBottom="12dp"
+		android:layout_marginTop="24dp"
 		android:layout_width="match_parent"
 		android:paddingHorizontal="10dp"
 		android:paddingVertical="10dp">
 		<TextView
-			android:id="@+id/textview10"
+			android:id="@+id/textview_10"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/series"
 			style="@style/Label_1" />
 		<Spinner
-			android:id="@+id/spinner1"
+			android:id="@+id/series_1"
 			android:background="@drawable/select_hour"
-			android:entries="@array/spinner1_array"
+			android:entries="@array/series_1_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
 			android:layout_width="0dp"
@@ -375,51 +379,51 @@ You can preview the library with the provided sample.html file which should gene
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview11"
+			android:id="@+id/textview_11"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/subset"
 			style="@style/Label_1" />
 		<Spinner
-			android:id="@+id/spinner2"
+			android:id="@+id/subset_1"
 			android:background="@drawable/select_hour"
-			android:entries="@array/spinner2_array"
+			android:entries="@array/subset_1_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview12"
+			android:id="@+id/textview_12"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/entries"
 			style="@style/Label_1" />
 		<LinearLayout
-			android:id="@+id/linearlayout4"
-			android:layout_columnWeight="1"
+			android:id="@+id/linearlayout_4"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
-				android:id="@+id/spinner3"
+				android:id="@+id/entry_1"
 				android:background="@drawable/select_hour"
+				android:layout_columnWeight="1"
 				android:layout_height="wrap_content"
-				android:layout_width="277dp"
+				android:layout_width="0dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
-				android:id="@+id/button2"
-				android:background="@drawable/input_button1"
+				android:id="@+id/button_2"
+				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -428,8 +432,8 @@ You can preview the library with the provided sample.html file which should gene
 				android:text="@string/open"
 				style="@style/Input_1.Input_5" />
 			<Button
-				android:id="@+id/button3"
-				android:background="@drawable/input_button1"
+				android:id="@+id/button_3"
+				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -440,11 +444,11 @@ You can preview the library with the provided sample.html file which should gene
 		</LinearLayout>
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview13"
+			android:id="@+id/textview_13"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/mode"
 			style="@style/Label_1" />
@@ -454,17 +458,17 @@ You can preview the library with the provided sample.html file which should gene
 			android:entries="@array/mode_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview14"
+			android:id="@+id/textview_14"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/style"
 			style="@style/Label_1" />
@@ -473,17 +477,17 @@ You can preview the library with the provided sample.html file which should gene
 			android:background="@drawable/select_hour"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview15"
+			android:id="@+id/textview_15"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/calendar"
 			style="@style/Label_1" />
@@ -493,30 +497,30 @@ You can preview the library with the provided sample.html file which should gene
 			android:entries="@array/calendar_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview16"
+			android:id="@+id/textview_16"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/version"
 			style="@style/Label_1" />
 		<LinearLayout
-			android:id="@+id/linearlayout5"
-			android:layout_columnWeight="1"
+			android:id="@+id/linearlayout_5"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/version"
 				android:background="@drawable/select_hour"
 				android:entries="@array/version_array"
+				android:layout_columnWeight="1"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:paddingBottom="2dp"
@@ -533,8 +537,8 @@ You can preview the library with the provided sample.html file which should gene
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
-				android:id="@+id/button4"
-				android:background="@drawable/input_button1"
+				android:id="@+id/button_4"
+				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -545,24 +549,24 @@ You can preview the library with the provided sample.html file which should gene
 		</LinearLayout>
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview17"
+			android:id="@+id/textview_17"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/branch"
 			style="@style/Label_1" />
 		<LinearLayout
-			android:id="@+id/linearlayout6"
-			android:layout_columnWeight="1"
+			android:id="@+id/linearlayout_6"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/branch"
 				android:background="@drawable/select_hour"
 				android:entries="@array/branch_array"
+				android:layout_columnWeight="1"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:paddingBottom="2dp"
@@ -579,8 +583,8 @@ You can preview the library with the provided sample.html file which should gene
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
-				android:id="@+id/button5"
-				android:background="@drawable/input_button1"
+				android:id="@+id/button_5"
+				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -589,8 +593,8 @@ You can preview the library with the provided sample.html file which should gene
 				android:text="@string/update"
 				style="@style/Input_1.Input_2" />
 			<Button
-				android:id="@+id/button6"
-				android:background="@drawable/input_button1"
+				android:id="@+id/button_6"
+				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
@@ -601,19 +605,19 @@ You can preview the library with the provided sample.html file which should gene
 		</LinearLayout>
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview18"
+			android:id="@+id/textview_18"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/custom_add"
 			style="@style/Label_1" />
 		<LinearLayout
-			android:id="@+id/linearlayout7"
+			android:id="@+id/linearlayout_7"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<EditText
 				android:id="@+id/customname0"
@@ -654,47 +658,52 @@ You can preview the library with the provided sample.html file which should gene
 		</LinearLayout>
 		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
 		<TextView
-			android:id="@+id/textview19"
+			android:id="@+id/textview_19"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_marginRight="5dp"
-			android:layout_width="wrap_content"
+			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/conclusion"
 			style="@style/Label_1" />
 		<LinearLayout
-			android:id="@+id/linearlayout8"
-			android:layout_columnWeight="1"
+			android:id="@+id/linearlayout_8"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/person"
 				android:background="@drawable/select_hour"
+				android:layout_columnWeight="1"
 				android:layout_height="wrap_content"
-				android:layout_width="133dp"
+				android:layout_width="0dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<RadioGroup
-				android:id="@+id/radiogroup1"
+				android:id="@+id/radiogroup_1"
 				android:checkedButton="@id+/c2"
+				android:layout_height="wrap_content"
+				android:layout_marginLeft="3dp"
+				android:layout_width="wrap_content"
 				android:orientation="horizontal">
 				<RadioButton
 					android:id="@+id/c2"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="8dp"
+					android:layout_marginLeft="5dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
+					android:layout_weight="1"
 					android:layout_width="wrap_content"
 					android:text="@string/birth"
 					style="@style/Input_1.Input_4" />
 				<RadioButton
 					android:id="@+id/c3"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="8dp"
+					android:layout_marginLeft="6dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
+					android:layout_weight="0"
 					android:layout_width="wrap_content"
 					android:text="@string/death"
 					style="@style/Input_1.Input_4" />
@@ -702,15 +711,14 @@ You can preview the library with the provided sample.html file which should gene
 			<CheckBox
 				android:id="@+id/c4"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="7dp"
-				android:layout_marginRight="3dp"
+				android:layout_marginHorizontal="3dp"
 				android:layout_marginVertical="3dp"
 				android:layout_width="wrap_content"
 				android:text="@string/none"
 				style="@style/Input_1.Input_4" />
 			<Button
-				android:id="@+id/button7"
-				android:background="@drawable/input_button1"
+				android:id="@+id/button_7"
+				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"

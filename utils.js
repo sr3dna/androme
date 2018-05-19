@@ -93,6 +93,13 @@ const Utils = (function() {
             }
             return 0;
         },
+        parseInt(value) {
+            value = parseInt(value)
+            if (!isNaN(value)) {
+                return value;
+            }
+            return 0;
+        },
         parseToDP(xml) {
             return xml.replace(/"[0-9\.]+px"/g, match => `"${Utils.convertToDP(Utils.parseUnit(match))}"`);
         },
