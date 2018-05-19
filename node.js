@@ -19,12 +19,12 @@ class Node {
         }
         this.id = id;
         this.element = element;
+        this.wrapper = null;
         this.children = [];
         this.style = style;
         this.styleMap = styleMap;
         this.depthIndent = 0;
         this.visible = true;
-        this.linearExclude = false;
         this.linearRows = [];
         this.renderId = null;
         this.renderChildren = [];
@@ -69,8 +69,8 @@ class Node {
         let styleMap = null;
         let width = 0;
         let height = 0;
-        if (this.wrapped != null) {
-            parent = (this.parent.wrapped != null ? this.wrapped.original.parent.element : this.parent.element);
+        if (this.wrapper != null) {
+            parent = (this.parent.wrapper != null ? this.wrapper.original.parent.element : this.parent.element);
             styleMap = this.styleMap;
             [width, height] = this.getChildDimensions();
         }
@@ -93,42 +93,43 @@ class Node {
             this.attr('layout_height', 'match_parent');
         }
         else {
-            if (this.gridColumnWeight != null) {
-                this.attr('layout_columnWeight', this.gridColumnWeight);
-            }
-            if (this.layoutWeight != null) {
-                this.attr('layout_weight', this.layoutWeight);
-            }
+            const layoutWeight = (this.gridColumnWeight != null || this.layoutWeight != null);
             if (styleMap.width != null) {
-                this.attr('layout_width', (this.layoutWeight == '1' || this.gridColumnWeight == '1' ? '0px' : Utils.convertToPX(styleMap.width)));
+                this.attr('layout_width', Utils.convertToPX(styleMap.width));
+                if (layoutWeight) {
+                    this.attr((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), '0');
+                }
             }
             else {
-                if (parentGridLayout) {
-                    this.attr('layout_width', 'wrap_content');
+                if (layoutWeight) {
+                    if (this.gridColumnWeight != null) {
+                        this.attr('layout_columnWeight', this.gridColumnWeight);
+                    }
+                    if (this.layoutWeight != null) {
+                        this.attr('layout_weight', this.layoutWeight);
+                    }
+                    this.attr('layout_width', (this.layoutWeight == '1' || this.gridColumnWeight == '1' ? '0px' : 'wrap_content'));
                 }
                 else {
-                    switch (this.tagName) {
-                        case 'INPUT':
-                        case 'SELECT':
-                        case 'BUTTON':
-                            this.attr('layout_width', 'wrap_content');
-                            break;
-                        default:
-                            if (!parentScrollView && width >= parentWidth) {
-                                this.attr('layout_width', 'match_parent');
+                    if (parentGridLayout) {
+                        this.attr('layout_width', 'wrap_content');
+                    }
+                    else {
+                        if (!parentScrollView && width >= parentWidth) {
+                            this.attr('layout_width', 'match_parent');
+                        }
+                        else {
+                            const display = (style != null && MAPPING_ANDROID[tagName] != null ? style.display : '');
+                            switch (display) {
+                                case 'line-item':
+                                case 'block':
+                                case 'inherit':
+                                    this.attr('layout_width', 'match_parent');
+                                    break;
+                                default:
+                                    this.attr('layout_width', 'wrap_content');
                             }
-                            else {
-                                this.attr('layout_width', 'wrap_content');
-                                if (style != null && MAPPING_ANDROID[tagName] != null) {
-                                    switch (style.display) {
-                                        case 'line-item':
-                                        case 'block':
-                                        case 'inherit':
-                                            this.attr('layout_width', 'match_parent');
-                                            break;
-                                    }
-                                }
-                            }
+                        }
                     }
                 }
             }
@@ -136,25 +137,17 @@ class Node {
                 this.attr('layout_height', Utils.convertToPX(styleMap.height));
             }
             else {
-                switch (this.tagName) {
-                    case 'INPUT':
-                    case 'SELECT':
-                    case 'BUTTON':
-                        this.attr('layout_height', 'wrap_content');
-                        break;
-                    default:
-                        if (!parentScrollView && !parentGridLayout && height >= parentHeight) {
-                            this.attr('layout_height', 'match_parent');
-                        }
-                        else {
-                            this.attr('layout_height', 'wrap_content');
-                        }
+                if (!parentScrollView && !parentGridLayout && height >= parentHeight) {
+                    this.attr('layout_height', 'match_parent');
+                }
+                else {
+                    this.attr('layout_height', 'wrap_content');
                 }
             }
         }
     }
-    setBounds(wrapper) {
-        if (!wrapper) {
+    setBounds() {
+        if (this.wrapper == null) {
             if (this.element != null) {
                 this.bounds = this.element.getBoundingClientRect();
             }
@@ -165,12 +158,14 @@ class Node {
                 top: nodes.top[0].bounds.top,
                 right: nodes.right[0].bounds.right,
                 bottom: nodes.bottom[0].bounds.bottom,
-                left: nodes.left[0].bounds.left
+                left: nodes.left[0].bounds.left,
+                x: nodes.left[0].bounds.x,
+                y: nodes.top[0].bounds.y
             };
         }
     }
-    setLinearBoxRect(wrapper) {
-        if (!wrapper) {
+    setLinearBoxRect() {
+        if (this.wrapper == null) {
             const bounds = this.bounds;
             const style = this.style;
             this.linear = {
@@ -467,9 +462,9 @@ class Node {
         return Utils.parseInt(this.css('paddingRight'));
     }
 
-    static insertWrapper(cache, node, parent, children, actions = null) {
+    static createWrapper(id, node, parent, children, actions = null) {
         const options = {
-            wrapped: node,
+            wrapper: node,
             parent,
             children,
             depth: parent.depth,
@@ -480,9 +475,7 @@ class Node {
             original: node.original,
             actions
         };
-        const wrapper = new Node(cache.length + 1, null, options);
-        cache.push(wrapper);
-        return wrapper;
+        return new Node(id, null, options);
     }
     static isLinearXY(nodes) {
         let linearX = true;

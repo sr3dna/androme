@@ -40,9 +40,9 @@ const SETTINGS = {
     defaultLayout: WIDGET_ANDROID.RELATIVE,
     showAndroidXmlNamespace: false,
     showAndroidAttributes: true,
-    useGridLayout: true,
+    useGridLayout: false,
     useVerticalHorizontal: true,
-    useColumnWeight: true,
+    useLayoutWeight: true,
     useUnitDP: true,
     boundsOffset: 2,
     whitespaceOffset: 4
@@ -76,12 +76,14 @@ You can preview the library with the provided sample.html file which should gene
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/linearlayout_1"
-	android:layout_height="wrap_content"
+	android:layout_height="match_parent"
 	android:layout_marginTop="10dp"
 	android:layout_width="500dp"
 	android:orientation="vertical">
 	<TextView
+		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:id="@+id/textview_1"
 		android:layout_height="wrap_content"
 		android:layout_width="match_parent"
@@ -90,10 +92,12 @@ You can preview the library with the provided sample.html file which should gene
 		android:text="@string/entry"
 		style="@style/H2_1" />
 	<ScrollView
+		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:id="@+id/scrollview_1"
 		android:layout_height="255dp"
 		android:layout_width="match_parent">
 		<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/entry"
 			android:background="@drawable/form_entry"
 			android:layout_height="match_parent"
@@ -103,12 +107,14 @@ You can preview the library with the provided sample.html file which should gene
 			android:paddingHorizontal="10dp"
 			android:paddingVertical="10dp">
 			<GridLayout
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/gridlayout_1"
 				android:columnCount="2"
 				android:layout_height="wrap_content"
 				android:layout_weight="1"
-				android:layout_width="wrap_content">
+				android:layout_width="0dp">
 				<TextView
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/textview_2"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
@@ -118,15 +124,22 @@ You can preview the library with the provided sample.html file which should gene
 					android:text="@string/order"
 					style="@style/Label_1" />
 				<EditText
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/order"
 					android:background="@drawable/input_order"
-					android:layout_columnWeight="1"
+					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
-					android:layout_width="0dp"
+					android:layout_width="40dp"
 					android:paddingVertical="1dp"
 					style="@style/Input_1.Input_3" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+				<Space
+					xmlns:android="http://schemas.android.com/apk/res/android"
+					android:layout_columnSpan="2"
+					android:layout_columnWeight="1"
+					android:layout_height="6dp"
+					android:layout_width="match_parent" />
 				<TextView
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/textview_3"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
@@ -136,11 +149,13 @@ You can preview the library with the provided sample.html file which should gene
 					android:text="@string/date_add"
 					style="@style/Label_1" />
 				<RelativeLayout
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/relativelayout_1"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content">
+					android:layout_width="0dp">
 					<Spinner
+						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/month0"
 						android:background="@drawable/select_hour"
 						android:entries="@array/month0_array"
@@ -156,6 +171,7 @@ You can preview the library with the provided sample.html file which should gene
 						android:layout_alignTop="@+id/day0"
 						android:layout_toStartOf="@+id/day0" />
 					<Spinner
+						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/day0"
 						android:background="@drawable/select_hour"
 						android:entries="@array/day0_array"
@@ -169,6 +185,7 @@ You can preview the library with the provided sample.html file which should gene
 						android:layout_alignTop="@+id/month0"
 						android:layout_toEndOf="@+id/month0" />
 					<Spinner
+						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/year0"
 						android:background="@drawable/select_hour"
 						android:entries="@array/year0_array"
@@ -183,8 +200,14 @@ You can preview the library with the provided sample.html file which should gene
 						android:layout_alignStart="@+id/month0"
 						android:layout_below="@+id/month0" />
 				</RelativeLayout>
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+				<Space
+					xmlns:android="http://schemas.android.com/apk/res/android"
+					android:layout_columnSpan="2"
+					android:layout_columnWeight="1"
+					android:layout_height="6dp"
+					android:layout_width="match_parent" />
 				<TextView
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/textview_4"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
@@ -194,33 +217,42 @@ You can preview the library with the provided sample.html file which should gene
 					android:text="@string/time"
 					style="@style/Label_1" />
 				<LinearLayout
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/linearlayout_2"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
 					android:orientation="horizontal">
 					<Spinner
+						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/hour"
 						android:background="@drawable/select_hour"
 						android:entries="@array/hour_array"
 						android:layout_columnWeight="1"
-						android:layout_height="wrap_content"
-						android:layout_width="wrap_content"
+						android:layout_height="match_parent"
+						android:layout_width="0dp"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
 						style="@style/Select_1" />
 					<Spinner
+						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/minute"
 						android:background="@drawable/select_hour"
 						android:entries="@array/minute_array"
-						android:layout_height="wrap_content"
+						android:layout_height="match_parent"
 						android:layout_marginLeft="3dp"
 						android:layout_width="wrap_content"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
 						style="@style/Select_1" />
 				</LinearLayout>
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+				<Space
+					xmlns:android="http://schemas.android.com/apk/res/android"
+					android:layout_columnSpan="2"
+					android:layout_columnWeight="1"
+					android:layout_height="6dp"
+					android:layout_width="match_parent" />
 				<TextView
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/textview_5"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
@@ -230,16 +262,23 @@ You can preview the library with the provided sample.html file which should gene
 					android:text="@string/type"
 					style="@style/Label_1" />
 				<Spinner
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/typeofentry"
 					android:background="@drawable/select_hour"
-					android:layout_columnWeight="1"
+					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
-					android:layout_width="0dp"
+					android:layout_width="159dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+				<Space
+					xmlns:android="http://schemas.android.com/apk/res/android"
+					android:layout_columnSpan="2"
+					android:layout_columnWeight="1"
+					android:layout_height="6dp"
+					android:layout_width="match_parent" />
 				<TextView
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/textview_6"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
@@ -249,12 +288,14 @@ You can preview the library with the provided sample.html file which should gene
 					android:text="@string/topic_add"
 					style="@style/Label_1" />
 				<LinearLayout
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/linearlayout_3"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:orientation="horizontal">
 					<EditText
+						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/topic0"
 						android:background="@drawable/input_order"
 						android:layout_height="wrap_content"
@@ -263,6 +304,7 @@ You can preview the library with the provided sample.html file which should gene
 						android:paddingVertical="1dp"
 						style="@style/Input_1.Input_3" />
 					<Spinner
+						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/prominence0"
 						android:background="@drawable/select_hour"
 						android:entries="@array/prominence0_array"
@@ -273,8 +315,14 @@ You can preview the library with the provided sample.html file which should gene
 						android:paddingTop="1dp"
 						style="@style/Select_1" />
 				</LinearLayout>
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+				<Space
+					xmlns:android="http://schemas.android.com/apk/res/android"
+					android:layout_columnSpan="2"
+					android:layout_columnWeight="1"
+					android:layout_height="6dp"
+					android:layout_width="match_parent" />
 				<TextView
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/textview_7"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
@@ -284,17 +332,24 @@ You can preview the library with the provided sample.html file which should gene
 					android:text="@string/series"
 					style="@style/Label_1" />
 				<Spinner
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/series"
 					android:background="@drawable/select_hour"
 					android:entries="@array/series_array"
-					android:layout_columnWeight="1"
+					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
-					android:layout_width="0dp"
+					android:layout_width="203dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+				<Space
+					xmlns:android="http://schemas.android.com/apk/res/android"
+					android:layout_columnSpan="2"
+					android:layout_columnWeight="1"
+					android:layout_height="6dp"
+					android:layout_width="match_parent" />
 				<TextView
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/textview_8"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
@@ -304,17 +359,24 @@ You can preview the library with the provided sample.html file which should gene
 					android:text="@string/subset"
 					style="@style/Label_1" />
 				<Spinner
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/subset"
 					android:background="@drawable/select_hour"
 					android:entries="@array/subset_array"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+				<Space
+					xmlns:android="http://schemas.android.com/apk/res/android"
+					android:layout_columnSpan="2"
+					android:layout_columnWeight="1"
+					android:layout_height="6dp"
+					android:layout_width="match_parent" />
 				<TextView
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/textview_9"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
@@ -324,24 +386,31 @@ You can preview the library with the provided sample.html file which should gene
 					android:text="@string/active"
 					style="@style/Label_1" />
 				<Spinner
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/entryactive"
 					android:background="@drawable/select_hour"
 					android:entries="@array/entryactive_array"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
-				<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+				<Space
+					xmlns:android="http://schemas.android.com/apk/res/android"
+					android:layout_columnSpan="2"
+					android:layout_columnWeight="1"
+					android:layout_height="6dp"
+					android:layout_width="match_parent" />
 			</GridLayout>
 			<Button
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/button_1"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginTop="20dp"
 				android:layout_weight="1"
-				android:layout_width="wrap_content"
+				android:layout_width="0dp"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
 				android:text="@string/add"
@@ -350,6 +419,7 @@ You can preview the library with the provided sample.html file which should gene
 		</LinearLayout>
 	</ScrollView>
 	<GridLayout
+		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:id="@+id/gridlayout_2"
 		android:columnCount="2"
 		android:layout_height="wrap_content"
@@ -359,6 +429,7 @@ You can preview the library with the provided sample.html file which should gene
 		android:paddingHorizontal="10dp"
 		android:paddingVertical="10dp">
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_10"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -368,17 +439,24 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/series"
 			style="@style/Label_1" />
 		<Spinner
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/series_1"
 			android:background="@drawable/select_hour"
 			android:entries="@array/series_1_array"
-			android:layout_columnWeight="1"
+			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
-			android:layout_width="0dp"
+			android:layout_width="203dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_11"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -388,17 +466,24 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/subset"
 			style="@style/Label_1" />
 		<Spinner
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/subset_1"
 			android:background="@drawable/select_hour"
 			android:entries="@array/subset_1_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_12"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -408,20 +493,23 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/entries"
 			style="@style/Label_1" />
 		<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_4"
 			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/entry_1"
 				android:background="@drawable/select_hour"
-				android:layout_columnWeight="1"
-				android:layout_height="wrap_content"
-				android:layout_width="0dp"
+				android:layout_columnWeight="0"
+				android:layout_height="match_parent"
+				android:layout_width="277dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/button_2"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
@@ -432,6 +520,7 @@ You can preview the library with the provided sample.html file which should gene
 				android:text="@string/open"
 				style="@style/Input_1.Input_5" />
 			<Button
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/button_3"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
@@ -442,8 +531,14 @@ You can preview the library with the provided sample.html file which should gene
 				android:text="@string/all"
 				style="@style/Input_1.Input_5" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_13"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -453,17 +548,24 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/mode"
 			style="@style/Label_1" />
 		<Spinner
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/mode"
 			android:background="@drawable/select_hour"
 			android:entries="@array/mode_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_14"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -473,16 +575,23 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/style"
 			style="@style/Label_1" />
 		<Spinner
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/style1"
 			android:background="@drawable/select_hour"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_15"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -492,17 +601,24 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/calendar"
 			style="@style/Label_1" />
 		<Spinner
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/calendar"
 			android:background="@drawable/select_hour"
 			android:entries="@array/calendar_array"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_16"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -512,31 +628,35 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/version"
 			style="@style/Label_1" />
 		<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_5"
 			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/version"
 				android:background="@drawable/select_hour"
 				android:entries="@array/version_array"
 				android:layout_columnWeight="1"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
+				android:layout_height="match_parent"
+				android:layout_width="0dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Spinner
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/version_update"
 				android:background="@drawable/select_hour"
 				android:entries="@array/version_update_array"
-				android:layout_height="wrap_content"
+				android:layout_height="match_parent"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/button_4"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
@@ -547,8 +667,14 @@ You can preview the library with the provided sample.html file which should gene
 				android:text="@string/update"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_17"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -558,31 +684,35 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/branch"
 			style="@style/Label_1" />
 		<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_6"
 			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/branch"
 				android:background="@drawable/select_hour"
 				android:entries="@array/branch_array"
 				android:layout_columnWeight="1"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
+				android:layout_height="match_parent"
+				android:layout_width="0dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Spinner
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/branch_update"
 				android:background="@drawable/select_hour"
 				android:entries="@array/branch_update_array"
-				android:layout_height="wrap_content"
+				android:layout_height="match_parent"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Button
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/button_5"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
@@ -593,6 +723,7 @@ You can preview the library with the provided sample.html file which should gene
 				android:text="@string/update"
 				style="@style/Input_1.Input_2" />
 			<Button
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/button_6"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
@@ -603,8 +734,14 @@ You can preview the library with the provided sample.html file which should gene
 				android:text="@string/clone"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_18"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -614,12 +751,14 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/custom_add"
 			style="@style/Label_1" />
 		<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_7"
 			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<EditText
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/customname0"
 				android:background="@drawable/input_order"
 				android:layout_height="wrap_content"
@@ -628,6 +767,7 @@ You can preview the library with the provided sample.html file which should gene
 				android:paddingVertical="1dp"
 				style="@style/Input_1.Input_3" />
 			<Spinner
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/custommonth0"
 				android:background="@drawable/select_hour"
 				android:entries="@array/custommonth0_array"
@@ -638,6 +778,7 @@ You can preview the library with the provided sample.html file which should gene
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Spinner
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/customday0"
 				android:background="@drawable/select_hour"
 				android:entries="@array/customday0_array"
@@ -648,6 +789,7 @@ You can preview the library with the provided sample.html file which should gene
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<EditText
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/customyear0"
 				android:background="@drawable/input_order"
 				android:layout_height="wrap_content"
@@ -656,8 +798,14 @@ You can preview the library with the provided sample.html file which should gene
 				android:paddingVertical="1dp"
 				style="@style/Input_1.Input_3" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 		<TextView
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/textview_19"
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
@@ -667,20 +815,23 @@ You can preview the library with the provided sample.html file which should gene
 			android:text="@string/conclusion"
 			style="@style/Label_1" />
 		<LinearLayout
+			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_8"
 			android:layout_height="wrap_content"
 			android:layout_width="wrap_content"
 			android:orientation="horizontal">
 			<Spinner
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/person"
 				android:background="@drawable/select_hour"
-				android:layout_columnWeight="1"
-				android:layout_height="wrap_content"
-				android:layout_width="0dp"
+				android:layout_columnWeight="0"
+				android:layout_height="match_parent"
+				android:layout_width="133dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<RadioGroup
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/radiogroup_1"
 				android:checkedButton="@id+/c2"
 				android:layout_height="wrap_content"
@@ -688,18 +839,20 @@ You can preview the library with the provided sample.html file which should gene
 				android:layout_width="wrap_content"
 				android:orientation="horizontal">
 				<RadioButton
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/c2"
-					android:layout_height="wrap_content"
+					android:layout_height="match_parent"
 					android:layout_marginLeft="5dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
 					android:layout_weight="1"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:text="@string/birth"
 					style="@style/Input_1.Input_4" />
 				<RadioButton
+					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/c3"
-					android:layout_height="wrap_content"
+					android:layout_height="match_parent"
 					android:layout_marginLeft="6dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
@@ -709,14 +862,16 @@ You can preview the library with the provided sample.html file which should gene
 					style="@style/Input_1.Input_4" />
 			</RadioGroup>
 			<CheckBox
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/c4"
-				android:layout_height="wrap_content"
+				android:layout_height="match_parent"
 				android:layout_marginHorizontal="3dp"
 				android:layout_marginVertical="3dp"
 				android:layout_width="wrap_content"
 				android:text="@string/none"
 				style="@style/Input_1.Input_4" />
 			<Button
+				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/button_7"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
@@ -727,7 +882,12 @@ You can preview the library with the provided sample.html file which should gene
 				android:text="@string/update"
 				style="@style/Input_1.Input_2" />
 		</LinearLayout>
-		<Space android:layout_width="match_parent" android:layout_height="6dp" android:layout_columnSpan="2" android:layout_columnWeight="0" />
+		<Space
+			xmlns:android="http://schemas.android.com/apk/res/android"
+			android:layout_columnSpan="2"
+			android:layout_columnWeight="1"
+			android:layout_height="6dp"
+			android:layout_width="match_parent" />
 	</GridLayout>
 </LinearLayout>
 ```
@@ -941,7 +1101,7 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <shape android:shape="rectangle">
-	<stroke android:width="1dp" android:color="@color/light_gray1" />
+	<stroke android:width="1dp" android:color="@color/light_gray_1" />
 </shape>
 <!-- filename: res/drawable/form_entry.xml -->
 
@@ -954,7 +1114,7 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 	</item>
 	<item>
 		<shape android:shape="rectangle">
-			<stroke android:width="2dp" android:color="@color/white_smoke1" />
+			<stroke android:width="2dp" android:color="@color/white_smoke_1" />
 		</shape>
 	</item>
 </layer-list>

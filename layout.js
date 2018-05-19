@@ -1,9 +1,9 @@
 const SETTINGS = {
     density: DENSITY_ANDROID.MDPI,
     defaultLayout: WIDGET_ANDROID.RELATIVE,
-    showAndroidXmlNamespace: false,
+    showAndroidXmlNs: true,
     showAndroidAttributes: true,
-    useGridLayout: false,
+    useGridLayout: true,
     useVerticalHorizontal: true,
     useLayoutWeight: true,
     useUnitDP: true,
@@ -194,7 +194,7 @@ function addResourceColor(value) {
                     if (GENERATE_ID[className] == null) {
                         GENERATE_ID[className] = 1;
                     }
-                    colorName = color.name + GENERATE_ID[className]++;
+                    colorName = `${color.name}_${GENERATE_ID[className]++}`;
                 }
             }
             if (colorName != '') {
@@ -212,7 +212,7 @@ function addResourceColor(value) {
 }
 
 function getXmlNs() {
-    return (SETTINGS.showAndroidXmlNamespace ? ` ${STRING_ANDROID.XMLNS}` : '');
+    return (SETTINGS.showAndroidXmlNs ? ` ${STRING_ANDROID.XMLNS}` : '');
 }
 
 function insertResourceAsset(resource, name, value) {
@@ -418,13 +418,15 @@ function writeViewLayout(node, depth, parent, tagName) {
     if (node.scrollOverflow != null) {
         node.depthIndent++;
         node.children.forEach(item => item.depthIndent++);
-        node.linearExclude = node.isView(WIDGET_ANDROID.LINEAR);
-        const wrapper = Node.insertWrapper(NODE_CACHE, node, parent, [node]);
-        wrapper.styleMap = node.styleMap;
         const scrollView = (node.isHorizontalScroll() ? WIDGET_ANDROID.SCROLL_HORIZONTAL : (node.scrollNested ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
+        const wrapper = Node.createWrapper(NODE_CACHE.length + 1, node, parent, [node]);
+        wrapper.styleMap = node.styleMap;
         wrapper.setAndroidId(scrollView);
+        wrapper.setBounds();
+        wrapper.setLinearBoxRect();
         wrapper.processAttributes(depth + 1);
         wrapper.renderParent = parent;
+        NODE_CACHE.push(wrapper);
         beforeXml = indent + `<${scrollView}{@${wrapper.id}}{#${wrapper.id}}>\n`;
         afterXml =  indent + `</${scrollView}>\n`;
         indent = Utils.setIndent(++depth);
@@ -450,9 +452,9 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                     let rowSpan = 1;
                     let columnSpan = 1;
                     let checked = '';
-                    const wrapper = Node.insertWrapper(NODE_CACHE, node, parent, result);
+                    const wrapper = Node.createWrapper(NODE_CACHE.length + 1, node, parent, result);
                     wrapper.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
-                    wrapper.linearExclude = node.parent.isView(WIDGET_ANDROID.LINEAR);
+                    NODE_CACHE.push(wrapper);                    
                     node.radioGroup = [];
                     node.radioGroupId = wrapper.id;
                     for (const item of result) {
@@ -480,9 +482,9 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                         wrapper.attr('layout_columnSpan', columnSpan);
                     }
                     wrapper.attr('orientation', (Node.isLinearXY(node.radioGroup)[0] ? 'horizontal' : 'vertical'));
+                    wrapper.setBounds();
+                    wrapper.setLinearBoxRect();
                     wrapper.processAttributes(depth + 1);
-                    wrapper.setBounds(true);
-                    wrapper.setLinearBoxRect(true);
                     wrapper.renderParent = parent;
                     if (parent.isView(WIDGET_ANDROID.LINEAR)) {
                         parent.linearRows.push(wrapper);
@@ -573,11 +575,11 @@ function processAndroidAttributes(output) {
                         break;
                     }
                 }
-                let xml = '';
-                if (SETTINGS.showAndroidXmlNamespace) {
-                    xml += ` ${STRING_ANDROID.XMLNS}`;
+                const indent = Utils.setIndent(node.depthAttribute);
+                if (SETTINGS.showAndroidXmlNs) {
+                    attributes.unshift(STRING_ANDROID.XMLNS);
                 }
-                xml += attributes.map(value => `\n${Utils.setIndent(node.depthAttribute) + value}`).join('').replace('{id}', node.androidId);
+                const xml = attributes.map(value => `\n${indent + value}`).join('').replace('{id}', node.androidId);
                 output = output.replace(`{@${node.id}}`, xml);
             }
         }
@@ -595,64 +597,64 @@ function processRelativeLayout(output) {
     for (const node of NODE_CACHE) {
         if (node.isView(WIDGET_ANDROID.RELATIVE)) {
             const children = NODE_CACHE.filter(item => (item.renderParent == node));
-            for (const i of children) {
-                nodeIndex[i.id] = {};
+            for (const item of children) {
+                nodeIndex[item.id] = {};
                 let centerVertical = false;
                 let centerHorizontal = false;
-                if (i.linear.top == node.linear.top) {
-                    addNodeLayout('layout_alignParentTop', i.id);
+                if (item.linear.top == node.linear.top) {
+                    addNodeLayout('layout_alignParentTop', item.id);
                 }
-                else if (i.linear.bottom == node.linear.bottom) {
-                    addNodeLayout('layout_alignParentBottom', i.id);
-                }
-                else {
-                    centerVertical = Utils.withinRange(node.bounds.top - i.bounds.top, node.bounds.bottom - i.bounds.bottom, SETTINGS.boundsOffset);
-                }
-                if (i.linear.left == node.linear.left) {
-                    addNodeLayout('layout_alignParentStart', i.id);
-                }
-                else if (i.linear.right == node.linear.right) {
-                    addNodeLayout('layout_alignParentEnd', i.id);
+                else if (item.linear.bottom == node.linear.bottom) {
+                    addNodeLayout('layout_alignParentBottom', item.id);
                 }
                 else {
-                    centerHorizontal = Utils.withinRange(i.bounds.left - node.bounds.left, node.bounds.right - i.bounds.right, SETTINGS.boundsOffset);
+                    centerVertical = Utils.withinRange(node.bounds.top - item.bounds.top, node.bounds.bottom - item.bounds.bottom, SETTINGS.boundsOffset);
+                }
+                if (item.linear.left == node.linear.left) {
+                    addNodeLayout('layout_alignParentStart', item.id);
+                }
+                else if (item.linear.right == node.linear.right) {
+                    addNodeLayout('layout_alignParentEnd', item.id);
+                }
+                else {
+                    centerHorizontal = Utils.withinRange(item.bounds.left - node.bounds.left, node.bounds.right - item.bounds.right, SETTINGS.boundsOffset);
                 }
                 if (centerVertical && centerHorizontal) {
-                    addNodeLayout('layout_centerInParent', i.id);
+                    addNodeLayout('layout_centerInParent', item.id);
                 }
                 else if (centerVertical) {
-                    addNodeLayout('layout_centerVertical', i.id);
+                    addNodeLayout('layout_centerVertical', item.id);
                 }
                 else if (centerHorizontal) {
-                    addNodeLayout('layout_centerHorizontal', i.id);
+                    addNodeLayout('layout_centerHorizontal', item.id);
                 }
             }
-            for (const i of children) {
-                for (const j of children) {
-                    if (i != j) {
-                        if (i.linear.bottom == j.linear.top) {
-                            addNodeLayout('layout_above', i.id, j.androidId);
+            for (const item of children) {
+                for (const adjacent of children) {
+                    if (item != adjacent) {
+                        if (item.linear.bottom == adjacent.linear.top) {
+                            addNodeLayout('layout_above', item.id, adjacent.androidId);
                         }
-                        else if (i.linear.top == j.linear.bottom) {
-                            addNodeLayout('layout_below', i.id, j.androidId);
+                        else if (item.linear.top == adjacent.linear.bottom) {
+                            addNodeLayout('layout_below', item.id, adjacent.androidId);
                         }
-                        if (i.linear.top == j.linear.top) {
-                            addNodeLayout('layout_alignTop', i.id, j.androidId);
+                        if (item.linear.top == adjacent.linear.top) {
+                            addNodeLayout('layout_alignTop', item.id, adjacent.androidId);
                         }
-                        else if (i.linear.bottom == j.linear.bottom) {
-                            addNodeLayout('layout_alignBottom', i.id, j.androidId);
+                        else if (item.linear.bottom == adjacent.linear.bottom) {
+                            addNodeLayout('layout_alignBottom', item.id, adjacent.androidId);
                         }
-                        if (i.linear.left == j.linear.left) {
-                            addNodeLayout('layout_alignStart', i.id, j.androidId);
+                        if (item.linear.left == adjacent.linear.left) {
+                            addNodeLayout('layout_alignStart', item.id, adjacent.androidId);
                         }
-                        else if (i.linear.right == j.linear.right) {
-                            addNodeLayout('layout_alignEnd', i.id, j.androidId);
+                        else if (item.linear.right == adjacent.linear.right) {
+                            addNodeLayout('layout_alignEnd', item.id, adjacent.androidId);
                         }
-                        if (Utils.withinRange(i.linear.right, j.linear.left, SETTINGS.whitespaceOffset)) {
-                            addNodeLayout('layout_toStartOf', i.id, j.androidId);
+                        if (Utils.withinRange(item.linear.right, adjacent.linear.left, SETTINGS.whitespaceOffset)) {
+                            addNodeLayout('layout_toStartOf', item.id, adjacent.androidId);
                         }
-                        else if (Utils.withinRange(i.linear.left, j.linear.right, SETTINGS.whitespaceOffset)) {
-                            addNodeLayout('layout_toEndOf', i.id, j.androidId);
+                        else if (Utils.withinRange(item.linear.left, adjacent.linear.right, SETTINGS.whitespaceOffset)) {
+                            addNodeLayout('layout_toEndOf', item.id, adjacent.androidId);
                         }
                     }
                 }
@@ -689,7 +691,7 @@ function setGridSpacing(node, depth = 0) {
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                xml += getSpaceXml(indent, 'match_parent', Utils.convertToPX(heightTop), node.renderParent.gridColumnCount);
+                xml += getSpaceXml(depth, 'match_parent', Utils.convertToPX(heightTop), node.renderParent.gridColumnCount, 1);
             }
         }
         if (node.gridRowStart) {
@@ -702,7 +704,7 @@ function setGridSpacing(node, depth = 0) {
             const heightBottom =  dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             const paddingRight = dimensions.marginRight + dimensions.paddingRight;
             if (heightBottom > 0) {
-                addRenderAppend(node.id, getSpaceXml(indent, 'match_parent', Utils.convertToPX(heightBottom), node.renderParent.gridColumnCount));
+                addRenderAppend(node.id, getSpaceXml(depth, 'match_parent', Utils.convertToPX(heightBottom), node.renderParent.gridColumnCount, 1));
             }
             if (paddingRight > 0) {
                 node.attr('paddingRight', Utils.convertToPX(paddingRight));
@@ -768,8 +770,13 @@ function getAndroidGravity(textAlign, verticalAlign) {
     return gravity.join('|');
 }
 
-function getSpaceXml(indent, width, height, columnCount, columnWeight = 0) {
-    return `${indent + (SETTINGS.showAndroidAttributes ? Utils.formatString(STRING_ANDROID.SPACE, width, `${height}`, columnCount, columnWeight) : '<Space />')}\n`;
+function getSpaceXml(depth, width, height, columnCount, columnWeight = 0) {
+    let indent = Utils.setIndent(depth);
+    if (SETTINGS.showAndroidAttributes) {
+        let xml = Utils.formatString(STRING_ANDROID.SPACE, (SETTINGS.showAndroidXmlNs ? `${STRING_ANDROID.XMLNS}\n` : ''), width, height, columnCount, columnWeight);
+        return `${indent + xml.replace(/\n/g, `\n${Utils.setIndent(depth + 1)}`)}\n`;
+    }
+    return `${indent}<Space />\n`;
 }
 
 function addRenderAppend(id, xml, index = -1) {
@@ -1022,9 +1029,6 @@ function setMarginPadding() {
                             visible.boxRefit.layout_marginTop = true;
                         }
                     }
-                    if (item.style == null) {
-                        item = item.wrapped;
-                    }
                     current = item.linear.bottom + item.marginBottom;
                 });
             }
@@ -1048,14 +1052,11 @@ function setMarginPadding() {
                     if (item.label != null) {
                         item = item.label;
                     }
-                    else if (item.style == null) {
-                        item = item.wrapped;
-                    }
                     current = item.bounds.right + item.marginRight;
                 });
             }
         }
-        if (!node.visible && node.wrapped == null && node.children.length > 0 && (!node.parent.isView(WIDGET_ANDROID.GRID) || typeof node.renderParent == 'object')) {
+        if (!node.visible && node.wrapper == null && node.children.length > 0 && (!node.parent.isView(WIDGET_ANDROID.GRID) || typeof node.renderParent == 'object')) {
             const box = {
                 layout_marginTop: Utils.convertToPX(node.marginTop, false),
                 layout_marginRight: Utils.convertToPX(node.marginRight, false),
@@ -1175,8 +1176,8 @@ function setLinearLayoutWeight() {
             const columnLeft = [];
             const columnRight = [];
             const columnWeight = [];
-            const borderSpacing =  (node.style.borderSpacing != null ? Utils.parseInt(node.style.borderSpacing.split(' ')[0]) : 0);
             const columnOuter = [];
+            const borderSpacing = (node.style.borderSpacing != null ? Utils.parseInt(node.style.borderSpacing.split(' ')[0]) : 0);
             for (let i = 0; i < node.linearRows.length; i++) {
                 const row = node.linearRows[i];
                 const children = row.renderChildren.filter(item => item.visible);
@@ -1414,7 +1415,6 @@ function parseDocument() {
                                     if (columns.length > 1) {
                                         const columnStart = []
                                         const columnEnd = [];
-                                        const columnRender = [];
                                         const rowStart = [];
                                         const columnWeightExclude = {};
                                         xml += writeGridLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, columns.length);
@@ -1423,14 +1423,10 @@ function parseDocument() {
                                             columnEnd[l] = Number.MIN_VALUE;
                                             let spacer = 0;
                                             for (let m = 0; m < columns[l].length; m++) {
-                                                if (columnRender[m] == null) {
-                                                    columnRender[m] = new Set();
-                                                }
                                                 const nodeX = columns[l][m];
                                                 if (!nodeX.spacer) {
                                                     columnStart[l] = Math.min(nodeX.bounds.left, columnStart[l]);
                                                     columnEnd[l] = Math.max(nodeX.bounds.right, columnEnd[l]);
-                                                    columnRender[m].add(nodeX.parent.id);
                                                     nodeX.depth = nodeY.depth + 1;
                                                     if (nodeX.children.length > 0) {
                                                         const offsetDepth = nodeX.original.depth - nodeX.depth;
@@ -1495,22 +1491,6 @@ function parseDocument() {
                                                 }
                                             }
                                         }
-                                        columnRender.forEach((item, index) => {
-                                            if (item.size > 1) {
-                                                const minId = Array.from(item).reduce((a, b) => Math.min(a, b));
-                                                let renderId = null;
-                                                for (let l = 0; l < columns.length; l++) {
-                                                    if (!columns[l][index].spacer && columns[l][index].original.parentId == minId) {
-                                                        renderId = columns[l][index].id;
-                                                    }
-                                                }
-                                                for (let l = 0; l < columns.length; l++) {
-                                                    if (!columns[l][index].spacer && columns[l][index].id != renderId) {
-                                                        columns[l][index].renderAppendId = renderId;
-                                                    }
-                                                }
-                                            }
-                                        });
                                         columnEnd[columnEnd.length - 1] = columnRight[columnRight.length - 1];
                                         nodeY.gridColumnStart = columnStart;
                                         nodeY.gridColumnEnd = columnEnd;
@@ -1525,7 +1505,6 @@ function parseDocument() {
                                         const nodeChild = nodeY.children[0];
                                         nodeChild.parent = nodeY.parent;
                                         nodeChild.renderId = nodeY.id;
-                                        nodeChild.linearExclude = true;
                                         if (nodeY.parent.isView(WIDGET_ANDROID.GRID)) {
                                             for (const prop in nodeY) {
                                                 if (prop.startsWith('grid')) {
@@ -1565,16 +1544,19 @@ function parseDocument() {
                                 if (siblings.length > 0) {
                                     siblings.unshift(nodeY);
                                     const [linearX, linearY] = Node.isLinearXY(siblings);
-                                    const node = Node.insertWrapper(NODE_CACHE, nodeY, nodeY.parent, siblings, [0]);
+                                    const wrapper = Node.createWrapper(NODE_CACHE.length + 1, nodeY, nodeY.parent, siblings, [0]);
+                                    wrapper.setAndroidId((linearX || linearY ? WIDGET_ANDROID.LINEAR : WIDGET_ANDROID.CONSTRAINT));
+                                    wrapper.setBounds();
+                                    wrapper.setLinearBoxRect();
+                                    NODE_CACHE.push(wrapper);
                                     const rowSpan = nodeY.attr('layout_rowSpan');
                                     const columnSpan = nodeY.attr('layout_columnSpan');
-                                    node.setAndroidId((linearX || linearY ? WIDGET_ANDROID.LINEAR : WIDGET_ANDROID.CONSTRAINT));
                                     if (rowSpan > 1) {
-                                        node.attr('layout_rowSpan', rowSpan);
+                                        wrapper.attr('layout_rowSpan', rowSpan);
                                         delete nodeY.android.layout_rowSpan;
                                     }
                                     if (columnSpan > 1) {
-                                        node.attr('layout_columnSpan', columnSpan);
+                                        wrapper.attr('layout_columnSpan', columnSpan);
                                         delete nodeY.android.layout_columnSpan;
                                     }
                                     const renderParent = nodeY.parent;
@@ -1596,15 +1578,15 @@ function parseDocument() {
                                                 item.renderParent = true;
                                             }
                                             else {
-                                                item.parent = node;
+                                                item.parent = wrapper;
                                                 item.depthIndent++;
                                                 item.autoWrap = true;
-                                                node.inheritGridPosition(item);
+                                                wrapper.inheritGridPosition(item);
                                                 if (item.children.length > 0) {
-                                                    return writeDefaultLayout(item, nodeY.depth + nodeY.depthIndent, node);
+                                                    return writeDefaultLayout(item, nodeY.depth + nodeY.depthIndent, wrapper);
                                                 }
                                                 else {
-                                                    return writeViewTag(item, nodeY.depth + nodeY.depthIndent, node);
+                                                    return writeViewTag(item, nodeY.depth + nodeY.depthIndent, wrapper);
                                                 }
                                             }
                                         }
@@ -1612,14 +1594,14 @@ function parseDocument() {
                                     }).join('');
                                     if (linearX || linearY) {
                                         if (renderParent.isView(WIDGET_ANDROID.LINEAR)) {
-                                            renderParent.linearRows.push(node);
+                                            renderParent.linearRows.push(wrapper);
                                         }
-                                        xml += writeLinearLayout(node, nodeY.depth + nodeY.depthIndent - 1, renderParent, linearY);
+                                        xml += writeLinearLayout(wrapper, nodeY.depth + nodeY.depthIndent - 1, renderParent, linearY);
                                     }
                                     else {
-                                        xml += writeDefaultLayout(node, nodeY.depth + nodeY.depthIndent - 1, renderParent);
+                                        xml += writeDefaultLayout(wrapper, nodeY.depth + nodeY.depthIndent - 1, renderParent);
                                     }
-                                    xml = xml.replace(`{${node.id}}`, template);
+                                    xml = xml.replace(`{${wrapper.id}}`, template);
                                 }
                             }
                         }
@@ -1628,19 +1610,14 @@ function parseDocument() {
                         }
                     }
                     if (nodeY.gridSpaceSpan > 0) {
-                        addRenderAppend(nodeY.id, getSpaceXml(Utils.setIndent(nodeY.depth + nodeY.depthIndent), (nodeY.gridSpaceSpanColumnWeight ? 'wrap_content' : '0dp'), 'wrap_content', nodeY.gridSpaceSpan, (nodeY.gridSpaceSpanColumnWeight ? 0 : 1)), 0);
+                        addRenderAppend(nodeY.id, getSpaceXml(nodeY.depth + nodeY.depthIndent, (nodeY.gridSpaceSpanColumnWeight ? 'wrap_content' : '0dp'), 'wrap_content', nodeY.gridSpaceSpan, (nodeY.gridSpaceSpanColumnWeight ? 0 : 1)), 0);
                     }
                     if (xml != '') {
-                        if (nodeY.renderAppendId == null) {
-                            const renderId = nodeY.renderId || parentId;
-                            if (partial[renderId] == null) {
-                                partial[renderId] = [];
-                            }
-                            partial[renderId].push(xml);
+                        const renderId = nodeY.renderId || parentId;
+                        if (partial[renderId] == null) {
+                            partial[renderId] = [];
                         }
-                        else {
-                            addRenderAppend(nodeY.renderAppendId, xml);
-                        }
+                        partial[renderId].push(xml);
                     }
                 }
             }
