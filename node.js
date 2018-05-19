@@ -119,7 +119,7 @@ class Node {
                             this.attr('layout_width', 'match_parent');
                         }
                         else {
-                            const display = (style != null && MAPPING_ANDROID[tagName] != null ? style.display : '');
+                            const display = (style != null && MAPPING_ANDROID[tagName] == null ? style.display : '');
                             switch (display) {
                                 case 'line-item':
                                 case 'block':
@@ -169,10 +169,10 @@ class Node {
             const bounds = this.bounds;
             const style = this.style;
             this.linear = {
-                top: bounds.top - parseInt(style.marginTop),
+                top: bounds.top,
                 right: bounds.right + parseInt(style.marginRight),
                 bottom: bounds.bottom + parseInt(style.marginBottom),
-                left: bounds.left - parseInt(style.marginLeft)
+                left: bounds.left
             };
             this.box = {
                 top: bounds.top + parseInt(style.paddingTop) + parseInt(style.borderTopWidth),
@@ -202,10 +202,7 @@ class Node {
             this.androidAttributes.push(value);
         }
     }
-    processAttributes(depth, actions = []) {
-        if (depth == null) {
-            depth = this.depth + this.depthIndent + 1;
-        }
+    setAttributes(actions = []) {
         const widget = ACTION_ANDROID[this.androidWidgetName];
         const element = this.element;
         const result = {};
@@ -286,10 +283,7 @@ class Node {
             if (nextElement && nextElement.htmlFor == element.id) {
                 const nextNode = nextElement.androidNode;
                 nextNode.setAndroidId(WIDGET_ANDROID.TEXT);
-                nextNode.processAttributes(depth, [5]);
-                if (this.isView(WIDGET_ANDROID.RADIO)) {
-                    nextNode.depthIndent++;
-                }
+                nextNode.setAttributes([5]);
                 const attributes = nextNode.androidAttributes;
                 for (const name in attributes) {
                     const value = attributes[name];
@@ -319,7 +313,6 @@ class Node {
                 });
             }
         }
-        this.depthAttribute = depth;
     }
     getChildDimensions() {
         let minLeft = Number.MAX_VALUE;
@@ -344,18 +337,19 @@ class Node {
     isView(viewName) {
         return (this.androidWidgetName == viewName);
     }
-    inheritGridPosition(node) {
-        if (node.gridFirst) {
-            this.gridFirst = true;
-            node.gridFirst = false;
+    inheritGrid(node) {
+        for (const prop in node) {
+            if (prop.startsWith('grid')) {
+                this[prop] = node[prop];
+                delete node[prop];
+            }
         }
-        if (node.gridRowStart) {
-            this.gridRowStart = true;
-            node.gridRowStart = false;
-        }
-        if (node.gridRowEnd) {
-            this.gridRowEnd = true;
-            node.gridRowEnd = false;
+    }
+    inheritStyleMap(node) {
+        for (const prop in node.styleMap) {
+            if (this.styleMap[prop] == null) {
+                this.styleMap[prop] = node.styleMap[prop];
+            }
         }
     }
     attr(name, value) { 

@@ -13,13 +13,9 @@ const WIDGET_ANDROID = {
 };
 
 const MAPPING_ANDROID = {
-    'SPAN': 'TextView',
     'LABEL': 'TextView',
-    'A': 'TextView',
-    'B': 'TextView',
-    'I': 'TextView',
-    'PRE': 'TextView',
     'HR': 'View',
+    'IMG': 'ImageView',
     'SELECT': 'Spinner',
     'INPUT' : {
         'text': 'EditText',
@@ -30,8 +26,7 @@ const MAPPING_ANDROID = {
         'submit': 'Button'
     },
     'BUTTON': 'Button',
-    'TEXTAREA': 'EditText',
-    'IMG': 'ImageView'
+    'TEXTAREA': 'EditText'
 };
 
 const PROPERTY_ANDROID = {

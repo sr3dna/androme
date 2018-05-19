@@ -37,13 +37,14 @@ These settings are available in layout.js to customize your desired XML structur
 ```javascript
 const SETTINGS = {
     density: DENSITY_ANDROID.MDPI,
-    defaultLayout: WIDGET_ANDROID.RELATIVE,
-    showAndroidXmlNamespace: false,
+    showAndroidXmlNs: true,
     showAndroidAttributes: true,
-    useGridLayout: false,
+    useConstraintLayout: true,
+    useGridLayout: true,
     useVerticalHorizontal: true,
     useLayoutWeight: true,
     useUnitDP: true,
+    useRTL: false,
     boundsOffset: 2,
     whitespaceOffset: 4
 };
@@ -78,7 +79,7 @@ You can preview the library with the provided sample.html file which should gene
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/linearlayout_1"
-	android:layout_height="match_parent"
+	android:layout_height="wrap_content"
 	android:layout_marginTop="10dp"
 	android:layout_width="500dp"
 	android:orientation="vertical">
@@ -148,9 +149,9 @@ You can preview the library with the provided sample.html file which should gene
 					android:paddingTop="3dp"
 					android:text="@string/date_add"
 					style="@style/Label_1" />
-				<RelativeLayout
+				<ConstraintLayout
 					xmlns:android="http://schemas.android.com/apk/res/android"
-					android:id="@+id/relativelayout_1"
+					android:id="@+id/constraintlayout_1"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
 					android:layout_width="0dp">
@@ -164,12 +165,10 @@ You can preview the library with the provided sample.html file which should gene
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
 						style="@style/Select_1"
-						android:layout_above="@+id/year0"
-						android:layout_alignParentStart="true"
-						android:layout_alignParentTop="true"
-						android:layout_alignStart="@+id/year0"
-						android:layout_alignTop="@+id/day0"
-						android:layout_toStartOf="@+id/day0" />
+						android:layout_constraintBottom_toTopOf="@+id/year0"
+						android:layout_constraintLeft_toLeftOf="@+id/constraintlayout_1"
+						android:layout_constraintRight_toLeftOf="@+id/day0"
+						android:layout_constraintTop_toTopOf="@+id/constraintlayout_1" />
 					<Spinner
 						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/day0"
@@ -180,10 +179,9 @@ You can preview the library with the provided sample.html file which should gene
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
 						style="@style/Select_1"
-						android:layout_above="@+id/year0"
-						android:layout_alignParentTop="true"
-						android:layout_alignTop="@+id/month0"
-						android:layout_toEndOf="@+id/month0" />
+						android:layout_constraintBottom_toTopOf="@+id/year0"
+						android:layout_constraintLeft_toRightOf="@+id/month0"
+						android:layout_constraintTop_toTopOf="@+id/constraintlayout_1" />
 					<Spinner
 						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/year0"
@@ -195,11 +193,10 @@ You can preview the library with the provided sample.html file which should gene
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
 						style="@style/Select_1"
-						android:layout_alignParentBottom="true"
-						android:layout_alignParentStart="true"
-						android:layout_alignStart="@+id/month0"
-						android:layout_below="@+id/month0" />
-				</RelativeLayout>
+						android:layout_constraintBottom_toBottomOf="@+id/constraintlayout_1"
+						android:layout_constraintLeft_toLeftOf="@+id/constraintlayout_1"
+						android:layout_constraintTop_toBottomOf="@+id/month0" />
+				</ConstraintLayout>
 				<Space
 					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:layout_columnSpan="2"
@@ -219,17 +216,17 @@ You can preview the library with the provided sample.html file which should gene
 				<LinearLayout
 					xmlns:android="http://schemas.android.com/apk/res/android"
 					android:id="@+id/linearlayout_2"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:orientation="horizontal">
 					<Spinner
 						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/hour"
 						android:background="@drawable/select_hour"
 						android:entries="@array/hour_array"
-						android:layout_columnWeight="1"
 						android:layout_height="match_parent"
-						android:layout_width="0dp"
+						android:layout_width="wrap_content"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
 						style="@style/Select_1" />
@@ -495,14 +492,14 @@ You can preview the library with the provided sample.html file which should gene
 		<LinearLayout
 			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_4"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
 				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/entry_1"
 				android:background="@drawable/select_hour"
-				android:layout_columnWeight="0"
 				android:layout_height="match_parent"
 				android:layout_width="277dp"
 				android:paddingBottom="2dp"
@@ -630,17 +627,17 @@ You can preview the library with the provided sample.html file which should gene
 		<LinearLayout
 			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_5"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
 				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/version"
 				android:background="@drawable/select_hour"
 				android:entries="@array/version_array"
-				android:layout_columnWeight="1"
 				android:layout_height="match_parent"
-				android:layout_width="0dp"
+				android:layout_width="wrap_content"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -686,17 +683,17 @@ You can preview the library with the provided sample.html file which should gene
 		<LinearLayout
 			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_6"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
 				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/branch"
 				android:background="@drawable/select_hour"
 				android:entries="@array/branch_array"
-				android:layout_columnWeight="1"
 				android:layout_height="match_parent"
-				android:layout_width="0dp"
+				android:layout_width="wrap_content"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -817,14 +814,14 @@ You can preview the library with the provided sample.html file which should gene
 		<LinearLayout
 			xmlns:android="http://schemas.android.com/apk/res/android"
 			android:id="@+id/linearlayout_8"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
 				xmlns:android="http://schemas.android.com/apk/res/android"
 				android:id="@+id/person"
 				android:background="@drawable/select_hour"
-				android:layout_columnWeight="0"
 				android:layout_height="match_parent"
 				android:layout_width="133dp"
 				android:paddingBottom="2dp"
@@ -845,8 +842,8 @@ You can preview the library with the provided sample.html file which should gene
 					android:layout_marginLeft="5dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
-					android:layout_weight="1"
-					android:layout_width="0dp"
+					android:layout_weight="0"
+					android:layout_width="wrap_content"
 					android:text="@string/birth"
 					style="@style/Input_1.Input_4" />
 				<RadioButton
@@ -1109,7 +1106,7 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 <layer-list>
 	<item>
 		<shape android:shape="rectangle">
-			<solid android:color="@color/white_smoke1" />
+			<solid android:color="@color/white_smoke_1" />
 		</shape>
 	</item>
 	<item>

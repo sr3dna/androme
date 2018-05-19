@@ -104,11 +104,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('output').innerHTML = parseDocument().replace(/</g, '&lt;');
-            console.log(writeResourceStringXml());
+            console.log(NODE_CACHE);
+            /*console.log(writeResourceStringXml());
             console.log(writeResourceArrayXml());
             console.log(writeResourceStyleXml());
             console.log(writeResourceColorXml());
-            console.log(writeResourceDrawableXml());
+            console.log(writeResourceDrawableXml());*/
         });
     </script>
 </head>
