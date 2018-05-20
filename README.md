@@ -166,9 +166,9 @@ You can preview the library with the provided sample.html file which should gene
 						android:paddingTop="1dp"
 						style="@style/Select_1"
 						android:layout_constraintBottom_toTopOf="@+id/year0"
-						android:layout_constraintLeft_toLeftOf="@+id/constraintlayout_1"
+						android:layout_constraintLeft_toLeftOf="parent"
 						android:layout_constraintRight_toLeftOf="@+id/day0"
-						android:layout_constraintTop_toTopOf="@+id/constraintlayout_1" />
+						android:layout_constraintTop_toTopOf="parent" />
 					<Spinner
 						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/day0"
@@ -181,7 +181,7 @@ You can preview the library with the provided sample.html file which should gene
 						style="@style/Select_1"
 						android:layout_constraintBottom_toTopOf="@+id/year0"
 						android:layout_constraintLeft_toRightOf="@+id/month0"
-						android:layout_constraintTop_toTopOf="@+id/constraintlayout_1" />
+						android:layout_constraintTop_toTopOf="parent" />
 					<Spinner
 						xmlns:android="http://schemas.android.com/apk/res/android"
 						android:id="@+id/year0"
@@ -193,8 +193,8 @@ You can preview the library with the provided sample.html file which should gene
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
 						style="@style/Select_1"
-						android:layout_constraintBottom_toBottomOf="@+id/constraintlayout_1"
-						android:layout_constraintLeft_toLeftOf="@+id/constraintlayout_1"
+						android:layout_constraintBottom_toBottomOf="parent"
+						android:layout_constraintLeft_toLeftOf="parent"
 						android:layout_constraintTop_toBottomOf="@+id/month0" />
 				</ConstraintLayout>
 				<Space
@@ -842,8 +842,8 @@ You can preview the library with the provided sample.html file which should gene
 					android:layout_marginLeft="5dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
-					android:layout_weight="0"
-					android:layout_width="wrap_content"
+					android:layout_weight="1"
+					android:layout_width="0dp"
 					android:text="@string/birth"
 					style="@style/Input_1.Input_4" />
 				<RadioButton

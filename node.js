@@ -119,7 +119,7 @@ class Node {
                             this.attr('layout_width', 'match_parent');
                         }
                         else {
-                            const display = (style != null && MAPPING_ANDROID[tagName] == null ? style.display : '');
+                            const display = (style != null ? style.display : '');
                             switch (display) {
                                 case 'line-item':
                                 case 'block':
@@ -148,9 +148,7 @@ class Node {
     }
     setBounds() {
         if (this.wrapper == null) {
-            if (this.element != null) {
-                this.bounds = this.element.getBoundingClientRect();
-            }
+            this.bounds = this.element.getBoundingClientRect();
         }
         else {
             const nodes = Node.getOuterNodes(this.children);
@@ -169,10 +167,10 @@ class Node {
             const bounds = this.bounds;
             const style = this.style;
             this.linear = {
-                top: bounds.top,
+                top: bounds.top - parseInt(style.marginTop),
                 right: bounds.right + parseInt(style.marginRight),
                 bottom: bounds.bottom + parseInt(style.marginBottom),
-                left: bounds.left
+                left: bounds.left - parseInt(style.marginLeft)
             };
             this.box = {
                 top: bounds.top + parseInt(style.paddingTop) + parseInt(style.borderTopWidth),
@@ -328,10 +326,10 @@ class Node {
         });
         return [maxRight - minLeft, maxBottom - minTop];
     }
-    isHorizontalLinear() {
+    isLinearHorizontal() {
         return (this.android.orientation == 'horizontal');
     }
-    isHorizontalScroll() {
+    isScrollHorizontal() {
         return (this.styleMap.width != null && (this.styleMap.overflowX == 'auto' || this.styleMap.overflowX == 'scroll'));
     }
     isView(viewName) {
