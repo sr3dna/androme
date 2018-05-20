@@ -139,7 +139,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						android:paddingTop="1dp"
 						style="@style/Select_1"
 						app:layout_constraintCircle="@+id/month0"
-						app:layout_constraintCircleAngle="309"
+						app:layout_constraintCircleAngle="141"
 						app:layout_constraintCircleRadius="56dp"
 						app:layout_constraintHorizontal_bias="0.75"
 						app:layout_constraintLeft_toLeftOf="parent"

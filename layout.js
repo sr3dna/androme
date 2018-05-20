@@ -777,25 +777,31 @@ function buildAndroidLayout(output) {
                 for (let i = 0; i < nodes.length; i++) {
                     const opposite = nodes[i];
                     if (!opposite.layoutVertical || !opposite.layoutHorizontal) {
-                        const adjacent = nodes[i + (i == 0 ? 1 : -1)];
-                        const center1 = opposite.center;
-                        const center2 = adjacent.center;
-                        const x = Math.abs(center1.x - center2.x);
-                        const y = Math.abs(center1.y - center2.y);
-                        let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
-                        let radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
-                        if (center2.x > center1.x && center2.y > center1.y) {
-                            degrees += 90;
+                        const adjacent = nodes.filter(item => (item != opposite && item.layoutVertical && item.layoutHorizontal))[0];
+                        if (adjacent != null) {
+                            const center1 = opposite.center;
+                            const center2 = adjacent.center;
+                            const x = Math.abs(center1.x - center2.x);
+                            const y = Math.abs(center1.y - center2.y);
+                            let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
+                            const radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
+                            if (center1.y > center2.y) {
+                                if (center1.x > center2.x) {
+                                    degrees = 180 - degrees
+                                }
+                                else {
+                                    degrees += 180;
+                                }
+                            }
+                            else if (center1.y < center2.y) {
+                                if (center2.x > center1.x) {
+                                    degrees = 360 - degrees
+                                }
+                            }
+                            setNodeLayout('layout_constraintCircle', opposite.id, adjacent.androidId);
+                            setNodeLayout('layout_constraintCircleRadius', opposite.id, `${radius}px`);
+                            setNodeLayout('layout_constraintCircleAngle', opposite.id, degrees);
                         }
-                        else if (center2.x < center1.x && center2.y > center1.y) {
-                            degrees += 180;
-                        }
-                        else if (center2.x < center1.x && center2.y < center1.y) {
-                            degrees += 270;
-                        }
-                        setNodeLayout('layout_constraintCircle', opposite.id, adjacent.androidId);
-                        setNodeLayout('layout_constraintCircleRadius', opposite.id, `${radius}px`);
-                        setNodeLayout('layout_constraintCircleAngle', opposite.id, degrees);
                     }
                 }
             }
@@ -805,7 +811,7 @@ function buildAndroidLayout(output) {
                 const result = [];
                 for (const name of position) {
                     const value = nodeIndex[id][name];
-                    result.push(`app:${name}="${(/^(parent|true|(0\.)?[0-9]{2,3}(px)?)$/.test(value) ? value : `@+id/${value}`)}"`);
+                    result.push(`app:${name}="${(/^(parent|true|(0\.)?[0-9]{2,}(px)?)$/.test(value) ? value : `@+id/${value}`)}"`);
                 }
                 const xml = result.map(value => `\n${indent + value}`).join('');
                 output = output.replace(`{#${id}}`, xml);
