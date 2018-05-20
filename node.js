@@ -89,8 +89,8 @@ class Node {
         const parentScrollView = (parent.androidNode && parent.androidNode.scrollOverflow != null);
         const parentGridLayout = (this.parent.id != 0 && this.parent.isView(WIDGET_ANDROID.GRID));
         if (this.scrollOverflow != null && !this.isView(WIDGET_ANDROID.TEXT)) {
-            this.attr('layout_width', 'match_parent');
-            this.attr('layout_height', 'match_parent');
+            this.attr('layout_width', 'match_parent', false);
+            this.attr('layout_height', 'match_parent', false);
         }
         else {
             const layoutWeight = (this.gridColumnWeight != null || this.layoutWeight != null);
@@ -99,6 +99,15 @@ class Node {
                 if (layoutWeight) {
                     this.attr((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), '0');
                 }
+            }
+            else if (styleMap.minWidth != null || styleMap.maxWidth != null) {
+                if (styleMap.minWidth != null) {
+                    this.attr('minWidth', Utils.convertToPX(styleMap.minWidth));
+                }
+                if (styleMap.maxWidth != null) {
+                    this.attr('maxWidth', Utils.convertToPX(styleMap.maxWidth));
+                }
+                this.attr('layout_width', 'wrap_content');
             }
             else {
                 if (layoutWeight) {
@@ -112,11 +121,11 @@ class Node {
                 }
                 else {
                     if (parentGridLayout) {
-                        this.attr('layout_width', 'wrap_content');
+                        this.attr('layout_width', 'wrap_content', false);
                     }
                     else {
                         if (!parentScrollView && width >= parentWidth) {
-                            this.attr('layout_width', 'match_parent');
+                            this.attr('layout_width', 'match_parent', false);
                         }
                         else {
                             const display = (style != null ? style.display : '');
@@ -124,10 +133,10 @@ class Node {
                                 case 'line-item':
                                 case 'block':
                                 case 'inherit':
-                                    this.attr('layout_width', 'match_parent');
+                                    this.attr('layout_width', 'match_parent', false);
                                     break;
                                 default:
-                                    this.attr('layout_width', 'wrap_content');
+                                    this.attr('layout_width', 'wrap_content', false);
                             }
                         }
                     }
@@ -136,12 +145,21 @@ class Node {
             if (styleMap.height != null) {
                 this.attr('layout_height', Utils.convertToPX(styleMap.height));
             }
+            else if (styleMap.minHeight != null || styleMap.maxHeight != null) {
+                if (styleMap.minHeight != null) {
+                    this.attr('minHeight', Utils.convertToPX(styleMap.minHeight));
+                }
+                if (styleMap.maxHeight != null) {
+                    this.attr('maxHeight', Utils.convertToPX(styleMap.maxHeight));
+                }
+                this.attr('layout_height', 'wrap_content');
+            }
             else {
                 if (!parentScrollView && !parentGridLayout && height >= parentHeight) {
-                    this.attr('layout_height', 'match_parent');
+                    this.attr('layout_height', 'match_parent', false);
                 }
                 else {
-                    this.attr('layout_height', 'wrap_content');
+                    this.attr('layout_height', 'wrap_content', false);
                 }
             }
         }
@@ -167,16 +185,16 @@ class Node {
             const bounds = this.bounds;
             const style = this.style;
             this.linear = {
-                top: bounds.top - parseInt(style.marginTop),
-                right: bounds.right + parseInt(style.marginRight),
-                bottom: bounds.bottom + parseInt(style.marginBottom),
-                left: bounds.left - parseInt(style.marginLeft)
+                top: Math.floor(bounds.top - parseInt(style.marginTop)),
+                right: Math.floor(bounds.right + parseInt(style.marginRight)),
+                bottom: Math.floor(bounds.bottom + parseInt(style.marginBottom)),
+                left: Math.floor(bounds.left - parseInt(style.marginLeft))
             };
             this.box = {
-                top: bounds.top + parseInt(style.paddingTop) + parseInt(style.borderTopWidth),
-                right: bounds.right - (parseInt(style.paddingRight) + parseInt(style.borderRightWidth)),
-                left: bounds.left + parseInt(style.paddingLeft) + parseInt(style.borderLeftWidth),
-                bottom: bounds.bottom - (parseInt(style.paddingBottom) + parseInt(style.borderBottomWidth))
+                top: Math.floor(bounds.top + parseInt(style.paddingTop) + parseInt(style.borderTopWidth)),
+                right: Math.floor(bounds.right - (parseInt(style.paddingRight) + parseInt(style.borderRightWidth))),
+                left: Math.floor(bounds.left + parseInt(style.paddingLeft) + parseInt(style.borderLeftWidth)),
+                bottom: Math.floor(bounds.bottom - (parseInt(style.paddingBottom) + parseInt(style.borderBottomWidth)))
             };
         }
         else {
@@ -350,8 +368,11 @@ class Node {
             }
         }
     }
-    attr(name, value) { 
+    attr(name, value, overwrite = true) { 
         if (Utils.hasValue(value)) {
+            if (!overwrite && this.android[name] != null) {
+                return null;
+            }
             this.android[name] = value;
         }
         return this.android[name];
@@ -365,7 +386,24 @@ class Node {
         }
         return (this.style[name] || ''); 
     }
-
+    get horizontalBias() {
+        const parent = this.renderParent;
+        if (parent != null && parent.visible) {
+            const left = this.linear.left - parent.box.left;
+            const right = parent.box.right - this.linear.right;
+            return (left == 0 || right == 0 ? 0 : (left / (left + right)).toFixed(2));
+        }
+        return 0;
+    }
+    get verticalBias() {
+        const parent = this.renderParent;
+        if (parent != null && parent.visible) {
+            const top = this.linear.top - parent.box.top;
+            const bottom = parent.box.bottom - this.linear.bottom;
+            return (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
+        }
+        return 0;
+    }
     get widgetName() {
         if (this.androidWidgetName != null) {
             return this.androidWidgetName;
@@ -456,6 +494,12 @@ class Node {
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
     }
+    get fixedWidth() {
+        return (this.styleMap.width != null || this.styleMap.maxWidth != null);
+    }
+    get fixedHeight() {
+        return (this.styleMap.height != null || this.styleMap.maxHeight != null);
+    }
 
     static createWrapper(id, node, parent, children, actions = null) {
         const options = {
@@ -527,6 +571,16 @@ class Node {
             }
         }
         return { top, right, bottom, left };
+    }
+    static getVerticalBias(parent, firstNode, lastNode) {
+        const top = firstNode.linear.top - parent.box.top;
+        const bottom = parent.box.bottom - lastNode.linear.bottom;
+        return (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
+    }
+    static getHorizontalBias(parent, firstNode, lastNode) {
+        const left = firstNode.linear.left - parent.box.left;
+        const right = parent.box.right - lastNode.linear.right;
+        return (left == 0 || right == 0 ? 0 : (left / (left + right)).toFixed(2));
     }
     static getElementStyle(element) {
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
