@@ -453,6 +453,9 @@ class Node {
     get paddingRight() {
         return Utils.parseInt(this.css('paddingRight'));
     }
+    get center() {
+        return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
+    }
 
     static createWrapper(id, node, parent, children, actions = null) {
         const options = {

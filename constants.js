@@ -154,8 +154,9 @@ const ACTION_ANDROID = {
 
 const STRING_ANDROID = {
     XML_DECLARATION: '<?xml version="1.0" encoding="utf-8"?>',
-    XMLNS: 'xmlns:android="http://schemas.android.com/apk/res/android"',
-    SPACE: '<Space\n{0}android:layout_columnSpan="{3}"\nandroid:layout_columnWeight="{4}"\nandroid:layout_height="{2}"\nandroid:layout_width="{1}" />'
+    XMLNS_DEFAULT: 'xmlns:android="http://schemas.android.com/apk/res/android"',
+    XMLNS_APP: 'xmlns:app="http://schemas.android.com/apk/res-auto"',
+    SPACE: '<Space\nandroid:layout_columnSpan="{2}"\nandroid:layout_columnWeight="{3}"\nandroid:layout_height="{1}"\nandroid:layout_width="{0}" />'
 };
 
 const DENSITY_ANDROID = {

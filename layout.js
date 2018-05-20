@@ -1,6 +1,5 @@
 const SETTINGS = {
     density: DENSITY_ANDROID.MDPI,
-    showAndroidXmlNs: true,
     showAndroidAttributes: true,
     useConstraintLayout: true,
     useGridLayout: true,
@@ -212,10 +211,6 @@ function addResourceColor(value) {
     return value;
 }
 
-function getXmlNs() {
-    return (SETTINGS.showAndroidXmlNs ? ` ${STRING_ANDROID.XMLNS}` : '');
-}
-
 function getLTR(ltr, rtl) {
     return (SETTINGS.useRTL ? rtl : ltr);
 }
@@ -274,7 +269,7 @@ function setBackgroundStyle(node) {
         };
         let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
         if (properties.borderRadius != null) {
-            xml += `<shape${getXmlNs()} android:shape="rectangle">\n` +
+            xml += `<shape ${STRING_ANDROID.XMLNS_DEFAULT} android:shape="rectangle">\n` +
                    `\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]] || borderStyle['default']} />\n` +
                    (properties.backgroundColor ? `\t<solid android:color="${properties.backgroundColor[1]}" />\n` : '');
             if (properties.borderRadius.length == 1) {
@@ -291,12 +286,12 @@ function setBackgroundStyle(node) {
                    '</shape>';
         }
         else if (properties.border[0] != 'none' && properties.backgroundColor == null) {
-            xml += `<shape${getXmlNs()} android:shape="rectangle">\n` +
+            xml += `<shape ${STRING_ANDROID.XMLNS_DEFAULT} android:shape="rectangle">\n` +
                    `\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]]} />\n` +
                    '</shape>';
         }
         else {
-            xml += `<layer-list${getXmlNs()}>\n`;
+            xml += `<layer-list ${STRING_ANDROID.XMLNS_DEFAULT}>\n`;
             if (properties.backgroundColor != null) {
                 xml += '\t<item>\n' +
                        '\t\t<shape android:shape="rectangle">\n' +
@@ -585,8 +580,11 @@ function buildAndroidAttributes(output) {
                     }
                 }
                 const indent = Utils.setIndent(node.renderDepth + 1);
-                if (SETTINGS.showAndroidXmlNs) {
-                    attributes.unshift(STRING_ANDROID.XMLNS);
+                if (node.renderDepth == 0) {
+                    if (SETTINGS.useConstraintLayout) {
+                        attributes.unshift(STRING_ANDROID.XMLNS_APP);
+                    }
+                    attributes.unshift(STRING_ANDROID.XMLNS_DEFAULT);
                 }
                 const xml = attributes.map(value => `\n${indent + value}`).join('').replace('{id}', node.androidId);
                 output = output.replace(`{@${node.id}}`, xml);
@@ -650,12 +648,13 @@ function buildAndroidLayout(output) {
                 if (parentHorizontal) {
                     const left = current.linear.left - node.box.left;
                     const right = node.box.right - current.linear.right;
-                    const bias = (left != 0 ? (left / (left + right)).toFixed(2) : 0);
+                    const bias = (left == 0 || right == 0 ? 0 : (left / (left + right)).toFixed(2));
                     if (constraint) {
                         if (bias != 0) {
                             setNodeLayout(layout['leftLeft'], current.id, 'parent');
                             setNodeLayout(layout['rightRight'], current.id, 'parent');
                             setNodeLayout('layout_constraintHorizontal_bias', current.id, bias);
+                            current.layoutHorizontal = true;
                         }
                     }
                     else {
@@ -667,12 +666,13 @@ function buildAndroidLayout(output) {
                 if (parentVertical) {
                     const top = current.linear.top - node.box.top;
                     const bottom = node.box.bottom - current.linear.bottom;
-                    const bias = (top != 0 ? (top / (top + bottom)).toFixed(2) : 0);
+                    const bias = (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
                     if (constraint) {
                         if (bias != 0) {
                             setNodeLayout(layout['top'], current.id, 'parent');
                             setNodeLayout(layout['bottom'], current.id, 'parent');
                             setNodeLayout('layout_constraintVertical_bias', current.id, bias);
+                            current.layoutVertical = true;
                         }
                     }
                     else {
@@ -685,21 +685,25 @@ function buildAndroidLayout(output) {
             nodes.unshift(node);
             for (let current of nodes) {
                 for (let adjacent of nodes) {
-                    if (current == adjacent || (relative && adjacent == node)) {
+                    if (current == adjacent || (relative && current == node)) {
                         continue;
                     }
-                    else if (relative && current == node) {
-                        if (adjacent.linear.top == node.box.top) {
-                            setNodeLayout('layout_alignParentTop', adjacent.id);
+                    else if (relative && adjacent == node) {
+                        if (current.linear.top == node.box.top) {
+                            setNodeLayout('layout_alignParentTop', current.id);
+                            current.layoutVertical = true;
                         }
-                        else if (adjacent.linear.bottom == node.box.bottom) {
-                            setNodeLayout('layout_alignParentBottom', adjacent.id);
+                        else if (current.linear.bottom == node.box.bottom) {
+                            setNodeLayout('layout_alignParentBottom', current.id);
+                            current.layoutVertical = true;
                         }
-                        if (adjacent.linear.left == node.box.left) {
-                            setNodeLayout(getLTR('layout_alignParentLeft', 'layout_alignParentStart'), adjacent.id);
+                        if (current.linear.left == node.box.left) {
+                            setNodeLayout(getLTR('layout_alignParentLeft', 'layout_alignParentStart'), current.id);
+                            current.layoutHorizontal = true;
                         }
-                        else if (adjacent.linear.right == node.box.right) {
-                            setNodeLayout(getLTR('layout_alignParentRight', 'layout_alignParentEnd'), adjacent.id);
+                        else if (current.linear.right == node.box.right) {
+                            setNodeLayout(getLTR('layout_alignParentRight', 'layout_alignParentEnd'), current.id);
+                            current.layoutHorizontal = true;
                         }
                     }
                     else {
@@ -713,37 +717,85 @@ function buildAndroidLayout(output) {
                         }
                         if (current.linear.bottom == adjacent.linear.top) {
                             setNodeLayout(layout['bottomTop'], current.id, adjacent.androidId);
+                            current.layoutVertical = true;
                         }
                         else if (current.linear.top == adjacent.linear.bottom) {
                             setNodeLayout(layout['topBottom'], current.id, adjacent.androidId);
+                            current.layoutVertical = true;
                         }
+                        let chain = false;
                         if (current.linear.top == adjacent.linear.top) {
                             if (baseline) {
                                 setNodeLayout(layout['baseline'], current.id, adjacent.androidId);
                             }
                             setNodeLayout(layout['top'], current.id, adjacent.androidId);
+                            current.layoutVertical = true;
+                            chain = true;
                         }
                         else if (current.linear.bottom == adjacent.linear.bottom) {
                             setNodeLayout(layout['bottom'], current.id, adjacent.androidId);
+                            current.layoutVertical = true;
+                            chain = true;
                         }
-                        if (Utils.withinRange(current.linear.right, adjacent.linear.left, SETTINGS.whitespaceOffset)) {
+                        if (current.linear.right == adjacent.linear.left || (chain && Utils.withinRange(current.linear.right, adjacent.linear.left, SETTINGS.whitespaceOffset))) {
                             if (baseline) {
                                 setNodeLayout(layout['baseline'], current.id, adjacent.androidId);
                             }
                             setNodeLayout(layout['left'], current.id, adjacent.androidId);
+                            current.layoutHorizontal = true;
                         }
-                        else if (Utils.withinRange(current.linear.left, adjacent.linear.right, SETTINGS.whitespaceOffset)) {
+                        else if (current.linear.left == adjacent.linear.right || (chain && Utils.withinRange(current.linear.left, adjacent.linear.right, SETTINGS.whitespaceOffset))) {
                             if (baseline) {
                                 setNodeLayout(layout['baseline'], current.id, adjacent.androidId);
                             }
                             setNodeLayout(layout['right'], current.id, adjacent.androidId);
+                            current.layoutHorizontal = true;
                         }
                         if (current.linear.left == adjacent.linear.left) {
                             setNodeLayout(layout['leftLeft'], current.id, adjacent.androidId);
+                            if (adjacent.androidId == 'parent') {
+                                current.layoutHorizontal = true;
+                            }
+                            else {
+                                current.layoutVertical = true;
+                            }
                         }
                         else if (current.linear.right == adjacent.linear.right) {
                             setNodeLayout(layout['rightRight'], current.id, adjacent.androidId);
+                            if (adjacent.androidId == 'parent') {
+                                current.layoutHorizontal = true;
+                            }
+                            else {
+                                current.layoutVertical = true;
+                            }
                         }
+                    }
+                }
+            }
+            nodes.shift();
+            if (constraint) {
+                for (let i = 0; i < nodes.length; i++) {
+                    const opposite = nodes[i];
+                    if (!opposite.layoutVertical || !opposite.layoutHorizontal) {
+                        const adjacent = nodes[i + (i == 0 ? 1 : -1)];
+                        const center1 = opposite.center;
+                        const center2 = adjacent.center;
+                        const x = Math.abs(center1.x - center2.x);
+                        const y = Math.abs(center1.y - center2.y);
+                        let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
+                        let radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
+                        if (center2.x > center1.x && center2.y > center1.y) {
+                            degrees += 90;
+                        }
+                        else if (center2.x < center1.x && center2.y > center1.y) {
+                            degrees += 180;
+                        }
+                        else if (center2.x < center1.x && center2.y < center1.y) {
+                            degrees += 270;
+                        }
+                        setNodeLayout('layout_constraintCircle', opposite.id, adjacent.androidId);
+                        setNodeLayout('layout_constraintCircleRadius', opposite.id, `${radius}px`);
+                        setNodeLayout('layout_constraintCircleAngle', opposite.id, degrees);
                     }
                 }
             }
@@ -753,7 +805,7 @@ function buildAndroidLayout(output) {
                 const result = [];
                 for (const name of position) {
                     const value = nodeIndex[id][name];
-                    result.push(`android:${name}="${(/^(parent|true|0\.[0-9]{2})$/.test(value) ? value : `@+id/${value}`)}"`);
+                    result.push(`app:${name}="${(/^(parent|true|(0\.)?[0-9]{2,3}(px)?)$/.test(value) ? value : `@+id/${value}`)}"`);
                 }
                 const xml = result.map(value => `\n${indent + value}`).join('');
                 output = output.replace(`{#${id}}`, xml);
@@ -862,7 +914,7 @@ function getAndroidGravity(textAlign, verticalAlign) {
 function getSpaceXml(depth, width, height, columnCount, columnWeight = 0) {
     let indent = Utils.setIndent(depth);
     if (SETTINGS.showAndroidAttributes) {
-        let xml = Utils.formatString(STRING_ANDROID.SPACE, (SETTINGS.showAndroidXmlNs ? `${STRING_ANDROID.XMLNS}\n` : ''), width, height, columnCount, columnWeight);
+        let xml = Utils.formatString(STRING_ANDROID.SPACE, width, height, columnCount, columnWeight);
         return `${indent + xml.replace(/\n/g, `\n${Utils.setIndent(depth + 1)}`)}\n`;
     }
     return `${indent}<Space />\n`;
