@@ -1,10 +1,9 @@
 const SETTINGS = {
     density: DENSITY_ANDROID.MDPI,
-    showAndroidAttributes: true,
+    showAttributes: true,
     useConstraintLayout: true,
     useConstraintChain: true,
     useGridLayout: true,
-    useVerticalHorizontal: true,
     useLayoutWeight: true,
     useUnitDP: true,
     useRTL: false,
@@ -396,7 +395,7 @@ function parseBoxDimensions(value) {
 }
 
 function writeLinearLayout(node, depth, parent, vertical) {
-    node.attr('orientation', (vertical ? 'vertical' : 'horizontal'));
+    node.android('orientation', (vertical ? 'vertical' : 'horizontal'));
     return writeViewLayout(node, depth, parent, WIDGET_ANDROID.LINEAR);
 }
 
@@ -409,7 +408,7 @@ function writeConstraintLayout(node, depth, parent) {
 }
 
 function writeGridLayout(node, depth, parent, columnCount = 2) {
-    node.attr('columnCount', columnCount);
+    node.android('columnCount', columnCount);
     return writeViewLayout(node, depth, parent, WIDGET_ANDROID.GRID);
 }
 
@@ -481,12 +480,12 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                     }
                     wrapper.androidCheckedButton = checked;
                     if (rowSpan > 1) {
-                        wrapper.attr('layout_rowSpan', rowSpan);
+                        wrapper.android('layout_rowSpan', rowSpan);
                     }
                     if (columnSpan > 1) {
-                        wrapper.attr('layout_columnSpan', columnSpan);
+                        wrapper.android('layout_columnSpan', columnSpan);
                     }
-                    wrapper.attr('orientation', (Node.isLinearXY(node.radioGroup)[0] ? 'horizontal' : 'vertical'));
+                    wrapper.android('orientation', (Node.isLinearXY(node.radioGroup)[0] ? 'horizontal' : 'vertical'));
                     wrapper.setBounds();
                     wrapper.setLinearBoxRect();
                     wrapper.setAttributes();
@@ -499,7 +498,7 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                 }
                 break;
             case 'password':
-                node.attr('inputType', 'textPassword');
+                node.android('inputType', 'textPassword');
                 break;
         }
         switch (element.tagName) {
@@ -521,32 +520,32 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                 node.androidSrc = src;
                 break;
             case 'TEXTAREA':
-                node.attr('minLines', 2);
+                node.android('minLines', 2);
                 if (element.rows > 2) {
-                    node.attr('maxLines', element.rows);
+                    node.android('maxLines', element.rows);
                 }
                 if (element.maxlength != null) {
-                    node.attr('maxLength', parseInt(element.maxlength));
+                    node.android('maxLength', parseInt(element.maxlength));
                 }
-                node.attr('hint', element.placeholder);
-                node.attr('scrollbars', 'vertical');
-                node.attr('inputType', 'textMultiLine');
+                node.android('hint', element.placeholder);
+                node.android('scrollbars', 'vertical');
+                node.android('inputType', 'textMultiLine');
                 if (node.styleMap.overflowX == 'scroll') {
-                    node.attr('scrollHorizontally', 'true');
+                    node.android('scrollHorizontally', 'true');
                 }
                 break;
         }
         switch (node.widgetName) {
             case WIDGET_ANDROID.TEXT:
                 if (node.scrollOverflow != null) {
-                    node.attr('scrollbars', (node.isScrollHorizontal() ? 'horizontal' : 'vertical'));
+                    node.android('scrollbars', (node.isScrollHorizontal() ? 'horizontal' : 'vertical'));
                 }
                 break;
         }
         if (parent.isView(WIDGET_ANDROID.GRID)) {
             const styleMap = node.original.parent.styleMap;
             if (styleMap.textAlign || styleMap.verticalAlign) {
-                node.attr('layout_gravity', getAndroidGravity(styleMap.textAlign, styleMap.verticalAlign));
+                node.android('layout_gravity', getAndroidGravity(styleMap.textAlign, styleMap.verticalAlign));
             }
         }
     }
@@ -566,13 +565,18 @@ function writeDefaultLayout() {
     }
 }
 
-function buildAndroidAttributes(output) {
+function inlineAttributes(output) {
     for (const node of NODE_CACHE) {
         if (node.visible) {
-            const attributes = node.androidAttributes;
             node.setAndroidDimensions();
-            for (const name in node.android) {
-                attributes.push(`android:${name}="${node.android[name]}"`);
+            const attributes = node.androidAttributes.slice();
+            const android = node.android();
+            const app = node.app();
+            for (const name in android) {
+                attributes.push(`android:${name}="${android[name]}"`);
+            }
+            for (const name in app) {
+                attributes.push(`app:${name}="${app[name]}"`);
             }
             if (attributes.length > 0) {
                 attributes.sort();
@@ -597,7 +601,17 @@ function buildAndroidAttributes(output) {
     return output;
 }
 
-function buildAndroidLayout(output) {
+function setNodePosition(current, name, value) {
+    value = (value != 'parent' ? `@+id/${value}` : 'parent');
+    if (current.renderParent.isView(WIDGET_ANDROID.CONSTRAINT)) {
+        current.app(name, value, false);
+    }
+    else {
+        current.android(name, value, false);
+    }
+}
+
+function positionConstraints() {
     const layoutMap = {
         relative: {
             top: 'layout_alignTop',
@@ -619,32 +633,16 @@ function buildAndroidLayout(output) {
             bottomTop: 'layout_constraintBottom_toTopOf',
             topBottom: 'layout_constraintTop_toBottomOf',
             rightLeft: getLTR('layout_constraintRight_toLeftOf', 'layout_constraintEnd_toStartOf'),
-            leftRight: getLTR('layout_constraintLeft_toRightOf', 'layout_constraintStart_toEndOf'),
+            leftRight: getLTR('layout_constraintLeft_toRightOf', 'layout_constraintStart_toEndOf')
         }
     };
-    const nodeIndex = {};
-    function setNodeLayout(position, id, value = true) {
-        if (nodeIndex[id][position] == null) {
-            let androidId = (typeof value == 'object' ? value.androidId : null);
-            if (androidId == 'parent') {
-                value = androidId;
-                androidId = null;
-            }
-            nodeIndex[id][position] = (androidId != null ? `@+id/${androidId}` : value);
-        }
-    }
     for (const node of NODE_CACHE) {
         const relative = node.isView(WIDGET_ANDROID.RELATIVE);
         const constraint = node.isView(WIDGET_ANDROID.CONSTRAINT);
         const layout = layoutMap[(relative ? 'relative' : 'constraint')];
         if (relative || constraint) {
             const nodes = NODE_CACHE.filter(item => (item.renderParent == node));
-            nodes.sort((a, b) => (a.id > b.id ? 1 : -1)).forEach(item => {
-                nodeIndex[item.id] = nodeIndex[item.id] || {};
-                if (constraint) {
-                    item.constraint = {};
-                }
-            });
+            nodes.sort((a, b) => (a.id > b.id ? 1 : -1));
             for (const current of nodes) {
                 let parentHorizontal = true;
                 let parentVertical = true;
@@ -662,14 +660,14 @@ function buildAndroidLayout(output) {
                     const bias = current.horizontalBias;
                     if (bias != 0) {
                         if (constraint) {
-                            setNodeLayout(layout['left'], current.id, 'parent');
-                            setNodeLayout(layout['right'], current.id, 'parent');
-                            setNodeLayout('layout_constraintHorizontal_bias', current.id, bias);
+                            current.app(layout['left'], 'parent');
+                            current.app(layout['right'], 'parent');
+                            current.app('layout_constraintHorizontal_bias', bias);
                             current.constraint.layoutHorizontal = true;
                         }
                         else {
                             if (Utils.withinRange(parseFloat(bias), 0.5, 0.02)) {
-                                setNodeLayout('layout_centerHorizontal', current.id);
+                                current.android('layout_centerHorizontal', 'true');
                             }
                         }
                     }
@@ -678,14 +676,14 @@ function buildAndroidLayout(output) {
                     const bias = current.verticalBias;
                     if (bias != 0) {
                         if (constraint) {
-                            setNodeLayout(layout['top'], current.id, 'parent');
-                            setNodeLayout(layout['bottom'], current.id, 'parent');
-                            setNodeLayout('layout_constraintVertical_bias', current.id, bias);
+                            current.app(layout['top'], 'parent');
+                            current.app(layout['bottom'], 'parent');
+                            current.app('layout_constraintVertical_bias', bias);
                             current.constraint.layoutVertical = true;
                         }
                         else {
                             if (Utils.withinRange(parseFloat(bias), 0.5, 0.02)) {
-                                setNodeLayout('layout_centerVertical', current.id);
+                                current.android('layout_centerVertical', 'true');
                             }
                         }
                     }
@@ -699,19 +697,19 @@ function buildAndroidLayout(output) {
                     }
                     else if (relative && adjacent == node) {
                         if (current.linear.top == node.box.top) {
-                            setNodeLayout('layout_alignParentTop', current.id);
+                            current.android('layout_alignParentTop', 'true');
                             current.constraint.layoutVertical = true;
                         }
                         else if (current.linear.bottom == node.box.bottom) {
-                            setNodeLayout('layout_alignParentBottom', current.id);
+                            current.android('layout_alignParentBottom', 'true');
                             current.constraint.layoutVertical = true;
                         }
                         if (current.linear.left == node.box.left) {
-                            setNodeLayout(getLTR('layout_alignParentLeft', 'layout_alignParentStart'), current.id);
+                            current.android(getLTR('layout_alignParentLeft', 'layout_alignParentStart'), 'true');
                             current.constraint.layoutHorizontal = true;
                         }
                         else if (current.linear.right == node.box.right) {
-                            setNodeLayout(getLTR('layout_alignParentRight', 'layout_alignParentEnd'), current.id);
+                            current.android(getLTR('layout_alignParentRight', 'layout_alignParentEnd'), 'true');
                             current.constraint.layoutHorizontal = true;
                         }
                     }
@@ -724,48 +722,49 @@ function buildAndroidLayout(output) {
                             adjacent = { androidId: 'parent', linear: node.box };
                             baseline = false;
                         }
+                        const androidId = adjacent.androidId;
                         if (current.linear.bottom == adjacent.linear.top) {
-                            setNodeLayout(layout['bottomTop'], current.id, adjacent);
+                            setNodePosition(current, layout['bottomTop'], androidId);
                             current.constraint.layoutVertical = true;
                         }
                         else if (current.linear.top == adjacent.linear.bottom) {
-                            setNodeLayout(layout['topBottom'], current.id, adjacent);
+                            setNodePosition(current, layout['topBottom'], androidId);
                             current.constraint.layoutVertical = true;
                         }
                         let chain = false;
                         if (current.linear.top == adjacent.linear.top) {
                             if (baseline) {
-                                setNodeLayout(layout['baseline'], current.id, adjacent);
+                                setNodePosition(current, layout['baseline'], androidId);
                             }
-                            setNodeLayout(layout['top'], current.id, adjacent);
+                            setNodePosition(current, layout['top'], androidId);
                             current.constraint.layoutVertical = true;
                             chain = true;
                         }
                         else if (current.linear.bottom == adjacent.linear.bottom) {
-                            setNodeLayout(layout['bottom'], current.id, adjacent);
+                            setNodePosition(current, layout['bottom'], androidId);
                             current.constraint.layoutVertical = true;
                             chain = true;
                         }
                         if (current.linear.right == adjacent.linear.left || (chain && Utils.withinRange(current.linear.right, adjacent.linear.left, SETTINGS.whitespaceOffset))) {
                             if (baseline) {
-                                setNodeLayout(layout['baseline'], current.id, adjacent);
+                                setNodePosition(current, layout['baseline'], androidId);
                             }
-                            setNodeLayout(layout['rightLeft'], current.id, adjacent);
+                            setNodePosition(current, layout['rightLeft'], androidId);
                             current.constraint.layoutHorizontal = true;
                         }
                         else if (current.linear.left == adjacent.linear.right || (chain && Utils.withinRange(current.linear.left, adjacent.linear.right, SETTINGS.whitespaceOffset))) {
                             if (baseline) {
-                                setNodeLayout(layout['baseline'], current.id, adjacent);
+                                setNodePosition(current, layout['baseline'], androidId);
                             }
-                            setNodeLayout(layout['leftRight'], current.id, adjacent);
+                            setNodePosition(current, layout['leftRight'], androidId);
                             current.constraint.layoutHorizontal = true;
                         }
                         if (current.linear.left == adjacent.linear.left) {
-                            setNodeLayout(layout['left'], current.id, adjacent);
+                            setNodePosition(current, layout['left'], androidId);
                             current.constraint.layoutHorizontal = true;
                         }
                         else if (current.linear.right == adjacent.linear.right) {
-                            setNodeLayout(layout['right'], current.id, adjacent);
+                            setNodePosition(current, layout['right'], androidId);
                             current.constraint.layoutHorizontal = true;
                         }
                     }
@@ -794,39 +793,55 @@ function buildAndroidLayout(output) {
                                 const valid = chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(chain => chain.id).join(''))).reduce((a, b) => (a == b ? a : 0));
                                 if (valid > 0) {
                                     const verticalHorizontal = chainMap['verticalHorizontal'][index];
+                                    const heightWidth = chainMap['heightWidth'][index];
                                     const firstNode = chainDirection[0];
                                     const lastNode = chainDirection[chainDirection.length - 1];
-                                    setNodeLayout(layout[chainMap['topLeft'][index]], firstNode.id, 'parent');
-                                    setNodeLayout(layout[chainMap['bottomRight'][index]], lastNode.id, 'parent');
+                                    firstNode.app(layout[chainMap['topLeft'][index]], 'parent');
+                                    lastNode.app(layout[chainMap['bottomRight'][index]], 'parent');
                                     let maxOffset = Number.MIN_VALUE;
                                     for (let i = 0; i < chainDirection.length; i++) {
                                         const chain = chainDirection[i];
                                         const chainNext = chainDirection[i + 1];
                                         const chainPrev = chainDirection[i - 1];
                                         if (chainNext != null) {
-                                            setNodeLayout(layout[chainMap['bottomTopRightLeft'][index]], chain.id, chainNext);
+                                            chain.app(layout[chainMap['bottomTopRightLeft'][index]], `@+id/${chainNext.androidId}`);
                                             maxOffset = Math.max(chainNext.linear[chainMap['topLeft'][index]] - chain.linear[chainMap['bottomRight'][index]], maxOffset);
                                         }
                                         if (chainPrev != null) {
-                                            setNodeLayout(layout[chainMap['topBottomLeftRight'][index]], chain.id, chainPrev);
+                                            chain.app(layout[chainMap['topBottomLeftRight'][index]], `@+id/${chainPrev.androidId}`);
                                         }
-                                        if (!chain[`fixed${chainMap['heightWidth'][index]}`]) {
-                                            chain.attr(`layout_${chainMap['heightWidth'][index].toLowerCase()}`, 'match_constraint');
+                                        if (chain.styleMap[heightWidth.toLowerCase()] == null) {
+                                            chain.android(`layout_${heightWidth.toLowerCase()}`, 'match_constraint');
+                                            const min = chain.styleMap[`min${heightWidth}`];
+                                            const max = chain.styleMap[`max${heightWidth}`];
+                                            if (min != null) {
+                                                chain.app(`layout_constraint${heightWidth}_min`, Utils.convertToPX(min));
+                                            }
+                                            if (max != null) {
+                                                chain.app(`layout_constraint${heightWidth}_max`, Utils.convertToPX(max));
+                                            }
+                                            else {
+                                                const percent = ((chain.linear.right - node.box.left) - (chainPrev != null ? chainPrev.linear.right - node.box.left : 0)) / (node.box.right - node.box.left);
+                                                if (percent > 0) {
+                                                    chain.app(`layout_constraint${heightWidth}_percent`, percent.toFixed(2));
+                                                }
+                                            }
                                         }
                                         if (chain != current) {
                                             chain.constraint[value] = null;
                                         }
                                         chain.constraint[`layout${verticalHorizontal}`] = true;
                                     }
+                                    const chainStyle = `layout_constraint${verticalHorizontal}_chainStyle`;
                                     if (maxOffset <= SETTINGS[`chainPacked${verticalHorizontal}Offset`]) {
-                                        setNodeLayout(`layout_constraint${verticalHorizontal}_chainStyle`, firstNode.id, 'chain_packed');
-                                        setNodeLayout(`layout_constraint${verticalHorizontal}_bias`, firstNode.id, Node[`get${verticalHorizontal}Bias`](node, firstNode, lastNode));
+                                        firstNode.app(chainStyle, 'chain_packed');
+                                        firstNode.app(`layout_constraint${verticalHorizontal}_bias`, Node[`get${verticalHorizontal}Bias`](node, firstNode, lastNode));
                                     }
                                     else if (firstNode.linear.left == node.box.left && lastNode.linear.right == node.box.right) {
-                                        setNodeLayout(`layout_constraint${verticalHorizontal}_chainStyle`, firstNode.id, 'chain_spread_inside');
+                                        firstNode.app(chainStyle, 'chain_spread_inside');
                                     }
                                     else {
-                                        setNodeLayout(`layout_constraint${verticalHorizontal}_chainStyle`, firstNode.id, 'chain_spread');
+                                        firstNode.app(chainStyle, 'chain_spread');
                                     }
                                 }
                                 else {
@@ -883,27 +898,15 @@ function buildAndroidLayout(output) {
                             else {
                                 degrees = (center1.x > center2.x ? 90 : 270);
                             }
-                            setNodeLayout('layout_constraintCircle', opposite.id, adjacent);
-                            setNodeLayout('layout_constraintCircleRadius', opposite.id, `${radius}px`);
-                            setNodeLayout('layout_constraintCircleAngle', opposite.id, degrees);
+                            opposite.app('layout_constraintCircle', `@+id/${adjacent.androidId}`);
+                            opposite.app('layout_constraintCircleRadius', `${radius}px`);
+                            opposite.app('layout_constraintCircleAngle', degrees);
                         }
                     }
                 }
             }
-            const indent = Utils.setIndent(node.renderDepth + 2);
-            for (const id in nodeIndex) {
-                const position = Object.keys(nodeIndex[id]).sort();
-                const result = [];
-                for (const name of position) {
-                    const value = nodeIndex[id][name];
-                    result.push(`app:${name}="${value}"`);
-                }
-                const xml = result.map(value => `\n${indent + value}`).join('');
-                output = output.replace(`{#${id}}`, xml);
-            }
         }
     }
-    return output;
 }
 
 function setGridSpacing(node, depth = 0) {
@@ -924,7 +927,7 @@ function setGridSpacing(node, depth = 0) {
         if (node.gridRowStart) {
             const paddingLeft = dimensions.marginLeft + dimensions.paddingLeft;
             if (paddingLeft > 0) {
-                node.attr('paddingLeft', Utils.convertToPX(paddingLeft));
+                node.android('paddingLeft', Utils.convertToPX(paddingLeft));
             }
         }
         if (node.gridRowEnd) {
@@ -934,7 +937,7 @@ function setGridSpacing(node, depth = 0) {
                 addRenderAppend(node.id, getSpaceXml(depth, 'match_parent', Utils.convertToPX(heightBottom), node.renderParent.gridColumnCount, 1));
             }
             if (paddingRight > 0) {
-                node.attr('paddingRight', Utils.convertToPX(paddingRight));
+                node.android('paddingRight', Utils.convertToPX(paddingRight));
             }
         }
     }
@@ -1004,7 +1007,7 @@ function getAndroidGravity(textAlign, verticalAlign) {
 
 function getSpaceXml(depth, width, height, columnCount, columnWeight = 0) {
     let indent = Utils.setIndent(depth);
-    if (SETTINGS.showAndroidAttributes) {
+    if (SETTINGS.showAttributes) {
         let xml = Utils.formatString(STRING_ANDROID.SPACE, width, height, columnCount, columnWeight);
         return `${indent + xml.replace(/\n/g, `\n${Utils.setIndent(depth + 1)}`)}\n`;
     }
@@ -1249,15 +1252,15 @@ function setMarginPadding() {
     for (const node of NODE_CACHE) {
         if (node.isView(WIDGET_ANDROID.LINEAR) || node.isView(WIDGET_ANDROID.RADIO_GROUP)) {
             const children = NODE_CACHE.filter(item => item.renderParent == node);
-            if (node.attr('orientation') == 'vertical') {
+            if (node.android('orientation') == 'vertical') {
                 let current = node.box.top + node.paddingTop;
                 children.sort((a, b) => (a.linear.top > b.linear.top ? 1 : -1)).forEach(item => {
                     const height = Math.floor(item.linear.top - current);
                     if (height > 0) {
                         const visible = (item.visible ? item : item.firstChild);
                         if (visible != null) {
-                            const marginTop = Utils.parseInt(node.attr('layout_marginTop')) + height;
-                            visible.attr('layout_marginTop', `${marginTop}px`);
+                            const marginTop = Utils.parseInt(node.android('layout_marginTop')) + height;
+                            visible.android('layout_marginTop', `${marginTop}px`);
                             visible.boxRefit.layout_marginTop = true;
                         }
                     }
@@ -1268,15 +1271,15 @@ function setMarginPadding() {
                 let current = node.box.left + node.paddingLeft;
                 children.sort((a, b) => (a.linear.left > b.linear.left ? 1 : -1)).forEach(item => {
                     if (item.visible && item.style.float == 'right') {
-                        item.attr('layout_gravity', getAndroidGravity('right', item.style.verticalAlign));
+                        item.android('layout_gravity', getAndroidGravity('right', item.style.verticalAlign));
                     }
                     else {
                         const width = Math.floor(item.linear.left - current);
                         if (width > 0) {
                             const visible = (item.visible ? item : item.firstChild);
                             if (visible != null) {
-                                const marginLeft = Utils.parseInt(node.attr('layout_marginLeft')) + width;
-                                visible.attr('layout_marginLeft', `${marginLeft}px`);
+                                const marginLeft = Utils.parseInt(node.android('layout_marginLeft')) + width;
+                                visible.android('layout_marginLeft', `${marginLeft}px`);
                                 visible.boxRefit.layout_marginLeft = true;
                             }
                         }
@@ -1313,7 +1316,7 @@ function setMarginPadding() {
                     paddingLeft: 0
                 };
                 for (const name in childBox) {
-                    childBox[name] = Utils.parseInt(item.attr(name));
+                    childBox[name] = Utils.parseInt(item.android(name));
                 }
                 for (const side in outerNodes) {
                     if (outerNodes[side].includes(item)) {
@@ -1329,34 +1332,34 @@ function setMarginPadding() {
                         switch (side) {
                             case 'top':
                                 if (childBox.layout_marginTop > 0) {
-                                    item.attr('layout_marginTop', `${childBox.layout_marginTop}px`);
+                                    item.android('layout_marginTop', `${childBox.layout_marginTop}px`);
                                 }
                                 if (childBox.paddingTop > 0) {
-                                    item.attr('paddingTop', `${childBox.paddingTop}px`);
+                                    item.android('paddingTop', `${childBox.paddingTop}px`);
                                 }
                                 break;
                             case 'right':
                                 if (childBox.layout_marginRight > 0) {
-                                    item.attr('layout_marginRight', `${childBox.layout_marginRight}px`);
+                                    item.android('layout_marginRight', `${childBox.layout_marginRight}px`);
                                 }
                                 if (childBox.paddingRight > 0) {
-                                    item.attr('paddingRight', `${childBox.paddingRight}px`);
+                                    item.android('paddingRight', `${childBox.paddingRight}px`);
                                 }
                                 break;
                             case 'bottom':
                                 if (childBox.layout_marginBottom > 0) {
-                                    item.attr('layout_marginBottom', `${childBox.layout_marginBottom}px`);
+                                    item.android('layout_marginBottom', `${childBox.layout_marginBottom}px`);
                                 }
                                 if (childBox.paddingBottom > 0) {
-                                    item.attr('paddingBottom', `${childBox.paddingBottom}px`);
+                                    item.android('paddingBottom', `${childBox.paddingBottom}px`);
                                 }
                                 break;
                             case 'left':
                                 if (childBox.layout_marginLeft > 0) {
-                                    item.attr('layout_marginLeft', `${childBox.layout_marginLeft}px`);
+                                    item.android('layout_marginLeft', `${childBox.layout_marginLeft}px`);
                                 }
                                 if (childBox.paddingLeft > 0) {
-                                    item.attr('paddingLeft', `${childBox.paddingLeft}px`);
+                                    item.android('paddingLeft', `${childBox.paddingLeft}px`);
                                 }
                                 break;
                         }
@@ -1365,47 +1368,45 @@ function setMarginPadding() {
             });
         }
     }
-    if (SETTINGS.useVerticalHorizontal) {
-        mergeMarginPadding();
-    }
+    mergeMarginPadding();
 }
 
 function mergeMarginPadding() {
     for (const node of NODE_CACHE) {
         if (node.visible) {
-            const marginTop = Utils.parseInt(node.attr('layout_marginTop'));
-            const marginRight = Utils.parseInt(node.attr('layout_marginRight'));
-            const marginBottom = Utils.parseInt(node.attr('layout_marginBottom'));
-            const marginLeft = Utils.parseInt(node.attr('layout_marginLeft'));
+            const marginTop = Utils.parseInt(node.android('layout_marginTop'));
+            const marginRight = Utils.parseInt(node.android('layout_marginRight'));
+            const marginBottom = Utils.parseInt(node.android('layout_marginBottom'));
+            const marginLeft = Utils.parseInt(node.android('layout_marginLeft'));
             if (marginTop != 0 && marginTop == marginBottom) {
-                node.attr('layout_marginVertical', `${marginTop}px`);
-                node.attrDelete('layout_marginTop');
-                node.attrDelete('layout_marginBottom');
+                node.android('layout_marginVertical', `${marginTop}px`);
+                node.delete('android', 'layout_marginTop');
+                node.delete('android', 'layout_marginBottom');
             }
             if (marginLeft != 0 && marginLeft == marginRight) {
-                node.attr('layout_marginHorizontal', `${marginLeft}px`);
-                node.attrDelete('layout_marginLeft');
-                node.attrDelete('layout_marginRight');
+                node.android('layout_marginHorizontal', `${marginLeft}px`);
+                node.delete('android', 'layout_marginLeft');
+                node.delete('android', 'layout_marginRight');
             }
-            const paddingTop = Utils.parseInt(node.attr('paddingTop'));
-            const paddingRight = Utils.parseInt(node.attr('paddingRight'));
-            const paddingBottom = Utils.parseInt(node.attr('paddingBottom'));
-            const paddingLeft = Utils.parseInt(node.attr('paddingLeft'));
+            const paddingTop = Utils.parseInt(node.android('paddingTop'));
+            const paddingRight = Utils.parseInt(node.android('paddingRight'));
+            const paddingBottom = Utils.parseInt(node.android('paddingBottom'));
+            const paddingLeft = Utils.parseInt(node.android('paddingLeft'));
             if (paddingTop != 0 && paddingTop == paddingBottom) {
-                node.attr('paddingVertical', `${paddingTop}px`);
-                node.attrDelete('paddingTop');
-                node.attrDelete('paddingBottom');
+                node.android('paddingVertical', `${paddingTop}px`);
+                node.delete('android', 'paddingTop');
+                node.delete('android', 'paddingBottom');
             }
             if (paddingLeft != 0 && paddingLeft == paddingRight) {
-                node.attr('paddingHorizontal', `${paddingLeft}px`);
-                node.attrDelete('paddingLeft');
-                node.attrDelete('paddingRight');
+                node.android('paddingHorizontal', `${paddingLeft}px`);
+                node.delete('android', 'paddingLeft');
+                node.delete('android', 'paddingRight');
             }
         }
     }
 }
 
-function setLinearLayoutWeight() {
+function setLayoutWeight() {
     for (const node of NODE_CACHE) {
         if (node.linearRows.length > 0) {
             if (node.scrollOverflow != null) {
@@ -1778,14 +1779,14 @@ function parseDocument() {
                                     wrapper.setBounds();
                                     wrapper.setLinearBoxRect();
                                     NODE_CACHE.push(wrapper);
-                                    const rowSpan = nodeY.attr('layout_rowSpan');
-                                    const columnSpan = nodeY.attr('layout_columnSpan');
+                                    const rowSpan = nodeY.android('layout_rowSpan');
+                                    const columnSpan = nodeY.android('layout_columnSpan');
                                     if (rowSpan > 1) {
-                                        wrapper.attr('layout_rowSpan', rowSpan);
+                                        wrapper.android('layout_rowSpan', rowSpan);
                                         delete nodeY.android.layout_rowSpan;
                                     }
                                     if (columnSpan > 1) {
-                                        wrapper.attr('layout_columnSpan', columnSpan);
+                                        wrapper.android('layout_columnSpan', columnSpan);
                                         delete nodeY.android.layout_columnSpan;
                                     }
                                     const renderParent = nodeY.parent;
@@ -1861,13 +1862,13 @@ function parseDocument() {
         output = output.replace(`{:${id}}`, RENDER_APPEND[id].join(''));
     }
     setResourceStyle();
-    if (SETTINGS.showAndroidAttributes) {
+    if (SETTINGS.showAttributes) {
         setMarginPadding();
         if (SETTINGS.useLayoutWeight) {
-            setLinearLayoutWeight();
+            setLayoutWeight();
         }
-        output = buildAndroidLayout(output);
-        output = buildAndroidAttributes(output);
+        positionConstraints();
+        output = inlineAttributes(output);
     }
     if (SETTINGS.useUnitDP) {
         output = Utils.insetToDP(output);

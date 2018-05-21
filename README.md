@@ -7,11 +7,10 @@ These settings are available in layout.js to customize your desired XML structur
 ```javascript
 const SETTINGS = {
     density: DENSITY_ANDROID.MDPI,
-    showAndroidAttributes: true,
+    showAttributes: true,
     useConstraintLayout: true,
     useConstraintChain: true,
     useGridLayout: true,
-    useVerticalHorizontal: true,
     useLayoutWeight: true,
     useUnitDP: true,
     useRTL: false,
@@ -130,9 +129,9 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
-						style="@style/Select_1"
 						app:layout_constraintLeft_toLeftOf="parent"
-						app:layout_constraintTop_toTopOf="parent" />
+						app:layout_constraintTop_toTopOf="parent"
+						style="@style/Select_1" />
 					<Spinner
 						android:id="@+id/day0"
 						android:background="@drawable/select_hour"
@@ -142,13 +141,13 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
-						style="@style/Select_1"
-						app:layout_constraintCircle="month0"
+						app:layout_constraintCircle="@+id/month0"
 						app:layout_constraintCircleAngle="129"
 						app:layout_constraintCircleRadius="56dp"
 						app:layout_constraintHorizontal_bias="0.74"
 						app:layout_constraintLeft_toLeftOf="parent"
-						app:layout_constraintRight_toRightOf="parent" />
+						app:layout_constraintRight_toRightOf="parent"
+						style="@style/Select_1" />
 					<Spinner
 						android:id="@+id/year0"
 						android:background="@drawable/select_hour"
@@ -159,9 +158,9 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
-						style="@style/Select_1"
 						app:layout_constraintBottom_toBottomOf="parent"
-						app:layout_constraintLeft_toLeftOf="parent" />
+						app:layout_constraintLeft_toLeftOf="parent"
+						style="@style/Select_1" />
 				</ConstraintLayout>
 				<Space
 					android:layout_columnSpan="2"
@@ -746,8 +745,8 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 					android:layout_marginLeft="5dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
-					android:layout_weight="1"
-					android:layout_width="0dp"
+					android:layout_weight="0"
+					android:layout_width="wrap_content"
 					android:text="@string/birth"
 					style="@style/Input_1.Input_4" />
 				<RadioButton

@@ -28,13 +28,19 @@ class Node {
         this.linearRows = [];
         this.renderId = null;
         this.renderChildren = [];
-        this.android = {};
         this.androidAttributes = [];
+        this.constraint = {};
         this.original = {};
         this.boxRefit = {};
         this.preAlignment = {};
         this.scrollOverflow = overflow;
         this.scrollNested = false;
+
+        this._parent = null;
+        this._depth = null;
+        this._android = {};
+        this._app = {};
+
         Object.assign(this, options);
     }
 
@@ -89,43 +95,45 @@ class Node {
         const parentScrollView = (parent.androidNode && parent.androidNode.scrollOverflow != null);
         const parentGridLayout = (this.parent.id != 0 && this.parent.isView(WIDGET_ANDROID.GRID));
         if (this.scrollOverflow != null && !this.isView(WIDGET_ANDROID.TEXT)) {
-            this.attr('layout_width', 'match_parent', false);
-            this.attr('layout_height', 'match_parent', false);
+            this.android('layout_width', 'match_parent', false);
+            this.android('layout_height', 'match_parent', false);
         }
         else {
             const layoutWeight = (this.gridColumnWeight != null || this.layoutWeight != null);
             if (styleMap.width != null) {
-                this.attr('layout_width', Utils.convertToPX(styleMap.width));
+                this.android('layout_width', Utils.convertToPX(styleMap.width));
                 if (layoutWeight) {
-                    this.attr((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), '0');
+                    this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), '0');
                 }
             }
             else if (styleMap.minWidth != null || styleMap.maxWidth != null) {
-                if (styleMap.minWidth != null) {
-                    this.attr('minWidth', Utils.convertToPX(styleMap.minWidth));
+                if (this.android('layout_width') != 'match_constraint') {
+                    if (styleMap.minWidth != null) {
+                        this.android('minWidth', Utils.convertToPX(styleMap.minWidth));
+                    }
+                    if (styleMap.maxWidth != null) {
+                        this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth));
+                    }
+                    this.android('layout_width', 'wrap_content');
                 }
-                if (styleMap.maxWidth != null) {
-                    this.attr('maxWidth', Utils.convertToPX(styleMap.maxWidth));
-                }
-                this.attr('layout_width', 'wrap_content');
             }
             else {
                 if (layoutWeight) {
                     if (this.gridColumnWeight != null) {
-                        this.attr('layout_columnWeight', this.gridColumnWeight);
+                        this.android('layout_columnWeight', this.gridColumnWeight);
                     }
                     if (this.layoutWeight != null) {
-                        this.attr('layout_weight', this.layoutWeight);
+                        this.android('layout_weight', this.layoutWeight);
                     }
-                    this.attr('layout_width', (this.layoutWeight == '1' || this.gridColumnWeight == '1' ? '0px' : 'wrap_content'));
+                    this.android('layout_width', (this.layoutWeight == '1' || this.gridColumnWeight == '1' ? '0px' : 'wrap_content'));
                 }
                 else {
                     if (parentGridLayout) {
-                        this.attr('layout_width', 'wrap_content', false);
+                        this.android('layout_width', 'wrap_content', false);
                     }
                     else {
                         if (!parentScrollView && width >= parentWidth) {
-                            this.attr('layout_width', 'match_parent', false);
+                            this.android('layout_width', 'match_parent', false);
                         }
                         else {
                             const display = (style != null ? style.display : '');
@@ -133,33 +141,35 @@ class Node {
                                 case 'line-item':
                                 case 'block':
                                 case 'inherit':
-                                    this.attr('layout_width', 'match_parent', false);
+                                    this.android('layout_width', 'match_parent', false);
                                     break;
                                 default:
-                                    this.attr('layout_width', 'wrap_content', false);
+                                    this.android('layout_width', 'wrap_content', false);
                             }
                         }
                     }
                 }
             }
             if (styleMap.height != null) {
-                this.attr('layout_height', Utils.convertToPX(styleMap.height));
+                this.android('layout_height', Utils.convertToPX(styleMap.height));
             }
             else if (styleMap.minHeight != null || styleMap.maxHeight != null) {
-                if (styleMap.minHeight != null) {
-                    this.attr('minHeight', Utils.convertToPX(styleMap.minHeight));
+                if (this.android('layout_height') != 'match_constraint') {
+                    if (styleMap.minHeight != null) {
+                        this.android('minHeight', Utils.convertToPX(styleMap.minHeight));
+                    }
+                    if (styleMap.maxHeight != null) {
+                        this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight));
+                    }
+                    this.android('layout_height', 'wrap_content');
                 }
-                if (styleMap.maxHeight != null) {
-                    this.attr('maxHeight', Utils.convertToPX(styleMap.maxHeight));
-                }
-                this.attr('layout_height', 'wrap_content');
             }
             else {
                 if (!parentScrollView && !parentGridLayout && height >= parentHeight) {
-                    this.attr('layout_height', 'match_parent', false);
+                    this.android('layout_height', 'match_parent', false);
                 }
                 else {
-                    this.attr('layout_height', 'wrap_content', false);
+                    this.android('layout_height', 'wrap_content', false);
                 }
             }
         }
@@ -321,7 +331,7 @@ class Node {
                 value.forEach(attr => {
                     var match = attr.match(/^android:([a-zA-Z_]+)="([a-zA-Z0-9]+)"$/);
                     if (match != null) {
-                        this.attr(match[1], match[2]);
+                        this.android(match[1], match[2]);
                     }
                     else {
                         this.addAttribute(attr);
@@ -368,17 +378,36 @@ class Node {
             }
         }
     }
-    attr(name, value, overwrite = true) { 
-        if (Utils.hasValue(value)) {
-            if (!overwrite && this.android[name] != null) {
-                return null;
-            }
-            this.android[name] = value;
+    android(name, value, overwrite = true) {
+        if (arguments.length == 0) {
+            return this._android;
         }
-        return this.android[name];
+        else {
+            if (Utils.hasValue(value)) {
+                if (!overwrite && this._android[name] != null) {
+                    return null;
+                }
+                this._android[name] = value;
+            }
+            return this._android[name];
+        }
     }
-    attrDelete(name) {
-        delete this.android[name];
+    app(name, value, overwrite = true) {
+        if (arguments.length == 0) {
+            return this._app;
+        }
+        else {
+            if (Utils.hasValue(value)) {
+                if (!overwrite && this._app[name] != null) {
+                    return null;
+                }
+                this._app[name] = value;
+            }
+            return this._app[name];
+        }
+    }
+    delete(ns, name) {
+        delete this[`_${ns}`][name];
     }
     css(name) {
         if (this.styleMap[name] != null) {
@@ -493,12 +522,6 @@ class Node {
     }
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
-    }
-    get fixedWidth() {
-        return (this.styleMap.width != null || this.styleMap.maxWidth != null);
-    }
-    get fixedHeight() {
-        return (this.styleMap.height != null || this.styleMap.maxHeight != null);
     }
 
     static createWrapper(id, node, parent, children, actions = null) {
