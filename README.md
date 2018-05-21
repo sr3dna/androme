@@ -224,6 +224,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_width="159dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -288,6 +289,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_width="203dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -384,6 +386,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 			android:layout_columnWeight="0"
 			android:layout_height="wrap_content"
 			android:layout_width="203dp"
+			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
 			style="@style/Select_1" />
@@ -436,6 +439,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:background="@drawable/select_hour"
 				android:layout_height="match_parent"
 				android:layout_width="277dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -729,6 +733,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:background="@drawable/select_hour"
 				android:layout_height="match_parent"
 				android:layout_width="133dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />

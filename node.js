@@ -106,7 +106,7 @@ class Node {
                     this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), '0');
                 }
             }
-            else if (styleMap.minWidth != null || styleMap.maxWidth != null) {
+            if (styleMap.minWidth != null || styleMap.maxWidth != null) {
                 if (this.android('layout_width') != 'match_constraint') {
                     if (styleMap.minWidth != null) {
                         this.android('minWidth', Utils.convertToPX(styleMap.minWidth));
@@ -114,10 +114,12 @@ class Node {
                     if (styleMap.maxWidth != null) {
                         this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth));
                     }
-                    this.android('layout_width', 'wrap_content');
+                    if (styleMap.width == null) {
+                        this.android('layout_width', 'wrap_content');
+                    }
                 }
             }
-            else {
+            if (this.android('layout_width') == null) {
                 if (layoutWeight) {
                     if (this.gridColumnWeight != null) {
                         this.android('layout_columnWeight', this.gridColumnWeight);
@@ -153,7 +155,7 @@ class Node {
             if (styleMap.height != null) {
                 this.android('layout_height', Utils.convertToPX(styleMap.height));
             }
-            else if (styleMap.minHeight != null || styleMap.maxHeight != null) {
+            if (styleMap.minHeight != null || styleMap.maxHeight != null) {
                 if (this.android('layout_height') != 'match_constraint') {
                     if (styleMap.minHeight != null) {
                         this.android('minHeight', Utils.convertToPX(styleMap.minHeight));
@@ -161,10 +163,12 @@ class Node {
                     if (styleMap.maxHeight != null) {
                         this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight));
                     }
-                    this.android('layout_height', 'wrap_content');
+                    if (styleMap.height == null) {
+                        this.android('layout_height', 'wrap_content');
+                    }
                 }
             }
-            else {
+            if (this.android('layout_height') == null) {
                 if (!parentScrollView && !parentGridLayout && height >= parentHeight) {
                     this.android('layout_height', 'match_parent', false);
                 }
@@ -223,10 +227,19 @@ class Node {
             };
         }
     }
-    addAttribute(value) {
-        if (Utils.hasValue(value)) {
-            this.androidAttributes.push(value);
-        }
+    getChildDimensions() {
+        let minLeft = Number.MAX_VALUE;
+        let maxRight = Number.MIN_VALUE;
+        let minTop = Number.MAX_VALUE;
+        let maxBottom = Number.MIN_VALUE;
+        this.children.forEach(node => {
+            const bounds = node.bounds;
+            minLeft = Math.min(bounds.left, minLeft);
+            maxRight = Math.max(bounds.right, maxRight);
+            minTop = Math.min(bounds.top, minTop);
+            maxBottom = Math.max(bounds.bottom, maxBottom);
+        });
+        return [maxRight - minLeft, maxBottom - minTop];
     }
     setAttributes(actions = []) {
         const widget = ACTION_ANDROID[this.androidWidgetName];
@@ -282,8 +295,8 @@ class Node {
                                             value = addResourceColor(value.replace(rgb[0], rgb[1]));
                                         }
                                     }
-                                    else if (/(px|pt|em)$/.test(value)) {
-                                        value = (j.toLowerCase().indexOf('font') != -1 ? Utils.convertToSP(value) : Utils.convertToPX(value));
+                                    else if (/(pt|em)$/.test(value)) {
+                                        value = Utils.convertToPX(value);
                                     }
                                     output.push(widget[action][j].replace('{0}', value));
                                 }
@@ -340,28 +353,10 @@ class Node {
             }
         }
     }
-    getChildDimensions() {
-        let minLeft = Number.MAX_VALUE;
-        let maxRight = Number.MIN_VALUE;
-        let minTop = Number.MAX_VALUE;
-        let maxBottom = Number.MIN_VALUE;
-        this.children.forEach(node => {
-            const bounds = node.bounds;
-            minLeft = Math.min(bounds.left, minLeft);
-            maxRight = Math.max(bounds.right, maxRight);
-            minTop = Math.min(bounds.top, minTop);
-            maxBottom = Math.max(bounds.bottom, maxBottom);
-        });
-        return [maxRight - minLeft, maxBottom - minTop];
-    }
-    isLinearHorizontal() {
-        return (this.android.orientation == 'horizontal');
-    }
-    isScrollHorizontal() {
-        return (this.styleMap.width != null && (this.styleMap.overflowX == 'auto' || this.styleMap.overflowX == 'scroll'));
-    }
-    isView(viewName) {
-        return (this.androidWidgetName == viewName);
+    addAttribute(value) {
+        if (Utils.hasValue(value)) {
+            this.androidAttributes.push(value);
+        }
     }
     inheritGrid(node) {
         for (const prop in node) {
@@ -417,6 +412,22 @@ class Node {
         }
         return (this.style[name] || ''); 
     }
+    withinX(adjacent) {
+        return ((adjacent.bounds.top >= this.bounds.top && adjacent.bounds.top <= this.bounds.bottom) || (adjacent.bounds.bottom >= this.bounds.top && adjacent.bounds.bottom <= this.bounds.bottom));
+    }
+    withinY(adjacent) {
+        return ((adjacent.bounds.left >= this.bounds.left && adjacent.bounds.left <= this.bounds.right) || (adjacent.bounds.right >= this.bounds.left && adjacent.bounds.right <= this.bounds.right));
+    }
+    isLinearHorizontal() {
+        return (this._android.orientation == 'horizontal');
+    }
+    isScrollHorizontal() {
+        return (this.styleMap.width != null && (this.styleMap.overflowX == 'auto' || this.styleMap.overflowX == 'scroll'));
+    }
+    isView(viewName) {
+        return (this.androidWidgetName == viewName);
+    }
+
     get horizontalBias() {
         const parent = this.renderParent;
         if (parent != null && parent.visible) {

@@ -47,7 +47,7 @@ const Utils = (function() {
                 if (typeof value == 'number') {
                     value += 'px';
                 }
-                const match = value.match(/(px|pt|em)/);
+                const match = value.match(/(pt|em)/);
                 value = parseInt(value);
                 if (match != null) {
                     switch (match[0]) {
@@ -86,7 +86,7 @@ const Utils = (function() {
         },
         parseUnit(value) {
             if (Utils.hasValue(value)) {
-                const match = value.match(/"([0-9]+)(?:(px|pt|em|dp|sp))"/);
+                const match = value.match(/(?:"|>)([0-9]+)(?:(px|pt|em|dp|sp))(?:"|<)/);
                 if (match != null) {
                     return parseFloat(match[1]);
                 }
@@ -96,8 +96,8 @@ const Utils = (function() {
         parseInt(value) {
             return parseInt(value) || 0;
         },
-        insetToDP(xml) {
-            return xml.replace(/"[0-9\.]+px"/g, match => `"${Utils.convertToDP(Utils.parseUnit(match))}"`);
+        insetToDP(xml, font = false) {
+            return xml.replace(/("|>)[0-9\.]+px("|<)/g, (match, ...capture) => capture[0] + Utils.convertToDP(Utils.parseUnit(match), true, font) + capture[1]);
         },
         withinRange: function(a, b, n = 1) {
             return (b >= (a - n) && b <= (a + n));

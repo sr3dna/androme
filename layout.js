@@ -54,7 +54,7 @@ function writeResourceArrayXml() {
 }
 
 function writeResourceStyleXml() {
-    const xml = [STRING_ANDROID.XML_DECLARATION,
+    let xml = [STRING_ANDROID.XML_DECLARATION,
                  '<resources>'];
     for (const i in RESOURCE['style']) {
         for (const j of RESOURCE['style'][i]) {
@@ -68,7 +68,11 @@ function writeResourceStyleXml() {
     }
     xml.push('</resources>',
              '<!-- filename: res/values/styles.xml -->\n');
-    return xml.join('\n');
+    xml = xml.join('\n');
+    if (SETTINGS.useUnitDP) {
+        xml = Utils.insetToDP(xml, true);
+    }
+    return xml;
 }
 
 function writeResourceColorXml() {
@@ -97,7 +101,7 @@ function writeResourceDrawableXml() {
     }
     xml = xml.join('\n');
     if (SETTINGS.useUnitDP) {
-        return Utils.insetToDP(xml);
+        xml = Utils.insetToDP(xml);
     }
     return xml;
 }
@@ -565,7 +569,7 @@ function writeDefaultLayout() {
     }
 }
 
-function getEnclosingTag(depth, tagName, id, content = '', space, preXml = '', postXml = '') {
+function getEnclosingTag(depth, tagName, id, content, space, preXml = '', postXml = '') {
     const indent = Utils.setIndent(depth);
     let xml = space[0] +
               preXml;
@@ -665,10 +669,10 @@ function positionConstraints() {
                 let parentVertical = true;
                 for (const adjacent of nodes) {
                     if (current != adjacent) {
-                        if ((adjacent.bounds.top >= current.bounds.top && adjacent.bounds.top <= current.bounds.bottom) || (adjacent.bounds.bottom >= current.bounds.top && adjacent.bounds.bottom <= current.bounds.bottom)) {
+                        if (current.withinX(adjacent)) {
                             parentHorizontal = false;
                         }
-                        if ((adjacent.bounds.left >= current.bounds.left && adjacent.bounds.left <= current.bounds.right) || (adjacent.bounds.right >= current.bounds.left && adjacent.bounds.right <= current.bounds.right)) {
+                        if (current.withinY(adjacent)) {
                             parentVertical = false;
                         }
                     }
@@ -791,17 +795,17 @@ function positionConstraints() {
             if (constraint) {
                 if (SETTINGS.useConstraintChain) {
                     const chainMap = {
-                        chain: ['verticalChain', 'horizontalChain'],
-                        topLeft: ['top', 'left'],
-                        bottomRight: ['bottom', 'right'],
-                        bottomTopRightLeft: ['bottomTop', 'rightLeft'],
-                        topBottomLeftRight: ['topBottomTop', 'leftRight'],
-                        heightWidth: ['Height', 'Width'],
-                        verticalHorizontal: ['Vertical', 'Horizontal']
+                        chain: ['horizontalChain', 'verticalChain'],
+                        leftTop: ['left', 'top'],
+                        rightBottom: ['right', 'bottom'],
+                        rightLeftBottomTop: ['rightLeft', 'bottomTop'],
+                        leftRightTopBottom: ['leftRight', 'topBottomTop'],
+                        widthHeight: ['Width', 'Height'],
+                        horizontalVertical: ['Horizontal', 'Vertical']
                     };
                     nodes.forEach(current => {
-                        current.constraint.horizontalChain = nodes.filter(item => ((item.bounds.top >= current.bounds.top && item.bounds.top <= current.bounds.bottom) || (item.bounds.bottom >= current.bounds.top && item.bounds.bottom <= current.bounds.bottom))).sort((a, b) => (a.bounds.x > b.bounds.x ? 1 : -1));
-                        current.constraint.verticalChain = nodes.filter(item => ((item.bounds.left >= current.bounds.left && item.bounds.left <= current.bounds.right) || (item.bounds.right >= current.bounds.left && item.bounds.right <= current.bounds.right))).sort((a, b) => (a.bounds.y > b.bounds.y ? 1 : -1));
+                        current.constraint.horizontalChain = nodes.filter(item => current.withinX(item)).sort((a, b) => (a.bounds.x > b.bounds.x ? 1 : -1));
+                        current.constraint.verticalChain = nodes.filter(item => current.withinY(item)).sort((a, b) => (a.bounds.y > b.bounds.y ? 1 : -1));
                     });
                     chainMap.chain.forEach((value, index) => {
                         nodes.forEach(current => {
@@ -809,61 +813,66 @@ function positionConstraints() {
                             if (chainDirection != null && chainDirection.length > 1) {
                                 const valid = chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(chain => chain.id).join(''))).reduce((a, b) => (a == b ? a : 0));
                                 if (valid > 0) {
-                                    const verticalHorizontal = chainMap['verticalHorizontal'][index];
-                                    const heightWidth = chainMap['heightWidth'][index];
+                                    const horizontalVertical = chainMap['horizontalVertical'][index];
+                                    const widthHeight = chainMap['widthHeight'][index];
                                     const firstNode = chainDirection[0];
                                     const lastNode = chainDirection[chainDirection.length - 1];
-                                    firstNode.app(layout[chainMap['topLeft'][index]], 'parent');
-                                    lastNode.app(layout[chainMap['bottomRight'][index]], 'parent');
+                                    firstNode.app(layout[chainMap['leftTop'][index]], 'parent');
+                                    lastNode.app(layout[chainMap['rightBottom'][index]], 'parent');
                                     let maxOffset = Number.MIN_VALUE;
                                     for (let i = 0; i < chainDirection.length; i++) {
                                         const chain = chainDirection[i];
                                         const chainNext = chainDirection[i + 1];
                                         const chainPrev = chainDirection[i - 1];
                                         if (chainNext != null) {
-                                            chain.app(layout[chainMap['bottomTopRightLeft'][index]], `@+id/${chainNext.androidId}`);
-                                            maxOffset = Math.max(chainNext.linear[chainMap['topLeft'][index]] - chain.linear[chainMap['bottomRight'][index]], maxOffset);
+                                            chain.app(layout[chainMap['rightLeftBottomTop'][index]], `@+id/${chainNext.androidId}`);
+                                            maxOffset = Math.max(chainNext.linear[chainMap['leftTop'][index]] - chain.linear[chainMap['rightBottom'][index]], maxOffset);
                                         }
                                         if (chainPrev != null) {
-                                            chain.app(layout[chainMap['topBottomLeftRight'][index]], `@+id/${chainPrev.androidId}`);
+                                            chain.app(layout[chainMap['leftRightTopBottom'][index]], `@+id/${chainPrev.androidId}`);
                                         }
-                                        if (chain.styleMap[heightWidth.toLowerCase()] == null) {
-                                            chain.android(`layout_${heightWidth.toLowerCase()}`, 'match_constraint');
-                                            const min = chain.styleMap[`min${heightWidth}`];
-                                            const max = chain.styleMap[`max${heightWidth}`];
+                                        if (chain.styleMap[widthHeight.toLowerCase()] == null) {
+                                            chain.android(`layout_${widthHeight.toLowerCase()}`, 'match_constraint');
+                                            const min = chain.styleMap[`min${widthHeight}`];
+                                            const max = chain.styleMap[`max${widthHeight}`];
                                             if (min != null) {
-                                                chain.app(`layout_constraint${heightWidth}_min`, Utils.convertToPX(min));
+                                                chain.app(`layout_constraint${widthHeight}_min`, Utils.convertToPX(min));
                                             }
                                             if (max != null) {
-                                                chain.app(`layout_constraint${heightWidth}_max`, Utils.convertToPX(max));
-                                            }
-                                            else {
-                                                const percent = ((chain.linear.right - node.box.left) - (chainPrev != null ? chainPrev.linear.right - node.box.left : 0)) / (node.box.right - node.box.left);
-                                                if (percent > 0) {
-                                                    chain.app(`layout_constraint${heightWidth}_default`, 'percent');
-                                                    chain.app(`layout_constraint${heightWidth}_percent`, percent.toFixed(2));
-                                                }
+                                                chain.app(`layout_constraint${widthHeight}_max`, Utils.convertToPX(max));
                                             }
                                         }
-                                        if (chain != current) {
-                                            chain.constraint[value] = null;
-                                        }
-                                        chain.constraint[`layout${verticalHorizontal}`] = true;
+                                        chain.constraint[`layout${horizontalVertical}`] = true;
                                     }
-                                    const chainStyle = `layout_constraint${verticalHorizontal}_chainStyle`;
-                                    if (maxOffset <= SETTINGS[`chainPacked${verticalHorizontal}Offset`]) {
+                                    const chainStyle = `layout_constraint${horizontalVertical}_chainStyle`;
+                                    if (maxOffset <= SETTINGS[`chainPacked${horizontalVertical}Offset`]) {
                                         firstNode.app(chainStyle, 'chain_packed');
-                                        firstNode.app(`layout_constraint${verticalHorizontal}_bias`, Node[`get${verticalHorizontal}Bias`](node, firstNode, lastNode));
+                                        firstNode.app(`layout_constraint${horizontalVertical}_bias`, Node[`get${horizontalVertical}Bias`](node, firstNode, lastNode));
                                     }
                                     else if (firstNode.linear.left == node.box.left && lastNode.linear.right == node.box.right) {
                                         firstNode.app(chainStyle, 'chain_spread_inside');
                                     }
                                     else {
-                                        firstNode.app(chainStyle, 'chain_spread');
+                                        let percentTotal = 0;
+                                        for (let i = 0; i < chainDirection.length; i++) {
+                                            const chain = chainDirection[i];
+                                            const chainPrev = chainDirection[i - 1];
+                                            let percent = ((chain.linear.right - node.box.left) - (chainPrev != null ? chainPrev.linear.right - node.box.left : 0)) / (node.box.right - node.box.left);
+                                            if (chain != lastNode || Utils.withinRange(percent + percentTotal, 1.0, 0.01)) {
+                                                chain.android('layout_gravity', getLTR('right', 'end'));
+                                            }
+                                            if (chain == lastNode) {
+                                                percent = 1 - percentTotal;
+                                            }
+                                            chain.app(`layout_constraint${widthHeight}_percent`, percent.toFixed(2));
+                                            chain.app(`layout_constraint${widthHeight}_default`, 'percent');
+                                            percentTotal += parseFloat(percent.toFixed(2));
+                                        }
                                     }
-                                }
-                                else {
-                                    chainDirection.slice().forEach(item => item.constraint[value] = null);
+                                    chainDirection.forEach(item => {
+                                        item.constraint.horizontalChain = null;
+                                        item.constraint.verticalChain = null;
+                                    });
                                 }
                             }
                         });
@@ -1243,7 +1252,7 @@ function setResourceStyle() {
         if (layout[tagName] != null) {
             for (const value in layout[tagName]) {
                 if (layout[tagName][value].includes(node.id)) {
-                    node.addAttribute(value);
+                    node.addAttribute((SETTINGS.useUnitDP ? Utils.insetToDP(value, true) : value));
                 }
             }
         }
@@ -1435,19 +1444,19 @@ function setLayoutWeight() {
                     }
                     if (row.isLinearHorizontal()) {
                         if (column.label != null) {
-                            columnLeft[j][i] = column.bounds.left;
-                            columnRight[j][i] = column.label.bounds.right;
+                            columnLeft[j][i] = column.linear.left;
+                            columnRight[j][i] = column.label.linear.right;
                             columnOuter[i] = (row.isView(WIDGET_ANDROID.RADIO_GROUP) ? row.box.right : node.box.right);
                         }
                         else {
-                            columnLeft[j][i] = column.bounds.left - borderSpacing;
-                            columnRight[j][i] = column.bounds.right + column.marginRight;
+                            columnLeft[j][i] = column.linear.left - borderSpacing;
+                            columnRight[j][i] = column.linear.right + column.marginRight;
                             columnOuter[i] = node.box.right - borderSpacing;
                         }
                     }
                     else {
-                        columnLeft[j][i] = column.bounds.top - borderSpacing;
-                        columnRight[j][i] = column.bounds.bottom + column.marginBottom;
+                        columnLeft[j][i] = column.linear.top - borderSpacing;
+                        columnRight[j][i] = column.linear.bottom + column.marginBottom;
                         columnOuter[i] = node.box.bottom - borderSpacing;
                     }
                 }
