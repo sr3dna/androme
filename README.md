@@ -1,6 +1,6 @@
-## chrome-mobile-layouts
+## chrome android layout
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. ConstraintLayout or RelativeLayout for positional views are generated based on your preference. iOS and Xamarin Forms can also be supported on request once the Android version is stable. Ideally it will be hosted inside a Chrome browser plugin. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. ConstraintLayout or RelativeLayout for positional views are generated based on your preference. iOS and Xamarin Forms can also be supported once the Android version is stable. Ideally it will be hosted inside a Chrome extension or WYSIWYG HTML editor. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
 
 These settings are available in layout.js to customize your desired XML structure. 
 
