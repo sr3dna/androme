@@ -366,7 +366,9 @@ class Node {
     inheritGrid(node) {
         for (const prop in node) {
             if (prop.startsWith('grid')) {
-                this[prop] = node[prop];
+                if (node[prop] !== false) {
+                    this[prop] = node[prop];
+                }
                 delete node[prop];
             }
         }
