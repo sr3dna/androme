@@ -31,8 +31,8 @@ function writeResourceStringXml() {
     const resource = new Map([...RESOURCE['string'].entries()].sort());
     const xml = [STRING_ANDROID.XML_DECLARATION,
                  '<resources>'];
-    for (const [i, j] of resource.entries()) {
-        xml.push(`\t<string name="${i}">${j}</string>`);
+    for (const [name, value] of resource.entries()) {
+        xml.push(`\t<string name="${name}">${value}</string>`);
     }
     xml.push('</resources>',
              '<!-- filename: res/values/string.xml -->\n');
@@ -43,10 +43,10 @@ function writeResourceArrayXml() {
     const resource = new Map([...RESOURCE['array'].entries()].sort());
     const xml = [STRING_ANDROID.XML_DECLARATION,
                  '<resources>'];
-    for (const [i, j] of resource.entries()) {
-        xml.push(`\t<array name="${i}">`);
-        for (const [k, l] of j.entries()) {
-            xml.push(`\t\t<item${(l != '' ? ` name="${k}"` : '')}>${(l != '' ? `@string/${l}` : `${k}`)}</item>`);
+    for (const [name, values] of resource.entries()) {
+        xml.push(`\t<array name="${name}">`);
+        for (const [name, value] of values.entries()) {
+            xml.push(`\t\t<item${(value != '' ? ` name="${name}">@string/${value}` : `>${name}`)}</item>`);
         }
         xml.push('\t</array>');
     }
@@ -58,10 +58,10 @@ function writeResourceArrayXml() {
 function writeResourceStyleXml() {
     let xml = [STRING_ANDROID.XML_DECLARATION,
                  '<resources>'];
-    for (const i in RESOURCE['style']) {
-        for (const j of RESOURCE['style'][i]) {
-            xml.push(`\t<style name="${j.name}">`);
-            j.attributes.split(';').forEach(value => {
+    for (const tag of RESOURCE['style'].values()) {
+        for (const style of tag) {
+            xml.push(`\t<style name="${style.name}">`);
+            style.attributes.split(';').forEach(value => {
                 const [name, setting] = value.split('=');
                 xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
             });
@@ -81,8 +81,8 @@ function writeResourceColorXml() {
     const resource = new Map([...RESOURCE['color'].entries()].sort());
     const xml = [STRING_ANDROID.XML_DECLARATION,
                  '<resources>'];
-    for (const [i, j] of resource.entries()) {
-        xml.push(`\t<color name="${i}">${j}</color>`);
+    for (const [name, value] of resource.entries()) {
+        xml.push(`\t<color name="${name}">${value}</color>`);
     }
     xml.push('</resources>',
              '<!-- filename: res/values/colors.xml -->\n');
@@ -91,14 +91,14 @@ function writeResourceColorXml() {
 
 function writeResourceDrawableXml() {
     let xml = [];
-    for (const [i, j] of RESOURCE['drawable'].entries()) {
-        xml.push(j,
-                 `<!-- filename: res/drawable/${i}.xml -->\n`);
+    for (const [name, value] of RESOURCE['drawable'].entries()) {
+        xml.push(value,
+                 `<!-- filename: res/drawable/${name}.xml -->\n`);
     }
     if (RESOURCE['image'].size > 0) {
-        for (const [i, j] of RESOURCE['image'].entries()) {
-            xml.push(`<!-- image: ${j} -->`,
-                     `<!-- filename: res/drawable/${i + j.substring(j.lastIndexOf('.'))} -->\n`);
+        for (const [name, value] of RESOURCE['image'].entries()) {
+            xml.push(`<!-- image: ${value} -->`,
+                     `<!-- filename: res/drawable/${name + value.substring(value.lastIndexOf('.'))} -->\n`);
         }
     }
     xml = xml.join('\n');
@@ -141,14 +141,14 @@ function addResourceString(node, value) {
                 }
             }
         }
-        for (const [i, j] in RESOURCE['string'].entries()) {
-            if (j == value) {
-                return { text: i };
+        for (const [name, resourceValue] in RESOURCE['string'].entries()) {
+            if (resourceValue == value) {
+                return { text: name };
             }
         }
         name = name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-        const resourceName = insertResourceAsset(RESOURCE['string'], name, value);
-        return { text: resourceName };
+        name = insertResourceAsset(RESOURCE['string'], name, value);
+        return { text: name };
     }
     return null;
 }
@@ -183,8 +183,8 @@ function addResourceStringArray(node) {
         }
     }
     if (stringArray.size > 0 || integerArray.size > 0) {
-        const resourceName = insertResourceAsset(RESOURCE['array'], `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : integerArray));
-        return { entries: resourceName };
+        const name = insertResourceAsset(RESOURCE['array'], `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : integerArray));
+        return { entries: name };
     }
     return null;
 }
@@ -280,7 +280,7 @@ function setBackgroundStyle(node) {
         };
         let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
         if (properties.borderRadius != null) {
-            xml += `<shape ${STRING_ANDROID.XMLNS_DEFAULT} android:shape="rectangle">\n` +
+            xml += `<shape ${STRING_ANDROID.XMLNS_ANDROID} android:shape="rectangle">\n` +
                    `\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]] || borderStyle['default']} />\n` +
                    (properties.backgroundColor ? `\t<solid android:color="${properties.backgroundColor[1]}" />\n` : '');
             if (properties.borderRadius.length == 1) {
@@ -297,12 +297,12 @@ function setBackgroundStyle(node) {
                    '</shape>';
         }
         else if (properties.border[0] != 'none' && properties.backgroundColor == null) {
-            xml += `<shape ${STRING_ANDROID.XMLNS_DEFAULT} android:shape="rectangle">\n` +
+            xml += `<shape ${STRING_ANDROID.XMLNS_ANDROID} android:shape="rectangle">\n` +
                    `\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]]} />\n` +
                    '</shape>';
         }
         else {
-            xml += `<layer-list ${STRING_ANDROID.XMLNS_DEFAULT}>\n`;
+            xml += `<layer-list ${STRING_ANDROID.XMLNS_ANDROID}>\n`;
             if (properties.backgroundColor != null) {
                 xml += '\t<item>\n' +
                        '\t\t<shape android:shape="rectangle">\n' +
@@ -618,7 +618,7 @@ function inlineAttributes(output) {
                 if (SETTINGS.useConstraintLayout) {
                     attributes.unshift(STRING_ANDROID.XMLNS_APP);
                 }
-                attributes.unshift(STRING_ANDROID.XMLNS_DEFAULT);
+                attributes.unshift(STRING_ANDROID.XMLNS_ANDROID);
             }
             const xml = attributes.map(value => `\n${indent + value}`).join('').replace('{id}', node.androidId);
             output = output.replace(`{@${node.id}}`, xml);
@@ -748,6 +748,7 @@ function positionConstraints() {
                             baseline = false;
                         }
                         const androidId = adjacent.androidId;
+                        const withinY = (androidId != 'parent' && current.withinY(adjacent.linear));
                         if (current.linear.bottom == adjacent.linear.top) {
                             setNodePosition(current, layout['bottomTop'], androidId);
                             current.constraint.layoutVertical = true;
@@ -756,28 +757,25 @@ function positionConstraints() {
                             setNodePosition(current, layout['topBottom'], androidId);
                             current.constraint.layoutVertical = true;
                         }
-                        let chain = false;
                         if (current.linear.top == adjacent.linear.top) {
                             if (baseline) {
                                 setNodePosition(current, layout['baseline'], androidId);
                             }
                             setNodePosition(current, layout['top'], androidId);
                             current.constraint.layoutVertical = true;
-                            chain = true;
                         }
                         else if (current.linear.bottom == adjacent.linear.bottom) {
                             setNodePosition(current, layout['bottom'], androidId);
                             current.constraint.layoutVertical = true;
-                            chain = true;
                         }
-                        if (current.linear.right == adjacent.linear.left || (chain && Utils.withinRange(current.linear.right, adjacent.linear.left, SETTINGS.whitespaceHorizontalOffset))) {
+                        if (current.linear.right == adjacent.linear.left || (withinY && Utils.withinRange(current.linear.right, adjacent.linear.left, SETTINGS.whitespaceHorizontalOffset))) {
                             if (baseline) {
                                 setNodePosition(current, layout['baseline'], androidId);
                             }
                             setNodePosition(current, layout['rightLeft'], androidId);
                             current.constraint.layoutHorizontal = true;
                         }
-                        else if (current.linear.left == adjacent.linear.right || (chain && Utils.withinRange(current.linear.left, adjacent.linear.right, SETTINGS.whitespaceHorizontalOffset))) {
+                        else if (current.linear.left == adjacent.linear.right || (withinY && Utils.withinRange(current.linear.left, adjacent.linear.right, SETTINGS.whitespaceHorizontalOffset))) {
                             if (baseline) {
                                 setNodePosition(current, layout['baseline'], androidId);
                             }
@@ -1102,31 +1100,55 @@ function setStyleMap() {
     }
 }
 
+function parseStyleAttribute(value) {
+    const rgb = Color.parseRGBA(value);
+    if (rgb != null) {
+        const name = addResourceColor(rgb[1]);
+        return value.replace(rgb[0], name);
+    }
+    const match = value.match(/#[A-Z0-9]{6}/);
+    if (match != null) {
+        const name = addResourceColor(match[0]);
+        return value.replace(match[0], name);
+    }
+    return value;
+}
+
 function setResourceStyle() {
+    const cache = {};
     const style = {};
     const layout = {};
-    for (const [i, j] of RESOURCE['style'].entries()) {
-        let sorted = Array.from({ length: j.reduce((a, b) => Math.max(a, b.attributes.length), 0) }, v => v = {});
-        for (const k of j) {
-            for (let l = 0; l < k.attributes.length; l++) {
-                const name = k.attributes[l];
-                if (sorted[l][name] == null) {
-                    sorted[l][name] = [];
+    for (const node of NODE_CACHE) {
+        if (node.visible && node.styleAttributes.length > 0) {
+            if (cache[node.tagName] == null) {
+                cache[node.tagName] = [];
+            }
+            cache[node.tagName].push(node);
+        }
+    }
+    for (const tag in cache) {
+        const nodes = cache[tag];
+        let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => value = {});
+        for (const node of nodes) {
+            for (let i = 0; i < node.styleAttributes.length; i++) {
+                const attr = parseStyleAttribute(node.styleAttributes[i]);
+                if (sorted[i][attr] == null) {
+                    sorted[i][attr] = [];
                 }
-                sorted[l][name].push(k.id);
+                sorted[i][attr].push(node.id);
             }
         }
-        style[i] = {};
-        layout[i] = {};
+        style[tag] = {};
+        layout[tag] = {};
         do {
             if (sorted.length == 1) {
-                for (const k in sorted[0]) {
-                    const value = sorted[0][k];
+                for (const attr in sorted[0]) {
+                    const value = sorted[0][attr];
                     if (value.length > 2) {
-                        style[i][k] = value;
+                        style[tag][attr] = value;
                     }
                     else {
-                        layout[i][k] = value;
+                        layout[tag][attr] = value;
                     }
                 }
                 sorted.length = 0;
@@ -1134,89 +1156,89 @@ function setResourceStyle() {
             else {
                 const styleKey = {};
                 const layoutKey = {}
-                for (let k = 0; k < sorted.length; k++) {
+                for (let i = 0; i < sorted.length; i++) {
                     const filtered = {};
-                    for (const l in sorted[k]) {
-                        if (sorted[k] == null) {
+                    for (const attr1 in sorted[i]) {
+                        if (sorted[i] == null) {
                             continue;
                         }
-                        const ids = sorted[k][l];
+                        const ids = sorted[i][attr1];
                         let revalidate = false;
                         if (ids == null) {
                             continue;
                         }
-                        else if (ids.length == j.length) {
-                            styleKey[l] = ids;
-                            sorted[k] = null;
+                        else if (ids.length == nodes.length) {
+                            styleKey[attr1] = ids;
+                            sorted[i] = null;
                             revalidate = true;
                         }
                         else if (ids.length == 1) {
-                            layoutKey[l] = ids;
-                            sorted[k] = null;
+                            layoutKey[attr1] = ids;
+                            sorted[i] = null;
                             revalidate = true;
                         }
                         if (!revalidate) {
                             const found = {};
-                            for (let m = 0; m < sorted.length; m++) {
-                                if (k != m) {
-                                    for (const n in sorted[m]) {
-                                        const compare = sorted[m][n];
-                                        for (let o = 0; o < ids.length; o++) {
-                                            if (compare.includes(ids[o])) {
-                                                if (found[n] == null) {
-                                                    found[n] = [];
+                            for (let j = 0; j < sorted.length; j++) {
+                                if (i != j) {
+                                    for (const attr in sorted[j]) {
+                                        const compare = sorted[j][attr];
+                                        for (let k = 0; k < ids.length; k++) {
+                                            if (compare.includes(ids[k])) {
+                                                if (found[attr] == null) {
+                                                    found[attr] = [];
                                                 }
-                                                found[n].push(ids[o]);
+                                                found[attr].push(ids[k]);
                                             }
                                         }
                                     }
                                 }
                             }
-                            for (const m in found) {
-                                if (found[m].length > 1) {
-                                    filtered[[l, m].sort().join(';')] = found[m];
+                            for (const attr2 in found) {
+                                if (found[attr2].length > 1) {
+                                    filtered[[attr1, attr2].sort().join(';')] = found[attr2];
                                 }
                             }
                         }
                     }
                     const combined = {};
                     const deleteKeys = new Set();
-                    for (const l in filtered) {
-                        for (const m in filtered) {
-                            if (l != m && filtered[l].join('') == filtered[m].join('')) {
-                                const shared = filtered[l].join(',');
+                    for (const attr1 in filtered) {
+                        for (const attr2 in filtered) {
+                            if (attr1 != attr2 && filtered[attr1].join('') == filtered[attr2].join('')) {
+                                const shared = filtered[attr1].join(',');
                                 if (combined[shared] != null) {
-                                    combined[shared] = new Set([...combined[shared], ...m.split(';')]);
+                                    combined[shared] = new Set([...combined[shared], ...attr2.split(';')]);
                                 }
                                 else {
-                                    combined[shared] = new Set([...l.split(';'), ...m.split(';')]);
+                                    combined[shared] = new Set([...attr1.split(';'), ...attr2.split(';')]);
                                 }
-                                deleteKeys.add(l).add(m);
+                                deleteKeys.add(attr1).add(attr2);
                             }
                         }
                     }
                     deleteKeys.forEach(value => delete filtered[value]);
-                    for (const l in filtered) {
-                        deleteStyleAttribute(sorted, l, filtered[l]);
-                        style[i][l] = filtered[l];
+                    for (const attrs in filtered) {
+                        deleteStyleAttribute(sorted, attrs, filtered[attrs]);
+                        style[tag][attrs] = filtered[attrs];
                     }
-                    for (const l in combined) {
-                        const attr = Array.from(combined[l]).sort().join(';');
-                        const nodeIds = l.split(',').map(m => parseInt(m));
-                        deleteStyleAttribute(sorted, attr, nodeIds);
-                        style[i][attr] = nodeIds;
+                    for (const ids in combined) {
+                        const attrs = Array.from(combined[ids]).sort().join(';');
+                        const nodeIds = ids.split(',').map(id => parseInt(id));
+                        deleteStyleAttribute(sorted, attrs, nodeIds);
+                        style[tag][attrs] = nodeIds;
                     }
                 }
                 const combined = Object.keys(styleKey);
                 if (combined.length > 0) {
-                    style[i][combined.join(';')] = styleKey[combined[0]];
+                    style[tag][combined.join(';')] = styleKey[combined[0]];
                 }
-                for (const k in layoutKey) {
-                    layout[i][k] = layoutKey[k];
+                for (const attribute in layoutKey) {
+                    layout[tag][attribute] = layoutKey[attribute];
                 }
-                for (let k = 0; k < sorted.length; k++) {
-                    if (sorted[k] != null && Object.keys(sorted[k]).length == 0) {
-                        delete sorted[k];
+                for (let i = 0; i < sorted.length; i++) {
+                    if (sorted[i] != null && Object.keys(sorted[i]).length == 0) {
+                        delete sorted[i];
                     }
                 }
                 sorted = sorted.filter(item => item);
@@ -1224,26 +1246,28 @@ function setResourceStyle() {
         }
         while (sorted.length > 0)
     }
-    const resource = {};
-    for (const tag in style) {
-        resource[tag] = [];
-        for (const attributes in style[tag]) {
-            resource[tag].push({ attributes, ids: style[tag][attributes]});
+    const resource = new Map();
+    for (const name in style) {
+        const tag = style[name];
+        const tagData = [];
+        for (const attributes in tag) {
+            tagData.push({ attributes, ids: tag[attributes]});
         }
-        resource[tag].sort((a, b) => {
+        tagData.sort((a, b) => {
             let [c, d] = [a.ids.length, b.ids.length];
             if (c == d) {
                 [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
             }
             return (c >= d ? -1 : 1);
         });
-        resource[tag].forEach((item, index) => item.name = `${tag.charAt(0) + tag.substring(1).toLowerCase()}_${(index + 1)}`);
+        tagData.forEach((item, index) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
+        resource.set(name, tagData);
     }
     for (const node of NODE_CACHE) {
         const tagName = node.tagName;
-        if (resource[tagName] != null) {
+        if (resource.has(tagName)) {
             const styles = [];
-            for (const tag of resource[tagName]) {
+            for (const tag of resource.get(tagName)) {
                 if (tag.ids.includes(node.id)) {
                     styles.push(tag.name);
                 }
@@ -1253,10 +1277,11 @@ function setResourceStyle() {
                 node.addAttribute(`style="@style/${node.androidStyle}"`);
             }
         }
-        if (layout[tagName] != null) {
-            for (const value in layout[tagName]) {
-                if (layout[tagName][value].includes(node.id)) {
-                    node.addAttribute((SETTINGS.useUnitDP ? Utils.insetToDP(value, true) : value));
+        const tag = layout[tagName];
+        if (tag != null) {
+            for (const attribute in tag) {
+                if (tag[attribute].includes(node.id)) {
+                    node.addAttribute((SETTINGS.useUnitDP ? Utils.insetToDP(attribute, true) : attribute));
                 }
             }
         }

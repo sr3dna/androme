@@ -29,6 +29,7 @@ class Node {
         this.renderId = null;
         this.renderChildren = [];
         this.androidAttributes = [];
+        this.styleAttributes = [];
         this.constraint = {};
         this.original = {};
         this.boxRefit = {};
@@ -312,7 +313,7 @@ class Node {
                             }
                             if (output.length > 0) {
                                 if (methodName == 'setComputedStyle') {
-                                    Node.addStyle(this, output);
+                                    this.styleAttributes = output;
                                 }
                                 else {
                                     result[i] = output;
@@ -575,31 +576,15 @@ class Node {
                     style.push(Utils.formatString(inherit[prop], value));
                 }
             }
-            Node.addStyle(node, style);
+            node.styleAttributes = style;
         }
         element.androidNode = node;
         return node;
     }
-    static addStyle(node, attributes) {
-        if (!RESOURCE['style'].has(node.tagName)) {
-            RESOURCE['style'].set(node.tagName, []);
-        }
-        RESOURCE['style'].get(node.tagName).push({ id: node.id, attributes });
-    }
     static parseStyle(element, name, value) {
-        if (value.startsWith('rgb')) {
-            const rgb = Color.parseRGBA(value);
-            if (name == 'backgroundColor') {
-                let backgroundParent = [];
-                if (element != null && element.parentNode != null) {
-                    backgroundParent = Color.parseRGBA(Node.getElementStyle(element.parentNode).backgroundColor);
-                }
-                if (backgroundParent[0] == rgb[0]) {
-                    return null;
-                }
-            }
-            if (rgb != null) {
-                value = addResourceColor(value.replace(rgb[0], rgb[1]));
+        if (name == 'backgroundColor') {
+            if (element != null && element.parentNode != null && value == Node.getElementStyle(element.parentNode).backgroundColor) {
+                return null;
             }
         }
         else if (/(pt|em)$/.test(value)) {
