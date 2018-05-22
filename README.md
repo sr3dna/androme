@@ -135,6 +135,19 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						app:layout_constraintTop_toTopOf="parent"
 						style="@style/Select_1" />
 					<Spinner
+						android:id="@+id/year0"
+						android:background="@drawable/select_hour"
+						android:entries="@array/year0_array"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="4dp"
+						android:layout_width="wrap_content"
+						android:minWidth="37dp"
+						android:paddingBottom="2dp"
+						android:paddingTop="1dp"
+						app:layout_constraintBottom_toBottomOf="parent"
+						app:layout_constraintLeft_toLeftOf="parent"
+						style="@style/Select_1" />
+					<Spinner
 						android:id="@+id/day0"
 						android:background="@drawable/select_hour"
 						android:entries="@array/day0_array"
@@ -149,19 +162,6 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						app:layout_constraintHorizontal_bias="0.74"
 						app:layout_constraintLeft_toLeftOf="parent"
 						app:layout_constraintRight_toRightOf="parent"
-						style="@style/Select_1" />
-					<Spinner
-						android:id="@+id/year0"
-						android:background="@drawable/select_hour"
-						android:entries="@array/year0_array"
-						android:layout_height="wrap_content"
-						android:layout_marginTop="4dp"
-						android:layout_width="wrap_content"
-						android:minWidth="37dp"
-						android:paddingBottom="2dp"
-						android:paddingTop="1dp"
-						app:layout_constraintBottom_toBottomOf="parent"
-						app:layout_constraintLeft_toLeftOf="parent"
 						style="@style/Select_1" />
 				</ConstraintLayout>
 				<Space
@@ -1070,12 +1070,6 @@ RECOMMENDED
 	<span>fghij</span>
 	<span>klmno</span>
 </div>
-
-<LinearLayout android:orientation="horizontal">
-	<TextView android:text="abcde" />
-	<TextView android:text="fghij" />
-	<TextView android:text="klmno" />
-</LinearLayout>
 ```
 
 NOT RECOMMENDED
@@ -1085,8 +1079,6 @@ NOT RECOMMENDED
 	<div>fghij</div>
 	klmno
 </span>
-
-<TextView android:text="abcde fghij klmno" />
 ```
 
 ```xml

@@ -559,13 +559,11 @@ class Node {
         return new Node(id, null, options);
     }
     static createTextNode(id, element, parent, actions = null) {
-        const node = new Node(id, null, { element, tagName: 'TEXT', parent, actions });
+        element.children = [];
+        const node = new Node(id, null, { element, parent, actions, tagName: 'TEXT' });
         node.setAndroidId(WIDGET_ANDROID.TEXT);
         node.setBounds(element);
         node.setLinearBoxRect();
-        if (actions != null) {
-            node.setAttributes();
-        }
         const inherit = INHERIT_ANDROID[WIDGET_ANDROID.TEXT];
         if (parent != null) {
             const style = [];
@@ -693,9 +691,12 @@ class Node {
     static orderDefault(a, b) {
         let [c, d] = [a.depth, b.depth];
         if (c == d) {
-            [c, d] = [a.bounds.x, b.bounds.x];
+            [c, d] = [a.parent.id, b.parent.id];
             if (c == d) {
-                [c, d] = [a.id, b.id];
+                [c, d] = [a.bounds.x, b.bounds.x];
+                if (c == d) {
+                    [c, d] = [a.id, b.id];
+                }
             }
         }
         return (c > d ? 1 : -1);

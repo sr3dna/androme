@@ -1485,6 +1485,9 @@ function setNodeCache() {
     elements = document.querySelectorAll(selector);
     for (const i in elements) {
         const element = elements[i];
+        if (WEBVIEW_ANDROID.includes(element.tagName) && MAPPING_ANDROID[element.parentNode.tagName] != null) {
+            continue;
+        }
         if (typeof element.getBoundingClientRect == 'function') {
             const bounds = element.getBoundingClientRect();
             if (bounds.width != 0 && bounds.height != 0) {
@@ -1520,6 +1523,7 @@ function setNodeCache() {
         }
     }
     const parentNodes = {};
+    const textCache = [];
     for (const parent of NODE_CACHE) {
         if (parent.bounds == null) {
             parent.setBounds();
@@ -1538,7 +1542,19 @@ function setNodeCache() {
             }
         }
     }
-    NODE_CACHE.forEach(node => node.parent = parentNodes[node.id]);
+    NODE_CACHE.forEach(node => {
+        node.parent = parentNodes[node.id];
+        if (node.element.children.length > 1) {
+            node.element.childNodes.forEach(element => {
+                if (element.nodeName == '#text' && element.textContent.trim() != '') {
+                    const textNode = Node.createTextNode(NODE_CACHE.length + textCache.length + 1, element, node, [0, 5]);
+                    textCache.push(textNode);
+                    node.children.push(textNode);
+                }
+            });
+        }
+    });
+    NODE_CACHE.push(...textCache);
     for (const node of NODE_CACHE) {
         for (const property in node.preAlignment) {
             node.element.style[property] = node.preAlignment[property];
@@ -1581,7 +1597,6 @@ function parseDocument() {
         for (let j = 0; j < coordsY.length; j++) {
             const axisX = mapX[i][coordsX[j]];
             const axisY = mapY[i][coordsY[j]];
-            axisY.sort((a, b) => (a.id > b.id ? 1 : -1));
             for (let k = 0; k < axisY.length; k++) {
                 const nodeY = axisY[k];
                 if (!nodeY.renderParent) {
@@ -1591,31 +1606,8 @@ function parseDocument() {
                     if (tagName == null) {
                         if (Utils.hasFreeFormText(nodeY.element)) {
                             tagName = WIDGET_ANDROID.TEXT;
-                            if (nodeY.element.childNodes.length > 1) {
-                                let template = '';
-                                let index = 0;
-                                nodeY.element.childNodes.forEach(element => {
-                                    if (element.nodeName == '#text') {
-                                        if (element.textContent.trim() != '') {
-                                            const node = Node.createTextNode(NODE_CACHE.length + 1, element, nodeY, [0, 5]);
-                                            NODE_CACHE.push(node);
-                                            nodeY.children.push(node);
-                                            node.renderDepth = node.depth + 1;
-                                            node.renderParent = nodeY;
-                                            template += getEnclosingTag(node.renderDepth, WIDGET_ANDROID.TEXT, node.id);
-                                        }
-                                    }
-                                    else {
-                                        const renderId = `${nodeY.id}:${index++}`;
-                                        element.androidNode.renderId = renderId;
-                                        template += `{${renderId}}`;
-                                    }
-                                });
-                                nodeY.children.sort(Node.orderDefault);
-                                nodeY.freeFormXml = template;
-                            }
                         }
-                        if (nodeY.children.length > 0) {
+                        else if (nodeY.children.length > 0) {
                             if (SETTINGS.useGridLayout && nodeY.children.findIndex(item => item.widgetName != null && (item.depth == nodeY.depth + 1)) == -1) {
                                 const nextMapX = mapX[nodeY.depth + 2];
                                 const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
@@ -1625,32 +1617,14 @@ function parseDocument() {
                                     let columns = [];
                                     let columnSymmetry = [];
                                     for (let l = 0; l < nextCoordsX.length; l++) {
-                                        const nextAxisX = nextMapX[nextCoordsX[l]];
+                                        const nextAxisX = nextMapX[nextCoordsX[l]].sort((a, b) => (a.bounds.top > b.bounds.top ? 1 : -1));
                                         columnLeft[l] = parseInt(nextCoordsX[l]);
                                         columnRight[l] = (l == 0 ? Number.MIN_VALUE : columnRight[l - 1]);
                                         for (let m = 0; m < nextAxisX.length; m++) {
                                             const nextX = nextAxisX[m];
                                             if (nextX.parent.parent != null && nodeY.id == nextX.parent.parent.id) {
-                                                let [left, right] = [nextX.bounds.left, nextX.bounds.right];
-                                                let columnPrev = columnRight[l - 1];
-                                                const prevSibling = nextX.element.previousSibling;
-                                                const nextSibling = nextX.element.nextSibling;
-                                                if (prevSibling != null && prevSibling.nodeName == '#text' && prevSibling.textContent.trim() != '') {
-                                                    const bounds = Node.getRangeBounds(prevSibling);
-                                                    if (nextX.withinY(bounds)) {
-                                                        const index = columnLeft.findIndex(value => (value == left));
-                                                        if (index != -1) {
-                                                            columnPrev = (index == 0 ? Number.MIN_VALUE : columnRight[index - 1]);
-                                                        }
-                                                    }
-                                                }
-                                                if (nextSibling != null && nextSibling.nodeName == '#text' && nextSibling.textContent.trim() != '') {
-                                                    const bounds = Node.getRangeBounds(nextSibling);
-                                                    if (nextX.withinY(bounds)) {
-                                                        right = bounds.right;
-                                                    }
-                                                }
-                                                if (l == 0 || left > columnPrev) {
+                                                const [left, right] = [nextX.bounds.left, nextX.bounds.right];
+                                                if (l == 0 || left > columnRight[l - 1]) {
                                                     if (columns[l] == null) {
                                                         columns[l] = [];
                                                     }
@@ -1780,7 +1754,6 @@ function parseDocument() {
                             }
                             if (!nodeY.renderParent) {
                                 const [linearX, linearY] = Node.isLinearXY(nodeY.children.filter(item => (item.depth == nodeY.depth + 1)));
-                                let template = '';
                                 if (linearX && linearY) {
                                     if (nodeY.children.length == 1) {
                                         const nodeChild = nodeY.children[0];
@@ -1792,7 +1765,7 @@ function parseDocument() {
                                         nodeChild.inheritStyleMap(nodeY);
                                     }
                                     nodeY.children.forEach(item => item.depthIndent -= 1);
-                                    template = `{${nodeY.id}}`;
+                                    xml += `{${nodeY.id}}`;
                                     nodeY.visible = false;
                                     nodeY.renderParent = nodeY.parent;
                                 }
@@ -1800,15 +1773,14 @@ function parseDocument() {
                                     if (nodeY.parent.isView(WIDGET_ANDROID.LINEAR)) {
                                         nodeY.parent.linearRows.push(nodeY);
                                     }
-                                    template = writeLinearLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, linearY);
+                                    xml += writeLinearLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, linearY);
                                 }
                                 else {
-                                    template = writeDefaultLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent);
+                                    xml += writeDefaultLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent);
                                 }
-                                xml += (nodeY.freeFormXml != null ? template.replace(`{${nodeY.id}}`, nodeY.freeFormXml) : template);
                             }
                         }
-                        else if (tagName == null) {
+                        else {
                             continue;
                         }
                     }
@@ -1838,8 +1810,8 @@ function parseDocument() {
                                     const renderParent = nodeY.parent;
                                     const template = siblings.map(item => {
                                         if (!item.renderParent) {
-                                            const children = item.element.children;
                                             let visible = true;
+                                            const children = item.element.children;
                                             if (children.length > 0) {
                                                 visible = false;
                                                 for (let l = 0; l < children.length; l++) {

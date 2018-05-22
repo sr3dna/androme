@@ -12,8 +12,12 @@ const WIDGET_ANDROID = {
     RADIO_GROUP: 'RadioGroup'
 };
 
+const WEBVIEW_ANDROID = ['STRONG', 'B', 'EM', 'CITE', 'DFN', 'I', 'BIG', 'SMALL', 'FONT', 'BLOCKQUOTE', 'TT', 'A', 'U', 'SUP', 'SUB', 'STRIKE'];
+
 const MAPPING_ANDROID = {
+    'TEXT': 'TextView',
     'LABEL': 'TextView',
+    'P': 'TextView',
     'HR': 'View',
     'IMG': 'ImageView',
     'SELECT': 'Spinner',
