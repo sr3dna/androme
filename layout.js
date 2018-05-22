@@ -274,15 +274,16 @@ function setBackgroundStyle(node) {
             properties.backgroundColor[1] = addResourceColor(properties.backgroundColor[1]);
         }
         const borderStyle = {
-            default: 'android:color="@android:color/black"',
-            solid: `android:color="${properties.border[2]}"`,
-            dotted: `android:color="${properties.border[2]}" android:dashWidth="3px" android:dashGap="1px"`,
-            dashed: `android:color="${properties.border[2]}" android:dashWidth="1px" android:dashGap="1px"`
+            black: 'android:color="@android:color/black"',
+            solid: `android:color="${properties.border[2]}"`
         };
+        borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
+        borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
+        borderStyle.default = borderStyle[properties.border[0]] || borderStyle.black;
         let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
-        if (properties.borderRadius != null) {
+        if (properties.border[0] != 'none' && properties.borderRadius != null) {
             xml += `<shape ${STRING_ANDROID.XMLNS_ANDROID} android:shape="rectangle">\n` +
-                   `\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]] || borderStyle['default']} />\n` +
+                   `\t<stroke android:width="${properties.border[1]}" ${borderStyle.default} />\n` +
                    (properties.backgroundColor ? `\t<solid android:color="${properties.backgroundColor[1]}" />\n` : '');
             if (properties.borderRadius.length == 1) {
                 xml += `\t<corners android:radius="${properties.borderRadius[0]}" />\n`;
@@ -299,7 +300,7 @@ function setBackgroundStyle(node) {
         }
         else if (properties.border[0] != 'none' && properties.backgroundColor == null) {
             xml += `<shape ${STRING_ANDROID.XMLNS_ANDROID} android:shape="rectangle">\n` +
-                   `\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]]} />\n` +
+                   `\t<stroke android:width="${properties.border[1]}" ${borderStyle.default} />\n` +
                    '</shape>';
         }
         else {
@@ -314,7 +315,7 @@ function setBackgroundStyle(node) {
             if (properties.border[0] != 'none') {
                 xml += '\t<item>\n' +
                        '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<stroke android:width="${properties.border[1]}" ${borderStyle[properties.border[0]]} />\n` +
+                       `\t\t\t<stroke android:width="${properties.border[1]}" ${borderStyle.default} />\n` +
                        '\t\t</shape>\n' +
                        '\t</item>\n';
             }
@@ -322,7 +323,7 @@ function setBackgroundStyle(node) {
                 [properties.borderTopWidth, properties.borderRightWidth, properties.borderBottomWidth, properties.borderLeftWidth].forEach((item, index) => {
                     xml += `\t<item android:${['top', 'right', 'bottom', 'left'][index]}="${item[2]}">\n` +
                            '\t\t<shape android:shape="rectangle">\n' +
-                           `\t\t\t<stroke android:width="${item[1]}" ${borderStyle[item[0]]} />\n` +
+                           `\t\t\t<stroke android:width="${item[1]}" ${borderStyle[item[0]] || borderStyle.black} />\n` +
                            '\t\t</shape>\n' +
                            '\t</item>\n';
                 });
@@ -392,7 +393,7 @@ function parseBoxDimensions(value) {
     const match = value.match(/^([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em))$/);
     if (match != null && match.length == 5) {
         if (match[1] == match[2] && match[2] == match[3] && match[3] == match[4]) {
-            return [Utils.onvertToPX(match[1])];
+            return [Utils.convertToPX(match[1])];
         }
         else if (match[1] == match[3] && match[2] == match[4]) {
             return [Utils.convertToPX(match[1]), Utils.convertToPX(match[2])];
@@ -440,8 +441,8 @@ function writeViewLayout(node, depth, parent, tagName) {
         wrapNode.renderDepth = depth;
         wrapNode.renderParent = parent;
         NODE_CACHE.push(wrapNode);
-        preXml += indent + `<${scrollView}{@${wrapNode.id}}>\n`;
-        postXml +=  indent + `</${scrollView}>\n`;
+        preXml = indent + `<${scrollView}{@${wrapNode.id}}>\n`;
+        postXml = indent + `</${scrollView}>\n`;
         indent = Utils.setIndent(++depth);
         node.renderParent = wrapNode;
     }
@@ -1006,7 +1007,7 @@ function getGridSpacing(node, depth) {
         }
         const dimensions = getBoxSpacing(container, true);
         if (node.gridSpaceSpan > 0) {
-            preXml += getSpaceXml(depth, (node.gridSpaceSpanColumnWeight ? 'wrap_content' : '0dp'), 'wrap_content', node.gridSpaceSpan, (node.gridSpaceSpanColumnWeight ? 0 : 1));
+            preXml += getSpaceXml(depth, (node.gridSpaceSpanColumnWeight ? 'wrap_content' : '0px'), 'wrap_content', node.gridSpaceSpan, (node.gridSpaceSpanColumnWeight ? 0 : 1));
         }
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
@@ -1558,20 +1559,50 @@ function setNodeCache() {
             parent.setLinearBoxRect();
         }
         for (const child of NODE_CACHE) {
-            if (parent != child && parent.element.parentNode != child.element) {
+            if (parent != child) {
                 if (child.bounds == null) {
                     child.setBounds();
                     child.setLinearBoxRect();
                 }
-                if (parent.element == child.element.parentNode || (child.box.left >= parent.box.left && child.box.right <= parent.box.right && child.box.top >= parent.box.top && child.box.bottom <= parent.box.bottom)) {
-                    parentNodes[child.id] = parent;
+                if (child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
+                    if (parentNodes[child.id] == null) {
+                        parentNodes[child.id] = [];
+                    }
+                    parentNodes[child.id].push(parent);
                     parent.children.push(child);
                 }
             }
         }
     }
     NODE_CACHE.forEach(node => {
-        node.parent = parentNodes[node.id];
+        const nodes = parentNodes[node.id];
+        if (nodes != null) {
+            let parent = node.element.parentNode.androidNode;
+            if (!node.withinX(parent.box) && !node.withinY(parent.box)) {
+                if (nodes.length > 1) {
+                    let minArea = Number.MAX_VALUE;
+                    nodes.forEach(item => {
+                        const area = (node.box.left - item.linear.left) + (node.box.right - item.linear.right) + (node.box.top - item.linear.top) + (node.box.bottom - item.linear.bottom);
+                        if (area < minArea) {
+                            parent = item;
+                            minArea = area;
+                        }
+                        else if (area == minArea) {
+                            if (item.element == node.element.parentNode) {
+                                parent = item;
+                            }
+                        }
+                    });
+                    node.parent = parent;
+                }
+                else {
+                    node.parent = nodes[0];
+                }
+            }
+            else {
+                node.parent = parent;
+            }
+        }
         if (node.element.children.length > 1) {
             node.element.childNodes.forEach(element => {
                 if (element.nodeName == '#text' && element.textContent.trim() != '') {
@@ -1590,6 +1621,12 @@ function setNodeCache() {
     }
     NODE_CACHE.sort(Node.orderDefault);
     for (const node of NODE_CACHE) {
+        let i = 0;
+        Array.from(node.element.childNodes).forEach(item => {
+            if (item.androidNode != null && item.androidNode.parent.element == node.element) {
+                item.androidNode.parentIndex = i++;
+            }
+        });
         node.children.sort(Node.orderDefault);
     }
 }
@@ -1602,7 +1639,7 @@ function parseDocument() {
     setNodeCache();
     for (const node of NODE_CACHE) {
         const x = Math.floor(node.bounds.x);
-        const y = (node.parent ? node.parent.id : 0);
+        const y = node.parent.id;
         if (mapX[node.depth] == null) {
             mapX[node.depth] = {};
         }
@@ -1623,8 +1660,7 @@ function parseDocument() {
         const coordsY = Object.keys(mapY[i]);
         const partial = {};
         for (let j = 0; j < coordsY.length; j++) {
-            const axisX = mapX[i][coordsX[j]];
-            const axisY = mapY[i][coordsY[j]];
+            const axisY = mapY[i][coordsY[j]].sort((a, b) => (a.parentIndex > b.parentIndex ? 1 : -1));
             for (let k = 0; k < axisY.length; k++) {
                 const nodeY = axisY[k];
                 if (!nodeY.renderParent) {

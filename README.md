@@ -135,19 +135,6 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						app:layout_constraintTop_toTopOf="parent"
 						style="@style/Select_1" />
 					<Spinner
-						android:id="@+id/year0"
-						android:background="@drawable/select_hour"
-						android:entries="@array/year0_array"
-						android:layout_height="wrap_content"
-						android:layout_marginTop="4dp"
-						android:layout_width="wrap_content"
-						android:minWidth="37dp"
-						android:paddingBottom="2dp"
-						android:paddingTop="1dp"
-						app:layout_constraintBottom_toBottomOf="parent"
-						app:layout_constraintLeft_toLeftOf="parent"
-						style="@style/Select_1" />
-					<Spinner
 						android:id="@+id/day0"
 						android:background="@drawable/select_hour"
 						android:entries="@array/day0_array"
@@ -159,9 +146,21 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						app:layout_constraintCircle="@+id/month0"
 						app:layout_constraintCircleAngle="129"
 						app:layout_constraintCircleRadius="56dp"
-						app:layout_constraintHorizontal_bias="0.74"
 						app:layout_constraintLeft_toLeftOf="parent"
 						app:layout_constraintRight_toRightOf="parent"
+						style="@style/Select_1" />
+					<Spinner
+						android:id="@+id/year0"
+						android:background="@drawable/select_hour"
+						android:entries="@array/year0_array"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="4dp"
+						android:layout_width="wrap_content"
+						android:minWidth="37dp"
+						android:paddingBottom="2dp"
+						android:paddingTop="1dp"
+						app:layout_constraintBottom_toBottomOf="parent"
+						app:layout_constraintLeft_toLeftOf="parent"
 						style="@style/Select_1" />
 				</ConstraintLayout>
 				<Space
@@ -939,7 +938,7 @@ Styles are grouped by HTML element name and then by common properties.  These st
 		<item name="android:textStyle">normal</item>
 	<style>
 	<style name="Input_3">
-		<item name="android:background">@color/white_smoke1</item>
+		<item name="android:background">@color/white_smoke_1</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textSize">11sp</item>
 		<item name="android:textStyle">normal</item>
@@ -953,7 +952,7 @@ Styles are grouped by HTML element name and then by common properties.  These st
 		<item name="android:textSize">11sp</item>
 	<style>
 	<style name="Input_6">
-		<item name="android:background">@color/white_smoke1</item>
+		<item name="android:background">@color/white_smoke_1</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textColor">@color/black</item>
 		<item name="android:textSize">12sp</item>

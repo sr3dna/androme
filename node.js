@@ -19,7 +19,6 @@ class Node {
         }
         this.id = id;
         this.element = element;
-        this.wrapNode = null;
         this.children = [];
         this.style = style;
         this.styleMap = styleMap;
@@ -36,6 +35,8 @@ class Node {
         this.preAlignment = {};
         this.scrollOverflow = overflow;
         this.scrollNested = false;
+        this.wrapNode = null;
+        this.parentIndex = Number.MAX_VALUE;
 
         this._parent = null;
         this._depth = null;
@@ -222,18 +223,17 @@ class Node {
     setLinearBoxRect() {
         if (this.wrapNode == null) {
             const bounds = this.bounds;
-            const style = this.style;
             this.linear = {
-                top: Math.floor(bounds.top - Utils.parseInt(style.marginTop)),
-                right: Math.floor(bounds.right + Utils.parseInt(style.marginRight)),
-                bottom: Math.floor(bounds.bottom + Utils.parseInt(style.marginBottom)),
-                left: Math.floor(bounds.left - Utils.parseInt(style.marginLeft))
+                top: Math.floor(bounds.top - this.marginTop),
+                right: Math.floor(bounds.right + this.marginRight),
+                bottom: Math.floor(bounds.bottom + this.marginBottom),
+                left: Math.floor(bounds.left - this.marginLeft)
             };
             this.box = {
-                top: Math.floor(bounds.top + Utils.parseInt(style.paddingTop) + Utils.parseInt(style.borderTopWidth)),
-                right: Math.floor(bounds.right - (Utils.parseInt(style.paddingRight) + Utils.parseInt(style.borderRightWidth))),
-                left: Math.floor(bounds.left + Utils.parseInt(style.paddingLeft) + Utils.parseInt(style.borderLeftWidth)),
-                bottom: Math.floor(bounds.bottom - (Utils.parseInt(style.paddingBottom) + Utils.parseInt(style.borderBottomWidth)))
+                top: Math.floor(bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth')))),
+                right: Math.floor(bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth')))),
+                left: Math.floor(bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))),
+                bottom: Math.floor(bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))))
             };
         }
         else {
@@ -271,10 +271,10 @@ class Node {
         const element = this.element;
         const result = {};
         if (widget != null) {
-            let i = -1;
             if (this.actions != null) {
                 actions = this.actions;
             }
+            let i = -1;
             for (const action in widget) {
                 i++;
                 if (result[action] != null || (actions != null && actions.length > 0 && !actions.includes(i))) {
@@ -409,8 +409,8 @@ class Node {
             return this._app[name];
         }
     }
-    delete(ns, name) {
-        delete this[`_${ns}`][name];
+    delete(obj, name) {
+        delete this[`_${obj}`][name];
     }
     css(name) {
         if (this.styleMap[name] != null) {
