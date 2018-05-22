@@ -873,8 +873,8 @@ function positionConstraints() {
                                         }
                                     }
                                     chainDirection.forEach(item => {
-                                        item.constraint.horizontalChain = null;
-                                        item.constraint.verticalChain = null;
+                                        item.constraint.horizontalChain = [];
+                                        item.constraint.verticalChain = [];
                                     });
                                 }
                             }
@@ -931,6 +931,8 @@ function positionConstraints() {
                             opposite.app('layout_constraintCircle', `@+id/${adjacent.androidId}`);
                             opposite.app('layout_constraintCircleRadius', `${radius}px`);
                             opposite.app('layout_constraintCircleAngle', degrees);
+                            opposite.delete('app', 'layout_constraintHorizontal_bias');
+                            opposite.delete('app', 'layout_constraintVertical_bias');
                         }
                     }
                 }

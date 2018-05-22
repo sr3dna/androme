@@ -45,7 +45,7 @@ You can preview the library with the provided sample.html file which should gene
 
 The Date fields in the form have been modified to demonstrate the Constraint circle and bias capabilities in this library. Constraint chain bias is also available as a setting although the current Android implementation does not support exact placement.
 
-<img src="sample.png" alt="Chrome Mobile Layouts" />
+<img src="sample.png" alt="chrome android layout" />
 
 ## auto-generated layout xml
 
@@ -993,8 +993,8 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 	<color name="#708090">slate_gray</color>
 	<color name="#808080">gray</color>
 	<color name="#A9A9A9">dark_gray</color>
-	<color name="#CCCCCC">light_gray1</color>
-	<color name="#DDDDDD">white_smoke1</color>
+	<color name="#CCCCCC">light_gray_1</color>
+	<color name="#DDDDDD">white_smoke_1</color>
 	<color name="#FFFFFF">white</color>
 </resources>
 <!-- filename: res/values/colors.xml -->

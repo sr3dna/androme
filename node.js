@@ -642,13 +642,13 @@ class Node {
         return { top, right, bottom, left };
     }
     static getHorizontalBias(parent, firstNode, lastNode) {
-        const left = firstlinear.left - parent.box.left;
-        const right = parent.box.right - lastlinear.right;
+        const left = firstNode.linear.left - parent.box.left;
+        const right = parent.box.right - lastNode.right;
         return (left == 0 || right == 0 ? 0 : (left / (left + right)).toFixed(2));
     }
     static getVerticalBias(parent, firstNode, lastNode) {
-        const top = firstlinear.top - parent.box.top;
-        const bottom = parent.box.bottom - lastlinear.bottom;
+        const top = firstNode.top - parent.box.top;
+        const bottom = parent.box.bottom - lastNode.bottom;
         return (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
     }
     static getRangeBounds(element) {
