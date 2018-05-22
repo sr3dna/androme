@@ -208,7 +208,7 @@ class Node {
             }
         }
         else {
-            const nodes = Node.getOuterNodes(this.children);
+            const nodes = Node.getNodesOuter(this.children);
             this.bounds = {
                 top: nodes.top[0].bounds.top,
                 right: nodes.right[0].bounds.right,
@@ -237,7 +237,7 @@ class Node {
             };
         }
         else {
-            const nodes = Node.getOuterNodes(this.children);
+            const nodes = Node.getNodesOuter(this.children);
             this.linear = {
                 top: nodes.top[0].linear.top,
                 right: nodes.right[0].linear.right,
@@ -338,8 +338,7 @@ class Node {
                     }
                 }
                 this.label = nextNode;
-                nextNode.visible = false;
-                nextNode.renderParent = true;
+                nextNode.hide();
             }
         }
         for (const i in result) {
@@ -418,6 +417,10 @@ class Node {
             return this.styleMap[name];
         }
         return (this.style[name] || ''); 
+    }
+    hide(parent = true) {
+        this.visible = false;
+        this.renderParent = parent;
     }
     withinX(rect, dimension = 'linear') {
         return ((rect.top >= this[dimension].top && rect.top < this[dimension].bottom) || (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) || (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) || (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom));
@@ -560,7 +563,6 @@ class Node {
         return new Node(id, null, options);
     }
     static createTextNode(id, element, parent, actions = null) {
-        element.children = [];
         const node = new Node(id, null, { element, parent, actions, tagName: 'TEXT' });
         node.setAndroidId(WIDGET_ANDROID.TEXT);
         node.setBounds(element);
@@ -578,6 +580,7 @@ class Node {
             }
             node.styleAttributes = style;
         }
+        element.children = [];
         element.androidNode = node;
         return node;
     }
@@ -597,23 +600,13 @@ class Node {
         let linearY = true;
         if (nodes.length > 1) {
             const minBottom = nodes.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
-            nodes.some(item => {
-                if (item.linear.top >= minBottom) {
-                    linearX = false;
-                    return true;
-                }
-            });
             const minRight = nodes.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
-            nodes.some(item => {
-                if (item.linear.left >= minRight) {
-                    linearY = false;
-                    return true;
-                }
-            });
+            linearX = !nodes.some(item => (item.linear.top >= minBottom));
+            linearY = !nodes.some(item => (item.linear.left >= minRight));
         }
         return [linearX, linearY];
     }
-    static getOuterNodes(nodes) {
+    static getNodesOuter(nodes) {
         let top = [nodes[0]];
         let right = [nodes[0]];
         let bottom = [nodes[0]];
@@ -648,15 +641,15 @@ class Node {
         }
         return { top, right, bottom, left };
     }
-    static getVerticalBias(parent, firstNode, lastNode) {
-        const top = firstlinear.top - parent.box.top;
-        const bottom = parent.box.bottom - lastlinear.bottom;
-        return (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
-    }
     static getHorizontalBias(parent, firstNode, lastNode) {
         const left = firstlinear.left - parent.box.left;
         const right = parent.box.right - lastlinear.right;
         return (left == 0 || right == 0 ? 0 : (left / (left + right)).toFixed(2));
+    }
+    static getVerticalBias(parent, firstNode, lastNode) {
+        const top = firstlinear.top - parent.box.top;
+        const bottom = parent.box.bottom - lastlinear.bottom;
+        return (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
     }
     static getRangeBounds(element) {
         const range = document.createRange();

@@ -141,6 +141,7 @@ function addResourceString(node, value) {
                 }
             }
         }
+        value = value.replace(/\s*style=""/g, '');
         for (const [name, resourceValue] in RESOURCE['string'].entries()) {
             if (resourceValue == value) {
                 return { text: name };
@@ -810,7 +811,7 @@ function positionConstraints() {
                         current.constraint.verticalChain = nodes.filter(item => current.withinY(item.linear)).sort((a, b) => (a.bounds.y > b.bounds.y ? 1 : -1));
                     });
                     chainMap.chain.forEach((value, index) => {
-                        nodes.forEach(current => {
+                        nodes.slice().sort((a, b) => (a.constraint[value].length > b.constraint[value].length ? -1 : 1)).forEach(current => {
                             const chainDirection = current.constraint[value];
                             if (chainDirection != null && chainDirection.length > 1) {
                                 const valid = chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(chain => chain.id).join(''))).reduce((a, b) => (a == b ? a : 0));
@@ -1341,7 +1342,7 @@ function setMarginPadding() {
                 paddingLeft: Utils.convertToPX(node.paddingLeft, false)
             };
             const children = node.children.filter(item => (item.visible && (item.original.depth || item.depth) == ((node.original.depth || node.depth) + 1)));
-            const outerNodes = Node.getOuterNodes(children);
+            const nodesOuter = Node.getNodesOuter(children);
             children.forEach(item => {
                 const childBox = {
                     layout_marginTop: 0,
@@ -1356,8 +1357,8 @@ function setMarginPadding() {
                 for (const name in childBox) {
                     childBox[name] = Utils.parseInt(item.android(name));
                 }
-                for (const side in outerNodes) {
-                    if (outerNodes[side].includes(item)) {
+                for (const side in nodesOuter) {
+                    if (nodesOuter[side].includes(item)) {
                         for (const name in childBox) {
                             if (name.toLowerCase().indexOf(side) != -1 && !item.boxRefit[name]) {
                                 childBox[name] += box[name];
@@ -1365,8 +1366,8 @@ function setMarginPadding() {
                         }
                     }
                 }
-                for (const side in outerNodes) {
-                    if (outerNodes[side].includes(item)) {
+                for (const side in nodesOuter) {
+                    if (nodesOuter[side].includes(item)) {
                         switch (side) {
                             case 'top':
                                 if (childBox.layout_marginTop > 0) {
@@ -1510,7 +1511,7 @@ function setNodeCache() {
     elements = document.querySelectorAll(selector);
     for (const i in elements) {
         const element = elements[i];
-        if (WEBVIEW_ANDROID.includes(element.tagName) && MAPPING_ANDROID[element.parentNode.tagName] != null) {
+        if (WEBVIEW_ANDROID.includes(element.tagName) && (MAPPING_ANDROID[element.parentNode.tagName] != null || WEBVIEW_ANDROID.includes(element.parentNode.tagName))) {
             continue;
         }
         if (typeof element.getBoundingClientRect == 'function') {
@@ -1629,8 +1630,9 @@ function parseDocument() {
                     let tagName = nodeY.widgetName;
                     let xml = '';
                     if (tagName == null) {
-                        if (Utils.hasFreeFormText(nodeY.element)) {
+                        if ((nodeY.children.length == 0 && Utils.hasFreeFormText(nodeY.element)) || nodeY.children.every(item => WEBVIEW_ANDROID.includes(item.tagName))) {
                             tagName = WIDGET_ANDROID.TEXT;
+                            nodeY.children.forEach(item => item.hide());
                         }
                         else if (nodeY.children.length > 0) {
                             if (SETTINGS.useGridLayout && nodeY.children.findIndex(item => item.widgetName != null && (item.depth == nodeY.depth + 1)) == -1) {
@@ -1711,8 +1713,7 @@ function parseDocument() {
                                                         const offsetDepth = nodeX.original.depth - nodeX.depth;
                                                         nodeX.children.forEach(item => item.depth -= offsetDepth);
                                                     }
-                                                    nodeX.parent.visible = false;
-                                                    nodeX.parent.renderParent = true;
+                                                    nodeX.parent.hide();
                                                     nodeX.parent = nodeY;
                                                     nodeX.gridIndex = l;
                                                     if (SETTINGS.useLayoutWeight) {
@@ -1791,8 +1792,7 @@ function parseDocument() {
                                     }
                                     nodeY.children.forEach(item => item.depthIndent -= 1);
                                     xml += `{${nodeY.id}}`;
-                                    nodeY.visible = false;
-                                    nodeY.renderParent = nodeY.parent;
+                                    nodeY.hide(nodeY.parent);
                                 }
                                 else if (linearX || linearY) {
                                     if (nodeY.parent.isView(WIDGET_ANDROID.LINEAR)) {
@@ -1847,8 +1847,7 @@ function parseDocument() {
                                                 }
                                             }
                                             if (!visible) {
-                                                item.visible = false;
-                                                item.renderParent = true;
+                                                item.hide();
                                             }
                                             else {
                                                 item.parent = wrapNode;

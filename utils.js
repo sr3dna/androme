@@ -33,14 +33,7 @@ const Utils = (function() {
             return value.repeat(n);
         },
         hasFreeFormText(element) {
-            let result = false;
-            Array.from(element.childNodes).some(item => {
-                if (item.nodeName == '#text' && item.wholeText.trim() != '') {
-                    result = true;
-                    return true;
-                }
-            });
-            return result;
+            return Array.from(element.childNodes).some(item => (item.nodeName == '#text' && item.textContent.trim() != ''));
         },
         convertToPX: function(value, unit = true) {
             if (Utils.hasValue(value)) {
