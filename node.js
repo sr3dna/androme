@@ -19,7 +19,7 @@ class Node {
         }
         this.id = id;
         this.element = element;
-        this.wrapper = null;
+        this.wrapNode = null;
         this.children = [];
         this.style = style;
         this.styleMap = styleMap;
@@ -75,8 +75,8 @@ class Node {
         let styleMap = null;
         let width = 0;
         let height = 0;
-        if (this.wrapper != null) {
-            parent = (this.parent.wrapper != null ? this.wrapper.original.parent.element : this.parent.element);
+        if (this.wrapNode != null) {
+            parent = (this.parent.wrapNode != null ? this.wrapNode.original.parent.element : this.parent.element);
             styleMap = this.styleMap;
             [width, height] = this.getChildDimensions();
         }
@@ -99,7 +99,7 @@ class Node {
             this.android('layout_height', 'match_parent', false);
         }
         else {
-            const layoutWeight = (this.gridColumnWeight != null || this.layoutWeight != null);
+            const layoutWeight = (this.gridColumnWeight != null || this.layoutWeightWidth != null);
             if (styleMap.width != null) {
                 this.android('layout_width', Utils.convertToPX(styleMap.width));
                 if (layoutWeight) {
@@ -121,13 +121,13 @@ class Node {
             }
             if (this.android('layout_width') == null) {
                 if (layoutWeight) {
-                    if (this.gridColumnWeight != null) {
+                    if (this.layoutWeightWidth != null) {
+                        this.android('layout_weight', this.layoutWeightWidth);
+                    }
+                    else if (this.gridColumnWeight != null) {
                         this.android('layout_columnWeight', this.gridColumnWeight);
                     }
-                    if (this.layoutWeight != null) {
-                        this.android('layout_weight', this.layoutWeight);
-                    }
-                    this.android('layout_width', (this.layoutWeight == '1' || this.gridColumnWeight == '1' ? '0px' : 'wrap_content'));
+                    this.android('layout_width', (this.layoutWeightWidth == '1' || this.gridColumnWeight == '1' ? '0px' : 'wrap_content'));
                 }
                 else {
                     if (parentGridLayout) {
@@ -154,6 +154,9 @@ class Node {
             }
             if (styleMap.height != null) {
                 this.android('layout_height', Utils.convertToPX(styleMap.height));
+                if (this.layoutWeightHeight != null) {
+                    this.android('layout_weight', '0');
+                }
             }
             if (styleMap.minHeight != null || styleMap.maxHeight != null) {
                 if (this.android('layout_height') != 'match_constraint') {
@@ -169,18 +172,39 @@ class Node {
                 }
             }
             if (this.android('layout_height') == null) {
-                if (!parentScrollView && !parentGridLayout && height >= parentHeight) {
-                    this.android('layout_height', 'match_parent', false);
+                if (this.layoutWeightHeight != null) {
+                    this.android('layout_weight', this.layoutWeightHeight);
+                    this.android('layout_height', (this.layoutWeightHeight == '1' ? '0px' : 'wrap_content'));
                 }
                 else {
-                    this.android('layout_height', 'wrap_content', false);
+                    if (!parentScrollView && !parentGridLayout && height >= parentHeight) {
+                        this.android('layout_height', 'match_parent', false);
+                    }
+                    else {
+                        this.android('layout_height', 'wrap_content', false);
+                    }
                 }
             }
         }
     }
-    setBounds() {
-        if (this.wrapper == null) {
-            this.bounds = this.element.getBoundingClientRect();
+    setBounds(element) {
+        if (this.wrapNode == null) {
+            if (element != null) {
+                const range = document.createRange();
+                range.selectNodeContents(element);
+                const domRect = range.getClientRects();
+                const domText = domRect[domRect.length - 1];
+                const bounds = JSON.parse(JSON.stringify(domText));
+                if (domRect.length > 1) {
+                    bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
+                    bounds.left = bounds.x;
+                    bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
+                }
+                this.bounds = Node.getRangeBounds(element);
+            }
+            else {
+                this.bounds = this.element.getBoundingClientRect();
+            }
         }
         else {
             const nodes = Node.getOuterNodes(this.children);
@@ -195,20 +219,20 @@ class Node {
         }
     }
     setLinearBoxRect() {
-        if (this.wrapper == null) {
+        if (this.wrapNode == null) {
             const bounds = this.bounds;
             const style = this.style;
             this.linear = {
-                top: Math.floor(bounds.top - parseInt(style.marginTop)),
-                right: Math.floor(bounds.right + parseInt(style.marginRight)),
-                bottom: Math.floor(bounds.bottom + parseInt(style.marginBottom)),
-                left: Math.floor(bounds.left - parseInt(style.marginLeft))
+                top: Math.floor(bounds.top - Utils.parseInt(style.marginTop)),
+                right: Math.floor(bounds.right + Utils.parseInt(style.marginRight)),
+                bottom: Math.floor(bounds.bottom + Utils.parseInt(style.marginBottom)),
+                left: Math.floor(bounds.left - Utils.parseInt(style.marginLeft))
             };
             this.box = {
-                top: Math.floor(bounds.top + parseInt(style.paddingTop) + parseInt(style.borderTopWidth)),
-                right: Math.floor(bounds.right - (parseInt(style.paddingRight) + parseInt(style.borderRightWidth))),
-                left: Math.floor(bounds.left + parseInt(style.paddingLeft) + parseInt(style.borderLeftWidth)),
-                bottom: Math.floor(bounds.bottom - (parseInt(style.paddingBottom) + parseInt(style.borderBottomWidth)))
+                top: Math.floor(bounds.top + Utils.parseInt(style.paddingTop) + Utils.parseInt(style.borderTopWidth)),
+                right: Math.floor(bounds.right - (Utils.parseInt(style.paddingRight) + Utils.parseInt(style.borderRightWidth))),
+                left: Math.floor(bounds.left + Utils.parseInt(style.paddingLeft) + Utils.parseInt(style.borderLeftWidth)),
+                bottom: Math.floor(bounds.bottom - (Utils.parseInt(style.paddingBottom) + Utils.parseInt(style.borderBottomWidth)))
             };
         }
         else {
@@ -256,7 +280,7 @@ class Node {
                     continue;
                 }
                 if (Utils.hasValue(this[action])) {
-                    result[action] = widget[action].replace('{0}', this[action]);
+                    result[action] = Utils.formatString(widget[action], this[action]);
                 }
                 else if (action.indexOf('.') != -1) {
                     let method = window;
@@ -280,33 +304,15 @@ class Node {
                                 }
                                 let value = data[j];
                                 if (Utils.hasValue(value)) {
-                                    if (value.startsWith('rgb')) {
-                                        const rgb = Color.parseRGBA(value);
-                                        if (j == 'backgroundColor') {
-                                            let backgroundParent = [];
-                                            if (element.parentNode != null) {
-                                                backgroundParent = Color.parseRGBA(Node.getElementStyle(element.parentNode).backgroundColor);
-                                            }
-                                            if (backgroundParent[0] == rgb[0]) {
-                                                continue;
-                                            }
-                                        }
-                                        if (rgb != null) {
-                                            value = addResourceColor(value.replace(rgb[0], rgb[1]));
-                                        }
+                                    value = Node.parseStyle(element, j, value);
+                                    if (value != null) {
+                                        output.push(Utils.formatString(widget[action][j], value));
                                     }
-                                    else if (/(pt|em)$/.test(value)) {
-                                        value = Utils.convertToPX(value);
-                                    }
-                                    output.push(widget[action][j].replace('{0}', value));
                                 }
                             }
                             if (output.length > 0) {
                                 if (methodName == 'setComputedStyle') {
-                                    if (!RESOURCE['style'].has(this.tagName)) {
-                                        RESOURCE['style'].set(this.tagName, []);
-                                    }
-                                    RESOURCE['style'].get(this.tagName).push({ id: this.id, attributes: output });
+                                    Node.addStyle(this, output);
                                 }
                                 else {
                                     result[i] = output;
@@ -412,11 +418,11 @@ class Node {
         }
         return (this.style[name] || ''); 
     }
-    withinX(adjacent) {
-        return ((adjacent.bounds.top >= this.bounds.top && adjacent.bounds.top <= this.bounds.bottom) || (adjacent.bounds.bottom >= this.bounds.top && adjacent.bounds.bottom <= this.bounds.bottom));
+    withinX(rect, dimension = 'linear') {
+        return ((rect.top >= this[dimension].top && rect.top < this[dimension].bottom) || (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) || (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) || (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom));
     }
-    withinY(adjacent) {
-        return ((adjacent.bounds.left >= this.bounds.left && adjacent.bounds.left <= this.bounds.right) || (adjacent.bounds.right >= this.bounds.left && adjacent.bounds.right <= this.bounds.right));
+    withinY(rect, dimension = 'linear') {
+        return ((rect.left >= this[dimension].left && rect.left < this[dimension].right) || (rect.right > this[dimension].left && rect.right <= this[dimension].right) || (this[dimension].left >= rect.left && this[dimension].right <= rect.right) || (rect.left >= this[dimension].left && rect.right <= this[dimension].right));
     }
     isLinearHorizontal() {
         return (this._android.orientation == 'horizontal');
@@ -537,9 +543,9 @@ class Node {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
     }
 
-    static createWrapper(id, node, parent, children, actions = null) {
+    static createWrapNode(id, node, parent, children, actions = null) {
         const options = {
-            wrapper: node,
+            wrapNode: node,
             parent,
             children,
             depth: parent.depth,
@@ -551,6 +557,57 @@ class Node {
             actions
         };
         return new Node(id, null, options);
+    }
+    static createTextNode(id, element, parent, actions = null) {
+        const node = new Node(id, null, { element, tagName: 'TEXT', parent, actions });
+        node.setAndroidId(WIDGET_ANDROID.TEXT);
+        node.setBounds(element);
+        node.setLinearBoxRect();
+        if (actions != null) {
+            node.setAttributes();
+        }
+        const inherit = INHERIT_ANDROID[WIDGET_ANDROID.TEXT];
+        if (parent != null) {
+            const style = [];
+            for (const prop in inherit) {
+                let value = parent.style[prop]; 
+                node.style[prop] = value;
+                value = Node.parseStyle(null, prop, value);
+                if (value != null) {
+                    style.push(Utils.formatString(inherit[prop], value));
+                }
+            }
+            Node.addStyle(node, style);
+        }
+        element.androidNode = node;
+        return node;
+    }
+    static addStyle(node, attributes) {
+        if (!RESOURCE['style'].has(node.tagName)) {
+            RESOURCE['style'].set(node.tagName, []);
+        }
+        RESOURCE['style'].get(node.tagName).push({ id: node.id, attributes });
+    }
+    static parseStyle(element, name, value) {
+        if (value.startsWith('rgb')) {
+            const rgb = Color.parseRGBA(value);
+            if (name == 'backgroundColor') {
+                let backgroundParent = [];
+                if (element != null && element.parentNode != null) {
+                    backgroundParent = Color.parseRGBA(Node.getElementStyle(element.parentNode).backgroundColor);
+                }
+                if (backgroundParent[0] == rgb[0]) {
+                    return null;
+                }
+            }
+            if (rgb != null) {
+                value = addResourceColor(value.replace(rgb[0], rgb[1]));
+            }
+        }
+        else if (/(pt|em)$/.test(value)) {
+            value = Utils.convertToPX(value);
+        }
+        return value;
     }
     static isLinearXY(nodes) {
         let linearX = true;
@@ -609,14 +666,26 @@ class Node {
         return { top, right, bottom, left };
     }
     static getVerticalBias(parent, firstNode, lastNode) {
-        const top = firstNode.linear.top - parent.box.top;
-        const bottom = parent.box.bottom - lastNode.linear.bottom;
+        const top = firstlinear.top - parent.box.top;
+        const bottom = parent.box.bottom - lastlinear.bottom;
         return (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
     }
     static getHorizontalBias(parent, firstNode, lastNode) {
-        const left = firstNode.linear.left - parent.box.left;
-        const right = parent.box.right - lastNode.linear.right;
+        const left = firstlinear.left - parent.box.left;
+        const right = parent.box.right - lastlinear.right;
         return (left == 0 || right == 0 ? 0 : (left / (left + right)).toFixed(2));
+    }
+    static getRangeBounds(element) {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const domRect = range.getClientRects();
+        const bounds = JSON.parse(JSON.stringify(domRect[domRect.length - 1]));
+        if (domRect.length > 1) {
+            bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
+            bounds.left = bounds.x;
+            bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
+        }
+        return bounds;
     }
     static getElementStyle(element) {
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));

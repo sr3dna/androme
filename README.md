@@ -15,7 +15,9 @@ const SETTINGS = {
     useUnitDP: true,
     useRTL: false,
     boundsOffset: 2,
-    whitespaceOffset: 4,
+    whitespaceHorizontalOffset: 4,
+    whitespaceVerticalOffset: 14,
+    constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14
 };
@@ -82,8 +84,8 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/gridlayout_1"
 				android:columnCount="2"
 				android:layout_height="wrap_content"
-				android:layout_weight="1"
-				android:layout_width="0dp">
+				android:layout_weight="0"
+				android:layout_width="match_parent">
 				<TextView
 					android:id="@+id/textview_2"
 					android:layout_columnWeight="0"
@@ -352,8 +354,8 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginTop="20dp"
-				android:layout_weight="1"
-				android:layout_width="0dp"
+				android:layout_weight="0"
+				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
 				android:text="@string/add"

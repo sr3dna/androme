@@ -29,6 +29,16 @@ const MAPPING_ANDROID = {
     'TEXTAREA': 'EditText'
 };
 
+const INHERIT_ANDROID = {
+    'TextView': {
+        'fontFamily': 'android:fontFamily="{0}"',
+        'fontSize': 'android:textSize="{0}"',
+        'fontWeight': 'android:fontWeight="{0}"',
+        'fontStyle': 'android:textStyle="{0}"',
+        'color': 'android:textColor="{0}"'
+    }
+}
+
 const PROPERTY_ANDROID = {
     'gravity': {
         'gravity': 'android:gravity="{0}"'
