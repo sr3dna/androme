@@ -180,14 +180,14 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				<LinearLayout
 					android:id="@+id/linearlayout_2"
 					android:layout_columnWeight="1"
-					android:layout_height="wrap_content"
+					android:layout_height="match_parent"
 					android:layout_width="0dp"
 					android:orientation="horizontal">
 					<Spinner
 						android:id="@+id/hour"
 						android:background="@drawable/select_hour"
 						android:entries="@array/hour_array"
-						android:layout_height="match_parent"
+						android:layout_height="wrap_content"
 						android:layout_width="wrap_content"
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
@@ -197,7 +197,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						android:id="@+id/minute"
 						android:background="@drawable/select_hour"
 						android:entries="@array/minute_array"
-						android:layout_height="match_parent"
+						android:layout_height="wrap_content"
 						android:layout_marginLeft="3dp"
 						android:layout_width="wrap_content"
 						android:minWidth="37dp"
@@ -312,8 +312,9 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 					android:id="@+id/subset"
 					android:background="@drawable/select_hour"
 					android:entries="@array/subset_array"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
@@ -336,8 +337,9 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 					android:id="@+id/entryactive"
 					android:background="@drawable/select_hour"
 					android:entries="@array/entryactive_array"
+					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
+					android:layout_width="0dp"
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
@@ -409,8 +411,9 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 			android:id="@+id/subset_1"
 			android:background="@drawable/select_hour"
 			android:entries="@array/subset_1_array"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
@@ -432,13 +435,13 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<LinearLayout
 			android:id="@+id/linearlayout_4"
 			android:layout_columnWeight="1"
-			android:layout_height="wrap_content"
+			android:layout_height="match_parent"
 			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/entry_1"
 				android:background="@drawable/select_hour"
-				android:layout_height="match_parent"
+				android:layout_height="wrap_content"
 				android:layout_width="277dp"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -483,8 +486,9 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 			android:id="@+id/mode"
 			android:background="@drawable/select_hour"
 			android:entries="@array/mode_array"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
@@ -506,8 +510,9 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<Spinner
 			android:id="@+id/style1"
 			android:background="@drawable/select_hour"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
@@ -530,8 +535,9 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 			android:id="@+id/calendar"
 			android:background="@drawable/select_hour"
 			android:entries="@array/calendar_array"
+			android:layout_columnWeight="1"
 			android:layout_height="wrap_content"
-			android:layout_width="wrap_content"
+			android:layout_width="0dp"
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
@@ -553,14 +559,14 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<LinearLayout
 			android:id="@+id/linearlayout_5"
 			android:layout_columnWeight="1"
-			android:layout_height="wrap_content"
+			android:layout_height="match_parent"
 			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/version"
 				android:background="@drawable/select_hour"
 				android:entries="@array/version_array"
-				android:layout_height="match_parent"
+				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -570,7 +576,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/version_update"
 				android:background="@drawable/select_hour"
 				android:entries="@array/version_update_array"
-				android:layout_height="match_parent"
+				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
@@ -605,14 +611,14 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<LinearLayout
 			android:id="@+id/linearlayout_6"
 			android:layout_columnWeight="1"
-			android:layout_height="wrap_content"
+			android:layout_height="match_parent"
 			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/branch"
 				android:background="@drawable/select_hour"
 				android:entries="@array/branch_array"
-				android:layout_height="match_parent"
+				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -622,7 +628,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/branch_update"
 				android:background="@drawable/select_hour"
 				android:entries="@array/branch_update_array"
-				android:layout_height="match_parent"
+				android:layout_height="wrap_content"
 				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
@@ -726,13 +732,13 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<LinearLayout
 			android:id="@+id/linearlayout_8"
 			android:layout_columnWeight="1"
-			android:layout_height="wrap_content"
+			android:layout_height="match_parent"
 			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
 				android:id="@+id/person"
 				android:background="@drawable/select_hour"
-				android:layout_height="match_parent"
+				android:layout_height="wrap_content"
 				android:layout_width="133dp"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -747,7 +753,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:orientation="horizontal">
 				<RadioButton
 					android:id="@+id/c2"
-					android:layout_height="match_parent"
+					android:layout_height="wrap_content"
 					android:layout_marginLeft="5dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
@@ -757,7 +763,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 					style="@style/Input_1.Input_4" />
 				<RadioButton
 					android:id="@+id/c3"
-					android:layout_height="match_parent"
+					android:layout_height="wrap_content"
 					android:layout_marginLeft="7dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
@@ -768,7 +774,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 			</RadioGroup>
 			<CheckBox
 				android:id="@+id/c4"
-				android:layout_height="match_parent"
+				android:layout_height="wrap_content"
 				android:layout_marginLeft="4dp"
 				android:layout_marginRight="3dp"
 				android:layout_marginVertical="3dp"
@@ -1056,11 +1062,11 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 
 ## user written html
 
-The DIV and FORM tag are not required for mobile devices which sometimes causes additional Linear layouts to be auto-generated. You can use the sample.html file provided to generate the same layout XML and resources.
+The DIV and FORM tag are not required for mobile devices which sometimes causes additional LinearLayouts to be auto-generated. You can use the sample.html file provided to generate the same layout XML and resources.
 
 https://www.w3.org/TR/html401/struct/global.html#h-7.5.3
 
-If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text will be collapsed into a TextView rather than a LinearLayout. Try to enclose everything inside an HTML container otherwise the text might be discarded.
+If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text might be collapsed into a TextView rather than a LinearLayout. Try to enclose everything inside an HTML container otherwise the text might be discarded.
 
 RECOMMENDED
 ```xml

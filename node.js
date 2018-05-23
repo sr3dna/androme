@@ -9,8 +9,8 @@ class Node {
             styleMap = element.styleMap || {};
             bounds = element.getBoundingClientRect();
             overflow = ((style.overflow == 'auto' || style.overflow == 'scroll') && (element.clientHeight != element.scrollHeight || element.clientWidth != element.scrollWidth) ? style.overflow : null);
-            for (const i of element.style) {
-                styleMap[Utils.hyphenToCamelCase(i)] = element.style[i];
+            for (const inline of element.style) {
+                styleMap[Utils.hyphenToCamelCase(inline)] = element.style[inline];
             }
             this.tagName = element.tagName;
         }
@@ -72,30 +72,20 @@ class Node {
     }
     setAndroidDimensions() {
         let parent = null;
-        let tagName = null;
-        let style = null;
-        let styleMap = null;
+        let styleMap = this.styleMap;
         let width = 0;
         let height = 0;
         if (this.wrapNode != null) {
-            parent = (this.parent.wrapNode != null ? this.wrapNode.original.parent.element : this.parent.element);
-            styleMap = this.styleMap;
+            parent = this.wrapNode.original.parent || this.parent;
             [width, height] = this.getChildDimensions();
         }
         else {
-            const element = this.element;
-            parent = element.parentNode;
-            tagName = element.tagName;
-            style = Node.getElementStyle(element);
-            styleMap = this.styleMap;
-            width = element.offsetWidth + parseInt(style.marginLeft) + parseInt(style.marginLeft);
-            height = element.offsetHeight + parseInt(style.marginTop) + parseInt(style.marginBottom);
+            parent = this.parent;
+            width = this.element.offsetWidth + this.marginLeft + this.marginRight;
+            height = this.element.offsetHeight + this.marginTop + this.marginBottom;
         }
-        const parentStyle = Node.getElementStyle(parent);
-        const parentWidth = parent.offsetWidth - (parseInt(parentStyle.paddingLeft) + parseInt(parentStyle.paddingRight) + parseInt(parentStyle.borderLeftWidth) + parseInt(parentStyle.borderRightWidth));
-        const parentHeight = parent.offsetHeight - (parseInt(parentStyle.paddingTop) + parseInt(parentStyle.paddingBottom) + parseInt(parentStyle.borderTopWidth) + parseInt(parentStyle.borderBottomWidth));
-        const parentScrollView = (parent.androidNode && parent.androidNode.scrollOverflow != null);
-        const parentGridLayout = (this.parent.id != 0 && this.parent.isView(WIDGET_ANDROID.GRID));
+        const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
+        const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
         if (this.scrollOverflow != null && !this.isView(WIDGET_ANDROID.TEXT)) {
             this.android('layout_width', 'match_parent', false);
             this.android('layout_height', 'match_parent', false);
@@ -108,17 +98,12 @@ class Node {
                     this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), '0');
                 }
             }
-            if (styleMap.minWidth != null || styleMap.maxWidth != null) {
-                if (this.android('layout_width') != 'match_constraint') {
-                    if (styleMap.minWidth != null) {
-                        this.android('minWidth', Utils.convertToPX(styleMap.minWidth));
-                    }
-                    if (styleMap.maxWidth != null) {
-                        this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth));
-                    }
-                    if (styleMap.width == null) {
-                        this.android('layout_width', 'wrap_content');
-                    }
+            if (this.android('layout_width') != 'match_constraint') {
+                if (styleMap.minWidth != null) {
+                    this.android('minWidth', Utils.convertToPX(styleMap.minWidth));
+                }
+                if (styleMap.maxWidth != null) {
+                    this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth));
                 }
             }
             if (this.android('layout_width') == null) {
@@ -129,18 +114,18 @@ class Node {
                     else if (this.gridColumnWeight != null) {
                         this.android('layout_columnWeight', this.gridColumnWeight);
                     }
-                    this.android('layout_width', (this.layoutWeightWidth == '1' || this.gridColumnWeight == '1' ? '0px' : 'wrap_content'));
+                    this.android('layout_width', (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1 ? '0px' : 'wrap_content'));
                 }
                 else {
-                    if (parentGridLayout) {
+                    if (parent.isView(WIDGET_ANDROID.GRID)) {
                         this.android('layout_width', 'wrap_content', false);
                     }
                     else {
-                        if (!parentScrollView && width >= parentWidth) {
+                        if (parent.scrollOverflow == null && width >= parentWidth) {
                             this.android('layout_width', 'match_parent', false);
                         }
                         else {
-                            const display = (style != null ? style.display : '');
+                            const display = (this.style != null ? this.style.display : '');
                             switch (display) {
                                 case 'line-item':
                                 case 'block':
@@ -160,26 +145,21 @@ class Node {
                     this.android('layout_weight', '0');
                 }
             }
-            if (styleMap.minHeight != null || styleMap.maxHeight != null) {
-                if (this.android('layout_height') != 'match_constraint') {
-                    if (styleMap.minHeight != null) {
-                        this.android('minHeight', Utils.convertToPX(styleMap.minHeight));
-                    }
-                    if (styleMap.maxHeight != null) {
-                        this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight));
-                    }
-                    if (styleMap.height == null) {
-                        this.android('layout_height', 'wrap_content');
-                    }
+            if (this.android('layout_height') != 'match_constraint') {
+                if (styleMap.minHeight != null) {
+                    this.android('minHeight', Utils.convertToPX(styleMap.minHeight));
+                }
+                if (styleMap.maxHeight != null) {
+                    this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight));
                 }
             }
             if (this.android('layout_height') == null) {
                 if (this.layoutWeightHeight != null) {
                     this.android('layout_weight', this.layoutWeightHeight);
-                    this.android('layout_height', (this.layoutWeightHeight == '1' ? '0px' : 'wrap_content'));
+                    this.android('layout_height', (this.layoutWeightHeight == 1 ? '0px' : 'wrap_content'));
                 }
                 else {
-                    if (!parentScrollView && !parentGridLayout && height >= parentHeight) {
+                    if (parent.scrollOverflow == null && !parent.isView(WIDGET_ANDROID.GRID) && height >= parentHeight) {
                         this.android('layout_height', 'match_parent', false);
                     }
                     else {
@@ -258,11 +238,10 @@ class Node {
         let minTop = Number.MAX_VALUE;
         let maxBottom = Number.MIN_VALUE;
         this.children.forEach(node => {
-            const bounds = node.bounds;
-            minLeft = Math.min(bounds.left, minLeft);
-            maxRight = Math.max(bounds.right, maxRight);
-            minTop = Math.min(bounds.top, minTop);
-            maxBottom = Math.max(bounds.bottom, maxBottom);
+            minLeft = Math.min(node.bounds.left, minLeft);
+            maxRight = Math.max(node.bounds.right, maxRight);
+            minTop = Math.min(node.bounds.top, minTop);
+            maxBottom = Math.max(node.bounds.bottom, maxBottom);
         });
         return [maxRight - minLeft, maxBottom - minTop];
     }
@@ -552,6 +531,7 @@ class Node {
             wrapNode: node,
             parent,
             children,
+            original: node.original,
             depth: parent.depth,
             depthIndent: parent.depthIndent,
             bounds: node.bounds,

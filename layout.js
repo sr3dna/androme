@@ -1495,7 +1495,7 @@ function setLayoutWeight() {
                 const row = node.linearRows[i];
                 const children = row.renderChildren.filter(item => item.visible);
                 for (let j = 0; j < children.length; j++) {
-                    children[j][`layoutWeight${(node.isLinearHorizontal() ? 'Width' : 'Height')}`] = (columnWeight[j][i] != null && columnWeight[j][i] <= SETTINGS[(node.isLinearHorizontal() ? 'whitespaceHorizontalOffset' : 'whitespaceVerticalOffset')] ? '0' : '1');
+                    children[j][`layoutWeight${(node.isLinearHorizontal() ? 'Width' : 'Height')}`] = (columnWeight[j][i] != null && columnWeight[j][i] <= SETTINGS[(node.isLinearHorizontal() ? 'whitespaceHorizontalOffset' : 'whitespaceVerticalOffset')] ? 0 : 1);
                 }
             }
         }
@@ -1755,7 +1755,7 @@ function parseDocument() {
                                                     nodeX.parent = nodeY;
                                                     nodeX.gridIndex = l;
                                                     if (SETTINGS.useLayoutWeight) {
-                                                        nodeX.gridColumnWeight = (columnSymmetry[l] && nodeY.tagName != 'TBODY' ? '0' : '1');
+                                                        nodeX.gridColumnWeight = (columnSymmetry[l] && nodeY.tagName != 'TBODY' ? 0 : 1);
                                                     }
                                                     let rowSpan = 1;
                                                     let columnSpan = 1 + spacer;
