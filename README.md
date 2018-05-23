@@ -1,6 +1,6 @@
 ## chrome android layout
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. Ultimately the goal is to create a pixel to pixel translation from HTML to mobile devices due to HTML being the most popular and versatile way to design user interfaces.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. Ultimately the goal is to create a pixel to pixel translation from HTML in terms of structure to mobile devices. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML.
 
 These settings are available in layout.js to customize your desired XML structure. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
@@ -461,7 +461,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_3"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="4dp"
+				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -587,7 +587,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_4"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="4dp"
+				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -639,7 +639,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_5"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="4dp"
+				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -649,7 +649,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_6"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="4dp"
+				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -700,7 +700,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:background="@drawable/select_hour"
 				android:entries="@array/customday0_array"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="4dp"
+				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -710,7 +710,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/customyear0"
 				android:background="@drawable/input_order"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="2dp"
 				android:layout_width="40dp"
 				android:paddingVertical="1dp"
 				style="@style/Input_1.Input_3" />
@@ -764,7 +764,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				<RadioButton
 					android:id="@+id/c3"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="7dp"
+					android:layout_marginLeft="6dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
 					android:layout_weight="0"
@@ -775,8 +775,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 			<CheckBox
 				android:id="@+id/c4"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="4dp"
-				android:layout_marginRight="3dp"
+				android:layout_marginHorizontal="3dp"
 				android:layout_marginVertical="3dp"
 				android:layout_width="wrap_content"
 				android:text="@string/none"
@@ -785,7 +784,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_7"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="4dp"
+				android:layout_marginLeft="3dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"

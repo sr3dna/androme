@@ -1521,7 +1521,6 @@ function setNodeCache() {
             const bounds = element.getBoundingClientRect();
             if (bounds.width != 0 && bounds.height != 0) {
                 const node = new Node(NODE_CACHE.length + 1, element);
-                element.androidNode = node;
                 NODE_CACHE.push(node);
             }
         }
@@ -1753,10 +1752,6 @@ function parseDocument() {
                                                     }
                                                     nodeX.parent.hide();
                                                     nodeX.parent = nodeY;
-                                                    nodeX.gridIndex = l;
-                                                    if (SETTINGS.useLayoutWeight) {
-                                                        nodeX.gridColumnWeight = (columnSymmetry[l] && nodeY.tagName != 'TBODY' ? 0 : 1);
-                                                    }
                                                     let rowSpan = 1;
                                                     let columnSpan = 1 + spacer;
                                                     let spaceSpan = 0;
@@ -1794,10 +1789,14 @@ function parseDocument() {
                                                     if (columnSpan > 1) {
                                                         nodeX.android.layout_columnSpan = columnSpan;
                                                     }
+                                                    nodeX.gridIndex = l;
                                                     nodeX.gridSpaceSpan = spaceSpan;
                                                     nodeX.gridRowEnd = (columnSpan + spaceSpan + l == columns.length);
                                                     nodeX.gridFirst = (count++ == 0);
                                                     nodeX.gridLast = (nodeX.gridRowEnd && m == columns[l].length - 1);
+                                                    if (SETTINGS.useLayoutWeight) {
+                                                        nodeX.gridColumnWeight = (columnSymmetry[l] && nodeY.tagName != 'TBODY' ? 0 : 1);
+                                                    }
                                                     if (rowStart[m] == null) {
                                                         nodeX.gridRowStart = true;
                                                         rowStart[m] = nodeX;
@@ -1820,13 +1819,11 @@ function parseDocument() {
                                 const [linearX, linearY] = Node.isLinearXY(nodeY.children.filter(item => (item.depth == nodeY.depth + 1)));
                                 if (linearX && linearY) {
                                     if (nodeY.children.length == 1) {
-                                        const nodeChild = nodeY.children[0];
-                                        nodeChild.parent = nodeY.parent;
-                                        nodeChild.renderId = nodeY.id;
-                                        if (nodeY.parent.isView(WIDGET_ANDROID.GRID)) {
-                                            nodeChild.inheritGrid(nodeY);
-                                        }
-                                        nodeChild.inheritStyleMap(nodeY);
+                                        const childNode = nodeY.children[0];
+                                        childNode.parent = nodeY.parent;
+                                        childNode.renderId = nodeY.id;
+                                        childNode.inheritGrid(nodeY);
+                                        childNode.inheritStyleMap(nodeY);
                                     }
                                     nodeY.children.forEach(item => item.depthIndent -= 1);
                                     xml += `{${nodeY.id}}`;
@@ -1870,8 +1867,7 @@ function parseDocument() {
                                         wrapNode.android('layout_columnSpan', columnSpan);
                                         delete nodeY.android.layout_columnSpan;
                                     }
-                                    const renderParent = nodeY.parent;
-                                    const template = siblings.map(item => {
+                                    const section = siblings.map(item => {
                                         if (!item.renderParent) {
                                             let visible = true;
                                             const children = item.element.children;
@@ -1902,15 +1898,15 @@ function parseDocument() {
                                         return '';
                                     }).join('');
                                     if (linearX || linearY) {
-                                        if (renderParent.isView(WIDGET_ANDROID.LINEAR)) {
-                                            renderParent.linearRows.push(wrapNode);
+                                        if (nodeY.parent.isView(WIDGET_ANDROID.LINEAR)) {
+                                            nodeY.parent.linearRows.push(wrapNode);
                                         }
-                                        xml += writeLinearLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, renderParent, linearY);
+                                        xml += writeLinearLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, nodeY.parent, linearY);
                                     }
                                     else {
-                                        xml += writeDefaultLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, renderParent);
+                                        xml += writeDefaultLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, nodeY.parent);
                                     }
-                                    xml = xml.replace(`{${wrapNode.id}}`, template);
+                                    xml = xml.replace(`{${wrapNode.id}}`, section);
                                 }
                             }
                         }

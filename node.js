@@ -44,6 +44,9 @@ class Node {
         this._app = {};
 
         Object.assign(this, options);
+        if (options.element != null || arguments[1] != null) {
+            this.element.androidNode = this;
+        }
     }
 
     setAndroidId(widgetName) {
@@ -205,14 +208,14 @@ class Node {
             const bounds = this.bounds;
             this.linear = {
                 top: Math.floor(bounds.top - this.marginTop),
-                right: Math.floor(bounds.right + this.marginRight),
-                bottom: Math.floor(bounds.bottom + this.marginBottom),
+                right: Math.ceil(bounds.right + this.marginRight),
+                bottom: Math.ceil(bounds.bottom + this.marginBottom),
                 left: Math.floor(bounds.left - this.marginLeft)
             };
             this.box = {
-                top: Math.floor(bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth')))),
+                top: Math.ceil(bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth')))),
                 right: Math.floor(bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth')))),
-                left: Math.floor(bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))),
+                left: Math.ceil(bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))),
                 bottom: Math.floor(bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))))
             };
         }
@@ -344,12 +347,14 @@ class Node {
         }
     }
     inheritGrid(node) {
-        for (const prop in node) {
-            if (prop.startsWith('grid')) {
-                if (node[prop] !== false) {
-                    this[prop] = node[prop];
+        if (node.parent.isView(WIDGET_ANDROID.GRID)) {
+            for (const prop in node) {
+                if (prop.startsWith('grid')) {
+                    if (node[prop] !== false) {
+                        this[prop] = node[prop];
+                    }
+                    delete node[prop];
                 }
-                delete node[prop];
             }
         }
     }
@@ -547,8 +552,8 @@ class Node {
         node.setAndroidId(WIDGET_ANDROID.TEXT);
         node.setBounds(element);
         node.setLinearBoxRect();
-        const inherit = INHERIT_ANDROID[WIDGET_ANDROID.TEXT];
         if (parent != null) {
+            const inherit = INHERIT_ANDROID[WIDGET_ANDROID.TEXT];
             const style = [];
             for (const prop in inherit) {
                 let value = parent.style[prop]; 
@@ -561,7 +566,6 @@ class Node {
             node.styleAttributes = style;
         }
         element.children = [];
-        element.androidNode = node;
         return node;
     }
     static parseStyle(element, name, value) {
