@@ -554,12 +554,6 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                 }
                 break;
         }
-        if (parent.isView(WIDGET_ANDROID.GRID)) {
-            const styleMap = node.original.parent.styleMap;
-            if (styleMap.textAlign || styleMap.verticalAlign) {
-                node.android('layout_gravity', getAndroidGravity(styleMap.textAlign, styleMap.verticalAlign));
-            }
-        }
     }
     node.setAttributes();
     node.renderDepth = depth;
@@ -956,44 +950,9 @@ function setGravity(node) {
         }
     }
     if (textAlign || verticalAlign) {
-        value = getAndroidGravity(textAlign, verticalAlign);
+        value = Node.getAndroidGravity(textAlign, verticalAlign);
     }
     return { gravity: value };
-}
-
-function getAndroidGravity(textAlign, verticalAlign) {
-    let gravity = [];
-    switch (verticalAlign) {
-        case 'middle':
-            gravity.push('center_vertical');
-            break;
-        case 'bottom':
-        case 'text-bottom':
-            gravity.push('bottom');
-            break;
-        default:
-            gravity.push('top');
-    }
-    switch (textAlign) {
-        case 'start':
-            gravity.push('start');
-            break;
-        case 'right':
-            gravity.push(getLTR('right', 'end'));
-            break;
-        case 'end':
-            gravity.push('end');
-            break;
-        case 'center':
-            gravity.push('center_horizontal');
-            break;
-        default:
-            gravity.push(getLTR('left', 'start'));
-    }
-    if (gravity.includes('center_vertical') && gravity.includes('center_horizontal')) {
-        gravity = ['center'];
-    }
-    return gravity.join('|');
 }
 
 function getGridSpacing(node, depth) {
@@ -1006,9 +965,6 @@ function getGridSpacing(node, depth) {
             container = container.original.parent;
         }
         const dimensions = getBoxSpacing(container, true);
-        if (node.gridSpaceSpan > 0) {
-            preXml += getSpaceXml(depth, (node.gridSpaceSpanColumnWeight ? 'wrap_content' : '0px'), 'wrap_content', node.gridSpaceSpan, (node.gridSpaceSpanColumnWeight ? 0 : 1));
-        }
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
@@ -1316,7 +1272,7 @@ function setMarginPadding() {
                 let current = node.box.left + node.paddingLeft;
                 children.sort((a, b) => (a.linear.left > b.linear.left ? 1 : -1)).forEach(item => {
                     if (item.visible && item.style.float == 'right') {
-                        item.android('layout_gravity', getAndroidGravity('right', item.style.verticalAlign));
+                        item.android('layout_gravity', Node.getAndroidGravity('right', item.style.verticalAlign));
                     }
                     else {
                         const width = Math.floor(item.linear.left - current);
@@ -1659,7 +1615,12 @@ function parseDocument() {
         const coordsY = Object.keys(mapY[i]);
         const partial = {};
         for (let j = 0; j < coordsY.length; j++) {
-            const axisY = mapY[i][coordsY[j]].sort((a, b) => (a.parentIndex > b.parentIndex ? 1 : -1));
+            const axisY = mapY[i][coordsY[j]].sort((a, b) => {
+                if (a.withinX(b.linear)) {
+                    return (a.linear.x > b.linear.x ? 1 : -1);
+                }
+                return (a.parentIndex > b.parentIndex ? 1 : -1);
+            });
             for (let k = 0; k < axisY.length; k++) {
                 const nodeY = axisY[k];
                 if (!nodeY.renderParent) {
@@ -1688,7 +1649,7 @@ function parseDocument() {
                                             const nextX = nextAxisX[m];
                                             if (nextX.parent.parent != null && nodeY.id == nextX.parent.parent.id) {
                                                 const [left, right] = [nextX.bounds.left, nextX.bounds.right];
-                                                if (l == 0 || left > columnRight[l - 1]) {
+                                                if (l == 0 || left >= columnRight[l - 1]) {
                                                     if (columns[l] == null) {
                                                         columns[l] = [];
                                                     }
@@ -1754,25 +1715,16 @@ function parseDocument() {
                                                     nodeX.parent = nodeY;
                                                     let rowSpan = 1;
                                                     let columnSpan = 1 + spacer;
-                                                    let spaceSpan = 0;
                                                     for (let n = l + 1; n < columns.length; n++) {
                                                         if (columns[n][m].spacer == 1) {
-                                                            if (nodeX.bounds.right == columnRight[l] && nodeX.bounds.right < columnLeft[n]) {
-                                                                spaceSpan++;
-                                                                if (nodeX.gridSpaceSpanColumnWeight == null || nodeX.gridSpaceSpanColumnWeight == true) {
-                                                                    nodeX.gridSpaceSpanColumnWeight = columnSymmetry[n];
-                                                                }
-                                                            }
-                                                            else {
-                                                                columnSpan++;
-                                                            }
+                                                            columnSpan++;
                                                             columns[n][m].spacer = 2;
                                                         }
                                                         else {
                                                             break;
                                                         }
                                                     }
-                                                    if (columnSpan + spaceSpan == 1) {
+                                                    if (columnSpan == 1) {
                                                         for (let n = m + 1; n < columns[l].length; n++) {
                                                             if (columns[l][n].spacer == 1) {
                                                                 rowSpan++;
@@ -1784,14 +1736,13 @@ function parseDocument() {
                                                         }
                                                     }
                                                     if (rowSpan > 1) {
-                                                        nodeX.android.layout_rowSpan = rowSpan;
+                                                        nodeX.android('layout_rowSpan', rowSpan);
                                                     }
                                                     if (columnSpan > 1) {
-                                                        nodeX.android.layout_columnSpan = columnSpan;
+                                                        nodeX.android('layout_columnSpan', columnSpan);
                                                     }
                                                     nodeX.gridIndex = l;
-                                                    nodeX.gridSpaceSpan = spaceSpan;
-                                                    nodeX.gridRowEnd = (columnSpan + spaceSpan + l == columns.length);
+                                                    nodeX.gridRowEnd = (columnSpan + l == columns.length);
                                                     nodeX.gridFirst = (count++ == 0);
                                                     nodeX.gridLast = (nodeX.gridRowEnd && m == columns[l].length - 1);
                                                     if (SETTINGS.useLayoutWeight) {
@@ -1861,11 +1812,11 @@ function parseDocument() {
                                     const columnSpan = nodeY.android('layout_columnSpan');
                                     if (rowSpan > 1) {
                                         wrapNode.android('layout_rowSpan', rowSpan);
-                                        delete nodeY.android.layout_rowSpan;
+                                        nodeY.delete('android', 'layout_rowSpan');
                                     }
                                     if (columnSpan > 1) {
                                         wrapNode.android('layout_columnSpan', columnSpan);
-                                        delete nodeY.android.layout_columnSpan;
+                                        nodeY.delete('android', 'layout_columnSpan');
                                     }
                                     const renderParent = nodeY.parent;
                                     const section = siblings.map(item => {

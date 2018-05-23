@@ -78,14 +78,17 @@ class Node {
         let styleMap = this.styleMap;
         let width = 0;
         let height = 0;
+        let gridLayout = false;
         if (this.wrapNode != null) {
             parent = this.wrapNode.original.parent || this.parent;
             [width, height] = this.getChildDimensions();
+            gridLayout = this.parent.isView(WIDGET_ANDROID.GRID);
         }
         else {
             parent = this.parent;
             width = this.element.offsetWidth + this.marginLeft + this.marginRight;
             height = this.element.offsetHeight + this.marginTop + this.marginBottom;
+            gridLayout = parent.isView(WIDGET_ANDROID.GRID);
         }
         const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
         const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
@@ -120,7 +123,7 @@ class Node {
                     this.android('layout_width', (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1 ? '0px' : 'wrap_content'));
                 }
                 else {
-                    if (parent.isView(WIDGET_ANDROID.GRID)) {
+                    if (gridLayout) {
                         this.android('layout_width', 'wrap_content', false);
                     }
                     else {
@@ -162,13 +165,19 @@ class Node {
                     this.android('layout_height', (this.layoutWeightHeight == 1 ? '0px' : 'wrap_content'));
                 }
                 else {
-                    if (parent.scrollOverflow == null && !parent.isView(WIDGET_ANDROID.GRID) && height >= parentHeight) {
+                    if (parent.scrollOverflow == null && !gridLayout && height >= parentHeight) {
                         this.android('layout_height', 'match_parent', false);
                     }
                     else {
                         this.android('layout_height', 'wrap_content', false);
                     }
                 }
+            }
+        }
+        if (gridLayout) {
+            const styleMap = this.original.parent.styleMap;
+            if (styleMap.textAlign || styleMap.verticalAlign) {
+                this.android('layout_gravity', Node.getAndroidGravity(styleMap.textAlign, styleMap.verticalAlign));
             }
         }
     }
@@ -644,6 +653,40 @@ class Node {
             bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
         }
         return bounds;
+    }
+    static getAndroidGravity(textAlign, verticalAlign) {
+        let gravity = [];
+        switch (verticalAlign) {
+            case 'middle':
+                gravity.push('center_vertical');
+                break;
+            case 'bottom':
+            case 'text-bottom':
+                gravity.push('bottom');
+                break;
+            default:
+                gravity.push('top');
+        }
+        switch (textAlign) {
+            case 'start':
+                gravity.push('start');
+                break;
+            case 'right':
+                gravity.push(getLTR('right', 'end'));
+                break;
+            case 'end':
+                gravity.push('end');
+                break;
+            case 'center':
+                gravity.push('center_horizontal');
+                break;
+            default:
+                gravity.push(getLTR('left', 'start'));
+        }
+        if (gravity.includes('center_vertical') && gravity.includes('center_horizontal')) {
+            gravity = ['center'];
+        }
+        return gravity.join('|');
     }
     static getElementStyle(element) {
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));

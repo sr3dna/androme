@@ -180,7 +180,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				<LinearLayout
 					android:id="@+id/linearlayout_2"
 					android:layout_columnWeight="1"
-					android:layout_height="match_parent"
+					android:layout_height="wrap_content"
 					android:layout_width="0dp"
 					android:orientation="horizontal">
 					<Spinner
@@ -435,7 +435,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<LinearLayout
 			android:id="@+id/linearlayout_4"
 			android:layout_columnWeight="1"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
@@ -559,7 +559,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<LinearLayout
 			android:id="@+id/linearlayout_5"
 			android:layout_columnWeight="1"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
@@ -611,7 +611,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<LinearLayout
 			android:id="@+id/linearlayout_6"
 			android:layout_columnWeight="1"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
@@ -732,7 +732,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 		<LinearLayout
 			android:id="@+id/linearlayout_8"
 			android:layout_columnWeight="1"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_width="0dp"
 			android:orientation="horizontal">
 			<Spinner
