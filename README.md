@@ -1,8 +1,8 @@
 ## chrome android layout
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. ConstraintLayout or RelativeLayout for positional views are generated based on your preference. iOS and Xamarin Forms can also be supported once the Android version is stable. Ideally it will be hosted inside a Chrome extension or WYSIWYG HTML editor. Currently the XML structure can be imported into your Android projects as a foundation for your layout design.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. Ultimately the goal is to create a pixel to pixel translation from HTML to mobile devices due to HTML being the most popular and versatile way to design user interfaces.
 
-These settings are available in layout.js to customize your desired XML structure. 
+These settings are available in layout.js to customize your desired XML structure. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
 ```javascript
 const SETTINGS = {
@@ -43,7 +43,7 @@ You can preview the library with the provided sample.html file which should gene
 </script>
 ```
 
-The Date fields in the form have been modified to demonstrate the Constraint circle and bias capabilities in this library. Constraint chain bias is also available as a setting although the current Android implementation does not support exact placement.
+The Date fields in the form have been modified to demonstrate the Constraint circle and bias capabilities in this library. Constraint chain bias is also available as a setting although the current Android implementation does not support exact placement. It might be more ideal to disable Constraint chain and use Constraint circle for some user interfaces. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate.
 
 <img src="sample.png" alt="chrome android layout" />
 
