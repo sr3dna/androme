@@ -427,13 +427,12 @@ function writeViewLayout(node, depth, parent, tagName) {
     let preXml = '';
     let postXml = '';
     node.setAndroidId(tagName);
-    const overflow = node.overflow;
     if (node.overflow != 0) {
         const scrollView = [];
-        if ((node.overflow & 4) == 4) {
+        if (node.overflowY) {
             scrollView.push((node.nestedScroll ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
         }
-        if ((node.overflow & 2) == 2) {
+        if (node.overflowX) {
             scrollView.push(WIDGET_ANDROID.SCROLL_HORIZONTAL);
         }
         node.depthIndent += scrollView.length;
@@ -569,13 +568,12 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                 }
                 break;
         }
-        const overflow = node.overflow;
-        if (overflow != 0) {
+        if (node.overflow != 0) {
             let scrollbars = '';
-            if ((overflow & 2) == 2) {
+            if (node.overflowX) {
                 scrollbars += 'horizontal';
             }
-            if ((overflow & 4) == 4) {
+            if (node.overflowY) {
                 scrollbars += (scrollbars != '' ? '|' : '') + 'vertical';
             }
             node.android('scrollbars', scrollbars);

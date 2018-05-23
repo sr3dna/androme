@@ -39,6 +39,7 @@ class Node {
         this._depth = null;
         this._android = {};
         this._app = {};
+        this._overflow = null;
 
         Object.assign(this, options);
         if (options.element != null || arguments[1] != null) {
@@ -423,16 +424,6 @@ class Node {
         return (this.androidWidgetName == viewName);
     }
 
-    get overflow() {
-        let value = 0;
-        if (this.style.overflow == 'scroll' || (this.style.overflowX == 'auto' && this.element.clientWidth != this.element.scrollWidth)) {
-            value |= 2;
-        }
-        if (this.style.overflow == 'scroll' || (this.style.overflowY == 'auto' && this.element.clientHeight != this.element.scrollHeight)) {
-            value |= 4;
-        }
-        return value;
-    }
     get horizontalBias() {
         const parent = this.renderParent;
         if (parent != null && parent.visible) {
@@ -513,6 +504,25 @@ class Node {
             return (c > d ? 1 : -1);
         });
         return (nodes.length > 0 ? nodes[0] : null);
+    }
+    get overflow() {
+        if (this._overflow == null) {
+            let value = 0;
+            if (this.style.overflow == 'scroll' || (this.style.overflowX == 'auto' && this.element.clientWidth != this.element.scrollWidth)) {
+                value |= 2;
+            }
+            if (this.style.overflow == 'scroll' || (this.style.overflowY == 'auto' && this.element.clientHeight != this.element.scrollHeight)) {
+                value |= 4;
+            }
+            this._overflow = value;
+        }
+        return this._overflow;
+    }
+    get overflowX() {
+        return ((this._overflow & 2) == 2);
+    }
+    get overflowY() {
+        return ((this._overflow & 4) == 4);
     }
     get marginTop() {
         return Utils.parseInt(this.css('marginTop'));
