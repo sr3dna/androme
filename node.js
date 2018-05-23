@@ -3,12 +3,10 @@ class Node {
         let style = {};
         let styleMap = {};
         let bounds = null;
-        let overflow = null;
         if (element != null) {
             style = window.getComputedStyle(element);
             styleMap = element.styleMap || {};
             bounds = element.getBoundingClientRect();
-            overflow = ((style.overflow == 'auto' || style.overflow == 'scroll') && (element.clientHeight != element.scrollHeight || element.clientWidth != element.scrollWidth) ? style.overflow : null);
             for (const inline of element.style) {
                 styleMap[Utils.hyphenToCamelCase(inline)] = element.style[inline];
             }
@@ -33,8 +31,7 @@ class Node {
         this.original = {};
         this.boxRefit = {};
         this.preAlignment = {};
-        this.scrollOverflow = overflow;
-        this.scrollNested = false;
+        this.nestedScroll = false;
         this.wrapNode = null;
         this.parentIndex = Number.MAX_VALUE;
 
@@ -92,7 +89,7 @@ class Node {
         }
         const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
         const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
-        if (this.scrollOverflow != null && !this.isView(WIDGET_ANDROID.TEXT)) {
+        if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
             this.android('layout_width', 'match_parent', false);
             this.android('layout_height', 'match_parent', false);
         }
@@ -127,7 +124,7 @@ class Node {
                         this.android('layout_width', 'wrap_content', false);
                     }
                     else {
-                        if (parent.scrollOverflow == null && width >= parentWidth) {
+                        if (parent.overflow == 0 && width >= parentWidth) {
                             this.android('layout_width', 'match_parent', false);
                         }
                         else {
@@ -165,7 +162,7 @@ class Node {
                     this.android('layout_height', (this.layoutWeightHeight == 1 ? '0px' : 'wrap_content'));
                 }
                 else {
-                    if (parent.scrollOverflow == null && !gridLayout && height >= parentHeight) {
+                    if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
                         this.android('layout_height', 'match_parent', false);
                     }
                     else {
@@ -173,11 +170,11 @@ class Node {
                     }
                 }
             }
-        }
-        if (gridLayout) {
-            const styleMap = this.original.parent.styleMap;
-            if (styleMap.textAlign || styleMap.verticalAlign) {
-                this.android('layout_gravity', Node.getAndroidGravity(styleMap.textAlign, styleMap.verticalAlign));
+            if (gridLayout) {
+                const styleMap = this.original.parent.styleMap;
+                if (styleMap.textAlign || styleMap.verticalAlign) {
+                    this.android('layout_gravity', Node.getAndroidGravity(styleMap.textAlign, styleMap.verticalAlign));
+                }
             }
         }
     }
@@ -422,13 +419,20 @@ class Node {
     isLinearHorizontal() {
         return (this._android.orientation == 'horizontal');
     }
-    isScrollHorizontal() {
-        return (this.styleMap.width != null && (this.styleMap.overflowX == 'auto' || this.styleMap.overflowX == 'scroll'));
-    }
     isView(viewName) {
         return (this.androidWidgetName == viewName);
     }
 
+    get overflow() {
+        let value = 0;
+        if (this.style.overflow == 'scroll' || (this.style.overflowX == 'auto' && this.element.clientWidth != this.element.scrollWidth)) {
+            value |= 2;
+        }
+        if (this.style.overflow == 'scroll' || (this.style.overflowY == 'auto' && this.element.clientHeight != this.element.scrollHeight)) {
+            value |= 4;
+        }
+        return value;
+    }
     get horizontalBias() {
         const parent = this.renderParent;
         if (parent != null && parent.visible) {

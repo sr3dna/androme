@@ -424,27 +424,50 @@ function writeGridLayout(node, depth, parent, columnCount = 2) {
 }
 
 function writeViewLayout(node, depth, parent, tagName) {
-    let indent = Utils.setIndent(depth);
     let preXml = '';
     let postXml = '';
     node.setAndroidId(tagName);
-    if (node.scrollOverflow != null) {
-        node.depthIndent++;
-        node.children.forEach(item => item.depthIndent++);
-        const scrollView = (node.isScrollHorizontal() ? WIDGET_ANDROID.SCROLL_HORIZONTAL : (node.scrollNested ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
-        const wrapNode = Node.createWrapNode(NODE_CACHE.length + 1, node, parent, [node]);
-        wrapNode.styleMap = node.styleMap;
-        wrapNode.setAndroidId(scrollView);
-        wrapNode.setBounds();
-        wrapNode.setLinearBoxRect();
-        wrapNode.setAttributes();
-        wrapNode.renderDepth = depth;
-        wrapNode.renderParent = parent;
-        NODE_CACHE.push(wrapNode);
-        preXml = indent + `<${scrollView}{@${wrapNode.id}}>\n`;
-        postXml = indent + `</${scrollView}>\n`;
-        indent = Utils.setIndent(++depth);
-        node.renderParent = wrapNode;
+    const overflow = node.overflow;
+    if (node.overflow != 0) {
+        const scrollView = [];
+        if ((node.overflow & 4) == 4) {
+            scrollView.push((node.nestedScroll ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
+        }
+        if ((node.overflow & 2) == 2) {
+            scrollView.push(WIDGET_ANDROID.SCROLL_HORIZONTAL);
+        }
+        node.depthIndent += scrollView.length;
+        node.children.forEach(item => {
+            item.depthIndent += scrollView.length
+            item.nestedScroll = true;
+        });
+        let current = node;
+        let scrollDepth = depth + scrollView.length;
+        scrollView.forEach((widgetName, index) => {
+            const wrapNode = Node.createWrapNode(NODE_CACHE.length + 1, current, parent, [current]);
+            wrapNode.setAndroidId(widgetName);
+            wrapNode.setBounds();
+            wrapNode.setLinearBoxRect();
+            wrapNode.setAttributes();
+            wrapNode.renderDepth = --scrollDepth;
+            wrapNode.renderParent = parent;
+            NODE_CACHE.push(wrapNode);
+            wrapNode.styleMap.overflow = node.styleMap.overflow;
+            if (widgetName == WIDGET_ANDROID.SCROLL_HORIZONTAL) {
+                wrapNode.styleMap.width = node.styleMap.width; 
+                wrapNode.styleMap.overflowX = node.styleMap.overflowX;
+            }
+            else {
+                wrapNode.styleMap.height = node.styleMap.height;
+                wrapNode.styleMap.overflowY = node.styleMap.overflowY;
+            }
+            let indent = Utils.setIndent(scrollDepth);
+            preXml = indent + `<${widgetName}{@${wrapNode.id}}>\n` + preXml;
+            postXml += indent + `</${widgetName}>\n`;
+            current.renderParent = wrapNode;
+            current = wrapNode;
+            depth++;
+        });
     }
     else {
         node.renderParent = parent;
@@ -456,7 +479,6 @@ function writeViewLayout(node, depth, parent, tagName) {
 
 function writeViewTag(node, depth, parent, tagName, recursive = false) {
     const element = node.element;
-    const indent = Utils.setIndent(depth);
     let preXml = '';
     let postXml = '';
     node.setAndroidId(tagName);
@@ -547,12 +569,16 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                 }
                 break;
         }
-        switch (node.widgetName) {
-            case WIDGET_ANDROID.TEXT:
-                if (node.scrollOverflow != null) {
-                    node.android('scrollbars', (node.isScrollHorizontal() ? 'horizontal' : 'vertical'));
-                }
-                break;
+        const overflow = node.overflow;
+        if (overflow != 0) {
+            let scrollbars = '';
+            if ((overflow & 2) == 2) {
+                scrollbars += 'horizontal';
+            }
+            if ((overflow & 4) == 4) {
+                scrollbars += (scrollbars != '' ? '|' : '') + 'vertical';
+            }
+            node.android('scrollbars', scrollbars);
         }
     }
     node.setAttributes();
@@ -1492,7 +1518,7 @@ function setNodeCache() {
         }
         node.preAlignment.verticalAlign = node.styleMap.verticalAlign || '';
         node.element.style.verticalAlign = 'top';
-        if (node.scrollOverflow != null) {
+        if (node.overflow != 0) {
             if (Utils.hasValue(node.styleMap.width)) {
                 node.preAlignment.width = node.styleMap.width;
                 node.element.style.width = '';
@@ -1501,9 +1527,8 @@ function setNodeCache() {
                 node.preAlignment.height = node.styleMap.height;
                 node.element.style.height = '';
             }
-            node.preAlignment.overflow = node.scrollOverflow;
+            node.preAlignment.overflow = node.style.overflow;
             node.element.style.overflow = 'visible';
-            node.children.forEach(item => item.scrollNested = true);
         }
     }
     const parentNodes = {};

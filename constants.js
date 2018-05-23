@@ -103,7 +103,7 @@ const ACTION_ANDROID = {
     'ScrollView': {
         'androidId': 'android:id="@+id/{0}"'
     },
-    'HorizonatalView': {
+    'HorizontalScrollView': {
         'androidId': 'android:id="@+id/{0}"'
     },
     'NestedScrollView': {
