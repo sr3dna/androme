@@ -1867,6 +1867,7 @@ function parseDocument() {
                                         wrapNode.android('layout_columnSpan', columnSpan);
                                         delete nodeY.android.layout_columnSpan;
                                     }
+                                    const renderParent = nodeY.parent;
                                     const section = siblings.map(item => {
                                         if (!item.renderParent) {
                                             let visible = true;
@@ -1898,13 +1899,13 @@ function parseDocument() {
                                         return '';
                                     }).join('');
                                     if (linearX || linearY) {
-                                        if (nodeY.parent.isView(WIDGET_ANDROID.LINEAR)) {
-                                            nodeY.parent.linearRows.push(wrapNode);
+                                        if (renderParent.isView(WIDGET_ANDROID.LINEAR)) {
+                                            renderParent.linearRows.push(wrapNode);
                                         }
-                                        xml += writeLinearLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, nodeY.parent, linearY);
+                                        xml += writeLinearLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, renderParent, linearY);
                                     }
                                     else {
-                                        xml += writeDefaultLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, nodeY.parent);
+                                        xml += writeDefaultLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, renderParent);
                                     }
                                     xml = xml.replace(`{${wrapNode.id}}`, section);
                                 }

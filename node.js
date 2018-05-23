@@ -347,14 +347,12 @@ class Node {
         }
     }
     inheritGrid(node) {
-        if (node.parent.isView(WIDGET_ANDROID.GRID)) {
-            for (const prop in node) {
-                if (prop.startsWith('grid')) {
-                    if (node[prop] !== false) {
-                        this[prop] = node[prop];
-                    }
-                    delete node[prop];
+        for (const prop in node) {
+            if (prop.startsWith('grid')) {
+                if (node[prop] !== false) {
+                    this[prop] = node[prop];
                 }
+                delete node[prop];
             }
         }
     }
