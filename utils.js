@@ -97,6 +97,15 @@ const Utils = (function() {
         },
         withinFraction: function(left, right) {
             return (Math.ceil(left) == Math.floor(right));
+        },
+        isVisible: function(element) {
+            if (typeof element.getBoundingClientRect == 'function') {
+                const bounds = element.getBoundingClientRect();
+                if (bounds.width != 0 && bounds.height != 0) {
+                    return true;
+                }
+            }
+            return false;
         }
     };
 

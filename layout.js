@@ -1527,26 +1527,28 @@ function generateNodeId() {
 }
 
 function setNodeCache() {
-    let elements = document.querySelectorAll('body > *');
-    let selector = 'body *';
-    for (const i in elements) {
-        if (MAPPING_ANDROID[elements[i].tagName] != null) {
-            selector = 'body, body *';
-            break;
+    let nodeTotal = 0;
+    document.body.childNodes.forEach(element => {
+        if (element.nodeName == '#text') {
+            if (element.textContent.trim() != '') {
+                nodeTotal++;
+            }
         }
-    }
-    elements = document.querySelectorAll(selector);
+        else {
+            if (Utils.isVisible(element)) {
+                nodeTotal++;
+            }   
+        }
+    });
+    let elements = document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *'));
     for (const i in elements) {
         const element = elements[i];
         if (INLINE_CHROME.includes(element.tagName) && (MAPPING_ANDROID[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
             continue;
         }
-        if (typeof element.getBoundingClientRect == 'function') {
-            const bounds = element.getBoundingClientRect();
-            if (bounds.width != 0 && bounds.height != 0) {
-                const node = new Node(generateNodeId(), element);
-                NODE_CACHE.push(node);
-            }
+        if (Utils.isVisible(element)) {
+            const node = new Node(generateNodeId(), element);
+            NODE_CACHE.push(node);
         }
     }
     for (const node of NODE_CACHE) {
