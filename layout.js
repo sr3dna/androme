@@ -793,14 +793,14 @@ function positionConstraints() {
                                 setNodePosition(current, layout['bottom'], adjacent);
                                 current.constraint.layoutVertical = true;
                             }
-                            if (current.linear.right == adjacent.linear.left || (withinY && Utils.withinRange(current.linear.right, adjacent.linear.left, SETTINGS.whitespaceHorizontalOffset))) {
+                            if (Utils.withinFraction(current.linear.right, adjacent.linear.left) || (withinY && Utils.withinRange(current.linear.right, adjacent.linear.left, SETTINGS.whitespaceHorizontalOffset))) {
                                 if (baseline) {
                                     setNodePosition(current, layout['baseline'], adjacent);
                                 }
                                 setNodePosition(current, layout['rightLeft'], adjacent);
                                 current.constraint.layoutHorizontal = true;
                             }
-                            else if (current.linear.left == adjacent.linear.right || (withinY && Utils.withinRange(current.linear.left, adjacent.linear.right, SETTINGS.whitespaceHorizontalOffset))) {
+                            else if (Utils.withinFraction(adjacent.linear.right, current.linear.left) || (withinY && Utils.withinRange(current.linear.left, adjacent.linear.right, SETTINGS.whitespaceHorizontalOffset))) {
                                 if (baseline) {
                                     setNodePosition(current, layout['baseline'], adjacent);
                                 }
@@ -925,32 +925,76 @@ function positionConstraints() {
                                     }
                                 }
                                 const chainStyle = `layout_constraint${horizontalVertical}_chainStyle`;
-                                if (Utils.withinFraction(node.box.left, firstNode.linear.left) && Utils.withinFraction(lastNode.linear.right, node.box.right)) {
-                                    firstNode.app(chainStyle, 'chain_spread_inside');
-                                }
-                                else if (maxOffset <= SETTINGS[`chainPacked${horizontalVertical}Offset`]) {
-                                    firstNode.app(chainStyle, 'chain_packed');
-                                    firstNode.app(`layout_constraint${horizontalVertical}_bias`, Node[`get${horizontalVertical}Bias`](node, firstNode, lastNode));
-                                    wrapNodes.forEach(item => item.android(layoutWidthHeight, 'wrap_content'));
-                                }
-                                else {
-                                    let percentTotal = 0;
-                                    for (let i = 0; i < chainDirection.length; i++) {
-                                        const chain = chainDirection[i];
-                                        const chainPrev = chainDirection[i - 1];
-                                        let percent = ((chain.linear.right - node.box.left) - (chainPrev != null ? chainPrev.linear.right - node.box.left : 0)) / (node.box.right - node.box.left);
-                                        if (chain != lastNode || Utils.withinRange(percent + percentTotal, 1.0, 0.01)) {
-                                            chain.android('layout_gravity', getLTR('right', 'end'), !flex.enabled);
-                                        }
-                                        if (chain == lastNode) {
-                                            percent = 1 - percentTotal;
-                                        }
-                                        chain.app(`layout_constraint${widthHeight}_percent`, percent.toFixed(2));
-                                        chain.app(`layout_constraint${widthHeight}_default`, 'percent');
-                                        percentTotal += parseFloat(percent.toFixed(2));
+                                if (flex.enabled && flex.justifyContent != 'normal') {
+                                    switch (flex.justifyContent) {
+                                        case 'space-between':
+                                            firstNode.app(chainStyle, 'chain_spread_inside');
+                                            Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
+                                            break;
+                                        case 'space-around':
+                                        case 'space-evenly':
+                                            firstNode.app(chainStyle, 'chain_spread_inside');
+                                            const width = node.box[widthHeight.toLowerCase()];
+                                            const percent = parseFloat((1 / chainDirection.length).toFixed(2));
+                                            let percentTotal = 0;
+                                            for (let i = 0; i < chainDirection.length; i++) {
+                                                const item = chainDirection[i];
+                                                item.app(`layout_constraint${widthHeight}_percent`, (i < chainDirection.length - 1 ? percent : parseFloat((1 - percentTotal).toFixed(2))));
+                                                let gravity = 'center';
+                                                if (flex.justifyContent == 'space-evenly') {
+                                                    if (index == 0) {
+                                                        gravity = (i < chainDirection.length - 1 ? getLTR('right', 'end') : getLTR('left', 'end'));
+                                                    }
+                                                    else {
+                                                        gravity = (i < chainDirection.length - 1 ? 'bottom' : 'top');
+                                                    }
+                                                }
+                                                item.android('layout_gravity', gravity);
+                                                percentTotal += percent;
+                                            }
+                                            Node.android(wrapNodes, layoutWidthHeight, 'match_constraint');
+                                            break;
+                                        default:
+                                            let bias = 0.5;
+                                            switch (flex.justifyContent) {
+                                                case 'flex-start':
+                                                    bias = 0;
+                                                    break;
+                                                case 'flex-end':
+                                                    bias = 1;
+                                                    break;
+                                            }
+                                            firstNode.app(chainStyle, 'chain_packed');
+                                            firstNode.app(`layout_constraint${horizontalVertical}_bias`, bias);
+                                            Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
                                     }
                                 }
-                                if (!flex.enabled) {
+                                else {
+                                    if (Utils.withinFraction(node.box.left, firstNode.linear.left) && Utils.withinFraction(lastNode.linear.right, node.box.right)) {
+                                        firstNode.app(chainStyle, 'chain_spread_inside');
+                                        Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
+                                    }
+                                    else if (maxOffset <= SETTINGS[`chainPacked${horizontalVertical}Offset`]) {
+                                        firstNode.app(chainStyle, 'chain_packed');
+                                        firstNode.app(`layout_constraint${horizontalVertical}_bias`, Node[`get${horizontalVertical}Bias`](node, firstNode, lastNode));
+                                        Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
+                                    }
+                                    else {
+                                        let percentTotal = 0;
+                                        for (let i = 0; i < chainDirection.length; i++) {
+                                            const chain = chainDirection[i];
+                                            const chainPrev = chainDirection[i - 1];
+                                            let percent = ((chain.linear.right - node.box.left) - (chainPrev != null ? chainPrev.linear.right - node.box.left : 0)) / (node.box.right - node.box.left);
+                                            if (chain != lastNode || Utils.withinRange(percent + percentTotal, 1.0, 0.01)) {
+                                                chain.android('layout_gravity', getLTR('right', 'end'), !flex.enabled);
+                                            }
+                                            if (chain == lastNode) {
+                                                percent = 1 - percentTotal;
+                                            }
+                                            chain.app(`layout_constraint${widthHeight}_percent`, percent.toFixed(2));
+                                            percentTotal += parseFloat(percent.toFixed(2));
+                                        }
+                                    }
                                     chainDirection.forEach(item => {
                                         item.constraint.horizontalChain = [];
                                         item.constraint.verticalChain = [];

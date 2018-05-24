@@ -41,11 +41,11 @@ const SETTINGS = {
     chainPackedVerticalOffset: 14
 };
 ```
-You can preview the library with the provided sample.html or sample_flex.html which should generate the same XML you see here in the README. Doing things from the "left" perspective is preferred and also to use flexbox instead of floats for the time being. I have only tested it with the latest Chrome.
+You can preview the library with the provided sample.html or sample_flex.html which should generate the same XML you see here in the README. Doing things from the "left" perspective is preferred and also to use flexbox instead of floats for the time being. Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. I have only tested it with the latest Chrome.
 
-Flexbox layouts using Constraint chains are currently only partially supported.
+<img src="sample_flex1.png" alt="chrome android layout - flexbox" />
 
-<img src="sample_flex1.png" alt="chrome android layout - flex" />
+<img src="sample_flex2.png" alt="chrome android layout - justify-content" />
 
 The Date fields have been modified to demonstrate the Constraint circle and bias capabilities. Constraint chain is also available as a setting although the current Android implementation does not support exact placement. It might be more ideal in some scenarios to disable Constraint chain and use Constraint circle. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate.
 

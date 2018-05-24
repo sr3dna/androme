@@ -236,6 +236,8 @@ class Node {
                 left: nodes.left[0].box.left
             };
         }
+        this.box.width = this.box.right - this.box.left;
+        this.box.height = this.box.bottom - this.box.top
     }
     getChildDimensions() {
         let minLeft = Number.MAX_VALUE;
@@ -495,18 +497,18 @@ class Node {
         if (parent != null && parent.visible) {
             const left = this.linear.left - parent.box.left;
             const right = parent.box.right - this.linear.right;
-            return (left == 0 || right == 0 ? 0 : (left / (left + right)).toFixed(2));
+            return Utils.getBias(left, right);
         }
-        return 0;
+        return 0.5;
     }
     get verticalBias() {
         const parent = this.renderParent;
         if (parent != null && parent.visible) {
             const top = this.linear.top - parent.box.top;
             const bottom = parent.box.bottom - this.linear.bottom;
-            return (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
+            return Utils.getBias(top, bottom);
         }
-        return 0;
+        return 0.5;
     }
     get widgetName() {
         if (this.androidWidgetName != null) {
@@ -735,13 +737,13 @@ class Node {
     }
     static getHorizontalBias(parent, firstNode, lastNode) {
         const left = firstNode.linear.left - parent.box.left;
-        const right = parent.box.right - lastNode.right;
-        return (left == 0 || right == 0 ? 0 : (left / (left + right)).toFixed(2));
+        const right = parent.box.right - lastNode.linear.right;
+        return Utils.getBias(left, right);
     }
     static getVerticalBias(parent, firstNode, lastNode) {
-        const top = firstNode.top - parent.box.top;
-        const bottom = parent.box.bottom - lastNode.bottom;
-        return (top == 0 || bottom == 0 ? 0 : (top / (top + bottom)).toFixed(2));
+        const top = firstNode.linear.top - parent.box.top;
+        const bottom = parent.box.bottom - lastNode.linear.bottom;
+        return Utils.getBias(top, bottom);
     }
     static getRangeBounds(element) {
         const range = document.createRange();
@@ -757,6 +759,9 @@ class Node {
     }
     static getElementStyle(element) {
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
+    }
+    static android(nodes, name, value) {
+        nodes.forEach(node => node.android(name, value));
     }
     static orderDefault(a, b) {
         let [c, d] = [a.depth, b.depth];

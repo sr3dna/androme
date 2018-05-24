@@ -96,7 +96,7 @@ const Utils = (function() {
             return (b >= (a - n) && b <= (a + n));
         },
         withinFraction: function(left, right) {
-            return (Math.ceil(left) == Math.floor(right));
+            return (left == right || Math.ceil(left) == Math.floor(right));
         },
         isVisible: function(element) {
             if (typeof element.getBoundingClientRect == 'function') {
@@ -106,6 +106,9 @@ const Utils = (function() {
                 }
             }
             return false;
+        },
+        getBias(start, end) {
+            return parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2)));
         }
     };
 
