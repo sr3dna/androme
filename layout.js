@@ -897,7 +897,7 @@ function positionConstraints() {
                                     }
                                     chain.constraint[`layout${horizontalVertical}`] = true;
                                     if (flex.enabled) {
-                                        chain.app(`layout_constraintHorizontal${horizontalVertical}_weight`, chain.flex.grow);
+                                        chain.app(`layout_constraint${horizontalVertical}_weight`, chain.flex.grow);
                                         if (chainWidthHeight == null && chain.flex.grow == 0 && chain.flex.shrink <= 1) {
                                             chain.android(layoutWidthHeight, 'wrap_content');
                                         }
@@ -932,15 +932,13 @@ function positionConstraints() {
                                             Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
                                             break;
                                         case 'space-around':
+                                            node.android('gravity', 'center');
                                         case 'space-evenly':
-                                            firstNode.app(chainStyle, 'chain_spread_inside');
+                                            firstNode.app(chainStyle, 'chain_spread');
                                             const width = node.box[widthHeight.toLowerCase()];
-                                            const percent = parseFloat((1 / chainDirection.length).toFixed(2));
-                                            let percentTotal = 0;
                                             for (let i = 0; i < chainDirection.length; i++) {
                                                 const item = chainDirection[i];
-                                                item.app(`layout_constraint${widthHeight}_percent`, (i < chainDirection.length - 1 ? percent : parseFloat((1 - percentTotal).toFixed(2))));
-                                                let gravity = 'center';
+                                                item.app(`layout_constraint${horizontalVertical}_weight`, 1);
                                                 if (flex.justifyContent == 'space-evenly') {
                                                     if (index == 0) {
                                                         gravity = (i < chainDirection.length - 1 ? getLTR('right', 'end') : getLTR('left', 'end'));
@@ -948,11 +946,10 @@ function positionConstraints() {
                                                     else {
                                                         gravity = (i < chainDirection.length - 1 ? 'bottom' : 'top');
                                                     }
+                                                    item.android('layout_gravity', gravity);
                                                 }
-                                                item.android('layout_gravity', gravity);
-                                                percentTotal += percent;
+                                                item.app(layoutWidthHeight, 'match_constraint');
                                             }
-                                            Node.android(wrapNodes, layoutWidthHeight, 'match_constraint');
                                             break;
                                         default:
                                             let bias = 0.5;
@@ -991,6 +988,7 @@ function positionConstraints() {
                                             if (chain == lastNode) {
                                                 percent = 1 - percentTotal;
                                             }
+                                            chain.app(layoutWidthHeight, 'match_constraint');
                                             chain.app(`layout_constraint${widthHeight}_percent`, percent.toFixed(2));
                                             percentTotal += parseFloat(percent.toFixed(2));
                                         }
