@@ -1,8 +1,27 @@
 ## chrome android layout
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. Ultimately the goal is to create a pixel to pixel translation from HTML in terms of structure to mobile devices. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. Ultimately the goal is to create a pixel to pixel translation from HTML in terms of structure to mobile devices. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
-These settings are available in layout.js to customize your desired XML structure. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
+INSTALLATION
+
+```javascript
+<script src="utils.js"></script>
+<script src="color.js"></script>
+<script src="constants.js"></script>
+<script src="node.js"></script>
+<script src="layout.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log(parseDocument());
+        console.log(writeResourceStringXml());
+        console.log(writeResourceArrayXml());
+        console.log(writeResourceStyleXml());
+        console.log(writeResourceColorXml());
+        console.log(writeResourceDrawableXml());
+    });
+</script>
+```
+These settings are available in layout.js to customize your desired XML structure.
 
 ```javascript
 const SETTINGS = {
@@ -22,30 +41,15 @@ const SETTINGS = {
     chainPackedVerticalOffset: 14
 };
 ```
+You can preview the library with the provided sample.html or sample_flex.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 
-You can preview the library with the provided sample.html file which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
+Flexbox layouts using Constraint chains are currently only partially supported.
 
-```javascript
-<script src="utils.js"></script>
-<script src="color.js"></script>
-<script src="constants.js"></script>
-<script src="node.js"></script>
-<script src="layout.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log(parseDocument());
-        console.log(writeResourceStringXml());
-        console.log(writeResourceArrayXml());
-        console.log(writeResourceStyleXml());
-        console.log(writeResourceColorXml());
-        console.log(writeResourceDrawableXml());
-    });
-</script>
-```
+<img src="sample_flex.png" alt="chrome android layout - flex" />
 
-The Date fields in the form have been modified to demonstrate the Constraint circle and bias capabilities in this library. Constraint chain bias is also available as a setting although the current Android implementation does not support exact placement. It might be more ideal to disable Constraint chain and use Constraint circle for some user interfaces. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate.
+The Date fields in the form have been modified to demonstrate the Constraint circle and bias capabilities. Constraint chain bias is also available as a setting although the current Android implementation does not support exact placement. It might be more ideal in some scenarios to disable Constraint chain and use Constraint circle. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate.
 
-<img src="sample.png" alt="chrome android layout" />
+<img src="sample.png" alt="chrome android layout - entry form" />
 
 ## auto-generated layout xml
 
@@ -198,7 +202,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						android:background="@drawable/select_hour"
 						android:entries="@array/minute_array"
 						android:layout_height="wrap_content"
-						android:layout_marginLeft="3dp"
+						android:layout_marginLeft="4dp"
 						android:layout_width="wrap_content"
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
@@ -262,7 +266,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 						android:background="@drawable/select_hour"
 						android:entries="@array/prominence0_array"
 						android:layout_height="wrap_content"
-						android:layout_marginLeft="3dp"
+						android:layout_marginLeft="4dp"
 						android:layout_width="wrap_content"
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
@@ -451,7 +455,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_2"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -461,7 +465,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_3"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -577,7 +581,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:background="@drawable/select_hour"
 				android:entries="@array/version_update_array"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -587,7 +591,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_4"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -629,7 +633,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:background="@drawable/select_hour"
 				android:entries="@array/branch_update_array"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -639,7 +643,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_5"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -649,7 +653,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_6"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"
@@ -689,7 +693,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:background="@drawable/select_hour"
 				android:entries="@array/custommonth0_array"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -700,7 +704,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:background="@drawable/select_hour"
 				android:entries="@array/customday0_array"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
@@ -710,7 +714,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/customyear0"
 				android:background="@drawable/input_order"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="2dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="40dp"
 				android:paddingVertical="1dp"
 				style="@style/Input_1.Input_3" />
@@ -748,7 +752,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/radiogroup_1"
 				android:checkedButton="@id+/c2"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:orientation="horizontal">
 				<RadioButton
@@ -764,7 +768,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				<RadioButton
 					android:id="@+id/c3"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="6dp"
+					android:layout_marginLeft="8dp"
 					android:layout_marginRight="3dp"
 					android:layout_marginTop="3dp"
 					android:layout_weight="0"
@@ -775,7 +779,8 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 			<CheckBox
 				android:id="@+id/c4"
 				android:layout_height="wrap_content"
-				android:layout_marginHorizontal="3dp"
+				android:layout_marginLeft="4dp"
+				android:layout_marginRight="3dp"
 				android:layout_marginVertical="3dp"
 				android:layout_width="wrap_content"
 				android:text="@string/none"
@@ -784,7 +789,7 @@ The Date fields in the form have been modified to demonstrate the Constraint cir
 				android:id="@+id/button_7"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
-				android:layout_marginLeft="3dp"
+				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
 				android:paddingHorizontal="6dp"
 				android:paddingVertical="1dp"

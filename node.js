@@ -175,7 +175,7 @@ class Node {
             if (gridLayout) {
                 const styleMap = this.original.parent.styleMap;
                 if (styleMap.textAlign || styleMap.verticalAlign) {
-                    this.android('layout_gravity', Node.getAndroidGravity(styleMap.textAlign, styleMap.verticalAlign));
+                    this.setAndroidGravity(styleMap.textAlign, styleMap.verticalAlign, false);
                 }
             }
         }
@@ -215,16 +215,16 @@ class Node {
         if (this.wrapNode == null) {
             const bounds = this.bounds;
             this.linear = {
-                top: Math.floor(bounds.top - this.marginTop),
-                right: Math.ceil(bounds.right + this.marginRight),
-                bottom: Math.ceil(bounds.bottom + this.marginBottom),
-                left: Math.floor(bounds.left - this.marginLeft)
+                top: bounds.top - this.marginTop,
+                right: bounds.right + this.marginRight,
+                bottom: bounds.bottom + this.marginBottom,
+                left: bounds.left - this.marginLeft
             };
             this.box = {
-                top: Math.ceil(bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth')))),
-                right: Math.floor(bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth')))),
-                left: Math.ceil(bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))),
-                bottom: Math.floor(bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))))
+                top: bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth'))),
+                right: bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth'))),
+                left: bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth'))),
+                bottom: bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth')))
             };
         }
         else {
@@ -255,6 +255,49 @@ class Node {
             maxBottom = Math.max(node.bounds.bottom, maxBottom);
         });
         return [maxRight - minLeft, maxBottom - minTop];
+    }
+    setAndroidGravity(textAlign, verticalAlign, overwrite = true) {
+        textAlign = textAlign || this.styleMap.textAlign;
+        verticalAlign = verticalAlign || this.styleMap.verticalAlign;
+        let gravity = [];
+        if (Utils.hasValue(verticalAlign) || Utils.hasValue(textAlign)) {
+            switch (verticalAlign) {
+                case 'top':
+                    gravity.push('top');
+                    break;
+                case 'middle':
+                    gravity.push('center_vertical');
+                    break;
+                case 'bottom':
+                case 'text-bottom':
+                    gravity.push('bottom');
+                    break;
+                default:
+                    if (this.style.height == this.style.lineHeight || parseInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
+                        gravity.push('center_vertical');
+                    }
+            }
+            switch (textAlign) {
+                case 'start':
+                    gravity.push('start');
+                    break;
+                case 'right':
+                    gravity.push(getLTR('right', 'end'));
+                    break;
+                case 'end':
+                    gravity.push('end');
+                    break;
+                case 'center':
+                    gravity.push('center_horizontal');
+                    break;
+                default:
+                    gravity.push(getLTR('left', 'start'));
+            }
+            if (gravity.includes('center_vertical') && gravity.includes('center_horizontal')) {
+                gravity = ['center'];
+            }
+            this.android('layout_gravity', gravity.join('|'), overwrite);
+        }
     }
     setAttributes(actions = []) {
         const widget = ACTION_ANDROID[this.androidWidgetName];
@@ -319,7 +362,7 @@ class Node {
             if (nextElement && nextElement.htmlFor == element.id) {
                 const nextNode = nextElement.androidNode;
                 nextNode.setAndroidId(WIDGET_ANDROID.TEXT);
-                nextNode.setAttributes([5]);
+                nextNode.setAttributes([4]);
                 const attributes = nextNode.androidAttributes;
                 for (const name in attributes) {
                     const value = attributes[name];
@@ -509,11 +552,13 @@ class Node {
     get flex() {
         if (this._flex == null) {
             this._flex = {
-                enabled: (this.style.display.indexOf('flex') != -1),
+                parent: (this.element.parentNode != null && this.element.parentNode.androidNode != null ? this.element.parentNode.androidNode.flex : {}),
+                enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
                 direction: this.style.flexDirection,
                 grow: parseInt(this.style.flexGrow),
                 shrink: parseInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
+                alignSelf: this.style.alignSelf || (this.element.parentNode != null ? this.element.parentNode.style.alignItems : null),
                 justifyContent: this.style.justifyContent
             };
         }
@@ -681,40 +726,6 @@ class Node {
             bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
         }
         return bounds;
-    }
-    static getAndroidGravity(textAlign, verticalAlign) {
-        let gravity = [];
-        switch (verticalAlign) {
-            case 'middle':
-                gravity.push('center_vertical');
-                break;
-            case 'bottom':
-            case 'text-bottom':
-                gravity.push('bottom');
-                break;
-            default:
-                gravity.push('top');
-        }
-        switch (textAlign) {
-            case 'start':
-                gravity.push('start');
-                break;
-            case 'right':
-                gravity.push(getLTR('right', 'end'));
-                break;
-            case 'end':
-                gravity.push('end');
-                break;
-            case 'center':
-                gravity.push('center_horizontal');
-                break;
-            default:
-                gravity.push(getLTR('left', 'start'));
-        }
-        if (gravity.includes('center_vertical') && gravity.includes('center_horizontal')) {
-            gravity = ['center'];
-        }
-        return gravity.join('|');
     }
     static getElementStyle(element) {
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));

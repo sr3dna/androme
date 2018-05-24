@@ -1,0 +1,205 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/chrome-android-layout</title>
+    <style type="text/css">
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        .flex-container {
+            background-color: #F4F7F8;
+            margin: 1em;
+            overflow: hidden;
+            display: flex;
+        }
+        .item {
+            width: 110px;
+            min-width: 0;
+            font-family: monospace;
+            font-size: 13px;
+            color: white;
+            background-color: #1B5385;
+            margin: 1em;
+            padding: 0.5em;
+        }
+        .initial {
+            flex: initial;
+        }
+        .auto {
+            flex: auto;
+        }
+        .none {
+            flex: none;
+        }
+        .four {
+            flex: 4;
+        }
+        .two {
+            flex: 2;
+        }
+        .one {
+            flex: 1;
+        }
+        ul.flex-container {
+            height: 200px;
+            list-style: none;
+            padding: 0.5em;
+            overflow: hidden;
+            display: flex;
+        }
+        .flex-start {
+            align-self: flex-start;
+        }
+        .flex-end {
+            align-self: flex-end;
+        }
+        .center {
+            align-self: center;
+        }
+        .baseline {
+            align-self: baseline;
+        }
+        .stretch {
+            align-self: stretch;
+        }
+        .flex-item {
+            width: 100px;
+            font-family: monospace;
+            color: white;
+            font-weight: bold;
+            font-size: 2em;
+            line-height: 100px;
+            text-align: center;
+            background: #1B5385;
+            padding: 5px;
+            margin: 5px;
+        }
+        div .flex-container {
+            height: auto;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            display: flex;
+        }
+        div .flex-start {
+            justify-content: flex-start;
+        }
+        div .flex-end {
+            justify-content: flex-end;
+        }
+        div .flex-item {
+            width: 60px;
+            height: 50px;
+            line-height: 50px;
+        }
+        .center {
+            justify-content: center;
+        }
+        .space-between {
+            justify-content: space-between;
+        }
+        .space-around {
+            justify-content: space-around;
+        }
+        .space-evenly {
+            justify-content: space-evenly;
+        }
+    </style>
+    <script src="utils.js"></script>
+    <script src="color.js"></script>
+    <script src="constants.js"></script>
+    <script src="node.js"></script>
+    <script src="layout.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('output').innerHTML = parseDocument().replace(/</g, '&lt;');
+            console.log(writeResourceStringXml());
+            console.log(writeResourceArrayXml());
+            console.log(writeResourceStyleXml());
+            console.log(writeResourceColorXml());
+            console.log(writeResourceDrawableXml());
+        });
+    </script>
+</head>
+<body>
+    <div class="flex-container">
+        <div class="item auto">auto</div>
+        <div class="item auto">auto</div>
+        <div class="item auto">auto</div>
+    </div>
+    <div class="flex-container">
+        <div class="item auto">auto</div>
+        <div class="item initial">initial</div>
+        <div class="item initial">initial</div>
+    </div>
+    <div class="flex-container">
+        <div class="item auto">auto</div>
+        <div class="item auto">auto</div>
+        <div class="item none">none</div>
+    </div>
+    <div class="flex-container">
+        <div class="item initial">initial</div>
+        <div class="item none">none</div>
+        <div class="item none">none</div>
+    </div>
+    <div class="flex-container">
+        <div class="item four">4</div>
+        <div class="item two">2</div>
+        <div class="item one">1</div>
+    </div>
+    <ul class="flex-container" style="align-items: stretch;">
+        <li class="flex-item flex-start">1</li>
+        <li class="flex-item flex-end">2</li>
+        <li class="flex-item center">3</li>
+        <li class="flex-item baseline">4</li>
+        <li class="flex-item stretch">5</li>
+    </ul>
+    <!-- <div>
+        <ul class="flex-container flex-start">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container flex-end">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container center">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container space-between">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container space-around">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container space-evenly">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+    </div> -->
+    <pre id="output" style="font-size: 11px; margin: 15px;"></pre>
+</body>
+</html>

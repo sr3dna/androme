@@ -42,9 +42,6 @@ const INHERIT_ANDROID = {
 }
 
 const PROPERTY_ANDROID = {
-    'gravity': {
-        'gravity': 'android:gravity="{0}"'
-    },
     'backgroundStyle': {
         'backgroundColor': 'android:background="@drawable/{0}"'
     },
@@ -79,7 +76,6 @@ const PROPERTY_ANDROID = {
 const ACTION_ANDROID = {
     'LinearLayout': {
         'androidId': 'android:id="@+id/{0}"',
-        'window.setGravity': PROPERTY_ANDROID['gravity'],
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
@@ -130,7 +126,6 @@ const ACTION_ANDROID = {
     },
     'TextView': {
         'androidId': 'android:id="@+id/{0}"',
-        'window.setGravity': PROPERTY_ANDROID['gravity'],
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
@@ -138,7 +133,6 @@ const ACTION_ANDROID = {
     },
     'EditText': {
         'androidId': 'android:id="@+id/{0}"',
-        'window.setGravity': PROPERTY_ANDROID['gravity'],
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setComputedStyle': PROPERTY_ANDROID['computedStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing'],
