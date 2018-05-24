@@ -259,9 +259,9 @@ function setBackgroundStyle(node) {
     };
     let backgroundParent = [];
     if (element.parentNode != null) {
-        backgroundParent = Color.parseRGBA(Node.getElementStyle(element.parentNode).backgroundColor);
+        backgroundParent = Color.parseRGBA(Node.getStyle(element.parentNode).backgroundColor);
     }
-    const style = Node.getElementStyle(element);
+    const style = Node.getStyle(element);
     for (const i in properties) {
         properties[i] = properties[i](style[i]);
     }
@@ -348,7 +348,7 @@ function setBackgroundStyle(node) {
 }
 
 function setComputedStyle(node) {
-    return Node.getElementStyle(node.element);
+    return Node.getStyle(node.element);
 }
 
 function setBoxSpacing(node) {
@@ -497,8 +497,8 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                     node.radioGroup = [];
                     node.radioGroupId = wrapNode.id;
                     for (const item of result) {
-                        rowSpan += (item.layout_rowSpan || 1) - 1;
-                        columnSpan += (item.layout_columnSpan || 1) - 1;
+                        rowSpan += (Utils.parseInt(item.android('layout_rowSpan')) || 1) - 1;
+                        columnSpan += (Utils.parseInt(item.android('layout_columnSpan')) || 1) - 1;
                         if (item != node) {
                             if (item.parent != node.parent) {
                                 item.parent = node.parent;
@@ -906,10 +906,10 @@ function positionConstraints() {
                                         }
                                         switch (chain.flex.alignSelf) {
                                             case 'flex-start':
-                                                chain.android(`layout_gravity`, (index == 0 ? 'top' : getRTL('left', 'start')));
+                                                chain.android(`layout_gravity`, (index == 0 ? 'top' : getLTR('left', 'start')));
                                                 break;
                                             case 'flex-end':
-                                                chain.android(`layout_gravity`, (index == 0 ? 'bottom' : getRTL('right', 'end')));
+                                                chain.android(`layout_gravity`, (index == 0 ? 'bottom' : getLTR('right', 'end')));
                                                 break;
                                             case 'center':
                                                 chain.android(`layout_gravity`, (index == 0 ? 'center_vertical' : 'center_horizontal'));
@@ -1147,7 +1147,7 @@ function setStyleMap() {
                 for (const i of element.style) {
                     attributes.add(Utils.hyphenToCamelCase(i));
                 }
-                const style = Node.getElementStyle(element);
+                const style = Node.getStyle(element);
                 const styleMap = {};
                 for (const name of attributes) {
                     if (name.toLowerCase().indexOf('color') != -1) {

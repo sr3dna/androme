@@ -678,16 +678,8 @@ class Node {
         element.children = [];
         return node;
     }
-    static parseStyle(element, name, value) {
-        if (name == 'backgroundColor') {
-            if (element != null && element.parentNode != null && value == Node.getElementStyle(element.parentNode).backgroundColor) {
-                return null;
-            }
-        }
-        else if (/(pt|em)$/.test(value)) {
-            value = Utils.convertToPX(value);
-        }
-        return value;
+    static android(nodes, name, value, overwrite = true) {
+        nodes.forEach(node => node.android(name, value, overwrite));
     }
     static isLinearXY(nodes) {
         let linearX = true;
@@ -757,11 +749,19 @@ class Node {
         }
         return bounds;
     }
-    static getElementStyle(element) {
+    static getStyle(element) {
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
     }
-    static android(nodes, name, value) {
-        nodes.forEach(node => node.android(name, value));
+    static parseStyle(element, name, value) {
+        if (name == 'backgroundColor') {
+            if (element != null && element.parentNode != null && value == Node.getStyle(element.parentNode).backgroundColor) {
+                return null;
+            }
+        }
+        else if (/(pt|em)$/.test(value)) {
+            value = Utils.convertToPX(value);
+        }
+        return value;
     }
     static orderDefault(a, b) {
         let [c, d] = [a.depth, b.depth];
