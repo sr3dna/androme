@@ -40,6 +40,7 @@ class Node {
         this._android = {};
         this._app = {};
         this._overflow = null;
+        this._flex = null;
 
         Object.assign(this, options);
         if (options.element != null || arguments[1] != null) {
@@ -505,6 +506,19 @@ class Node {
         });
         return (nodes.length > 0 ? nodes[0] : null);
     }
+    get flex() {
+        if (this._flex == null) {
+            this._flex = {
+                enabled: (this.style.display.indexOf('flex') != -1),
+                direction: this.style.flexDirection,
+                grow: parseInt(this.style.flexGrow),
+                shrink: parseInt(this.style.flexShrink),
+                wrap: this.style.flexWrap,
+                justifyContent: this.style.justifyContent
+            };
+        }
+        return this._flex;
+    }
     get overflow() {
         if (this._overflow == null) {
             let value = 0;
@@ -710,7 +724,7 @@ class Node {
         if (c == d) {
             [c, d] = [a.parent.id, b.parent.id];
             if (c == d) {
-                [c, d] = [a.bounds.x, b.bounds.x];
+                [c, d] = [a.bounds.y, b.bounds.y];
                 if (c == d) {
                     [c, d] = [a.id, b.id];
                 }

@@ -582,15 +582,16 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
     node.setAttributes();
     node.renderDepth = depth;
     node.renderParent = parent;
+    node.children.forEach(item => item.hide());
     return getEnclosingTag(depth, node.widgetName, node.id, '', getGridSpacing(node, depth));
 }
 
-function writeDefaultLayout() {
-    if (SETTINGS.useConstraintLayout) {
-        return writeConstraintLayout.apply(null, arguments);
+function writeDefaultLayout(node, depth, parent) {
+    if (SETTINGS.useConstraintLayout || node.flex.enabled) {
+        return writeConstraintLayout(node, depth, parent);
     }
     else {
-        return writeRelativeLayout.apply(null, arguments);
+        return writeRelativeLayout(node, depth, parent);
     }
 }
 
@@ -1494,7 +1495,7 @@ function setNodeCache() {
     elements = document.querySelectorAll(selector);
     for (const i in elements) {
         const element = elements[i];
-        if (WEBVIEW_ANDROID.includes(element.tagName) && (MAPPING_ANDROID[element.parentNode.tagName] != null || WEBVIEW_ANDROID.includes(element.parentNode.tagName))) {
+        if (INLINE_CHROME.includes(element.tagName) && (MAPPING_ANDROID[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
             continue;
         }
         if (typeof element.getBoundingClientRect == 'function') {
@@ -1651,12 +1652,12 @@ function parseDocument() {
                     let tagName = nodeY.widgetName;
                     let xml = '';
                     if (tagName == null) {
-                        if ((nodeY.children.length == 0 && Utils.hasFreeFormText(nodeY.element)) || nodeY.children.every(item => WEBVIEW_ANDROID.includes(item.tagName))) {
+                        if ((nodeY.children.length == 0 && Utils.hasFreeFormText(nodeY.element)) || nodeY.children.every(item => INLINE_CHROME.includes(item.tagName))) {
                             tagName = WIDGET_ANDROID.TEXT;
-                            nodeY.children.forEach(item => item.hide());
                         }
                         else if (nodeY.children.length > 0) {
-                            if (SETTINGS.useGridLayout && nodeY.children.findIndex(item => item.widgetName != null && (item.depth == nodeY.depth + 1)) == -1) {
+                            const nextDepth = nodeY.children.filter(item => (item.depth == nodeY.depth + 1));
+                            if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nextDepth.length > 1 && nextDepth.every(item => BLOCK_CHROME.includes(item.tagName))) {
                                 const nextMapX = mapX[nodeY.depth + 2];
                                 const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
                                 if (nextCoordsX.length > 1) {
@@ -1803,7 +1804,7 @@ function parseDocument() {
                                     xml += `{${nodeY.id}}`;
                                     nodeY.hide(nodeY.parent);
                                 }
-                                else if (linearX || linearY) {
+                                else if (!nodeY.flex.enabled && (linearX || linearY)) {
                                     if (nodeY.parent.isView(WIDGET_ANDROID.LINEAR)) {
                                         nodeY.parent.linearRows.push(nodeY);
                                     }
@@ -1862,11 +1863,11 @@ function parseDocument() {
                                                 item.parent = wrapNode;
                                                 item.depthIndent++;
                                                 wrapNode.inheritGrid(item);
-                                                if (item.children.length > 0) {
-                                                    return writeDefaultLayout(item, nodeY.depth + nodeY.depthIndent, wrapNode);
+                                                if (item.children.length == 0 || item.children.every(item => INLINE_CHROME.includes(item.tagName))) {
+                                                    return writeViewTag(item, nodeY.depth + nodeY.depthIndent, wrapNode);
                                                 }
                                                 else {
-                                                    return writeViewTag(item, nodeY.depth + nodeY.depthIndent, wrapNode);
+                                                    return writeDefaultLayout(item, nodeY.depth + nodeY.depthIndent, wrapNode);
                                                 }
                                             }
                                         }
