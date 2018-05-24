@@ -95,8 +95,8 @@ const Utils = (function() {
         withinRange: function(a, b, n = 1) {
             return (b >= (a - n) && b <= (a + n));
         },
-        withinFraction: function(a, b) {
-            return (a == b || Math.floor(a) == Math.floor(b) || Math.floor(a) == b || a == Math.floor(b) || Math.ceil(a) == b || a == Math.ceil(b) || Math.ceil(a) == Math.floor(b) || Math.floor(a) == Math.ceil(b));
+        withinFraction: function(left, right) {
+            return (Math.ceil(left) == Math.floor(right));
         }
     };
 

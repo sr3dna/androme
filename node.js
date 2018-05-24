@@ -56,9 +56,6 @@ class Node {
         this.androidWidgetName = widgetName;
         if (this.androidId == null) {
             let androidName = element.id || element.name || widgetName.toLowerCase();
-            if (GENERATE_ID[androidName] == null) {
-                GENERATE_ID[androidName] = 1;
-            }
             this.androidId = androidName;
             do {
                 if (!GENERATE_ID['__id'].includes(this.androidId) && this.androidId != widgetName.toLowerCase()) {
@@ -66,6 +63,9 @@ class Node {
                     break;
                 }
                 else {
+                    if (GENERATE_ID[androidName] == null) {
+                        GENERATE_ID[androidName] = 1;
+                    }
                     this.androidId = `${androidName}_${GENERATE_ID[androidName]++}`;
                 }
             }
@@ -100,7 +100,7 @@ class Node {
             if (styleMap.width != null) {
                 this.android('layout_width', Utils.convertToPX(styleMap.width));
                 if (layoutWeight) {
-                    this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), '0');
+                    this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), 0, false);
                 }
             }
             if (this.android('layout_width') != 'match_constraint') {
@@ -117,7 +117,7 @@ class Node {
                         this.android('layout_weight', this.layoutWeightWidth);
                     }
                     else if (this.gridColumnWeight != null) {
-                        this.android('layout_columnWeight', this.gridColumnWeight);
+                        this.android('layout_columnWeight', this.gridColumnWeight, false);
                     }
                     this.android('layout_width', (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1 ? '0px' : 'wrap_content'));
                 }
@@ -172,12 +172,6 @@ class Node {
                     }
                 }
             }
-            if (gridLayout) {
-                const styleMap = this.original.parent.styleMap;
-                if (styleMap.textAlign || styleMap.verticalAlign) {
-                    this.setAndroidGravity(styleMap.textAlign, styleMap.verticalAlign, false);
-                }
-            }
         }
     }
     setBounds(element) {
@@ -223,8 +217,8 @@ class Node {
             this.box = {
                 top: bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth'))),
                 right: bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth'))),
-                left: bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth'))),
-                bottom: bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth')))
+                bottom: bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))),
+                left: bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))
             };
         }
         else {
@@ -256,51 +250,79 @@ class Node {
         });
         return [maxRight - minLeft, maxBottom - minTop];
     }
-    setAndroidGravity(textAlign, verticalAlign, overwrite = true) {
-        textAlign = textAlign || this.styleMap.textAlign;
-        verticalAlign = verticalAlign || this.styleMap.verticalAlign;
-        let gravity = [];
-        if (Utils.hasValue(verticalAlign) || Utils.hasValue(textAlign)) {
-            switch (verticalAlign) {
-                case 'top':
-                    gravity.push('top');
+    setGravity() {
+        if (this.wrapNode == null) {
+            const verticalAlign = this.styleMap.verticalAlign;
+            let textAlign = null;
+            let element = this.element;
+            let gravity = [];
+            while (element != null && element.styleMap != null) {
+                textAlign = element.styleMap.textAlign || textAlign;
+                const float = (element != this.element ? element.styleMap.float : '');
+                if (float == 'left' || float == 'right' || Utils.hasValue(textAlign)) {
                     break;
-                case 'middle':
-                    gravity.push('center_vertical');
-                    break;
-                case 'bottom':
-                case 'text-bottom':
-                    gravity.push('bottom');
-                    break;
-                default:
-                    if (this.style.height == this.style.lineHeight || parseInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
+                }
+                element = element.parentNode;
+            }
+            if (Utils.hasValue(verticalAlign) || Utils.hasValue(textAlign)) {
+                switch (verticalAlign) {
+                    case 'top':
+                        gravity.push('top');
+                        break;
+                    case 'middle':
                         gravity.push('center_vertical');
+                        break;
+                    case 'bottom':
+                    case 'text-bottom':
+                        gravity.push('bottom');
+                        break;
+                    default:
+                        if (this.style.height == this.style.lineHeight || parseInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
+                            gravity.push('center_vertical');
+                        }
+                }
+                let direction = '';
+                switch (textAlign) {
+                    case 'start':
+                        gravity.push('start');
+                        break;
+                    case 'right':
+                        gravity.push(getLTR('right', 'end'));
+                        direction = 'right';
+                        break;
+                    case 'end':
+                        gravity.push('end');
+                        direction = 'right';
+                        break;
+                    case 'center':
+                        gravity.push('center_horizontal');
+                        direction = 'center_horizontal';
+                        break;
+                }
+                if (gravity.includes('center_vertical') && gravity.includes('center_horizontal')) {
+                    gravity = ['center'];
+                }
+                if (direction != '' && this.styleMap.textAlign != textAlign && !this.floating && !this.renderParent.floating) {
+                    switch (this.renderParent.widgetName) {
+                        case WIDGET_ANDROID.GRID:
+                            if (this.styleMap.width == null || this.styleMap.maxWidth == null) {
+                                this.android('layout_width', 'wrap_content');
+                            }
+                            this.android(`layout_columnWeight`, 0);
+                            this.android('layout_gravity', direction);
+                            break;
+                        case WIDGET_ANDROID.LINEAR:
+                        case WIDGET_ANDROID.RADIO_GROUP:
+                            this.renderParent.android('gravity', direction);
+                            break;
                     }
+                }
+                this.android(`gravity`, gravity.join('|'));
             }
-            switch (textAlign) {
-                case 'start':
-                    gravity.push('start');
-                    break;
-                case 'right':
-                    gravity.push(getLTR('right', 'end'));
-                    break;
-                case 'end':
-                    gravity.push('end');
-                    break;
-                case 'center':
-                    gravity.push('center_horizontal');
-                    break;
-                default:
-                    gravity.push(getLTR('left', 'start'));
-            }
-            if (gravity.includes('center_vertical') && gravity.includes('center_horizontal')) {
-                gravity = ['center'];
-            }
-            this.android('layout_gravity', gravity.join('|'), overwrite);
         }
     }
     setAttributes(actions = []) {
-        const widget = ACTION_ANDROID[this.androidWidgetName];
+        const widget = ACTION_ANDROID[this.widgetName];
         const element = this.element;
         const result = {};
         if (widget != null) {
@@ -465,7 +487,7 @@ class Node {
         return (this._android.orientation == 'horizontal');
     }
     isView(viewName) {
-        return (this.androidWidgetName == viewName);
+        return (this.widgetName == viewName);
     }
 
     get horizontalBias() {
@@ -564,6 +586,9 @@ class Node {
         }
         return this._flex;
     }
+    get floating() {
+        return (this.styleMap.float == 'left' || this.styleMap.float == 'right');
+    }
     get overflow() {
         if (this._overflow == null) {
             let value = 0;
@@ -609,6 +634,9 @@ class Node {
     }
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
+    }
+    get stringId() {
+        return (this.androidId != null ? `@+id/${this.androidId}` : '');
     }
 
     static createWrapNode(id, node, parent, children, actions = null) {
