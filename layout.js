@@ -882,7 +882,6 @@ function positionConstraints() {
                                             wrapContent.push(chain);
                                         }
                                     }
-                                    chain.constraint[`layout${horizontalVertical}`] = true;
                                     if (flex.enabled) {
                                         chain.app(`layout_constraint${horizontalVertical}_weight`, chain.flex.grow);
                                         if (chainWidthHeight == null && chain.flex.grow == 0 && chain.flex.shrink <= 1) {
@@ -909,11 +908,25 @@ function positionConstraints() {
                                                 chain.android(`layout_${chainMap['widthHeight'][(index == 0 ? 1 : 0)].toLowerCase()}`, 'match_parent');
                                                 break;
                                         }
+                                        if (chain.flex.basis != 'auto') {
+                                            if (/(100|[1-9][0-9]?)%/.test(chain.flex.basis)) {
+                                                chain.app(`layout_constraint${widthHeight}_percent`, parseInt(chain.flex.basis));
+                                            }
+                                            else {
+                                                const width = Utils.convertToPX(chain.flex.basis);
+                                                if (width != '0px') {
+                                                    chain.app(`layout_constraintWidth_min`, width);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        chain.constraint[`layout${horizontalVertical}`] = true;
                                     }
                                 }
                                 const chainStyle = `layout_constraint${horizontalVertical}_chainStyle`;
-                                if (flex.enabled && flex.justifyContent != 'normal') {
-                                    if (chainDirection.reduce((a, b) => Math.max(a, b.flex.grow), -1) == 0) {
+                                if (flex.enabled) {
+                                    if (chainDirection.reduce((a, b) => Math.max(a, b.flex.grow), -1) == 0 && flex.justifyContent != 'normal') {
                                         switch (flex.justifyContent) {
                                             case 'space-between':
                                                 firstNode.app(chainStyle, 'chain_spread_inside');
@@ -956,9 +969,10 @@ function positionConstraints() {
                                     }
                                     else {
                                         chainDirection.forEach(item => {
+                                            firstNode.app(chainStyle, 'chain_spread');
                                             item.app(`layout_constraint${horizontalVertical}_weight`, item.flex.grow);
-                                            item.app(layoutWidthHeight, 'match_constraint');
                                         });
+                                        Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                     }
                                 }
                                 else {

@@ -578,6 +578,7 @@ class Node {
                 parent: (this.element.parentNode != null && this.element.parentNode.androidNode != null ? this.element.parentNode.androidNode.flex : {}),
                 enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
                 direction: this.style.flexDirection,
+                basis: this.style.flexBasis,
                 grow: parseInt(this.style.flexGrow),
                 shrink: parseInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
