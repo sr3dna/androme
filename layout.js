@@ -1,4 +1,5 @@
 const SETTINGS = {
+    targetAPI: 19,
     density: DENSITY_ANDROID.MDPI,
     showAttributes: true,
     useConstraintLayout: true,
@@ -7,6 +8,7 @@ const SETTINGS = {
     useLayoutWeight: true,
     useUnitDP: true,
     useRTL: true,
+    resourceValueNumber: false,
     boundsOffset: 2,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
@@ -28,83 +30,96 @@ const RESOURCE = {
 
 function writeResourceStringXml() {
     const resource = new Map([...RESOURCE['string'].entries()].sort());
-    const xml = [STRING_ANDROID.XML_DECLARATION,
-                 '<resources>'];
-    for (const [name, value] of resource.entries()) {
-        xml.push(`\t<string name="${name}">${value}</string>`);
+    if (resource.size > 0) {
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, value] of resource.entries()) {
+            xml.push(`\t<string name="${name}">${value}</string>`);
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/string.xml -->\n');
+        return xml.join('\n');
     }
-    xml.push('</resources>',
-             '<!-- filename: res/values/string.xml -->\n');
-    return xml.join('\n');
+    return '';
 }
 
 function writeResourceArrayXml() {
     const resource = new Map([...RESOURCE['array'].entries()].sort());
-    const xml = [STRING_ANDROID.XML_DECLARATION,
-                 '<resources>'];
-    for (const [name, values] of resource.entries()) {
-        xml.push(`\t<array name="${name}">`);
-        for (const [name, value] of values.entries()) {
-            xml.push(`\t\t<item${(value != '' ? ` name="${name}">@string/${value}` : `>${name}`)}</item>`);
+    if (resource.size > 0) {
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, values] of resource.entries()) {
+            xml.push(`\t<array name="${name}">`);
+            for (const [name, value] of values.entries()) {
+                xml.push(`\t\t<item>${(value ? `@string/` : '') + name}</item>`);
+            }
+            xml.push('\t</array>');
         }
-        xml.push('\t</array>');
+        xml.push('</resources>',
+                 '<!-- filename: res/values/string_array.xml -->\n');
+        return xml.join('\n');
     }
-    xml.push('</resources>',
-             '<!-- filename: res/values/string_array.xml -->\n');
-    return xml.join('\n');
+    return '';
 }
 
 function writeResourceStyleXml() {
-    let xml = [STRING_ANDROID.XML_DECLARATION,
-                 '<resources>'];
-    for (const tag of RESOURCE['style'].values()) {
-        for (const style of tag) {
-            xml.push(`\t<style name="${style.name}">`);
-            style.attributes.split(';').forEach(value => {
-                const [name, setting] = value.split('=');
-                xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
-            });
-            xml.push('\t<style>');
+    if (RESOURCE['style'].size > 0) {
+        let xml = [STRING_ANDROID.XML_DECLARATION,
+                   '<resources>'];
+        for (const tag of RESOURCE['style'].values()) {
+            for (const style of tag) {
+                xml.push(`\t<style name="${style.name}">`);
+                style.attributes.split(';').forEach(value => {
+                    const [name, setting] = value.split('=');
+                    xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
+                });
+                xml.push('\t</style>');
+            }
         }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/styles.xml -->\n');
+        xml = xml.join('\n');
+        if (SETTINGS.useUnitDP) {
+            xml = Utils.insetToDP(xml, true);
+        }
+        return xml;
     }
-    xml.push('</resources>',
-             '<!-- filename: res/values/styles.xml -->\n');
-    xml = xml.join('\n');
-    if (SETTINGS.useUnitDP) {
-        xml = Utils.insetToDP(xml, true);
-    }
-    return xml;
+    return '';
 }
 
 function writeResourceColorXml() {
-    const resource = new Map([...RESOURCE['color'].entries()].sort());
-    const xml = [STRING_ANDROID.XML_DECLARATION,
-                 '<resources>'];
-    for (const [name, value] of resource.entries()) {
-        xml.push(`\t<color name="${name}">${value}</color>`);
+    if (RESOURCE['color'].size > 0) {
+        const resource = new Map([...RESOURCE['color'].entries()].sort());
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, value] of resource.entries()) {
+            xml.push(`\t<color name="${value}">${name}</color>`);
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/colors.xml -->\n');
+        return xml.join('\n');
     }
-    xml.push('</resources>',
-             '<!-- filename: res/values/colors.xml -->\n');
-    return xml.join('\n');
+    return '';
 }
 
 function writeResourceDrawableXml() {
-    let xml = [];
-    for (const [name, value] of RESOURCE['drawable'].entries()) {
-        xml.push(value,
-                 `<!-- filename: res/drawable/${name}.xml -->\n`);
-    }
-    if (RESOURCE['image'].size > 0) {
+    if (RESOURCE['drawable'].size > 0 || RESOURCE['image'].size > 0) {
+        let xml = [];
+        for (const [name, value] of RESOURCE['drawable'].entries()) {
+            xml.push(value,
+                     `<!-- filename: res/drawable/${name}.xml -->\n`);
+        }
         for (const [name, value] of RESOURCE['image'].entries()) {
             xml.push(`<!-- image: ${value} -->`,
                      `<!-- filename: res/drawable/${name + value.substring(value.lastIndexOf('.'))} -->\n`);
         }
+        xml = xml.join('\n');
+        if (SETTINGS.useUnitDP) {
+            xml = Utils.insetToDP(xml);
+        }
+        return xml;
     }
-    xml = xml.join('\n');
-    if (SETTINGS.useUnitDP) {
-        xml = Utils.insetToDP(xml);
-    }
-    return xml;
+    return '';
 }
 
 function addResourceString(node, value) {
@@ -113,7 +128,7 @@ function addResourceString(node, value) {
         const element = node.element;
         if (element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') {
             name = element.value;
-            value = element.value;
+            value = name;
         }
         else if (element.nodeName == '#text') {
             name = element.textContent.trim();
@@ -141,14 +156,26 @@ function addResourceString(node, value) {
             }
         }
         value = value.replace(/\s*style=""/g, '');
-        for (const [name, resourceValue] in RESOURCE['string'].entries()) {
-            if (resourceValue == value) {
-                return { text: name };
-            }
+        const number = Utils.isNumber(value);
+        if (!SETTINGS.resourceValueNumber && number) {
+            return { text: value };
         }
-        name = name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-        name = insertResourceAsset(RESOURCE['string'], name, value);
-        return { text: name };
+        else {
+            for (const [name, resourceValue] in RESOURCE['string'].entries()) {
+                if (resourceValue == value) {
+                    return { text: name };
+                }
+            }
+            name = name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
+            if (number && Utils.isNumber(name)) {
+                name = `number_${name}`;
+            }
+            else if (/^[0-9]/.test(value)) {
+                name = `__${name}`;
+            }
+            name = insertResourceAsset(RESOURCE['string'], name, value);
+            return { text: name };
+        }
     }
     return null;
 }
@@ -156,7 +183,7 @@ function addResourceString(node, value) {
 function addResourceStringArray(node) {
     const element = node.element
     const stringArray = new Map();
-    let integerArray = new Map();
+    let numberArray = new Map();
     for (let i = 0; i < element.children.length; i++) {
         const item = element.children[i];
         let value = item.value.trim();
@@ -168,22 +195,22 @@ function addResourceStringArray(node) {
             value = text;
         }
         if (text != '') {
-            if (integerArray != null && !stringArray.size && /^\d+$/.test(text) && !/^(^0+)\d+$/.test(text)) {
-                integerArray.set(value, '');
+            if (numberArray != null && !stringArray.size && Utils.isNumber(text)) {
+                numberArray.set(value, false);
             }
             else {
-                if (integerArray != null && integerArray.size > 0) {
+                if (numberArray != null && numberArray.size > 0) {
                     i = -1;
                     stringArray = new Map();
-                    integerArray = null;
+                    numberArray = null;
                     continue;
                 }
-                stringArray.set(value, addResourceString(null, text).text);
+                stringArray.set(addResourceString(null, text).text, true);
             }
         }
     }
-    if (stringArray.size > 0 || integerArray.size > 0) {
-        const name = insertResourceAsset(RESOURCE['array'], `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : integerArray));
+    if (stringArray.size > 0 || numberArray.size > 0) {
+        const name = insertResourceAsset(RESOURCE['array'], `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : numberArray));
         return { entries: name };
     }
     return null;
@@ -453,7 +480,6 @@ function writeViewLayout(node, depth, parent, tagName) {
             const wrapNode = Node.createWrapNode(generateNodeId(), current, parent, [current]);
             wrapNode.setAndroidId(widgetName);
             wrapNode.setBounds();
-            wrapNode.setLinearBoxRect();
             wrapNode.setAttributes();
             wrapNode.renderDepth = --scrollDepth;
             wrapNode.renderParent = parent;
@@ -467,7 +493,7 @@ function writeViewLayout(node, depth, parent, tagName) {
                 wrapNode.styleMap.height = node.styleMap.height;
                 wrapNode.styleMap.overflowY = node.styleMap.overflowY;
             }
-            let indent = Utils.setIndent(scrollDepth);
+            const indent = Utils.padLeft(scrollDepth);
             preXml = indent + `<${widgetName}{@${wrapNode.id}}>\n` + preXml;
             postXml += indent + `</${widgetName}>\n`;
             current.renderParent = wrapNode;
@@ -506,18 +532,16 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                         rowSpan += (Utils.parseInt(item.android('layout_rowSpan')) || 1) - 1;
                         columnSpan += (Utils.parseInt(item.android('layout_columnSpan')) || 1) - 1;
                         if (item != node) {
-                            if (item.parent != node.parent) {
-                                item.parent = node.parent;
-                            }
+                            item.parent = node.parent;
+                            item.depth = node.depth;
                         }
-                        radioGroup.push(item);
-                        item.depth = node.depth;
                         item.depthIndent = (depth + 1) - item.depth;
                         if (item.element.checked) {
                             checked = item;
                         }
-                        xml += writeViewTag(item, item.depth + item.depthIndent, wrapNode, WIDGET_ANDROID.RADIO, true);
+                        radioGroup.push(item);
                         wrapNode.inheritGrid(item);
+                        xml += writeViewTag(item, item.depth + item.depthIndent, wrapNode, WIDGET_ANDROID.RADIO, true);
                     }
                     if (rowSpan > 1) {
                         wrapNode.android('layout_rowSpan', rowSpan);
@@ -528,7 +552,6 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                     wrapNode.android('orientation', (Node.isLinearXY(radioGroup)[0] ? 'horizontal' : 'vertical'));
                     wrapNode.android('checkedButton', checked.stringId);
                     wrapNode.setBounds();
-                    wrapNode.setLinearBoxRect();
                     wrapNode.setAttributes();
                     wrapNode.renderDepth = depth;
                     wrapNode.renderParent = parent;
@@ -605,7 +628,7 @@ function writeDefaultLayout(node, depth, parent) {
 }
 
 function getEnclosingTag(depth, tagName, id, content, space = ['', ''], preXml = '', postXml = '') {
-    const indent = Utils.setIndent(depth);
+    const indent = Utils.padLeft(depth);
     let xml = space[0] +
               preXml;
     if (Utils.hasValue(content)) {
@@ -634,7 +657,7 @@ function inlineAttributes(output) {
                     break;
                 }
             }
-            const indent = Utils.setIndent(node.renderDepth + 1);
+            const indent = Utils.padLeft(node.renderDepth + 1);
             if (node.renderDepth == 0) {
                 if (SETTINGS.useConstraintLayout) {
                     result.unshift(STRING_ANDROID.XMLNS_APP);
@@ -880,7 +903,7 @@ function positionConstraints() {
                                         chain.app(layout[chainMap['leftRightTopBottom'][index]], chainPrev.stringId);
                                     }
                                     if (chainWidthHeight == null) {
-                                        chain.android(layoutWidthHeight, 'match_constraint');
+                                        chain.android(layoutWidthHeight, '0px');
                                         const min = chain.styleMap[`min${widthHeight}`];
                                         const max = chain.styleMap[`max${widthHeight}`];
                                         if (min != null) {
@@ -915,7 +938,6 @@ function positionConstraints() {
                                                 chain.android(`layout_gravity`, 'baseline');
                                                 break;
                                             case 'stretch':
-                                                chain.android(`layout_gravity`, (index == 0 ? 'fill_vertical' : 'fill_horizontal'));
                                                 chain.android(`layout_${chainMap['widthHeight'][(index == 0 ? 1 : 0)].toLowerCase()}`, 'match_parent');
                                                 break;
                                         }
@@ -940,13 +962,13 @@ function positionConstraints() {
                                     if (chainDirection.reduce((a, b) => Math.max(a, b.flex.grow), -1) == 0 && flex.justifyContent != 'normal') {
                                         switch (flex.justifyContent) {
                                             case 'space-between':
-                                                firstNode.app(chainStyle, 'chain_spread_inside');
+                                                firstNode.app(chainStyle, 'spread_inside');
                                                 Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                                 break;
                                             case 'space-around':
                                                 node.android('gravity', 'center');
                                             case 'space-evenly':
-                                                firstNode.app(chainStyle, 'chain_spread');
+                                                firstNode.app(chainStyle, 'spread');
                                                 const width = node.box[widthHeight.toLowerCase()];
                                                 for (let i = 0; i < chainDirection.length; i++) {
                                                     const item = chainDirection[i];
@@ -960,7 +982,7 @@ function positionConstraints() {
                                                         }
                                                         item.android('layout_gravity', gravity);
                                                     }
-                                                    item.app(layoutWidthHeight, 'match_constraint');
+                                                    item.app(layoutWidthHeight, '0px');
                                                 }
                                                 break;
                                             default:
@@ -973,26 +995,35 @@ function positionConstraints() {
                                                         bias = 1;
                                                         break;
                                                 }
-                                                firstNode.app(chainStyle, 'chain_packed');
+                                                firstNode.app(chainStyle, 'packed');
                                                 firstNode.app(`layout_constraint${horizontalVertical}_bias`, bias);
                                                 Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                         }
                                     }
                                     else {
-                                        chainDirection.forEach(item => {
-                                            firstNode.app(chainStyle, 'chain_spread');
-                                            item.app(`layout_constraint${horizontalVertical}_weight`, item.flex.grow);
-                                        });
-                                        Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
+                                        if (maxOffset <= SETTINGS[`chainPacked${horizontalVertical}Offset`]) {
+                                            firstNode.app(chainStyle, 'packed');
+                                            firstNode.app(`layout_constraint${horizontalVertical}_bias`, Node[`get${horizontalVertical}Bias`](node, firstNode, lastNode));
+                                            Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
+                                        }
+                                        else {
+                                            chainDirection.forEach(item => {
+                                                firstNode.app(chainStyle, 'spread');
+                                                item.app(`layout_constraint${horizontalVertical}_weight`, item.flex.grow);
+                                                if (item.flex.grow > 0 && wrapContent.includes(item)) {
+                                                    item.android(layoutWidthHeight, '0px');
+                                                }
+                                            });
+                                        }
                                     }
                                 }
                                 else {
                                     if (Utils.withinFraction(node.box.left, firstNode.linear.left) && Utils.withinFraction(lastNode.linear.right, node.box.right)) {
-                                        firstNode.app(chainStyle, 'chain_spread_inside');
+                                        firstNode.app(chainStyle, 'spread_inside');
                                         Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                     }
                                     else if (maxOffset <= SETTINGS[`chainPacked${horizontalVertical}Offset`]) {
-                                        firstNode.app(chainStyle, 'chain_packed');
+                                        firstNode.app(chainStyle, 'packed');
                                         firstNode.app(`layout_constraint${horizontalVertical}_bias`, Node[`get${horizontalVertical}Bias`](node, firstNode, lastNode));
                                         Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                     }
@@ -1008,7 +1039,7 @@ function positionConstraints() {
                                             if (chain == lastNode) {
                                                 percent = 1 - percentTotal;
                                             }
-                                            chain.app(layoutWidthHeight, 'match_constraint');
+                                            chain.app(layoutWidthHeight, '0px');
                                             chain.app(`layout_constraint${widthHeight}_percent`, percent.toFixed(2));
                                             percentTotal += parseFloat(percent.toFixed(2));
                                         }
@@ -1088,7 +1119,6 @@ function getGridSpacing(node, depth) {
     let preXml = '';
     let postXml = '';
     if (node.parent.isView(WIDGET_ANDROID.GRID)) {
-        const indent = Utils.setIndent(depth);
         let container = node.original.parent;
         if (node.renderId != null) {
             container = container.original.parent;
@@ -1121,10 +1151,10 @@ function getGridSpacing(node, depth) {
 }
 
 function getSpaceXml(depth, width, height, columnCount, columnWeight = 0) {
-    let indent = Utils.setIndent(depth);
+    const indent = Utils.padLeft(depth);
     if (SETTINGS.showAttributes) {
         let xml = Utils.formatString(STRING_ANDROID.SPACE, width, height, columnCount, columnWeight);
-        return `${indent + xml.replace(/\n/g, `\n${Utils.setIndent(depth + 1)}`)}\n`;
+        return `${indent + xml.replace(/\n/g, `\n${Utils.padLeft(depth + 1)}`)}\n`;
     }
     return `${indent}<Space />\n`;
 }
@@ -1655,13 +1685,11 @@ function setNodeCache() {
     for (const parent of NODE_CACHE) {
         if (parent.bounds == null) {
             parent.setBounds();
-            parent.setLinearBoxRect();
         }
         for (const child of NODE_CACHE) {
             if (parent != child) {
                 if (child.bounds == null) {
                     child.setBounds();
-                    child.setLinearBoxRect();
                 }
                 if (child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
                     if (parentNodes[child.id] == null) {
@@ -1941,7 +1969,7 @@ function parseDocument() {
                     }
                     if (!nodeY.renderParent) {
                         if (nodeY.parent.isView(WIDGET_ANDROID.GRID)) {
-                            const original = nodeY.parent.children.find(item => item.id == nodeY.original.parentId);
+                            const original = nodeY.parent.children.find(item => (nodeY.original.parent != null && item.id == nodeY.original.parent.id));
                             if (original != null) {
                                 const siblings = original.children.filter(item => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= nodeY.parent.gridColumnEnd[nodeY.gridIndex]).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
                                 if (siblings.length > 0) {
@@ -1993,7 +2021,6 @@ function parseDocument() {
                                         return '';
                                     }).join('');
                                     wrapNode.setBounds();
-                                    wrapNode.setLinearBoxRect();
                                     if (linearX || linearY) {
                                         if (renderParent.isView(WIDGET_ANDROID.LINEAR)) {
                                             renderParent.linearRows.push(wrapNode);

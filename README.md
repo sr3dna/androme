@@ -25,6 +25,7 @@ These settings are available in layout.js to customize your desired XML structur
 
 ```javascript
 const SETTINGS = {
+    targetAPI: 19,
     density: DENSITY_ANDROID.MDPI,
     showAttributes: true,
     useConstraintLayout: true,
@@ -32,7 +33,8 @@ const SETTINGS = {
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
-    useRTL: false,
+    useRTL: true,
+    resourceValueNumber: false,
     boundsOffset: 2,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
@@ -120,7 +122,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:paddingTop="3dp"
 					android:text="@string/date_add"
 					style="@style/Label_1" />
-				<ConstraintLayout
+				<android.support.constraint.ConstraintLayout
 					android:id="@+id/constraintlayout_1"
 					android:layout_columnWeight="1"
 					android:layout_height="wrap_content"
@@ -165,7 +167,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 						app:layout_constraintBottom_toBottomOf="parent"
 						app:layout_constraintStart_toStartOf="parent"
 						style="@style/Select_1" />
-				</ConstraintLayout>
+				</android.support.constraint.ConstraintLayout>
 				<Space
 					android:layout_columnSpan="2"
 					android:layout_columnWeight="1"
@@ -846,46 +848,17 @@ Partial output of the string resources.
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<array name="branch_array">
-		<item>0</item>
-		<item>1</item>
-		<item>2</item>
-		<item>3</item>
-		<item>4</item>
-		<item>5</item>
-		<item>6</item>
-		<item>7</item>
-		<item>8</item>
-		<item>9</item>
-		<item>10</item>
-	</array>
-	<array name="branch_update_array">
-		<item>0</item>
-		<item>1</item>
-		<item>2</item>
-		<item>3</item>
-		<item>4</item>
-		<item>5</item>
-		<item>6</item>
-		<item>7</item>
-		<item>8</item>
-		<item>9</item>
-		<item>10</item>
-		<item>11</item>
-		<item>12</item>
-		<item>13</item>
-	</array>
 	<array name="calendar_array">
-		<item name="1">@string/birth</item>
-		<item name="2">@string/death</item>
+		<item>@string/birth</item>
+		<item>@string/death</item>
 	</array>
 	<array name="entryactive_array">
-		<item name="1">@string/yes</item>
-		<item name="0">@string/no</item>
+		<item>@string/yes</item>
+		<item>@string/no</item>
 	</array>
 	<array name="mode_array">
-		<item name="1">@string/variant</item>
-		<item name="2">@string/predefined</item>
+		<item>@string/variant</item>
+		<item>@string/predefined</item>
 	</array>
 	<array name="prominence0_array">
 		<item>0</item>
@@ -996,13 +969,13 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<color name="#000000">black</color>
-	<color name="#708090">slate_gray</color>
-	<color name="#808080">gray</color>
-	<color name="#A9A9A9">dark_gray</color>
-	<color name="#CCCCCC">light_gray_1</color>
-	<color name="#DDDDDD">white_smoke_1</color>
-	<color name="#FFFFFF">white</color>
+	<color name="black">#000000</color>
+	<color name="slate_gray">#708090</color>
+	<color name="gray">#808080</color>
+	<color name="dark_gray">#A9A9A9</color>
+	<color name="light_gray_1">#CCCCCC</color>
+	<color name="white_smoke_1">#DDDDDD</color>
+	<color name="white">#FFFFFF</color>
 </resources>
 <!-- filename: res/values/colors.xml -->
 ```

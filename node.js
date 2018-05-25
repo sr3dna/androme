@@ -157,7 +157,7 @@ class Node {
     setAndroidId(widgetName) {
         this.androidWidgetName = widgetName || this.widgetName;
         if (this.androidId == null) {
-            this.androidId = Utils.generateId('android', this.element.id || this.element.name || `${this.androidWidgetName.toLowerCase()}_1`);
+            this.androidId = Utils.generateId('android', this.element.id || this.element.name || `${this.androidWidgetName.substring(this.androidWidgetName.lastIndexOf('.') + 1).toLowerCase()}_1`);
         }
     }
     setAndroidDimensions() {
@@ -374,16 +374,22 @@ class Node {
                                 if (Utils.hasValue(value)) {
                                     value = Node.parseStyle(element, j, value);
                                     if (value != null) {
+                                        switch (methodName) {
+                                            case 'addResourceString':
+                                                value = Utils.isNumber(value) ? value : `@string/${value}`;
+                                                break;
+                                        }
                                         output.push(Utils.formatString(widget[action][j], value));
                                     }
                                 }
                             }
                             if (output.length > 0) {
-                                if (methodName == 'setComputedStyle') {
-                                    this.styleAttributes = output;
-                                }
-                                else {
-                                    result[i] = output;
+                                switch (methodName) {
+                                    case 'setComputedStyle':
+                                        this.styleAttributes = output;
+                                        break;
+                                    default:
+                                        result[i] = output;
                                 }
                             }
                         }
@@ -433,21 +439,6 @@ class Node {
             else {
                 this.bounds = this.element.getBoundingClientRect();
             }
-        }
-        else {
-            const nodes = this.outerNodes;
-            this.bounds = {
-                top: nodes.top[0].bounds.top,
-                right: nodes.right[0].bounds.right,
-                bottom: nodes.bottom[0].bounds.bottom,
-                left: nodes.left[0].bounds.left,
-                x: nodes.left[0].bounds.x,
-                y: nodes.top[0].bounds.y
-            };
-        }
-    }
-    setLinearBoxRect() {
-        if (this.wrapNode == null) {
             const bounds = this.bounds;
             this.linear = {
                 top: bounds.top - this.marginTop,
@@ -464,6 +455,16 @@ class Node {
         }
         else {
             const nodes = this.outerNodes;
+            this.bounds = {
+                top: nodes.top[0].bounds.top,
+                right: nodes.right[0].bounds.right,
+                bottom: nodes.bottom[0].bounds.bottom,
+                left: nodes.left[0].bounds.left,
+                x: nodes.left[0].bounds.x,
+                y: nodes.top[0].bounds.y
+            };
+            this.bounds.width = this.bounds.right - this.bounds.left;
+            this.bounds.height = this.bounds.bottom - this.bounds.top;
             this.linear = {
                 top: nodes.top[0].linear.top,
                 right: nodes.right[0].linear.right,
@@ -486,7 +487,7 @@ class Node {
         if (parent != null && parent.visible) {
             const left = this.linear.left - parent.box.left;
             const right = parent.box.right - this.linear.right;
-            return Utils.getBias(left, right);
+            return Utils.calculateBias(left, right);
         }
         return 0.5;
     }
@@ -495,7 +496,7 @@ class Node {
         if (parent != null && parent.visible) {
             const top = this.linear.top - parent.box.top;
             const bottom = parent.box.bottom - this.linear.bottom;
-            return Utils.getBias(top, bottom);
+            return Utils.calculateBias(top, bottom);
         }
         return 0.5;
     }
@@ -512,18 +513,16 @@ class Node {
         }
     }
     set parent(value) {
+        if (this._parent == value) {
+            return;
+        }
         if (this._parent != null && this.original.parent == null) {
             this.original.parent = this._parent;
-            this.original.parentId = this._parent.id;
         }
-        if (value == null) {
-            value = new Node(0);
-            value.depth = -1;
-        }
+        this._parent = value;
         if (this._depth == null) {
             this._depth = value.depth + 1;
         }
-        this._parent = value;
     }
     get parent() {
         return (this._parent != null ? this._parent : new Node(0));
@@ -540,7 +539,10 @@ class Node {
         return this._renderParent;
     }
     set depth(value) {
-        if (this.original.depth == null && this._depth != null && this._depth != value) {
+        if (this._depth == value) {
+            return;
+        }
+        if (this.original.depth == null && this._depth != null) {
             this.original.depth = this._depth;
         }
         this._depth = value;
@@ -719,12 +721,12 @@ class Node {
     static getHorizontalBias(parent, firstNode, lastNode) {
         const left = firstNode.linear.left - parent.box.left;
         const right = parent.box.right - lastNode.linear.right;
-        return Utils.getBias(left, right);
+        return Utils.calculateBias(left, right);
     }
     static getVerticalBias(parent, firstNode, lastNode) {
         const top = firstNode.linear.top - parent.box.top;
         const bottom = parent.box.bottom - lastNode.linear.bottom;
-        return Utils.getBias(top, bottom);
+        return Utils.calculateBias(top, bottom);
     }
     static getRangeBounds(element) {
         const range = document.createRange();

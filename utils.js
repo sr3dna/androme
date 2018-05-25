@@ -52,14 +52,8 @@ const Utils = (function() {
             }
             return value;
         },
-        hasValue: function(value) {
-            return (typeof value !== 'undefined' && value !== null && value !== '');
-        },
-        setIndent: function(n, value = '\t') {
+        padLeft: function(n, value = '\t') {
             return value.repeat(n);
-        },
-        hasFreeFormText(element) {
-            return Array.from(element.childNodes).some(item => (item.nodeName == '#text' && item.textContent.trim() != ''));
         },
         convertToPX: function(value, unit = true) {
             if (Utils.hasValue(value)) {
@@ -103,6 +97,12 @@ const Utils = (function() {
         convertToSP: function(value, unit = true) {
             return Utils.convertToDP(value, unit, true);
         },
+        insetToDP(xml, font = false) {
+            return xml.replace(/("|>)[0-9\.]+px("|<)/g, (match, ...capture) => capture[0] + Utils.convertToDP(Utils.parseUnit(match), true, font) + capture[1]);
+        },
+        parseInt(value) {
+            return parseInt(value) || 0;
+        },
         parseUnit(value) {
             if (Utils.hasValue(value)) {
                 const match = value.match(/(?:"|>)([0-9]+)(?:(px|pt|em|dp|sp))(?:"|<)/);
@@ -112,17 +112,23 @@ const Utils = (function() {
             }
             return 0;
         },
-        parseInt(value) {
-            return parseInt(value) || 0;
+        calculateBias(start, end) {
+            return parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2)));
         },
-        insetToDP(xml, font = false) {
-            return xml.replace(/("|>)[0-9\.]+px("|<)/g, (match, ...capture) => capture[0] + Utils.convertToDP(Utils.parseUnit(match), true, font) + capture[1]);
+        hasValue: function(value) {
+            return (typeof value !== 'undefined' && value !== null && value !== '');
         },
         withinRange: function(a, b, n = 1) {
             return (b >= (a - n) && b <= (a + n));
         },
         withinFraction: function(left, right) {
             return (left == right || Math.ceil(left) == Math.floor(right));
+        },
+        isNumber: function(value) {
+            return /^[0-9.]+$/.test(value.trim());
+        },
+        hasFreeFormText(element) {
+            return Array.from(element.childNodes).some(item => (item.nodeName == '#text' && item.textContent.trim() != ''));
         },
         isVisible: function(element) {
             if (typeof element.getBoundingClientRect == 'function') {
@@ -132,9 +138,6 @@ const Utils = (function() {
                 }
             }
             return false;
-        },
-        getBias(start, end) {
-            return parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2)));
         }
     };
 

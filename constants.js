@@ -2,7 +2,7 @@ const WIDGET_ANDROID = {
     TEXT: 'TextView',
     EDIT: 'EditText',
     LINEAR: 'LinearLayout',
-    CONSTRAINT: 'ConstraintLayout',
+    CONSTRAINT: 'android.support.constraint.ConstraintLayout',
     RELATIVE: 'RelativeLayout',
     GRID: 'GridLayout',
     SCROLL_VERTICAL: 'ScrollView',
@@ -70,7 +70,7 @@ const PROPERTY_ANDROID = {
         'paddingStart': 'android:paddingStart="{0}"'
     },
     'resourceString': {
-        'text': 'android:text="@string/{0}"'
+        'text': 'android:text="{0}"'
     },
     'resourceStringArray': {
         'entries': 'android:entries="@array/{0}"'
@@ -88,7 +88,7 @@ const ACTION_ANDROID = {
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
     },
-    'ConstraintLayout': {
+    'android.support.constraint.ConstraintLayout': {
         'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
         'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
@@ -165,6 +165,7 @@ const STRING_ANDROID = {
     XML_DECLARATION: '<?xml version="1.0" encoding="utf-8"?>',
     XMLNS_ANDROID: 'xmlns:android="http://schemas.android.com/apk/res/android"',
     XMLNS_APP: 'xmlns:app="http://schemas.android.com/apk/res-auto"',
+    XMLNS_TOOLS: 'xmlns:tools="http://schemas.android.com/tools"',
     SPACE: '<Space\nandroid:layout_columnSpan="{2}"\nandroid:layout_columnWeight="{3}"\nandroid:layout_height="{1}"\nandroid:layout_width="{0}" />'
 };
 
