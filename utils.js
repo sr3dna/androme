@@ -1,5 +1,31 @@
 const Utils = (function() {
+    const ID = {
+        android: ['parent']
+    };
     const Utils = {
+        generateId: function(section, name) {
+            let prefix = name;
+            let i = 1;
+            const match = name.match(/^([a-zA-Z0-9_]+)_([0-9]+)$/);
+            if (match != null) {
+                prefix = match[1];
+                i = parseInt(match[2]);
+            }
+            if (ID[section] == null) {
+                ID[section] = [];
+            }
+            do {
+                if (!ID[section].includes(name)) {
+                    ID[section].push(name);
+                    break;
+                }
+                else {
+                    name = `${prefix}_${i++}`;
+                }
+            }
+            while (true)
+            return name;
+        },
         formatString: function(value, ...params) {
             for (let i = 0; i < params.length; i++) {
                 value = value.replace(`{${i}}`, params[i]);

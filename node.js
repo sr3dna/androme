@@ -49,27 +49,9 @@ class Node {
     }
 
     setAndroidId(widgetName) {
-        const element = this.element;
-        if (widgetName == null) {
-            widgetName = this.widgetName;
-        }
-        this.androidWidgetName = widgetName;
+        this.androidWidgetName = widgetName || this.widgetName;
         if (this.androidId == null) {
-            let androidName = element.id || element.name || widgetName.toLowerCase();
-            this.androidId = androidName;
-            do {
-                if (!GENERATE_ID['__id'].includes(this.androidId) && this.androidId != widgetName.toLowerCase()) {
-                    GENERATE_ID['__id'].push(this.androidId);
-                    break;
-                }
-                else {
-                    if (GENERATE_ID[androidName] == null) {
-                        GENERATE_ID[androidName] = 1;
-                    }
-                    this.androidId = `${androidName}_${GENERATE_ID[androidName]++}`;
-                }
-            }
-            while (true)
+            this.androidId = Utils.generateId('android', this.element.id || this.element.name || `${this.androidWidgetName.toLowerCase()}_1`);
         }
     }
     setAndroidDimensions() {

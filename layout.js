@@ -16,7 +16,6 @@ const SETTINGS = {
 };
 
 const NODE_CACHE = [];
-const GENERATE_ID = { '__id': ['parent'] };
 
 const RESOURCE = {
     string: new Map(),
@@ -202,11 +201,7 @@ function addResourceColor(value) {
                     colorName = color.name;
                 }
                 else {
-                    const className = `__color${color.name}`;
-                    if (GENERATE_ID[className] == null) {
-                        GENERATE_ID[className] = 1;
-                    }
-                    colorName = `${color.name}_${GENERATE_ID[className]++}`;
+                    colorName = Utils.generateId('color', color.name);
                 }
             }
             if (colorName != '') {
@@ -426,7 +421,9 @@ function writeGridLayout(node, depth, parent, columnCount = 2) {
 function writeViewLayout(node, depth, parent, tagName) {
     let preXml = '';
     let postXml = '';
-    node.setAndroidId(tagName);
+    if (node.wrapNode == null) {
+        node.setAndroidId(tagName);
+    }
     if (node.overflow != 0) {
         const scrollView = [];
         if (node.overflowY) {
@@ -580,11 +577,11 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
             node.android('scrollbars', scrollbars);
         }
     }
-    node.children.forEach(item => item.hide());
     node.setAttributes();
     node.renderDepth = depth;
     node.renderParent = parent;
     node.setGravity();
+    node.children.forEach(item => item.hide());
     return getEnclosingTag(depth, node.widgetName, node.id, '', getGridSpacing(node, depth));
 }
 
@@ -868,7 +865,7 @@ function positionConstraints() {
                                 firstNode.app(layout[chainMap['leftTop'][index]], 'parent');
                                 lastNode.app(layout[chainMap['rightBottom'][index]], 'parent');
                                 let maxOffset = -1;
-                                const wrapNodes = [];
+                                const wrapContent = [];
                                 for (let i = 0; i < chainDirection.length; i++) {
                                     const chain = chainDirection[i];
                                     const chainNext = chainDirection[i + 1];
@@ -892,7 +889,7 @@ function positionConstraints() {
                                             chain.app(`layout_constraint${widthHeight}_max`, Utils.convertToPX(max));
                                         }
                                         else {
-                                            wrapNodes.push(chain);
+                                            wrapContent.push(chain);
                                         }
                                     }
                                     chain.constraint[`layout${horizontalVertical}`] = true;
@@ -929,7 +926,7 @@ function positionConstraints() {
                                     switch (flex.justifyContent) {
                                         case 'space-between':
                                             firstNode.app(chainStyle, 'chain_spread_inside');
-                                            Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
+                                            Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                             break;
                                         case 'space-around':
                                             node.android('gravity', 'center');
@@ -963,18 +960,18 @@ function positionConstraints() {
                                             }
                                             firstNode.app(chainStyle, 'chain_packed');
                                             firstNode.app(`layout_constraint${horizontalVertical}_bias`, bias);
-                                            Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
+                                            Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                     }
                                 }
                                 else {
                                     if (Utils.withinFraction(node.box.left, firstNode.linear.left) && Utils.withinFraction(lastNode.linear.right, node.box.right)) {
                                         firstNode.app(chainStyle, 'chain_spread_inside');
-                                        Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
+                                        Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                     }
                                     else if (maxOffset <= SETTINGS[`chainPacked${horizontalVertical}Offset`]) {
                                         firstNode.app(chainStyle, 'chain_packed');
                                         firstNode.app(`layout_constraint${horizontalVertical}_bias`, Node[`get${horizontalVertical}Bias`](node, firstNode, lastNode));
-                                        Node.android(wrapNodes, layoutWidthHeight, 'wrap_content');
+                                        Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
                                     }
                                     else {
                                         let percentTotal = 0;
