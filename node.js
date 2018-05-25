@@ -25,10 +25,10 @@ class Node {
         this.linearRows = [];
         this.renderId = null;
         this.renderChildren = [];
-        this.androidAttributes = [];
-        this.styleAttributes = [];
-        this.constraint = {};
         this.original = {};
+        this.styleAttributes = [];
+        this.label = null;
+        this.constraint = {};
         this.boxRefit = {};
         this.preAlignment = {};
         this.nestedScroll = false;
@@ -37,6 +37,7 @@ class Node {
 
         this._parent = null;
         this._depth = null;
+        this._default = {};
         this._android = {};
         this._app = {};
         this._overflow = null;
@@ -46,6 +47,108 @@ class Node {
         if (options.element != null || arguments[1] != null) {
             this.element.androidNode = this;
         }
+    }
+
+    add(obj, name, value, overwrite = true) {
+        const prop = `_${obj}`;
+        if (this[prop] == null) {
+            this[prop] = {};
+        }
+        if (Utils.hasValue(value)) {
+            if (!overwrite && this[prop][name] != null) {
+                return null;
+            }
+            this[prop][name] = value;
+        }
+        return this[prop][name];
+    }
+    delete(obj, name) {
+        delete this[`_${obj}`][name];
+    }
+    attr(value) {
+        const match = value.match(/^(?:([a-z]+):)?([a-zA-Z_]+)="((?:@+?[a-z]+\/)?.+)"$/);
+        if (match != null) {
+            this.add(match[1] || 'other', match[2], match[3]);
+        }
+    }
+    android(name, value, overwrite = true) {
+        if (arguments.length == 0) {
+            return this._android;
+        }
+        else {
+            return this.add('android', name, value, overwrite);
+        }
+    }
+    app(name, value, overwrite = true) {
+        if (arguments.length == 0) {
+            return this._app;
+        }
+        else {
+            return this.add('app', name, value, overwrite);
+        }
+    }
+    other(name, value, overwrite = true) {
+        if (arguments.length == 0) {
+            return this._other;
+        }
+        else {
+            return this.add('other', name, value, overwrite);
+        }
+    }
+    combine() {
+        const other = this.other();
+        const android = this.android();
+        const app = this.app();
+        const result = [];
+        for (const name in android) {
+            result.push(`android:${name}="${android[name]}"`);
+        }
+        for (const name in app) {
+            result.push(`app:${name}="${app[name]}"`);
+        }
+        for (const name in other) {
+            result.push(`${name}="${other[name]}"`);
+        }
+        return result.sort();
+    }
+    css(name) {
+        if (this.styleMap[name] != null) {
+            return this.styleMap[name];
+        }
+        return (this.style[name] || ''); 
+    }
+    hide(parent = true) {
+        this.visible = false;
+        this.renderParent = parent;
+    }
+    inheritGrid(node) {
+        for (const prop in node) {
+            if (prop.startsWith('grid')) {
+                if (node[prop] !== false) {
+                    this[prop] = node[prop];
+                }
+                delete node[prop];
+            }
+        }
+    }
+    inheritStyleMap(node) {
+        for (const prop in node.styleMap) {
+            if (this.styleMap[prop] == null) {
+                this.styleMap[prop] = node.styleMap[prop];
+            }
+        }
+    }
+    isHorizontal() {
+        return (this._android.orientation == 'horizontal');
+    }
+    isView(viewName) {
+        return (this.widgetName == viewName);
+    }
+    withinX(rect, dimension = 'linear') {
+        return ((rect.top >= this[dimension].top && rect.top < this[dimension].bottom) || (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) || (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) || (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom));
+    }
+    withinY(rect, dimension = 'linear') {
+        return ((rect.left >= this[dimension].left && rect.left < this[dimension].right) || (rect.right > this[dimension].left && rect.right <= this[dimension].right) || (this[dimension].left >= rect.left && this[dimension].right <= rect.right) || (rect.left >= this[dimension].left && rect.right <= this[dimension].right));
     }
 
     setAndroidId(widgetName) {
@@ -62,7 +165,7 @@ class Node {
         let gridLayout = false;
         if (this.wrapNode != null) {
             parent = this.wrapNode.original.parent || this.parent;
-            [width, height] = this.getChildDimensions();
+            [width, height] = this.childrenBox;
             gridLayout = this.parent.isView(WIDGET_ANDROID.GRID);
         }
         else {
@@ -155,84 +258,6 @@ class Node {
                 }
             }
         }
-    }
-    setBounds(element) {
-        if (this.wrapNode == null) {
-            if (element != null) {
-                const range = document.createRange();
-                range.selectNodeContents(element);
-                const domRect = range.getClientRects();
-                const domText = domRect[domRect.length - 1];
-                const bounds = JSON.parse(JSON.stringify(domText));
-                if (domRect.length > 1) {
-                    bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
-                    bounds.left = bounds.x;
-                    bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
-                }
-                this.bounds = Node.getRangeBounds(element);
-            }
-            else {
-                this.bounds = this.element.getBoundingClientRect();
-            }
-        }
-        else {
-            const nodes = Node.getNodesOuter(this.children);
-            this.bounds = {
-                top: nodes.top[0].bounds.top,
-                right: nodes.right[0].bounds.right,
-                bottom: nodes.bottom[0].bounds.bottom,
-                left: nodes.left[0].bounds.left,
-                x: nodes.left[0].bounds.x,
-                y: nodes.top[0].bounds.y
-            };
-        }
-    }
-    setLinearBoxRect() {
-        if (this.wrapNode == null) {
-            const bounds = this.bounds;
-            this.linear = {
-                top: bounds.top - this.marginTop,
-                right: bounds.right + this.marginRight,
-                bottom: bounds.bottom + this.marginBottom,
-                left: bounds.left - this.marginLeft
-            };
-            this.box = {
-                top: bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth'))),
-                right: bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth'))),
-                bottom: bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))),
-                left: bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))
-            };
-        }
-        else {
-            const nodes = Node.getNodesOuter(this.children);
-            this.linear = {
-                top: nodes.top[0].linear.top,
-                right: nodes.right[0].linear.right,
-                bottom: nodes.bottom[0].linear.bottom,
-                left: nodes.left[0].linear.left
-            };
-            this.box = {
-                top: nodes.top[0].box.top,
-                right: nodes.right[0].box.right,
-                bottom: nodes.bottom[0].box.bottom,
-                left: nodes.left[0].box.left
-            };
-        }
-        this.box.width = this.box.right - this.box.left;
-        this.box.height = this.box.bottom - this.box.top
-    }
-    getChildDimensions() {
-        let minLeft = Number.MAX_VALUE;
-        let maxRight = Number.MIN_VALUE;
-        let minTop = Number.MAX_VALUE;
-        let maxBottom = Number.MIN_VALUE;
-        this.children.forEach(node => {
-            minLeft = Math.min(node.bounds.left, minLeft);
-            maxRight = Math.max(node.bounds.right, maxRight);
-            minTop = Math.min(node.bounds.top, minTop);
-            maxBottom = Math.max(node.bounds.bottom, maxBottom);
-        });
-        return [maxRight - minLeft, maxBottom - minTop];
     }
     setGravity() {
         if (this.wrapNode == null) {
@@ -365,16 +390,13 @@ class Node {
         }
         if (element.tagName == 'INPUT' && element.id != '') {
             const nextElement = element.nextElementSibling;
-            if (nextElement && nextElement.htmlFor == element.id) {
+            if (nextElement && nextElement.htmlFor == element.id && result[4] == null) {
                 const nextNode = nextElement.androidNode;
                 nextNode.setAndroidId(WIDGET_ANDROID.TEXT);
                 nextNode.setAttributes([4]);
-                const attributes = nextNode.androidAttributes;
-                for (const name in attributes) {
-                    const value = attributes[name];
-                    if (result[name] == null && Utils.hasValue(value)) {
-                        result[name] = value;
-                    }
+                const attrs = nextNode.combine();
+                if (attrs.length > 0) {
+                    result[4] = attrs;
                 }
                 this.label = nextNode;
                 nextNode.hide();
@@ -386,92 +408,74 @@ class Node {
                 if (!Array.isArray(value)) {
                     value = [value];
                 }
-                value.forEach(attr => {
-                    var match = attr.match(/^android:([a-zA-Z_]+)="([a-zA-Z0-9]+)"$/);
-                    if (match != null) {
-                        this.android(match[1], match[2]);
-                    }
-                    else {
-                        this.addAttribute(attr);
-                    }
-                });
+                value.forEach(attr => this.attr(attr));
             }
         }
     }
-    addAttribute(value) {
-        if (Utils.hasValue(value)) {
-            this.androidAttributes.push(value);
-        }
-    }
-    inheritGrid(node) {
-        for (const prop in node) {
-            if (prop.startsWith('grid')) {
-                if (node[prop] !== false) {
-                    this[prop] = node[prop];
+    setBounds(element) {
+        if (this.wrapNode == null) {
+            if (element != null) {
+                const range = document.createRange();
+                range.selectNodeContents(element);
+                const domRect = range.getClientRects();
+                const domText = domRect[domRect.length - 1];
+                const bounds = JSON.parse(JSON.stringify(domText));
+                if (domRect.length > 1) {
+                    bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
+                    bounds.left = bounds.x;
+                    bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
                 }
-                delete node[prop];
+                this.bounds = Node.getRangeBounds(element);
             }
-        }
-    }
-    inheritStyleMap(node) {
-        for (const prop in node.styleMap) {
-            if (this.styleMap[prop] == null) {
-                this.styleMap[prop] = node.styleMap[prop];
+            else {
+                this.bounds = this.element.getBoundingClientRect();
             }
-        }
-    }
-    android(name, value, overwrite = true) {
-        if (arguments.length == 0) {
-            return this._android;
         }
         else {
-            if (Utils.hasValue(value)) {
-                if (!overwrite && this._android[name] != null) {
-                    return null;
-                }
-                this._android[name] = value;
-            }
-            return this._android[name];
+            const nodes = Node.getNodesOuter(this.children);
+            this.bounds = {
+                top: nodes.top[0].bounds.top,
+                right: nodes.right[0].bounds.right,
+                bottom: nodes.bottom[0].bounds.bottom,
+                left: nodes.left[0].bounds.left,
+                x: nodes.left[0].bounds.x,
+                y: nodes.top[0].bounds.y
+            };
         }
     }
-    app(name, value, overwrite = true) {
-        if (arguments.length == 0) {
-            return this._app;
+    setLinearBoxRect() {
+        if (this.wrapNode == null) {
+            const bounds = this.bounds;
+            this.linear = {
+                top: bounds.top - this.marginTop,
+                right: bounds.right + this.marginRight,
+                bottom: bounds.bottom + this.marginBottom,
+                left: bounds.left - this.marginLeft
+            };
+            this.box = {
+                top: bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth'))),
+                right: bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth'))),
+                bottom: bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))),
+                left: bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))
+            };
         }
         else {
-            if (Utils.hasValue(value)) {
-                if (!overwrite && this._app[name] != null) {
-                    return null;
-                }
-                this._app[name] = value;
-            }
-            return this._app[name];
+            const nodes = Node.getNodesOuter(this.children);
+            this.linear = {
+                top: nodes.top[0].linear.top,
+                right: nodes.right[0].linear.right,
+                bottom: nodes.bottom[0].linear.bottom,
+                left: nodes.left[0].linear.left
+            };
+            this.box = {
+                top: nodes.top[0].box.top,
+                right: nodes.right[0].box.right,
+                bottom: nodes.bottom[0].box.bottom,
+                left: nodes.left[0].box.left
+            };
         }
-    }
-    delete(obj, name) {
-        delete this[`_${obj}`][name];
-    }
-    css(name) {
-        if (this.styleMap[name] != null) {
-            return this.styleMap[name];
-        }
-        return (this.style[name] || ''); 
-    }
-    hide(parent = true) {
-        this.visible = false;
-        this.renderParent = parent;
-    }
-    withinX(rect, dimension = 'linear') {
-        return ((rect.top >= this[dimension].top && rect.top < this[dimension].bottom) || (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) || (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) || (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom));
-    }
-    withinY(rect, dimension = 'linear') {
-        return ((rect.left >= this[dimension].left && rect.left < this[dimension].right) || (rect.right > this[dimension].left && rect.right <= this[dimension].right) || (this[dimension].left >= rect.left && this[dimension].right <= rect.right) || (rect.left >= this[dimension].left && rect.right <= this[dimension].right));
-    }
-    isLinearHorizontal() {
-        return (this._android.orientation == 'horizontal');
-    }
-    isView(viewName) {
-        return (this.widgetName == viewName);
+        this.box.width = this.box.right - this.box.left;
+        this.box.height = this.box.bottom - this.box.top
     }
 
     get horizontalBias() {
@@ -540,6 +544,19 @@ class Node {
     }
     get depth() {
         return (this._depth != null ? this._depth : 0);
+    }
+    get childrenBox() {
+        let minLeft = Number.MAX_VALUE;
+        let maxRight = Number.MIN_VALUE;
+        let minTop = Number.MAX_VALUE;
+        let maxBottom = Number.MIN_VALUE;
+        this.children.forEach(node => {
+            minLeft = Math.min(node.bounds.left, minLeft);
+            maxRight = Math.max(node.bounds.right, maxRight);
+            minTop = Math.min(node.bounds.top, minTop);
+            maxBottom = Math.max(node.bounds.bottom, maxBottom);
+        });
+        return [maxRight - minLeft, maxBottom - minTop];
     }
     get firstChild() {
         const nodes = this.children.slice();
@@ -631,10 +648,6 @@ class Node {
             original: node.original,
             depth: parent.depth,
             depthIndent: parent.depthIndent,
-            bounds: node.bounds,
-            linear: node.linear,
-            box: node.box,
-            original: node.original,
             actions
         };
         return new Node(id, null, options);
@@ -662,17 +675,6 @@ class Node {
     }
     static android(nodes, name, value, overwrite = true) {
         nodes.forEach(node => node.android(name, value, overwrite));
-    }
-    static isLinearXY(nodes) {
-        let linearX = true;
-        let linearY = true;
-        if (nodes.length > 1) {
-            const minBottom = nodes.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
-            const minRight = nodes.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
-            linearX = !nodes.some(item => (item.linear.top >= minBottom));
-            linearY = !nodes.some(item => (item.linear.left >= minRight));
-        }
-        return [linearX, linearY];
     }
     static getNodesOuter(nodes) {
         let top = [nodes[0]];
@@ -744,6 +746,17 @@ class Node {
             value = Utils.convertToPX(value);
         }
         return value;
+    }
+    static isLinearXY(nodes) {
+        let linearX = true;
+        let linearY = true;
+        if (nodes.length > 1) {
+            const minBottom = nodes.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
+            const minRight = nodes.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
+            linearX = !nodes.some(item => (item.linear.top >= minBottom));
+            linearY = !nodes.some(item => (item.linear.left >= minRight));
+        }
+        return [linearX, linearY];
     }
     static orderDefault(a, b) {
         let [c, d] = [a.depth, b.depth];

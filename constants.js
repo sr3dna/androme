@@ -104,8 +104,7 @@ const ACTION_ANDROID = {
         'androidId': 'android:id="@+id/{0}"'
     },
     'RadioGroup': {
-        'androidId': 'android:id="@+id/{0}"',
-        'androidCheckedButton': 'android:checkedButton="@id+/{0}"'
+        'androidId': 'android:id="@+id/{0}"'
     },
     'RadioButton': {
         'androidId': 'android:id="@+id/{0}"',

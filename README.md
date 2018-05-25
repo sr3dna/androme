@@ -750,7 +750,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				style="@style/Select_1" />
 			<RadioGroup
 				android:id="@+id/radiogroup_1"
-				android:checkedButton="@id+/c2"
+				android:checkedButton="@+id/c2"
 				android:layout_height="wrap_content"
 				android:layout_marginLeft="4dp"
 				android:layout_width="wrap_content"
