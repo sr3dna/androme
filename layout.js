@@ -6,7 +6,7 @@ const SETTINGS = {
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
-    useRTL: false,
+    useRTL: true,
     boundsOffset: 2,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
@@ -218,8 +218,18 @@ function addResourceColor(value) {
     return value;
 }
 
-function getLTR(ltr, rtl) {
-    return (SETTINGS.useRTL ? rtl : ltr);
+function getRTL(value) {
+    if (SETTINGS.useRTL) {
+        switch (value) {
+            case 'left':
+                return 'start';
+            case 'right':
+                return 'end';
+        }
+        value = value.replace(/Left/g, 'Start');
+        value = value.replace(/Right/g, 'End');
+    }
+    return value;
 }
 
 function insertResourceAsset(resource, name, value) {
@@ -358,10 +368,10 @@ function getBoxSpacing(node, complete) {
     const result = {};
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
-            const property = border + side;
-            const value = Utils.parseInt(node.css(property));
+            const prop = border + side;
+            const value = Utils.parseInt(node.css(prop));
             if (complete || value != 0) {
-                result[property] = value;
+                result[(SETTINGS.useRTL ? prop.replace('Left', 'Start').replace('Right', 'End') : prop)] = value;
             }
         });
     });
@@ -652,25 +662,25 @@ function positionConstraints() {
     const layoutMap = {
         relative: {
             top: 'layout_alignTop',
-            right: getLTR('layout_alignRight', 'layout_alignEnd'),
+            right: getRTL('layout_alignRight'),
             bottom: 'layout_alignBottom',
-            left: getLTR('layout_alignLeft', 'layout_alignStart'),
+            left: getRTL('layout_alignLeft'),
             baseline: 'layout_alignBaseline',
             bottomTop: 'layout_above',
             topBottom: 'layout_below',
-            rightLeft: getLTR('layout_toLeftOf', 'layout_toStartOf'),
-            leftRight: getLTR('layout_toRightOf', 'layout_toEndOf')
+            rightLeft: getRTL('layout_toLeftOf'),
+            leftRight: getRTL('layout_toRightOf')
         },
         constraint: {
             top: 'layout_constraintTop_toTopOf',
-            right: getLTR('layout_constraintRight_toRightOf', 'layout_constraintEnd_toEndOf'),
+            right: getRTL('layout_constraintRight_toRightOf'),
             bottom: 'layout_constraintBottom_toBottomOf',
-            left: getLTR('layout_constraintLeft_toLeftOf', 'layout_constraintStart_toStartOf'),
+            left: getRTL('layout_constraintLeft_toLeftOf'),
             baseline: 'layout_constraintBaseline_toBaselineOf',
             bottomTop: 'layout_constraintBottom_toTopOf',
             topBottom: 'layout_constraintTop_toBottomOf',
-            rightLeft: getLTR('layout_constraintRight_toLeftOf', 'layout_constraintEnd_toStartOf'),
-            leftRight: getLTR('layout_constraintLeft_toRightOf', 'layout_constraintStart_toEndOf')
+            rightLeft: getRTL('layout_constraintRight_toLeftOf'),
+            leftRight: getRTL('layout_constraintLeft_toRightOf')
         }
     };
     for (const node of NODE_CACHE) {
@@ -743,11 +753,11 @@ function positionConstraints() {
                                 current.constraint.layoutVertical = true;
                             }
                             if (current.linear.left == node.box.left) {
-                                current.android(getLTR('layout_alignParentLeft', 'layout_alignParentStart'), 'true');
+                                current.android(getRTL('layout_alignParentLeft'), 'true');
                                 current.constraint.layoutHorizontal = true;
                             }
                             else if (current.linear.right == node.box.right) {
-                                current.android(getLTR('layout_alignParentRight', 'layout_alignParentEnd'), 'true');
+                                current.android(getRTL('layout_alignParentRight'), 'true');
                                 current.constraint.layoutHorizontal = true;
                             }
                         }
@@ -893,10 +903,10 @@ function positionConstraints() {
                                         }
                                         switch (chain.flex.alignSelf) {
                                             case 'flex-start':
-                                                chain.android(`layout_gravity`, (index == 0 ? 'top' : getLTR('left', 'start')));
+                                                chain.android(`layout_gravity`, (index == 0 ? 'top' : getRTL('left')));
                                                 break;
                                             case 'flex-end':
-                                                chain.android(`layout_gravity`, (index == 0 ? 'bottom' : getLTR('right', 'end')));
+                                                chain.android(`layout_gravity`, (index == 0 ? 'bottom' : getRTL('right')));
                                                 break;
                                             case 'center':
                                                 chain.android(`layout_gravity`, (index == 0 ? 'center_vertical' : 'center_horizontal'));
@@ -943,7 +953,7 @@ function positionConstraints() {
                                                     item.app(`layout_constraint${horizontalVertical}_weight`, 1);
                                                     if (flex.justifyContent == 'space-evenly') {
                                                         if (index == 0) {
-                                                            gravity = (i < chainDirection.length - 1 ? getLTR('right', 'end') : getLTR('left', 'end'));
+                                                            gravity = (i < chainDirection.length - 1 ? getRTL('right') : getRTL('left'));
                                                         }
                                                         else {
                                                             gravity = (i < chainDirection.length - 1 ? 'bottom' : 'top');
@@ -993,7 +1003,7 @@ function positionConstraints() {
                                             const chainPrev = chainDirection[i - 1];
                                             let percent = ((chain.linear.right - node.box.left) - (chainPrev != null ? chainPrev.linear.right - node.box.left : 0)) / (node.box.right - node.box.left);
                                             if (chain != lastNode || Utils.withinRange(percent + percentTotal, 1.0, 0.01)) {
-                                                chain.android('layout_gravity', getLTR('right', 'end'), !flex.enabled);
+                                                chain.android('layout_gravity', getRTL('right'), !flex.enabled);
                                             }
                                             if (chain == lastNode) {
                                                 percent = 1 - percentTotal;
@@ -1093,7 +1103,7 @@ function getGridSpacing(node, depth) {
         if (node.gridRowStart) {
             const paddingLeft = dimensions.marginLeft + dimensions.paddingLeft;
             if (paddingLeft > 0) {
-                node.android('paddingLeft', Utils.convertToPX(paddingLeft));
+                node.android(getRTL('paddingLeft'), Utils.convertToPX(paddingLeft));
             }
         }
         if (node.gridRowEnd) {
@@ -1103,7 +1113,7 @@ function getGridSpacing(node, depth) {
                 postXml += getSpaceXml(depth, 'match_parent', Utils.convertToPX(heightBottom), node.renderParent.gridColumnCount, 1);
             }
             if (paddingRight > 0) {
-                node.android('paddingRight', Utils.convertToPX(paddingRight));
+                node.android(getRTL('paddingRight'), Utils.convertToPX(paddingRight));
             }
         }
     }
@@ -1343,24 +1353,26 @@ function setResourceStyle() {
         resource.set(name, tagData);
     }
     for (const node of NODE_CACHE) {
-        const tagName = node.tagName;
-        if (resource.has(tagName)) {
-            const styles = [];
-            for (const tag of resource.get(tagName)) {
-                if (tag.ids.includes(node.id)) {
-                    styles.push(tag.name);
+        if (node.visible) {
+            const tagName = node.tagName;
+            if (resource.has(tagName)) {
+                const styles = [];
+                for (const tag of resource.get(tagName)) {
+                    if (tag.ids.includes(node.id)) {
+                        styles.push(tag.name);
+                    }
+                }
+                node.androidStyle = styles.join('.');
+                if (node.androidStyle != '') {
+                    node.attr(`style="@style/${node.androidStyle}"`);
                 }
             }
-            node.androidStyle = styles.join('.');
-            if (node.androidStyle != '') {
-                node.attr(`style="@style/${node.androidStyle}"`);
-            }
-        }
-        const tag = layout[tagName];
-        if (tag != null) {
-            for (const attr in tag) {
-                if (tag[attr].includes(node.id)) {
-                    node.attr((SETTINGS.useUnitDP ? Utils.insetToDP(attr, true) : attr));
+            const tag = layout[tagName];
+            if (tag != null) {
+                for (const attr in tag) {
+                    if (tag[attr].includes(node.id)) {
+                        node.attr((SETTINGS.useUnitDP ? Utils.insetToDP(attr, true) : attr));
+                    }
                 }
             }
         }
@@ -1395,8 +1407,8 @@ function setMarginPadding() {
                         if (width > 0) {
                             const visible = (item.visible ? item : item.firstChild);
                             if (visible != null) {
-                                const marginLeft = Utils.parseInt(node.android('layout_marginLeft')) + width;
-                                visible.android('layout_marginLeft', `${marginLeft}px`);
+                                const marginLeft = Utils.parseInt(node.android(getRTL('layout_marginLeft'))) + width;
+                                visible.android(getRTL('layout_marginLeft'), `${marginLeft}px`);
                                 visible.boxRefit.layout_marginLeft = true;
                             }
                         }
@@ -1453,10 +1465,10 @@ function setMarginPadding() {
                                 break;
                             case 'right':
                                 if (childBox.layout_marginRight > 0) {
-                                    item.android('layout_marginRight', `${childBox.layout_marginRight}px`);
+                                    item.android(getRTL('layout_marginRight'), `${childBox.layout_marginRight}px`);
                                 }
                                 if (childBox.paddingRight > 0) {
-                                    item.android('paddingRight', `${childBox.paddingRight}px`);
+                                    item.android(getRTL('paddingRight'), `${childBox.paddingRight}px`);
                                 }
                                 break;
                             case 'bottom':
@@ -1469,10 +1481,10 @@ function setMarginPadding() {
                                 break;
                             case 'left':
                                 if (childBox.layout_marginLeft > 0) {
-                                    item.android('layout_marginLeft', `${childBox.layout_marginLeft}px`);
+                                    item.android(getRTL('layout_marginLeft'), `${childBox.layout_marginLeft}px`);
                                 }
                                 if (childBox.paddingLeft > 0) {
-                                    item.android('paddingLeft', `${childBox.paddingLeft}px`);
+                                    item.android(getRTL('paddingLeft'), `${childBox.paddingLeft}px`);
                                 }
                                 break;
                         }
@@ -1487,33 +1499,45 @@ function setMarginPadding() {
 function mergeMarginPadding() {
     for (const node of NODE_CACHE) {
         if (node.visible) {
+            const LTR_marginLeft = getRTL('layout_marginLeft');
+            const LTR_marginRight = getRTL('layout_marginRight');
             const marginTop = Utils.parseInt(node.android('layout_marginTop'));
-            const marginRight = Utils.parseInt(node.android('layout_marginRight'));
+            const marginRight = Utils.parseInt(node.android(LTR_marginRight));
             const marginBottom = Utils.parseInt(node.android('layout_marginBottom'));
-            const marginLeft = Utils.parseInt(node.android('layout_marginLeft'));
-            if (marginTop != 0 && marginTop == marginBottom) {
-                node.android('layout_marginVertical', `${marginTop}px`);
-                node.delete('android', 'layout_marginTop');
-                node.delete('android', 'layout_marginBottom');
+            const marginLeft = Utils.parseInt(node.android(LTR_marginLeft));
+            if (marginTop != 0 && marginTop == marginBottom && marginBottom == marginLeft && marginLeft == marginRight) {
+                node.android('layout_margin', `${marginTop}px`);
+                node.delete('android', 'layout_marginTop', 'layout_marginBottom', LTR_marginLeft, LTR_marginRight);
             }
-            if (marginLeft != 0 && marginLeft == marginRight) {
-                node.android('layout_marginHorizontal', `${marginLeft}px`);
-                node.delete('android', 'layout_marginLeft');
-                node.delete('android', 'layout_marginRight');
+            else {
+                if (marginTop != 0 && marginTop == marginBottom) {
+                    node.android('layout_marginVertical', `${marginTop}px`);
+                    node.delete('android', 'layout_marginTop', 'layout_marginBottom');
+                }
+                if (marginLeft != 0 && marginLeft == marginRight) {
+                    node.android('layout_marginHorizontal', `${marginLeft}px`);
+                    node.delete('android', LTR_marginLeft, LTR_marginRight);
+                }
             }
+            const LTR_paddingLeft = getRTL('paddingLeft');
+            const LTR_paddingRight = getRTL('paddingRight');
             const paddingTop = Utils.parseInt(node.android('paddingTop'));
-            const paddingRight = Utils.parseInt(node.android('paddingRight'));
+            const paddingRight = Utils.parseInt(node.android(LTR_paddingRight));
             const paddingBottom = Utils.parseInt(node.android('paddingBottom'));
-            const paddingLeft = Utils.parseInt(node.android('paddingLeft'));
-            if (paddingTop != 0 && paddingTop == paddingBottom) {
-                node.android('paddingVertical', `${paddingTop}px`);
-                node.delete('android', 'paddingTop');
-                node.delete('android', 'paddingBottom');
+            const paddingLeft = Utils.parseInt(node.android(LTR_paddingLeft));
+            if (paddingTop != 0 && paddingTop == paddingBottom && paddingBottom == paddingLeft && paddingLeft == paddingRight) {
+                node.android('padding', `${paddingTop}px`);
+                node.delete('android', 'paddingTop', 'paddingBottom', LTR_paddingLeft, LTR_paddingRight);
             }
-            if (paddingLeft != 0 && paddingLeft == paddingRight) {
-                node.android('paddingHorizontal', `${paddingLeft}px`);
-                node.delete('android', 'paddingLeft');
-                node.delete('android', 'paddingRight');
+            else {
+                if (paddingTop != 0 && paddingTop == paddingBottom) {
+                    node.android('paddingVertical', `${paddingTop}px`);
+                    node.delete('android', 'paddingTop', 'paddingBottom');
+                }
+                if (paddingLeft != 0 && paddingLeft == paddingRight) {
+                    node.android('paddingHorizontal', `${paddingLeft}px`);
+                    node.delete('android', LTR_paddingLeft, LTR_paddingRight);
+                }
             }
         }
     }
@@ -1540,8 +1564,8 @@ function setLayoutWeight() {
                         column = column.original.parent;
                     }
                     if (row.isHorizontal()) {
-                        columnLeft[j][i] = column.bounds.left - (Utils.parseInt(column.android('layout_marginLeft') + borderSpacing));
-                        columnRight[j][i] = (column.label != null ? column.label.linear.right : column.bounds.right + (Utils.parseInt(column.android('layout_marginRight') + borderSpacing)));
+                        columnLeft[j][i] = column.bounds.left - (Utils.parseInt(column.android(getRTL('layout_marginLeft')) + borderSpacing));
+                        columnRight[j][i] = (column.label != null ? column.label.linear.right : column.bounds.right + (Utils.parseInt(column.android(getRTL('layout_marginRight')) + borderSpacing)));
                         columnOuter[i] = (row.isView(WIDGET_ANDROID.RADIO_GROUP) ? row.box.right : column.parent.box.right);
                     }
                     else {

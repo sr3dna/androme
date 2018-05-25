@@ -57,13 +57,17 @@ const PROPERTY_ANDROID = {
         'margin': 'android:layout_margin="{0}"',
         'marginTop': 'android:layout_marginTop="{0}"',
         'marginRight': 'android:layout_marginRight="{0}"',
+        'marginEnd': 'android:layout_marginEnd="{0}"',
         'marginBottom': 'android:layout_marginBottom="{0}"',
         'marginLeft': 'android:layout_marginLeft="{0}"',
+        'marginStart': 'android:layout_marginStart="{0}"',
         'padding': 'android:padding="{0}"',
         'paddingTop': 'android:paddingTop="{0}"',
         'paddingRight': 'android:paddingRight="{0}"',
+        'paddingEnd': 'android:paddingEnd="{0}"',
         'paddingBottom': 'android:paddingBottom="{0}"',
         'paddingLeft': 'android:paddingLeft="{0}"',
+        'paddingStart': 'android:paddingStart="{0}"'
     },
     'resourceString': {
         'text': 'android:text="@string/{0}"'

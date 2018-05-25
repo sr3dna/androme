@@ -49,21 +49,24 @@ class Node {
         }
     }
 
-    add(obj, name, value, overwrite = true) {
-        const prop = `_${obj}`;
-        if (this[prop] == null) {
-            this[prop] = {};
+    add(obj, attr, value, overwrite = true) {
+        const name = `_${obj}`;
+        if (this[name] == null) {
+            this[name] = {};
         }
         if (Utils.hasValue(value)) {
-            if (!overwrite && this[prop][name] != null) {
+            if (!overwrite && this[name][attr] != null) {
                 return null;
             }
-            this[prop][name] = value;
+            this[name][attr] = value;
         }
-        return this[prop][name];
+        return this[name][attr];
     }
-    delete(obj, name) {
-        delete this[`_${obj}`][name];
+    delete(obj, ...attrs) {
+        const name = `_${obj}`;
+        for (const attr of attrs) {
+            delete this[name][attr];
+        }
     }
     attr(value) {
         const match = value.match(/^(?:([a-z]+):)?([a-zA-Z_]+)="((?:@+?[a-z]+\/)?.+)"$/);
@@ -71,28 +74,28 @@ class Node {
             this.add(match[1] || 'other', match[2], match[3]);
         }
     }
-    android(name, value, overwrite = true) {
+    android(attr, value, overwrite = true) {
         if (arguments.length == 0) {
             return this._android;
         }
         else {
-            return this.add('android', name, value, overwrite);
+            return this.add('android', attr, value, overwrite);
         }
     }
-    app(name, value, overwrite = true) {
+    app(attr, value, overwrite = true) {
         if (arguments.length == 0) {
             return this._app;
         }
         else {
-            return this.add('app', name, value, overwrite);
+            return this.add('app', attr, value, overwrite);
         }
     }
-    other(name, value, overwrite = true) {
+    other(attr, value, overwrite = true) {
         if (arguments.length == 0) {
             return this._other;
         }
         else {
-            return this.add('other', name, value, overwrite);
+            return this.add('other', attr, value, overwrite);
         }
     }
     combine() {
@@ -100,22 +103,22 @@ class Node {
         const android = this.android();
         const app = this.app();
         const result = [];
-        for (const name in android) {
-            result.push(`android:${name}="${android[name]}"`);
+        for (const attr in android) {
+            result.push(`android:${attr}="${android[attr]}"`);
         }
-        for (const name in app) {
-            result.push(`app:${name}="${app[name]}"`);
+        for (const attr in app) {
+            result.push(`app:${attr}="${app[attr]}"`);
         }
-        for (const name in other) {
-            result.push(`${name}="${other[name]}"`);
+        for (const attr in other) {
+            result.push(`${attr}="${other[attr]}"`);
         }
         return result.sort();
     }
-    css(name) {
-        if (this.styleMap[name] != null) {
-            return this.styleMap[name];
+    css(attr) {
+        if (this.styleMap[attr] != null) {
+            return this.styleMap[attr];
         }
-        return (this.style[name] || ''); 
+        return (this.style[attr] || ''); 
     }
     hide(parent = true) {
         this.visible = false;
