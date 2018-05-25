@@ -228,7 +228,7 @@ function addResourceColor(value) {
                     colorName = color.name;
                 }
                 else {
-                    colorName = Utils.generateId('color', color.name);
+                    colorName = Utils.generateId('color', `${color.name}_1`);
                 }
             }
             if (colorName != '') {

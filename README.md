@@ -812,6 +812,8 @@ Partial output of the string resources.
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="__00_inactive">00 - Inactive</string>
+	<string name="__01_active">01 - Active</string>
 	<string name="active">Active:</string>
 	<string name="add">Add</string>
 	<string name="all">All</string>
@@ -826,7 +828,6 @@ Partial output of the string resources.
 	<string name="entries">Entries:</string>
 	<string name="entry">Entry</string>
 	<string name="mode">Mode:</string>
-	<string name="next">Next</string>
 	<string name="no">No</string>
 	<string name="none">None</string>
 	<string name="open">Open</string>
@@ -843,6 +844,7 @@ Partial output of the string resources.
 	<string name="version">Version:</string>
 	<string name="yes">Yes</string>
 </resources>
+<!-- filename: res/values/string.xml -->
 ```
 
 ```xml
@@ -885,6 +887,7 @@ Partial output of the string resources.
 		<item>2018</item>
 	</array>
 </resources>
+<!-- filename: res/values/string_array.xml -->
 ```
 
 ## auto-generated styles and themes
@@ -984,13 +987,13 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<shape android:shape="rectangle">
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<stroke android:width="1dp" android:color="@color/light_gray_1" />
 </shape>
 <!-- filename: res/drawable/form_entry.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 	<item>
 		<shape android:shape="rectangle">
 			<solid android:color="@color/white_smoke_1" />
@@ -1002,10 +1005,10 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 		</shape>
 	</item>
 </layer-list>
-<!-- filename: res/drawable/input_button1.xml -->
+<!-- filename: res/drawable/input_button_1.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 	<item>
 		<shape android:shape="rectangle">
 			<solid android:color="@color/white" />
@@ -1020,7 +1023,7 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 <!-- filename: res/drawable/input_order.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 	<item>
 		<shape android:shape="rectangle">
 			<solid android:color="@color/white" />
