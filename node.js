@@ -432,7 +432,7 @@ class Node {
             }
         }
         else {
-            const nodes = Node.getNodesOuter(this.children);
+            const nodes = this.outerNodes;
             this.bounds = {
                 top: nodes.top[0].bounds.top,
                 right: nodes.right[0].bounds.right,
@@ -460,7 +460,7 @@ class Node {
             };
         }
         else {
-            const nodes = Node.getNodesOuter(this.children);
+            const nodes = this.outerNodes;
             this.linear = {
                 top: nodes.top[0].linear.top,
                 right: nodes.right[0].linear.right,
@@ -537,7 +537,7 @@ class Node {
         return this._renderParent;
     }
     set depth(value) {
-        if (this._depth != null && this.original.depth == null) {
+        if (this.original.depth == null && this._depth != null && this._depth != value) {
             this.original.depth = this._depth;
         }
         this._depth = value;
@@ -571,6 +571,42 @@ class Node {
             return (c > d ? 1 : -1);
         });
         return (nodes.length > 0 ? nodes[0] : null);
+    }
+    get outerNodes() {
+        const children = this.children.filter(node => (node.visible && node.depth == this.depth + 1));
+        let top = [children[0]];
+        let right = [children[0]];
+        let bottom = [children[0]];
+        let left = [children[0]];
+        for (let i = 1; i < children.length; i++) {
+            const node = children[i];
+            const nodeRight = node.label || node;
+            if (top[0].bounds.top == node.bounds.top) {
+                top.push(node);
+            }
+            else if (node.bounds.top < top[0].bounds.top) {
+                top = [node];
+            }
+            if (right[0].bounds.right == nodeRight.bounds.right) {
+                right.push(nodeRight);
+            }
+            else if (nodeRight.bounds.right > right[0].bounds.right) {
+                right = [nodeRight];
+            }
+            if (bottom[0].bounds.bottom == node.bounds.bottom) {
+                bottom.push(node);
+            }
+            else if (node.bounds.bottom > bottom[0].bounds.bottom) {
+                bottom = [node];
+            }
+            if (left[0].bounds.left == node.bounds.left) {
+                left.push(node);
+            }
+            else if (node.bounds.left < left[0].bounds.left) {
+                left = [node];
+            }
+        }
+        return { top, right, bottom, left, children };
     }
     get flex() {
         if (this._flex == null) {
@@ -644,11 +680,11 @@ class Node {
     static createWrapNode(id, node, parent, children, actions = null) {
         const options = {
             wrapNode: node,
-            parent,
             children,
             original: node.original,
             depth: parent.depth,
             depthIndent: parent.depthIndent,
+            parent,
             actions
         };
         return new Node(id, null, options);
@@ -676,41 +712,6 @@ class Node {
     }
     static android(nodes, name, value, overwrite = true) {
         nodes.forEach(node => node.android(name, value, overwrite));
-    }
-    static getNodesOuter(nodes) {
-        let top = [nodes[0]];
-        let right = [nodes[0]];
-        let bottom = [nodes[0]];
-        let left = [nodes[0]];
-        for (let i = 1; i < nodes.length; i++) {
-            let node = nodes[i];
-            let nodeRight = node.label || node;
-            if (top[0].bounds.top == node.bounds.top) {
-                top.push(node);
-            }
-            else if (node.bounds.top < top[0].bounds.top) {
-                top = [node];
-            }
-            if (right[0].bounds.right == nodeRight.bounds.right) {
-                right.push(nodeRight);
-            }
-            else if (nodeRight.bounds.right > right[0].bounds.right) {
-                right = [nodeRight];
-            }
-            if (bottom[0].bounds.bottom == node.bounds.bottom) {
-                bottom.push(node);
-            }
-            else if (node.bounds.bottom > bottom[0].bounds.bottom) {
-                bottom = [node];
-            }
-            if (left[0].bounds.left == node.bounds.left) {
-                left.push(node);
-            }
-            else if (node.bounds.left < left[0].bounds.left) {
-                left = [node];
-            }
-        }
-        return { top, right, bottom, left };
     }
     static getHorizontalBias(parent, firstNode, lastNode) {
         const left = firstNode.linear.left - parent.box.left;

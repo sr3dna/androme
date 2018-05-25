@@ -501,6 +501,7 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                             }
                         }
                         radioGroup.push(item);
+                        item.depth = node.depth;
                         item.depthIndent = (depth + 1) - item.depth;
                         if (item.element.checked) {
                             checked = item;
@@ -1415,9 +1416,8 @@ function setMarginPadding() {
                 paddingBottom: Utils.convertToPX(node.paddingBottom, false),
                 paddingLeft: Utils.convertToPX(node.paddingLeft, false)
             };
-            const children = node.children.filter(item => (item.visible && (item.original.depth || item.depth) == ((node.original.depth || node.depth) + 1)));
-            const nodesOuter = Node.getNodesOuter(children);
-            children.forEach(item => {
+            const outerNodes = node.outerNodes;
+            outerNodes.children.forEach(item => {
                 const childBox = {
                     layout_marginTop: 0,
                     layout_marginRight: 0,
@@ -1431,8 +1431,8 @@ function setMarginPadding() {
                 for (const name in childBox) {
                     childBox[name] = Utils.parseInt(item.android(name));
                 }
-                for (const side in nodesOuter) {
-                    if (nodesOuter[side].includes(item)) {
+                for (const side in outerNodes) {
+                    if (outerNodes[side].includes(item)) {
                         for (const name in childBox) {
                             if (name.toLowerCase().indexOf(side) != -1 && !item.boxRefit[name]) {
                                 childBox[name] += box[name];
@@ -1440,8 +1440,8 @@ function setMarginPadding() {
                         }
                     }
                 }
-                for (const side in nodesOuter) {
-                    if (nodesOuter[side].includes(item)) {
+                for (const side in outerNodes) {
+                    if (outerNodes[side].includes(item)) {
                         switch (side) {
                             case 'top':
                                 if (childBox.layout_marginTop > 0) {
@@ -1925,8 +1925,6 @@ function parseDocument() {
                                     const [linearX, linearY] = Node.isLinearXY(siblings);
                                     const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, nodeY.parent, siblings, [0]);
                                     wrapNode.setAndroidId((linearX || linearY ? WIDGET_ANDROID.LINEAR : WIDGET_ANDROID.CONSTRAINT));
-                                    wrapNode.setBounds();
-                                    wrapNode.setLinearBoxRect();
                                     NODE_CACHE.push(wrapNode);
                                     const rowSpan = nodeY.android('layout_rowSpan');
                                     const columnSpan = nodeY.android('layout_columnSpan');
@@ -1957,6 +1955,7 @@ function parseDocument() {
                                             }
                                             else {
                                                 item.parent = wrapNode;
+                                                item.depth = nodeY.depth;
                                                 item.depthIndent++;
                                                 wrapNode.inheritGrid(item);
                                                 if (item.children.length == 0 || item.children.every(item => INLINE_CHROME.includes(item.tagName))) {
@@ -1969,6 +1968,8 @@ function parseDocument() {
                                         }
                                         return '';
                                     }).join('');
+                                    wrapNode.setBounds();
+                                    wrapNode.setLinearBoxRect();
                                     if (linearX || linearY) {
                                         if (renderParent.isView(WIDGET_ANDROID.LINEAR)) {
                                             renderParent.linearRows.push(wrapNode);
