@@ -186,17 +186,17 @@ class Node {
         else {
             const layoutWeight = (this.gridColumnWeight != null || this.layoutWeightWidth != null);
             if (styleMap.width != null) {
-                this.android('layout_width', Utils.convertToPX(styleMap.width));
+                this.android('layout_width', Utils.convertToPX(styleMap.width), false);
                 if (layoutWeight) {
-                    this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), 0, false);
+                    this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), 0);
                 }
             }
-            if (this.android('layout_width') != 'match_constraint') {
+            if (this.android('layout_width') != '0px') {
                 if (styleMap.minWidth != null) {
-                    this.android('minWidth', Utils.convertToPX(styleMap.minWidth));
+                    this.android('minWidth', Utils.convertToPX(styleMap.minWidth), false);
                 }
                 if (styleMap.maxWidth != null) {
-                    this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth));
+                    this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth), false);
                 }
             }
             if (this.android('layout_width') == null) {
@@ -205,9 +205,9 @@ class Node {
                         this.android('layout_weight', this.layoutWeightWidth);
                     }
                     else if (this.gridColumnWeight != null) {
-                        this.android('layout_columnWeight', this.gridColumnWeight, false);
+                        this.android('layout_columnWeight', this.gridColumnWeight);
                     }
-                    this.android('layout_width', (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1 ? '0px' : 'wrap_content'));
+                    this.android('layout_width', (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1 ? '0px' : 'wrap_content'), false);
                 }
                 else {
                     if (gridLayout) {
@@ -233,23 +233,23 @@ class Node {
                 }
             }
             if (styleMap.height != null) {
-                this.android('layout_height', Utils.convertToPX(styleMap.height));
+                this.android('layout_height', Utils.convertToPX(styleMap.height), false);
                 if (this.layoutWeightHeight != null) {
-                    this.android('layout_weight', '0');
+                    this.android('layout_weight', 0);
                 }
             }
-            if (this.android('layout_height') != 'match_constraint') {
+            if (this.android('layout_height') != '0px') {
                 if (styleMap.minHeight != null) {
-                    this.android('minHeight', Utils.convertToPX(styleMap.minHeight));
+                    this.android('minHeight', Utils.convertToPX(styleMap.minHeight), false);
                 }
                 if (styleMap.maxHeight != null) {
-                    this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight));
+                    this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight), false);
                 }
             }
             if (this.android('layout_height') == null) {
                 if (this.layoutWeightHeight != null) {
                     this.android('layout_weight', this.layoutWeightHeight);
-                    this.android('layout_height', (this.layoutWeightHeight == 1 ? '0px' : 'wrap_content'));
+                    this.android('layout_height', (this.layoutWeightHeight == 1 ? '0px' : 'wrap_content'), false);
                 }
                 else {
                     if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
@@ -478,8 +478,12 @@ class Node {
                 left: nodes.left[0].box.left
             };
         }
-        this.box.width = this.box.right - this.box.left;
-        this.box.height = this.box.bottom - this.box.top
+        const linear = this.linear;
+        linear.width = linear.right - linear.left;
+        linear.height = linear.bottom - linear.top;
+        const box = this.box;
+        box.width = box.right - box.left;
+        box.height = box.bottom - box.top;
     }
 
     get horizontalBias() {
@@ -620,8 +624,8 @@ class Node {
                 enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
                 direction: this.style.flexDirection,
                 basis: this.style.flexBasis,
-                grow: parseInt(this.style.flexGrow),
-                shrink: parseInt(this.style.flexShrink),
+                grow: Utils.parseInt(this.style.flexGrow),
+                shrink: Utils.parseInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
                 alignSelf: this.style.alignSelf || (this.element.parentNode != null ? this.element.parentNode.style.alignItems : null),
                 justifyContent: this.style.justifyContent
