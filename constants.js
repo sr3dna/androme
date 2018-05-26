@@ -9,7 +9,9 @@ const WIDGET_ANDROID = {
     SCROLL_HORIZONTAL: 'HorizontalScrollView',
     SCROLL_NESTED: 'NestedScrollView',
     RADIO: 'RadioButton',
-    RADIO_GROUP: 'RadioGroup'
+    RADIO_GROUP: 'RadioGroup',
+    VIEW: 'View',
+    SPACE: 'Space'
 };
 
 const MAPPING_ANDROID = {
@@ -165,8 +167,7 @@ const STRING_ANDROID = {
     XML_DECLARATION: '<?xml version="1.0" encoding="utf-8"?>',
     XMLNS_ANDROID: 'xmlns:android="http://schemas.android.com/apk/res/android"',
     XMLNS_APP: 'xmlns:app="http://schemas.android.com/apk/res-auto"',
-    XMLNS_TOOLS: 'xmlns:tools="http://schemas.android.com/tools"',
-    SPACE: '<Space\nandroid:layout_columnSpan="{2}"\nandroid:layout_columnWeight="{3}"\nandroid:layout_height="{1}"\nandroid:layout_width="{0}" />'
+    XMLNS_TOOLS: 'xmlns:tools="http://schemas.android.com/tools"'
 };
 
 const DENSITY_ANDROID = {
@@ -180,3 +181,8 @@ const DENSITY_ANDROID = {
 
 const BLOCK_CHROME = ['DIV', 'LI', 'TD', 'SECTION', 'SPAN'];
 const INLINE_CHROME = ['STRONG', 'B', 'EM', 'CITE', 'DFN', 'I', 'BIG', 'SMALL', 'FONT', 'BLOCKQUOTE', 'TT', 'A', 'U', 'SUP', 'SUB', 'STRIKE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DEL', 'TEXT'];
+
+const API_ANDROID = [];
+API_ANDROID[21] = {
+    android: ['layout_columnWeight']
+};

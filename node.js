@@ -1,5 +1,5 @@
 class Node {
-    constructor(id, element, options = {}) {
+    constructor(id, element, api, options = {}) {
         let style = {};
         let styleMap = {};
         let bounds = null;
@@ -18,6 +18,7 @@ class Node {
         this.id = id;
         this.element = element;
         this.children = [];
+        this.api = api;
         this.style = style;
         this.styleMap = styleMap;
         this.depthIndent = 0;
@@ -55,6 +56,12 @@ class Node {
             this[name] = {};
         }
         if (Utils.hasValue(value)) {
+            for (let i = this.api + 1; i < API_ANDROID.length; i++) {
+                const version = API_ANDROID[i];
+                if (version != null && version[obj] != null && version[obj].includes(attr)) {
+                    return false;
+                }
+            }
             if (!overwrite && this[name][attr] != null) {
                 return null;
             }
@@ -180,8 +187,8 @@ class Node {
         const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
         const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
         if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
-            this.android('layout_width', 'match_parent', false);
-            this.android('layout_height', 'match_parent', false);
+            this.android('layout_width', 'wrap_content');
+            this.android('layout_height', 'wrap_content');
         }
         else {
             const layoutWeight = (this.gridColumnWeight != null || this.layoutWeightWidth != null);
@@ -686,7 +693,7 @@ class Node {
         return (this.androidId != null ? `@+id/${this.androidId}` : '');
     }
 
-    static createWrapNode(id, node, parent, children, actions = null) {
+    static createWrapNode(id, node, parent, children, api, actions = null) {
         const options = {
             wrapNode: node,
             children,
@@ -696,10 +703,10 @@ class Node {
             parent,
             actions
         };
-        return new Node(id, null, options);
+        return new Node(id, null, api, options);
     }
-    static createTextNode(id, element, parent, actions = null) {
-        const node = new Node(id, null, { element, parent, actions, tagName: 'TEXT' });
+    static createTextNode(id, element, api, parent, actions = null) {
+        const node = new Node(id, null, api, { element, parent, actions, tagName: 'TEXT' });
         node.setAndroidId(WIDGET_ANDROID.TEXT);
         node.setBounds(element);
         node.setLinearBoxRect();

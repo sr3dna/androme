@@ -1,6 +1,6 @@
 ## chrome android layout
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. Ultimately the goal is to create a pixel to pixel translation from HTML in terms of structure to mobile devices. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
 INSTALLATION
 
@@ -25,7 +25,7 @@ These settings are available in layout.js to customize your desired XML structur
 
 ```javascript
 const SETTINGS = {
-    targetAPI: 19,
+    targetAPI: 21,
     density: DENSITY_ANDROID.MDPI,
     showAttributes: true,
     useConstraintLayout: true,
@@ -67,12 +67,17 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 	android:orientation="vertical">
 	<TextView
 		android:id="@+id/textview_1"
+		android:background="@color/slate_gray"
 		android:layout_height="wrap_content"
 		android:layout_width="match_parent"
-		android:paddingHorizontal="8dp"
-		android:paddingVertical="5dp"
+		android:paddingBottom="5dp"
+		android:paddingEnd="8dp"
+		android:paddingStart="8dp"
+		android:paddingTop="5dp"
 		android:text="@string/entry"
-		style="@style/H2_1" />
+		android:textColor="@color/white"
+		android:textSize="14sp"
+		style="@style/TextView_1" />
 	<ScrollView
 		android:id="@+id/scrollview_1"
 		android:layout_height="305dp"
@@ -80,11 +85,14 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 		<LinearLayout
 			android:id="@+id/entry"
 			android:background="@drawable/form_entry"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:layout_marginBottom="12dp"
-			android:layout_width="match_parent"
+			android:layout_width="wrap_content"
 			android:orientation="vertical"
-			android:padding="10dp">
+			android:paddingBottom="10dp"
+			android:paddingEnd="10dp"
+			android:paddingStart="10dp"
+			android:paddingTop="10dp">
 			<GridLayout
 				android:id="@+id/gridlayout_1"
 				android:columnCount="2"
@@ -99,15 +107,17 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/order"
-					style="@style/Label_1" />
+					style="@style/TextView_1" />
 				<EditText
 					android:id="@+id/order"
 					android:background="@drawable/input_order"
+					android:inputType="text"
 					android:layout_columnWeight="0"
 					android:layout_height="wrap_content"
 					android:layout_width="40dp"
-					android:paddingVertical="1dp"
-					style="@style/Input_1.Input_3" />
+					android:paddingBottom="1dp"
+					android:paddingTop="1dp"
+					style="@style/EditText_1" />
 				<Space
 					android:layout_columnSpan="2"
 					android:layout_columnWeight="1"
@@ -121,7 +131,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/date_add"
-					style="@style/Label_1" />
+					style="@style/TextView_1" />
 				<android.support.constraint.ConstraintLayout
 					android:id="@+id/constraintlayout_1"
 					android:layout_columnWeight="1"
@@ -138,7 +148,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 						android:paddingTop="1dp"
 						app:layout_constraintStart_toStartOf="parent"
 						app:layout_constraintTop_toTopOf="parent"
-						style="@style/Select_1" />
+						style="@style/Spinner_1" />
 					<Spinner
 						android:id="@+id/day0"
 						android:background="@drawable/select_hour"
@@ -153,7 +163,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 						app:layout_constraintCircleRadius="56dp"
 						app:layout_constraintEnd_toEndOf="parent"
 						app:layout_constraintStart_toStartOf="parent"
-						style="@style/Select_1" />
+						style="@style/Spinner_1" />
 					<Spinner
 						android:id="@+id/year0"
 						android:background="@drawable/select_hour"
@@ -166,7 +176,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 						android:paddingTop="1dp"
 						app:layout_constraintBottom_toBottomOf="parent"
 						app:layout_constraintStart_toStartOf="parent"
-						style="@style/Select_1" />
+						style="@style/Spinner_1" />
 				</android.support.constraint.ConstraintLayout>
 				<Space
 					android:layout_columnSpan="2"
@@ -181,7 +191,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/time"
-					style="@style/Label_1" />
+					style="@style/TextView_1" />
 				<LinearLayout
 					android:id="@+id/linearlayout_2"
 					android:layout_columnWeight="1"
@@ -197,7 +207,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
-						style="@style/Select_1" />
+						style="@style/Spinner_1" />
 					<Spinner
 						android:id="@+id/minute"
 						android:background="@drawable/select_hour"
@@ -208,7 +218,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
-						style="@style/Select_1" />
+						style="@style/Spinner_1" />
 				</LinearLayout>
 				<Space
 					android:layout_columnSpan="2"
@@ -223,7 +233,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/type"
-					style="@style/Label_1" />
+					style="@style/TextView_1" />
 				<Spinner
 					android:id="@+id/typeofentry"
 					android:background="@drawable/select_hour"
@@ -233,7 +243,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					style="@style/Select_1" />
+					style="@style/Spinner_1" />
 				<Space
 					android:layout_columnSpan="2"
 					android:layout_columnWeight="1"
@@ -247,7 +257,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/topic_add"
-					style="@style/Label_1" />
+					style="@style/TextView_1" />
 				<LinearLayout
 					android:id="@+id/linearlayout_3"
 					android:layout_columnWeight="1"
@@ -257,11 +267,13 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					<EditText
 						android:id="@+id/topic0"
 						android:background="@drawable/input_order"
+						android:inputType="text"
 						android:layout_height="wrap_content"
 						android:layout_marginEnd="5dp"
 						android:layout_width="130dp"
-						android:paddingVertical="1dp"
-						style="@style/Input_1.Input_3" />
+						android:paddingBottom="1dp"
+						android:paddingTop="1dp"
+						style="@style/EditText_1" />
 					<Spinner
 						android:id="@+id/prominence0"
 						android:background="@drawable/select_hour"
@@ -272,7 +284,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
-						style="@style/Select_1" />
+						style="@style/Spinner_1" />
 				</LinearLayout>
 				<Space
 					android:layout_columnSpan="2"
@@ -287,7 +299,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/series"
-					style="@style/Label_1" />
+					style="@style/TextView_1" />
 				<Spinner
 					android:id="@+id/series"
 					android:background="@drawable/select_hour"
@@ -298,7 +310,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					style="@style/Select_1" />
+					style="@style/Spinner_1" />
 				<Space
 					android:layout_columnSpan="2"
 					android:layout_columnWeight="1"
@@ -312,7 +324,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/subset"
-					style="@style/Label_1" />
+					style="@style/TextView_1" />
 				<Spinner
 					android:id="@+id/subset"
 					android:background="@drawable/select_hour"
@@ -323,7 +335,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					style="@style/Select_1" />
+					style="@style/Spinner_1" />
 				<Space
 					android:layout_columnSpan="2"
 					android:layout_columnWeight="1"
@@ -337,7 +349,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/active"
-					style="@style/Label_1" />
+					style="@style/TextView_1" />
 				<Spinner
 					android:id="@+id/entryactive"
 					android:background="@drawable/select_hour"
@@ -348,7 +360,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					style="@style/Select_1" />
+					style="@style/Spinner_1" />
 				<Space
 					android:layout_columnSpan="2"
 					android:layout_columnWeight="1"
@@ -362,11 +374,13 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:layout_marginTop="20dp"
 				android:layout_weight="0"
 				android:layout_width="wrap_content"
-				android:paddingHorizontal="6dp"
-				android:paddingVertical="1dp"
+				android:paddingBottom="1dp"
+				android:paddingEnd="6dp"
+				android:paddingStart="6dp"
+				android:paddingTop="1dp"
 				android:text="@string/add"
 				android:textSize="12sp"
-				style="@style/Input_1.Input_2" />
+				style="@style/Button_2" />
 		</LinearLayout>
 	</ScrollView>
 	<GridLayout
@@ -376,7 +390,10 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 		android:layout_marginBottom="12dp"
 		android:layout_marginTop="24dp"
 		android:layout_width="match_parent"
-		android:padding="10dp">
+		android:paddingBottom="10dp"
+		android:paddingEnd="10dp"
+		android:paddingStart="10dp"
+		android:paddingTop="10dp">
 		<TextView
 			android:id="@+id/textview_10"
 			android:layout_columnWeight="0"
@@ -385,7 +402,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/series"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<Spinner
 			android:id="@+id/series_1"
 			android:background="@drawable/select_hour"
@@ -396,7 +413,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
-			style="@style/Select_1" />
+			style="@style/Spinner_1" />
 		<Space
 			android:layout_columnSpan="2"
 			android:layout_columnWeight="1"
@@ -410,7 +427,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/subset"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<Spinner
 			android:id="@+id/subset_1"
 			android:background="@drawable/select_hour"
@@ -421,7 +438,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
-			style="@style/Select_1" />
+			style="@style/Spinner_1" />
 		<Space
 			android:layout_columnSpan="2"
 			android:layout_columnWeight="1"
@@ -435,7 +452,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/entries"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout_4"
 			android:layout_columnWeight="1"
@@ -450,27 +467,31 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
-				style="@style/Select_1" />
+				style="@style/Spinner_1" />
 			<Button
 				android:id="@+id/button_2"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginStart="4dp"
 				android:layout_width="wrap_content"
-				android:paddingHorizontal="6dp"
-				android:paddingVertical="1dp"
+				android:paddingBottom="1dp"
+				android:paddingEnd="6dp"
+				android:paddingStart="6dp"
+				android:paddingTop="1dp"
 				android:text="@string/open"
-				style="@style/Input_1.Input_5" />
+				style="@style/Button_3" />
 			<Button
 				android:id="@+id/button_3"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginStart="4dp"
 				android:layout_width="wrap_content"
-				android:paddingHorizontal="6dp"
-				android:paddingVertical="1dp"
+				android:paddingBottom="1dp"
+				android:paddingEnd="6dp"
+				android:paddingStart="6dp"
+				android:paddingTop="1dp"
 				android:text="@string/all"
-				style="@style/Input_1.Input_5" />
+				style="@style/Button_3" />
 		</LinearLayout>
 		<Space
 			android:layout_columnSpan="2"
@@ -485,7 +506,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/mode"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<Spinner
 			android:id="@+id/mode"
 			android:background="@drawable/select_hour"
@@ -496,7 +517,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
-			style="@style/Select_1" />
+			style="@style/Spinner_1" />
 		<Space
 			android:layout_columnSpan="2"
 			android:layout_columnWeight="1"
@@ -510,7 +531,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/style"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<Spinner
 			android:id="@+id/style1"
 			android:background="@drawable/select_hour"
@@ -520,7 +541,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
-			style="@style/Select_1" />
+			style="@style/Spinner_1" />
 		<Space
 			android:layout_columnSpan="2"
 			android:layout_columnWeight="1"
@@ -534,7 +555,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/calendar"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<Spinner
 			android:id="@+id/calendar"
 			android:background="@drawable/select_hour"
@@ -545,7 +566,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:minWidth="37dp"
 			android:paddingBottom="2dp"
 			android:paddingTop="1dp"
-			style="@style/Select_1" />
+			style="@style/Spinner_1" />
 		<Space
 			android:layout_columnSpan="2"
 			android:layout_columnWeight="1"
@@ -559,7 +580,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/version"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout_5"
 			android:layout_columnWeight="1"
@@ -575,7 +596,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
-				style="@style/Select_1" />
+				style="@style/Spinner_1" />
 			<Spinner
 				android:id="@+id/version_update"
 				android:background="@drawable/select_hour"
@@ -586,17 +607,19 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
-				style="@style/Select_1" />
+				style="@style/Spinner_1" />
 			<Button
 				android:id="@+id/button_4"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginStart="4dp"
 				android:layout_width="wrap_content"
-				android:paddingHorizontal="6dp"
-				android:paddingVertical="1dp"
+				android:paddingBottom="1dp"
+				android:paddingEnd="6dp"
+				android:paddingStart="6dp"
+				android:paddingTop="1dp"
 				android:text="@string/update"
-				style="@style/Input_1.Input_2" />
+				style="@style/Button_2" />
 		</LinearLayout>
 		<Space
 			android:layout_columnSpan="2"
@@ -611,7 +634,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/branch"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout_6"
 			android:layout_columnWeight="1"
@@ -627,7 +650,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
-				style="@style/Select_1" />
+				style="@style/Spinner_1" />
 			<Spinner
 				android:id="@+id/branch_update"
 				android:background="@drawable/select_hour"
@@ -638,27 +661,31 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
-				style="@style/Select_1" />
+				style="@style/Spinner_1" />
 			<Button
 				android:id="@+id/button_5"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginStart="4dp"
 				android:layout_width="wrap_content"
-				android:paddingHorizontal="6dp"
-				android:paddingVertical="1dp"
+				android:paddingBottom="1dp"
+				android:paddingEnd="6dp"
+				android:paddingStart="6dp"
+				android:paddingTop="1dp"
 				android:text="@string/update"
-				style="@style/Input_1.Input_2" />
+				style="@style/Button_2" />
 			<Button
 				android:id="@+id/button_6"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginStart="4dp"
 				android:layout_width="wrap_content"
-				android:paddingHorizontal="6dp"
-				android:paddingVertical="1dp"
+				android:paddingBottom="1dp"
+				android:paddingEnd="6dp"
+				android:paddingStart="6dp"
+				android:paddingTop="1dp"
 				android:text="@string/clone"
-				style="@style/Input_1.Input_2" />
+				style="@style/Button_2" />
 		</LinearLayout>
 		<Space
 			android:layout_columnSpan="2"
@@ -673,7 +700,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/custom_add"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout_7"
 			android:layout_columnWeight="1"
@@ -683,11 +710,13 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			<EditText
 				android:id="@+id/customname0"
 				android:background="@drawable/input_order"
+				android:inputType="text"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
 				android:layout_width="130dp"
-				android:paddingVertical="1dp"
-				style="@style/Input_1.Input_3" />
+				android:paddingBottom="1dp"
+				android:paddingTop="1dp"
+				style="@style/EditText_1" />
 			<Spinner
 				android:id="@+id/custommonth0"
 				android:background="@drawable/select_hour"
@@ -698,7 +727,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
-				style="@style/Select_1" />
+				style="@style/Spinner_1" />
 			<Spinner
 				android:id="@+id/customday0"
 				android:background="@drawable/select_hour"
@@ -709,15 +738,17 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
-				style="@style/Select_1" />
+				style="@style/Spinner_1" />
 			<EditText
 				android:id="@+id/customyear0"
 				android:background="@drawable/input_order"
+				android:inputType="text"
 				android:layout_height="wrap_content"
 				android:layout_marginStart="4dp"
 				android:layout_width="40dp"
-				android:paddingVertical="1dp"
-				style="@style/Input_1.Input_3" />
+				android:paddingBottom="1dp"
+				android:paddingTop="1dp"
+				style="@style/EditText_1" />
 		</LinearLayout>
 		<Space
 			android:layout_columnSpan="2"
@@ -732,7 +763,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 			android:layout_width="100dp"
 			android:paddingTop="3dp"
 			android:text="@string/conclusion"
-			style="@style/Label_1" />
+			style="@style/TextView_1" />
 		<LinearLayout
 			android:id="@+id/linearlayout_8"
 			android:layout_columnWeight="1"
@@ -747,7 +778,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
-				style="@style/Select_1" />
+				style="@style/Spinner_1" />
 			<RadioGroup
 				android:id="@+id/radiogroup_1"
 				android:checkedButton="@+id/c2"
@@ -764,7 +795,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_weight="0"
 					android:layout_width="wrap_content"
 					android:text="@string/birth"
-					style="@style/Input_1.Input_4" />
+					style="@style/RadioButton_1" />
 				<RadioButton
 					android:id="@+id/c3"
 					android:layout_height="wrap_content"
@@ -774,27 +805,30 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:layout_weight="0"
 					android:layout_width="wrap_content"
 					android:text="@string/death"
-					style="@style/Input_1.Input_4" />
+					style="@style/RadioButton_1" />
 			</RadioGroup>
 			<CheckBox
 				android:id="@+id/c4"
 				android:layout_height="wrap_content"
+				android:layout_marginBottom="3dp"
 				android:layout_marginEnd="3dp"
 				android:layout_marginStart="4dp"
-				android:layout_marginVertical="3dp"
+				android:layout_marginTop="3dp"
 				android:layout_width="wrap_content"
 				android:text="@string/none"
-				style="@style/Input_1.Input_4" />
+				style="@style/CheckBox_1" />
 			<Button
 				android:id="@+id/button_7"
 				android:background="@drawable/input_button_1"
 				android:layout_height="wrap_content"
 				android:layout_marginStart="4dp"
 				android:layout_width="wrap_content"
-				android:paddingHorizontal="6dp"
-				android:paddingVertical="1dp"
+				android:paddingBottom="1dp"
+				android:paddingEnd="6dp"
+				android:paddingStart="6dp"
+				android:paddingTop="1dp"
 				android:text="@string/update"
-				style="@style/Input_1.Input_2" />
+				style="@style/Button_2" />
 		</LinearLayout>
 		<Space
 			android:layout_columnSpan="2"
@@ -897,70 +931,54 @@ Styles are grouped by HTML element name and then by common properties.  These st
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<style name="H2_1">
+	<style name="TextView_1">
 		<item name="android:fontFamily">Arial, Helvetica, Tahoma</item>
-		<item name="android:textSize">14sp</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
-		<item name="android:textColor">@color/white</item>
-		<item name="android:background">@color/slate_gray</item>
-	<style>
-	<style name="A_1">
-		<item name="android:fontFamily">Arial, Helvetica, Tahoma</item>
-		<item name="android:textSize">12sp</item>
-		<item name="android:fontWeight">400</item>
-		<item name="android:textStyle">normal</item>
-		<item name="android:textColor">@color/blue</item>
-	<style>
-	<style name="Input_1">
+	</style>
+	<style name="Button_1">
 		<item name="android:fontFamily">Arial</item>
-	<style>
-	<style name="Input_2">
 		<item name="android:fontWeight">400</item>
-		<item name="android:textColor">@color/black</item>
-		<item name="android:textSize">13sp</item>
 		<item name="android:textStyle">normal</item>
-	<style>
-	<style name="Input_3">
+	</style>
+	<style name="Button_2" parent="Button_1">
 		<item name="android:background">@color/white_smoke_1</item>
+		<item name="android:textColor">@color/black</item>
+	</style>
+	<style name="EditText_1">
+		<item name="android:fontFamily">Arial</item>
+		<item name="android:textSize">13.33sp</item>
 		<item name="android:fontWeight">400</item>
-		<item name="android:textSize">11sp</item>
 		<item name="android:textStyle">normal</item>
-	<style>
-	<style name="Input_4">
+		<item name="android:textColor">@color/black</item>
 		<item name="android:background">@color/white</item>
-		<item name="android:textSize">13sp</item>
-	<style>
-	<style name="Input_5">
-		<item name="android:textColor">@color/black</item>
-		<item name="android:textSize">11sp</item>
-	<style>
-	<style name="Input_6">
-		<item name="android:background">@color/white_smoke_1</item>
-		<item name="android:fontWeight">400</item>
-		<item name="android:textColor">@color/black</item>
+	</style>
+	<style name="Spinner_1">
+		<item name="android:fontFamily">Arial</item>
 		<item name="android:textSize">12sp</item>
+		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
-	<style>
-	<style name="Input_7">
+		<item name="android:textColor">@color/black</item>
+		<item name="android:background">@color/white</item>
+	</style>
+	<style name="Button_3" parent="Button_1">
+		<item name="android:background">@color/white_smoke_1</item>
 		<item name="android:textColor">@color/gray</item>
-		<item name="android:textSize">11sp</item>
-	<style>
-	<style name="Label_1">
-		<item name="android:fontFamily">Arial, Helvetica, Tahoma</item>
-		<item name="android:textSize">12sp</item>
-		<item name="android:fontWeight">400</item>
-		<item name="android:textStyle">normal</item>
-		<item name="android:textColor">@color/black</item>
-	<style>
-	<style name="Select_1">
+	</style>
+	<style name="RadioButton_1">
 		<item name="android:fontFamily">Arial</item>
-		<item name="android:textSize">12sp</item>
+		<item name="android:textSize">13.33sp</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
 		<item name="android:textColor">@color/black</item>
-		<item name="android:background">@color/white</item>
-	<style>
+	</style>
+	<style name="CheckBox_1">
+		<item name="android:fontFamily">Arial</item>
+		<item name="android:textSize">13.33sp</item>
+		<item name="android:fontWeight">400</item>
+		<item name="android:textStyle">normal</item>
+		<item name="android:textColor">@color/black</item>
+	</style>
 </resources>
 <!-- filename: res/values/styles.xml -->
 ```

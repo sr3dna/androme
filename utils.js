@@ -61,7 +61,7 @@ const Utils = (function() {
                     value += 'px';
                 }
                 const match = value.match(/(pt|em)/);
-                value = parseInt(value);
+                value = parseFloat(value);
                 if (match != null) {
                     switch (match[0]) {
                         case 'pt':
@@ -82,12 +82,7 @@ const Utils = (function() {
             if (Utils.hasValue(value)) {
                 value = Utils.convertToPX(value, false);
                 value = value / (SETTINGS.density / 160);
-                if (value < 1) {
-                    value = parseFloat(value.toFixed(2));
-                }
-                else {
-                    value = Math.floor(value);
-                }
+                value = parseFloat(value.toFixed(2));
                 if (!isNaN(value)) {
                     return value + (unit ? (font ? 'sp' : 'dp') : 0);
                 }
@@ -98,7 +93,7 @@ const Utils = (function() {
             return Utils.convertToDP(value, unit, true);
         },
         insetToDP(xml, font = false) {
-            return xml.replace(/("|>)[0-9\.]+px("|<)/g, (match, ...capture) => capture[0] + Utils.convertToDP(Utils.parseUnit(match), true, font) + capture[1]);
+            return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + Utils.convertToDP(capture[1], true, font) + capture[2]);
         },
         parseInt(value) {
             return parseInt(value) || 0;
