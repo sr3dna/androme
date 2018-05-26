@@ -1,6 +1,5 @@
 const WIDGET_ANDROID = {
-    TEXT: 'TextView',
-    EDIT: 'EditText',
+    FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
     RELATIVE: 'RelativeLayout',
@@ -8,8 +7,13 @@ const WIDGET_ANDROID = {
     SCROLL_VERTICAL: 'ScrollView',
     SCROLL_HORIZONTAL: 'HorizontalScrollView',
     SCROLL_NESTED: 'NestedScrollView',
-    RADIO: 'RadioButton',
     RADIO_GROUP: 'RadioGroup',
+    TEXT: 'TextView',
+    EDIT: 'EditText',
+    SPINNER: 'Spinner',
+    CHECKBOX: 'CheckBox',
+    RADIO: 'RadioButton',
+    BUTTON: 'Button',
     VIEW: 'View',
     SPACE: 'Space'
 };
@@ -80,6 +84,11 @@ const PROPERTY_ANDROID = {
 };
 
 const ACTION_ANDROID = {
+    'FrameLayout': {
+        'androidId': 'android:id="@+id/{0}"',
+        'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
+        'window.setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
+    },
     'LinearLayout': {
         'androidId': 'android:id="@+id/{0}"',
         'window.setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
@@ -183,6 +192,28 @@ const BLOCK_CHROME = ['DIV', 'LI', 'TD', 'SECTION', 'SPAN'];
 const INLINE_CHROME = ['STRONG', 'B', 'EM', 'CITE', 'DFN', 'I', 'BIG', 'SMALL', 'FONT', 'BLOCKQUOTE', 'TT', 'A', 'U', 'SUP', 'SUB', 'STRIKE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DEL', 'TEXT'];
 
 const API_ANDROID = [];
-API_ANDROID[21] = {
+const BUILD_ANDROID = {
+    OREO_1: 27,
+    OREO_0: 26,
+    NOUGAT_1: 25,
+    NOUGAT_0: 24,
+    MARSHMALLOW_0: 23,
+    LOLLIPOP_1: 22,
+    LOLLIPOP_0: 21,
+    KITKAT_1: 20,
+    KITKAT_0: 19,
+    JELLYBEAN_2: 18,   
+    JELLYBEAN_1: 17,
+    JELLYBEAN_0: 16,
+    ICE_CREAM_SANDWICH_1: 15,
+    ICE_CREAM_SANDWICH_0: 14,
+    HONEYCOMB_2: 13,
+    HONEYCOMB_1: 12,
+    HONEYCOMB_0: 11
+};
+API_ANDROID[BUILD_ANDROID.JELLYBEAN_1] = {
+    android: ['labelFor']
+};
+API_ANDROID[BUILD_ANDROID.LOLLIPOP_0] = {
     android: ['layout_columnWeight']
 };

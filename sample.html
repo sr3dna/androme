@@ -113,9 +113,9 @@
     </script>
 </head>
 <body>
-    <div style="width: 500px; float: left;">
+    <div style="width: 550px; float: left;">
         <h2>Entry</h2>
-        <form name="entry" autocomplete="off" style="height: 305px; overflow: auto;">
+        <form name="entry" autocomplete="off">
             <ul>
                 <li>
                     <label>Order:</label>
@@ -233,7 +233,11 @@
                 </li>
                 <li>
                     <label>Type:</label>
-                    <select name="typeofentry" style="width: 159px;"></select>
+                    <select name="typeofentry" style="width: 159px;">
+                        <option value=""></option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                    </select>
                 </li>
                 <li>
                     <label>Topic (<a href="#">Add</a>):</label>
@@ -291,6 +295,8 @@
                     <label>Entries:</label>
                     <select name="entry" class="req-pageurl-0" style="width: 277px;">
                         <option value=""></option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
                     </select>
                     <input type="button" value="Open" disabled="disabled" target="_blank" />
                     <input type="button" value="All" disabled="disabled" target="_blank" />
@@ -304,11 +310,16 @@
                 </li>
                 <li>
                     <label>Style:</label>
-                    <select name="style1" class="req-pageurl-2"></select>
+                    <select name="style1" class="req-pageurl-2">
+                        <option value=""></option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                    </select>
                 </li>
                 <li>
                     <label>Calendar:</label>
                     <select name="calendar" class="req-pageurl-3">
+                        <option value=""></option>
                         <option value="1">Birth</option>
                         <option value="2">Death</option>
                     </select>
@@ -416,12 +427,15 @@
                             <option value="30">30</option>
                             <option value="31">31</option>
                         </select>
-                        <input type="text" name="customyear0" class="null-allowed" />
                     </div>
                 </li>
                 <li>
                     <label>Conclusion:</label>
-                    <select name="person" class="null-allowed" style="width: 133px;"></select>
+                    <select name="person" class="null-allowed" style="width: 133px;">
+                        <option value=""></option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                    </select>
                     <div>
                         <input id="c2" type="radio" name="personbirth" value="1" checked="checked" /><label for="c2">Birth</label>
                         <input id="c3" type="radio" name="personbirth" value="0" /><label for="c3">Death</label>

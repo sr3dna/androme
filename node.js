@@ -121,11 +121,8 @@ class Node {
         }
         return result.sort();
     }
-    css(attr) {
-        if (this.styleMap[attr] != null) {
-            return this.styleMap[attr];
-        }
-        return (this.style[attr] || ''); 
+    css(attr, map = false) {
+        return (this.styleMap[attr] || (!map ? this.style[attr] : '') || '');
     }
     hide(parent = true) {
         this.visible = false;
@@ -187,8 +184,8 @@ class Node {
         const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
         const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
         if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
-            this.android('layout_width', 'wrap_content');
-            this.android('layout_height', 'wrap_content');
+            this.android('layout_width', (this.isHorizontal() ? 'wrap_content' : 'match_parent'));
+            this.android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
         }
         else {
             const layoutWeight = (this.gridColumnWeight != null || this.layoutWeightWidth != null);
@@ -221,20 +218,30 @@ class Node {
                         this.android('layout_width', 'wrap_content', false);
                     }
                     else {
-                        if (parent.overflow == 0 && width >= parentWidth) {
-                            this.android('layout_width', 'match_parent', false);
-                        }
-                        else {
-                            const display = (this.style != null ? this.style.display : '');
-                            switch (display) {
-                                case 'line-item':
-                                case 'block':
-                                case 'inherit':
+                        switch (this.widgetName) {
+                            case WIDGET_ANDROID.EDIT:
+                            case WIDGET_ANDROID.SPINNER:
+                            case WIDGET_ANDROID.CHECKBOX:
+                            case WIDGET_ANDROID.RADIO:
+                            case WIDGET_ANDROID.BUTTON:
+                                this.android('layout_width', 'wrap_content', false);
+                                break;
+                            default:
+                                if (parent.overflow == 0 && width >= parentWidth) {
                                     this.android('layout_width', 'match_parent', false);
-                                    break;
-                                default:
-                                    this.android('layout_width', 'wrap_content', false);
-                            }
+                                }
+                                else {
+                                    const display = (this.style != null ? this.style.display : '');
+                                    switch (display) {
+                                        case 'line-item':
+                                        case 'block':
+                                        case 'inherit':
+                                            this.android('layout_width', 'match_parent', false);
+                                            break;
+                                        default:
+                                            this.android('layout_width', 'wrap_content', false);
+                                    }
+                                }
                         }
                     }
                 }
@@ -259,11 +266,22 @@ class Node {
                     this.android('layout_height', (this.layoutWeightHeight == 1 ? '0px' : 'wrap_content'), false);
                 }
                 else {
-                    if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
-                        this.android('layout_height', 'match_parent', false);
-                    }
-                    else {
-                        this.android('layout_height', 'wrap_content', false);
+                    switch (this.widgetName) {
+                        case WIDGET_ANDROID.TEXT:
+                        case WIDGET_ANDROID.EDIT:
+                        case WIDGET_ANDROID.SPINNER:
+                        case WIDGET_ANDROID.CHECKBOX:
+                        case WIDGET_ANDROID.RADIO:
+                        case WIDGET_ANDROID.BUTTON:
+                            this.android('layout_height', 'wrap_content', false);
+                            break;
+                        default:
+                            if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
+                                this.android('layout_height', 'match_parent', false);
+                            }
+                            else {
+                                this.android('layout_height', 'wrap_content', false);
+                            }
                     }
                 }
             }
