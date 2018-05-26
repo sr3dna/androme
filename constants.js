@@ -212,6 +212,10 @@ const BUILD_ANDROID = {
     HONEYCOMB_1: 12,
     HONEYCOMB: 11
 };
+API_ANDROID[BUILD_ANDROID.OREO] = {
+    android: ['fontWeight'],
+    customizations: {}
+};
 API_ANDROID[BUILD_ANDROID.JELLYBEAN_1] = {
     android: ['labelFor'],
     customizations: {}

@@ -184,26 +184,18 @@ function addResourceStringArray(node) {
     let numberArray = new Map();
     for (let i = 0; i < element.children.length; i++) {
         const item = element.children[i];
-        let value = item.value.trim();
-        let text = item.text.trim();
-        if (text == '') {
-            text = value;
-        }
-        if (value == '') {
-            value = text;
-        }
-        if (text != '') {
-            if (numberArray != null && !stringArray.size && Utils.isNumber(text)) {
+        let value = item.text.trim() || item.value.trim();
+        if (value != '') {
+            if (numberArray != null && !stringArray.size && Utils.isNumber(value)) {
                 numberArray.set(value, false);
             }
             else {
                 if (numberArray != null && numberArray.size > 0) {
                     i = -1;
-                    stringArray = new Map();
                     numberArray = null;
                     continue;
                 }
-                stringArray.set(addResourceString(null, text).text, true);
+                stringArray.set(addResourceString(null, value).text, true);
             }
         }
     }
