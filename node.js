@@ -319,18 +319,18 @@ class Node {
         const result = {};
         if (element.tagName == 'INPUT' && element.id != '') {
             const nextElement = element.nextElementSibling;
-            if (nextElement && nextElement.htmlFor == element.id && result[4] == null) {
-                const nextNode = nextElement.androidNode;
-                nextNode.setAndroidId(WIDGET_ANDROID.TEXT);
-                nextNode.setAttributes([4]);
-                const attrs = nextNode.combine();
+            if (nextElement != null && nextElement.htmlFor == element.id) {
+                let node = nextElement.androidNode;
+                node.setAttributes([4]);
+                node.setAndroidId(WIDGET_ANDROID.TEXT);
+                const attrs = node.combine();
                 if (attrs.length > 0) {
                     result[4] = attrs;
                 }
-                this.css('marginRight', nextNode.style.marginRight);
-                this.css('paddingRight', nextNode.style.paddingRight);
-                this.label = nextNode;
-                nextNode.hide();
+                this.css('marginRight', node.style.marginRight);
+                this.css('paddingRight', node.style.paddingRight);
+                this.label = node;
+                node.hide();
             }
         }
         if (widget != null) {
@@ -760,7 +760,6 @@ class Node {
         const node = new Node(id, null, api, { element, parent, actions, tagName: 'TEXT' });
         node.setAndroidId(WIDGET_ANDROID.TEXT);
         node.setBounds(element);
-        node.setLinearBoxRect();
         if (parent != null) {
             const inherit = INHERIT_ANDROID[WIDGET_ANDROID.TEXT];
             const style = [];

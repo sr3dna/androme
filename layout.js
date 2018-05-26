@@ -121,9 +121,9 @@ function writeResourceDrawableXml() {
 }
 
 function addResourceString(node, value) {
+    const element = (node != null ? node.element : null);
     let name = value;
     if (value == null) {
-        const element = node.element;
         if (element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') {
             name = element.value;
             value = name;
@@ -153,12 +153,9 @@ function addResourceString(node, value) {
                 }
             }
         }
-        value = value.replace(/\s*style=""/g, '');
         const number = Utils.isNumber(value);
-        if (!SETTINGS.resourceValueNumber && number) {
-            return { text: value };
-        }
-        else {
+        if (SETTINGS.resourceValueNumber || !number) {
+            value = value.replace(/\s*style=""/g, '');
             for (const [name, resourceValue] in RESOURCE['string'].entries()) {
                 if (resourceValue == value) {
                     return { text: name };
@@ -172,8 +169,22 @@ function addResourceString(node, value) {
                 name = `__${name}`;
             }
             name = insertResourceAsset(RESOURCE['string'], name, value);
-            return { text: name };
         }
+        if (element != null && element.nodeName == '#text') {
+            const prevSibling = element.previousSibling;
+            if (prevSibling != null) {
+                const prevNode = prevSibling.androidNode;
+                switch (prevNode.widgetName) {
+                    case WIDGET_ANDROID.CHECKBOX:
+                    case WIDGET_ANDROID.RADIO:
+                        prevNode.android('text', (!SETTINGS.resourceValueNumber && number ? name : `@string/${name}`));
+                        prevNode.label = node;
+                        node.hide();
+                        break;
+                }
+            }
+        }
+        return { text: name };
     }
     return null;
 }
@@ -617,11 +628,14 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
         node.android('scrollbars', scrollbars);
     }
     node.setAttributes();
-    node.renderDepth = depth;
-    node.renderParent = parent;
-    node.setGravity();
-    node.children.forEach(item => item.hide());
-    return getEnclosingTag(depth, node.widgetName, node.id, '', insertGridSpace(node, depth));
+    if (node.visible) {
+        node.renderDepth = depth;
+        node.renderParent = parent;
+        node.setGravity();
+        node.children.forEach(item => item.hide());
+        return getEnclosingTag(depth, node.widgetName, node.id, '', insertGridSpace(node, depth));
+    }
+    return '';
 }
 
 function writeDefaultLayout(node, depth, parent) {
