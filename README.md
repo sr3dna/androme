@@ -140,7 +140,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
 					android:minHeight="95dp"
-					android:minWidth="96dp">
+					android:minWidth="97dp">
 					<Spinner
 						android:id="@+id/month0"
 						android:background="@drawable/select_hour"
@@ -801,7 +801,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:id="@+id/c2"
 							android:focusable="true"
 							android:layout_height="wrap_content"
-							android:layout_marginEnd="3dp"
+							android:layout_marginEnd="1dp"
 							android:layout_marginStart="5dp"
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
@@ -811,7 +811,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:id="@+id/c3"
 							android:focusable="true"
 							android:layout_height="wrap_content"
-							android:layout_marginEnd="3dp"
+							android:layout_marginEnd="1dp"
 							android:layout_marginStart="4dp"
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
@@ -823,8 +823,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:focusable="true"
 						android:layout_height="wrap_content"
 						android:layout_marginBottom="3dp"
-						android:layout_marginEnd="3dp"
-						android:layout_marginStart="8dp"
+						android:layout_marginEnd="1dp"
+						android:layout_marginStart="4dp"
 						android:layout_marginTop="3dp"
 						android:layout_width="wrap_content"
 						android:text="@string/none"

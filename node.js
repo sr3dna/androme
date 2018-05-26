@@ -72,10 +72,10 @@ class Node {
             delete this[name][attr];
         }
     }
-    attr(value) {
+    attr(value, overwrite = true) {
         const match = value.match(/^(?:([a-z]+):)?([a-zA-Z_]+)="((?:@+?[a-z]+\/)?.+)"$/);
         if (match != null) {
-            this.add(match[1] || 'other', match[2], match[3]);
+            this.add(match[1] || 'other', match[2], match[3], overwrite);
         }
     }
     android(attr, value, overwrite = true) {
@@ -140,8 +140,13 @@ class Node {
             }
         }
     }
-    css(attr, map = false) {
-        return (this.styleMap[attr] || (!map ? this.style[attr] : '') || '');
+    css(attr, value, map = false) {
+        if (Utils.hasValue(value)) {
+            this.styleMap[attr] = value;
+        }
+        else {
+            return (this.styleMap[attr] || (!map ? this.style[attr] : null) || null);
+        }
     }
     hide(parent = true) {
         this.visible = false;
@@ -177,130 +182,132 @@ class Node {
         }
     }
     setAndroidDimensions() {
-        let parent = null;
-        let styleMap = this.styleMap;
-        let width = 0;
-        let height = 0;
-        let gridLayout = false;
-        if (this.wrapNode != null) {
-            parent = this.wrapNode.original.parent || this.parent;
-            [width, height] = this.childrenBox;
-            gridLayout = this.parent.isView(WIDGET_ANDROID.GRID);
-        }
-        else {
-            parent = this.parent;
-            width = this.element.offsetWidth + this.marginLeft + this.marginRight;
-            height = this.element.offsetHeight + this.marginTop + this.marginBottom;
-            gridLayout = parent.isView(WIDGET_ANDROID.GRID);
-        }
-        const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
-        const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
-        if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
-            this.android('layout_width', (this.isHorizontal() ? 'wrap_content' : 'match_parent'));
-            this.android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
-        }
-        else {
-            const layoutWeight = (this.gridColumnWeight != null || this.layoutWeightWidth != null);
-            if (styleMap.width != null) {
-                this.android('layout_width', Utils.convertToPX(styleMap.width), false);
-                if (layoutWeight) {
-                    this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), 0);
-                }
+        if (this.visible) {
+            let parent = null;
+            let styleMap = this.styleMap;
+            let width = 0;
+            let height = 0;
+            let gridLayout = false;
+            if (this.wrapNode != null) {
+                parent = this.wrapNode.original.parent || this.parent;
+                [width, height] = this.childrenBox;
+                gridLayout = this.parent.isView(WIDGET_ANDROID.GRID);
             }
-            if (this.android('layout_width') != '0px') {
-                if (styleMap.minWidth != null) {
-                    this.android('minWidth', Utils.convertToPX(styleMap.minWidth), false);
-                }
-                if (styleMap.maxWidth != null) {
-                    this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth), false);
-                }
+            else {
+                parent = this.parent;
+                width = this.element.offsetWidth + this.marginLeft + this.marginRight;
+                height = this.element.offsetHeight + this.marginTop + this.marginBottom;
+                gridLayout = parent.isView(WIDGET_ANDROID.GRID);
             }
-            if (this.android('layout_width') == null) {
-                if (layoutWeight) {
-                    if (this.layoutWeightWidth != null) {
-                        this.android('layout_weight', this.layoutWeightWidth);
+            const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
+            const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
+            if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
+                this.android('layout_width', (this.isHorizontal() ? 'wrap_content' : 'match_parent'));
+                this.android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
+            }
+            else {
+                const layoutWeight = (this.gridColumnWeight != null || this.layoutWeightWidth != null);
+                if (styleMap.width != null) {
+                    this.android('layout_width', Utils.convertToPX(styleMap.width), false);
+                    if (layoutWeight) {
+                        this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), 0);
                     }
-                    else if (this.gridColumnWeight != null) {
-                        this.android('layout_columnWeight', this.gridColumnWeight);
+                }
+                if (this.android('layout_width') != '0px') {
+                    if (styleMap.minWidth != null) {
+                        this.android('minWidth', Utils.convertToPX(styleMap.minWidth), false);
                     }
-                    if (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1) {
-                        this.android('layout_gravity', 'fill_horizontal');
-                        this.android('layout_width', '0px');
+                    if (styleMap.maxWidth != null) {
+                        this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth), false);
+                    }
+                }
+                if (this.android('layout_width') == null) {
+                    if (layoutWeight) {
+                        if (this.layoutWeightWidth != null) {
+                            this.android('layout_weight', this.layoutWeightWidth);
+                        }
+                        else if (this.gridColumnWeight != null) {
+                            this.android('layout_columnWeight', this.gridColumnWeight);
+                        }
+                        if (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1) {
+                            this.android('layout_gravity', 'fill_horizontal');
+                            this.android('layout_width', '0px');
+                        }
+                        else {
+                            this.android('layout_width', 'wrap_content', false);
+                        }
                     }
                     else {
-                        this.android('layout_width', 'wrap_content', false);
-                    }
-                }
-                else {
-                    if (gridLayout) {
-                        this.android('layout_width', 'wrap_content', false);
-                    }
-                    else {
-                        if (FIXED_ANDROID.includes(this.widgetName)) {
+                        if (gridLayout) {
                             this.android('layout_width', 'wrap_content', false);
                         }
                         else {
-                            if (parent.overflow == 0 && width >= parentWidth) {
-                                this.android('layout_width', 'match_parent', false);
+                            if (FIXED_ANDROID.includes(this.widgetName)) {
+                                this.android('layout_width', 'wrap_content', false);
                             }
                             else {
-                                const display = (this.style != null ? this.style.display : '');
-                                switch (display) {
-                                    case 'line-item':
-                                    case 'block':
-                                    case 'inherit':
-                                        this.android('layout_width', 'match_parent', false);
-                                        break;
-                                    default:
-                                        this.android('layout_width', 'wrap_content', false);
+                                if (parent.overflow == 0 && width >= parentWidth) {
+                                    this.android('layout_width', 'match_parent', false);
+                                }
+                                else {
+                                    const display = (this.style != null ? this.style.display : '');
+                                    switch (display) {
+                                        case 'line-item':
+                                        case 'block':
+                                        case 'inherit':
+                                            this.android('layout_width', 'match_parent', false);
+                                            break;
+                                        default:
+                                            this.android('layout_width', 'wrap_content', false);
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            if (styleMap.height != null) {
-                this.android('layout_height', Utils.convertToPX(styleMap.height), false);
-                if (this.layoutWeightHeight != null) {
-                    this.android('layout_weight', 0);
+                if (styleMap.height != null) {
+                    this.android('layout_height', Utils.convertToPX(styleMap.height), false);
+                    if (this.layoutWeightHeight != null) {
+                        this.android('layout_weight', 0);
+                    }
                 }
-            }
-            if (this.android('layout_height') != '0px') {
-                if (styleMap.minHeight != null) {
-                    this.android('minHeight', Utils.convertToPX(styleMap.minHeight), false);
+                if (this.android('layout_height') != '0px') {
+                    if (styleMap.minHeight != null) {
+                        this.android('minHeight', Utils.convertToPX(styleMap.minHeight), false);
+                    }
+                    if (styleMap.maxHeight != null) {
+                        this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight), false);
+                    }
                 }
-                if (styleMap.maxHeight != null) {
-                    this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight), false);
-                }
-            }
-            if (this.android('layout_height') == null) {
-                if (this.layoutWeightHeight != null) {
-                    this.android('layout_weight', this.layoutWeightHeight);
-                    if (this.layoutWeightHeight == 1) {
-                        this.android('layout_gravity', 'fill_vertical');
-                        this.android('layout_height', '0px');
+                if (this.android('layout_height') == null) {
+                    if (this.layoutWeightHeight != null) {
+                        this.android('layout_weight', this.layoutWeightHeight);
+                        if (this.layoutWeightHeight == 1) {
+                            this.android('layout_gravity', 'fill_vertical');
+                            this.android('layout_height', '0px');
+                        }
+                        else {
+                            this.android('layout_height', 'wrap_content', false);
+                        }
                     }
                     else {
-                        this.android('layout_height', 'wrap_content', false);
-                    }
-                }
-                else {
-                    switch (this.widgetName) {
-                        case WIDGET_ANDROID.TEXT:
-                        case WIDGET_ANDROID.EDIT:
-                        case WIDGET_ANDROID.SPINNER:
-                        case WIDGET_ANDROID.CHECKBOX:
-                        case WIDGET_ANDROID.RADIO:
-                        case WIDGET_ANDROID.BUTTON:
-                            this.android('layout_height', 'wrap_content', false);
-                            break;
-                        default:
-                            if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
-                                this.android('layout_height', 'match_parent', false);
-                            }
-                            else {
+                        switch (this.widgetName) {
+                            case WIDGET_ANDROID.TEXT:
+                            case WIDGET_ANDROID.EDIT:
+                            case WIDGET_ANDROID.SPINNER:
+                            case WIDGET_ANDROID.CHECKBOX:
+                            case WIDGET_ANDROID.RADIO:
+                            case WIDGET_ANDROID.BUTTON:
                                 this.android('layout_height', 'wrap_content', false);
-                            }
+                                break;
+                            default:
+                                if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
+                                    this.android('layout_height', 'match_parent', false);
+                                }
+                                else {
+                                    this.android('layout_height', 'wrap_content', false);
+                                }
+                        }
                     }
                 }
             }
@@ -310,6 +317,22 @@ class Node {
         const widget = ACTION_ANDROID[this.widgetName];
         const element = this.element;
         const result = {};
+        if (element.tagName == 'INPUT' && element.id != '') {
+            const nextElement = element.nextElementSibling;
+            if (nextElement && nextElement.htmlFor == element.id && result[4] == null) {
+                const nextNode = nextElement.androidNode;
+                nextNode.setAndroidId(WIDGET_ANDROID.TEXT);
+                nextNode.setAttributes([4]);
+                const attrs = nextNode.combine();
+                if (attrs.length > 0) {
+                    result[4] = attrs;
+                }
+                this.css('marginRight', nextNode.style.marginRight);
+                this.css('paddingRight', nextNode.style.paddingRight);
+                this.label = nextNode;
+                nextNode.hide();
+            }
+        }
         if (widget != null) {
             if (this.actions != null) {
                 actions = this.actions;
@@ -375,27 +398,13 @@ class Node {
                 }
             }
         }
-        if (element.tagName == 'INPUT' && element.id != '') {
-            const nextElement = element.nextElementSibling;
-            if (nextElement && nextElement.htmlFor == element.id && result[4] == null) {
-                const nextNode = nextElement.androidNode;
-                nextNode.setAndroidId(WIDGET_ANDROID.TEXT);
-                nextNode.setAttributes([4]);
-                const attrs = nextNode.combine();
-                if (attrs.length > 0) {
-                    result[4] = attrs;
-                }
-                this.label = nextNode;
-                nextNode.hide();
-            }
-        }
         for (const i in result) {
             let value = result[i];
             if (Utils.hasValue(value)) {
                 if (!Array.isArray(value)) {
                     value = [value];
                 }
-                value.forEach(attr => this.attr(attr));
+                value.forEach(attr => this.attr(attr, false));
             }
         }
     }

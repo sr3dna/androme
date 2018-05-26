@@ -79,6 +79,9 @@
         input[type=radio], input[type=checkbox] {
             vertical-align: sub;
         }
+        div > label {
+            margin-right: 1px;
+        }
         .empty {
             height: 5px;
         }
@@ -94,6 +97,9 @@
         input[name^='topic'], input[name^='customname'] {
             width: 130px;
             margin-right: 5px;
+        }
+        input[value='Update'] {
+            margin-left: 4px;
         }
     </style>
     <script src="utils.js"></script>
@@ -439,7 +445,7 @@
                         <input id="c3" type="radio" name="personbirth" value="0" /><label for="c3">Death</label>
                         <input id="c4" type="checkbox" name="conclusionnone" value="1" /><label for="c4">None</label>
                     </div>
-                    <input type="button" value="Update" style="margin-left: 4px;" />
+                    <input type="button" value="Update" />
                 </li>
             </ul>
         </form>
