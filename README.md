@@ -480,6 +480,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/open"
+					android:textAllCaps="false"
 					style="@style/Button_3" />
 				<Button
 					android:id="@+id/button_2"
@@ -495,6 +496,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/all"
+					android:textAllCaps="false"
 					style="@style/Button_3" />
 			</LinearLayout>
 			<LinearLayout
@@ -626,6 +628,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/update"
+					android:textAllCaps="false"
 					style="@style/Button_2" />
 			</LinearLayout>
 			<LinearLayout
@@ -679,6 +682,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/update"
+					android:textAllCaps="false"
 					style="@style/Button_2" />
 				<Button
 					android:id="@+id/button_5"
@@ -694,6 +698,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/clone"
+					android:textAllCaps="false"
 					style="@style/Button_2" />
 			</LinearLayout>
 			<LinearLayout
@@ -828,6 +833,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:background="@drawable/input_button_1"
 					android:focusable="true"
 					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
@@ -836,6 +842,7 @@ The Date fields have been modified to demonstrate the Constraint circle and bias
 					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/update"
+					android:textAllCaps="false"
 					style="@style/Button_2" />
 			</LinearLayout>
 		</LinearLayout>

@@ -470,9 +470,7 @@ function writeGridLayout(node, depth, parent, columnCount = 2) {
 function writeViewLayout(node, depth, parent, tagName) {
     let preXml = '';
     let postXml = '';
-    if (node.wrapNode == null) {
-        node.setAndroidId(tagName);
-    }
+    node.setAndroidId(tagName);
     if (node.overflow != 0) {
         const scrollView = [];
         if (node.overflowY) {
@@ -490,6 +488,7 @@ function writeViewLayout(node, depth, parent, tagName) {
         let scrollDepth = depth + scrollView.length;
         scrollView.forEach((widgetName, index) => {
             const wrapNode = Node.createWrapNode(generateNodeId(), current, parent, [current], SETTINGS.targetAPI);
+            current.depth++;
             wrapNode.setAndroidId(widgetName);
             wrapNode.setBounds();
             wrapNode.setAttributes();
@@ -516,6 +515,7 @@ function writeViewLayout(node, depth, parent, tagName) {
     else {
         node.renderParent = parent;
     }
+    node.applyCustomizations();
     node.setAttributes();
     node.renderDepth = depth;
     node.setGravity();
@@ -527,9 +527,9 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
     let preXml = '';
     let postXml = '';
     node.setAndroidId(tagName);
-    if (!recursive) {
-        switch (element.type) {
-            case 'radio':
+    switch (element.type) {
+        case 'radio':
+            if (!recursive) {
                 const result = NODE_CACHE.filter(item => (item.element.type == 'radio' && item.element.name == element.name && !item.renderParent && ((node.original.depth || node.depth) == (item.original.depth || item.depth))));
                 let xml = '';
                 if (result.length > 1) {
@@ -543,10 +543,8 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                     for (const item of result) {
                         rowSpan += (Utils.parseInt(item.android('layout_rowSpan')) || 1) - 1;
                         columnSpan += (Utils.parseInt(item.android('layout_columnSpan')) || 1) - 1;
-                        if (item != node) {
-                            item.parent = node.parent;
-                            item.depth = node.depth;
-                        }
+                        item.parent = wrapNode;
+                        item.depth++;
                         item.depthIndent = (depth + 1) - item.depth;
                         if (item.element.checked) {
                             checked = item;
@@ -571,69 +569,70 @@ function writeViewTag(node, depth, parent, tagName, recursive = false) {
                         parent.linearRows.push(wrapNode);
                     }
                     return getEnclosingTag(depth, WIDGET_ANDROID.RADIO_GROUP, wrapNode.id, xml, getGridSpacing(wrapNode, depth));
-                }
-                break;
-            case 'password':
-                node.android('inputType', 'textPassword');
-                break;
-        }
-        switch (node.widgetName) {
-            case WIDGET_ANDROID.EDIT:
-                node.android('inputType', 'text');
-                break;
-            case WIDGET_ANDROID.BUTTON:
-                if (node.css('width', true) == '' && node.css('minWidth', true) == '') {
-                    node.android('minWidth', '0px');
-                }
-                if (node.css('height', true) == '' && node.css('minHeight', true) == '') {
-                    node.android('minHeight', '0px');
-                }
-                break;
-        }
-        switch (element.tagName) {
-            case 'IMG':
-                const image = element.src.substring(element.src.lastIndexOf('/') + 1);
-                const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
-                let src = image.replace(/.\w+$/, '');
-                switch (format) {
-                    case 'bmp':
-                    case 'gif':
-                    case 'jpg':
-                    case 'png':
-                    case 'webp':
-                        src = insertResourceAsset(RESOURCE['image'], src, element.src);
-                        break;
-                    default:
-                        src = `(UNSUPPORTED: ${image})`;
-                }
-                node.androidSrc = src;
-                break;
-            case 'TEXTAREA':
-                node.android('minLines', 2);
-                if (element.rows > 2) {
-                    node.android('maxLines', element.rows);
-                }
-                if (element.maxlength != null) {
-                    node.android('maxLength', parseInt(element.maxlength));
-                }
-                node.android('hint', element.placeholder);
-                node.android('scrollbars', 'vertical');
-                node.android('inputType', 'textMultiLine');
-                if (node.styleMap.overflowX == 'scroll') {
-                    node.android('scrollHorizontally', 'true');
-                }
-                break;
-        }
-        if (node.overflow != 0) {
-            let scrollbars = '';
-            if (node.overflowX) {
-                scrollbars += 'horizontal';
+                }                
             }
-            if (node.overflowY) {
-                scrollbars += (scrollbars != '' ? '|' : '') + 'vertical';
+            break;
+        case 'password':
+            node.android('inputType', 'textPassword');
+            break;
+    }
+    switch (node.widgetName) {
+        case WIDGET_ANDROID.EDIT:
+            node.android('inputType', 'text');
+            break;
+        case WIDGET_ANDROID.BUTTON:
+            if (node.css('width', true) == '' && node.css('minWidth', true) == '') {
+                node.android('minWidth', '0px');
             }
-            node.android('scrollbars', scrollbars);
+            if (node.css('height', true) == '' && node.css('minHeight', true) == '') {
+                node.android('minHeight', '0px');
+            }
+            break;
+    }
+    switch (element.tagName) {
+        case 'IMG':
+            const image = element.src.substring(element.src.lastIndexOf('/') + 1);
+            const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
+            let src = image.replace(/.\w+$/, '');
+            switch (format) {
+                case 'bmp':
+                case 'gif':
+                case 'jpg':
+                case 'png':
+                case 'webp':
+                    src = insertResourceAsset(RESOURCE['image'], src, element.src);
+                    break;
+                default:
+                    src = `(UNSUPPORTED: ${image})`;
+            }
+            node.androidSrc = src;
+            break;
+        case 'TEXTAREA':
+            node.android('minLines', 2);
+            if (element.rows > 2) {
+                node.android('maxLines', element.rows);
+            }
+            if (element.maxlength != null) {
+                node.android('maxLength', parseInt(element.maxlength));
+            }
+            node.android('hint', element.placeholder);
+            node.android('scrollbars', 'vertical');
+            node.android('inputType', 'textMultiLine');
+            if (node.styleMap.overflowX == 'scroll') {
+                node.android('scrollHorizontally', 'true');
+            }
+            break;
+    }
+    node.applyCustomizations();
+    if (node.overflow != 0) {
+        let scrollbars = '';
+        if (node.overflowX) {
+            scrollbars += 'horizontal';
         }
+        if (node.overflowY) {
+            scrollbars += (scrollbars != '' ? '|' : '') + 'vertical';
+        }
+        node.android('scrollbars', scrollbars);
     }
     node.setAttributes();
     node.renderDepth = depth;
@@ -1681,12 +1680,13 @@ function setLayoutWeight() {
                 const row = node.linearRows[i];
                 const children = row.renderChildren.filter(item => item.visible);
                 const weight = [];
+                const offset = (row.isHorizontal() ? 'whitespaceHorizontalOffset' : 'whitespaceVerticalOffset');
                 for (let j = 0; j < children.length; j++) {
-                     weight.push((columnWeight[j][i] != null && columnWeight[j][i] <= SETTINGS[(node.isHorizontal() ? 'whitespaceHorizontalOffset' : 'whitespaceVerticalOffset')] ? 0 : 1));
+                     weight.push(((columnWeight[j][i] != null && columnWeight[j][i] <= SETTINGS[offset]) || FIXED_ANDROID.includes(children[j].widgetName) ? 0 : 1));
                 }
                 if (weight.reduce((a, b) => Math.max(a, b)) == 1) {
                     for (let j = 0; j < children.length; j++) {
-                        children[j][`layoutWeight${(node.isHorizontal() ? 'Height' : 'Width')}`] = weight[j];
+                        children[j][`layoutWeight${(row.isHorizontal() ? 'Width' : 'Height')}`] = weight[j];
                     }
                 }
             }
@@ -1758,7 +1758,7 @@ function setNodeCache() {
                 if (child.bounds == null) {
                     child.setBounds();
                 }
-                if (child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
+                if ((child.element.parentNode == parent.element) || (child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom)) {
                     let element = parent.element.parentNode;
                     let valid = true;
                     while (element != null) {
@@ -1876,6 +1876,7 @@ function parseDocument() {
                 if (!nodeY.renderParent) {
                     const parentId = nodeY.parent.id;
                     let tagName = nodeY.widgetName;
+                    let restart = false;
                     let xml = '';
                     if (tagName == null) {
                         if ((nodeY.children.length == 0 && Utils.hasFreeFormText(nodeY.element)) || nodeY.children.every(item => INLINE_CHROME.includes(item.tagName))) {
@@ -2039,15 +2040,14 @@ function parseDocument() {
                     }
                     if (!nodeY.renderParent) {
                         if (nodeY.parent.isView(WIDGET_ANDROID.GRID)) {
-                            const original = nodeY.parent.children.find(item => (nodeY.original.parent != null && item.id == nodeY.original.parent.id));
+                            const original = nodeY.original.parent;
                             if (original != null) {
-                                const siblings = original.children.filter(item => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= nodeY.parent.gridColumnEnd[nodeY.gridIndex]).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
+                                const siblings = original.children.filter(item => !item.renderParent && item.depth == original.depth + 1 && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= nodeY.parent.gridColumnEnd[nodeY.gridIndex]).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
                                 if (siblings.length > 0) {
                                     siblings.unshift(nodeY);
                                     const [linearX, linearY] = Node.isLinearXY(siblings);
                                     const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, nodeY.parent, siblings, SETTINGS.targetAPI, [0]);
-                                    wrapNode.setAndroidId((linearX || linearY ? WIDGET_ANDROID.LINEAR : WIDGET_ANDROID.CONSTRAINT));
-                                    NODE_CACHE.push(wrapNode);
+                                    const renderParent = nodeY.parent;
                                     const rowSpan = nodeY.android('layout_rowSpan');
                                     const columnSpan = nodeY.android('layout_columnSpan');
                                     if (rowSpan > 1) {
@@ -2058,53 +2058,28 @@ function parseDocument() {
                                         wrapNode.android('layout_columnSpan', columnSpan);
                                         nodeY.delete('android', 'layout_columnSpan');
                                     }
-                                    const renderParent = nodeY.parent;
-                                    const section = siblings.map(item => {
-                                        if (!item.renderParent) {
-                                            let visible = true;
-                                            const children = item.element.children;
-                                            if (children.length > 0) {
-                                                visible = false;
-                                                for (let l = 0; l < children.length; l++) {
-                                                    if (!siblings.includes(children[l].androidNode)) {
-                                                        visible = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            if (!visible) {
-                                                item.hide();
-                                            }
-                                            else {
-                                                item.parent = wrapNode;
-                                                item.depth = nodeY.depth;
-                                                item.depthIndent++;
-                                                wrapNode.inheritGrid(item);
-                                                if (item.children.length == 0 || item.children.every(item => INLINE_CHROME.includes(item.tagName))) {
-                                                    return writeViewTag(item, nodeY.depth + nodeY.depthIndent, wrapNode);
-                                                }
-                                                else {
-                                                    return writeDefaultLayout(item, nodeY.depth + nodeY.depthIndent, wrapNode);
-                                                }
-                                            }
-                                        }
-                                        return '';
-                                    }).join('');
+                                    siblings.forEach(item => {
+                                        item.parent = wrapNode
+                                        wrapNode.inheritGrid(item);
+                                    });
+                                    nodeY.depth++;
                                     wrapNode.setBounds();
                                     if (linearX || linearY) {
                                         if (renderParent.isView(WIDGET_ANDROID.LINEAR)) {
                                             renderParent.linearRows.push(wrapNode);
                                         }
-                                        xml += writeLinearLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, renderParent, linearY);
+                                        xml += writeLinearLayout(wrapNode, wrapNode.depth + wrapNode.depthIndent, renderParent, linearY);
                                     }
                                     else {
-                                        xml += writeDefaultLayout(wrapNode, nodeY.depth + nodeY.depthIndent - 1, renderParent);
+                                        xml += writeDefaultLayout(wrapNode, wrapNode.depth + wrapNode.depthIndent, renderParent);
                                     }
-                                    xml = xml.replace(`{${wrapNode.id}}`, section);
+                                    k--;
+                                    restart = true;
+                                    NODE_CACHE.push(wrapNode);
                                 }
                             }
                         }
-                        if (!nodeY.renderParent) {
+                        if (!nodeY.renderParent && !restart) {
                             xml += writeViewTag(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, tagName);
                         }
                     }

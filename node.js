@@ -121,6 +121,19 @@ class Node {
         }
         return result.sort();
     }
+    applyCustomizations() {
+        const api = API_ANDROID[this.api];
+        if (api != null) {
+            const customizations = api.customizations[this.widgetName];
+            if (customizations != null) {
+                for (const obj in customizations) {
+                    for (const attr in customizations[obj]) {
+                        this.add(obj, attr, customizations[obj][attr], false);
+                    }
+                }
+            }
+        }
+    }
     css(attr, map = false) {
         return (this.styleMap[attr] || (!map ? this.style[attr] : '') || '');
     }
@@ -204,37 +217,38 @@ class Node {
                     else if (this.gridColumnWeight != null) {
                         this.android('layout_columnWeight', this.gridColumnWeight);
                     }
-                    this.android('layout_width', (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1 ? '0px' : 'wrap_content'), false);
+                    if (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1) {
+                        this.android('layout_gravity', 'fill_horizontal');
+                        this.android('layout_width', '0px');
+                    }
+                    else {
+                        this.android('layout_width', 'wrap_content', false);
+                    }
                 }
                 else {
                     if (gridLayout) {
                         this.android('layout_width', 'wrap_content', false);
                     }
                     else {
-                        switch (this.widgetName) {
-                            case WIDGET_ANDROID.EDIT:
-                            case WIDGET_ANDROID.SPINNER:
-                            case WIDGET_ANDROID.CHECKBOX:
-                            case WIDGET_ANDROID.RADIO:
-                            case WIDGET_ANDROID.BUTTON:
-                                this.android('layout_width', 'wrap_content', false);
-                                break;
-                            default:
-                                if (parent.overflow == 0 && width >= parentWidth) {
-                                    this.android('layout_width', 'match_parent', false);
+                        if (FIXED_ANDROID.includes(this.widgetName)) {
+                            this.android('layout_width', 'wrap_content', false);
+                        }
+                        else {
+                            if (parent.overflow == 0 && width >= parentWidth) {
+                                this.android('layout_width', 'match_parent', false);
+                            }
+                            else {
+                                const display = (this.style != null ? this.style.display : '');
+                                switch (display) {
+                                    case 'line-item':
+                                    case 'block':
+                                    case 'inherit':
+                                        this.android('layout_width', 'match_parent', false);
+                                        break;
+                                    default:
+                                        this.android('layout_width', 'wrap_content', false);
                                 }
-                                else {
-                                    const display = (this.style != null ? this.style.display : '');
-                                    switch (display) {
-                                        case 'line-item':
-                                        case 'block':
-                                        case 'inherit':
-                                            this.android('layout_width', 'match_parent', false);
-                                            break;
-                                        default:
-                                            this.android('layout_width', 'wrap_content', false);
-                                    }
-                                }
+                            }
                         }
                     }
                 }
@@ -256,7 +270,13 @@ class Node {
             if (this.android('layout_height') == null) {
                 if (this.layoutWeightHeight != null) {
                     this.android('layout_weight', this.layoutWeightHeight);
-                    this.android('layout_height', (this.layoutWeightHeight == 1 ? '0px' : 'wrap_content'), false);
+                    if (this.layoutWeightHeight == 1) {
+                        this.android('layout_gravity', 'fill_vertical');
+                        this.android('layout_height', '0px');
+                    }
+                    else {
+                        this.android('layout_height', 'wrap_content', false);
+                    }
                 }
                 else {
                     switch (this.widgetName) {
@@ -709,8 +729,8 @@ class Node {
             wrapNode: node,
             children,
             original: node.original,
-            depth: parent.depth,
-            depthIndent: parent.depthIndent,
+            depth: node.depth,
+            depthIndent: node.depthIndent,
             parent,
             actions
         };

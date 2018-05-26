@@ -190,6 +190,7 @@ const DENSITY_ANDROID = {
 
 const BLOCK_CHROME = ['DIV', 'LI', 'TD', 'SECTION', 'SPAN'];
 const INLINE_CHROME = ['STRONG', 'B', 'EM', 'CITE', 'DFN', 'I', 'BIG', 'SMALL', 'FONT', 'BLOCKQUOTE', 'TT', 'A', 'U', 'SUP', 'SUB', 'STRIKE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DEL', 'TEXT'];
+const FIXED_ANDROID = [WIDGET_ANDROID.EDIT, WIDGET_ANDROID.SPINNER, WIDGET_ANDROID.CHECKBOX, WIDGET_ANDROID.RADIO, WIDGET_ANDROID.BUTTON];
 
 const API_ANDROID = [];
 const BUILD_ANDROID = {
@@ -212,8 +213,16 @@ const BUILD_ANDROID = {
     HONEYCOMB: 11
 };
 API_ANDROID[BUILD_ANDROID.JELLYBEAN_1] = {
-    android: ['labelFor']
+    android: ['labelFor'],
+    customizations: {}
 };
 API_ANDROID[BUILD_ANDROID.LOLLIPOP] = {
-    android: ['layout_columnWeight']
+    android: ['layout_columnWeight'],
+    customizations: {
+        'Button': {
+            android: {
+                textAllCaps: 'false'
+            }
+        }
+    }
 };
