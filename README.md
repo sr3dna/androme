@@ -33,7 +33,7 @@ const SETTINGS = {
     useGridLayout: false,
     useLayoutWeight: false,
     useUnitDP: true,
-    useRTL: true,
+    useRTL: false,
     resourceValueNumber: false,
     boundsOffset: 2,
     whitespaceHorizontalOffset: 4,

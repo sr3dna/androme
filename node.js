@@ -2,15 +2,12 @@ class Node {
     constructor(id, element, api, options = {}) {
         let style = {};
         let styleMap = {};
-        let bounds = null;
         if (element != null) {
             style = window.getComputedStyle(element);
             styleMap = element.styleMap || {};
-            bounds = element.getBoundingClientRect();
             for (const inline of element.style) {
                 styleMap[Utils.hyphenToCamelCase(inline)] = element.style[inline];
             }
-            this.tagName = element.tagName;
         }
         else {
             element = {};
@@ -24,7 +21,6 @@ class Node {
         this.depthIndent = 0;
         this.visible = true;
         this.linearRows = [];
-        this.renderId = null;
         this.renderChildren = [];
         this.original = {};
         this.styleAttributes = [];
@@ -38,21 +34,25 @@ class Node {
 
         this._parent = null;
         this._depth = null;
-        this._default = {};
+        this._flex = null;
+        this._overflow = null;
+
         this._android = {};
         this._app = {};
-        this._overflow = null;
-        this._flex = null;
+        this._none = {};
+        this._namespaces = new Set(['android', 'app', 'none']);
 
         Object.assign(this, options);
+
         if (options.element != null || arguments[1] != null) {
             this.element.androidNode = this;
         }
     }
 
     add(obj, attr, value, overwrite = true) {
-        const name = `_${obj}`;
+        const name = `_${obj || 'none'}`;
         if (this[name] == null) {
+            this._namespaces.add(name);
             this[name] = {};
         }
         if (Utils.hasValue(value)) {
@@ -66,16 +66,16 @@ class Node {
         }
         return this[name][attr];
     }
-    delete(obj, ...attrs) {
+    delete(obj, ...attributes) {
         const name = `_${obj}`;
-        for (const attr of attrs) {
+        for (const attr of attributes) {
             delete this[name][attr];
         }
     }
     attr(value, overwrite = true) {
         const match = value.match(/^(?:([a-z]+):)?([a-zA-Z_]+)="((?:@+?[a-z]+\/)?.+)"$/);
         if (match != null) {
-            this.add(match[1] || 'other', match[2], match[3], overwrite);
+            this.add(match[1] || 'none', match[2], match[3], overwrite);
         }
     }
     android(attr, value, overwrite = true) {
@@ -94,28 +94,14 @@ class Node {
             return this.add('app', attr, value, overwrite);
         }
     }
-    other(attr, value, overwrite = true) {
-        if (arguments.length == 0) {
-            return this._other;
-        }
-        else {
-            return this.add('other', attr, value, overwrite);
-        }
-    }
     combine() {
-        const other = this.other();
-        const android = this.android();
-        const app = this.app();
         const result = [];
-        for (const attr in android) {
-            result.push(`android:${attr}="${android[attr]}"`);
-        }
-        for (const attr in app) {
-            result.push(`app:${attr}="${app[attr]}"`);
-        }
-        for (const attr in other) {
-            result.push(`${attr}="${other[attr]}"`);
-        }
+        this._namespaces.forEach(value => {
+            const obj = this[`_${value}`];
+            for (const attr in obj) {
+                result.push(`${(value != 'none' ? `${value}:` : '')}${attr}="${obj[attr]}"`);
+            }
+        });
         return result.sort();
     }
     supported(obj, attr) {
@@ -183,8 +169,8 @@ class Node {
     }
     setAndroidDimensions() {
         if (this.visible) {
+            const styleMap = this.styleMap;
             let parent = null;
-            let styleMap = this.styleMap;
             let width = 0;
             let height = 0;
             let gridLayout = false;
@@ -206,6 +192,9 @@ class Node {
                 this.android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
             }
             else {
+                if (this.gridColumnWeight == 1) {
+                    this.gridColumnWeight = (FIXED_ANDROID.includes(this.widgetName) ? 0 : 1);
+                }
                 const layoutWeight = (this.gridColumnWeight != null || this.layoutWeightWidth != null);
                 if (styleMap.width != null) {
                     this.android('layout_width', Utils.convertToPX(styleMap.width), false);
@@ -313,19 +302,19 @@ class Node {
             }
         }
     }
-    setAttributes(actions = []) {
+    setAttributes(...actions) {
         const widget = ACTION_ANDROID[this.widgetName];
         const element = this.element;
         const result = {};
         if (element.tagName == 'INPUT' && element.id != '') {
             const nextElement = element.nextElementSibling;
             if (nextElement != null && nextElement.htmlFor == element.id) {
-                let node = nextElement.androidNode;
-                node.setAttributes([4]);
+                const node = nextElement.androidNode;
+                node.setAttributes(4);
                 node.setAndroidId(WIDGET_ANDROID.TEXT);
-                const attrs = node.combine();
-                if (attrs.length > 0) {
-                    result[4] = attrs;
+                const attributes = node.combine();
+                if (attributes.length > 0) {
+                    result[4] = attributes;
                 }
                 this.css('marginRight', node.style.marginRight);
                 this.css('paddingRight', node.style.paddingRight);
@@ -600,6 +589,9 @@ class Node {
     get renderParent() {
         return this._renderParent;
     }
+    get parentElement() {
+        return this.element.parentNode;
+    }
     set depth(value) {
         if (this._depth == value) {
             return;
@@ -675,17 +667,20 @@ class Node {
         }
         return { top, right, bottom, left, children };
     }
+    get tagName() {
+        return this.element.tagName;
+    }
     get flex() {
         if (this._flex == null) {
             this._flex = {
-                parent: (this.element.parentNode != null && this.element.parentNode.androidNode != null ? this.element.parentNode.androidNode.flex : {}),
+                parent: (this.parentElement != null && this.parentElement.androidNode != null ? this.parentElement.androidNode.flex : {}),
                 enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
                 direction: this.style.flexDirection,
                 basis: this.style.flexBasis,
                 grow: Utils.parseInt(this.style.flexGrow),
                 shrink: Utils.parseInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
-                alignSelf: this.style.alignSelf || (this.element.parentNode != null ? this.element.parentNode.style.alignItems : null),
+                alignSelf: this.style.alignSelf || (this.parentElement != null ? this.parentElement.style.alignItems : null),
                 justifyContent: this.style.justifyContent
             };
         }

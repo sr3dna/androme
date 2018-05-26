@@ -7,7 +7,7 @@ const SETTINGS = {
     useGridLayout: false,
     useLayoutWeight: false,
     useUnitDP: true,
-    useRTL: true,
+    useRTL: false,
     resourceValueNumber: false,
     boundsOffset: 2,
     whitespaceHorizontalOffset: 4,
@@ -247,7 +247,7 @@ function addResourceColor(value) {
 }
 
 function getRTL(value) {
-    if (SETTINGS.useRTL) {
+    if (SETTINGS.useRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
         switch (value) {
             case 'left':
                 return 'start';
@@ -1142,8 +1142,7 @@ function insertGridSpace(node, depth) {
     let preXml = '';
     let postXml = '';
     if (node.parent.isView(WIDGET_ANDROID.GRID)) {
-        let container = node.original.parent;
-        const dimensions = getBoxSpacing(container, true);
+        const dimensions = getBoxSpacing(node.original.parent, true);
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
@@ -1177,7 +1176,6 @@ function insertGridSpace(node, depth) {
 }
 
 function getSpaceTag(depth, width, height, columnSpan, columnWeight = 0) {
-    let xml = getEnclosingTag(depth, WIDGET_ANDROID.SPACE, 0, '');
     let attributes = '';
     if (SETTINGS.showAttributes) {
         const indent = Utils.padLeft(depth + 1);
@@ -1190,7 +1188,7 @@ function getSpaceTag(depth, width, height, columnSpan, columnWeight = 0) {
             attributes += `\n${indent + attr}`;
         }
     }
-    return xml.replace('{@0}', attributes);
+    return getEnclosingTag(depth, WIDGET_ANDROID.SPACE, 0, '').replace('{@0}', attributes);
 }
 
 function deleteStyleAttribute(sorted, attributes, nodeIds) {
@@ -1663,7 +1661,7 @@ function setLayoutWeight() {
                 const row = node.linearRows[i];
                 const children = row.renderChildren.filter(item => item.visible);
                 for (let j = 0; j < children.length; j++) {
-                    let column = children[j];
+                    const column = children[j];
                     if (columnLeft[j] == null) {
                         columnLeft[j] = new Array(node.linearRows.length).fill(null);
                         columnRight[j] = new Array(node.linearRows.length).fill(null);
@@ -1727,7 +1725,7 @@ function setNodeCache() {
             }   
         }
     });
-    let elements = document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *'));
+    const elements = document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *'));
     for (const i in elements) {
         const element = elements[i];
         if (INLINE_CHROME.includes(element.tagName) && (MAPPING_ANDROID[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
@@ -1773,8 +1771,8 @@ function setNodeCache() {
                 if (child.bounds == null) {
                     child.setBounds();
                 }
-                if ((child.element.parentNode == parent.element) || (child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom)) {
-                    let element = parent.element.parentNode;
+                if ((child.parentElement == parent.element) || (child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom)) {
+                    let element = parent.parentElement;
                     let valid = true;
                     while (element != null) {
                         if (element == child.element) {
@@ -1797,7 +1795,7 @@ function setNodeCache() {
     NODE_CACHE.forEach(node => {
         const nodes = parentNodes[node.id];
         if (nodes != null) {
-            let parent = node.element.parentNode.androidNode;
+            let parent = node.parentElement.androidNode;
             if (!node.withinX(parent.box) && !node.withinY(parent.box)) {
                 if (nodes.length > 1) {
                     let minArea = Number.MAX_VALUE;
@@ -1808,7 +1806,7 @@ function setNodeCache() {
                             minArea = area;
                         }
                         else if (area == minArea) {
-                            if (item.element == node.element.parentNode) {
+                            if (item.element == node.parentElement) {
                                 parent = item;
                             }
                         }
