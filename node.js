@@ -138,13 +138,6 @@ class Node {
             }
         }
     }
-    inheritStyleMap(node) {
-        for (const prop in node.styleMap) {
-            if (this.styleMap[prop] == null) {
-                this.styleMap[prop] = node.styleMap[prop];
-            }
-        }
-    }
     isHorizontal() {
         return (this._android.orientation == 'horizontal');
     }

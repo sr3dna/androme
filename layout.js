@@ -4,7 +4,7 @@ const SETTINGS = {
     showAttributes: true,
     useConstraintLayout: true,
     useConstraintChain: true,
-    useGridLayout: true,
+    useGridLayout: false,
     useLayoutWeight: false,
     useUnitDP: true,
     useRTL: true,
@@ -914,7 +914,7 @@ function setConstraints() {
                                 firstNode.app(layout[chainMap['leftTop'][index]], 'parent');
                                 lastNode.app(layout[chainMap['rightBottom'][index]], 'parent');
                                 let maxOffset = -1;
-                                const wrapContent = [];
+                                const unassigned = [];
                                 for (let i = 0; i < chainDirection.length; i++) {
                                     const chain = chainDirection[i];
                                     const chainNext = chainDirection[i + 1];
@@ -938,7 +938,7 @@ function setConstraints() {
                                             chain.app(`layout_constraint${widthHeight}_max`, Utils.convertToPX(max));
                                         }
                                         else {
-                                            wrapContent.push(chain);
+                                            unassigned.push(chain);
                                         }
                                     }
                                     if (flex.enabled) {
@@ -997,17 +997,15 @@ function setConstraints() {
                                     switch (flex.justifyContent) {
                                         case 'space-between':
                                             firstNode.app(chainStyle, 'spread_inside');
-                                            Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
+                                            Node.android(unassigned, layoutWidthHeight, 'wrap_content');
                                             break;
                                         case 'space-evenly':
                                             setConstraintPercent(node, chainDirection, (index == 0));
                                             break;
                                         case 'space-around':
                                             firstNode.app(chainStyle, 'spread');
-                                            chainDirection.forEach(item => {
-                                                item.app(`layout_constraint${horizontalVertical}_weight`, item.flex.grow || 1);
-                                            });
-                                            Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
+                                            chainDirection.forEach(item => item.app(`layout_constraint${horizontalVertical}_weight`, item.flex.grow || 1));
+                                            Node.android(unassigned, layoutWidthHeight, 'wrap_content');
                                             break;
                                         default:
                                             let bias = 0.5;
@@ -1021,7 +1019,7 @@ function setConstraints() {
                                             }
                                             firstNode.app(chainStyle, 'packed');
                                             firstNode.app(`layout_constraint${horizontalVertical}_bias`, bias);
-                                            Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
+                                            Node.android(unassigned, layoutWidthHeight, 'wrap_content');
                                     }
                                 }
                                 else {
@@ -1031,7 +1029,7 @@ function setConstraints() {
                                     else if (maxOffset <= SETTINGS[`chainPacked${horizontalVertical}Offset`]) {
                                         firstNode.app(chainStyle, 'packed');
                                         firstNode.app(`layout_constraint${horizontalVertical}_bias`, Node[`get${horizontalVertical}Bias`](node, firstNode, lastNode));
-                                        Node.android(wrapContent, layoutWidthHeight, 'wrap_content');
+                                        Node.android(unassigned, layoutWidthHeight, 'wrap_content');
                                     }
                                     else {
                                         setConstraintPercent(node, chainDirection, (index == 0));
@@ -1591,7 +1589,7 @@ function setMarginPadding() {
 }
 
 function mergeMarginPadding() {
-    if (SETTINGS.targetAPI >= BUILD_ANDROID.OREO_0) {
+    if (SETTINGS.targetAPI >= BUILD_ANDROID.OREO) {
         for (const node of NODE_CACHE) {
             if (node.visible) {
                 const LTR_marginLeft = getRTL('layout_marginLeft');
