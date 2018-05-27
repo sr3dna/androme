@@ -7,7 +7,7 @@ const SETTINGS = {
     useGridLayout: false,
     useLayoutWeight: false,
     useUnitDP: true,
-    useRTL: false,
+    useRTL: true,
     resourceValueNumber: false,
     boundsOffset: 2,
     whitespaceHorizontalOffset: 4,
@@ -318,7 +318,7 @@ function setBackgroundStyle(node) {
         borderStyle.default = borderStyle[properties.border[0]] || borderStyle.black;
         let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
         if (properties.border[0] != 'none' && properties.borderRadius != null) {
-            xml += `<shape ${STRING_ANDROID.XMLNS_ANDROID} android:shape="rectangle">\n` +
+            xml += `<shape ${XMLNS_ANDROID.ANDROID} android:shape="rectangle">\n` +
                    `\t<stroke android:width="${properties.border[1]}" ${borderStyle.default} />\n` +
                    (properties.backgroundColor ? `\t<solid android:color="${properties.backgroundColor[1]}" />\n` : '');
             if (properties.borderRadius.length == 1) {
@@ -335,12 +335,12 @@ function setBackgroundStyle(node) {
                    '</shape>';
         }
         else if (properties.border[0] != 'none' && properties.backgroundColor == null) {
-            xml += `<shape ${STRING_ANDROID.XMLNS_ANDROID} android:shape="rectangle">\n` +
+            xml += `<shape ${XMLNS_ANDROID.ANDROID} android:shape="rectangle">\n` +
                    `\t<stroke android:width="${properties.border[1]}" ${borderStyle.default} />\n` +
                    '</shape>';
         }
         else {
-            xml += `<layer-list ${STRING_ANDROID.XMLNS_ANDROID}>\n`;
+            xml += `<layer-list ${XMLNS_ANDROID.ANDROID}>\n`;
             if (properties.backgroundColor != null) {
                 xml += '\t<item>\n' +
                        '\t\t<shape android:shape="rectangle">\n' +
@@ -1866,92 +1866,171 @@ function parseDocument() {
                             tagName = WIDGET_ANDROID.TEXT;
                         }
                         else if (nodeY.children.length > 0) {
-                            const nextDepth = nodeY.children.filter(item => (item.depth == nodeY.depth + 1));
-                            if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nextDepth.length > 1 && nextDepth.every(item => BLOCK_CHROME.includes(item.tagName))) {
-                                const nextMapX = mapX[nodeY.depth + 2];
-                                const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
-                                if (nextCoordsX.length > 1) {
-                                    const columnEnd = [];
-                                    const columnRight = [];
-                                    let columns = [];
-                                    for (let l = 0; l < nextCoordsX.length; l++) {
-                                        const nextAxisX = nextMapX[nextCoordsX[l]].sort((a, b) => (a.bounds.top > b.bounds.top ? 1 : -1));
-                                        columnRight[l] = (l == 0 ? Number.MIN_VALUE : columnRight[l - 1]);
-                                        for (let m = 0; m < nextAxisX.length; m++) {
-                                            const nextX = nextAxisX[m];
-                                            if (nextX.parent.parent != null && nodeY.id == nextX.parent.parent.id) {
-                                                const [left, right] = [nextX.bounds.left, nextX.bounds.right];
-                                                if (l == 0 || left >= columnRight[l - 1]) {
-                                                    if (columns[l] == null) {
-                                                        columns[l] = [];
-                                                    }
-                                                    columns[l].push(nextX);
+                            const rows = nodeY.children.filter(item => (item.depth == nodeY.depth + 1));
+                            if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every(item => (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                                let columns = [];
+                                let columnEnd = [];
+                                if (SETTINGS.useLayoutWeight) {
+                                    const dimensions = [];
+                                    for (let l = 0; l < rows.length; l++) {
+                                        const children = rows[l].children.filter(item => (item.depth == rows[l].depth + 1));
+                                        dimensions[l] = [];
+                                        for (let m = 0; m < children.length; m++) {
+                                            dimensions[l].push(children[m].bounds.width);
+                                        }
+                                        columns.push(children);
+                                    }
+                                    const base = columns[
+                                        dimensions.findIndex(item => {
+                                            return (item == dimensions.reduce((a, b) => {
+                                                if (a.length == b.length) {
+                                                    return (a.reduce((c, d) => c + d, 0) < b.reduce((c, d) => c + d, 0) ? a : b);
                                                 }
-                                                columnRight[l] = Math.max(right, columnRight[l]);
-                                            }
-                                        }
-                                    }
-                                    for (let l = 0, m = -1; l < columnRight.length; l++) {
-                                        if (m == -1 && columns[l] == null) {
-                                            m = l - 1;
-                                        }
-                                        else if (columns[l] == null) {
-                                            if (m != -1 && l == columnRight.length - 1) {
-                                                columnRight[m] = columnRight[l];
-                                            }
-                                            continue;
-                                        }
-                                        else if (m != -1) {
-                                            columnRight[m] = columnRight[l - 1];
-                                            m = -1;
-                                        }
-                                    }
-                                    for (let l = 0; l < columns.length; l++) {
-                                        if (columns[l] != null) {
-                                            columnEnd.push(columnRight[l]);
-                                        }
-                                    }
-                                    columns = columns.filter(nodes => nodes);
-                                    const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
-                                    for (let l = 0; l < columnLength; l++) {
-                                        let y = null;
-                                        for (let m = 0; m < columns.length; m++) {
-                                            const nodeX = columns[m][l];
-                                            if (nodeX != null) {
-                                                if (y == null) {
-                                                    y = nodeX.linear.top;
+                                                else {
+                                                    return (a.length < b.length ? a : b);
                                                 }
-                                                else if (!Utils.withinRange(nodeX.linear.top, y, SETTINGS.boundsOffset)) {
-                                                    const nextRowX = columns[m - 1][l + 1];
-                                                    if (columns[m][l - 1] == null || (nextRowX && Utils.withinRange(nextRowX.linear.top, nodeX.linear.top, SETTINGS.boundsOffset))) {
-                                                        columns[m].splice(l, 0, { spacer: 1 });
+                                            }))
+                                        })];
+                                    let maxIndex = -1;
+                                    let assigned = [];
+                                    for (let l = 0; l < base.length; l++) {
+                                        const bounds = base[l].bounds;
+                                        let found = [];
+                                        if (l < base.length - 1) {
+                                            for (let m = 0; m < columns.length; m++) {
+                                                if (columns[m] == base) {
+                                                    found.push(l);
+                                                }
+                                                else {
+                                                    const index = columns[m].findIndex((item, index) => (index >= l && item.bounds.width == bounds.width && index < columns[m].length - 1));
+                                                    if (index != -1) {
+                                                        found.push(index);
                                                     }
-                                                    else if (columns[m][l + 1] == null) {
-                                                        columns[m][l + 1] = nodeX;
-                                                        columns[m][l] = { spacer: 1 };
+                                                    else {
+                                                        found = [];
+                                                        break;
                                                     }
                                                 }
                                             }
-                                            else {
-                                                columns[m].splice(l, 0, { spacer: 1 });
+                                        }
+                                        else {
+                                            for (let m = 0; m < columns.length; m++) {
+                                                if (columns[m].length > base.length) {
+                                                    const index = assigned[m] + 1;
+                                                    const removed = columns[m].splice(assigned[m] + 1, columns[m].length - base.length);
+                                                    columns[m][assigned[m]].gridSiblings = [...removed];
+                                                }
+                                            }
+                                        }
+                                        if (found.length == columns.length) {
+                                            const minIndex = found.reduce((a, b) => Math.min(a, b));
+                                            maxIndex = found.reduce((a, b) => Math.max(a, b));
+                                            for (let m = 0; m < columns.length; m++) {
+                                                if (found[m] == maxIndex && minIndex != maxIndex) {
+                                                    const removed = columns[m].splice(minIndex, maxIndex - minIndex);
+                                                    columns[m][assigned[m]].gridSiblings = [...removed];
+                                                }
+                                            }
+                                            assigned = found;
+                                        }
+                                        else {
+                                            assigned = new Array(columns.length).fill(l);
+                                        }
+                                    }
+                                }
+                                else {
+                                    const nextMapX = mapX[nodeY.depth + 2];
+                                    const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
+                                    if (nextCoordsX.length > 1) {
+                                        const columnRight = [];
+                                        for (let l = 0; l < nextCoordsX.length; l++) {
+                                            const nextAxisX = nextMapX[nextCoordsX[l]].sort((a, b) => (a.bounds.top > b.bounds.top ? 1 : -1));
+                                            columnRight[l] = (l == 0 ? Number.MIN_VALUE : columnRight[l - 1]);
+                                            for (let m = 0; m < nextAxisX.length; m++) {
+                                                const nextX = nextAxisX[m];
+                                                if (nextX.parent.parent != null && nodeY.id == nextX.parent.parent.id) {
+                                                    const [left, right] = [nextX.bounds.left, nextX.bounds.right];
+                                                    if (l == 0 || left >= columnRight[l - 1]) {
+                                                        if (columns[l] == null) {
+                                                            columns[l] = [];
+                                                        }
+                                                        columns[l].push(nextX);
+                                                    }
+                                                    columnRight[l] = Math.max(right, columnRight[l]);
+                                                }
+                                            }
+                                        }
+                                        for (let l = 0, m = -1; l < columnRight.length; l++) {
+                                            if (m == -1 && columns[l] == null) {
+                                                m = l - 1;
+                                            }
+                                            else if (columns[l] == null) {
+                                                if (m != -1 && l == columnRight.length - 1) {
+                                                    columnRight[m] = columnRight[l];
+                                                }
+                                                continue;
+                                            }
+                                            else if (m != -1) {
+                                                columnRight[m] = columnRight[l - 1];
+                                                m = -1;
+                                            }
+                                        }
+                                        for (let l = 0; l < columns.length; l++) {
+                                            if (columns[l] != null) {
+                                                columnEnd.push(columnRight[l]);
+                                            }
+                                        }
+                                        columns = columns.filter(nodes => nodes);
+                                        const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
+                                        for (let l = 0; l < columnLength; l++) {
+                                            let y = null;
+                                            for (let m = 0; m < columns.length; m++) {
+                                                const nodeX = columns[m][l];
+                                                if (nodeX != null) {
+                                                    if (y == null) {
+                                                        y = nodeX.linear.top;
+                                                    }
+                                                    else if (!Utils.withinRange(nodeX.linear.top, y, SETTINGS.boundsOffset)) {
+                                                        const nextRowX = columns[m - 1][l + 1];
+                                                        if (columns[m][l - 1] == null || (nextRowX && Utils.withinRange(nextRowX.linear.top, nodeX.linear.top, SETTINGS.boundsOffset))) {
+                                                            columns[m].splice(l, 0, { spacer: 1 });
+                                                        }
+                                                        else if (columns[m][l + 1] == null) {
+                                                            columns[m][l + 1] = nodeX;
+                                                            columns[m][l] = { spacer: 1 };
+                                                        }
+                                                    }
+                                                }
+                                                else {
+                                                    columns[m].splice(l, 0, { spacer: 1 });
+                                                }
                                             }
                                         }
                                     }
-                                    if (columns.length > 1) {
-                                        const rowStart = [];
-                                        xml += writeGridLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, columns.length);
-                                        for (let l = 0, count = 0; l < columns.length; l++) {
-                                            let spacer = 0;
-                                            for (let m = 0; m < columns[l].length; m++) {
-                                                const nodeX = columns[l][m];
-                                                if (!nodeX.spacer) {
-                                                    nodeX.depth = nodeY.depth + 1;
-                                                    if (nodeX.children.length > 0) {
-                                                        const offsetDepth = nodeX.original.depth - nodeX.depth;
-                                                        nodeX.children.forEach(item => item.depth -= offsetDepth);
-                                                    }
-                                                    nodeX.parent.hide();
-                                                    nodeX.parent = nodeY;
+                                }
+                                if (columns.length > 1) {
+                                    const rowStart = [];
+                                    xml += writeGridLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, columns.length);
+                                    for (let l = 0, count = 0; l < columns.length; l++) {
+                                        let spacer = 0;
+                                        for (let m = 0; m < columns[l].length; m++) {
+                                            const nodeX = columns[l][m];
+                                            if (!nodeX.spacer) {
+                                                const depth = nodeY.depth + 1;
+                                                if (nodeX.children.length > 0) {
+                                                    const offset = nodeX.depth - depth;
+                                                    nodeX.children.forEach(item => item.depth -= offset);
+                                                }
+                                                nodeX.depth = depth;
+                                                nodeX.parent.hide();
+                                                nodeX.parent = nodeY;
+                                                if (SETTINGS.useLayoutWeight) {
+                                                    nodeX.gridRowEnd = (m == columns.length - 1);
+                                                    nodeX.gridFirst = (l == 0 && m == 0);
+                                                    nodeX.gridLast = (nodeX.gridRowEnd && l == columns[l].length - 1);
+                                                    nodeX.gridRowStart = (m == 0);
+                                                }
+                                                else {
                                                     let rowSpan = 1;
                                                     let columnSpan = 1 + spacer;
                                                     for (let n = l + 1; n < columns.length; n++) {
@@ -1980,7 +2059,6 @@ function parseDocument() {
                                                     if (columnSpan > 1) {
                                                         nodeX.android('layout_columnSpan', columnSpan);
                                                     }
-                                                    nodeX.gridIndex = l;
                                                     nodeX.gridRowEnd = (columnSpan + l == columns.length);
                                                     nodeX.gridFirst = (count++ == 0);
                                                     nodeX.gridLast = (nodeX.gridRowEnd && m == columns[l].length - 1);
@@ -1989,15 +2067,16 @@ function parseDocument() {
                                                         rowStart[m] = nodeX;
                                                     }
                                                     spacer = 0;
-                                                }
-                                                else if (nodeX.spacer == 1) {
-                                                    spacer++;
+                                                    nodeX.gridIndex = l;
                                                 }
                                             }
+                                            else if (nodeX.spacer == 1) {
+                                                spacer++;
+                                            }
                                         }
-                                        nodeY.gridColumnEnd = columnEnd;
-                                        nodeY.gridColumnCount = columns.length;
                                     }
+                                    nodeY.gridColumnEnd = columnEnd;
+                                    nodeY.gridColumnCount = columns.length;
                                 }
                             }
                             if (!nodeY.renderParent) {
@@ -2025,10 +2104,17 @@ function parseDocument() {
                         if (nodeY.parent.isView(WIDGET_ANDROID.GRID)) {
                             const original = nodeY.original.parent;
                             if (original != null) {
-                                const columnEnd = nodeY.parent.gridColumnEnd[nodeY.gridIndex + (nodeY.android('layout_columnSpan') || 1) - 1];
-                                const siblings = original.children.filter(item => !item.renderParent && item.depth == original.depth + 1 && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
-                                if (siblings.length > 0) {
+                                let siblings = null;
+                                if (SETTINGS.useLayoutWeight) {
+                                    siblings = nodeY.gridSiblings;
+                                }
+                                else {
+                                    const columnEnd = nodeY.parent.gridColumnEnd[nodeY.gridIndex + (nodeY.android('layout_columnSpan') || 1) - 1];
+                                    siblings = original.children.filter(item => !item.renderParent && item.depth == original.depth + 1 && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
+                                }
+                                if (siblings != null && siblings.length > 0) {
                                     siblings.unshift(nodeY);
+                                    siblings.sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
                                     const [linearX, linearY] = Node.isLinearXY(siblings);
                                     const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, nodeY.parent, siblings, SETTINGS.targetAPI, [0]);
                                     const renderParent = nodeY.parent;

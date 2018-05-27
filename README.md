@@ -33,7 +33,7 @@ const SETTINGS = {
     useGridLayout: false,
     useLayoutWeight: false,
     useUnitDP: true,
-    useRTL: false,
+    useRTL: true,
     resourceValueNumber: false,
     boundsOffset: 2,
     whitespaceHorizontalOffset: 4,
@@ -43,17 +43,19 @@ const SETTINGS = {
     chainPackedVerticalOffset: 14
 };
 ```
-You can preview the library with the provided sample.html or sample_flex.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
+You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 
 The Date fields have been modified to demonstrate the Constraint circle and bias capabilities. Constraint chain is also available as a setting although the current Android implementation does not support exact placement. It might be more ideal in some scenarios to disable Constraint chain and use Constraint circle. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate.
 
-<img src="sample.png" alt="chrome android layout - entry form" />
+<img src="demos/form.png" alt="form" />
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and also to use flexbox instead of floats.
 
-<img src="sample_flex1.png" alt="chrome android layout - flexbox" />
+<img src="demos/flexbox_1.png" alt="flexbox" />
 
-<img src="sample_flex2.png" alt="chrome android layout - justify-content" />
+<img src="demos/flexbox_2.png" alt="flexbox - justify-content" />
+
+<img src="demos/layout_weight.png" alt="gridlayout - layout weight" />
 
 ## auto-generated layout xml
 
@@ -73,8 +75,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		android:layout_height="wrap_content"
 		android:layout_width="match_parent"
 		android:paddingBottom="5dp"
-		android:paddingLeft="8dp"
-		android:paddingRight="8dp"
+		android:paddingEnd="8dp"
+		android:paddingStart="8dp"
 		android:paddingTop="5dp"
 		android:text="@string/entry"
 		android:textColor="@color/white"
@@ -87,8 +89,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		android:layout_marginBottom="12dp"
 		android:layout_width="match_parent"
 		android:paddingBottom="10dp"
-		android:paddingLeft="10dp"
-		android:paddingRight="10dp"
+		android:paddingEnd="10dp"
+		android:paddingStart="10dp"
 		android:paddingTop="10dp">
 		<LinearLayout
 			android:id="@+id/linearlayout_2"
@@ -105,7 +107,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:id="@+id/textview_2"
 					android:labelFor="@+id/order"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/order"
@@ -130,7 +132,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_3"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/date_add"
@@ -151,7 +153,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
-						app:layout_constraintLeft_toLeftOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
 						app:layout_constraintTop_toTopOf="parent"
 						style="@style/Spinner_1" />
 					<Spinner
@@ -167,8 +169,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						app:layout_constraintCircle="@+id/month0"
 						app:layout_constraintCircleAngle="129"
 						app:layout_constraintCircleRadius="56dp"
-						app:layout_constraintLeft_toLeftOf="parent"
-						app:layout_constraintRight_toRightOf="parent"
+						app:layout_constraintEnd_toEndOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
 						style="@style/Spinner_1" />
 					<Spinner
 						android:id="@+id/year0"
@@ -182,7 +184,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:paddingBottom="2dp"
 						android:paddingTop="1dp"
 						app:layout_constraintBottom_toBottomOf="parent"
-						app:layout_constraintLeft_toLeftOf="parent"
+						app:layout_constraintStart_toStartOf="parent"
 						style="@style/Spinner_1" />
 				</android.support.constraint.ConstraintLayout>
 			</LinearLayout>
@@ -195,7 +197,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_4"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/time"
@@ -217,7 +219,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:entries="@array/minute_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
@@ -233,7 +235,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_5"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/type"
@@ -260,7 +262,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:id="@+id/textview_6"
 					android:labelFor="@+id/topic0"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/topic_add"
@@ -276,7 +278,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:focusable="true"
 						android:inputType="text"
 						android:layout_height="wrap_content"
-						android:layout_marginRight="5dp"
+						android:layout_marginEnd="5dp"
 						android:layout_width="130dp"
 						android:paddingBottom="1dp"
 						android:paddingTop="1dp"
@@ -287,7 +289,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:entries="@array/prominence0_array"
 						android:focusable="true"
 						android:layout_height="wrap_content"
-						android:layout_marginLeft="4dp"
+						android:layout_marginStart="4dp"
 						android:layout_width="wrap_content"
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
@@ -304,7 +306,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_7"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/series"
@@ -330,7 +332,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_8"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/subset"
@@ -356,7 +358,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_9"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/active"
@@ -383,8 +385,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		android:layout_marginTop="24dp"
 		android:layout_width="match_parent"
 		android:paddingBottom="10dp"
-		android:paddingLeft="10dp"
-		android:paddingRight="10dp"
+		android:paddingEnd="10dp"
+		android:paddingStart="10dp"
 		android:paddingTop="10dp">
 		<LinearLayout
 			android:id="@+id/linearlayout_3"
@@ -400,7 +402,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_10"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/series"
@@ -426,7 +428,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_11"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/subset"
@@ -452,7 +454,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_12"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/entries"
@@ -473,13 +475,13 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:background="@drawable/input_button_1"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
 					android:paddingBottom="1dp"
-					android:paddingLeft="6dp"
-					android:paddingRight="6dp"
+					android:paddingEnd="6dp"
+					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/open"
 					android:textAllCaps="false"
@@ -489,13 +491,13 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:background="@drawable/input_button_1"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
 					android:paddingBottom="1dp"
-					android:paddingLeft="6dp"
-					android:paddingRight="6dp"
+					android:paddingEnd="6dp"
+					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/all"
 					android:textAllCaps="false"
@@ -510,7 +512,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_13"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/mode"
@@ -536,7 +538,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_14"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/style"
@@ -562,7 +564,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_15"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/calendar"
@@ -588,7 +590,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_16"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/version"
@@ -610,7 +612,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:entries="@array/version_update_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
@@ -621,13 +623,13 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:background="@drawable/input_button_1"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
 					android:paddingBottom="1dp"
-					android:paddingLeft="6dp"
-					android:paddingRight="6dp"
+					android:paddingEnd="6dp"
+					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/update"
 					android:textAllCaps="false"
@@ -642,7 +644,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_17"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/branch"
@@ -664,7 +666,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:entries="@array/branch_update_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
@@ -675,13 +677,13 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:background="@drawable/input_button_1"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
 					android:paddingBottom="1dp"
-					android:paddingLeft="6dp"
-					android:paddingRight="6dp"
+					android:paddingEnd="6dp"
+					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/update"
 					android:textAllCaps="false"
@@ -691,13 +693,13 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:background="@drawable/input_button_1"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
 					android:paddingBottom="1dp"
-					android:paddingLeft="6dp"
-					android:paddingRight="6dp"
+					android:paddingEnd="6dp"
+					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/clone"
 					android:textAllCaps="false"
@@ -713,7 +715,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:id="@+id/textview_18"
 					android:labelFor="@+id/customname0"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/custom_add"
@@ -729,7 +731,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:focusable="true"
 						android:inputType="text"
 						android:layout_height="wrap_content"
-						android:layout_marginRight="5dp"
+						android:layout_marginEnd="5dp"
 						android:layout_width="130dp"
 						android:paddingBottom="1dp"
 						android:paddingTop="1dp"
@@ -740,7 +742,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:entries="@array/custommonth0_array"
 						android:focusable="true"
 						android:layout_height="wrap_content"
-						android:layout_marginLeft="4dp"
+						android:layout_marginStart="4dp"
 						android:layout_width="wrap_content"
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
@@ -752,7 +754,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:entries="@array/customday0_array"
 						android:focusable="true"
 						android:layout_height="wrap_content"
-						android:layout_marginLeft="4dp"
+						android:layout_marginStart="4dp"
 						android:layout_width="wrap_content"
 						android:minWidth="37dp"
 						android:paddingBottom="2dp"
@@ -769,7 +771,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<TextView
 					android:id="@+id/textview_19"
 					android:layout_height="wrap_content"
-					android:layout_marginRight="5dp"
+					android:layout_marginEnd="5dp"
 					android:layout_width="100dp"
 					android:paddingTop="3dp"
 					android:text="@string/conclusion"
@@ -788,7 +790,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<LinearLayout
 					android:id="@+id/linearlayout_24"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:orientation="horizontal">
 					<RadioGroup
@@ -801,8 +803,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:id="@+id/c2"
 							android:focusable="true"
 							android:layout_height="wrap_content"
-							android:layout_marginLeft="5dp"
-							android:layout_marginRight="1dp"
+							android:layout_marginEnd="1dp"
+							android:layout_marginStart="5dp"
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
 							android:text="@string/birth"
@@ -811,8 +813,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:id="@+id/c3"
 							android:focusable="true"
 							android:layout_height="wrap_content"
-							android:layout_marginLeft="4dp"
-							android:layout_marginRight="1dp"
+							android:layout_marginEnd="1dp"
+							android:layout_marginStart="4dp"
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
 							android:text="@string/death"
@@ -823,8 +825,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:focusable="true"
 						android:layout_height="wrap_content"
 						android:layout_marginBottom="3dp"
-						android:layout_marginLeft="4dp"
-						android:layout_marginRight="1dp"
+						android:layout_marginEnd="1dp"
+						android:layout_marginStart="4dp"
 						android:layout_marginTop="3dp"
 						android:layout_width="wrap_content"
 						android:text="@string/none"
@@ -835,13 +837,13 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:background="@drawable/input_button_1"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginLeft="4dp"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
 					android:paddingBottom="1dp"
-					android:paddingLeft="6dp"
-					android:paddingRight="6dp"
+					android:paddingEnd="6dp"
+					android:paddingStart="6dp"
 					android:paddingTop="1dp"
 					android:text="@string/update"
 					android:textAllCaps="false"
@@ -1094,4 +1096,4 @@ NOT RECOMMENDED
 	klmno
 </span>
 ```
-You can use the sample.html or sample_flex.html file provided to generate the same layout XML and resources.
+You can use the /demos/*.html files provided to generate the same layout XML and resources.
