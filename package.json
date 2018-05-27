@@ -1,6 +1,6 @@
 {
   "name": "chrome-android-layout",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Converts and optimizes HTML pages into the various standard Android layouts in XML. Resources and drawables are also auto-generated. iOS and Xamarin Forms will be supported as well.",
   "main": "sample.html",
   "repository": {

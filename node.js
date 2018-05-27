@@ -192,15 +192,8 @@ class Node {
                 this.android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
             }
             else {
-                if (this.gridColumnWeight == 1) {
-                    this.gridColumnWeight = (FIXED_ANDROID.includes(this.widgetName) ? 0 : 1);
-                }
-                const layoutWeight = (this.gridColumnWeight != null || this.layoutWeightWidth != null);
                 if (styleMap.width != null) {
                     this.android('layout_width', Utils.convertToPX(styleMap.width), false);
-                    if (layoutWeight) {
-                        this.android((this.gridColumnWeight != null ? 'layout_columnWeight' : 'layout_weight'), 0);
-                    }
                 }
                 if (this.android('layout_width') != '0px') {
                     if (styleMap.minWidth != null) {
@@ -211,44 +204,27 @@ class Node {
                     }
                 }
                 if (this.android('layout_width') == null) {
-                    if (layoutWeight) {
-                        if (this.layoutWeightWidth != null) {
-                            this.android('layout_weight', this.layoutWeightWidth);
-                        }
-                        else if (this.gridColumnWeight != null) {
-                            this.android('layout_columnWeight', this.gridColumnWeight);
-                        }
-                        if (this.layoutWeightWidth == 1 || this.gridColumnWeight == 1) {
-                            this.android('layout_gravity', 'fill_horizontal');
-                            this.android('layout_width', '0px');
-                        }
-                        else {
-                            this.android('layout_width', 'wrap_content', false);
-                        }
+                    if (gridLayout) {
+                        this.android('layout_width', 'wrap_content', false);
                     }
                     else {
-                        if (gridLayout) {
+                        if (FIXED_ANDROID.includes(this.widgetName)) {
                             this.android('layout_width', 'wrap_content', false);
                         }
                         else {
-                            if (FIXED_ANDROID.includes(this.widgetName)) {
-                                this.android('layout_width', 'wrap_content', false);
+                            if (parent.overflow == 0 && width >= parentWidth) {
+                                this.android('layout_width', 'match_parent', false);
                             }
                             else {
-                                if (parent.overflow == 0 && width >= parentWidth) {
-                                    this.android('layout_width', 'match_parent', false);
-                                }
-                                else {
-                                    const display = (this.style != null ? this.style.display : '');
-                                    switch (display) {
-                                        case 'line-item':
-                                        case 'block':
-                                        case 'inherit':
-                                            this.android('layout_width', 'match_parent', false);
-                                            break;
-                                        default:
-                                            this.android('layout_width', 'wrap_content', false);
-                                    }
+                                const display = (this.style != null ? this.style.display : '');
+                                switch (display) {
+                                    case 'line-item':
+                                    case 'block':
+                                    case 'inherit':
+                                        this.android('layout_width', 'match_parent', false);
+                                        break;
+                                    default:
+                                        this.android('layout_width', 'wrap_content', false);
                                 }
                             }
                         }
@@ -256,9 +232,6 @@ class Node {
                 }
                 if (styleMap.height != null) {
                     this.android('layout_height', Utils.convertToPX(styleMap.height), false);
-                    if (this.layoutWeightHeight != null) {
-                        this.android('layout_weight', 0);
-                    }
                 }
                 if (this.android('layout_height') != '0px') {
                     if (styleMap.minHeight != null) {
@@ -269,34 +242,22 @@ class Node {
                     }
                 }
                 if (this.android('layout_height') == null) {
-                    if (this.layoutWeightHeight != null) {
-                        this.android('layout_weight', this.layoutWeightHeight);
-                        if (this.layoutWeightHeight == 1) {
-                            this.android('layout_gravity', 'fill_vertical');
-                            this.android('layout_height', '0px');
-                        }
-                        else {
+                    switch (this.widgetName) {
+                        case WIDGET_ANDROID.TEXT:
+                        case WIDGET_ANDROID.EDIT:
+                        case WIDGET_ANDROID.SPINNER:
+                        case WIDGET_ANDROID.CHECKBOX:
+                        case WIDGET_ANDROID.RADIO:
+                        case WIDGET_ANDROID.BUTTON:
                             this.android('layout_height', 'wrap_content', false);
-                        }
-                    }
-                    else {
-                        switch (this.widgetName) {
-                            case WIDGET_ANDROID.TEXT:
-                            case WIDGET_ANDROID.EDIT:
-                            case WIDGET_ANDROID.SPINNER:
-                            case WIDGET_ANDROID.CHECKBOX:
-                            case WIDGET_ANDROID.RADIO:
-                            case WIDGET_ANDROID.BUTTON:
+                            break;
+                        default:
+                            if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
+                                this.android('layout_height', 'match_parent', false);
+                            }
+                            else {
                                 this.android('layout_height', 'wrap_content', false);
-                                break;
-                            default:
-                                if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
-                                    this.android('layout_height', 'match_parent', false);
-                                }
-                                else {
-                                    this.android('layout_height', 'wrap_content', false);
-                                }
-                        }
+                            }
                     }
                 }
             }

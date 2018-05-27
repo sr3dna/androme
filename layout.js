@@ -161,12 +161,15 @@ function addResourceString(node, value) {
                     return { text: name };
                 }
             }
-            name = name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-            if (number && Utils.isNumber(name)) {
+            name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
+            if (number) {
                 name = `number_${name}`;
             }
             else if (/^[0-9]/.test(value)) {
                 name = `__${name}`;
+            }
+            else if (!/[a-zA-Z0-9]+/.test(name) && node != null) {
+                name = node.androidId;
             }
             name = insertResourceAsset(RESOURCE['string'], name, value);
         }
@@ -1155,7 +1158,7 @@ function insertGridSpace(node, depth) {
                 marginLeft += node.marginLeft;
                 marginLeft = Utils.convertToPX(marginLeft);
                 node.css('marginLeft', marginLeft);
-                node.android(getRTL('marginLeft'), marginLeft);
+                node.android(getRTL('layout_marginLeft'), marginLeft);
             }
         }
         if (node.gridRowEnd) {
@@ -1168,7 +1171,7 @@ function insertGridSpace(node, depth) {
                 marginRight += node.marginRight;
                 marginRight = Utils.convertToPX(marginRight);
                 node.css('marginRight', marginRight);
-                node.android(getRTL('marginRight'), marginRight);
+                node.android(getRTL('layout_marginRight'), marginRight);
             }
         }
     }
@@ -1651,57 +1654,27 @@ function mergeMarginPadding() {
 
 function setLayoutWeight() {
     for (const node of NODE_CACHE) {
-        if (node.linearRows.length > 0) {
-            const columnLeft = [];
-            const columnRight = [];
-            const columnWeight = [];
-            const columnOuter = [];
-            const borderSpacing = (node.style.borderSpacing != null ? Utils.parseInt(node.style.borderSpacing.split(' ')[0]) : 0);
-            for (let i = 0; i < node.linearRows.length; i++) {
-                const row = node.linearRows[i];
-                const children = row.renderChildren.filter(item => item.visible);
-                for (let j = 0; j < children.length; j++) {
-                    const column = children[j];
-                    if (columnLeft[j] == null) {
-                        columnLeft[j] = new Array(node.linearRows.length).fill(null);
-                        columnRight[j] = new Array(node.linearRows.length).fill(null);
+        const rows = node.linearRows;
+        if (rows.length > 1) {
+            const columnLength = rows[0].renderChildren.length;
+            if (rows.reduce((a, b) => (a && a == b.renderChildren.length ? a: 0), columnLength) > 0) {
+                const horizontal = !node.isHorizontal();
+                const columnDimension = new Array(columnLength).fill(Number.MIN_VALUE);
+                rows.forEach(row => {
+                    for (let i = 0; i < row.renderChildren.length; i++) {
+                        columnDimension[i] = Math.max(row.renderChildren[i].linear[(horizontal ? 'width' : 'height')], columnDimension[i]);
                     }
-                    if (row.isHorizontal()) {
-                        columnLeft[j][i] = column.bounds.left - (Utils.parseInt(column.android(getRTL('layout_marginLeft')) + borderSpacing));
-                        columnRight[j][i] = (column.label != null ? column.label.linear.right : column.bounds.right + (Utils.parseInt(column.android(getRTL('layout_marginRight')) + borderSpacing)));
-                        columnOuter[i] = (row.isView(WIDGET_ANDROID.RADIO_GROUP) ? row.box.right : column.parent.box.right);
+                });
+                const total = columnDimension.reduce((a, b) => a + b);
+                const percent = columnDimension.map(value => Math.floor((value * 100) / total));
+                percent[percent.length - 1] += 100 - percent.reduce((a, b) => a + b);
+                rows.forEach(row => {
+                    for (let i = 0; i < row.renderChildren.length; i++) {
+                        const column = row.renderChildren[i];
+                        column.android(`layout_${(horizontal ? 'width' : 'height')}`, '0px');
+                        column.android('layout_weight', (percent[i] / 100).toFixed(2));
                     }
-                    else {
-                        columnLeft[j][i] = column.bounds.top - (Utils.parseInt(column.android('layout_marginTop') + borderSpacing));
-                        columnRight[j][i] = column.bounds.bottom + (Utils.parseInt(column.android('layout_marginBottom') + borderSpacing));
-                        columnOuter[i] = column.parent.box.bottom;
-                    }
-                }
-            }
-            columnLeft.push(columnOuter);
-            for (let i = 1; i < columnLeft.length; i++) {
-                columnWeight[i - 1] = new Array(columnLeft[i - 1].length).fill(null);
-                for (let j = 0; j < columnLeft[i].length; j++) {
-                    const left = columnLeft[i][j];
-                    const right = columnRight[i - 1][j];
-                    if (left != null && right != null) {
-                        columnWeight[i - 1][j] = left - right;
-                    }
-                }
-            }
-            for (let i = 0; i < node.linearRows.length; i++) {
-                const row = node.linearRows[i];
-                const children = row.renderChildren.filter(item => item.visible);
-                const weight = [];
-                const offset = (row.isHorizontal() ? 'whitespaceHorizontalOffset' : 'whitespaceVerticalOffset');
-                for (let j = 0; j < children.length; j++) {
-                     weight.push(((columnWeight[j][i] != null && columnWeight[j][i] <= SETTINGS[offset]) || FIXED_ANDROID.includes(children[j].widgetName) ? 0 : 1));
-                }
-                if (weight.reduce((a, b) => Math.max(a, b)) == 1) {
-                    for (let j = 0; j < children.length; j++) {
-                        children[j][`layoutWeight${(row.isHorizontal() ? 'Width' : 'Height')}`] = weight[j];
-                    }
-                }
+                });
             }
         }
     }
@@ -1901,13 +1874,11 @@ function parseDocument() {
                                 const nextMapX = mapX[nodeY.depth + 2];
                                 const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
                                 if (nextCoordsX.length > 1) {
-                                    const columnLeft = [];
+                                    const columnEnd = [];
                                     const columnRight = [];
                                     let columns = [];
-                                    let columnSymmetry = [];
                                     for (let l = 0; l < nextCoordsX.length; l++) {
                                         const nextAxisX = nextMapX[nextCoordsX[l]].sort((a, b) => (a.bounds.top > b.bounds.top ? 1 : -1));
-                                        columnLeft[l] = parseInt(nextCoordsX[l]);
                                         columnRight[l] = (l == 0 ? Number.MIN_VALUE : columnRight[l - 1]);
                                         for (let m = 0; m < nextAxisX.length; m++) {
                                             const nextX = nextAxisX[m];
@@ -1917,19 +1888,33 @@ function parseDocument() {
                                                     if (columns[l] == null) {
                                                         columns[l] = [];
                                                     }
-                                                    if (columnSymmetry[l] == null) {
-                                                        columnSymmetry[l] = [];
-                                                    }
                                                     columns[l].push(nextX);
-                                                    columnSymmetry[l].push(right);
                                                 }
-                                                columnLeft[l] = Math.max(left, columnLeft[l]);
                                                 columnRight[l] = Math.max(right, columnRight[l]);
                                             }
                                         }
                                     }
+                                    for (let l = 0, m = -1; l < columnRight.length; l++) {
+                                        if (m == -1 && columns[l] == null) {
+                                            m = l - 1;
+                                        }
+                                        else if (columns[l] == null) {
+                                            if (m != -1 && l == columnRight.length - 1) {
+                                                columnRight[m] = columnRight[l];
+                                            }
+                                            continue;
+                                        }
+                                        else if (m != -1) {
+                                            columnRight[m] = columnRight[l - 1];
+                                            m = -1;
+                                        }
+                                    }
+                                    for (let l = 0; l < columns.length; l++) {
+                                        if (columns[l] != null) {
+                                            columnEnd.push(columnRight[l]);
+                                        }
+                                    }
                                     columns = columns.filter(nodes => nodes);
-                                    columnSymmetry = columnSymmetry.filter(item => item).map(item => (item.length == 1 || new Set(item).size == 1));
                                     const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                                     for (let l = 0; l < columnLength; l++) {
                                         let y = null;
@@ -1956,20 +1941,14 @@ function parseDocument() {
                                         }
                                     }
                                     if (columns.length > 1) {
-                                        const columnStart = []
-                                        const columnEnd = [];
                                         const rowStart = [];
                                         const columnWeightExclude = {};
                                         xml += writeGridLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, columns.length);
                                         for (let l = 0, count = 0; l < columns.length; l++) {
-                                            columnStart[l] = Number.MAX_VALUE;
-                                            columnEnd[l] = Number.MIN_VALUE;
                                             let spacer = 0;
                                             for (let m = 0; m < columns[l].length; m++) {
                                                 const nodeX = columns[l][m];
                                                 if (!nodeX.spacer) {
-                                                    columnStart[l] = Math.min(nodeX.bounds.left, columnStart[l]);
-                                                    columnEnd[l] = Math.max(nodeX.bounds.right, columnEnd[l]);
                                                     nodeX.depth = nodeY.depth + 1;
                                                     if (nodeX.children.length > 0) {
                                                         const offsetDepth = nodeX.original.depth - nodeX.depth;
@@ -2009,9 +1988,6 @@ function parseDocument() {
                                                     nodeX.gridRowEnd = (columnSpan + l == columns.length);
                                                     nodeX.gridFirst = (count++ == 0);
                                                     nodeX.gridLast = (nodeX.gridRowEnd && m == columns[l].length - 1);
-                                                    if (SETTINGS.useLayoutWeight) {
-                                                        nodeX.gridColumnWeight = (columnSymmetry[l] && nodeY.tagName != 'TBODY' ? 0 : 1);
-                                                    }
                                                     if (rowStart[m] == null) {
                                                         nodeX.gridRowStart = true;
                                                         rowStart[m] = nodeX;
@@ -2023,8 +1999,6 @@ function parseDocument() {
                                                 }
                                             }
                                         }
-                                        columnEnd[columnEnd.length - 1] = columnRight[columnRight.length - 1];
-                                        nodeY.gridColumnStart = columnStart;
                                         nodeY.gridColumnEnd = columnEnd;
                                         nodeY.gridColumnCount = columns.length;
                                     }
@@ -2055,7 +2029,8 @@ function parseDocument() {
                         if (nodeY.parent.isView(WIDGET_ANDROID.GRID)) {
                             const original = nodeY.original.parent;
                             if (original != null) {
-                                const siblings = original.children.filter(item => !item.renderParent && item.depth == original.depth + 1 && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= nodeY.parent.gridColumnEnd[nodeY.gridIndex]).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
+                                const columnEnd = nodeY.parent.gridColumnEnd[nodeY.gridIndex + (nodeY.android('layout_columnSpan') || 1) - 1];
+                                const siblings = original.children.filter(item => !item.renderParent && item.depth == original.depth + 1 && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd).sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
                                 if (siblings.length > 0) {
                                     siblings.unshift(nodeY);
                                     const [linearX, linearY] = Node.isLinearXY(siblings);
