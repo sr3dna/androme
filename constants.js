@@ -17,8 +17,9 @@ const WIDGET_ANDROID = {
     VIEW: 'View',
     SPACE: 'Space'
 };
+const FIXED_ANDROID = [WIDGET_ANDROID.EDIT, WIDGET_ANDROID.SPINNER, WIDGET_ANDROID.CHECKBOX, WIDGET_ANDROID.RADIO, WIDGET_ANDROID.BUTTON];
 
-const MAPPING_ANDROID = {
+const MAPPING_CHROME = {
     'TEXT': 'TextView',
     'LABEL': 'TextView',
     'P': 'TextView',
@@ -36,16 +37,8 @@ const MAPPING_ANDROID = {
     'BUTTON': 'Button',
     'TEXTAREA': 'EditText'
 };
-
-const INHERIT_ANDROID = {
-    'TextView': {
-        'fontFamily': 'android:fontFamily="{0}"',
-        'fontSize': 'android:textSize="{0}"',
-        'fontWeight': 'android:fontWeight="{0}"',
-        'fontStyle': 'android:textStyle="{0}"',
-        'color': 'android:textColor="{0}"'
-    }
-}
+const BLOCK_CHROME = ['DIV', 'LI', 'TD', 'SECTION', 'SPAN'];
+const INLINE_CHROME = ['STRONG', 'B', 'EM', 'CITE', 'DFN', 'I', 'BIG', 'SMALL', 'FONT', 'BLOCKQUOTE', 'TT', 'A', 'U', 'SUP', 'SUB', 'STRIKE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DEL', 'TEXT'];
 
 const PROPERTY_ANDROID = {
     'backgroundStyle': {
@@ -172,11 +165,14 @@ const ACTION_ANDROID = {
     }
 };
 
-const STRING_ANDROID = {
-    XML_DECLARATION: '<?xml version="1.0" encoding="utf-8"?>',
-    XMLNS_ANDROID: 'xmlns:android="http://schemas.android.com/apk/res/android"',
-    XMLNS_APP: 'xmlns:app="http://schemas.android.com/apk/res-auto"',
-    XMLNS_TOOLS: 'xmlns:tools="http://schemas.android.com/tools"'
+const INHERIT_ANDROID = {
+    'TextView': {
+        'fontFamily': 'android:fontFamily="{0}"',
+        'fontSize': 'android:textSize="{0}"',
+        'fontWeight': 'android:fontWeight="{0}"',
+        'fontStyle': 'android:textStyle="{0}"',
+        'color': 'android:textColor="{0}"'
+    }
 };
 
 const DENSITY_ANDROID = {
@@ -188,11 +184,6 @@ const DENSITY_ANDROID = {
     XXXHDPI: 640
 };
 
-const BLOCK_CHROME = ['DIV', 'LI', 'TD', 'SECTION', 'SPAN'];
-const INLINE_CHROME = ['STRONG', 'B', 'EM', 'CITE', 'DFN', 'I', 'BIG', 'SMALL', 'FONT', 'BLOCKQUOTE', 'TT', 'A', 'U', 'SUP', 'SUB', 'STRIKE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'DEL', 'TEXT'];
-const FIXED_ANDROID = [WIDGET_ANDROID.EDIT, WIDGET_ANDROID.SPINNER, WIDGET_ANDROID.CHECKBOX, WIDGET_ANDROID.RADIO, WIDGET_ANDROID.BUTTON];
-
-const API_ANDROID = [];
 const BUILD_ANDROID = {
     OREO_1: 27,
     OREO: 26,
@@ -212,6 +203,8 @@ const BUILD_ANDROID = {
     HONEYCOMB_1: 12,
     HONEYCOMB: 11
 };
+
+const API_ANDROID = [];
 API_ANDROID[BUILD_ANDROID.OREO] = {
     android: ['fontWeight'],
     customizations: {}
@@ -229,4 +222,14 @@ API_ANDROID[BUILD_ANDROID.LOLLIPOP] = {
             }
         }
     }
+};
+
+const STRING_ANDROID = {
+    XML_DECLARATION: '<?xml version="1.0" encoding="utf-8"?>',
+};
+
+const XMLNS_ANDROID = {
+    ANDROID: 'xmlns:android="http://schemas.android.com/apk/res/android"',
+    APP: 'xmlns:app="http://schemas.android.com/apk/res-auto"',
+    TOOLS: 'xmlns:tools="http://schemas.android.com/tools"'
 };

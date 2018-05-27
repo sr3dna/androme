@@ -667,29 +667,26 @@ function getEnclosingTag(depth, tagName, id, content, space = ['', ''], preXml =
     return xml;
 }
 
-function inlineAttributes(output) {
+function insetAttributes(output) {
+    const namespaces = [];
     for (const node of NODE_CACHE) {
         node.setAndroidDimensions();
-        const result = node.combine();
-        if (result.length > 0) {
-            for (let i = 0; i < result.length; i++) {
-                if (result[i].startsWith('android:id=')) {
-                    result.unshift(...result.splice(i, 1));
+        const result = node.combine(true);
+        const attributes = result[0];
+        namespaces.push(...result[1]);
+        if (attributes.length > 0) {
+            for (let i = 0; i < attributes.length; i++) {
+                if (attributes[i].startsWith('android:id=')) {
+                    attributes.unshift(...attributes.splice(i, 1));
                     break;
                 }
             }
             const indent = Utils.padLeft(node.renderDepth + 1);
-            if (node.renderDepth == 0) {
-                if (SETTINGS.useConstraintLayout) {
-                    result.unshift(STRING_ANDROID.XMLNS_APP);
-                }
-                result.unshift(STRING_ANDROID.XMLNS_ANDROID);
-            }
-            const xml = result.map(value => `\n${indent + value}`).join('').replace('{id}', node.androidId);
+            let xml = (node.renderDepth == 0 ? `{@0}` : '') + attributes.map(value => `\n${indent + value}`).join('');
             output = output.replace(`{@${node.id}}`, xml);
         }
     }
-    return output;
+    return output.replace('{@0}', Array.from(new Set(namespaces)).sort().map(value => `\n\t${value}`).join(''));
 }
 
 function setNodePosition(current, name, adjacent) {
@@ -1701,7 +1698,7 @@ function setNodeCache() {
     const elements = document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *'));
     for (const i in elements) {
         const element = elements[i];
-        if (INLINE_CHROME.includes(element.tagName) && (MAPPING_ANDROID[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
+        if (INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
             continue;
         }
         if (Utils.isVisible(element)) {
@@ -1942,7 +1939,6 @@ function parseDocument() {
                                     }
                                     if (columns.length > 1) {
                                         const rowStart = [];
-                                        const columnWeightExclude = {};
                                         xml += writeGridLayout(nodeY, nodeY.depth + nodeY.depthIndent, nodeY.parent, columns.length);
                                         for (let l = 0, count = 0; l < columns.length; l++) {
                                             let spacer = 0;
@@ -2094,7 +2090,7 @@ function parseDocument() {
         }
         setAccessibility();
         setConstraints();
-        output = inlineAttributes(output);
+        output = insetAttributes(output);
     }
     else {
         output = output.replace(/{@[0-9]+}/g, '');

@@ -39,8 +39,8 @@ class Node {
 
         this._android = {};
         this._app = {};
-        this._none = {};
-        this._namespaces = new Set(['android', 'app', 'none']);
+        this.__ = {};
+        this._namespaces = new Set(['android', 'app', '_']);
 
         Object.assign(this, options);
 
@@ -50,9 +50,9 @@ class Node {
     }
 
     add(obj, attr, value, overwrite = true) {
-        const name = `_${obj || 'none'}`;
+        const name = `_${obj || '_'}`;
         if (this[name] == null) {
-            this._namespaces.add(name);
+            this._namespaces.add(obj);
             this[name] = {};
         }
         if (Utils.hasValue(value)) {
@@ -75,7 +75,7 @@ class Node {
     attr(value, overwrite = true) {
         const match = value.match(/^(?:([a-z]+):)?([a-zA-Z_]+)="((?:@+?[a-z]+\/)?.+)"$/);
         if (match != null) {
-            this.add(match[1] || 'none', match[2], match[3], overwrite);
+            this.add(match[1] || '_', match[2], match[3], overwrite);
         }
     }
     android(attr, value, overwrite = true) {
@@ -94,15 +94,23 @@ class Node {
             return this.add('app', attr, value, overwrite);
         }
     }
-    combine() {
+    combine(xmlns) {
         const result = [];
+        const namespaces = {};
         this._namespaces.forEach(value => {
             const obj = this[`_${value}`];
             for (const attr in obj) {
-                result.push(`${(value != 'none' ? `${value}:` : '')}${attr}="${obj[attr]}"`);
+                if (value != '_') {
+                    result.push(`${value}:${attr}="${obj[attr]}"`);
+                    namespaces[XMLNS_ANDROID[value.toUpperCase()]] = true;
+                }
+                else {
+                    result.push(`${attr}="${obj[attr]}"`);
+                }
             }
         });
-        return result.sort();
+        result.sort();
+        return (xmlns ? [result, Object.keys(namespaces)] : result);
     }
     supported(obj, attr) {
         for (let i = this.api + 1; i < API_ANDROID.length; i++) {
@@ -517,7 +525,7 @@ class Node {
             return this.androidWidgetName;
         }
         else {
-            let widgetName = MAPPING_ANDROID[this.tagName];
+            let widgetName = MAPPING_CHROME[this.tagName];
             if (typeof widgetName == 'object') {
                 widgetName = widgetName[this.element.type];
             }
