@@ -25,13 +25,13 @@ These settings are available in layout.js to customize your desired XML structur
 
 ```javascript
 const SETTINGS = {
-    targetAPI: 21,
+    targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
     showAttributes: true,
     useConstraintLayout: true,
     useConstraintChain: true,
-    useGridLayout: false,
-    useLayoutWeight: false,
+    useGridLayout: true,
+    useLayoutWeight: true,
     useUnitDP: true,
     useRTL: true,
     resourceValueNumber: false,
@@ -74,10 +74,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		android:background="@color/slate_gray"
 		android:layout_height="wrap_content"
 		android:layout_width="match_parent"
-		android:paddingBottom="5dp"
-		android:paddingEnd="8dp"
-		android:paddingStart="8dp"
-		android:paddingTop="5dp"
+		android:paddingHorizontal="8dp"
+		android:paddingVertical="5dp"
 		android:text="@string/entry"
 		android:textColor="@color/white"
 		android:textSize="14sp"
@@ -88,120 +86,111 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		android:layout_height="wrap_content"
 		android:layout_marginBottom="12dp"
 		android:layout_width="match_parent"
-		android:paddingBottom="10dp"
-		android:paddingEnd="10dp"
-		android:paddingStart="10dp"
-		android:paddingTop="10dp">
-		<LinearLayout
-			android:id="@+id/linearlayout_2"
+		android:padding="10dp">
+		<GridLayout
+			android:id="@+id/gridlayout_1"
+			android:columnCount="2"
 			android:layout_height="wrap_content"
-			android:layout_width="match_parent"
-			android:orientation="vertical">
-			<LinearLayout
-				android:id="@+id/linearlayout_4"
+			android:layout_width="match_parent">
+			<TextView
+				android:id="@+id/textview_2"
+				android:labelFor="@+id/order"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_2"
-					android:labelFor="@+id/order"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/order"
-					style="@style/TextView_1" />
-				<EditText
-					android:id="@+id/order"
-					android:background="@drawable/input_order"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/order"
+				style="@style/TextView_1" />
+			<EditText
+				android:id="@+id/order"
+				android:background="@drawable/input_order"
+				android:focusable="true"
+				android:inputType="text"
+				android:layout_height="wrap_content"
+				android:layout_width="40dp"
+				android:paddingVertical="1dp"
+				style="@style/EditText_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_3"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/date_add"
+				style="@style/TextView_1" />
+			<android.support.constraint.ConstraintLayout
+				android:id="@+id/constraintlayout_1"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:minHeight="95dp"
+				android:minWidth="97dp">
+				<Spinner
+					android:id="@+id/month0"
+					android:background="@drawable/select_hour"
+					android:entries="@array/month0_array"
 					android:focusable="true"
-					android:inputType="text"
-					android:layout_height="wrap_content"
-					android:layout_width="40dp"
-					android:paddingBottom="1dp"
-					android:paddingTop="1dp"
-					style="@style/EditText_1" />
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_5"
-				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_3"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/date_add"
-					style="@style/TextView_1" />
-				<android.support.constraint.ConstraintLayout
-					android:id="@+id/constraintlayout_1"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:minHeight="95dp"
-					android:minWidth="97dp">
-					<Spinner
-						android:id="@+id/month0"
-						android:background="@drawable/select_hour"
-						android:entries="@array/month0_array"
-						android:focusable="true"
-						android:layout_height="wrap_content"
-						android:layout_width="wrap_content"
-						android:minWidth="37dp"
-						android:paddingBottom="2dp"
-						android:paddingTop="1dp"
-						app:layout_constraintStart_toStartOf="parent"
-						app:layout_constraintTop_toTopOf="parent"
-						style="@style/Spinner_1" />
-					<Spinner
-						android:id="@+id/day0"
-						android:background="@drawable/select_hour"
-						android:entries="@array/day0_array"
-						android:focusable="true"
-						android:layout_height="wrap_content"
-						android:layout_width="wrap_content"
-						android:minWidth="37dp"
-						android:paddingBottom="2dp"
-						android:paddingTop="1dp"
-						app:layout_constraintCircle="@+id/month0"
-						app:layout_constraintCircleAngle="129"
-						app:layout_constraintCircleRadius="56dp"
-						app:layout_constraintEnd_toEndOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						style="@style/Spinner_1" />
-					<Spinner
-						android:id="@+id/year0"
-						android:background="@drawable/select_hour"
-						android:entries="@array/year0_array"
-						android:focusable="true"
-						android:layout_height="wrap_content"
-						android:layout_marginTop="4dp"
-						android:layout_width="wrap_content"
-						android:minWidth="37dp"
-						android:paddingBottom="2dp"
-						android:paddingTop="1dp"
-						app:layout_constraintBottom_toBottomOf="parent"
-						app:layout_constraintStart_toStartOf="parent"
-						style="@style/Spinner_1" />
-				</android.support.constraint.ConstraintLayout>
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_6"
-				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_4"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toTopOf="parent"
+					style="@style/Spinner_1" />
+				<Spinner
+					android:id="@+id/day0"
+					android:background="@drawable/select_hour"
+					android:entries="@array/day0_array"
+					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/time"
-					style="@style/TextView_1" />
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintCircle="@+id/month0"
+					app:layout_constraintCircleAngle="129"
+					app:layout_constraintCircleRadius="56dp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					style="@style/Spinner_1" />
+				<Spinner
+					android:id="@+id/year0"
+					android:background="@drawable/select_hour"
+					android:entries="@array/year0_array"
+					android:focusable="true"
+					android:layout_height="wrap_content"
+					android:layout_marginTop="4dp"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintBottom_toBottomOf="parent"
+					app:layout_constraintStart_toStartOf="parent"
+					style="@style/Spinner_1" />
+			</android.support.constraint.ConstraintLayout>
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_4"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/time"
+				style="@style/TextView_1" />
+			<LinearLayout
+				android:id="@+id/linearlayout_2"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:orientation="horizontal">
 				<Spinner
 					android:id="@+id/hour"
 					android:background="@drawable/select_hour"
@@ -226,156 +215,150 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingTop="1dp"
 					style="@style/Spinner_1" />
 			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_7"
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_5"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/type"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/typeofentry"
+				android:background="@drawable/select_hour"
+				android:entries="@array/typeofentry_array"
+				android:focusable="true"
+				android:layout_height="wrap_content"
+				android:layout_width="159dp"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_6"
+				android:labelFor="@+id/topic0"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/topic_add"
+				style="@style/TextView_1" />
+			<LinearLayout
+				android:id="@+id/linearlayout_3"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
 				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_5"
+				<EditText
+					android:id="@+id/topic0"
+					android:background="@drawable/input_order"
+					android:focusable="true"
+					android:inputType="text"
 					android:layout_height="wrap_content"
 					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/type"
-					style="@style/TextView_1" />
+					android:layout_width="130dp"
+					android:paddingVertical="1dp"
+					style="@style/EditText_1" />
 				<Spinner
-					android:id="@+id/typeofentry"
+					android:id="@+id/prominence0"
 					android:background="@drawable/select_hour"
-					android:entries="@array/typeofentry_array"
+					android:entries="@array/prominence0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_width="159dp"
-					android:minWidth="37dp"
-					android:paddingBottom="2dp"
-					android:paddingTop="1dp"
-					style="@style/Spinner_1" />
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_8"
-				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_6"
-					android:labelFor="@+id/topic0"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/topic_add"
-					style="@style/TextView_1" />
-				<LinearLayout
-					android:id="@+id/linearlayout_22"
-					android:layout_height="match_parent"
-					android:layout_width="match_parent"
-					android:orientation="horizontal">
-					<EditText
-						android:id="@+id/topic0"
-						android:background="@drawable/input_order"
-						android:focusable="true"
-						android:inputType="text"
-						android:layout_height="wrap_content"
-						android:layout_marginEnd="5dp"
-						android:layout_width="130dp"
-						android:paddingBottom="1dp"
-						android:paddingTop="1dp"
-						style="@style/EditText_1" />
-					<Spinner
-						android:id="@+id/prominence0"
-						android:background="@drawable/select_hour"
-						android:entries="@array/prominence0_array"
-						android:focusable="true"
-						android:layout_height="wrap_content"
-						android:layout_marginStart="4dp"
-						android:layout_width="wrap_content"
-						android:minWidth="37dp"
-						android:paddingBottom="2dp"
-						android:paddingTop="1dp"
-						style="@style/Spinner_1" />
-				</LinearLayout>
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_9"
-				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_7"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/series"
-					style="@style/TextView_1" />
-				<Spinner
-					android:id="@+id/series"
-					android:background="@drawable/select_hour"
-					android:entries="@array/series_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="203dp"
-					android:minWidth="37dp"
-					android:paddingBottom="2dp"
-					android:paddingTop="1dp"
-					style="@style/Spinner_1" />
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_10"
-				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_8"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/subset"
-					style="@style/TextView_1" />
-				<Spinner
-					android:id="@+id/subset"
-					android:background="@drawable/select_hour"
-					android:entries="@array/subset_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Spinner_1" />
 			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_11"
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_7"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_9"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/active"
-					style="@style/TextView_1" />
-				<Spinner
-					android:id="@+id/entryactive"
-					android:background="@drawable/select_hour"
-					android:entries="@array/entryactive_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:minWidth="37dp"
-					android:paddingBottom="2dp"
-					android:paddingTop="1dp"
-					style="@style/Spinner_1" />
-			</LinearLayout>
-		</LinearLayout>
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/series"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/series"
+				android:background="@drawable/select_hour"
+				android:entries="@array/series_array"
+				android:focusable="true"
+				android:layout_height="wrap_content"
+				android:layout_width="203dp"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_8"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/subset"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/subset"
+				android:background="@drawable/select_hour"
+				android:entries="@array/subset_array"
+				android:focusable="true"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_9"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/active"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/entryactive"
+				android:background="@drawable/select_hour"
+				android:entries="@array/entryactive_array"
+				android:focusable="true"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+		</GridLayout>
 	</FrameLayout>
 	<FrameLayout
 		android:id="@+id/itemofentry"
@@ -384,81 +367,73 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		android:layout_marginBottom="12dp"
 		android:layout_marginTop="24dp"
 		android:layout_width="match_parent"
-		android:paddingBottom="10dp"
-		android:paddingEnd="10dp"
-		android:paddingStart="10dp"
-		android:paddingTop="10dp">
-		<LinearLayout
-			android:id="@+id/linearlayout_3"
+		android:padding="10dp">
+		<GridLayout
+			android:id="@+id/gridlayout_2"
+			android:columnCount="2"
 			android:layout_height="wrap_content"
-			android:layout_width="match_parent"
-			android:orientation="vertical">
-			<LinearLayout
-				android:id="@+id/linearlayout_12"
+			android:layout_width="match_parent">
+			<TextView
+				android:id="@+id/textview_10"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_10"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/series"
-					style="@style/TextView_1" />
-				<Spinner
-					android:id="@+id/series_1"
-					android:background="@drawable/select_hour"
-					android:entries="@array/series_1_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="203dp"
-					android:minWidth="37dp"
-					android:paddingBottom="2dp"
-					android:paddingTop="1dp"
-					style="@style/Spinner_1" />
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_13"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/series"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/series_1"
+				android:background="@drawable/select_hour"
+				android:entries="@array/series_1_array"
+				android:focusable="true"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_11"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/subset"
-					style="@style/TextView_1" />
-				<Spinner
-					android:id="@+id/subset_1"
-					android:background="@drawable/select_hour"
-					android:entries="@array/subset_1_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:minWidth="37dp"
-					android:paddingBottom="2dp"
-					android:paddingTop="1dp"
-					style="@style/Spinner_1" />
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_14"
+				android:layout_width="203dp"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_11"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/subset"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/subset_1"
+				android:background="@drawable/select_hour"
+				android:entries="@array/subset_1_array"
+				android:focusable="true"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_12"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/entries"
+				style="@style/TextView_1" />
+			<LinearLayout
+				android:id="@+id/linearlayout_4"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
 				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_12"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/entries"
-					style="@style/TextView_1" />
 				<Spinner
 					android:id="@+id/entry_1"
 					android:background="@drawable/select_hour"
@@ -479,10 +454,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
-					android:paddingBottom="1dp"
-					android:paddingEnd="6dp"
-					android:paddingStart="6dp"
-					android:paddingTop="1dp"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="1dp"
 					android:text="@string/open"
 					android:textAllCaps="false"
 					style="@style/Button_3" />
@@ -495,106 +468,102 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
-					android:paddingBottom="1dp"
-					android:paddingEnd="6dp"
-					android:paddingStart="6dp"
-					android:paddingTop="1dp"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="1dp"
 					android:text="@string/all"
 					android:textAllCaps="false"
 					style="@style/Button_3" />
 			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_15"
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_13"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_13"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/mode"
-					style="@style/TextView_1" />
-				<Spinner
-					android:id="@+id/mode"
-					android:background="@drawable/select_hour"
-					android:entries="@array/mode_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:minWidth="37dp"
-					android:paddingBottom="2dp"
-					android:paddingTop="1dp"
-					style="@style/Spinner_1" />
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_16"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/mode"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/mode"
+				android:background="@drawable/select_hour"
+				android:entries="@array/mode_array"
+				android:focusable="true"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_14"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/style"
-					style="@style/TextView_1" />
-				<Spinner
-					android:id="@+id/style1"
-					android:background="@drawable/select_hour"
-					android:entries="@array/style1_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:minWidth="37dp"
-					android:paddingBottom="2dp"
-					android:paddingTop="1dp"
-					style="@style/Spinner_1" />
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_17"
+				android:layout_width="wrap_content"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_14"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
-				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_15"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/calendar"
-					style="@style/TextView_1" />
-				<Spinner
-					android:id="@+id/calendar"
-					android:background="@drawable/select_hour"
-					android:entries="@array/calendar_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:minWidth="37dp"
-					android:paddingBottom="2dp"
-					android:paddingTop="1dp"
-					style="@style/Spinner_1" />
-			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_18"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/style"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/style1"
+				android:background="@drawable/select_hour"
+				android:entries="@array/style1_array"
+				android:focusable="true"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
+				android:layout_width="wrap_content"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_15"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/calendar"
+				style="@style/TextView_1" />
+			<Spinner
+				android:id="@+id/calendar"
+				android:background="@drawable/select_hour"
+				android:entries="@array/calendar_array"
+				android:focusable="true"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:minWidth="37dp"
+				android:paddingBottom="2dp"
+				android:paddingTop="1dp"
+				style="@style/Spinner_1" />
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_16"
+				android:layout_height="wrap_content"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/version"
+				style="@style/TextView_1" />
+			<LinearLayout
+				android:id="@+id/linearlayout_5"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
 				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_16"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/version"
-					style="@style/TextView_1" />
 				<Spinner
 					android:id="@+id/version"
 					android:background="@drawable/select_hour"
@@ -627,28 +596,30 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
-					android:paddingBottom="1dp"
-					android:paddingEnd="6dp"
-					android:paddingStart="6dp"
-					android:paddingTop="1dp"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="1dp"
 					android:text="@string/update"
 					android:textAllCaps="false"
 					style="@style/Button_2" />
 			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_19"
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_17"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/branch"
+				style="@style/TextView_1" />
+			<LinearLayout
+				android:id="@+id/linearlayout_6"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
 				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_17"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/branch"
-					style="@style/TextView_1" />
 				<Spinner
 					android:id="@+id/branch"
 					android:background="@drawable/select_hour"
@@ -681,10 +652,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
-					android:paddingBottom="1dp"
-					android:paddingEnd="6dp"
-					android:paddingStart="6dp"
-					android:paddingTop="1dp"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="1dp"
 					android:text="@string/update"
 					android:textAllCaps="false"
 					style="@style/Button_2" />
@@ -697,85 +666,84 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
-					android:paddingBottom="1dp"
-					android:paddingEnd="6dp"
-					android:paddingStart="6dp"
-					android:paddingTop="1dp"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="1dp"
 					android:text="@string/clone"
 					android:textAllCaps="false"
 					style="@style/Button_2" />
 			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_20"
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_18"
+				android:labelFor="@+id/customname0"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/custom_add"
+				style="@style/TextView_1" />
+			<LinearLayout
+				android:id="@+id/linearlayout_7"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
 				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_18"
-					android:labelFor="@+id/customname0"
+				<EditText
+					android:id="@+id/customname0"
+					android:background="@drawable/input_order"
+					android:focusable="true"
+					android:inputType="text"
 					android:layout_height="wrap_content"
 					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/custom_add"
-					style="@style/TextView_1" />
-				<LinearLayout
-					android:id="@+id/linearlayout_23"
-					android:layout_height="match_parent"
-					android:layout_width="match_parent"
-					android:orientation="horizontal">
-					<EditText
-						android:id="@+id/customname0"
-						android:background="@drawable/input_order"
-						android:focusable="true"
-						android:inputType="text"
-						android:layout_height="wrap_content"
-						android:layout_marginEnd="5dp"
-						android:layout_width="130dp"
-						android:paddingBottom="1dp"
-						android:paddingTop="1dp"
-						style="@style/EditText_1" />
-					<Spinner
-						android:id="@+id/custommonth0"
-						android:background="@drawable/select_hour"
-						android:entries="@array/custommonth0_array"
-						android:focusable="true"
-						android:layout_height="wrap_content"
-						android:layout_marginStart="4dp"
-						android:layout_width="wrap_content"
-						android:minWidth="37dp"
-						android:paddingBottom="2dp"
-						android:paddingTop="1dp"
-						style="@style/Spinner_1" />
-					<Spinner
-						android:id="@+id/customday0"
-						android:background="@drawable/select_hour"
-						android:entries="@array/customday0_array"
-						android:focusable="true"
-						android:layout_height="wrap_content"
-						android:layout_marginStart="4dp"
-						android:layout_width="wrap_content"
-						android:minWidth="37dp"
-						android:paddingBottom="2dp"
-						android:paddingTop="1dp"
-						style="@style/Spinner_1" />
-				</LinearLayout>
+					android:layout_width="130dp"
+					android:paddingVertical="1dp"
+					style="@style/EditText_1" />
+				<Spinner
+					android:id="@+id/custommonth0"
+					android:background="@drawable/select_hour"
+					android:entries="@array/custommonth0_array"
+					android:focusable="true"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					style="@style/Spinner_1" />
+				<Spinner
+					android:id="@+id/customday0"
+					android:background="@drawable/select_hour"
+					android:entries="@array/customday0_array"
+					android:focusable="true"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					style="@style/Spinner_1" />
 			</LinearLayout>
-			<LinearLayout
-				android:id="@+id/linearlayout_21"
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+			<TextView
+				android:id="@+id/textview_19"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="6dp"
-				android:layout_width="match_parent"
+				android:layout_marginEnd="5dp"
+				android:layout_width="100dp"
+				android:paddingTop="3dp"
+				android:text="@string/conclusion"
+				style="@style/TextView_1" />
+			<LinearLayout
+				android:id="@+id/linearlayout_8"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
 				android:orientation="horizontal">
-				<TextView
-					android:id="@+id/textview_19"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="5dp"
-					android:layout_width="100dp"
-					android:paddingTop="3dp"
-					android:text="@string/conclusion"
-					style="@style/TextView_1" />
 				<Spinner
 					android:id="@+id/person"
 					android:background="@drawable/select_hour"
@@ -788,7 +756,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingTop="1dp"
 					style="@style/Spinner_1" />
 				<LinearLayout
-					android:id="@+id/linearlayout_24"
+					android:id="@+id/linearlayout_9"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
@@ -824,10 +792,9 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:id="@+id/c4"
 						android:focusable="true"
 						android:layout_height="wrap_content"
-						android:layout_marginBottom="3dp"
 						android:layout_marginEnd="1dp"
 						android:layout_marginStart="4dp"
-						android:layout_marginTop="3dp"
+						android:layout_marginVertical="3dp"
 						android:layout_width="wrap_content"
 						android:text="@string/none"
 						style="@style/CheckBox_1" />
@@ -841,15 +808,18 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:minHeight="0dp"
 					android:minWidth="0dp"
-					android:paddingBottom="1dp"
-					android:paddingEnd="6dp"
-					android:paddingStart="6dp"
-					android:paddingTop="1dp"
+					android:paddingHorizontal="6dp"
+					android:paddingVertical="1dp"
 					android:text="@string/update"
 					android:textAllCaps="false"
 					style="@style/Button_2" />
 			</LinearLayout>
-		</LinearLayout>
+			<Space
+				android:layout_columnSpan="2"
+				android:layout_columnWeight="1"
+				android:layout_height="6dp"
+				android:layout_width="match_parent" />
+		</GridLayout>
 	</FrameLayout>
 </LinearLayout>
 ```
