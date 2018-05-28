@@ -34,10 +34,8 @@ const SETTINGS = {
     useLayoutWeight: true,
     useUnitDP: true,
     useRTL: true,
-    resourceValueNumber: false,
-    boundsOffset: 2,
+    numberResourceValue: false,
     whitespaceHorizontalOffset: 4,
-    whitespaceVerticalOffset: 14,
     constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14

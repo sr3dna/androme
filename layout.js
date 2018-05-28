@@ -5,13 +5,11 @@ const SETTINGS = {
     useConstraintLayout: true,
     useConstraintChain: true,
     useGridLayout: true,
-    useLayoutWeight: false,
+    useLayoutWeight: true,
     useUnitDP: true,
     useRTL: true,
-    resourceValueNumber: false,
-    boundsOffset: 2,
+    numberResourceValue: false,
     whitespaceHorizontalOffset: 4,
-    whitespaceVerticalOffset: 14,
     constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14
@@ -154,7 +152,7 @@ function addResourceString(node, value) {
             }
         }
         const number = Utils.isNumber(value);
-        if (SETTINGS.resourceValueNumber || !number) {
+        if (SETTINGS.numberResourceValue || !number) {
             value = value.replace(/\s*style=""/g, '');
             for (const [name, resourceValue] in RESOURCE['string'].entries()) {
                 if (resourceValue == value) {
@@ -180,7 +178,7 @@ function addResourceString(node, value) {
                 switch (prevNode.widgetName) {
                     case WIDGET_ANDROID.CHECKBOX:
                     case WIDGET_ANDROID.RADIO:
-                        prevNode.android('text', (!SETTINGS.resourceValueNumber && number ? name : `@string/${name}`));
+                        prevNode.android('text', (!SETTINGS.numberResourceValue && number ? name : `@string/${name}`));
                         prevNode.label = node;
                         node.hide();
                         break;
@@ -1883,53 +1881,59 @@ function parseDocument() {
                                                 }
                                             }))
                                         })];
-                                    let maxIndex = -1;
-                                    let assigned = [];
-                                    for (let l = 0; l < base.length; l++) {
-                                        const bounds = base[l].bounds;
-                                        const found = [];
-                                        if (l < base.length - 1) {
-                                            for (let m = 0; m < columns.length; m++) {
-                                                if (columns[m] == base) {
-                                                    found.push(l);
-                                                }
-                                                else {
-                                                    const index = columns[m].findIndex((item, index) => (index >= l && item.bounds.width == bounds.width && index < columns[m].length - 1));
-                                                    if (index != -1) {
-                                                        found.push(index);
+                                    if (base.length > 1) {
+                                        let maxIndex = -1;
+                                        let assigned = [];
+                                        let every = false;
+                                        for (let l = 0; l < base.length; l++) {
+                                            const bounds = base[l].bounds;
+                                            const found = [];
+                                            if (l < base.length - 1) {
+                                                for (let m = 0; m < columns.length; m++) {
+                                                    if (columns[m] == base) {
+                                                        found.push(l);
                                                     }
                                                     else {
-                                                        found.length = 0;
-                                                        break;
+                                                        const index = columns[m].findIndex((item, index) => (index >= l && item.bounds.width == bounds.width && index < columns[m].length - 1));
+                                                        if (index != -1) {
+                                                            found.push(index);
+                                                        }
+                                                        else {
+                                                            found.length = 0;
+                                                            break;
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
-                                        else {
-                                            for (let m = 0; m < columns.length; m++) {
-                                                if (columns[m].length > base.length) {
-                                                    const index = assigned[m] + 1;
-                                                    const removed = columns[m].splice(assigned[m] + 1, columns[m].length - base.length);
-                                                    columns[m][assigned[m]].gridSiblings = [...removed];
-                                                }
-                                            }
-                                        }
-                                        if (found.length == columns.length) {
-                                            const minIndex = found.reduce((a, b) => Math.min(a, b));
-                                            maxIndex = found.reduce((a, b) => Math.max(a, b));
-                                            if (maxIndex > minIndex) {
+                                            else {
                                                 for (let m = 0; m < columns.length; m++) {
-                                                    if (found[m] > minIndex) {
-                                                        const removed = columns[m].splice(minIndex, found[m] - minIndex);
-                                                        columns[m][assigned[m]].gridSiblings = [...removed];
+                                                    if (columns[m].length > base.length) {
+                                                        const removed = columns[m].splice(assigned[m] + (every ? 2 : 1), columns[m].length - base.length);
+                                                        columns[m][assigned[m] + (every ? 1 : 0)].gridSiblings = [...removed];
                                                     }
                                                 }
                                             }
-                                            assigned = found;
+                                            if (found.length == columns.length) {
+                                                const minIndex = found.reduce((a, b) => Math.min(a, b));
+                                                maxIndex = found.reduce((a, b) => Math.max(a, b));
+                                                if (maxIndex > minIndex) {
+                                                    for (let m = 0; m < columns.length; m++) {
+                                                        if (found[m] > minIndex) {
+                                                            const removed = columns[m].splice(minIndex, found[m] - minIndex);
+                                                            columns[m][assigned[m]].gridSiblings = [...removed];
+                                                        }
+                                                    }
+                                                }
+                                                assigned = found;
+                                                every = true;
+                                            }
+                                            else {
+                                                assigned = new Array(columns.length).fill(l);
+                                            }
                                         }
-                                        else {
-                                            assigned = new Array(columns.length).fill(l);
-                                        }
+                                    }
+                                    else {
+                                        columns.length = 0;
                                     }
                                 }
                                 else {
@@ -1977,16 +1981,16 @@ function parseDocument() {
                                         columns = columns.filter(nodes => nodes);
                                         const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                                         for (let l = 0; l < columnLength; l++) {
-                                            let y = null;
+                                            let top = null;
                                             for (let m = 0; m < columns.length; m++) {
                                                 const nodeX = columns[m][l];
                                                 if (nodeX != null) {
-                                                    if (y == null) {
-                                                        y = nodeX.linear.top;
+                                                    if (top == null) {
+                                                        top = nodeX.linear.top;
                                                     }
-                                                    else if (!Utils.withinRange(nodeX.linear.top, y, SETTINGS.boundsOffset)) {
+                                                    else if (nodeX.linear.top != top) {
                                                         const nextRowX = columns[m - 1][l + 1];
-                                                        if (columns[m][l - 1] == null || (nextRowX && Utils.withinRange(nextRowX.linear.top, nodeX.linear.top, SETTINGS.boundsOffset))) {
+                                                        if (columns[m][l - 1] == null || (nextRowX != null && nextRowX.linear.top == nodeX.linear.top)) {
                                                             columns[m].splice(l, 0, { spacer: 1 });
                                                         }
                                                         else if (columns[m][l + 1] == null) {
@@ -2003,27 +2007,28 @@ function parseDocument() {
                                     }
                                 }
                                 if (columns.length > 1) {
-                                    const rowStart = [];
-                                    xml += writeGridLayout(nodeY, nodeY.depth + nodeY.depthIndent, parent, columns.length);
+                                    nodeY.gridColumnEnd = columnEnd;
+                                    nodeY.gridColumnCount = (SETTINGS.useLayoutWeight ? columns[0].length : columns.length);
+                                    xml += writeGridLayout(nodeY, nodeY.depth + nodeY.depthIndent, parent, nodeY.gridColumnCount);
                                     for (let l = 0, count = 0; l < columns.length; l++) {
                                         let spacer = 0;
-                                        for (let m = 0; m < columns[l].length; m++) {
-                                            const nodeX = columns[l][m];
-                                            if (!nodeX.spacer) {
+                                        for (let m = 0, start = 0; m < columns[l].length; m++) {
+                                            const node = columns[l][m];
+                                            if (!node.spacer) {
                                                 const depth = nodeY.depth + 1;
-                                                if (nodeX.children.length > 0) {
-                                                    const offset = nodeX.depth - depth;
-                                                    nodeX.children.forEach(item => item.depth -= offset);
+                                                if (node.children.length > 0) {
+                                                    const offset = node.depth - depth;
+                                                    node.children.forEach(item => item.depth -= offset);
                                                 }
-                                                nodeX.depth = depth;
-                                                nodeX.parent.hide();
-                                                nodeX.parent = nodeY;
+                                                node.depth = depth;
+                                                node.parent.hide();
+                                                node.parent = nodeY;
                                                 if (SETTINGS.useLayoutWeight) {
-                                                    nodeX.gridRowStart = (m == 0);
-                                                    nodeX.gridRowEnd = (m == columns.length - 1);
-                                                    nodeX.gridFirst = (l == 0 && m == 0);
-                                                    nodeX.gridLast = (nodeX.gridRowEnd && l == columns[l].length - 1);
-                                                    nodeX.gridIndex = m;
+                                                    node.gridRowStart = (m == 0);
+                                                    node.gridRowEnd = (m == columns[l].length - 1);
+                                                    node.gridFirst = (l == 0 && m == 0);
+                                                    node.gridLast = (l == columns.length - 1 && node.gridRowEnd);
+                                                    node.gridIndex = m;
                                                 }
                                                 else {
                                                     let rowSpan = 1;
@@ -2049,29 +2054,24 @@ function parseDocument() {
                                                         }
                                                     }
                                                     if (rowSpan > 1) {
-                                                        nodeX.android('layout_rowSpan', rowSpan);
+                                                        node.android('layout_rowSpan', rowSpan);
                                                     }
                                                     if (columnSpan > 1) {
-                                                        nodeX.android('layout_columnSpan', columnSpan);
+                                                        node.android('layout_columnSpan', columnSpan);
                                                     }
-                                                    if (rowStart[m] == null) {
-                                                        nodeX.gridRowStart = true;
-                                                        rowStart[m] = nodeX;
-                                                    }
-                                                    nodeX.gridRowEnd = (columnSpan + l == columns.length);
-                                                    nodeX.gridFirst = (count++ == 0);
-                                                    nodeX.gridLast = (nodeX.gridRowEnd && m == columns[l].length - 1);
-                                                    nodeX.gridIndex = l;
+                                                    node.gridRowStart = (start++ == 0);
+                                                    node.gridRowEnd = (columnSpan + l == columns.length);
+                                                    node.gridFirst = (count++ == 0);
+                                                    node.gridLast = (node.gridRowEnd && m == columns[l].length - 1);
+                                                    node.gridIndex = l;
                                                     spacer = 0;
                                                 }
                                             }
-                                            else if (nodeX.spacer == 1) {
+                                            else if (node.spacer == 1) {
                                                 spacer++;
                                             }
                                         }
                                     }
-                                    nodeY.gridColumnEnd = columnEnd;
-                                    nodeY.gridColumnCount = columns.length;
                                 }
                             }
                             if (!nodeY.renderParent) {
