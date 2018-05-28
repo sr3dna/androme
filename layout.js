@@ -1,4 +1,5 @@
-const SETTINGS = {
+const SETTINGS =
+{
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
     showAttributes: true,
@@ -223,7 +224,7 @@ function addResourceColor(value) {
     if (value != '') {
         let colorName = '';
         if (!RESOURCE['color'].has(value)) {
-            const color = Color.findNearestColor(value);
+            const color = Color.findNearest(value);
             if (color != null) {
                 color.name = Utils.cameltoLowerCase(color.name);
                 if (value.toUpperCase().trim() == color.hex) {
@@ -1233,7 +1234,7 @@ function setStyleMap() {
                     if (name.toLowerCase().indexOf('color') != -1) {
                         const color = Color.getColorByName(rule.style[name]);
                         if (color != null) {
-                            rule.style[name] = Color.convertColorToRGB(color);
+                            rule.style[name] = Color.convertToRGB(color);
                         }
                     }
                     if (Utils.hasValue(element.style[name])) {

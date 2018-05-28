@@ -1,9 +1,11 @@
 const Utils = (function() {
-    const ID = {
+    const ID =
+    {
         android: ['parent']
     };
-    const Utils = {
-        generateId: function(section, name) {
+
+    const Utils = class {
+        static generateId(section, name) {
             let prefix = name;
             let i = 1;
             const match = name.match(/^([a-zA-Z0-9_]+)_([0-9]+)$/);
@@ -25,14 +27,14 @@ const Utils = (function() {
             }
             while (true)
             return name;
-        },
-        formatString: function(value, ...params) {
+        }
+        static formatString(value, ...params) {
             for (let i = 0; i < params.length; i++) {
                 value = value.replace(`{${i}}`, params[i]);
             }
             return value;
-        },
-        cameltoLowerCase: function(value) {
+        }
+        static cameltoLowerCase(value) {
             value = value.charAt(0).toLowerCase() + value.substring(1);
             const result = value.match(/([a-z]{1}[A-Z]{1})/g);
             if (result != null) {
@@ -41,8 +43,8 @@ const Utils = (function() {
                 }
             }
             return value;
-        },
-        hyphenToCamelCase: function(value) {
+        }
+        static hyphenToCamelCase(value) {
             value = value.replace(/$-+/, '');
             const result = value.match(/(-{1}[a-z]{1})/g);
             if (result != null) {
@@ -51,11 +53,11 @@ const Utils = (function() {
                 }
             }
             return value;
-        },
-        padLeft: function(n, value = '\t') {
+        }
+        static padLeft(n, value = '\t') {
             return value.repeat(n);
-        },
-        convertToPX: function(value, unit = true) {
+        }
+        static convertToPX(value, unit = true) {
             if (Utils.hasValue(value)) {
                 if (typeof value == 'number') {
                     value += 'px';
@@ -77,8 +79,8 @@ const Utils = (function() {
                 }
             }
             return (unit ? '0px' : 0);
-        },
-        convertToDP: function(value, unit = true, font = false) {
+        }
+        static convertToDP(value, unit = true, font = false) {
             if (Utils.hasValue(value)) {
                 value = Utils.convertToPX(value, false);
                 value = value / (SETTINGS.density / 160);
@@ -88,17 +90,17 @@ const Utils = (function() {
                 }
             }
             return (unit ? '0dp' : 0);
-        },
-        convertToSP: function(value, unit = true) {
+        }
+        static convertToSP(value, unit = true) {
             return Utils.convertToDP(value, unit, true);
-        },
-        insetToDP(xml, font = false) {
+        }
+        static insetToDP(xml, font = false) {
             return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + Utils.convertToDP(capture[1], true, font) + capture[2]);
-        },
-        parseInt(value) {
+        }
+        static parseInt(value) {
             return parseInt(value) || 0;
-        },
-        parseUnit(value) {
+        }
+        static parseUnit(value) {
             if (Utils.hasValue(value)) {
                 const match = value.match(/(?:"|>)([0-9]+)(?:(px|pt|em|dp|sp))(?:"|<)/);
                 if (match != null) {
@@ -106,26 +108,26 @@ const Utils = (function() {
                 }
             }
             return 0;
-        },
-        calculateBias(start, end) {
+        }
+        static calculateBias(start, end) {
             return parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2)));
-        },
-        hasValue: function(value) {
+        }
+        static hasValue(value) {
             return (typeof value !== 'undefined' && value !== null && value !== '');
-        },
-        withinRange: function(a, b, n = 1) {
+        }
+        static withinRange(a, b, n = 1) {
             return (b >= (a - n) && b <= (a + n));
-        },
-        withinFraction: function(left, right) {
+        }
+        static withinFraction(left, right) {
             return (left == right || Math.ceil(left) == Math.floor(right));
-        },
-        isNumber: function(value) {
+        }
+        static isNumber(value) {
             return /^[0-9.]+$/.test(value.trim());
-        },
-        hasFreeFormText(element) {
+        }
+        static hasFreeFormText(element) {
             return Array.from(element.childNodes).some(item => (item.nodeName == '#text' && item.textContent.trim() != ''));
-        },
-        isVisible: function(element) {
+        }
+        static isVisible(element) {
             if (typeof element.getBoundingClientRect == 'function') {
                 const bounds = element.getBoundingClientRect();
                 if (bounds.width != 0 && bounds.height != 0) {

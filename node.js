@@ -36,11 +36,7 @@ class Node {
         this._depth = null;
         this._flex = null;
         this._overflow = null;
-
-        this._android = {};
-        this._app = {};
-        this.__ = {};
-        this._namespaces = new Set(['android', 'app', '_']);
+        this._namespaces = new Set();
 
         Object.assign(this, options);
 
@@ -113,7 +109,7 @@ class Node {
         return (xmlns ? [result, Object.keys(namespaces)] : result);
     }
     supported(obj, attr) {
-        for (let i = this.api + 1; i < API_ANDROID.length; i++) {
+        for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
             const version = API_ANDROID[i];
             if (version != null && version[obj] != null && version[obj].includes(attr)) {
                 return false;
@@ -547,6 +543,9 @@ class Node {
     get parent() {
         return (this._parent != null ? this._parent : new Node(0));
     }
+    get parentElement() {
+        return this.element.parentNode;
+    }
     set renderParent(value) {
         if (typeof value == 'object') {
             if (value.visible) {
@@ -557,9 +556,6 @@ class Node {
     }
     get renderParent() {
         return this._renderParent;
-    }
-    get parentElement() {
-        return this.element.parentNode;
     }
     set depth(value) {
         if (this._depth == value) {
@@ -585,20 +581,6 @@ class Node {
             maxBottom = Math.max(node.bounds.bottom, maxBottom);
         });
         return [maxRight - minLeft, maxBottom - minTop];
-    }
-    get firstChild() {
-        const nodes = this.children.slice();
-        nodes.sort((a, b) => {
-            let [c, d] = [a.depth, b.depth];
-            if (c == d) {
-                [c, d] = [a.bounds.top, b.bounds.top];
-            }
-            if (c == d) {
-                [c, d] = [a.bounds.left, b.bounds.left];
-            }
-            return (c > d ? 1 : -1);
-        });
-        return (nodes.length > 0 ? nodes[0] : null);
     }
     get outerNodes() {
         const children = this.children.filter(node => (node.visible && node.depth == this.depth + 1));
