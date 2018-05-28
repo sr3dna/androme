@@ -5,7 +5,7 @@ const SETTINGS = {
     useConstraintLayout: true,
     useConstraintChain: true,
     useGridLayout: true,
-    useLayoutWeight: true,
+    useLayoutWeight: false,
     useUnitDP: true,
     useRTL: true,
     resourceValueNumber: false,
@@ -68,7 +68,7 @@ function writeResourceStyleXml() {
                    '<resources>'];
         for (const [name, style] of RESOURCE['style'].entries()) {
             xml.push(`\t<style name="${name}"${(style.parent != null ? ` parent="${style.parent}"` : '')}>`);
-            style.attributes.split(';').forEach(value => {
+            style.attributes.split(';').sort().forEach(value => {
                 const [name, setting] = value.split('=');
                 xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
             });
@@ -1271,10 +1271,10 @@ function setResourceStyle() {
     const layout = {};
     for (const node of NODE_CACHE) {
         if (node.styleAttributes.length > 0) {
-            if (cache[node.widgetName] == null) {
-                cache[node.widgetName] = [];
+            if (cache[node.tagName] == null) {
+                cache[node.tagName] = [];
             }
-            cache[node.widgetName].push(node);
+            cache[node.tagName].push(node);
         }
     }
     for (const tag in cache) {
@@ -1411,13 +1411,13 @@ function setResourceStyle() {
             }
             return (c >= d ? -1 : 1);
         });
-        tagData.forEach((item, index) => item.name = `${name}_${(index + 1)}`);
+        tagData.forEach((item, index) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
         resource.set(name, tagData);
     }
     const inherit = new Set();
     for (const node of NODE_CACHE) {
         if (node.visible) {
-            const tagName = node.widgetName;
+            const tagName = node.tagName;
             if (resource.has(tagName)) {
                 const styles = [];
                 for (const tag of resource.get(tagName)) {
@@ -1444,19 +1444,11 @@ function setResourceStyle() {
     inherit.forEach(styles => {
         let parent = null;
         styles.split('.').forEach((value, index) => {
-            const match = value.match(/^([a-zA-Z]+)_([0-9]+)$/);
+            const match = value.match(/^(\w+)_([0-9]+)$/);
             if (match != null) {
-                const style = resource.get(match[1])[parseInt(match[2] - 1)];
-                switch (index) {
-                    case 0:
-                        RESOURCE['style'].set(value, { attributes: style.attributes });
-                        parent = value;
-                        break;
-                    case 1:
-                        RESOURCE['style'].set(value, { parent, attributes: style.attributes });
-                        break;
-                    
-                }
+                const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
+                RESOURCE['style'].set(value, { parent, attributes: style.attributes });
+                parent = value;
             }
         });
     });
