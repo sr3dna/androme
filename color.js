@@ -221,7 +221,7 @@ const Color = (function() {
             }
             return { h: (h * 360), s: (s * 100), l: (l * 100) };
         }
-        static getColorByName(value) {
+        static getByName(value) {
             for (const color in X11_CSS3) {
                 if (color.toLowerCase() == value.toLowerCase()) {
                     return X11_CSS3[color];

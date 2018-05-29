@@ -100,6 +100,54 @@ const Utils = (function() {
         static parseInt(value) {
             return parseInt(value) || 0;
         }
+        static *search(obj, attr) {
+            let filter = null;
+            if (/^\*.+\*$/.test(attr)) {
+                filter = value => value.indexOf(attr.replace(/\*/g, '')) != -1;
+            }
+            else if (/^\*/.test(attr)) {
+                filter = value => value.endsWith(attr.replace(/\*/, ''));
+            }
+            else if (/\*$/.test(attr)) {
+                filter = value => value.startsWith(attr.replace(/\*/, ''));
+            }
+            if (filter != null) {
+                for (const i in obj) {
+                    if (filter(i)) {
+                        yield [i, obj[i]];
+                    }
+                }
+            }
+        }
+        static indexOf(value, ...terms) {
+            for (const term of terms) {
+                const index = value.indexOf(term);
+                if (index != -1) {
+                    return index;
+                }
+            }
+            return -1;
+        }
+        static same(obj1, obj2, ...attrs) {
+            for (const attr of attrs) {
+                const namespaces = attr.split('.');
+                let current1 = obj1;
+                let current2 = obj2;
+                for (const name of namespaces) {
+                    if (current1[name] != null && current2[name] != null) {
+                        current1 = current1[name];
+                        current2 = current2[name];
+                    }
+                    else {
+                        return false;
+                    }
+                }
+                if (current1 != null && current1 !== current2) {
+                    return false;
+                }
+            }
+            return true;
+        }
         static parseUnit(value) {
             if (Utils.hasValue(value)) {
                 const match = value.match(/(?:"|>)([0-9]+)(?:(px|pt|em|dp|sp))(?:"|<)/);

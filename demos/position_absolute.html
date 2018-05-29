@@ -1,0 +1,52 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/chrome-android-layout</title>
+    <style type="text/css">
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+        span {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            line-height: 100px;
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            text-align: center;
+            background-color: #1B5385;
+        }
+    </style>
+    <script src="../utils.js"></script>
+    <script src="../color.js"></script>
+    <script src="../constants.js"></script>
+    <script src="../node.js"></script>
+    <script src="../layout.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            for (const span of document.getElementsByTagName('span')) {
+                span.style.top = `${400 * Math.random()}px`;
+                span.style.left = `${400 * Math.random()}px`;
+            }
+            document.getElementById('output').innerHTML = parseDocument().replace(/</g, '&lt;');
+            console.log(writeResourceStringXml());
+            console.log(writeResourceStyleXml());
+            console.log(writeResourceColorXml());
+            console.log(writeResourceDrawableXml());
+        });
+    </script>
+</head>
+<body>
+    <div style="min-width: 100px; min-height: 100px; float: left;">
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>4</span>
+        <span>5</span>
+    </div>
+    <pre id="output" style="font-size: 11px; margin: 15px; float: right;"></pre>
+</body>
+</html>

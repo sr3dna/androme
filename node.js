@@ -26,7 +26,6 @@ class Node {
         this.styleAttributes = [];
         this.label = null;
         this.constraint = {};
-        this.boxRefit = {};
         this.preAlignment = {};
         this.nestedScroll = false;
         this.wrapNode = null;
@@ -65,7 +64,14 @@ class Node {
     delete(obj, ...attributes) {
         const name = `_${obj}`;
         for (const attr of attributes) {
-            delete this[name][attr];
+            if (attr.indexOf('*') != -1) {
+                for (const [key] of Utils.search(this[name], attr)) {
+                    delete this[name][key];
+                }
+            }
+            else {
+                delete this[name][attr];
+            }
         }
     }
     attr(value, overwrite = true) {
@@ -158,11 +164,28 @@ class Node {
     isView(viewName) {
         return (this.widgetName == viewName);
     }
+    inside(rect, dimension = 'bounds') {
+        const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
+        const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
+        const left = (rect.left >= this[dimension].left && rect.left < this[dimension].right);
+        const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
+        return (top && (left || right)) || (bottom && (left || right));
+    }
     withinX(rect, dimension = 'linear') {
-        return ((rect.top >= this[dimension].top && rect.top < this[dimension].bottom) || (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) || (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) || (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom));
+        return (
+            (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
+            (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
+            (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) ||
+            (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom)
+        );
     }
     withinY(rect, dimension = 'linear') {
-        return ((rect.left >= this[dimension].left && rect.left < this[dimension].right) || (rect.right > this[dimension].left && rect.right <= this[dimension].right) || (this[dimension].left >= rect.left && this[dimension].right <= rect.right) || (rect.left >= this[dimension].left && rect.right <= this[dimension].right));
+        return (
+            (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
+            (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
+            (this[dimension].left >= rect.left && this[dimension].right <= rect.right) ||
+            (rect.left >= this[dimension].left && rect.right <= this[dimension].right)
+        );
     }
 
     setAndroidId(widgetName) {
@@ -232,6 +255,14 @@ class Node {
                                 }
                             }
                         }
+                    }
+                    if (this.constraint.minWidth != null && styleMap.width == null && this.android('minWidth') == null && this.android('layout_width') != 'match_parent') {
+                        this.android('minWidth', `${this.constraint.minWidth}px`);
+                        this.android('layout_width', 'wrap_content');
+                    }
+                    if (this.constraint.minHeight != null && styleMap.height == null && this.android('minHeight') == null && this.android('layout_height') != 'match_parent') {
+                        this.android('minHeight', `${this.constraint.minHeight}px`);
+                        this.android('layout_height', 'wrap_content');
                     }
                 }
                 if (styleMap.height != null) {
@@ -362,50 +393,38 @@ class Node {
             }
         }
     }
-    setBounds(element) {
+    setBounds(element, calibrate = false) {
         if (this.wrapNode == null) {
-            if (element != null) {
-                const range = document.createRange();
-                range.selectNodeContents(element);
-                const domRect = range.getClientRects();
-                const domText = domRect[domRect.length - 1];
-                const bounds = JSON.parse(JSON.stringify(domText));
-                if (domRect.length > 1) {
-                    bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
-                    bounds.left = bounds.x;
-                    bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
-                }
-                this.bounds = Node.getRangeBounds(element);
+            if (!calibrate) {
+                this.bounds = (element != null ?  Node.getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
             }
-            else {
-                this.bounds = this.element.getBoundingClientRect();
-            }
-            const bounds = this.bounds;
             this.linear = {
-                top: bounds.top - this.marginTop,
-                right: bounds.right + this.marginRight,
-                bottom: bounds.bottom + this.marginBottom,
-                left: bounds.left - this.marginLeft
+                top: this.bounds.top - this.marginTop,
+                right: this.bounds.right + this.marginRight,
+                bottom: this.bounds.bottom + this.marginBottom,
+                left: this.bounds.left - this.marginLeft
             };
             this.box = {
-                top: bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth'))),
-                right: bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth'))),
-                bottom: bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))),
-                left: bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))
+                top: this.bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth'))),
+                right: this.bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth'))),
+                bottom: this.bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))),
+                left: this.bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))
             };
         }
         else {
             const nodes = this.outerNodes;
-            this.bounds = {
-                top: nodes.top[0].bounds.top,
-                right: nodes.right[0].bounds.right,
-                bottom: nodes.bottom[0].bounds.bottom,
-                left: nodes.left[0].bounds.left,
-                x: nodes.left[0].bounds.x,
-                y: nodes.top[0].bounds.y
-            };
-            this.bounds.width = this.bounds.right - this.bounds.left;
-            this.bounds.height = this.bounds.bottom - this.bounds.top;
+            if (!calibrate) {
+                this.bounds = {
+                    top: nodes.top[0].bounds.top,
+                    right: nodes.right[0].bounds.right,
+                    bottom: nodes.bottom[0].bounds.bottom,
+                    left: nodes.left[0].bounds.left,
+                    x: nodes.left[0].bounds.x,
+                    y: nodes.top[0].bounds.y
+                };
+                this.bounds.width = this.bounds.right - this.bounds.left;
+                this.bounds.height = this.bounds.bottom - this.bounds.top;
+            }
             this.linear = {
                 top: nodes.top[0].linear.top,
                 right: nodes.right[0].linear.right,
@@ -431,7 +450,6 @@ class Node {
             const verticalAlign = this.styleMap.verticalAlign;
             let textAlign = null;
             let element = this.element;
-            let gravity = [];
             while (element != null && element.styleMap != null) {
                 textAlign = element.styleMap.textAlign || textAlign;
                 const float = (element != this.element ? element.styleMap.float : '');
@@ -441,59 +459,67 @@ class Node {
                 element = element.parentNode;
             }
             if (Utils.hasValue(verticalAlign) || Utils.hasValue(textAlign)) {
+                let horizontal = null;
+                let vertical = null;
+                let layoutGravity = [];
+                switch (textAlign) {
+                    case 'start':
+                        horizontal = 'start';
+                        break;
+                    case 'right':
+                        horizontal = getLTR('right', 'end');
+                        break;
+                    case 'end':
+                        horizontal = 'end';
+                        break;
+                    case 'center':
+                        horizontal = 'center_horizontal';
+                        break;
+                }
                 switch (verticalAlign) {
                     case 'top':
-                        gravity.push('top');
+                        vertical = 'top';
                         break;
                     case 'middle':
-                        gravity.push('center_vertical');
+                        vertical = 'center_vertical';
                         break;
                     case 'bottom':
                     case 'text-bottom':
-                        gravity.push('bottom');
+                        vertical = 'bottom';
                         break;
                     default:
-                        if (this.style.height == this.style.lineHeight || parseInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
-                            gravity.push('center_vertical');
+                        if (this.style.height == this.style.lineHeight || Utils.parseInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
+                            vertical = 'center_vertical';
                         }
                 }
-                let direction = '';
-                switch (textAlign) {
-                    case 'start':
-                        gravity.push('start');
+                const parentTextAlign = (this.styleMap.textAlign != textAlign && !this.renderParent.floating && !this.floating);
+                switch (this.renderParent.widgetName) {
+                    case WIDGET_ANDROID.LINEAR:
+                    case WIDGET_ANDROID.RADIO_GROUP:
+                        if (parentTextAlign) {
+                            this.renderParent.android('gravity', horizontal);
+                            horizontal = null;
+                        }
+                    case WIDGET_ANDROID.CONSTRAINT:
+                    case WIDGET_ANDROID.RELATIVE:
+                        this.android('gravity', [vertical, horizontal].join('|'));
+                        horizontal = null;
+                        vertical = null;
                         break;
-                    case 'right':
-                        gravity.push(getLTR('right', 'end'));
-                        direction = 'right';
-                        break;
-                    case 'end':
-                        gravity.push('end');
-                        direction = 'right';
-                        break;
-                    case 'center':
-                        gravity.push('center_horizontal');
-                        direction = 'center_horizontal';
+                    case WIDGET_ANDROID.GRID:
+                        if (parentTextAlign) {
+                            layoutGravity.push(horizontal);
+                            horizontal = null;
+                        }
                         break;
                 }
-                if (gravity.includes('center_vertical') && gravity.includes('center_horizontal')) {
-                    gravity = ['center'];
+                if (vertical != null || layoutGravity.length > 0) {
+                    layoutGravity.push(vertical);
+                    this.android('layout_gravity', layoutGravity.join('|'));
                 }
-                if (direction != '' && this.styleMap.textAlign != textAlign && !this.floating && !this.renderParent.floating) {
-                    switch (this.renderParent.widgetName) {
-                        case WIDGET_ANDROID.GRID:
-                            if (this.styleMap.width == null || this.styleMap.maxWidth == null) {
-                                this.android('layout_width', 'wrap_content');
-                            }
-                            this.android(`layout_columnWeight`, 0);
-                            this.android('layout_gravity', direction);
-                            break;
-                        case WIDGET_ANDROID.LINEAR:
-                        case WIDGET_ANDROID.RADIO_GROUP:
-                            this.renderParent.android('gravity', direction);
-                            break;
-                    }
+                if (horizontal != null) {
+                    this.android('gravity', horizontal);
                 }
-                this.android(`gravity`, gravity.join('|'));
             }
         }
     }
@@ -640,6 +666,9 @@ class Node {
     get floating() {
         return (this.styleMap.float == 'left' || this.styleMap.float == 'right');
     }
+    get fixed() {
+        return (this.style.display == 'fixed');
+    }
     get overflow() {
         if (this._overflow == null) {
             let value = 0;
@@ -658,6 +687,9 @@ class Node {
     }
     get overflowY() {
         return ((this._overflow & 4) == 4);
+    }
+    get anchors() {
+        return (this.constraint.horizontal ? 1 : 0) + (this.constraint.vertical ? 1 : 0);
     }
     get marginTop() {
         return Utils.parseInt(this.css('marginTop'));
@@ -682,6 +714,18 @@ class Node {
     }
     get paddingRight() {
         return Utils.parseInt(this.css('paddingRight'));
+    }
+    get paddingHorizontal() {
+        return this.paddingLeft + this.paddingRight;
+    }
+    get paddingVertical() {
+        return this.paddingTop + this.paddingBottom;
+    }
+    get borderHorizontal() {
+        return Utils.parseInt(this.css('borderLeftWidth')) + Utils.parseInt(this.css('borderRightWidth'));
+    }
+    get borderVertical() {
+        return Utils.parseInt(this.css('borderTopWidth')) + Utils.parseInt(this.css('borderBottomWidth'));
     }
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
@@ -761,16 +805,29 @@ class Node {
         }
         return value;
     }
-    static isLinearXY(nodes) {
-        let linearX = true;
-        let linearY = true;
-        if (nodes.length > 1) {
-            const minBottom = nodes.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
-            const minRight = nodes.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
-            linearX = !nodes.some(item => (item.linear.top >= minBottom));
-            linearY = !nodes.some(item => (item.linear.left >= minRight));
+    static inside(nodes, dimension = 'linear') {
+        for (const node of nodes) {
+            if (nodes.some(item => item != node && node.inside(item[dimension]))) {
+                return true;
+            }
         }
-        return [linearX, linearY];
+        return false;
+    }
+    static isLinearXY(nodes) {
+        if (!Node.inside(nodes)) {
+            let linearX = true;
+            let linearY = true;
+            if (nodes.length > 1) {
+                const minBottom = nodes.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
+                const minRight = nodes.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
+                linearX = !nodes.some(item => (item.linear.top >= minBottom));
+                linearY = !nodes.some(item => (item.linear.left >= minRight));
+            }
+            return [linearX, linearY];
+        }
+        else {
+            return [false, false];
+        }
     }
     static orderDefault(a, b) {
         let [c, d] = [a.depth, b.depth];

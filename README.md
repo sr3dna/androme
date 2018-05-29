@@ -53,7 +53,9 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/flexbox_2.png" alt="flexbox - justify-content" />
 
-<img src="demos/layout_weight.png" alt="gridlayout - layout weight" />
+<img src="demos/layout_weight.png" alt="GridLayout - layout weight" />
+
+<img src="demos/position_absolute.png" alt="ConstraintLayout - position: absolute" />
 
 ## auto-generated layout xml
 
@@ -150,8 +152,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					app:layout_constraintCircle="@+id/month0"
 					app:layout_constraintCircleAngle="129"
 					app:layout_constraintCircleRadius="56dp"
-					app:layout_constraintEnd_toEndOf="parent"
-					app:layout_constraintStart_toStartOf="parent"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/year0"
