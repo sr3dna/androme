@@ -652,15 +652,16 @@ class Node {
     }
     get flex() {
         if (this._flex == null) {
+            let parent = (this.parentElement != null ? this.parentElement.androidNode : null);
             this._flex = {
-                parent: (this.parentElement != null && this.parentElement.androidNode != null ? this.parentElement.androidNode.flex : {}),
+                parent,
                 enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
                 direction: this.style.flexDirection,
                 basis: this.style.flexBasis,
                 grow: Utils.parseInt(this.style.flexGrow),
                 shrink: Utils.parseInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
-                alignSelf: this.style.alignSelf || (this.parentElement != null ? this.parentElement.style.alignItems : null),
+                alignSelf: (parent != null && this.styleMap.alignSelf == null && this.style.alignSelf == 'auto' ? parent.styleMap.alignItems : this.style.alignSelf),
                 justifyContent: this.style.justifyContent
             };
         }

@@ -998,7 +998,18 @@ function setConstraints() {
                                         break;
                                     default:
                                         let bias = 0.5;
-                                        switch (flex.justifyContent) {
+                                        let justifyContent = flex.justifyContent;
+                                        if (flex.direction == 'row-reverse' || flex.direction == 'column-reverse') {
+                                            switch (flex.justifyContent) {
+                                                case 'flex-start':
+                                                    justifyContent = 'flex-end';
+                                                    break;
+                                                case 'flex-end':
+                                                    justifyContent = 'flex-start';
+                                                    break;
+                                            }
+                                        }
+                                        switch (justifyContent) {
                                             case 'flex-start':
                                                 bias = 0;
                                                 break;
@@ -1007,7 +1018,7 @@ function setConstraints() {
                                                 break;
                                         }
                                         firstNode.app(chainStyle, 'packed');
-                                        firstNode.app(`layout_constraint${HV}_bias`, bias);
+                                        firstNode.app(`layout_constraint${HV}_bias`, bias, false);
                                         Node.android(unassigned, layoutWH, 'wrap_content');
                                 }
                             }
@@ -1146,14 +1157,14 @@ function setConstraints() {
     }
 }
 
-function setConstraintPercent(parent, nodes, width) {
+function setConstraintPercent(parent, nodes, width, full) {
     nodes[0].app(`layout_constraint${(width ? 'Horizontal' : 'Vertical')}_chainStyle`, 'spread');
     let percentTotal = 0;
     for (let i = 0; i < nodes.length; i++) {
         const chain = nodes[i];
         const chainPrev = nodes[i - 1];
         let percent = ((chain.linear.right - parent.box.left) - (chainPrev != null ? chainPrev.linear.right - parent.box.left : 0)) / parent.box.width;
-        percent = parseFloat(percent.toFixed(2));
+        percent = (full && i == nodes.length - 1 ? 1 - percentTotal : parseFloat(percent.toFixed(2)));
         chain.android(`layout_${(width ? 'width' : 'height')}`, '0px');
         chain.app(`layout_constraint${(width ? 'Width' : 'Height')}_percent`, percent);
         percentTotal += percent;
@@ -1797,7 +1808,7 @@ function parseDocument() {
         const partial = {};
         for (let j = 0; j < coordsY.length; j++) {
             const axisY = mapY[i][coordsY[j]].sort((a, b) => {
-                if (!a.flex.parent.enabled && !b.flex.parent.enabled && a.withinX(b.linear)) {
+                if (!a.parent.flex.enabled && !b.parent.flex.enabled && a.withinX(b.linear)) {
                     return (a.linear.left > b.linear.left ? 1 : -1);
                 }
                 return (a.parentIndex > b.parentIndex ? 1 : -1);
