@@ -738,12 +738,6 @@ class Node {
     get paddingRight() {
         return Utils.parseInt(this.css('paddingRight'));
     }
-    get borderWidthHorizontal() {
-        return Utils.parseInt(this.css('borderLeftWidth')) + Utils.parseInt(this.css('borderRightWidth'));
-    }
-    get borderHeightVertical() {
-        return Utils.parseInt(this.css('borderTopWidth')) + Utils.parseInt(this.css('borderBottomWidth'));
-    }
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
     }
@@ -785,16 +779,6 @@ class Node {
     }
     static android(nodes, name, value, overwrite = true) {
         nodes.forEach(node => node.android(name, value, overwrite));
-    }
-    static getHorizontalBias(parent, firstNode, lastNode) {
-        const left = firstNode.linear.left - parent.box.left;
-        const right = parent.box.right - lastNode.linear.right;
-        return Utils.calculateBias(left, right);
-    }
-    static getVerticalBias(parent, firstNode, lastNode) {
-        const top = firstNode.linear.top - parent.box.top;
-        const bottom = parent.box.bottom - lastNode.linear.bottom;
-        return Utils.calculateBias(top, bottom);
     }
     static getRangeBounds(element) {
         const range = document.createRange();
@@ -845,18 +829,5 @@ class Node {
         else {
             return [false, false];
         }
-    }
-    static orderDefault(a, b) {
-        let [c, d] = [a.depth, b.depth];
-        if (c == d) {
-            [c, d] = [a.parent.id, b.parent.id];
-            if (c == d) {
-                [c, d] = [a.parentIndex, b.parentIndex];
-                if (c == d) {
-                    [c, d] = [a.id, b.id];
-                }
-            }
-        }
-        return (c > d ? 1 : -1);
     }
 }

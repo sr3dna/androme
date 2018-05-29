@@ -100,7 +100,8 @@ const Utils = (function() {
         static parseInt(value) {
             return parseInt(value) || 0;
         }
-        static *search(obj, attr) {
+        static search(obj, attr) {
+            const result = [];
             let filter = null;
             if (/^\*.+\*$/.test(attr)) {
                 filter = value => value.indexOf(attr.replace(/\*/g, '')) != -1;
@@ -114,10 +115,11 @@ const Utils = (function() {
             if (filter != null) {
                 for (const i in obj) {
                     if (filter(i)) {
-                        yield [i, obj[i]];
+                        result.push([i, obj[i]]);
                     }
                 }
             }
+            return result;
         }
         static indexOf(value, ...terms) {
             for (const term of terms) {
@@ -128,25 +130,62 @@ const Utils = (function() {
             }
             return -1;
         }
-        static same(obj1, obj2, ...attrs) {
-            for (const attr of attrs) {
-                const namespaces = attr.split('.');
-                let current1 = obj1;
-                let current2 = obj2;
-                for (const name of namespaces) {
-                    if (current1[name] != null && current2[name] != null) {
-                        current1 = current1[name];
-                        current2 = current2[name];
-                    }
-                    else {
-                        return false;
+        static sort(list, asc = 0, ...attrs) {
+            return list.sort((a, b) => {
+                for (const attr of attrs) {
+                    const result = Utils.compare(a, b, attr);
+                    if (result && result[0] !== result[1]) {
+                        if (asc == 0) {
+                            return (result[0] > result[1] ? 1 : -1);
+                        }
+                        else {
+                            return (result[0] < result[1] ? 1 : -1);
+                        }
                     }
                 }
-                if (current1 != null && current1 !== current2) {
+                return 0;
+            });
+        }
+        static sortAsc(list, ...attrs) {
+            return Utils.sort(list, 0, ...attrs);
+        }
+        static sortDesc(list, ...attrs) {
+            return Utils.sort(list, 1, ...attrs);
+        }
+        static same(obj1, obj2, ...attrs) {
+            for (const attr of attrs) {
+                const result = Utils.compare(obj1, obj2, attr);
+                if (!result || result[0] !== result[1]) {
                     return false;
                 }
             }
             return true;
+        }
+        static compare(obj1, obj2, attr) {
+            const namespaces = attr.split('.');
+            let current1 = obj1;
+            let current2 = obj2;
+            for (const name of namespaces) {
+                if (current1[name] != null && current2[name] != null) {
+                    current1 = current1[name];
+                    current2 = current2[name];
+                }
+                else if (current1[name] == null && current2[name] == null) {
+                    return false;
+                }
+                else if (current1[name] != null) {
+                    return [1, 0];
+                }
+                else {
+                    return [0, 1];
+                }
+            }
+            if (!isNaN(parseInt(current1)) || !isNaN(parseInt(current2))) {
+                return [Utils.parseInt(current1), Utils.parseInt(current2)];
+            }
+            else {
+                return [current1, current2];
+            }
         }
         static parseUnit(value) {
             if (Utils.hasValue(value)) {
