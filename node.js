@@ -75,19 +75,27 @@ class Node {
                 }
             }
         }
+        return this;
     }
     attr(value, overwrite = true) {
         const match = value.match(/^(?:([a-z]+):)?([a-zA-Z_]+)="((?:@+?[a-z]+\/)?.+)"$/);
         if (match != null) {
             this.add(match[1] || '_', match[2], match[3], overwrite);
         }
+        return this;
     }
     android(attr, value, overwrite = true) {
         if (arguments.length == 0) {
             return this._android;
         }
         else {
-            return this.add('android', attr, value, overwrite);
+            const result = this.add('android', attr, value, overwrite);
+            if (Utils.hasValue(value)) {
+                return this;
+            }
+            else {
+                return result;
+            }
         }
     }
     app(attr, value, overwrite = true) {
@@ -95,8 +103,15 @@ class Node {
             return this._app;
         }
         else {
-            return this.add('app', attr, value, overwrite);
+            const result = this.add('app', attr, value, overwrite);
+            if (Utils.hasValue(value)) {
+                return this;
+            }
+            else {
+                return result;
+            }
         }
+        return this;
     }
     combine(xmlns) {
         const result = [];
@@ -115,6 +130,15 @@ class Node {
         });
         result.sort();
         return (xmlns ? [result, Object.keys(namespaces)] : result);
+    }
+    css(attr, value, map = false) {
+        if (Utils.hasValue(value)) {
+            this.styleMap[attr] = value;
+            return this;
+        }
+        else {
+            return (this.styleMap[attr] || (!map ? this.style[attr] : null) || null);
+        }
     }
     supported(obj, attr) {
         for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
@@ -136,14 +160,6 @@ class Node {
                     }
                 }
             }
-        }
-    }
-    css(attr, value, map = false) {
-        if (Utils.hasValue(value)) {
-            this.styleMap[attr] = value;
-        }
-        else {
-            return (this.styleMap[attr] || (!map ? this.style[attr] : null) || null);
         }
     }
     hide(parent = true) {
@@ -217,8 +233,9 @@ class Node {
             const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
             const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
             if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
-                this.android('layout_width', (this.isHorizontal() ? 'wrap_content' : 'match_parent'));
-                this.android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
+                this
+                    .android('layout_width', (this.isHorizontal() ? 'wrap_content' : 'match_parent'))
+                    .android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
             }
             else {
                 if (styleMap.width != null) {
@@ -259,12 +276,14 @@ class Node {
                         }
                     }
                     if (this.constraint.minWidth != null && styleMap.width == null && this.android('minWidth') == null && this.android('layout_width') != 'match_parent') {
-                        this.android('minWidth', `${this.constraint.minWidth}px`);
-                        this.android('layout_width', 'wrap_content');
+                        this
+                            .android('minWidth', `${this.constraint.minWidth}px`)
+                            .android('layout_width', 'wrap_content');
                     }
                     if (this.constraint.minHeight != null && styleMap.height == null && this.android('minHeight') == null && this.android('layout_height') != 'match_parent') {
-                        this.android('minHeight', `${this.constraint.minHeight}px`);
-                        this.android('layout_height', 'wrap_content');
+                        this
+                            .android('minHeight', `${this.constraint.minHeight}px`)
+                            .android('layout_height', 'wrap_content');
                     }
                 }
                 if (styleMap.height != null) {
