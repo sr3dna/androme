@@ -63,14 +63,16 @@ class Node {
     }
     delete(obj, ...attributes) {
         const name = `_${obj}`;
-        for (const attr of attributes) {
-            if (attr.indexOf('*') != -1) {
-                for (const [key] of Utils.search(this[name], attr)) {
-                    delete this[name][key];
+        if (this[name] != null) {
+            for (const attr of attributes) {
+                if (attr.indexOf('*') != -1) {
+                    for (const [key] of Utils.search(this[name], attr)) {
+                        delete this[name][key];
+                    }
                 }
-            }
-            else {
-                delete this[name][attr];
+                else {
+                    delete this[name][attr];
+                }
             }
         }
     }

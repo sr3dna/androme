@@ -1039,14 +1039,14 @@ function setConstraints() {
                     if (anchored.length == 0) {
                         const unbound = nodes.reduce((a, b) => (a.anchors >= b.anchors ? a : b), nodes[0]);
                         if (!unbound.constraint.horizontal) {
-                            unbound.delete('app', getRTL('*constraintLeft*'), getRTL('*constraintRight*'));
+                            unbound.delete('app', layout['left'], layout['right']);
                             unbound.app(layout['left'], 'parent');
                             unbound.app(layout['right'], 'parent');
                             unbound.app('layout_constraintHorizontal_bias', unbound.horizontalBias);
                             unbound.constraint.horizontal = true;
                         }
                         if (!unbound.constraint.vertical) {
-                            unbound.delete('app', '*constraintTop*', '*constraintBottom*', 'layout_constraintBaseline_toBaselineOf');
+                            unbound.delete('app', layout['top'], layout['bottom'], layout['baseline']);
                             unbound.app(layout['top'], 'parent');
                             unbound.app(layout['bottom'], 'parent');
                             unbound.app('layout_constraintVertical_bias', unbound.verticalBias);
@@ -1125,10 +1125,10 @@ function setConstraints() {
                             else {
                                 degrees = (center1.x > center2.x ? 90 : 270);
                             }
+                            opposite.delete('app', 'layout_constraint*');
                             opposite.app('layout_constraintCircle', adjacent.stringId);
                             opposite.app('layout_constraintCircleRadius', `${radius}px`);
                             opposite.app('layout_constraintCircleAngle', degrees);
-                            opposite.delete('app', '*constraintTop*', getRTL('*constraintRight*'), '*constraintBottom*', getRTL('*constraintLeft*'), '*_bias');
                             opposite.constraint.vertical = true;
                             opposite.constraint.horizontal = true;
                         }

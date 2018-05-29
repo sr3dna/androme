@@ -906,7 +906,7 @@ Partial output of the string resources.
 
 ## auto-generated styles and themes
 
-Styles are grouped by HTML element name and then by common properties.  These styles were modified to demonstrate the grouping capabilities although it is not completely accurate with the sample picture.
+Styles are grouped by HTML element name and then by common properties.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1040,7 +1040,7 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 
 ## user written html
 
-The DIV and FORM tag are not required for mobile devices which sometimes causes additional LinearLayouts to be auto-generated.
+Using excessive DIV and FORM tags are not required for mobile devices which sometimes causes additional LinearLayouts to be auto-generated.
 
 https://www.w3.org/TR/html401/struct/global.html#h-7.5.3
 
