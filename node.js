@@ -502,6 +502,7 @@ class Node {
                             this.renderParent.android('gravity', horizontal);
                             horizontal = null;
                         }
+                        break;
                     case WIDGET_ANDROID.CONSTRAINT:
                     case WIDGET_ANDROID.RELATIVE:
                         this.android('gravity', [vertical, horizontal].join('|'));
@@ -717,16 +718,10 @@ class Node {
     get paddingRight() {
         return Utils.parseInt(this.css('paddingRight'));
     }
-    get paddingHorizontal() {
-        return this.paddingLeft + this.paddingRight;
-    }
-    get paddingVertical() {
-        return this.paddingTop + this.paddingBottom;
-    }
-    get borderHorizontal() {
+    get borderWidthHorizontal() {
         return Utils.parseInt(this.css('borderLeftWidth')) + Utils.parseInt(this.css('borderRightWidth'));
     }
-    get borderVertical() {
+    get borderHeightVertical() {
         return Utils.parseInt(this.css('borderTopWidth')) + Utils.parseInt(this.css('borderBottomWidth'));
     }
     get center() {
@@ -836,7 +831,7 @@ class Node {
         if (c == d) {
             [c, d] = [a.parent.id, b.parent.id];
             if (c == d) {
-                [c, d] = [a.bounds.y, b.bounds.y];
+                [c, d] = [a.parentIndex, b.parentIndex];
                 if (c == d) {
                     [c, d] = [a.id, b.id];
                 }

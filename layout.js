@@ -773,26 +773,27 @@ function setConstraints() {
                         }
                         else {
                             let parent = false;
+                            let dimension = 'linear';
                             if (current == node || adjacent == node) {
                                 if (current == node) {
                                     current = adjacent;
                                 }
                                 adjacent = Object.assign({}, node);
                                 adjacent.androidId = 'parent';
+                                dimension = 'box';
                                 parent = true;
-                                baseline = false;
                             }
                             const withinY = (adjacent.androidId != 'parent' && current.withinY(adjacent.linear));
                             if (!parent) {
-                                if ((current.linear.bottom - current.borderVertical) == adjacent.linear.top) {
+                                if ((current.linear.bottom - current.borderHeightVertical) == adjacent.linear.top) {
                                     setNodePosition(current, layout['bottomTop'], adjacent);
                                 }
-                                else if (current.linear.top == (adjacent.linear.bottom - adjacent.borderVertical)) {
+                                else if (current.linear.top == (adjacent.linear.bottom - adjacent.borderHeightVertical)) {
                                     setNodePosition(current, layout['topBottom'], adjacent);
                                 }
                             }
-                            if (current.linear.top == adjacent.linear.top) {
-                                if (current.isView(WIDGET_ANDROID.TEXT) && adjacent.isView(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.style.verticalAlign == 'baseline') {
+                            if (current.linear.top == adjacent[dimension].top) {
+                                if (!parent && current.isView(WIDGET_ANDROID.TEXT) && adjacent.isView(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.style.verticalAlign == 'baseline') {
                                     setNodePosition(current, layout['baseline'], adjacent);
                                 }
                                 else {
@@ -802,31 +803,31 @@ function setConstraints() {
                                     current.constraint.vertical = true;
                                 }
                             }
-                            else if (current.linear.bottom == adjacent.linear.bottom) {
+                            else if (current.linear.bottom == adjacent[dimension].bottom) {
                                 setNodePosition(current, layout['bottom'], adjacent);
                                 if (parent) {
                                     current.constraint.vertical = true;
                                 }
                             }
-                            if (Utils.withinFraction(current.linear.right, adjacent.linear.left) || (withinY && Utils.withinRange(current.linear.right, adjacent.linear.left, SETTINGS.whitespaceHorizontalOffset))) {
+                            if (Utils.withinFraction(current.linear.right, adjacent[dimension].left) || (withinY && Utils.withinRange(current.linear.right, adjacent[dimension].left, SETTINGS.whitespaceHorizontalOffset))) {
                                 setNodePosition(current, layout['rightLeft'], adjacent);
                                 if (parent) {
                                     current.constraint.horizontal = true;
                                 }
                             }
-                            else if (Utils.withinFraction(adjacent.linear.right, current.linear.left) || (withinY && Utils.withinRange(current.linear.left, adjacent.linear.right, SETTINGS.whitespaceHorizontalOffset))) {
+                            else if (Utils.withinFraction(current.linear.left, adjacent[dimension].right) || (withinY && Utils.withinRange(current.linear.left, adjacent[dimension].right, SETTINGS.whitespaceHorizontalOffset))) {
                                 setNodePosition(current, layout['leftRight'], adjacent);
                                 if (parent) {
                                     current.constraint.horizontal = true;
                                 }
                             }
-                            if (current.linear.left == adjacent.linear.left) {
+                            if (current.linear.left == adjacent[dimension].left) {
                                 setNodePosition(current, layout['left'], adjacent);
                                 if (parent) {
                                     current.constraint.horizontal = true;
                                 }
                             }
-                            else if (current.linear.right == adjacent.linear.right) {
+                            else if (current.linear.right == adjacent[dimension].right) {
                                 setNodePosition(current, layout['right'], adjacent);
                                 if (parent) {
                                     current.constraint.horizontal = true;
@@ -1152,7 +1153,7 @@ function setConstraintPercent(parent, nodes, width) {
         const chain = nodes[i];
         const chainPrev = nodes[i - 1];
         let percent = ((chain.linear.right - parent.box.left) - (chainPrev != null ? chainPrev.linear.right - parent.box.left : 0)) / parent.box.width;
-        percent = parseFloat(percent.toFixed(3));
+        percent = parseFloat(percent.toFixed(2));
         chain.android(`layout_${(width ? 'width' : 'height')}`, '0px');
         chain.app(`layout_constraint${(width ? 'Width' : 'Height')}_percent`, percent);
         percentTotal += percent;
