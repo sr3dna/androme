@@ -1,6 +1,5 @@
 const Utils = (function() {
-    const ID =
-    {
+    const ID = {
         android: ['parent']
     };
 
