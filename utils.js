@@ -99,22 +99,32 @@ const Utils = (function() {
         static parseInt(value) {
             return parseInt(value) || 0;
         }
-        static search(obj, attr) {
+        static search(obj, value) {
             const result = [];
-            let filter = null;
-            if (/^\*.+\*$/.test(attr)) {
-                filter = value => value.indexOf(attr.replace(/\*/g, '')) != -1;
-            }
-            else if (/^\*/.test(attr)) {
-                filter = value => value.endsWith(attr.replace(/\*/, ''));
-            }
-            else if (/\*$/.test(attr)) {
-                filter = value => value.startsWith(attr.replace(/\*/, ''));
-            }
-            if (filter != null) {
-                for (const i in obj) {
-                    if (filter(i)) {
+            if (typeof value == 'object') {
+                for (const term in value) {
+                    const i = value[term];
+                    if (Utils.hasValue(obj[i])) {
                         result.push([i, obj[i]]);
+                    }
+                }
+            }
+            else {
+                let filter = null;
+                if (/^\*.+\*$/.test(value)) {
+                    filter = attr => attr.indexOf(value.replace(/\*/g, '')) != -1;
+                }
+                else if (/^\*/.test(value)) {
+                    filter = attr => attr.endsWith(value.replace(/\*/, ''));
+                }
+                else if (/\*$/.test(value)) {
+                    filter = attr => attr.startsWith(value.replace(/\*/, ''));
+                }
+                if (filter != null) {
+                    for (const i in obj) {
+                        if (filter(i)) {
+                            result.push([i, obj[i]]);
+                        }
                     }
                 }
             }
@@ -218,6 +228,12 @@ const Utils = (function() {
                 const bounds = element.getBoundingClientRect();
                 if (bounds.width != 0 && bounds.height != 0) {
                     return true;
+                }
+                else if (element.children.length > 0) {
+                    return Array.from(element.children).some(item => {
+                        const style = getComputedStyle(item);
+                        return !(style.position == '' || style.position == 'static');
+                    });
                 }
             }
             return false;

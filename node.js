@@ -61,17 +61,24 @@ class Node {
         }
         return this[name][attr];
     }
-    delete(obj, ...attributes) {
+    delete(obj, ...attrs) {
         const name = `_${obj}`;
         if (this[name] != null) {
-            for (const attr of attributes) {
-                if (attr.indexOf('*') != -1) {
-                    for (const [key] of Utils.search(this[name], attr)) {
-                        delete this[name][key];
-                    }
+            if (typeof attrs[0] == 'object') {
+                for (const key in attrs[0]) {
+                    delete this[name][attrs[0][key]];
                 }
-                else {
-                    delete this[name][attr];
+            }
+            else {
+                for (const attr of attrs) {
+                    if (attr.indexOf('*') != -1) {
+                        for (const [key] of Utils.search(this[name], attr)) {
+                            delete this[name][key];
+                        }
+                    }
+                    else {
+                        delete this[name][attr];
+                    }
                 }
             }
         }
@@ -90,7 +97,7 @@ class Node {
         }
         else {
             const result = this.add('android', attr, value, overwrite);
-            if (Utils.hasValue(value)) {
+            if (arguments.length >= 2) {
                 return this;
             }
             else {
@@ -104,7 +111,7 @@ class Node {
         }
         else {
             const result = this.add('app', attr, value, overwrite);
-            if (Utils.hasValue(value)) {
+            if (arguments.length >= 2) {
                 return this;
             }
             else {
@@ -239,8 +246,13 @@ class Node {
     isHorizontal() {
         return (this._android.orientation == 'horizontal');
     }
-    isView(viewName) {
-        return (this.widgetName == viewName);
+    isView(...views) {
+        for (const viewName of views) {
+            if (this.widgetName == viewName) {
+                return true;
+            }
+        }
+        return false;
     }
     inside(rect, dimension = 'bounds') {
         const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
@@ -278,17 +290,17 @@ class Node {
             let parent = null;
             let width = 0;
             let height = 0;
-            let gridLayout = false;
+            let requireWrap = false;
             if (this.wrapNode != null) {
-                parent = this.wrapNode.parentOriginal || this.parent;
+                parent = this.wrapNode.parentOriginal;
                 [width, height] = this.childrenBox;
-                gridLayout = this.parent.isView(WIDGET_ANDROID.GRID);
+                requireWrap = this.parent.isView(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
             }
             else {
                 parent = this.parent;
                 width = this.element.offsetWidth + this.marginLeft + this.marginRight;
                 height = this.element.offsetHeight + this.marginTop + this.marginBottom;
-                gridLayout = parent.isView(WIDGET_ANDROID.GRID);
+                requireWrap = parent.isView(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
             }
             const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
             const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
@@ -297,10 +309,10 @@ class Node {
                     .android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
             }
             else {
-                if (styleMap.width != null) {
-                    this.android('layout_width', Utils.convertToPX(styleMap.width), false);
-                }
                 if (this.android('layout_width') != '0px') {
+                    if (styleMap.width != null) {
+                        this.android('layout_width', Utils.convertToPX(styleMap.width));
+                    }
                     if (styleMap.minWidth != null) {
                         this.android('minWidth', Utils.convertToPX(styleMap.minWidth), false);
                     }
@@ -308,17 +320,21 @@ class Node {
                         this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth), false);
                     }
                 }
-                if (this.android('layout_width') == null) {
-                    if (gridLayout) {
-                        this.android('layout_width', 'wrap_content', false);
+                if (this.constraint.minWidth != null) {
+                    this.android('minWidth', `${this.constraint.minWidth}px`)
+                        .android('layout_width', 'wrap_content');
+                }
+                else if (this.android('layout_width') == null) {
+                    if (requireWrap) {
+                        this.android('layout_width', 'wrap_content');
                     }
                     else {
                         if (FIXED_ANDROID.includes(this.widgetName)) {
-                            this.android('layout_width', 'wrap_content', false);
+                            this.android('layout_width', 'wrap_content');
                         }
                         else {
                             if (parent.overflow == 0 && width >= parentWidth) {
-                                this.android('layout_width', 'match_parent', false);
+                                this.android('layout_width', 'match_parent');
                             }
                             else {
                                 const display = (this.style != null ? this.style.display : '');
@@ -326,23 +342,19 @@ class Node {
                                     case 'line-item':
                                     case 'block':
                                     case 'inherit':
-                                        this.android('layout_width', 'match_parent', false);
+                                        this.android('layout_width', 'match_parent');
                                         break;
                                     default:
-                                        this.android('layout_width', 'wrap_content', false);
+                                        this.android('layout_width', 'wrap_content');
                                 }
                             }
                         }
                     }
                 }
-                if (this.constraint.minWidth != null && this.android('layout_width') != 'match_parent') {
-                    this.android('minWidth', `${this.constraint.minWidth}px`)
-                        .android('layout_width', 'wrap_content');
-                }
-                if (styleMap.height != null) {
-                    this.android('layout_height', Utils.convertToPX(styleMap.height), false);
-                }
                 if (this.android('layout_height') != '0px') {
+                    if (styleMap.height != null) {
+                        this.android('layout_height', Utils.convertToPX(styleMap.height));
+                    }
                     if (styleMap.minHeight != null) {
                         this.android('minHeight', Utils.convertToPX(styleMap.minHeight), false);
                     }
@@ -350,28 +362,17 @@ class Node {
                         this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight), false);
                     }
                 }
-                if (this.android('layout_height') == null) {
-                    switch (this.widgetName) {
-                        case WIDGET_ANDROID.TEXT:
-                        case WIDGET_ANDROID.EDIT:
-                        case WIDGET_ANDROID.SPINNER:
-                        case WIDGET_ANDROID.CHECKBOX:
-                        case WIDGET_ANDROID.RADIO:
-                        case WIDGET_ANDROID.BUTTON:
-                            this.android('layout_height', 'wrap_content', false);
-                            break;
-                        default:
-                            if (parent.overflow == 0 && !gridLayout && height >= parentHeight) {
-                                this.android('layout_height', 'match_parent', false);
-                            }
-                            else {
-                                this.android('layout_height', 'wrap_content', false);
-                            }
-                    }
-                }
-                if (this.constraint.minHeight != null && this.android('layout_height') != 'match_parent') {
+                if (this.constraint.minHeight != null) {
                     this.android('minHeight', `${this.constraint.minHeight}px`)
                         .android('layout_height', 'wrap_content');
+                }
+                else if (this.android('layout_height') == null) {
+                    if (parent.overflow == 0 && !requireWrap && height >= parentHeight) {
+                        this.android('layout_height', 'match_parent');
+                    }
+                    else {
+                        this.android('layout_height', 'wrap_content');
+                    }
                 }
             }
         }

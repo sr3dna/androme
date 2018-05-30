@@ -45,17 +45,17 @@ You can preview the library with the provided /demos/*.html which should generat
 
 The Date fields have been modified to demonstrate the Constraint circle and bias capabilities. Constraint chain is also available as a setting although the current Android implementation does not support exact placement. It might be more ideal in some scenarios to disable Constraint chain and use Constraint circle. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate.
 
-<img src="demos/form.png" alt="form" />
+<img src="demos/screenshots/form.png" alt="form" />
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and also to use flexbox instead of floats.
 
-<img src="demos/flexbox_1.png" alt="flexbox" />
+<img src="demos/screenshots/flexbox_1.png" alt="flexbox" />
 
-<img src="demos/flexbox_2.png" alt="flexbox - justify-content" />
+<img src="demos/screenshots/flexbox_2.png" alt="flexbox - justify-content" />
 
-<img src="demos/layout_weight.png" alt="GridLayout - layout weight" />
+<img src="demos/screenshots/layout_weight.png" alt="GridLayout - layout weight" />
 
-<img src="demos/position_absolute.png" alt="ConstraintLayout - position: absolute" />
+<img src="demos/screenshots/position_absolute.png" alt="ConstraintLayout - position: absolute" />
 
 ## auto-generated layout xml
 
