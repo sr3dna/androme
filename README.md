@@ -122,10 +122,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Label_1" />
 			<android.support.constraint.ConstraintLayout
 				android:id="@+id/constraintlayout_1"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:minHeight="95dp"
-				android:minWidth="97dp">
+				android:layout_height="95dp"
+				android:layout_width="match_parent">
 				<Spinner
 					android:id="@+id/month0"
 					android:background="@drawable/select_hour"

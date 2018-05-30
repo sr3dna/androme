@@ -145,10 +145,10 @@ const Utils = (function() {
                     const result = Utils.compare(a, b, attr);
                     if (result && result[0] !== result[1]) {
                         if (asc == 0) {
-                            return (result[0] > result[1] ? 1 : -1);
+                            return (result[0] >= result[1] ? 1 : -1);
                         }
                         else {
-                            return (result[0] < result[1] ? 1 : -1);
+                            return (result[0] <= result[1] ? 1 : -1);
                         }
                     }
                 }

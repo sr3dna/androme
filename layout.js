@@ -902,14 +902,14 @@ function setConstraints() {
                             horizontalChain = nodes.filter(item => (item != current && Utils.same(current, item, 'bounds.bottom')));
                         }
                         if (horizontalChain.length > 0) {
-                            horizontalChain.sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
+                            horizontalChain.sortAsc('bounds.x');
                         }
                         let verticalChain = nodes.filter(item => (item != current && Utils.same(current, item, 'bounds.left')));
                         if (verticalChain.length == 0) {
                             verticalChain = nodes.filter(item => (item != current && Utils.same(current, item, 'bounds.right')));
                         }
                         if (verticalChain.length > 0) {
-                            verticalChain.sort((a, b) => (a.bounds.y >= b.bounds.y ? 1 : -1));
+                            verticalChain.sortAsc('bounds.y');
                         }
                         current.constraint.horizontalChain = horizontalChain;
                         current.constraint.verticalChain = verticalChain;
@@ -1597,7 +1597,7 @@ function setMarginPadding() {
         if (node.isView(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
             if (node.android('orientation') == 'vertical') {
                 let current = node.box.top + node.paddingTop;
-                node.renderChildren.sort((a, b) => (a.linear.top >= b.linear.top ? 1 : -1)).forEach(item => {
+                node.renderChildren.sortAsc('linear.top').forEach(item => {
                     const height = Math.ceil(item.linear.top - current);
                     if (height > 0) {
                         item.android('layout_marginTop', `${node.marginTop + height}px`);
@@ -1607,7 +1607,7 @@ function setMarginPadding() {
             }
             else {
                 let current = node.box.left + node.paddingLeft;
-                node.renderChildren.sort((a, b) => (a.linear.left >= b.linear.left ? 1 : -1)).forEach(item => {
+                node.renderChildren.sortAsc('linear.left').forEach(item => {
                     if (!item.floating) {
                         const width = Math.ceil(item.linear.left - current);
                         if (width > 0) {
@@ -1822,7 +1822,7 @@ function setNodeCache() {
                 item.androidNode.parentIndex = i++;
             }
         });
-        Utils.sortAsc(node.children, 'depth', 'parent.id', 'parentIndex', 'id');
+        node.children.sortAsc('parentIndex');
     }
 }
 
@@ -1842,10 +1842,10 @@ function parseDocument() {
             mapY[node.depth] = {};
         }
         if (mapX[node.depth][x] == null) {
-            mapX[node.depth][x] = [];
+            mapX[node.depth][x] = new NodeList();
         }
         if (mapY[node.depth][y] == null) {
-            mapY[node.depth][y] = [];
+            mapY[node.depth][y] = new NodeList();
         }
         mapX[node.depth][x].push(node);
         mapY[node.depth][y].push(node);
@@ -1857,13 +1857,7 @@ function parseDocument() {
         for (let j = 0; j < coordsY.length; j++) {
             const axisY = [];
             const layers = [];
-            const sorted = mapY[i][coordsY[j]].sort((a, b) => {
-                if (!a.parent.flex.enabled && !b.parent.flex.enabled && a.withinX(b.linear)) {
-                    return (a.linear.left > b.linear.left ? 1 : -1);
-                }
-                return (a.parentIndex > b.parentIndex ? 1 : -1);
-            });
-            sorted.forEach(item => {
+            mapY[i][coordsY[j]].forEach(item => {
                 switch (item.style.position) {
                     case 'absolute':
                     case 'relative':
@@ -1874,8 +1868,13 @@ function parseDocument() {
                         axisY.push(item);
                 }
             });
-            Utils.sortAsc(layers, 'style.zIndex', 'parentIndex');
-            axisY.push(...layers);
+            axisY.sort((a, b) => {
+                if (!a.parent.flex.enabled && !b.parent.flex.enabled && a.withinX(b.linear)) {
+                    return (a.linear.left > b.linear.left ? 1 : -1);
+                }
+                return (a.parentIndex > b.parentIndex ? 1 : -1);
+            })
+            axisY.push(...Utils.sortAsc(layers, 'style.zIndex', 'parentIndex'));
             for (let k = 0; k < axisY.length; k++) {
                 const nodeY = axisY[k];
                 if (!nodeY.renderParent) {
@@ -1975,7 +1974,7 @@ function parseDocument() {
                                     if (nextCoordsX.length > 1) {
                                         const columnRight = [];
                                         for (let l = 0; l < nextCoordsX.length; l++) {
-                                            const nextAxisX = nextMapX[nextCoordsX[l]].sort((a, b) => (a.bounds.top >= b.bounds.top ? 1 : -1));
+                                            const nextAxisX = nextMapX[nextCoordsX[l]].sortAsc('bounds.top');
                                             columnRight[l] = (l == 0 ? Number.MIN_VALUE : columnRight[l - 1]);
                                             for (let m = 0; m < nextAxisX.length; m++) {
                                                 const nextX = nextAxisX[m];
@@ -2126,11 +2125,11 @@ function parseDocument() {
                             }
                             else {
                                 const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + (nodeY.android('layout_columnSpan') || 1) - 1];
-                                siblings = original.children.filter(item => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
+                                siblings = nodeY.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
                             }
                             if (siblings.length > 0) {
                                 siblings.unshift(nodeY);
-                                siblings.sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
+                                siblings.sortAsc('bounds.x');
                                 const renderParent = parent;
                                 const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, parent, siblings, SETTINGS.targetAPI, [0]);
                                 const rowSpan = nodeY.android('layout_rowSpan');

@@ -928,6 +928,12 @@ class NodeList extends Array {
         }
         return false;
     }
+    sortAsc(...attr) {
+        return Utils.sortAsc(this, ...attr);
+    }
+    sortDesc(...attr) {
+        return Utils.sortDesc(this, ...attr);
+    }
 
     get first() {
         return (this.length > 0 ? this[0] : null);
