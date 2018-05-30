@@ -282,7 +282,7 @@ function insertResourceAsset(resource, name, value) {
 
 function setBackgroundStyle(node) {
     const element = node.element;
-    const properties = {
+    const attributes = {
         border: parseBorderStyle,
         borderTop: parseBorderStyle,
         borderRight: parseBorderStyle,
@@ -296,65 +296,65 @@ function setBackgroundStyle(node) {
         backgroundParent = Color.parseRGBA(Node.getStyle(element.parentNode).backgroundColor);
     }
     const style = Node.getStyle(element);
-    for (const i in properties) {
-        properties[i] = properties[i](style[i]);
+    for (const i in attributes) {
+        attributes[i] = attributes[i](style[i]);
     }
-    if (properties.border[0] != 'none' || properties.borderRadius != null) {
-        properties.border[2] = addResourceColor(properties.border[2]);
-        if (backgroundParent[0] == properties.backgroundColor[0] || properties.backgroundColor[4] == 0) {
-            properties.backgroundColor = null;
+    if (attributes.border[0] != 'none' || attributes.borderRadius != null) {
+        attributes.border[2] = addResourceColor(attributes.border[2]);
+        if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
+            attributes.backgroundColor = null;
         }
         else {
-            properties.backgroundColor[1] = addResourceColor(properties.backgroundColor[1]);
+            attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
         }
         const borderStyle = {
             black: 'android:color="@android:color/black"',
-            solid: `android:color="${properties.border[2]}"`
+            solid: `android:color="${attributes.border[2]}"`
         };
         borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
         borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
-        borderStyle.default = borderStyle[properties.border[0]] || borderStyle.black;
+        borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
         let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
-        if (properties.border[0] != 'none' && properties.borderRadius != null) {
+        if (attributes.border[0] != 'none' && attributes.borderRadius != null) {
             xml += `<shape ${XMLNS_ANDROID.ANDROID} android:shape="rectangle">\n` +
-                   `\t<stroke android:width="${properties.border[1]}" ${borderStyle.default} />\n` +
-                   (properties.backgroundColor ? `\t<solid android:color="${properties.backgroundColor[1]}" />\n` : '');
-            if (properties.borderRadius.length == 1) {
-                xml += `\t<corners android:radius="${properties.borderRadius[0]}" />\n`;
+                   `\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
+                   (attributes.backgroundColor ? `\t<solid android:color="${attributes.backgroundColor[1]}" />\n` : '');
+            if (attributes.borderRadius.length == 1) {
+                xml += `\t<corners android:radius="${attributes.borderRadius[0]}" />\n`;
             }
             else {
-                if (properties.borderRadius.length == 2) {
-                    properties.borderRadius.push(...properties.borderRadius.slice());
+                if (attributes.borderRadius.length == 2) {
+                    attributes.borderRadius.push(...attributes.borderRadius.slice());
                 }
                 xml += '\t<corners';
-                properties.borderRadius.forEach((value, index) => xml += ` android:${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius="${value}"`);
+                attributes.borderRadius.forEach((value, index) => xml += ` android:${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius="${value}"`);
             }
             xml += ' />\n' +
                    '</shape>';
         }
-        else if (properties.border[0] != 'none' && properties.backgroundColor == null) {
+        else if (attributes.border[0] != 'none' && attributes.backgroundColor == null) {
             xml += `<shape ${XMLNS_ANDROID.ANDROID} android:shape="rectangle">\n` +
-                   `\t<stroke android:width="${properties.border[1]}" ${borderStyle.default} />\n` +
+                   `\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
                    '</shape>';
         }
         else {
             xml += `<layer-list ${XMLNS_ANDROID.ANDROID}>\n`;
-            if (properties.backgroundColor != null) {
+            if (attributes.backgroundColor != null) {
                 xml += '\t<item>\n' +
                        '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<solid android:color="${properties.backgroundColor[1]}" />\n` +
+                       `\t\t\t<solid android:color="${attributes.backgroundColor[1]}" />\n` +
                        '\t\t</shape>\n' +
                        '\t</item>\n';
             }
-            if (properties.border[0] != 'none') {
+            if (attributes.border[0] != 'none') {
                 xml += '\t<item>\n' +
                        '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<stroke android:width="${properties.border[1]}" ${borderStyle.default} />\n` +
+                       `\t\t\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
                        '\t\t</shape>\n' +
                        '\t</item>\n';
             }
             else {
-                [properties.borderTopWidth, properties.borderRightWidth, properties.borderBottomWidth, properties.borderLeftWidth].forEach((item, index) => {
+                [attributes.borderTopWidth, attributes.borderRightWidth, attributes.borderBottomWidth, attributes.borderLeftWidth].forEach((item, index) => {
                     xml += `\t<item android:${['top', 'right', 'bottom', 'left'][index]}="${item[2]}">\n` +
                            '\t\t<shape android:shape="rectangle">\n' +
                            `\t\t\t<stroke android:width="${item[1]}" ${borderStyle[item[0]] || borderStyle.black} />\n` +
@@ -397,10 +397,10 @@ function getBoxSpacing(node, complete) {
     const result = {};
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
-            const prop = border + side;
-            const value = Utils.parseInt(node.css(prop));
+            const attr = border + side;
+            const value = Utils.parseInt(node.css(attr));
             if (complete || value != 0) {
-                result[(SETTINGS.useRTL ? prop.replace('Left', 'Start').replace('Right', 'End') : prop)] = value;
+                result[(SETTINGS.useRTL ? attr.replace('Left', 'Start').replace('Right', 'End') : attr)] = value;
             }
         });
     });
@@ -1474,15 +1474,15 @@ function setResourceStyle() {
                         }
                     }
                     deleteKeys.forEach(value => delete filtered[value]);
-                    for (const attrs in filtered) {
-                        deleteStyleAttribute(sorted, attrs, filtered[attrs]);
-                        style[tag][attrs] = filtered[attrs];
+                    for (const attributes in filtered) {
+                        deleteStyleAttribute(sorted, attributes, filtered[attributes]);
+                        style[tag][attributes] = filtered[attributes];
                     }
                     for (const ids in combined) {
-                        const attrs = Array.from(combined[ids]).sort().join(';');
+                        const attributes = Array.from(combined[ids]).sort().join(';');
                         const nodeIds = ids.split(',').map(id => parseInt(id));
-                        deleteStyleAttribute(sorted, attrs, nodeIds);
-                        style[tag][attrs] = nodeIds;
+                        deleteStyleAttribute(sorted, attributes, nodeIds);
+                        style[tag][attributes] = nodeIds;
                     }
                 }
                 const combined = Object.keys(styleKey);
@@ -1724,27 +1724,30 @@ function setNodeCache() {
             NODE_CACHE.push(node);
         }
     }
+    const preAlignment = {};
     for (const node of NODE_CACHE) {
+        preAlignment[node.id] = {};
+        const style = preAlignment[node.id];
         switch (node.style.textAlign) {
             case 'center':
             case 'right':
             case 'end':
-                node.preAlignment.textAlign = node.style.textAlign;
+                style.textAlign = node.style.textAlign;
                 node.element.style.textAlign = '';
                 break
         }
-        node.preAlignment.verticalAlign = node.styleMap.verticalAlign || '';
+        style.verticalAlign = node.styleMap.verticalAlign || '';
         node.element.style.verticalAlign = 'top';
         if (node.overflow != 0) {
             if (Utils.hasValue(node.styleMap.width)) {
-                node.preAlignment.width = node.styleMap.width;
+                style.width = node.styleMap.width;
                 node.element.style.width = '';
             }
             if (Utils.hasValue(node.styleMap.height)) {
-                node.preAlignment.height = node.styleMap.height;
+                style.height = node.styleMap.height;
                 node.element.style.height = '';
             }
-            node.preAlignment.overflow = node.style.overflow;
+            style.overflow = node.style.overflow;
             node.element.style.overflow = 'visible';
         }
     }
@@ -1809,9 +1812,9 @@ function setNodeCache() {
         }
     });
     NODE_CACHE.push(...textCache);
-    for (const node of NODE_CACHE) {
-        for (const property in node.preAlignment) {
-            node.element.style[property] = node.preAlignment[property];
+    for (const node in preAlignment) {
+        for (const attr in node.style) {
+            node.element.style[attr] = node.style[attr];
         }
     }
     Utils.sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');

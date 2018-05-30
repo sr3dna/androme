@@ -25,7 +25,6 @@ class Node {
         this.styleAttributes = [];
         this.label = null;
         this.constraint = {};
-        this.preAlignment = {};
         this.nestedScroll = false;
         this.wrapNode = null;
         this.parentIndex = Number.MAX_VALUE;
@@ -61,16 +60,16 @@ class Node {
         }
         return this[name][attr];
     }
-    delete(obj, ...attrs) {
+    delete(obj, ...attributes) {
         const name = `_${obj}`;
         if (this[name] != null) {
-            if (typeof attrs[0] == 'object') {
-                for (const key in attrs[0]) {
-                    delete this[name][attrs[0][key]];
+            if (typeof attributes[0] == 'object') {
+                for (const key in attributes[0]) {
+                    delete this[name][attributes[0][key]];
                 }
             }
             else {
-                for (const attr of attrs) {
+                for (const attr of attributes) {
                     if (attr.indexOf('*') != -1) {
                         for (const [key] of Utils.search(this[name], attr)) {
                             delete this[name][key];

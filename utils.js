@@ -139,9 +139,9 @@ const Utils = (function() {
             }
             return -1;
         }
-        static sort(list, asc = 0, ...attrs) {
+        static sort(list, asc = 0, ...attributes) {
             return list.sort((a, b) => {
-                for (const attr of attrs) {
+                for (const attr of attributes) {
                     const result = Utils.compare(a, b, attr);
                     if (result && result[0] !== result[1]) {
                         if (asc == 0) {
@@ -155,14 +155,14 @@ const Utils = (function() {
                 return 0;
             });
         }
-        static sortAsc(list, ...attrs) {
-            return Utils.sort(list, 0, ...attrs);
+        static sortAsc(list, ...attributes) {
+            return Utils.sort(list, 0, ...attributes);
         }
-        static sortDesc(list, ...attrs) {
-            return Utils.sort(list, 1, ...attrs);
+        static sortDesc(list, ...attributes) {
+            return Utils.sort(list, 1, ...attributes);
         }
-        static same(obj1, obj2, ...attrs) {
-            for (const attr of attrs) {
+        static same(obj1, obj2, ...attributes) {
+            for (const attr of attributes) {
                 const result = Utils.compare(obj1, obj2, attr);
                 if (!result || result[0] !== result[1]) {
                     return false;
