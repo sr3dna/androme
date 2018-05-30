@@ -14,25 +14,25 @@ class Node {
         }
         this.id = id;
         this.element = element;
-        this.children = new NodeList();
+        this.children = new NodeList(null, this);
         this.api = api;
         this.depth = 0;
         this.style = style;
         this.styleMap = styleMap;
         this.visible = true;
-        this.linearRows = new NodeList();
-        this.renderChildren = new NodeList();
+        this.linearRows = new NodeList(null, this);
+        this.renderChildren = new NodeList(null, this);
         this.styleAttributes = [];
         this.label = null;
         this.constraint = {};
         this.preAlignment = {};
         this.nestedScroll = false;
         this.wrapNode = null;
-        this.parentOriginal = null;
         this.parentIndex = Number.MAX_VALUE;
 
         this._tagName = null;
         this._parent = null;
+        this._parentOriginal = null;
         this._flex = null;
         this._overflow = null;
         this._namespaces = new Set();
@@ -172,19 +172,21 @@ class Node {
         }
     }
     render(parent) {
-        if (parent.isView(WIDGET_ANDROID.LINEAR)) {
-            switch (this.widgetName) {
-                case WIDGET_ANDROID.LINEAR:
-                case WIDGET_ANDROID.RADIO_GROUP:
-                    parent.linearRows.push(this);
-                    break;
+        if (Node.is(parent)) {
+            if (parent.isView(WIDGET_ANDROID.LINEAR)) {
+                switch (this.widgetName) {
+                    case WIDGET_ANDROID.LINEAR:
+                    case WIDGET_ANDROID.RADIO_GROUP:
+                        parent.linearRows.push(this);
+                        break;
+                }
             }
+            this.renderParent = parent;
+            this.renderDepth = (parent.id == 0 ? 0 : parent.renderDepth + 1);
         }
-        this.renderParent = parent;
-        this.renderDepth = (parent.id == 0 ? 0 : parent.renderDepth + 1);
     }
-    hide(parent = true) {
-        this.renderParent = parent;
+    hide() {
+        this.renderParent = true;
         this.visible = false;
     }
     cascade() {
@@ -216,7 +218,12 @@ class Node {
             else {
                 width = this.bounds.width;
             }
-            this.constraint.minWidth = Math.ceil(width);
+            if (this.parent.id != 0 && this.parentOriginal.bounds.width > width) {
+                this.constraint.minWidth = 'match_parent';
+            }
+            else {
+                this.constraint.minWidth = `${Math.ceil(width)}px`;
+            }
         }
         if (this.viewHeight < height) {
             if (this.bounds.height < height) {
@@ -227,7 +234,12 @@ class Node {
             else {
                 height = this.bounds.height;
             }
-            this.constraint.minHeight = Math.ceil(height);
+            if (this.parent.id != 0 && this.parentOriginal.bounds.height > height) {
+                this.constraint.minHeight = 'match_parent';
+            }
+            else {
+                this.constraint.minHeight = `${Math.ceil(height)}px`;
+            }
         }
         if (calibrate) {
             this.setBounds(null, true);
@@ -322,12 +334,12 @@ class Node {
                     }
                 }
                 if (this.constraint.minWidth != null) {
-                    if (this.constraint.layoutWidth) {
-                        this.android('layout_width', `${this.constraint.minWidth}px`);
+                    if (this.constraint.layoutWidth || this.constraint.minWidth == 'match_parent') {
+                        this.android('layout_width', this.constraint.minWidth);
                     }
                     else {
-                        this.android('minWidth', `${this.constraint.minWidth}px`)
-                            .android('layout_width', 'wrap_content');
+                        this.android('minWidth', this.constraint.minWidth)
+                            .android('layout_width', 'wrap_content', false);
                     }
                 }
                 else if (this.android('layout_width') == null) {
@@ -370,12 +382,12 @@ class Node {
                     }
                 }
                 if (this.constraint.minHeight != null) {
-                    if (this.constraint.layoutHeight) {
-                        this.android('layout_height', `${this.constraint.minHeight}px`);
+                    if (this.constraint.layoutHeight || this.constraint.minHeight == 'match_parent') {
+                        this.android('layout_height', this.constraint.minHeight, true);
                     }
                     else {
                         this.android('minHeight', `${this.constraint.minHeight}px`)
-                            .android('layout_height', 'wrap_content');
+                            .android('layout_height', 'wrap_content', false);
                     }
                 }
                 else if (this.android('layout_height') == null) {
@@ -656,11 +668,11 @@ class Node {
         }
     }
     set parent(value) {
-        if (value == null || value == this._parent) {
+        if (!Node.is(value) || value == this._parent) {
             return;
         }
-        if (this._parent != null && this.parentOriginal == null) {
-            this.parentOriginal = this._parent;
+        if (this._parent != null && this._parentOriginal == null) {
+            this._parentOriginal = this._parent;
         }
         this._parent = value;
         if (this.depth == 0) {
@@ -670,14 +682,20 @@ class Node {
     get parent() {
         return (this._parent != null ? this._parent : new Node(0));
     }
+    set parentOriginal(value) {
+        if (Node.is(value)) {
+            this._parentOriginal = value;
+        }
+    }
+    get parentOriginal() {
+        return (this._parentOriginal || this._parent);
+    }
     get parentElement() {
         return this.element.parentNode;
     }
     set renderParent(value) {
-        if (typeof value == 'object') {
-            if (value.visible) {
-                value.renderChildren.push(this);
-            }
+        if (Node.is(value) && value.visible) {
+            value.renderChildren.push(this);
         }
         this._renderParent = value;
     }
@@ -821,6 +839,9 @@ class Node {
         return (this.androidId != null ? `@+id/${this.androidId}` : '');
     }
 
+    static is(node) {
+        return (node != null && node instanceof Node);
+    }
     static createWrapNode(id, node, parent, children, api, actions = null) {
         const options = {
             wrapNode: node,
@@ -881,17 +902,17 @@ class Node {
 }
 
 class NodeList extends Array {
-    constructor(nodes) {
+    constructor(nodes, parent = null) {
         super();
         if (Array.isArray(nodes)) {
             for (const node of nodes) {
                 this.push(node);
             }
         }
-        this._parent = null;
+        this.parent = parent;
     }
     push(value) {
-        if (value != null && value instanceof Node) {
+        if (Node.is(value)) {
             super.push(value);
         }
     }
@@ -915,7 +936,9 @@ class NodeList extends Array {
         return (this.length > 0 ? this[this.length - 1] : null);
     }
     set parent(value) {
-        this._parent = value;
+        if (Node.is(value)) {
+            this._parent = value;
+        }
     }
     get parent() {
         return this._parent;
@@ -955,5 +978,9 @@ class NodeList extends Array {
             return Utils.calculateBias(top, bottom);
         }
         return 0.5;
+    }
+
+    static is(nodes) {
+        return (nodes != null && nodes instanceof NodeList);
     }
 }
