@@ -14,14 +14,14 @@ class Node {
         }
         this.id = id;
         this.element = element;
-        this.children = [];
+        this.children = new NodeList();
         this.api = api;
         this.depth = 0;
         this.style = style;
         this.styleMap = styleMap;
         this.visible = true;
-        this.linearRows = [];
-        this.renderChildren = [];
+        this.linearRows = new NodeList();
+        this.renderChildren = new NodeList();
         this.styleAttributes = [];
         this.label = null;
         this.constraint = {};
@@ -243,18 +243,7 @@ class Node {
             }
         }
     }
-    isHorizontal() {
-        return (this._android.orientation == 'horizontal');
-    }
-    isView(...views) {
-        for (const viewName of views) {
-            if (this.widgetName == viewName) {
-                return true;
-            }
-        }
-        return false;
-    }
-    inside(rect, dimension = 'bounds') {
+    intersect(rect, dimension = 'bounds') {
         const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
         const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
         const left = (rect.left >= this[dimension].left && rect.left < this[dimension].right);
@@ -276,6 +265,17 @@ class Node {
             (this[dimension].left >= rect.left && this[dimension].right <= rect.right) ||
             (rect.left >= this[dimension].left && rect.right <= this[dimension].right)
         );
+    }
+    isHorizontal() {
+        return (this._android.orientation == 'horizontal');
+    }
+    isView(...views) {
+        for (const viewName of views) {
+            if (this.widgetName == viewName) {
+                return true;
+            }
+        }
+        return false;
     }
 
     setAndroidId(widgetName) {
@@ -314,15 +314,21 @@ class Node {
                         this.android('layout_width', Utils.convertToPX(styleMap.width));
                     }
                     if (styleMap.minWidth != null) {
-                        this.android('minWidth', Utils.convertToPX(styleMap.minWidth), false);
+                        this.android('minWidth', Utils.convertToPX(styleMap.minWidth), false)
+                            .android('layout_width', 'wrap_content', false);
                     }
                     if (styleMap.maxWidth != null) {
                         this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth), false);
                     }
                 }
                 if (this.constraint.minWidth != null) {
-                    this.android('minWidth', `${this.constraint.minWidth}px`)
-                        .android('layout_width', 'wrap_content');
+                    if (this.constraint.layoutWidth) {
+                        this.android('layout_width', `${this.constraint.minWidth}px`);
+                    }
+                    else {
+                        this.android('minWidth', `${this.constraint.minWidth}px`)
+                            .android('layout_width', 'wrap_content');
+                    }
                 }
                 else if (this.android('layout_width') == null) {
                     if (requireWrap) {
@@ -356,22 +362,39 @@ class Node {
                         this.android('layout_height', Utils.convertToPX(styleMap.height));
                     }
                     if (styleMap.minHeight != null) {
-                        this.android('minHeight', Utils.convertToPX(styleMap.minHeight), false);
+                        this.android('minHeight', Utils.convertToPX(styleMap.minHeight), false)
+                            .android('layout_height', 'wrap_content', false);
                     }
                     if (styleMap.maxHeight != null) {
                         this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight), false);
                     }
                 }
                 if (this.constraint.minHeight != null) {
-                    this.android('minHeight', `${this.constraint.minHeight}px`)
-                        .android('layout_height', 'wrap_content');
-                }
-                else if (this.android('layout_height') == null) {
-                    if (parent.overflow == 0 && !requireWrap && height >= parentHeight) {
-                        this.android('layout_height', 'match_parent');
+                    if (this.constraint.layoutHeight) {
+                        this.android('layout_height', `${this.constraint.minHeight}px`);
                     }
                     else {
-                        this.android('layout_height', 'wrap_content');
+                        this.android('minHeight', `${this.constraint.minHeight}px`)
+                            .android('layout_height', 'wrap_content');
+                    }
+                }
+                else if (this.android('layout_height') == null) {
+                    switch (this.widgetName) {
+                        case WIDGET_ANDROID.TEXT:
+                        case WIDGET_ANDROID.EDIT:
+                        case WIDGET_ANDROID.SPINNER:
+                        case WIDGET_ANDROID.CHECKBOX:
+                        case WIDGET_ANDROID.RADIO:
+                        case WIDGET_ANDROID.BUTTON:
+                            this.android('layout_height', 'wrap_content');
+                            break;
+                        default:
+                            if (parent.overflow == 0 && !requireWrap && height >= parentHeight) {
+                                this.android('layout_height', 'match_parent');
+                            }
+                            else {
+                                this.android('layout_height', 'wrap_content');
+                            }
                     }
                 }
             }
@@ -675,7 +698,7 @@ class Node {
         return [maxRight - minLeft, maxBottom - minTop];
     }
     get outerNodes() {
-        const children = this.children.filter(node => node.visible);
+        const children = this.children;
         let top = [children[0]];
         let right = [children[0]];
         let bottom = [children[0]];
@@ -829,19 +852,6 @@ class Node {
         element.children = [];
         return node;
     }
-    static android(nodes, name, value, overwrite = true) {
-        nodes.forEach(node => node.android(name, value, overwrite));
-    }
-    static getHorizontalBias(parent, firstNode, lastNode) {
-        const left = firstNode.linear.left - parent.box.left;
-        const right = parent.box.right - lastNode.linear.right;
-        return Utils.calculateBias(left, right);
-    }
-    static getVerticalBias(parent, firstNode, lastNode) {
-        const top = firstNode.linear.top - parent.box.top;
-        const bottom = parent.box.bottom - lastNode.linear.bottom;
-        return Utils.calculateBias(top, bottom);
-    }
     static getRangeBounds(element) {
         const range = document.createRange();
         range.selectNodeContents(element);
@@ -868,28 +878,82 @@ class Node {
         }
         return value;
     }
-    static inside(nodes, dimension = 'linear') {
-        for (const node of nodes) {
-            if (nodes.some(item => item != node && node.inside(item[dimension]))) {
+}
+
+class NodeList extends Array {
+    constructor(nodes) {
+        super();
+        if (Array.isArray(nodes)) {
+            for (const node of nodes) {
+                this.push(node);
+            }
+        }
+        this._parent = null;
+    }
+    push(value) {
+        if (value != null && value instanceof Node) {
+            super.push(value);
+        }
+    }
+
+    android(name, value, overwrite = true) {
+        this.forEach(node => node.android(name, value, overwrite));
+    }
+    intersect(dimension = 'linear') {
+        for (const node of this) {
+            if (this.some(item => (item != node && node.intersect(item[dimension])))) {
                 return true;
             }
         }
         return false;
     }
-    static isLinearXY(nodes) {
-        if (!Node.inside(nodes)) {
-            let linearX = true;
-            let linearY = true;
-            if (nodes.length > 1) {
-                const minBottom = nodes.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
-                const minRight = nodes.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
-                linearX = !nodes.some(item => (item.linear.top >= minBottom));
-                linearY = !nodes.some(item => (item.linear.left >= minRight));
+
+    get first() {
+        return (this.length > 0 ? this[0] : null);
+    }
+    get last() {
+        return (this.length > 0 ? this[this.length - 1] : null);
+    }
+    set parent(value) {
+        this._parent = value;
+    }
+    get parent() {
+        return this._parent;
+    }
+    get linearX() {
+        if (this.length > 0 && !this.intersect()) {
+            if (this.length > 1) {
+                const minBottom = this.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
+                return !this.some(item => (item.linear.top >= minBottom));
             }
-            return [linearX, linearY];
+            return true;
         }
-        else {
-            return [false, false];
+        return false;
+    }
+    get linearY() {
+        if (this.length > 0 && !this.intersect()) {
+            if (this.length > 1) {
+                const minRight = this.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
+                return !this.some(item => (item.linear.left >= minRight));
+            }
+            return true;
         }
+        return false;
+    }
+    get horizontalBias() {
+        if (this.parent != null) {
+            const left = this.first.linear.left - this.parent.box.left;
+            const right = this.parent.box.right - this.last.linear.right;
+            return Utils.calculateBias(left, right);
+        }
+        return 0.5;
+    }
+    get verticalBias() {
+        if (this.parent != null) {
+            const top = this.first.linear.top - this.parent.box.top;
+            const bottom = this.parent.box.bottom - this.last.linear.bottom;
+            return Utils.calculateBias(top, bottom);
+        }
+        return 0.5;
     }
 }

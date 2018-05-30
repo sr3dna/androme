@@ -15,7 +15,7 @@ const SETTINGS = {
     chainPackedVerticalOffset: 14,
 };
 
-const NODE_CACHE = [];
+const NODE_CACHE = new NodeList();
 
 const RESOURCE = {
     string: new Map(),
@@ -865,7 +865,7 @@ function setConstraints() {
                     }
                 }
             }
-            if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !Node.inside(nodes))) {
+            if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect())) {
                 const CHAIN_MAP = {
                     chain: ['horizontalChain', 'verticalChain'],
                     leftTop: ['left', 'top'],
@@ -918,14 +918,15 @@ function setConstraints() {
                     chainNodes.forEach(current => {
                         const chainDirection = current.constraint[value];
                         if (chainDirection != null && (flex.enabled || (chainDirection.length > 1 && chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(chain => chain.id).join(''))).reduce((a, b) => (a == b ? a : 0)) > 0))) {
+                            chainDirection.parent = node;
                             const HV = CHAIN_MAP['horizontalVertical'][index];
                             const VH = CHAIN_MAP['horizontalVertical'][(index == 0 ? 1 : 0)];
                             const WH = CHAIN_MAP['widthHeight'][index];
                             const LAYOUT_WH = `layout_${WH.toLowerCase()}`;
                             const leftTop = CHAIN_MAP['leftTop'][index];
                             const rightBottom = CHAIN_MAP['rightBottom'][index];
-                            const firstNode = chainDirection[0];
-                            const lastNode = chainDirection[chainDirection.length - 1];
+                            const firstNode = chainDirection.first;
+                            const lastNode = chainDirection.last;
                             firstNode
                                 .app(LAYOUT[leftTop], 'parent')
                                 .constraint[HV.toLowerCase()] = true;
@@ -933,7 +934,7 @@ function setConstraints() {
                                 .app(LAYOUT[rightBottom], 'parent')
                                 .constraint[HV.toLowerCase()] = true;
                             let maxOffset = -1;
-                            const unassigned = [];
+                            const unassigned = new NodeList();
                             for (let i = 0; i < chainDirection.length; i++) {
                                 const chain = chainDirection[i];
                                 const chainNext = chainDirection[i + 1];
@@ -947,7 +948,7 @@ function setConstraints() {
                                     chain.app(LAYOUT[CHAIN_MAP['leftRightTopBottom'][index]], chainPrev.stringId);
                                 }
                                 if (chain[`view${WH}`] == null) {
-                                    chain.android(`layout_${LAYOUT_WH}`, '0px');
+                                    chain.android(LAYOUT_WH, '0px');
                                     const min = chain.styleMap[`min${WH}`];
                                     const max = chain.styleMap[`max${WH}`];
                                     if (min != null) {
@@ -965,7 +966,10 @@ function setConstraints() {
                                     const LAYOUT_VH = VH.toLowerCase();
                                     chain.app(`layout_constraint${HV}_weight`, chain.flex.grow);
                                     if (chain[`view${WH}`] == null && chain.flex.grow == 0 && chain.flex.shrink <= 1) {
-                                        chain.android(`layout_${LAYOUT_WH}`, 'wrap_content');
+                                        chain.android(LAYOUT_WH, 'wrap_content');
+                                    }
+                                    else if (chain.flex.grow > 0) {
+                                        chain.android(LAYOUT_WH, '0px');
                                     }
                                     if (chain.flex.shrink == 0) {
                                         chain.app(`layout_constrained${WH}`, 'true');
@@ -1018,7 +1022,7 @@ function setConstraints() {
                                 switch (flex.justifyContent) {
                                     case 'space-between':
                                         firstNode.app(chainStyle, 'spread_inside');
-                                        Node.android(unassigned, LAYOUT_WH, 'wrap_content');
+                                        unassigned.android(LAYOUT_WH, 'wrap_content');
                                         break;
                                     case 'space-evenly':
                                         setConstraintPercent(node, chainDirection, (index == 0));
@@ -1026,7 +1030,7 @@ function setConstraints() {
                                     case 'space-around':
                                         firstNode.app(chainStyle, 'spread');
                                         chainDirection.forEach(item => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
-                                        Node.android(unassigned, LAYOUT_WH, 'wrap_content');
+                                        unassigned.android(LAYOUT_WH, 'wrap_content');
                                         break;
                                     default:
                                         let bias = 0.5;
@@ -1052,7 +1056,7 @@ function setConstraints() {
                                         firstNode
                                             .app(chainStyle, 'packed')
                                             .app(`layout_constraint${HV}_bias`, bias, false);
-                                        Node.android(unassigned, LAYOUT_WH, 'wrap_content');
+                                        unassigned.android(LAYOUT_WH, 'wrap_content');
                                 }
                             }
                             else {
@@ -1062,8 +1066,8 @@ function setConstraints() {
                                 else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
                                     firstNode
                                         .app(chainStyle, 'packed')
-                                        .app(`layout_constraint${HV}_bias`, Node[`get${HV}Bias`](node, firstNode, lastNode));
-                                    Node.android(unassigned, LAYOUT_WH, 'wrap_content');
+                                        .app(`layout_constraint${HV}_bias`, chainDirection[`${HV.toLowerCase()}Bias`]);
+                                    unassigned.android(LAYOUT_WH, 'wrap_content');
                                 }
                                 else {
                                     setConstraintPercent(node, chainDirection, (index == 0));
@@ -1200,6 +1204,12 @@ function setConstraints() {
                                 .android(getRTL('layout_marginLeft'), left);
                             current.constraint.vertical = true;
                             current.constraint.horizontal = true;
+                        }
+                        if (current.android(LAYOUT['parentRight']) != null) {
+                            node.constraint.layoutWidth = true;
+                        }
+                        if (current.android(LAYOUT['parentBottom']) != null) {
+                            node.constraint.layoutHeight = true;
                         }
                     }
                 }
@@ -1696,6 +1706,7 @@ function setNodeCache() {
         if (INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
             continue;
         }
+        
         if (Utils.isVisible(element)) {
             const node = new Node(generateNodeId(), element, SETTINGS.targetAPI);
             NODE_CACHE.push(node);
@@ -1778,7 +1789,7 @@ function setNodeCache() {
         if (node.element.children.length > 1) {
             node.element.childNodes.forEach(element => {
                 if (element.nodeName == '#text' && element.textContent.trim() != '') {
-                    const textNode = Node.createTextNode(NODE_CACHE.length + textCache.length + 1, element, SETTINGS.targetAPI, node, [0, 4]);
+                    const textNode = Node.createTextNode(generateNodeId() + textCache.length, element, SETTINGS.targetAPI, node, [0, 4]);
                     textCache.push(textNode);
                     node.children.push(textNode);
                 }
@@ -1938,6 +1949,7 @@ function parseDocument() {
                                             }
                                             else {
                                                 assigned = new Array(columns.length).fill(l);
+                                                every = false;
                                             }
                                         }
                                     }
@@ -2078,7 +2090,7 @@ function parseDocument() {
                                 }
                             }
                             if (!nodeY.renderParent) {
-                                const [linearX, linearY] = Node.isLinearXY(nodeY.children);
+                                const [linearX, linearY] = [nodeY.children.linearX, nodeY.children.linearY];
                                 if (linearX && linearY) {
                                     xml += writeFrameLayout(nodeY, parent);
                                 }
@@ -2100,17 +2112,16 @@ function parseDocument() {
                             if (original != null) {
                                 let siblings = null;
                                 if (SETTINGS.useLayoutWeight) {
-                                    siblings = nodeY.gridSiblings;
+                                    siblings = new NodeList(nodeY.gridSiblings);
                                 }
                                 else {
                                     const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + (nodeY.android('layout_columnSpan') || 1) - 1];
                                     siblings = original.children.filter(item => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
                                 }
-                                if (siblings != null && siblings.length > 0) {
+                                if (siblings.length > 0) {
                                     siblings.unshift(nodeY);
                                     siblings.sort((a, b) => (a.bounds.x >= b.bounds.x ? 1 : -1));
                                     const renderParent = parent;
-                                    const [linearX, linearY] = Node.isLinearXY(siblings);
                                     const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, parent, siblings, SETTINGS.targetAPI, [0]);
                                     const rowSpan = nodeY.android('layout_rowSpan');
                                     const columnSpan = nodeY.android('layout_columnSpan');
@@ -2127,8 +2138,8 @@ function parseDocument() {
                                         wrapNode.inheritGrid(item);
                                     });
                                     wrapNode.setBounds();
-                                    if (linearX || linearY) {
-                                        xml += writeLinearLayout(wrapNode, renderParent, linearY);
+                                    if (siblings.linearX || siblings.linearY) {
+                                        xml += writeLinearLayout(wrapNode, renderParent, siblings.linearY);
                                     }
                                     else {
                                         xml += writeDefaultLayout(wrapNode, renderParent);
@@ -2172,7 +2183,7 @@ function parseDocument() {
                                                 wrapNode.android('layout_columnSpan', columnSpan);
                                             }
                                             wrapNode
-                                                .android('orientation', (Node.isLinearXY(result)[0] ? 'horizontal' : 'vertical'))
+                                                .android('orientation', (result.linearX ? 'horizontal' : 'vertical'))
                                                 .android('checkedButton', checked.stringId);
                                             wrapNode.setBounds();
                                             wrapNode.setAttributes();
