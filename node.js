@@ -16,23 +16,23 @@ class Node {
         this.element = element;
         this.children = [];
         this.api = api;
+        this.depth = 0;
         this.style = style;
         this.styleMap = styleMap;
-        this.depthIndent = 0;
         this.visible = true;
         this.linearRows = [];
         this.renderChildren = [];
-        this.original = {};
         this.styleAttributes = [];
         this.label = null;
         this.constraint = {};
         this.preAlignment = {};
         this.nestedScroll = false;
         this.wrapNode = null;
+        this.parentOriginal = null;
         this.parentIndex = Number.MAX_VALUE;
 
+        this._tagName = null;
         this._parent = null;
-        this._depth = null;
         this._flex = null;
         this._overflow = null;
         this._namespaces = new Set();
@@ -162,9 +162,24 @@ class Node {
             }
         }
     }
-    hide(parent = true) {
-        this.visible = false;
+    render(parent) {
+        if (parent.isView(WIDGET_ANDROID.LINEAR)) {
+            parent.linearRows.push(this);
+        }
         this.renderParent = parent;
+        this.renderDepth = (parent.id == 0 ? 0 : parent.renderDepth + 1);
+    }
+    hide(parent = true) {
+        this.renderParent = parent;
+        this.visible = false;
+    }
+    cascade() {
+        function cascade(node) {
+            const children = [...node.children];
+            node.children.forEach(item => children.push(...cascade(item)));
+            return children;
+        }
+        return cascade(this);
     }
     inheritGrid(node) {
         for (const prop in node) {
@@ -220,7 +235,7 @@ class Node {
             let height = 0;
             let gridLayout = false;
             if (this.wrapNode != null) {
-                parent = this.wrapNode.original.parent || this.parent;
+                parent = this.wrapNode.parentOriginal || this.parent;
                 [width, height] = this.childrenBox;
                 gridLayout = this.parent.isView(WIDGET_ANDROID.GRID);
             }
@@ -276,13 +291,11 @@ class Node {
                         }
                     }
                     if (this.constraint.minWidth != null && styleMap.width == null && this.android('minWidth') == null && this.android('layout_width') != 'match_parent') {
-                        this
-                            .android('minWidth', `${this.constraint.minWidth}px`)
+                        this.android('minWidth', `${this.constraint.minWidth}px`)
                             .android('layout_width', 'wrap_content');
                     }
                     if (this.constraint.minHeight != null && styleMap.height == null && this.android('minHeight') == null && this.android('layout_height') != 'match_parent') {
-                        this
-                            .android('minHeight', `${this.constraint.minHeight}px`)
+                        this.android('minHeight', `${this.constraint.minHeight}px`)
                             .android('layout_height', 'wrap_content');
                     }
                 }
@@ -515,11 +528,10 @@ class Node {
                 }
                 const parentTextAlign = (this.styleMap.textAlign != textAlign && !this.renderParent.floating && !this.floating);
                 switch (this.renderParent.widgetName) {
-                    case WIDGET_ANDROID.LINEAR:
                     case WIDGET_ANDROID.RADIO_GROUP:
-                        if (parentTextAlign) {
+                    case WIDGET_ANDROID.LINEAR:
+                        if (parentTextAlign && this.parent.wrapNode != null) {
                             this.renderParent.android('gravity', horizontal);
-                            horizontal = null;
                         }
                         break;
                     case WIDGET_ANDROID.CONSTRAINT:
@@ -531,7 +543,6 @@ class Node {
                     case WIDGET_ANDROID.GRID:
                         if (parentTextAlign) {
                             layoutGravity.push(horizontal);
-                            horizontal = null;
                         }
                         break;
                 }
@@ -577,15 +588,15 @@ class Node {
         }
     }
     set parent(value) {
-        if (this._parent == value) {
+        if (value == null || value == this._parent) {
             return;
         }
-        if (this._parent != null && this.original.parent == null) {
-            this.original.parent = this._parent;
+        if (this._parent != null && this.parentOriginal == null) {
+            this.parentOriginal = this._parent;
         }
         this._parent = value;
-        if (this._depth == null) {
-            this._depth = value.depth + 1;
+        if (this.depth == 0) {
+            this.depth = value.depth + 1;
         }
     }
     get parent() {
@@ -605,18 +616,6 @@ class Node {
     get renderParent() {
         return this._renderParent;
     }
-    set depth(value) {
-        if (this._depth == value) {
-            return;
-        }
-        if (this.original.depth == null && this._depth != null) {
-            this.original.depth = this._depth;
-        }
-        this._depth = value;
-    }
-    get depth() {
-        return (this._depth != null ? this._depth : 0);
-    }
     get childrenBox() {
         let minLeft = Number.MAX_VALUE;
         let maxRight = Number.MIN_VALUE;
@@ -631,7 +630,7 @@ class Node {
         return [maxRight - minLeft, maxBottom - minTop];
     }
     get outerNodes() {
-        const children = this.children.filter(node => (node.visible && node.depth == this.depth + 1));
+        const children = this.children.filter(node => node.visible);
         let top = [children[0]];
         let right = [children[0]];
         let bottom = [children[0]];
@@ -666,8 +665,11 @@ class Node {
         }
         return { top, right, bottom, left, children };
     }
+    set tagName(value) {
+        this._tagName = value;
+    }
     get tagName() {
-        return this.element.tagName;
+        return (this._tagName != null ? this._tagName : this.element.tagName);
     }
     get flex() {
         if (this._flex == null) {
@@ -749,9 +751,8 @@ class Node {
         const options = {
             wrapNode: node,
             children,
-            original: node.original,
+            parentOriginal: node.parentOriginal,
             depth: node.depth,
-            depthIndent: node.depthIndent,
             parent,
             actions
         };
@@ -779,6 +780,16 @@ class Node {
     }
     static android(nodes, name, value, overwrite = true) {
         nodes.forEach(node => node.android(name, value, overwrite));
+    }
+    static getHorizontalBias(parent, firstNode, lastNode) {
+        const left = firstNode.linear.left - parent.box.left;
+        const right = parent.box.right - lastNode.linear.right;
+        return Utils.calculateBias(left, right);
+    }
+    static getVerticalBias(parent, firstNode, lastNode) {
+        const top = firstNode.linear.top - parent.box.top;
+        const bottom = parent.box.bottom - lastNode.linear.bottom;
+        return Utils.calculateBias(top, bottom);
     }
     static getRangeBounds(element) {
         const range = document.createRange();
