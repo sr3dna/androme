@@ -25,7 +25,6 @@ class Node {
         this.styleAttributes = [];
         this.label = null;
         this.constraint = {};
-        this.nestedScroll = false;
         this.wrapNode = null;
         this.parentIndex = Number.MAX_VALUE;
 
@@ -187,6 +186,20 @@ class Node {
     hide() {
         this.renderParent = true;
         this.visible = false;
+    }
+    ascend() {
+        const result = [];
+        let current = this.parent;
+        while (current != null) {
+            if (current.id != 0) {
+                result.push(current);
+                current = current.parent;
+            }
+            else {
+                break;
+            }
+        }
+        return result;
     }
     cascade() {
         function cascade(node) {

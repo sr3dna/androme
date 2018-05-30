@@ -477,13 +477,12 @@ function renderViewLayout(node, parent, tagName) {
     node.setAndroidId(tagName);
     if (node.overflow != 0) {
         const scrollView = [];
-        if (node.overflowY) {
-            scrollView.push((node.nestedScroll ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
-        }
         if (node.overflowX) {
             scrollView.push(WIDGET_ANDROID.SCROLL_HORIZONTAL);
         }
-        node.cascade().forEach(item => item.nestedScroll = true);
+        if (node.overflowY) {
+            scrollView.push((node.ascend().some(item => item.overflow != 0) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
+        }
         let current = node;
         let scrollDepth = parent.renderDepth + scrollView.length;
         scrollView
@@ -491,6 +490,7 @@ function renderViewLayout(node, parent, tagName) {
                 const wrapNode = Node.createWrapNode(generateNodeId(), current, null, [current], SETTINGS.targetAPI);
                 wrapNode.setAndroidId(widgetName);
                 wrapNode.setBounds();
+                wrapNode.android('fadeScrollbars', 'false');
                 wrapNode.setAttributes();
                 NODE_CACHE.push(wrapNode);
                 switch (widgetName) {
@@ -511,7 +511,7 @@ function renderViewLayout(node, parent, tagName) {
                 preXml = indent + `<${widgetName}{@${wrapNode.id}}>\n` + preXml;
                 postXml += indent + `</${widgetName}>\n`;
                 if (current == node) {
-                    node.parent = wrapeNode;
+                    node.parent = wrapNode;
                     renderParent = wrapNode;
                 }
                 current = wrapNode;
