@@ -1,25 +1,14 @@
 import { WIDGET_ANDROID, BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, STRING_ANDROID, BUILD_ANDROID, DENSITY_ANDROID } from './constants';
+import { RESOURCE, insertResourceAsset, getViewAttributes, parseStyleAttribute } from './resource';
+import getRTL from './localization';
 import * as Util from './util';
 import * as Color from './color';
 import * as Element from './element';
-import { RESOURCE, getViewAttributes, parseStyleAttribute } from './resource';
-import { Node, NodeList } from './node';
+import Node from './node';
+import NodeList from './nodelist';
 import SETTINGS from './settings';
 
 const NODE_CACHE = new NodeList();
-
-function getRTL(value) {
-    if (SETTINGS.useRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
-        switch (value) {
-            case 'left':
-                return 'start';
-            case 'right':
-                return 'end';
-        }
-        value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
-    }
-    return value;
-}
 
 function writeFrameLayout(node, parent) {
     return renderViewLayout(node, parent, WIDGET_ANDROID.FRAME);
@@ -68,13 +57,13 @@ function renderViewLayout(node, parent, tagName) {
         let current = node;
         let scrollDepth = parent.renderDepth + scrollView.length;
         scrollView
-            .map((widgetName, index) => {
-                const wrapNode = Node.createWrapNode(generateNodeId(), current, null, [current], SETTINGS.targetAPI);
+            .map(widgetName => {
+                const wrapNode = Node.createWrapNode(generateNodeId(), current, SETTINGS.targetAPI, null, new NodeList([current]));
+                NODE_CACHE.push(wrapNode);
                 wrapNode.setAndroidId(widgetName);
                 wrapNode.setBounds();
                 wrapNode.android('fadeScrollbars', 'false');
                 wrapNode.setAttributes();
-                NODE_CACHE.push(wrapNode);
                 switch (widgetName) {
                     case WIDGET_ANDROID.SCROLL_HORIZONTAL:
                         wrapNode
@@ -121,10 +110,8 @@ function renderViewLayout(node, parent, tagName) {
     return getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, insertGridSpace(node), preXml, postXml);
 }
 
-function renderViewTag(node, parent, tagName, recursive = false) {
+function renderViewTag(node, parent, tagName) {
     const element = node.element;
-    let preXml = '';
-    let postXml = '';
     node.setAndroidId(tagName);
     switch (node.widgetName) {
         case WIDGET_ANDROID.EDIT:
@@ -423,7 +410,7 @@ function setConstraints() {
                         break;
                     }
                 }
-                while (true)
+                while (true);
                 for (const current of nodes) {
                     if (!anchored.includes(current.stringId)) {
                         if (constraint) {
@@ -509,7 +496,6 @@ function setConstraints() {
                                 const chain = chainDirection[i];
                                 const chainNext = chainDirection[i + 1];
                                 const chainPrev = chainDirection[i - 1];
-                                const chainWidthHeight = chain.styleMap[LAYOUT_WH];
                                 if (chainNext != null) {
                                     chain.app(LAYOUT[CHAIN_MAP['rightLeftBottomTop'][index]], chainNext.stringId);
                                     maxOffset = Math.max(chainNext.linear[leftTop] - chain.linear[rightBottom], maxOffset);
@@ -703,7 +689,7 @@ function setConstraints() {
                         break;
                     }
                 }
-                while (true)
+                while (true);
                 if (constraint) {
                     nodes.forEach(opposite => {
                         if (opposite.anchors < 2) {
@@ -938,7 +924,10 @@ function setResourceStyle() {
     }
     for (const tag in cache) {
         const nodes = cache[tag];
-        let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => value = {});
+        let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => {
+            value = {};
+            return value;
+        });
         for (const node of nodes) {
             for (let i = 0; i < node.styleAttributes.length; i++) {
                 const attr = parseStyleAttribute(node.styleAttributes[i]);
@@ -965,7 +954,7 @@ function setResourceStyle() {
             }
             else {
                 const styleKey = {};
-                const layoutKey = {}
+                const layoutKey = {};
                 for (let i = 0; i < sorted.length; i++) {
                     const filtered = {};
                     for (const attr1 in sorted[i]) {
@@ -1054,7 +1043,7 @@ function setResourceStyle() {
                 sorted = sorted.filter(item => item);
             }
         }
-        while (sorted.length > 0)
+        while (sorted.length > 0);
     }
     const resource = new Map();
     for (const name in style) {
@@ -1104,7 +1093,7 @@ function setResourceStyle() {
     }
     inherit.forEach(styles => {
         let parent = null;
-        styles.split('.').forEach((value, index) => {
+        styles.split('.').forEach(value => {
             const match = value.match(/^(\w+)_([0-9]+)$/);
             if (match != null) {
                 const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
@@ -1288,7 +1277,7 @@ function setNodeCache() {
             case 'end':
                 style.textAlign = node.style.textAlign;
                 node.element.style.textAlign = '';
-                break
+                break;
         }
         style.verticalAlign = node.styleMap.verticalAlign || '';
         node.element.style.verticalAlign = 'top';
@@ -1306,7 +1295,7 @@ function setNodeCache() {
         }
     }
     const parentNodes = {};
-    const textNodes = [];
+    const textNodes = new NodeList();
     for (const parent of NODE_CACHE) {
         if (parent.bounds == null) {
             parent.setBounds();
@@ -1521,7 +1510,7 @@ export function parseDocument() {
                     return (a.linear.left > b.linear.left ? 1 : -1);
                 }
                 return (a.parentIndex > b.parentIndex ? 1 : -1);
-            })
+            });
             axisY.push(...Util.sortAsc(layers, 'style.zIndex', 'parentIndex'));
             for (let k = 0; k < axisY.length; k++) {
                 const nodeY = axisY[k];
@@ -1558,7 +1547,7 @@ export function parseDocument() {
                                                 else {
                                                     return (a.length < b.length ? a : b);
                                                 }
-                                            }))
+                                            }));
                                         })];
                                     if (base.length > 1) {
                                         let maxIndex = -1;
@@ -1779,7 +1768,8 @@ export function parseDocument() {
                                 siblings.unshift(nodeY);
                                 siblings.sortAsc('bounds.x');
                                 const renderParent = parent;
-                                const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, parent, siblings, SETTINGS.targetAPI, [0]);
+                                const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, SETTINGS.targetAPI, parent, siblings, [0]);
+                                NODE_CACHE.push(wrapNode);
                                 const rowSpan = nodeY.android('layout_rowSpan');
                                 const columnSpan = nodeY.android('layout_columnSpan');
                                 if (rowSpan > 1) {
@@ -1791,7 +1781,7 @@ export function parseDocument() {
                                     wrapNode.android('layout_columnSpan', columnSpan);
                                 }
                                 siblings.forEach(item => {
-                                    item.parent = wrapNode
+                                    item.parent = wrapNode;
                                     wrapNode.inheritGrid(item);
                                 });
                                 wrapNode.setBounds();
@@ -1803,7 +1793,6 @@ export function parseDocument() {
                                 }
                                 k--;
                                 restart = true;
-                                NODE_CACHE.push(wrapNode);
                             }
                         }
                         if (!nodeY.renderParent && !restart) {
@@ -1817,10 +1806,10 @@ export function parseDocument() {
                                             let rowSpan = 1;
                                             let columnSpan = 1;
                                             let checked = null;
-                                            const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, parent, result, SETTINGS.targetAPI);
+                                            const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, SETTINGS.targetAPI, parent, result);
+                                            NODE_CACHE.push(wrapNode);
                                             wrapNode.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
                                             wrapNode.render(parent);
-                                            NODE_CACHE.push(wrapNode);
                                             for (const item of result) {
                                                 rowSpan += (Util.convertToInt(item.android('layout_rowSpan')) || 1) - 1;
                                                 columnSpan += (Util.convertToInt(item.android('layout_columnSpan')) || 1) - 1;
@@ -1830,7 +1819,7 @@ export function parseDocument() {
                                                 }
                                                 item.parent = wrapNode;
                                                 item.render(wrapNode);
-                                                radioXml += renderViewTag(item, wrapNode, WIDGET_ANDROID.RADIO, true);
+                                                radioXml += renderViewTag(item, wrapNode, WIDGET_ANDROID.RADIO);
                                             }
                                             if (rowSpan > 1) {
                                                 wrapNode.android('layout_rowSpan', rowSpan);

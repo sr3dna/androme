@@ -39,7 +39,7 @@ export function generateId(section, name) {
             name = `${prefix}_${i++}`;
         }
     }
-    while (true)
+    while (true);
     return name;
 }
 
@@ -87,7 +87,7 @@ export function convertToPX(value, unit = true) {
             switch (match[0]) {
                 case 'pt':
                     value *= (4 / 3);
-                    break
+                    break;
                 case 'em':
                     value * 16;
                     break;

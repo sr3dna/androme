@@ -1,3 +1,6 @@
+// chrome-android-layout: 1.2.1
+// https://github.com/anpham6/chrome-android-layout
+
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -203,7 +206,7 @@
                 name = `${prefix}_${i++}`;
             }
         }
-        while (true)
+        while (true);
         return name;
     }
 
@@ -251,7 +254,7 @@
                 switch (match[0]) {
                     case 'pt':
                         value *= (4 / 3);
-                        break
+                        break;
                     case 'em':
                         value * 16;
                         break;
@@ -862,28 +865,9 @@
         }
     };
 
-    function insertResourceAsset$1(resource, name, value) {
-        let resourceName = null;
-        if (hasValue(value)) {
-            let i = 0;
-            do {
-                resourceName = name;
-                if (i > 0) {
-                    resourceName += i;
-                }
-                if (!resource.has(resourceName)) {
-                    resource.set(resourceName, value);
-                }
-                i++;
-            }
-            while (resource.has(resourceName) && resource.get(resourceName) != value)
-        }
-        return resourceName;
-    }
-
     function parseBorderStyle(value) {
         let stroke = value.match(/(none|dotted|dashed|solid)/);
-        let width = value.match(/([0-9\.]+(?:px|pt|em))/);
+        let width = value.match(/([0-9.]+(?:px|pt|em))/);
         let color = parseRGBA(value);
         if (stroke != null) {
             stroke = stroke[1];
@@ -911,6 +895,25 @@
             }
         }
         return null;
+    }
+
+    function insertResourceAsset(resource, name, value) {
+        let resourceName = null;
+        if (hasValue(value)) {
+            let i = 0;
+            do {
+                resourceName = name;
+                if (i > 0) {
+                    resourceName += i;
+                }
+                if (!resource.has(resourceName)) {
+                    resource.set(resourceName, value);
+                }
+                i++;
+            }
+            while (resource.has(resourceName) && resource.get(resourceName) != value);
+        }
+        return resourceName;
     }
 
     function addResourceString(node, value) {
@@ -964,7 +967,7 @@
                 else if (!/[a-zA-Z0-9]+/.test(name) && node != null) {
                     name = node.androidId;
                 }
-                name = insertResourceAsset$1(RESOURCE['string'], name, value);
+                name = insertResourceAsset(RESOURCE['string'], name, value);
             }
             if (element != null && element.nodeName == '#text') {
                 const prevSibling = element.previousSibling;
@@ -1007,7 +1010,7 @@
             }
         }
         if (stringArray.size > 0 || numberArray.size > 0) {
-            const name = insertResourceAsset$1(RESOURCE['array'], `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : numberArray));
+            const name = insertResourceAsset(RESOURCE['array'], `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : numberArray));
             return { entries: name };
         }
         return null;
@@ -1195,6 +1198,7 @@
         RESOURCE: RESOURCE,
         XMLNS_ANDROID: XMLNS_ANDROID,
         ACTION_ANDROID: ACTION_ANDROID,
+        insertResourceAsset: insertResourceAsset,
         addResourceString: addResourceString,
         addResourceStringArray: addResourceStringArray,
         addResourceColor: addResourceColor,
@@ -1204,6 +1208,19 @@
         getViewAttributes: getViewAttributes,
         parseStyleAttribute: parseStyleAttribute
     });
+
+    function getRTL(value) {
+        if (SETTINGS.useRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
+            switch (value) {
+                case 'left':
+                    return 'start';
+                case 'right':
+                    return 'end';
+            }
+            value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
+        }
+        return value;
+    }
 
     class Node {
         constructor(id, element, api, options = {}) {
@@ -1221,14 +1238,11 @@
             }
             this.id = id;
             this.element = element;
-            this.children = new NodeList(null, this);
             this.api = api;
             this.depth = 0;
             this.style = style;
             this.styleMap = styleMap;
             this.visible = true;
-            this.linearRows = new NodeList(null, this);
-            this.renderChildren = new NodeList(null, this);
             this.styleAttributes = [];
             this.label = null;
             this.constraint = {};
@@ -1323,11 +1337,9 @@
                     return result;
                 }
             }
-            return this;
         }
         combine() {
             const result = [];
-            const namespaces = {};
             this._namespaces.forEach(value => {
                 const obj = this[`_${value}`];
                 for (const attr in obj) {
@@ -1377,7 +1389,7 @@
         }
         render(parent) {
             if (Node.is(parent)) {
-                if (parent.isView(WIDGET_ANDROID.LINEAR)) {
+                if (parent.isView(WIDGET_ANDROID.LINEAR) && parent.id != 0) {
                     switch (this.widgetName) {
                         case WIDGET_ANDROID.LINEAR:
                         case WIDGET_ANDROID.RADIO_GROUP:
@@ -1786,7 +1798,7 @@
                             horizontal = 'start';
                             break;
                         case 'right':
-                            horizontal = getLTR('right', 'end');
+                            horizontal = getRTL('right', 'end');
                             break;
                         case 'end':
                             horizontal = 'end';
@@ -1899,7 +1911,7 @@
             return this.element.parentNode;
         }
         set renderParent(value) {
-            if (Node.is(value) && value.visible) {
+            if (Node.is(value) && value.visible && value.renderChildren != null) {
                 value.renderChildren.push(this);
             }
             this._renderParent = value;
@@ -2047,7 +2059,7 @@
         static is(node) {
             return (node != null && node instanceof Node);
         }
-        static createWrapNode(id, node, parent, children, api, actions = null) {
+        static createWrapNode(id, node, api, parent, children, actions = null) {
             const options = {
                 wrapNode: node,
                 children,
@@ -2107,15 +2119,24 @@
         constructor(nodes, parent = null) {
             super();
             if (Array.isArray(nodes)) {
-                for (const node of nodes) {
-                    this.push(node);
-                }
+                this.push(...nodes);
             }
             this.parent = parent;
         }
         push(...value) {
-            if (value.length > 0 && Node.is(value[0])) {
-                super.push(...value);
+            for (const node of value) {
+                if (Node.is(node)) {
+                    if (node.children == null) {
+                        node.children = new NodeList(null, node);
+                    }
+                    if (node.linearRows == null) {
+                        node.linearRows = new NodeList(null, node);
+                    }
+                    if (node.renderChildren == null) {
+                        node.renderChildren = new NodeList(null, node);
+                    }
+                    super.push(node);
+                }
             }
         }
 
@@ -2195,19 +2216,6 @@
 
     const NODE_CACHE = new NodeList();
 
-    function getRTL(value) {
-        if (SETTINGS.useRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
-            switch (value) {
-                case 'left':
-                    return 'start';
-                case 'right':
-                    return 'end';
-            }
-            value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
-        }
-        return value;
-    }
-
     function writeFrameLayout(node, parent) {
         return renderViewLayout(node, parent, WIDGET_ANDROID.FRAME);
     }
@@ -2255,13 +2263,13 @@
             let current = node;
             let scrollDepth = parent.renderDepth + scrollView.length;
             scrollView
-                .map((widgetName, index) => {
-                    const wrapNode = Node.createWrapNode(generateNodeId(), current, null, [current], SETTINGS.targetAPI);
+                .map(widgetName => {
+                    const wrapNode = Node.createWrapNode(generateNodeId(), current, SETTINGS.targetAPI, null, new NodeList([current]));
+                    NODE_CACHE.push(wrapNode);
                     wrapNode.setAndroidId(widgetName);
                     wrapNode.setBounds();
                     wrapNode.android('fadeScrollbars', 'false');
                     wrapNode.setAttributes();
-                    NODE_CACHE.push(wrapNode);
                     switch (widgetName) {
                         case WIDGET_ANDROID.SCROLL_HORIZONTAL:
                             wrapNode
@@ -2308,10 +2316,8 @@
         return getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, insertGridSpace(node), preXml, postXml);
     }
 
-    function renderViewTag(node, parent, tagName, recursive = false) {
+    function renderViewTag(node, parent, tagName) {
         const element = node.element;
-        let preXml = '';
-        let postXml = '';
         node.setAndroidId(tagName);
         switch (node.widgetName) {
             case WIDGET_ANDROID.EDIT:
@@ -2610,7 +2616,7 @@
                             break;
                         }
                     }
-                    while (true)
+                    while (true);
                     for (const current of nodes) {
                         if (!anchored.includes(current.stringId)) {
                             if (constraint) {
@@ -2696,7 +2702,6 @@
                                     const chain = chainDirection[i];
                                     const chainNext = chainDirection[i + 1];
                                     const chainPrev = chainDirection[i - 1];
-                                    const chainWidthHeight = chain.styleMap[LAYOUT_WH];
                                     if (chainNext != null) {
                                         chain.app(LAYOUT[CHAIN_MAP['rightLeftBottomTop'][index]], chainNext.stringId);
                                         maxOffset = Math.max(chainNext.linear[leftTop] - chain.linear[rightBottom], maxOffset);
@@ -2890,7 +2895,7 @@
                             break;
                         }
                     }
-                    while (true)
+                    while (true);
                     if (constraint) {
                         nodes.forEach(opposite => {
                             if (opposite.anchors < 2) {
@@ -3125,7 +3130,10 @@
         }
         for (const tag in cache) {
             const nodes = cache[tag];
-            let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => value = {});
+            let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => {
+                value = {};
+                return value;
+            });
             for (const node of nodes) {
                 for (let i = 0; i < node.styleAttributes.length; i++) {
                     const attr = parseStyleAttribute(node.styleAttributes[i]);
@@ -3241,7 +3249,7 @@
                     sorted = sorted.filter(item => item);
                 }
             }
-            while (sorted.length > 0)
+            while (sorted.length > 0);
         }
         const resource = new Map();
         for (const name in style) {
@@ -3291,7 +3299,7 @@
         }
         inherit.forEach(styles => {
             let parent = null;
-            styles.split('.').forEach((value, index) => {
+            styles.split('.').forEach(value => {
                 const match = value.match(/^(\w+)_([0-9]+)$/);
                 if (match != null) {
                     const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
@@ -3475,7 +3483,7 @@
                 case 'end':
                     style.textAlign = node.style.textAlign;
                     node.element.style.textAlign = '';
-                    break
+                    break;
             }
             style.verticalAlign = node.styleMap.verticalAlign || '';
             node.element.style.verticalAlign = 'top';
@@ -3493,7 +3501,7 @@
             }
         }
         const parentNodes = {};
-        const textNodes = [];
+        const textNodes = new NodeList();
         for (const parent of NODE_CACHE) {
             if (parent.bounds == null) {
                 parent.setBounds();
@@ -3745,7 +3753,7 @@
                                                     else {
                                                         return (a.length < b.length ? a : b);
                                                     }
-                                                }))
+                                                }));
                                             })];
                                         if (base.length > 1) {
                                             let maxIndex = -1;
@@ -3966,7 +3974,8 @@
                                     siblings.unshift(nodeY);
                                     siblings.sortAsc('bounds.x');
                                     const renderParent = parent;
-                                    const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, parent, siblings, SETTINGS.targetAPI, [0]);
+                                    const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, SETTINGS.targetAPI, parent, siblings, [0]);
+                                    NODE_CACHE.push(wrapNode);
                                     const rowSpan = nodeY.android('layout_rowSpan');
                                     const columnSpan = nodeY.android('layout_columnSpan');
                                     if (rowSpan > 1) {
@@ -3990,7 +3999,6 @@
                                     }
                                     k--;
                                     restart = true;
-                                    NODE_CACHE.push(wrapNode);
                                 }
                             }
                             if (!nodeY.renderParent && !restart) {
@@ -4004,10 +4012,10 @@
                                                 let rowSpan = 1;
                                                 let columnSpan = 1;
                                                 let checked = null;
-                                                const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, parent, result, SETTINGS.targetAPI);
+                                                const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, SETTINGS.targetAPI, parent, result);
+                                                NODE_CACHE.push(wrapNode);
                                                 wrapNode.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
                                                 wrapNode.render(parent);
-                                                NODE_CACHE.push(wrapNode);
                                                 for (const item of result) {
                                                     rowSpan += (convertToInt(item.android('layout_rowSpan')) || 1) - 1;
                                                     columnSpan += (convertToInt(item.android('layout_columnSpan')) || 1) - 1;
@@ -4017,7 +4025,7 @@
                                                     }
                                                     item.parent = wrapNode;
                                                     item.render(wrapNode);
-                                                    radioXml += renderViewTag(item, wrapNode, WIDGET_ANDROID.RADIO, true);
+                                                    radioXml += renderViewTag(item, wrapNode, WIDGET_ANDROID.RADIO);
                                                 }
                                                 if (rowSpan > 1) {
                                                     wrapNode.android('layout_rowSpan', rowSpan);

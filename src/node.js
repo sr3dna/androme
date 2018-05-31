@@ -1,9 +1,10 @@
 import { WIDGET_ANDROID, BUILD_ANDROID, INHERIT_ANDROID, MAPPING_CHROME, API_ANDROID, FIXED_ANDROID } from './constants';
+import * as Resource from './resource';
+import getRTL from './localization';
 import * as Util from './util';
 import { getStyle } from './element';
-import * as Resource from './resource';
 
-export class Node {
+export default class Node {
     constructor(id, element, api, options = {}) {
         let style = {};
         let styleMap = {};
@@ -19,14 +20,11 @@ export class Node {
         }
         this.id = id;
         this.element = element;
-        this.children = new NodeList(null, this);
         this.api = api;
         this.depth = 0;
         this.style = style;
         this.styleMap = styleMap;
         this.visible = true;
-        this.linearRows = new NodeList(null, this);
-        this.renderChildren = new NodeList(null, this);
         this.styleAttributes = [];
         this.label = null;
         this.constraint = {};
@@ -121,11 +119,9 @@ export class Node {
                 return result;
             }
         }
-        return this;
     }
     combine() {
         const result = [];
-        const namespaces = {};
         this._namespaces.forEach(value => {
             const obj = this[`_${value}`];
             for (const attr in obj) {
@@ -175,7 +171,7 @@ export class Node {
     }
     render(parent) {
         if (Node.is(parent)) {
-            if (parent.isView(WIDGET_ANDROID.LINEAR)) {
+            if (parent.isView(WIDGET_ANDROID.LINEAR) && parent.id != 0) {
                 switch (this.widgetName) {
                     case WIDGET_ANDROID.LINEAR:
                     case WIDGET_ANDROID.RADIO_GROUP:
@@ -584,7 +580,7 @@ export class Node {
                         horizontal = 'start';
                         break;
                     case 'right':
-                        horizontal = getLTR('right', 'end');
+                        horizontal = getRTL('right', 'end');
                         break;
                     case 'end':
                         horizontal = 'end';
@@ -697,7 +693,7 @@ export class Node {
         return this.element.parentNode;
     }
     set renderParent(value) {
-        if (Node.is(value) && value.visible) {
+        if (Node.is(value) && value.visible && value.renderChildren != null) {
             value.renderChildren.push(this);
         }
         this._renderParent = value;
@@ -845,7 +841,7 @@ export class Node {
     static is(node) {
         return (node != null && node instanceof Node);
     }
-    static createWrapNode(id, node, parent, children, api, actions = null) {
+    static createWrapNode(id, node, api, parent, children, actions = null) {
         const options = {
             wrapNode: node,
             children,
@@ -898,95 +894,5 @@ export class Node {
             value = Util.convertToPX(value);
         }
         return value;
-    }
-}
-
-export class NodeList extends Array {
-    constructor(nodes, parent = null) {
-        super();
-        if (Array.isArray(nodes)) {
-            for (const node of nodes) {
-                this.push(node);
-            }
-        }
-        this.parent = parent;
-    }
-    push(...value) {
-        if (value.length > 0 && Node.is(value[0])) {
-            super.push(...value);
-        }
-    }
-
-    android(name, value, overwrite = true) {
-        this.forEach(node => node.android(name, value, overwrite));
-    }
-    intersect(dimension = 'linear') {
-        for (const node of this) {
-            if (this.some(item => (item != node && node.intersect(item[dimension])))) {
-                return true;
-            }
-        }
-        return false;
-    }
-    sortAsc(...attr) {
-        return Util.sortAsc(this, ...attr);
-    }
-    sortDesc(...attr) {
-        return Util.sortDesc(this, ...attr);
-    }
-
-    get first() {
-        return (this.length > 0 ? this[0] : null);
-    }
-    get last() {
-        return (this.length > 0 ? this[this.length - 1] : null);
-    }
-    set parent(value) {
-        if (Node.is(value)) {
-            this._parent = value;
-        }
-    }
-    get parent() {
-        return this._parent;
-    }
-    get linearX() {
-        if (this.length > 0 && !this.intersect()) {
-            if (this.length > 1) {
-                const minBottom = this.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
-                return !this.some(item => (item.linear.top >= minBottom));
-            }
-            return true;
-        }
-        return false;
-    }
-    get linearY() {
-        if (this.length > 0 && !this.intersect()) {
-            if (this.length > 1) {
-                const minRight = this.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
-                return !this.some(item => (item.linear.left >= minRight));
-            }
-            return true;
-        }
-        return false;
-    }
-    get horizontalBias() {
-        if (this.parent != null) {
-            const left = this.first.linear.left - this.parent.box.left;
-            const right = this.parent.box.right - this.last.linear.right;
-            return Util.calculateBias(left, right);
-        }
-        return 0.5;
-    }
-    get verticalBias() {
-        if (this.parent != null) {
-            const top = this.first.linear.top - this.parent.box.top;
-            const bottom = this.parent.box.bottom - this.last.linear.bottom;
-            return Util.calculateBias(top, bottom);
-        }
-        return 0.5;
-    }
-
-    static is(nodes) {
-        return (nodes != null && nodes instanceof NodeList);
     }
 }

@@ -1,9 +1,11 @@
 {
   "name": "chrome-android-layout",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Converts and optimizes HTML pages into the various standard Android layouts in XML. Resources and drawables are also auto-generated. iOS and Xamarin Forms will be supported as well.",
   "scripts": {
-    "build": "rollup -c --watch"
+    "dev": "./node_modules/.bin/rollup -c ./config/rollup.dev.config.js",
+    "prod": "./node_modules/.bin/rollup -c ./config/rollup.prod.config.js",
+    "watch": "./node_modules/.bin/rollup -c ./config/rollup.dev.config.js --watch"
   },
   "repository": {
     "type": "git",
@@ -42,5 +44,15 @@
   "bugs": {
     "url": "https://github.com/anpham6/chrome-android-layout/issues"
   },
-  "homepage": "https://github.com/anpham6/chrome-android-layout#readme"
+  "homepage": "https://github.com/anpham6/chrome-android-layout#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-transform-builtin-extend": "^1.1.2",
+    "babel-preset-env": "^1.7.0",
+    "rollup": "^0.59.4",
+    "rollup-plugin-babel": "^3.0.4",
+    "rollup-plugin-babel-minify": "^5.0.0",
+    "rollup-plugin-eslint": "^4.0.0"
+  }
 }

@@ -147,28 +147,9 @@ export const ACTION_ANDROID =
     }
 };
 
-function insertResourceAsset(resource, name, value) {
-    let resourceName = null;
-    if (hasValue(value)) {
-        let i = 0;
-        do {
-            resourceName = name;
-            if (i > 0) {
-                resourceName += i;
-            }
-            if (!resource.has(resourceName)) {
-                resource.set(resourceName, value);
-            }
-            i++;
-        }
-        while (resource.has(resourceName) && resource.get(resourceName) != value)
-    }
-    return resourceName;
-}
-
 function parseBorderStyle(value) {
     let stroke = value.match(/(none|dotted|dashed|solid)/);
-    let width = value.match(/([0-9\.]+(?:px|pt|em))/);
+    let width = value.match(/([0-9.]+(?:px|pt|em))/);
     let color = parseRGBA(value);
     if (stroke != null) {
         stroke = stroke[1];
@@ -196,6 +177,25 @@ function parseBoxDimensions(value) {
         }
     }
     return null;
+}
+
+export function insertResourceAsset(resource, name, value) {
+    let resourceName = null;
+    if (hasValue(value)) {
+        let i = 0;
+        do {
+            resourceName = name;
+            if (i > 0) {
+                resourceName += i;
+            }
+            if (!resource.has(resourceName)) {
+                resource.set(resourceName, value);
+            }
+            i++;
+        }
+        while (resource.has(resourceName) && resource.get(resourceName) != value);
+    }
+    return resourceName;
 }
 
 export function addResourceString(node, value) {
@@ -271,7 +271,7 @@ export function addResourceString(node, value) {
 }
 
 export function addResourceStringArray(node) {
-    const element = node.element
+    const element = node.element;
     const stringArray = new Map();
     let numberArray = new Map();
     for (let i = 0; i < element.children.length; i++) {
