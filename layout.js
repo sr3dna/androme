@@ -12,7 +12,7 @@ const SETTINGS = {
     whitespaceHorizontalOffset: 4,
     constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 14,
+    chainPackedVerticalOffset: 14
 };
 
 const NODE_CACHE = new NodeList();
@@ -255,8 +255,7 @@ function getRTL(value) {
             case 'right':
                 return 'end';
         }
-        value = value.replace(/Left/g, 'Start');
-        value = value.replace(/Right/g, 'End');
+        value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
     }
     return value;
 }
@@ -695,11 +694,11 @@ function setConstraints() {
         }
     };
     for (const node of NODE_CACHE) {
-        const relative = node.isView(WIDGET_ANDROID.RELATIVE);
         const constraint = node.isView(WIDGET_ANDROID.CONSTRAINT);
+        const relative = node.isView(WIDGET_ANDROID.RELATIVE);
         const flex = node.flex;
         const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
-        if (relative || constraint || flex.enabled) {
+        if (constraint || relative || flex.enabled) {
             const nodes = node.renderChildren;
             if (!flex.enabled) {
                 node.expandToFit();
@@ -1620,12 +1619,14 @@ function setMarginPadding() {
         }
         if (SETTINGS.targetAPI >= BUILD_ANDROID.OREO) {
             if (node.visible) {
-                const RTL_marginLeft = getRTL('layout_marginLeft');
-                const RTL_marginRight = getRTL('layout_marginRight');
+                const marginLeft_RTL = getRTL('layout_marginLeft');
+                const marginRight_RTL = getRTL('layout_marginRight');
+                const paddingLeft_RTL = getRTL('paddingLeft');
+                const paddingRight_RTL = getRTL('paddingRight');
                 const marginTop = Utils.parseInt(node.android('layout_marginTop'));
-                const marginRight = Utils.parseInt(node.android(RTL_marginRight));
+                const marginRight = Utils.parseInt(node.android(marginRight_RTL));
                 const marginBottom = Utils.parseInt(node.android('layout_marginBottom'));
-                const marginLeft = Utils.parseInt(node.android(RTL_marginLeft));
+                const marginLeft = Utils.parseInt(node.android(marginLeft_RTL));
                 if (marginTop != 0 && marginTop == marginBottom && marginBottom == marginLeft && marginLeft == marginRight) {
                     node.delete('android', 'layout_margin*')
                         .android('layout_margin', `${marginTop}px`);
@@ -1636,16 +1637,14 @@ function setMarginPadding() {
                             .android('layout_marginVertical', `${marginTop}px`);
                     }
                     if (marginLeft != 0 && marginLeft == marginRight) {
-                        node.delete('android', RTL_marginLeft, RTL_marginRight)
+                        node.delete('android', marginLeft_RTL, marginRight_RTL)
                             .android('layout_marginHorizontal', `${marginLeft}px`);
                     }
                 }
-                const RTL_paddingLeft = getRTL('paddingLeft');
-                const RTL_paddingRight = getRTL('paddingRight');
                 const paddingTop = Utils.parseInt(node.android('paddingTop'));
-                const paddingRight = Utils.parseInt(node.android(RTL_paddingRight));
+                const paddingRight = Utils.parseInt(node.android(paddingRight_RTL));
                 const paddingBottom = Utils.parseInt(node.android('paddingBottom'));
-                const paddingLeft = Utils.parseInt(node.android(RTL_paddingLeft));
+                const paddingLeft = Utils.parseInt(node.android(paddingLeft_RTL));
                 if (paddingTop != 0 && paddingTop == paddingBottom && paddingBottom == paddingLeft && paddingLeft == paddingRight) {
                     node.delete('android', 'padding*')
                         .android('padding', `${paddingTop}px`);
@@ -1656,7 +1655,7 @@ function setMarginPadding() {
                             .android('paddingVertical', `${paddingTop}px`);
                     }
                     if (paddingLeft != 0 && paddingLeft == paddingRight) {
-                        node.delete('android', RTL_paddingLeft, RTL_paddingRight)
+                        node.delete('android', paddingLeft_RTL, paddingRight_RTL)
                             .android('paddingHorizontal', `${paddingLeft}px`);
                     }
                 }
@@ -1752,7 +1751,7 @@ function setNodeCache() {
         }
     }
     const parentNodes = {};
-    const textCache = [];
+    const textNodes = [];
     for (const parent of NODE_CACHE) {
         if (parent.bounds == null) {
             parent.setBounds();
@@ -1804,14 +1803,14 @@ function setNodeCache() {
         if (node.element.children.length > 1) {
             node.element.childNodes.forEach(element => {
                 if (element.nodeName == '#text' && element.textContent.trim() != '') {
-                    const textNode = Node.createTextNode(generateNodeId() + textCache.length, element, SETTINGS.targetAPI, node, [0, 4]);
-                    textCache.push(textNode);
+                    const textNode = Node.createTextNode(generateNodeId() + textNodes.length, element, SETTINGS.targetAPI, node, [0, 4]);
+                    textNodes.push(textNode);
                     node.children.push(textNode);
                 }
             });
         }
     });
-    NODE_CACHE.push(...textCache);
+    NODE_CACHE.push(...textNodes);
     for (const node in preAlignment) {
         for (const attr in node.style) {
             node.element.style[attr] = node.style[attr];
@@ -1830,9 +1829,9 @@ function setNodeCache() {
 }
 
 function parseDocument() {
+    let output = `${STRING_ANDROID.XML_DECLARATION}\n{0}`;
     const mapX = [];
     const mapY = [];
-    let output = `${STRING_ANDROID.XML_DECLARATION}\n{0}`;
     setStyleMap();
     setNodeCache();
     for (const node of NODE_CACHE) {
@@ -1854,7 +1853,6 @@ function parseDocument() {
         mapY[node.depth][y].push(node);
     }
     for (let i = 0; i < mapY.length; i++) {
-        const coordsX = Object.keys(mapX[i]);
         const coordsY = Object.keys(mapY[i]);
         const partial = new Map();
         for (let j = 0; j < coordsY.length; j++) {
@@ -2021,11 +2019,11 @@ function parseDocument() {
                                                 const nodeX = columns[m][l];
                                                 if (nodeX != null) {
                                                     if (top == null) {
-                                                        top = nodeX.linear.top;
+                                                        top = nodeX.bounds.top;
                                                     }
-                                                    else if (nodeX.linear.top != top) {
+                                                    else if (nodeX.bounds.top != top) {
                                                         const nextRowX = columns[m - 1][l + 1];
-                                                        if (columns[m][l - 1] == null || (nextRowX != null && nextRowX.linear.top == nodeX.linear.top)) {
+                                                        if (columns[m][l - 1] == null || (nextRowX != null && nextRowX.bounds.top == nodeX.bounds.top)) {
                                                             columns[m].splice(l, 0, { spacer: 1 });
                                                         }
                                                         else if (columns[m][l + 1] == null) {

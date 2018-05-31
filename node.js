@@ -203,9 +203,9 @@ class Node {
     }
     cascade() {
         function cascade(node) {
-            const children = [...node.children];
-            node.children.forEach(item => children.push(...cascade(item)));
-            return children;
+            const current = [...node.children];
+            node.children.forEach(item => current.push(...cascade(item)));
+            return current;
         }
         return cascade(this);
     }
@@ -923,9 +923,9 @@ class NodeList extends Array {
         }
         this.parent = parent;
     }
-    push(value) {
-        if (Node.is(value)) {
-            super.push(value);
+    push(...value) {
+        if (value.length > 0 && Node.is(value[0])) {
+            super.push(...value);
         }
     }
 
