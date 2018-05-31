@@ -4,12 +4,10 @@ export default {
     input: './src/layout.js',
     treeshake: false,
     output: {
-        file: './dist/chrome-android-layout.js',
-        name: 'android',
+        file: './dist/androme.js',
+        name: 'androme',
         format: 'umd',
-        sourcemap: true,
-        banner: `// chrome-android-layout: ${version}\n` +
-                '// https://github.com/anpham6/chrome-android-layout\n'
+        sourcemap: 'inline'
     },
     watch: {
         include: './src/**',

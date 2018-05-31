@@ -1,15 +1,14 @@
 {
-  "name": "chrome-android-layout",
-  "version": "1.2.1",
+  "name": "androme",
+  "version": "1.2.2",
   "description": "Converts and optimizes HTML pages into the various standard Android layouts in XML. Resources and drawables are also auto-generated. iOS and Xamarin Forms will be supported as well.",
   "scripts": {
-    "dev": "./node_modules/.bin/rollup -c ./config/rollup.dev.config.js",
-    "prod": "./node_modules/.bin/rollup -c ./config/rollup.prod.config.js",
-    "watch": "./node_modules/.bin/rollup -c ./config/rollup.dev.config.js --watch"
+    "dev": "./node_modules/.bin/rollup -c ./config/rollup.dev.config.js --watch",
+    "prod": "./node_modules/.bin/rollup -c ./config/rollup.prod.config.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anpham6/chrome-android-layout.git"
+    "url": "git+https://github.com/anpham6/androme.git"
   },
   "keywords": [
     "Android",
@@ -42,9 +41,9 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/anpham6/chrome-android-layout/issues"
+    "url": "https://github.com/anpham6/androme/issues"
   },
-  "homepage": "https://github.com/anpham6/chrome-android-layout#readme",
+  "homepage": "https://github.com/anpham6/androme#readme",
   "devDependencies": {
     "babel-core": "^6.26.3",
     "babel-plugin-external-helpers": "^6.22.0",

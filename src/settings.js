@@ -1,4 +1,4 @@
-import { BUILD_ANDROID, DENSITY_ANDROID } from './constants';
+import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/constants';
 
 const SETTINGS = {
     targetAPI: BUILD_ANDROID.OREO,

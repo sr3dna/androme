@@ -1,4 +1,4 @@
-import { sortAsc, sortDesc, calculateBias } from './util';
+import { sortAsc, sortDesc, calculateBias } from './lib/util';
 import Node from './node';
 
 export default class NodeList extends Array {

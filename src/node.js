@@ -1,8 +1,8 @@
-import { WIDGET_ANDROID, BUILD_ANDROID, INHERIT_ANDROID, MAPPING_CHROME, API_ANDROID, FIXED_ANDROID } from './constants';
+import { WIDGET_ANDROID, BUILD_ANDROID, INHERIT_ANDROID, MAPPING_CHROME, API_ANDROID, FIXED_ANDROID } from './lib/constants';
+import * as Util from './lib/util';
+import { getStyle } from './lib/element';
 import * as Resource from './resource';
-import getRTL from './localization';
-import * as Util from './util';
-import { getStyle } from './element';
+import RTL from './localization';
 
 export default class Node {
     constructor(id, element, api, options = {}) {
@@ -580,7 +580,7 @@ export default class Node {
                         horizontal = 'start';
                         break;
                     case 'right':
-                        horizontal = getRTL('right', 'end');
+                        horizontal = RTL('right', 'end');
                         break;
                     case 'end':
                         horizontal = 'end';

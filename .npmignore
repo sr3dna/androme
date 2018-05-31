@@ -1,4 +1,7 @@
-package-lock.json
+.vscode/
+/node_modules/
+*.code-workspace
 /config/
+package-lock.json
 .babelrc
 .eslintrc.json

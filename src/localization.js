@@ -1,7 +1,7 @@
-import { BUILD_ANDROID } from './constants';
+import { BUILD_ANDROID } from './lib/constants';
 import SETTINGS from './settings';
 
-export default function getRTL(value) {
+export default function RTL(value) {
     if (SETTINGS.useRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
         switch (value) {
             case 'left':

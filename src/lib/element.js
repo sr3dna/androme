@@ -2,12 +2,12 @@ export function getStyle(element) {
     return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
 }
 
-export function getBoxSpacing(node, rtl = false, complete = false) {
+export function getBoxSpacing(element, rtl = false, complete = false) {
     const result = {};
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
             const attr = border + side;
-            const value = parseInt(node.css(attr));
+            const value = parseInt(getStyle(element)[attr]) || 0;
             if (complete || value != 0) {
                 result[(rtl ? attr.replace('Left', 'Start').replace('Right', 'End') : attr)] = value;
             }

@@ -1,7 +1,7 @@
-import { WIDGET_ANDROID } from './constants';
-import { generateId, cameltoLowerCase, convertToPX, hasValue, isNumber, padLeft } from './util';
-import { findNearestColor, parseRGBA } from './color';
-import { getStyle, getBoxSpacing } from './element';
+import { WIDGET_ANDROID, STRING_ANDROID } from './lib/constants';
+import { generateId, cameltoLowerCase, convertToPX, insetToDP, hasValue, isNumber, padLeft } from './lib/util';
+import { findNearestColor, parseRGBA } from './lib/color';
+import { getStyle, getBoxSpacing } from './lib/element';
 import SETTINGS from './settings';
 
 export const RESOURCE = {
@@ -433,7 +433,7 @@ export function setComputedStyle(node) {
 }
 
 export function setBoxSpacing(node) {
-    const result = getBoxSpacing(node, SETTINGS.useRTL);
+    const result = getBoxSpacing(node.element, SETTINGS.useRTL);
     for (const i in result) {
         result[i] += 'px';
     }
@@ -474,4 +474,96 @@ export function parseStyleAttribute(value) {
         return value.replace(match[0], name);
     }
     return value;
+}
+
+export function writeResourceStringXml() {
+    const resource = new Map([...RESOURCE['string'].entries()].sort());
+    if (resource.size > 0) {
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, value] of resource.entries()) {
+            xml.push(`\t<string name="${name}">${value}</string>`);
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/string.xml -->\n');
+        return xml.join('\n');
+    }
+    return '';
+}
+
+export function writeResourceArrayXml() {
+    const resource = new Map([...RESOURCE['array'].entries()].sort());
+    if (resource.size > 0) {
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, values] of resource.entries()) {
+            xml.push(`\t<string-array name="${name}">`);
+            for (const [name, value] of values.entries()) {
+                xml.push(`\t\t<item>${(value ? `@string/` : '') + name}</item>`);
+            }
+            xml.push('\t</string-array>');
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/string_array.xml -->\n');
+        return xml.join('\n');
+    }
+    return '';
+}
+
+export function writeResourceStyleXml() {
+    if (RESOURCE['style'].size > 0) {
+        let xml = [STRING_ANDROID.XML_DECLARATION,
+                   '<resources>'];
+        for (const [name, style] of RESOURCE['style'].entries()) {
+            xml.push(`\t<style name="${name}"${(style.parent != null ? ` parent="${style.parent}"` : '')}>`);
+            style.attributes.split(';').sort().forEach(value => {
+                const [name, setting] = value.split('=');
+                xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
+            });
+            xml.push('\t</style>');
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/styles.xml -->\n');
+        xml = xml.join('\n');
+        if (SETTINGS.useUnitDP) {
+            xml = insetToDP(xml, SETTINGS.density, true);
+        }
+        return xml;
+    }
+    return '';
+}
+
+export function writeResourceColorXml() {
+    if (RESOURCE['color'].size > 0) {
+        const resource = new Map([...RESOURCE['color'].entries()].sort());
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, value] of resource.entries()) {
+            xml.push(`\t<color name="${value}">${name}</color>`);
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/colors.xml -->\n');
+        return xml.join('\n');
+    }
+    return '';
+}
+
+export function writeResourceDrawableXml() {
+    if (RESOURCE['drawable'].size > 0 || RESOURCE['image'].size > 0) {
+        let xml = [];
+        for (const [name, value] of RESOURCE['drawable'].entries()) {
+            xml.push(value,
+                     `<!-- filename: res/drawable/${name}.xml -->\n`);
+        }
+        for (const [name, value] of RESOURCE['image'].entries()) {
+            xml.push(`<!-- image: ${value} -->`,
+                     `<!-- filename: res/drawable/${name + value.substring(value.lastIndexOf('.'))} -->\n`);
+        }
+        xml = xml.join('\n');
+        if (SETTINGS.useUnitDP) {
+            xml = insetToDP(xml, SETTINGS.density);
+        }
+        return xml;
+    }
+    return '';
 }

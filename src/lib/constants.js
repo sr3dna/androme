@@ -49,43 +49,6 @@ export const MAPPING_CHROME =
     'TEXTAREA': WIDGET_ANDROID.EDIT
 };
 
-export const BLOCK_CHROME =
-[
-    'DIV',
-    'LI',
-    'TD',
-    'SECTION',
-    'SPAN'
-];
-
-export const INLINE_CHROME =
-[
-    'STRONG',
-    'B',
-    'EM',
-    'CITE',
-    'DFN',
-    'I',
-    'BIG',
-    'SMALL',
-    'FONT',
-    'BLOCKQUOTE',
-    'TT',
-    'A',
-    'U',
-    'SUP',
-    'SUB',
-    'STRIKE',
-    'H1',
-    'H2',
-    'H3',
-    'H4',
-    'H5',
-    'H6',
-    'DEL',
-    'TEXT'
-];
-
 export const INHERIT_ANDROID =
 {
     'TextView': {

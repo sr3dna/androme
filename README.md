@@ -1,32 +1,34 @@
-## chrome android layout
+## androme
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
-INSTALLATION (global js variable: android)
+INSTALLATION (global js variable: androme)
+
+Library files are in the /dist folder. There is a babel minified for production and non-babel version for development.
 
 ```javascript
-<script src="/dist/chrome-android-layout.js"></script>
+<script src="/dist/androme.js"></script>
 <script>
-	android.settings.targetAPI = 19; /* android.build.KITKAT */
-	android.settings.density = 160; /* android.density.MDPI */
+	androme.settings.targetAPI = 19; /* androme.BUILD_ANDROID.KITKAT */
+	androme.settings.density = 160; /* androme.DENSITY_ANDROID.MDPI */
 
 	document.addEventListener('DOMContentLoaded', () => {
-        console.log(android.parseDocument());
-        console.log(android.writeResourceStringXml());
-        console.log(android.writeResourceArrayXml());
-        console.log(android.writeResourceStyleXml());
-        console.log(android.writeResourceColorXml());
-        console.log(android.writeResourceDrawableXml());
+        console.log(androme.parseDocument());
+        console.log(androme.writeResourceStringXml());
+        console.log(androme.writeResourceArrayXml());
+        console.log(androme.writeResourceStyleXml());
+        console.log(androme.writeResourceColorXml());
+        console.log(androme.writeResourceDrawableXml());
     });
 </script>
 ```
-These settings are available in the global variable "android" to customize your desired XML structure. Compatible attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
+These settings are available in the global variable "androme" to customize your desired XML structure. Compatible attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
 
 ```javascript
-android.settings
+androme.settings
 {
-    targetAPI: android.build.OREO,
-    density: android.density.MDPI,
+    targetAPI: androme.build.OREO,
+    density: androme.density.MDPI,
     showAttributes: true,
     useConstraintLayout: true,
     useConstraintChain: true,
@@ -759,7 +761,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:id="@+id/c2"
 							android:focusable="true"
 							android:layout_height="wrap_content"
-							android:layout_marginEnd="1dp"
+							android:layout_marginEnd="3dp"
 							android:layout_marginStart="5dp"
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
@@ -769,7 +771,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:id="@+id/c3"
 							android:focusable="true"
 							android:layout_height="wrap_content"
-							android:layout_marginEnd="1dp"
+							android:layout_marginEnd="3dp"
 							android:layout_marginStart="4dp"
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
@@ -780,7 +782,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:id="@+id/c4"
 						android:focusable="true"
 						android:layout_height="wrap_content"
-						android:layout_marginEnd="1dp"
+						android:layout_marginEnd="3dp"
 						android:layout_marginStart="4dp"
 						android:layout_marginVertical="3dp"
 						android:layout_width="wrap_content"

@@ -1,10 +1,10 @@
-// chrome-android-layout: 1.2.1
-// https://github.com/anpham6/chrome-android-layout
+/* androme: 1.2.2
+   https://github.com/anpham6/androme */
 
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (factory((global.android = {})));
+    (factory((global.androme = {})));
 }(this, (function (exports) { 'use strict';
 
     const WIDGET_ANDROID =
@@ -57,43 +57,6 @@
         'BUTTON': WIDGET_ANDROID.BUTTON,
         'TEXTAREA': WIDGET_ANDROID.EDIT
     };
-
-    const BLOCK_CHROME =
-    [
-        'DIV',
-        'LI',
-        'TD',
-        'SECTION',
-        'SPAN'
-    ];
-
-    const INLINE_CHROME =
-    [
-        'STRONG',
-        'B',
-        'EM',
-        'CITE',
-        'DFN',
-        'I',
-        'BIG',
-        'SMALL',
-        'FONT',
-        'BLOCKQUOTE',
-        'TT',
-        'A',
-        'U',
-        'SUP',
-        'SUB',
-        'STRIKE',
-        'H1',
-        'H2',
-        'H3',
-        'H4',
-        'H5',
-        'H6',
-        'DEL',
-        'TEXT'
-    ];
 
     const INHERIT_ANDROID =
     {
@@ -671,12 +634,12 @@
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
     }
 
-    function getBoxSpacing(node, rtl = false, complete = false) {
+    function getBoxSpacing(element, rtl = false, complete = false) {
         const result = {};
         ['padding', 'margin'].forEach(border => {
             ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
                 const attr = border + side;
-                const value = parseInt(node.css(attr));
+                const value = parseInt(getStyle(element)[attr]) || 0;
                 if (complete || value != 0) {
                     result[(rtl ? attr.replace('Left', 'Start').replace('Right', 'End') : attr)] = value;
                 }
@@ -1151,7 +1114,7 @@
     }
 
     function setBoxSpacing(node) {
-        const result = getBoxSpacing(node, SETTINGS.useRTL);
+        const result = getBoxSpacing(node.element, SETTINGS.useRTL);
         for (const i in result) {
             result[i] += 'px';
         }
@@ -1194,6 +1157,98 @@
         return value;
     }
 
+    function writeResourceStringXml() {
+        const resource = new Map([...RESOURCE['string'].entries()].sort());
+        if (resource.size > 0) {
+            const xml = [STRING_ANDROID.XML_DECLARATION,
+                         '<resources>'];
+            for (const [name, value] of resource.entries()) {
+                xml.push(`\t<string name="${name}">${value}</string>`);
+            }
+            xml.push('</resources>',
+                     '<!-- filename: res/values/string.xml -->\n');
+            return xml.join('\n');
+        }
+        return '';
+    }
+
+    function writeResourceArrayXml() {
+        const resource = new Map([...RESOURCE['array'].entries()].sort());
+        if (resource.size > 0) {
+            const xml = [STRING_ANDROID.XML_DECLARATION,
+                         '<resources>'];
+            for (const [name, values] of resource.entries()) {
+                xml.push(`\t<string-array name="${name}">`);
+                for (const [name, value] of values.entries()) {
+                    xml.push(`\t\t<item>${(value ? `@string/` : '') + name}</item>`);
+                }
+                xml.push('\t</string-array>');
+            }
+            xml.push('</resources>',
+                     '<!-- filename: res/values/string_array.xml -->\n');
+            return xml.join('\n');
+        }
+        return '';
+    }
+
+    function writeResourceStyleXml() {
+        if (RESOURCE['style'].size > 0) {
+            let xml = [STRING_ANDROID.XML_DECLARATION,
+                       '<resources>'];
+            for (const [name, style] of RESOURCE['style'].entries()) {
+                xml.push(`\t<style name="${name}"${(style.parent != null ? ` parent="${style.parent}"` : '')}>`);
+                style.attributes.split(';').sort().forEach(value => {
+                    const [name, setting] = value.split('=');
+                    xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
+                });
+                xml.push('\t</style>');
+            }
+            xml.push('</resources>',
+                     '<!-- filename: res/values/styles.xml -->\n');
+            xml = xml.join('\n');
+            if (SETTINGS.useUnitDP) {
+                xml = insetToDP(xml, SETTINGS.density, true);
+            }
+            return xml;
+        }
+        return '';
+    }
+
+    function writeResourceColorXml() {
+        if (RESOURCE['color'].size > 0) {
+            const resource = new Map([...RESOURCE['color'].entries()].sort());
+            const xml = [STRING_ANDROID.XML_DECLARATION,
+                         '<resources>'];
+            for (const [name, value] of resource.entries()) {
+                xml.push(`\t<color name="${value}">${name}</color>`);
+            }
+            xml.push('</resources>',
+                     '<!-- filename: res/values/colors.xml -->\n');
+            return xml.join('\n');
+        }
+        return '';
+    }
+
+    function writeResourceDrawableXml() {
+        if (RESOURCE['drawable'].size > 0 || RESOURCE['image'].size > 0) {
+            let xml = [];
+            for (const [name, value] of RESOURCE['drawable'].entries()) {
+                xml.push(value,
+                         `<!-- filename: res/drawable/${name}.xml -->\n`);
+            }
+            for (const [name, value] of RESOURCE['image'].entries()) {
+                xml.push(`<!-- image: ${value} -->`,
+                         `<!-- filename: res/drawable/${name + value.substring(value.lastIndexOf('.'))} -->\n`);
+            }
+            xml = xml.join('\n');
+            if (SETTINGS.useUnitDP) {
+                xml = insetToDP(xml, SETTINGS.density);
+            }
+            return xml;
+        }
+        return '';
+    }
+
     var Resource = /*#__PURE__*/Object.freeze({
         RESOURCE: RESOURCE,
         XMLNS_ANDROID: XMLNS_ANDROID,
@@ -1206,10 +1261,15 @@
         setComputedStyle: setComputedStyle,
         setBoxSpacing: setBoxSpacing,
         getViewAttributes: getViewAttributes,
-        parseStyleAttribute: parseStyleAttribute
+        parseStyleAttribute: parseStyleAttribute,
+        writeResourceStringXml: writeResourceStringXml,
+        writeResourceArrayXml: writeResourceArrayXml,
+        writeResourceStyleXml: writeResourceStyleXml,
+        writeResourceColorXml: writeResourceColorXml,
+        writeResourceDrawableXml: writeResourceDrawableXml
     });
 
-    function getRTL(value) {
+    function RTL(value) {
         if (SETTINGS.useRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
             switch (value) {
                 case 'left':
@@ -1798,7 +1858,7 @@
                             horizontal = 'start';
                             break;
                         case 'right':
-                            horizontal = getRTL('right', 'end');
+                            horizontal = RTL('right', 'end');
                             break;
                         case 'end':
                             horizontal = 'end';
@@ -2214,6 +2274,43 @@
         }
     }
 
+    const BLOCK_CHROME =
+    [
+        'DIV',
+        'LI',
+        'TD',
+        'SECTION',
+        'SPAN'
+    ];
+
+    const INLINE_CHROME =
+    [
+        'STRONG',
+        'B',
+        'EM',
+        'CITE',
+        'DFN',
+        'I',
+        'BIG',
+        'SMALL',
+        'FONT',
+        'BLOCKQUOTE',
+        'TT',
+        'A',
+        'U',
+        'SUP',
+        'SUB',
+        'STRIKE',
+        'H1',
+        'H2',
+        'H3',
+        'H4',
+        'H5',
+        'H6',
+        'DEL',
+        'TEXT'
+    ];
+
     const NODE_CACHE = new NodeList();
 
     function writeFrameLayout(node, parent) {
@@ -2430,29 +2527,29 @@
         const LAYOUT_MAP = {
             relative: {
                 top: 'layout_alignTop',
-                right: getRTL('layout_alignRight'),
+                right: RTL('layout_alignRight'),
                 bottom: 'layout_alignBottom',
-                left: getRTL('layout_alignLeft'),
+                left: RTL('layout_alignLeft'),
                 baseline: 'layout_alignBaseline',
                 bottomTop: 'layout_above',
                 topBottom: 'layout_below',
-                rightLeft: getRTL('layout_toLeftOf'),
-                leftRight: getRTL('layout_toRightOf'),
-                parentLeft: getRTL('layout_alignParentLeft'),
-                parentRight: getRTL('layout_alignParentRight'),
+                rightLeft: RTL('layout_toLeftOf'),
+                leftRight: RTL('layout_toRightOf'),
+                parentLeft: RTL('layout_alignParentLeft'),
+                parentRight: RTL('layout_alignParentRight'),
                 parentTop: 'layout_alignParentTop',
                 parentBottom: 'layout_alignParentBottom'
             },
             constraint: {
                 top: 'layout_constraintTop_toTopOf',
-                right: getRTL('layout_constraintRight_toRightOf'),
+                right: RTL('layout_constraintRight_toRightOf'),
                 bottom: 'layout_constraintBottom_toBottomOf',
-                left: getRTL('layout_constraintLeft_toLeftOf'),
+                left: RTL('layout_constraintLeft_toLeftOf'),
                 baseline: 'layout_constraintBaseline_toBaselineOf',
                 bottomTop: 'layout_constraintBottom_toTopOf',
                 topBottom: 'layout_constraintTop_toBottomOf',
-                rightLeft: getRTL('layout_constraintRight_toLeftOf'),
-                leftRight: getRTL('layout_constraintLeft_toRightOf')
+                rightLeft: RTL('layout_constraintRight_toLeftOf'),
+                leftRight: RTL('layout_constraintLeft_toRightOf')
             }
         };
         for (const node of NODE_CACHE) {
@@ -2739,12 +2836,12 @@
                                         switch (chain.flex.alignSelf) {
                                             case 'flex-start':
                                                 chain
-                                                    .app((index == 0 ? CONSTRAINT['top'] : getRTL(CONSTRAINT['left'])), 'parent')
+                                                    .app((index == 0 ? CONSTRAINT['top'] : RTL(CONSTRAINT['left'])), 'parent')
                                                     .constraint[LAYOUT_VH] = true;
                                                 break;
                                             case 'flex-end':
                                                 chain
-                                                    .app((index == 0 ? CONSTRAINT['bottom'] : getRTL(CONSTRAINT['right'])), 'parent')
+                                                    .app((index == 0 ? CONSTRAINT['bottom'] : RTL(CONSTRAINT['right'])), 'parent')
                                                     .constraint[LAYOUT_VH] = true;
                                                 break;
                                             case 'baseline':
@@ -2876,7 +2973,7 @@
                                 for (const [key, value] of result) {
                                     if (value != 'parent') {
                                         if (anchored.find(anchor => anchor.stringId == value) != null) {
-                                            if (!current.constraint.horizontal && indexOf(key, getRTL('Left'), getRTL('Right')) != -1) {
+                                            if (!current.constraint.horizontal && indexOf(key, RTL('Left'), RTL('Right')) != -1) {
                                                 current.constraint.horizontal = true;
                                             }
                                             if (!current.constraint.vertical && indexOf(key, 'Top', 'Bottom', 'Baseline', 'above', 'below') != -1) {
@@ -2971,9 +3068,9 @@
                                 const left = `${Math.floor(current.bounds.left - node.box.left)}px`;
                                 current
                                     .css('marginTop', top)
-                                    .css(getRTL('marginLeft'), left)
+                                    .css(RTL('marginLeft'), left)
                                     .android('layout_marginTop', top)
-                                    .android(getRTL('layout_marginLeft'), left);
+                                    .android(RTL('layout_marginLeft'), left);
                                 current.constraint.vertical = true;
                                 current.constraint.horizontal = true;
                             }
@@ -3009,7 +3106,7 @@
         let preXml = '';
         let postXml = '';
         if (node.parent.isView(WIDGET_ANDROID.GRID)) {
-            const dimensions = getBoxSpacing(node.parentOriginal, SETTINGS.useRTL, true);
+            const dimensions = getBoxSpacing(node.parentOriginal.element, SETTINGS.useRTL, true);
             if (node.gridFirst) {
                 const heightTop = dimensions.paddingTop + dimensions.marginTop;
                 if (heightTop > 0) {
@@ -3017,22 +3114,22 @@
                 }
             }
             if (node.gridRowStart) {
-                let marginLeft = dimensions[getRTL('marginLeft')] + dimensions[getRTL('paddingLeft')];
+                let marginLeft = dimensions[RTL('marginLeft')] + dimensions[RTL('paddingLeft')];
                 if (marginLeft > 0) {
                     marginLeft = convertToPX(marginLeft + node.marginLeft);
-                    node.android(getRTL('layout_marginLeft'), marginLeft)
+                    node.android(RTL('layout_marginLeft'), marginLeft)
                         .css('marginLeft', marginLeft);
                 }
             }
             if (node.gridRowEnd) {
                 const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
-                let marginRight = dimensions[getRTL('marginRight')] + dimensions[getRTL('paddingRight')];
+                let marginRight = dimensions[RTL('marginRight')] + dimensions[RTL('paddingRight')];
                 if (heightBottom > 0) {
                     postXml += getSpaceTag(node.renderDepth, 'match_parent', convertToPX(heightBottom), node.renderParent.gridColumnCount, 1);
                 }
                 if (marginRight > 0) {
                     marginRight = convertToPX(marginRight + node.marginRight);
-                    node.android(getRTL('layout_marginRight'), marginRight)
+                    node.android(RTL('layout_marginRight'), marginRight)
                         .css('marginRight', marginRight);
                 }
             }
@@ -3360,7 +3457,7 @@
                         if (!item.floating) {
                             const width = Math.ceil(item.linear.left - current);
                             if (width > 0) {
-                                item.android(getRTL('layout_marginLeft'), `${node.marginLeft + width}px`);
+                                item.android(RTL('layout_marginLeft'), `${node.marginLeft + width}px`);
                             }
                         }
                         current = (item.label || item).linear.right;
@@ -3369,10 +3466,10 @@
             }
             if (SETTINGS.targetAPI >= BUILD_ANDROID.OREO) {
                 if (node.visible) {
-                    const marginLeft_RTL = getRTL('layout_marginLeft');
-                    const marginRight_RTL = getRTL('layout_marginRight');
-                    const paddingLeft_RTL = getRTL('paddingLeft');
-                    const paddingRight_RTL = getRTL('paddingRight');
+                    const marginLeft_RTL = RTL('layout_marginLeft');
+                    const marginRight_RTL = RTL('layout_marginRight');
+                    const paddingLeft_RTL = RTL('paddingLeft');
+                    const paddingRight_RTL = RTL('paddingRight');
                     const marginTop = convertToInt(node.android('layout_marginTop'));
                     const marginRight = convertToInt(node.android(marginRight_RTL));
                     const marginBottom = convertToInt(node.android('layout_marginBottom'));
@@ -3467,7 +3564,6 @@
             if (INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
                 continue;
             }
-            
             if (isVisible(element)) {
                 const node = new Node(generateNodeId(), element, SETTINGS.targetAPI);
                 NODE_CACHE.push(node);
@@ -3576,98 +3672,6 @@
             });
             node.children.sortAsc('parentIndex');
         }
-    }
-
-    function writeResourceStringXml() {
-        const resource = new Map([...RESOURCE['string'].entries()].sort());
-        if (resource.size > 0) {
-            const xml = [STRING_ANDROID.XML_DECLARATION,
-                         '<resources>'];
-            for (const [name, value] of resource.entries()) {
-                xml.push(`\t<string name="${name}">${value}</string>`);
-            }
-            xml.push('</resources>',
-                     '<!-- filename: res/values/string.xml -->\n');
-            return xml.join('\n');
-        }
-        return '';
-    }
-
-    function writeResourceArrayXml() {
-        const resource = new Map([...RESOURCE['array'].entries()].sort());
-        if (resource.size > 0) {
-            const xml = [STRING_ANDROID.XML_DECLARATION,
-                         '<resources>'];
-            for (const [name, values] of resource.entries()) {
-                xml.push(`\t<string-array name="${name}">`);
-                for (const [name, value] of values.entries()) {
-                    xml.push(`\t\t<item>${(value ? `@string/` : '') + name}</item>`);
-                }
-                xml.push('\t</string-array>');
-            }
-            xml.push('</resources>',
-                     '<!-- filename: res/values/string_array.xml -->\n');
-            return xml.join('\n');
-        }
-        return '';
-    }
-
-    function writeResourceStyleXml() {
-        if (RESOURCE['style'].size > 0) {
-            let xml = [STRING_ANDROID.XML_DECLARATION,
-                       '<resources>'];
-            for (const [name, style] of RESOURCE['style'].entries()) {
-                xml.push(`\t<style name="${name}"${(style.parent != null ? ` parent="${style.parent}"` : '')}>`);
-                style.attributes.split(';').sort().forEach(value => {
-                    const [name, setting] = value.split('=');
-                    xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
-                });
-                xml.push('\t</style>');
-            }
-            xml.push('</resources>',
-                     '<!-- filename: res/values/styles.xml -->\n');
-            xml = xml.join('\n');
-            if (SETTINGS.useUnitDP) {
-                xml = insetToDP(xml, SETTINGS.density, true);
-            }
-            return xml;
-        }
-        return '';
-    }
-
-    function writeResourceColorXml() {
-        if (RESOURCE['color'].size > 0) {
-            const resource = new Map([...RESOURCE['color'].entries()].sort());
-            const xml = [STRING_ANDROID.XML_DECLARATION,
-                         '<resources>'];
-            for (const [name, value] of resource.entries()) {
-                xml.push(`\t<color name="${value}">${name}</color>`);
-            }
-            xml.push('</resources>',
-                     '<!-- filename: res/values/colors.xml -->\n');
-            return xml.join('\n');
-        }
-        return '';
-    }
-
-    function writeResourceDrawableXml() {
-        if (RESOURCE['drawable'].size > 0 || RESOURCE['image'].size > 0) {
-            let xml = [];
-            for (const [name, value] of RESOURCE['drawable'].entries()) {
-                xml.push(value,
-                         `<!-- filename: res/drawable/${name}.xml -->\n`);
-            }
-            for (const [name, value] of RESOURCE['image'].entries()) {
-                xml.push(`<!-- image: ${value} -->`,
-                         `<!-- filename: res/drawable/${name + value.substring(value.lastIndexOf('.'))} -->\n`);
-            }
-            xml = xml.join('\n');
-            if (SETTINGS.useUnitDP) {
-                xml = insetToDP(xml, SETTINGS.density);
-            }
-            return xml;
-        }
-        return '';
     }
 
     function parseDocument() {
@@ -4080,20 +4084,17 @@
     }
 
     const settings = SETTINGS;
-    const build = BUILD_ANDROID;
-    const density = DENSITY_ANDROID;
 
-    exports.writeResourceStringXml = writeResourceStringXml;
-    exports.writeResourceArrayXml = writeResourceArrayXml;
-    exports.writeResourceStyleXml = writeResourceStyleXml;
-    exports.writeResourceColorXml = writeResourceColorXml;
-    exports.writeResourceDrawableXml = writeResourceDrawableXml;
     exports.parseDocument = parseDocument;
     exports.settings = settings;
-    exports.build = build;
-    exports.density = density;
+    exports.BUILD_ANDROID = BUILD_ANDROID;
+    exports.DENSITY_ANDROID = DENSITY_ANDROID;
+    exports.writeResourceDrawableXml = writeResourceDrawableXml;
+    exports.writeResourceColorXml = writeResourceColorXml;
+    exports.writeResourceStyleXml = writeResourceStyleXml;
+    exports.writeResourceArrayXml = writeResourceArrayXml;
+    exports.writeResourceStringXml = writeResourceStringXml;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
-//# sourceMappingURL=chrome-android-layout.js.map

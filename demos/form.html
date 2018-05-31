@@ -2,7 +2,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Language" content="en">
-    <title>https://github.com/anpham6/chrome-android-layout</title>
+    <title>https://github.com/anpham6/androme</title>
     <style>
         body {
             margin: 0px;
@@ -102,18 +102,18 @@
             margin-left: 4px;
         }
     </style>
-    <script src="../dist/chrome-android-layout.js"></script>
+    <script src="../dist/androme.js"></script>
     <script>
-        android.settings.targetAPI = android.build.OREO;
-        android.settings.density = android.density.MDPI;
-
+        androme.settings.targetAPI = androme.BUILD_ANDROID.OREO;
+        androme.settings.density = androme.DENSITY_ANDROID.MDPI;
+        
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('output').innerHTML = android.parseDocument().replace(/</g, '&lt;');
-            console.log(android.writeResourceStringXml());
-            console.log(android.writeResourceArrayXml());
-            console.log(android.writeResourceStyleXml());
-            console.log(android.writeResourceColorXml());
-            console.log(android.writeResourceDrawableXml());
+            document.getElementById('output').innerHTML = androme.parseDocument().replace(/</g, '&lt;');
+            console.log(androme.writeResourceStringXml());
+            console.log(androme.writeResourceArrayXml());
+            console.log(androme.writeResourceStyleXml());
+            console.log(androme.writeResourceColorXml());
+            console.log(androme.writeResourceDrawableXml());
         });
     </script>
 </head>
