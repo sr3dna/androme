@@ -1,4 +1,9 @@
-class Node {
+import { WIDGET_ANDROID, BUILD_ANDROID, INHERIT_ANDROID, MAPPING_CHROME, API_ANDROID, FIXED_ANDROID } from './constants';
+import * as Util from './util';
+import { getStyle } from './element';
+import * as Resource from './resource';
+
+export class Node {
     constructor(id, element, api, options = {}) {
         let style = {};
         let styleMap = {};
@@ -6,7 +11,7 @@ class Node {
             style = window.getComputedStyle(element);
             styleMap = element.styleMap || {};
             for (const inline of element.style) {
-                styleMap[Utils.hyphenToCamelCase(inline)] = element.style[inline];
+                styleMap[Util.hyphenToCamelCase(inline)] = element.style[inline];
             }
         }
         else {
@@ -48,7 +53,7 @@ class Node {
             this._namespaces.add(obj);
             this[name] = {};
         }
-        if (Utils.hasValue(value)) {
+        if (Util.hasValue(value)) {
             if (!this.supported(obj, attr)) {
                 return false;
             }
@@ -70,7 +75,7 @@ class Node {
             else {
                 for (const attr of attributes) {
                     if (attr.indexOf('*') != -1) {
-                        for (const [key] of Utils.search(this[name], attr)) {
+                        for (const [key] of Util.search(this[name], attr)) {
                             delete this[name][key];
                         }
                     }
@@ -118,7 +123,7 @@ class Node {
         }
         return this;
     }
-    combine(xmlns) {
+    combine() {
         const result = [];
         const namespaces = {};
         this._namespaces.forEach(value => {
@@ -126,7 +131,6 @@ class Node {
             for (const attr in obj) {
                 if (value != '_') {
                     result.push(`${value}:${attr}="${obj[attr]}"`);
-                    namespaces[XMLNS_ANDROID[value.toUpperCase()]] = true;
                 }
                 else {
                     result.push(`${attr}="${obj[attr]}"`);
@@ -134,11 +138,11 @@ class Node {
             }
         });
         result.sort();
-        return (xmlns ? [result, Object.keys(namespaces)] : result);
+        return result;
     }
     css(attr, value) {
         if (arguments.length == 2) {
-            if (Utils.hasValue(value)) {
+            if (Util.hasValue(value)) {
                 this.styleMap[attr] = value;
             }
             return this;
@@ -218,8 +222,8 @@ class Node {
                 height -= this.linear.top;
                 break;
         }
-        width += (this.paddingRight + Utils.parseInt(this.css('borderRightWidth')));
-        height += (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth')));
+        width += (this.paddingRight + Util.convertToInt(this.css('borderRightWidth')));
+        height += (this.paddingBottom + Util.convertToInt(this.css('borderBottomWidth')));
         let calibrate = false;
         if (this.viewWidth < width) {
             if (this.bounds.width < width) {
@@ -305,7 +309,7 @@ class Node {
     setAndroidId(widgetName) {
         this.androidWidgetName = widgetName || this.widgetName;
         if (this.androidId == null) {
-            this.androidId = Utils.generateId('android', this.element.id || this.element.name || `${this.androidWidgetName.substring(this.androidWidgetName.lastIndexOf('.') + 1).toLowerCase()}_1`);
+            this.androidId = Util.generateId('android', this.element.id || this.element.name || `${this.androidWidgetName.substring(this.androidWidgetName.lastIndexOf('.') + 1).toLowerCase()}_1`);
         }
     }
     setAndroidDimensions() {
@@ -326,8 +330,8 @@ class Node {
                 height = this.element.offsetHeight + this.marginTop + this.marginBottom;
                 requireWrap = parent.isView(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
             }
-            const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Utils.parseInt(parent.style.borderLeftWidth) + Utils.parseInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
-            const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Utils.parseInt(parent.style.borderTopWidth) + Utils.parseInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
+            const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Util.convertToInt(parent.style.borderLeftWidth) + Util.convertToInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
+            const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Util.convertToInt(parent.style.borderTopWidth) + Util.convertToInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
             if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
                 this.android('layout_width', (this.isHorizontal() ? 'wrap_content' : 'match_parent'))
                     .android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
@@ -335,14 +339,14 @@ class Node {
             else {
                 if (this.android('layout_width') != '0px') {
                     if (styleMap.width != null) {
-                        this.android('layout_width', Utils.convertToPX(styleMap.width));
+                        this.android('layout_width', Util.convertToPX(styleMap.width));
                     }
                     if (styleMap.minWidth != null) {
-                        this.android('minWidth', Utils.convertToPX(styleMap.minWidth), false)
+                        this.android('minWidth', Util.convertToPX(styleMap.minWidth), false)
                             .android('layout_width', 'wrap_content', false);
                     }
                     if (styleMap.maxWidth != null) {
-                        this.android('maxWidth', Utils.convertToPX(styleMap.maxWidth), false);
+                        this.android('maxWidth', Util.convertToPX(styleMap.maxWidth), false);
                     }
                 }
                 if (this.constraint.minWidth != null) {
@@ -383,14 +387,14 @@ class Node {
                 }
                 if (this.android('layout_height') != '0px') {
                     if (styleMap.height != null) {
-                        this.android('layout_height', Utils.convertToPX(styleMap.height));
+                        this.android('layout_height', Util.convertToPX(styleMap.height));
                     }
                     if (styleMap.minHeight != null) {
-                        this.android('minHeight', Utils.convertToPX(styleMap.minHeight), false)
+                        this.android('minHeight', Util.convertToPX(styleMap.minHeight), false)
                             .android('layout_height', 'wrap_content', false);
                     }
                     if (styleMap.maxHeight != null) {
-                        this.android('maxHeight', Utils.convertToPX(styleMap.maxHeight), false);
+                        this.android('maxHeight', Util.convertToPX(styleMap.maxHeight), false);
                     }
                 }
                 if (this.constraint.minHeight != null) {
@@ -425,7 +429,7 @@ class Node {
         }
     }
     setAttributes(...actions) {
-        const widget = ACTION_ANDROID[this.widgetName];
+        const widget = Resource.ACTION_ANDROID[this.widgetName];
         const element = this.element;
         const result = {};
         if (element.tagName == 'INPUT' && element.id != '') {
@@ -454,55 +458,42 @@ class Node {
                 if (result[action] != null || (actions != null && actions.length > 0 && !actions.includes(i))) {
                     continue;
                 }
-                if (Utils.hasValue(this[action])) {
-                    result[action] = Utils.formatString(widget[action], this[action]);
+                if (Util.hasValue(this[action])) {
+                    result[action] = Util.formatString(widget[action], this[action]);
                 }
-                else if (action.indexOf('.') != -1) {
-                    let method = window;
-                    let methodName = '';
-                    action.split('.').forEach(value => {
-                        if (value == 'window') {
-                            return true;
-                        }
-                        else if (method[value] != null) {
-                            method = method[value];
-                            methodName = value;
-                        }
-                    });
-                    if (typeof method == 'function') {
-                        const data = method(this);
-                        if (data != null) {
-                            const output = [];
-                            for (const j in widget[action]) {
-                                if (result[j] != null) {
-                                    continue;
-                                }
-                                let value = data[j];
-                                if (Utils.hasValue(value)) {
-                                    value = Node.parseStyle(element, j, value);
-                                    if (value != null) {
-                                        switch (methodName) {
-                                            case 'setComputedStyle':
-                                                if (!this.supported.apply(this, widget[action][j].split('=')[0].split(':'))) {
-                                                    continue;
-                                                }
-                                                break;
-                                            case 'addResourceString':
-                                                value = Utils.isNumber(value) ? value : `@string/${value}`;
-                                                break;
-                                        }
-                                        output.push(Utils.formatString(widget[action][j], value));
+                else if (typeof Resource[action] == 'function') {
+                    const data = Resource[action](this);
+                    if (data != null) {
+                        const output = [];
+                        for (const j in widget[action]) {
+                            if (result[j] != null) {
+                                continue;
+                            }
+                            let value = data[j];
+                            if (Util.hasValue(value)) {
+                                value = Node.parseStyle(element, j, value);
+                                if (value != null) {
+                                    switch (action) {
+                                        case 'setComputedStyle':
+                                            if (!this.supported.apply(this, widget[action][j].split('=')[0].split(':'))) {
+                                                continue;
+                                            }
+                                            break;
+                                        case 'addResourceString':
+                                            value = Util.isNumber(value) ? value : `@string/${value}`;
+                                            break;
                                     }
+                                    output.push(Util.formatString(widget[action][j], value));
                                 }
                             }
-                            if (output.length > 0) {
-                                switch (methodName) {
-                                    case 'setComputedStyle':
-                                        this.styleAttributes = output;
-                                        break;
-                                    default:
-                                        result[i] = output;
-                                }
+                        }
+                        if (output.length > 0) {
+                            switch (action) {
+                                case 'setComputedStyle':
+                                    this.styleAttributes = output;
+                                    break;
+                                default:
+                                    result[i] = output;
                             }
                         }
                     }
@@ -511,7 +502,7 @@ class Node {
         }
         for (const i in result) {
             let value = result[i];
-            if (Utils.hasValue(value)) {
+            if (Util.hasValue(value)) {
                 if (!Array.isArray(value)) {
                     value = [value];
                 }
@@ -531,10 +522,10 @@ class Node {
                 left: this.bounds.left - this.marginLeft
             };
             this.box = {
-                top: this.bounds.top + (this.paddingTop + Utils.parseInt(this.css('borderTopWidth'))),
-                right: this.bounds.right - (this.paddingRight + Utils.parseInt(this.css('borderRightWidth'))),
-                bottom: this.bounds.bottom - (this.paddingBottom + Utils.parseInt(this.css('borderBottomWidth'))),
-                left: this.bounds.left + (this.paddingLeft + Utils.parseInt(this.css('borderLeftWidth')))
+                top: this.bounds.top + (this.paddingTop + Util.convertToInt(this.css('borderTopWidth'))),
+                right: this.bounds.right - (this.paddingRight + Util.convertToInt(this.css('borderRightWidth'))),
+                bottom: this.bounds.bottom - (this.paddingBottom + Util.convertToInt(this.css('borderBottomWidth'))),
+                left: this.bounds.left + (this.paddingLeft + Util.convertToInt(this.css('borderLeftWidth')))
             };
         }
         else {
@@ -579,12 +570,12 @@ class Node {
             while (element != null && element.styleMap != null) {
                 textAlign = element.styleMap.textAlign || textAlign;
                 const float = (element != this.element ? element.styleMap.float : '');
-                if (float == 'left' || float == 'right' || Utils.hasValue(textAlign)) {
+                if (float == 'left' || float == 'right' || Util.hasValue(textAlign)) {
                     break;
                 }
                 element = element.parentNode;
             }
-            if (Utils.hasValue(verticalAlign) || Utils.hasValue(textAlign)) {
+            if (Util.hasValue(verticalAlign) || Util.hasValue(textAlign)) {
                 let horizontal = null;
                 let vertical = null;
                 let layoutGravity = [];
@@ -614,7 +605,7 @@ class Node {
                         vertical = 'bottom';
                         break;
                     default:
-                        if (this.style.height == this.style.lineHeight || Utils.parseInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
+                        if (this.style.height == this.style.lineHeight || Util.convertToInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
                             vertical = 'center_vertical';
                         }
                 }
@@ -654,7 +645,7 @@ class Node {
         if (parent != null && parent.visible) {
             const left = this.linear.left - parent.box.left;
             const right = parent.box.right - this.linear.right;
-            return Utils.calculateBias(left, right);
+            return Util.calculateBias(left, right);
         }
         return 0.5;
     }
@@ -663,7 +654,7 @@ class Node {
         if (parent != null && parent.visible) {
             const top = this.linear.top - parent.box.top;
             const bottom = parent.box.bottom - this.linear.bottom;
-            return Utils.calculateBias(top, bottom);
+            return Util.calculateBias(top, bottom);
         }
         return 0.5;
     }
@@ -777,8 +768,8 @@ class Node {
                 enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
                 direction: this.style.flexDirection,
                 basis: this.style.flexBasis,
-                grow: Utils.parseInt(this.style.flexGrow),
-                shrink: Utils.parseInt(this.style.flexShrink),
+                grow: Util.convertToInt(this.style.flexGrow),
+                shrink: Util.convertToInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
                 alignSelf: (parent != null && this.styleMap.alignSelf == null && this.style.alignSelf == 'auto' ? parent.styleMap.alignItems : this.style.alignSelf),
                 justifyContent: this.style.justifyContent
@@ -815,34 +806,34 @@ class Node {
         return (this.constraint.horizontal ? 1 : 0) + (this.constraint.vertical ? 1 : 0);
     }
     get viewWidth() {
-        return Utils.parseInt(this.styleMap.width || this.styleMap.minWidth);
+        return Util.convertToInt(this.styleMap.width || this.styleMap.minWidth);
     }
     get viewHeight() {
-        return Utils.parseInt(this.styleMap.height || this.styleMap.minHeight);
+        return Util.convertToInt(this.styleMap.height || this.styleMap.minHeight);
     }
     get marginTop() {
-        return Utils.parseInt(this.css('marginTop'));
+        return Util.convertToInt(this.css('marginTop'));
     }
     get marginBottom() {
-        return Utils.parseInt(this.css('marginBottom'));
+        return Util.convertToInt(this.css('marginBottom'));
     }
     get marginLeft() {
-        return Utils.parseInt(this.css('marginLeft'));
+        return Util.convertToInt(this.css('marginLeft'));
     }
     get marginRight() {
-        return Utils.parseInt(this.css('marginRight'));
+        return Util.convertToInt(this.css('marginRight'));
     }
     get paddingTop() {
-        return Utils.parseInt(this.css('paddingTop'));
+        return Util.convertToInt(this.css('paddingTop'));
     }
     get paddingBottom() {
-        return Utils.parseInt(this.css('paddingBottom'));
+        return Util.convertToInt(this.css('paddingBottom'));
     }
     get paddingLeft() {
-        return Utils.parseInt(this.css('paddingLeft'));
+        return Util.convertToInt(this.css('paddingLeft'));
     }
     get paddingRight() {
-        return Utils.parseInt(this.css('paddingRight'));
+        return Util.convertToInt(this.css('paddingRight'));
     }
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
@@ -877,7 +868,7 @@ class Node {
                 node.style[prop] = value;
                 value = Node.parseStyle(null, prop, value);
                 if (value != null) {
-                    style.push(Utils.formatString(inherit[prop], value));
+                    style.push(Util.formatString(inherit[prop], value));
                 }
             }
             node.styleAttributes = style;
@@ -897,23 +888,20 @@ class Node {
         }
         return bounds;
     }
-    static getStyle(element) {
-        return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
-    }
     static parseStyle(element, name, value) {
         if (name == 'backgroundColor') {
-            if (element != null && element.parentNode != null && value == Node.getStyle(element.parentNode).backgroundColor) {
+            if (element != null && element.parentNode != null && value == getStyle(element.parentNode).backgroundColor) {
                 return null;
             }
         }
         else if (/(pt|em)$/.test(value)) {
-            value = Utils.convertToPX(value);
+            value = Util.convertToPX(value);
         }
         return value;
     }
 }
 
-class NodeList extends Array {
+export class NodeList extends Array {
     constructor(nodes, parent = null) {
         super();
         if (Array.isArray(nodes)) {
@@ -941,10 +929,10 @@ class NodeList extends Array {
         return false;
     }
     sortAsc(...attr) {
-        return Utils.sortAsc(this, ...attr);
+        return Util.sortAsc(this, ...attr);
     }
     sortDesc(...attr) {
-        return Utils.sortDesc(this, ...attr);
+        return Util.sortDesc(this, ...attr);
     }
 
     get first() {
@@ -985,7 +973,7 @@ class NodeList extends Array {
         if (this.parent != null) {
             const left = this.first.linear.left - this.parent.box.left;
             const right = this.parent.box.right - this.last.linear.right;
-            return Utils.calculateBias(left, right);
+            return Util.calculateBias(left, right);
         }
         return 0.5;
     }
@@ -993,7 +981,7 @@ class NodeList extends Array {
         if (this.parent != null) {
             const top = this.first.linear.top - this.parent.box.top;
             const bottom = this.parent.box.bottom - this.last.linear.bottom;
-            return Utils.calculateBias(top, bottom);
+            return Util.calculateBias(top, bottom);
         }
         return 0.5;
     }

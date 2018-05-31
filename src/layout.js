@@ -1,251 +1,12 @@
-const SETTINGS = {
-    targetAPI: BUILD_ANDROID.OREO,
-    density: DENSITY_ANDROID.MDPI,
-    showAttributes: true,
-    useConstraintLayout: true,
-    useConstraintChain: true,
-    useGridLayout: true,
-    useLayoutWeight: true,
-    useUnitDP: true,
-    useRTL: true,
-    numberResourceValue: false,
-    whitespaceHorizontalOffset: 4,
-    constraintBiasBoxOffset: 14,
-    chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 14
-};
+import { WIDGET_ANDROID, BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, STRING_ANDROID, BUILD_ANDROID, DENSITY_ANDROID } from './constants';
+import * as Util from './util';
+import * as Color from './color';
+import * as Element from './element';
+import { RESOURCE, getViewAttributes, parseStyleAttribute } from './resource';
+import { Node, NodeList } from './node';
+import SETTINGS from './settings';
 
 const NODE_CACHE = new NodeList();
-
-const RESOURCE = {
-    string: new Map(),
-    array: new Map(),
-    color: new Map(),
-    image: new Map(),
-    drawable: new Map(),
-    style: new Map()
-};
-
-function writeResourceStringXml() {
-    const resource = new Map([...RESOURCE['string'].entries()].sort());
-    if (resource.size > 0) {
-        const xml = [STRING_ANDROID.XML_DECLARATION,
-                     '<resources>'];
-        for (const [name, value] of resource.entries()) {
-            xml.push(`\t<string name="${name}">${value}</string>`);
-        }
-        xml.push('</resources>',
-                 '<!-- filename: res/values/string.xml -->\n');
-        return xml.join('\n');
-    }
-    return '';
-}
-
-function writeResourceArrayXml() {
-    const resource = new Map([...RESOURCE['array'].entries()].sort());
-    if (resource.size > 0) {
-        const xml = [STRING_ANDROID.XML_DECLARATION,
-                     '<resources>'];
-        for (const [name, values] of resource.entries()) {
-            xml.push(`\t<string-array name="${name}">`);
-            for (const [name, value] of values.entries()) {
-                xml.push(`\t\t<item>${(value ? `@string/` : '') + name}</item>`);
-            }
-            xml.push('\t</string-array>');
-        }
-        xml.push('</resources>',
-                 '<!-- filename: res/values/string_array.xml -->\n');
-        return xml.join('\n');
-    }
-    return '';
-}
-
-function writeResourceStyleXml() {
-    if (RESOURCE['style'].size > 0) {
-        let xml = [STRING_ANDROID.XML_DECLARATION,
-                   '<resources>'];
-        for (const [name, style] of RESOURCE['style'].entries()) {
-            xml.push(`\t<style name="${name}"${(style.parent != null ? ` parent="${style.parent}"` : '')}>`);
-            style.attributes.split(';').sort().forEach(value => {
-                const [name, setting] = value.split('=');
-                xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
-            });
-            xml.push('\t</style>');
-        }
-        xml.push('</resources>',
-                 '<!-- filename: res/values/styles.xml -->\n');
-        xml = xml.join('\n');
-        if (SETTINGS.useUnitDP) {
-            xml = Utils.insetToDP(xml, true);
-        }
-        return xml;
-    }
-    return '';
-}
-
-function writeResourceColorXml() {
-    if (RESOURCE['color'].size > 0) {
-        const resource = new Map([...RESOURCE['color'].entries()].sort());
-        const xml = [STRING_ANDROID.XML_DECLARATION,
-                     '<resources>'];
-        for (const [name, value] of resource.entries()) {
-            xml.push(`\t<color name="${value}">${name}</color>`);
-        }
-        xml.push('</resources>',
-                 '<!-- filename: res/values/colors.xml -->\n');
-        return xml.join('\n');
-    }
-    return '';
-}
-
-function writeResourceDrawableXml() {
-    if (RESOURCE['drawable'].size > 0 || RESOURCE['image'].size > 0) {
-        let xml = [];
-        for (const [name, value] of RESOURCE['drawable'].entries()) {
-            xml.push(value,
-                     `<!-- filename: res/drawable/${name}.xml -->\n`);
-        }
-        for (const [name, value] of RESOURCE['image'].entries()) {
-            xml.push(`<!-- image: ${value} -->`,
-                     `<!-- filename: res/drawable/${name + value.substring(value.lastIndexOf('.'))} -->\n`);
-        }
-        xml = xml.join('\n');
-        if (SETTINGS.useUnitDP) {
-            xml = Utils.insetToDP(xml);
-        }
-        return xml;
-    }
-    return '';
-}
-
-function addResourceString(node, value) {
-    const element = (node != null ? node.element : null);
-    let name = value;
-    if (value == null) {
-        if (element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') {
-            name = element.value;
-            value = name;
-        }
-        else if (element.nodeName == '#text') {
-            name = element.textContent.trim();
-            value = name;
-        }
-        else {
-            name = element.innerText;
-            value = element.innerHTML;
-        }
-    }
-    if (Utils.hasValue(value)) {
-        if (node != null) {
-            if (node.isView(WIDGET_ANDROID.TEXT)) {
-                const match = (node.style.textDecoration != null ? node.style.textDecoration.match(/(underline|line-through)/) : null);
-                if (match != null) {
-                    switch (match[0]) {
-                        case 'underline':
-                            value = `<u>${value}</u>`;
-                            break;
-                        case 'line-through':
-                            value = `<strike>${value}</strike>`;
-                            break;
-                    }
-                }
-            }
-        }
-        const number = Utils.isNumber(value);
-        if (SETTINGS.numberResourceValue || !number) {
-            value = value.replace(/\s*style=""/g, '');
-            for (const [name, resourceValue] in RESOURCE['string'].entries()) {
-                if (resourceValue == value) {
-                    return { text: name };
-                }
-            }
-            name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-            if (number) {
-                name = `number_${name}`;
-            }
-            else if (/^[0-9]/.test(value)) {
-                name = `__${name}`;
-            }
-            else if (!/[a-zA-Z0-9]+/.test(name) && node != null) {
-                name = node.androidId;
-            }
-            name = insertResourceAsset(RESOURCE['string'], name, value);
-        }
-        if (element != null && element.nodeName == '#text') {
-            const prevSibling = element.previousSibling;
-            if (prevSibling != null) {
-                const prevNode = prevSibling.androidNode;
-                switch (prevNode.widgetName) {
-                    case WIDGET_ANDROID.CHECKBOX:
-                    case WIDGET_ANDROID.RADIO:
-                        prevNode.android('text', (!SETTINGS.numberResourceValue && number ? name : `@string/${name}`));
-                        prevNode.label = node;
-                        node.hide();
-                        break;
-                }
-            }
-        }
-        return { text: name };
-    }
-    return null;
-}
-
-function addResourceStringArray(node) {
-    const element = node.element
-    const stringArray = new Map();
-    let numberArray = new Map();
-    for (let i = 0; i < element.children.length; i++) {
-        const item = element.children[i];
-        let value = item.text.trim() || item.value.trim();
-        if (value != '') {
-            if (numberArray != null && !stringArray.size && Utils.isNumber(value)) {
-                numberArray.set(value, false);
-            }
-            else {
-                if (numberArray != null && numberArray.size > 0) {
-                    i = -1;
-                    numberArray = null;
-                    continue;
-                }
-                stringArray.set(addResourceString(null, value).text, true);
-            }
-        }
-    }
-    if (stringArray.size > 0 || numberArray.size > 0) {
-        const name = insertResourceAsset(RESOURCE['array'], `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : numberArray));
-        return { entries: name };
-    }
-    return null;
-}
-
-function addResourceColor(value) {
-    value = value.toUpperCase().trim();
-    if (value != '') {
-        let colorName = '';
-        if (!RESOURCE['color'].has(value)) {
-            const color = Color.findNearest(value);
-            if (color != null) {
-                color.name = Utils.cameltoLowerCase(color.name);
-                if (value.toUpperCase().trim() == color.hex) {
-                    colorName = color.name;
-                }
-                else {
-                    colorName = Utils.generateId('color', `${color.name}_1`);
-                }
-            }
-            if (colorName != '') {
-                RESOURCE['color'].set(value, colorName);
-            }
-        }
-        else {
-            colorName = RESOURCE['color'].get(value);
-        }
-        if (colorName != '') {
-            return `@color/${colorName}`;
-        }
-    }
-    return value;
-}
 
 function getRTL(value) {
     if (SETTINGS.useRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
@@ -258,184 +19,6 @@ function getRTL(value) {
         value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
     }
     return value;
-}
-
-function insertResourceAsset(resource, name, value) {
-    let resourceName = null;
-    if (Utils.hasValue(value)) {
-        let i = 0;
-        do {
-            resourceName = name;
-            if (i > 0) {
-                resourceName += i;
-            }
-            if (!resource.has(resourceName)) {
-                resource.set(resourceName, value);
-            }
-            i++;
-        }
-        while (resource.has(resourceName) && resource.get(resourceName) != value)
-    }
-    return resourceName;
-}
-
-function setBackgroundStyle(node) {
-    const element = node.element;
-    const attributes = {
-        border: parseBorderStyle,
-        borderTop: parseBorderStyle,
-        borderRight: parseBorderStyle,
-        borderBottom: parseBorderStyle,
-        borderLeft: parseBorderStyle,
-        borderRadius: parseBoxDimensions,
-        backgroundColor: Color.parseRGBA
-    };
-    let backgroundParent = [];
-    if (element.parentNode != null) {
-        backgroundParent = Color.parseRGBA(Node.getStyle(element.parentNode).backgroundColor);
-    }
-    const style = Node.getStyle(element);
-    for (const i in attributes) {
-        attributes[i] = attributes[i](style[i]);
-    }
-    if (attributes.border[0] != 'none' || attributes.borderRadius != null) {
-        attributes.border[2] = addResourceColor(attributes.border[2]);
-        if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
-            attributes.backgroundColor = null;
-        }
-        else {
-            attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
-        }
-        const borderStyle = {
-            black: 'android:color="@android:color/black"',
-            solid: `android:color="${attributes.border[2]}"`
-        };
-        borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
-        borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
-        borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
-        let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
-        if (attributes.border[0] != 'none' && attributes.borderRadius != null) {
-            xml += `<shape ${XMLNS_ANDROID.ANDROID} android:shape="rectangle">\n` +
-                   `\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
-                   (attributes.backgroundColor ? `\t<solid android:color="${attributes.backgroundColor[1]}" />\n` : '');
-            if (attributes.borderRadius.length == 1) {
-                xml += `\t<corners android:radius="${attributes.borderRadius[0]}" />\n`;
-            }
-            else {
-                if (attributes.borderRadius.length == 2) {
-                    attributes.borderRadius.push(...attributes.borderRadius.slice());
-                }
-                xml += '\t<corners';
-                attributes.borderRadius.forEach((value, index) => xml += ` android:${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius="${value}"`);
-            }
-            xml += ' />\n' +
-                   '</shape>';
-        }
-        else if (attributes.border[0] != 'none' && attributes.backgroundColor == null) {
-            xml += `<shape ${XMLNS_ANDROID.ANDROID} android:shape="rectangle">\n` +
-                   `\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
-                   '</shape>';
-        }
-        else {
-            xml += `<layer-list ${XMLNS_ANDROID.ANDROID}>\n`;
-            if (attributes.backgroundColor != null) {
-                xml += '\t<item>\n' +
-                       '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<solid android:color="${attributes.backgroundColor[1]}" />\n` +
-                       '\t\t</shape>\n' +
-                       '\t</item>\n';
-            }
-            if (attributes.border[0] != 'none') {
-                xml += '\t<item>\n' +
-                       '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
-                       '\t\t</shape>\n' +
-                       '\t</item>\n';
-            }
-            else {
-                [attributes.borderTopWidth, attributes.borderRightWidth, attributes.borderBottomWidth, attributes.borderLeftWidth].forEach((item, index) => {
-                    xml += `\t<item android:${['top', 'right', 'bottom', 'left'][index]}="${item[2]}">\n` +
-                           '\t\t<shape android:shape="rectangle">\n' +
-                           `\t\t\t<stroke android:width="${item[1]}" ${borderStyle[item[0]] || borderStyle.black} />\n` +
-                           '\t\t</shape>\n' +
-                           '\t</item>\n';
-                });
-            }
-            xml += '</layer-list>';
-        }
-        let drawableName = null;
-        for (const [i, j] of RESOURCE['drawable'].entries()) {
-            if (j == xml) {
-                drawableName = i;
-                break;
-            }
-        }
-        if (drawableName == null) {
-            drawableName = `${node.tagName.toLowerCase()}_${node.androidId}`;
-            RESOURCE['drawable'].set(drawableName, xml);
-        }
-        node.drawable = drawableName;
-        return { backgroundColor: drawableName };
-    }
-    return null;
-}
-
-function setComputedStyle(node) {
-    return Node.getStyle(node.element);
-}
-
-function setBoxSpacing(node) {
-    const result = getBoxSpacing(node);
-    for (const i in result) {
-        result[i] += 'px';
-    }
-    return result;
-}
-
-function getBoxSpacing(node, complete) {
-    const result = {};
-    ['padding', 'margin'].forEach(border => {
-        ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
-            const attr = border + side;
-            const value = Utils.parseInt(node.css(attr));
-            if (complete || value != 0) {
-                result[(SETTINGS.useRTL ? attr.replace('Left', 'Start').replace('Right', 'End') : attr)] = value;
-            }
-        });
-    });
-    return result;
-}
-
-function parseBorderStyle(value) {
-    let stroke = value.match(/(none|dotted|dashed|solid)/);
-    let width = value.match(/([0-9\.]+(?:px|pt|em))/);
-    let color = Color.parseRGBA(value);
-    if (stroke != null) {
-        stroke = stroke[1];
-    }
-    if (width != null) {
-        width = Utils.convertToPX(width[1]);
-    }
-    if (color != null) {
-        color = color[1];
-    }
-    return [stroke || 'solid', width || '1px', color || '#000'];
-}
-
-function parseBoxDimensions(value) {
-    const match = value.match(/^([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em))$/);
-    if (match != null && match.length == 5) {
-        if (match[1] == match[2] && match[2] == match[3] && match[3] == match[4]) {
-            return [Utils.convertToPX(match[1])];
-        }
-        else if (match[1] == match[3] && match[2] == match[4]) {
-            return [Utils.convertToPX(match[1]), Utils.convertToPX(match[2])];
-        }
-        else {
-            return [Utils.convertToPX(match[1]), Utils.convertToPX(match[2]), Utils.convertToPX(match[3]), Utils.convertToPX(match[4])];
-        }
-    }
-    return null;
 }
 
 function writeFrameLayout(node, parent) {
@@ -506,7 +89,7 @@ function renderViewLayout(node, parent, tagName) {
                             .css('overflowY', node.styleMap.overflowY);
                         break;
                 }
-                const indent = Utils.padLeft(scrollDepth--);
+                const indent = Util.padLeft(scrollDepth--);
                 preXml = indent + `<${widgetName}{@${wrapNode.id}}>\n` + preXml;
                 postXml += indent + `</${widgetName}>\n`;
                 if (current == node) {
@@ -616,10 +199,10 @@ function renderViewTag(node, parent, tagName, recursive = false) {
 }
 
 function getEnclosingTag(depth, tagName, id, content, space = ['', ''], preXml = '', postXml = '') {
-    const indent = Utils.padLeft(depth);
+    const indent = Util.padLeft(depth);
     let xml = space[0] +
               preXml;
-    if (Utils.hasValue(content)) {
+    if (Util.hasValue(content)) {
         xml += indent + `<${tagName}{@${id}}>\n` +
                         content +
                indent + `</${tagName}>\n`;
@@ -633,25 +216,11 @@ function getEnclosingTag(depth, tagName, id, content, space = ['', ''], preXml =
 }
 
 function insetAttributes(output) {
-    const namespaces = [];
     for (const node of NODE_CACHE) {
         node.setAndroidDimensions();
-        const result = node.combine(true);
-        const attributes = result[0];
-        namespaces.push(...result[1]);
-        if (attributes.length > 0) {
-            for (let i = 0; i < attributes.length; i++) {
-                if (attributes[i].startsWith('android:id=')) {
-                    attributes.unshift(...attributes.splice(i, 1));
-                    break;
-                }
-            }
-            const indent = Utils.padLeft(node.renderDepth + 1);
-            let xml = (node.renderDepth == 0 ? `{@0}` : '') + attributes.map(value => `\n${indent + value}`).join('');
-            output = output.replace(`{@${node.id}}`, xml);
-        }
+        output = output.replace(`{@${node.id}}`, getViewAttributes(node));
     }
-    return output.replace('{@0}', Array.from(new Set(namespaces)).sort().map(value => `\n\t${value}`).join(''));
+    return output;
 }
 
 function setNodePosition(current, name, adjacent) {
@@ -703,7 +272,7 @@ function setConstraints() {
             if (!flex.enabled) {
                 node.expandToFit();
                 for (const current of nodes) {
-                    if (Utils.withinRange(parseFloat(current.horizontalBias), 0.5, 0.01) && Utils.withinRange(parseFloat(current.verticalBias), 0.5, 0.01)) {
+                    if (Util.withinRange(parseFloat(current.horizontalBias), 0.5, 0.01) && Util.withinRange(parseFloat(current.verticalBias), 0.5, 0.01)) {
                         if (constraint) {
                             current
                                 .app(LAYOUT['top'], 'parent')
@@ -764,13 +333,13 @@ function setConstraints() {
                             }
                             const withinY = (adjacent.androidId != 'parent' && current.withinY(adjacent.linear));
                             if (!current.constraint.horizontal) {
-                                if (Utils.withinFraction(current.linear.right, adjacent[dimension].left) || (withinY && Utils.withinRange(current.linear.right, adjacent[dimension].left, SETTINGS.whitespaceHorizontalOffset))) {
+                                if (Util.withinFraction(current.linear.right, adjacent[dimension].left) || (withinY && Util.withinRange(current.linear.right, adjacent[dimension].left, SETTINGS.whitespaceHorizontalOffset))) {
                                     setNodePosition(current, LAYOUT['rightLeft'], adjacent);
                                     if (parent) {
                                         current.constraint.horizontal = true;
                                     }
                                 }
-                                else if (Utils.withinFraction(current.linear.left, adjacent[dimension].right) || (withinY && Utils.withinRange(current.linear.left, adjacent[dimension].right, SETTINGS.whitespaceHorizontalOffset))) {
+                                else if (Util.withinFraction(current.linear.left, adjacent[dimension].right) || (withinY && Util.withinRange(current.linear.left, adjacent[dimension].right, SETTINGS.whitespaceHorizontalOffset))) {
                                     setNodePosition(current, LAYOUT['leftRight'], adjacent);
                                     if (parent) {
                                         current.constraint.horizontal = true;
@@ -825,7 +394,7 @@ function setConstraints() {
                     let restart = false;
                     for (const current of nodes) {
                         if (!anchored.includes(current.stringId)) {
-                            const result = (constraint ? Utils.search(current.app(), '*constraint*') : Utils.search(current.android(), LAYOUT));
+                            const result = (constraint ? Util.search(current.app(), '*constraint*') : Util.search(current.android(), LAYOUT));
                             if (result.length > 1) {
                                 const anchors = [];
                                 for (let i = 0; i < result.length; i++) {
@@ -896,16 +465,16 @@ function setConstraints() {
                 }
                 else {
                     nodes.forEach(current => {
-                        let horizontalChain = nodes.filter(item => (item != current && Utils.same(current, item, 'bounds.top')));
+                        let horizontalChain = nodes.filter(item => (item != current && Util.same(current, item, 'bounds.top')));
                         if (horizontalChain.length == 0) {
-                            horizontalChain = nodes.filter(item => (item != current && Utils.same(current, item, 'bounds.bottom')));
+                            horizontalChain = nodes.filter(item => (item != current && Util.same(current, item, 'bounds.bottom')));
                         }
                         if (horizontalChain.length > 0) {
                             horizontalChain.sortAsc('bounds.x');
                         }
-                        let verticalChain = nodes.filter(item => (item != current && Utils.same(current, item, 'bounds.left')));
+                        let verticalChain = nodes.filter(item => (item != current && Util.same(current, item, 'bounds.left')));
                         if (verticalChain.length == 0) {
-                            verticalChain = nodes.filter(item => (item != current && Utils.same(current, item, 'bounds.right')));
+                            verticalChain = nodes.filter(item => (item != current && Util.same(current, item, 'bounds.right')));
                         }
                         if (verticalChain.length > 0) {
                             verticalChain.sortAsc('bounds.y');
@@ -953,10 +522,10 @@ function setConstraints() {
                                     const min = chain.styleMap[`min${WH}`];
                                     const max = chain.styleMap[`max${WH}`];
                                     if (min != null) {
-                                        chain.app(`layout_constraint${WH}_min`, Utils.convertToPX(min));
+                                        chain.app(`layout_constraint${WH}_min`, Util.convertToPX(min));
                                     }
                                     if (max != null) {
-                                        chain.app(`layout_constraint${WH}_max`, Utils.convertToPX(max));
+                                        chain.app(`layout_constraint${WH}_max`, Util.convertToPX(max));
                                     }
                                     else {
                                         unassigned.push(chain);
@@ -1010,7 +579,7 @@ function setConstraints() {
                                             chain.app(`layout_constraint${WH}_percent`, parseInt(chain.flex.basis));
                                         }
                                         else {
-                                            const width = Utils.convertToPX(chain.flex.basis);
+                                            const width = Util.convertToPX(chain.flex.basis);
                                             if (width != '0px') {
                                                 chain.app(`layout_constraintWidth_min`, width);
                                             }
@@ -1061,7 +630,7 @@ function setConstraints() {
                                 }
                             }
                             else {
-                                if (Utils.withinFraction(node.box.left, firstNode.linear.left) && Utils.withinFraction(lastNode.linear.right, node.box.right)) {
+                                if (Util.withinFraction(node.box.left, firstNode.linear.left) && Util.withinFraction(lastNode.linear.right, node.box.right)) {
                                     firstNode.app(chainStyle, 'spread_inside');
                                 }
                                 else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
@@ -1111,14 +680,14 @@ function setConstraints() {
                     let restart = false;
                     nodes.forEach(current => {
                         if (current.anchors < 2) {
-                            const result = (constraint ? Utils.search(current.app(), '*constraint*') : Utils.search(current.android(), LAYOUT));
+                            const result = (constraint ? Util.search(current.app(), '*constraint*') : Util.search(current.android(), LAYOUT));
                             for (const [key, value] of result) {
                                 if (value != 'parent') {
                                     if (anchored.find(anchor => anchor.stringId == value) != null) {
-                                        if (!current.constraint.horizontal && Utils.indexOf(key, getRTL('Left'), getRTL('Right')) != -1) {
+                                        if (!current.constraint.horizontal && Util.indexOf(key, getRTL('Left'), getRTL('Right')) != -1) {
                                             current.constraint.horizontal = true;
                                         }
-                                        if (!current.constraint.vertical && Utils.indexOf(key, 'Top', 'Bottom', 'Baseline', 'above', 'below') != -1) {
+                                        if (!current.constraint.vertical && Util.indexOf(key, 'Top', 'Bottom', 'Baseline', 'above', 'below') != -1) {
                                             current.constraint.vertical = true;
                                         }
                                     }
@@ -1248,17 +817,17 @@ function insertGridSpace(node) {
     let preXml = '';
     let postXml = '';
     if (node.parent.isView(WIDGET_ANDROID.GRID)) {
-        const dimensions = getBoxSpacing(node.parentOriginal, true);
+        const dimensions = Element.getBoxSpacing(node.parentOriginal, SETTINGS.useRTL, true);
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                preXml += getSpaceTag(node.renderDepth, 'match_parent', Utils.convertToPX(heightTop), node.renderParent.gridColumnCount, 1);
+                preXml += getSpaceTag(node.renderDepth, 'match_parent', Util.convertToPX(heightTop), node.renderParent.gridColumnCount, 1);
             }
         }
         if (node.gridRowStart) {
             let marginLeft = dimensions[getRTL('marginLeft')] + dimensions[getRTL('paddingLeft')];
             if (marginLeft > 0) {
-                marginLeft = Utils.convertToPX(marginLeft + node.marginLeft);
+                marginLeft = Util.convertToPX(marginLeft + node.marginLeft);
                 node.android(getRTL('layout_marginLeft'), marginLeft)
                     .css('marginLeft', marginLeft);
             }
@@ -1267,10 +836,10 @@ function insertGridSpace(node) {
             const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             let marginRight = dimensions[getRTL('marginRight')] + dimensions[getRTL('paddingRight')];
             if (heightBottom > 0) {
-                postXml += getSpaceTag(node.renderDepth, 'match_parent', Utils.convertToPX(heightBottom), node.renderParent.gridColumnCount, 1);
+                postXml += getSpaceTag(node.renderDepth, 'match_parent', Util.convertToPX(heightBottom), node.renderParent.gridColumnCount, 1);
             }
             if (marginRight > 0) {
-                marginRight = Utils.convertToPX(marginRight + node.marginRight);
+                marginRight = Util.convertToPX(marginRight + node.marginRight);
                 node.android(getRTL('layout_marginRight'), marginRight)
                     .css('marginRight', marginRight);
             }
@@ -1287,7 +856,7 @@ function getSpaceTag(depth, width, height, columnSpan, columnWeight = 0) {
             .android('layout_height', height)
             .android('layout_columnSpan', columnSpan)
             .android('layout_columnWeight', columnWeight);
-        const indent = Utils.padLeft(depth + 1);
+        const indent = Util.padLeft(depth + 1);
         for (const attr of node.combine()) {
             attributes += `\n${indent + attr}`;
         }
@@ -1327,22 +896,22 @@ function setStyleMap() {
             const elements = document.querySelectorAll(rule.selectorText);
             const attributes = new Set();
             for (const i of rule.styleMap) {
-                attributes.add(Utils.hyphenToCamelCase(i[0]));
+                attributes.add(Util.hyphenToCamelCase(i[0]));
             }
             for (const element of elements) {
                 for (const i of element.style) {
-                    attributes.add(Utils.hyphenToCamelCase(i));
+                    attributes.add(Util.hyphenToCamelCase(i));
                 }
-                const style = Node.getStyle(element);
+                const style = Element.getStyle(element);
                 const styleMap = {};
                 for (const name of attributes) {
                     if (name.toLowerCase().indexOf('color') != -1) {
-                        const color = Color.getByName(rule.style[name]);
+                        const color = Color.getByColorName(rule.style[name]);
                         if (color != null) {
                             rule.style[name] = Color.convertToRGB(color);
                         }
                     }
-                    if (Utils.hasValue(element.style[name])) {
+                    if (Util.hasValue(element.style[name])) {
                         styleMap[name] = element.style[name];
                     }
                     else if (style[name] == rule.style[name]) {
@@ -1353,20 +922,6 @@ function setStyleMap() {
             }
         }
     }
-}
-
-function parseStyleAttribute(value) {
-    const rgb = Color.parseRGBA(value);
-    if (rgb != null) {
-        const name = addResourceColor(rgb[1]);
-        return value.replace(rgb[0], name);
-    }
-    const match = value.match(/#[A-Z0-9]{6}/);
-    if (match != null) {
-        const name = addResourceColor(match[0]);
-        return value.replace(match[0], name);
-    }
-    return value;
 }
 
 function setResourceStyle() {
@@ -1541,7 +1096,7 @@ function setResourceStyle() {
             if (tag != null) {
                 for (const attr in tag) {
                     if (tag[attr].includes(node.id)) {
-                        node.attr((SETTINGS.useUnitDP ? Utils.insetToDP(attr, true) : attr));
+                        node.attr((SETTINGS.useUnitDP ? Util.insetToDP(attr, SETTINGS.density, true) : attr));
                     }
                 }
             }
@@ -1623,10 +1178,10 @@ function setMarginPadding() {
                 const marginRight_RTL = getRTL('layout_marginRight');
                 const paddingLeft_RTL = getRTL('paddingLeft');
                 const paddingRight_RTL = getRTL('paddingRight');
-                const marginTop = Utils.parseInt(node.android('layout_marginTop'));
-                const marginRight = Utils.parseInt(node.android(marginRight_RTL));
-                const marginBottom = Utils.parseInt(node.android('layout_marginBottom'));
-                const marginLeft = Utils.parseInt(node.android(marginLeft_RTL));
+                const marginTop = Util.convertToInt(node.android('layout_marginTop'));
+                const marginRight = Util.convertToInt(node.android(marginRight_RTL));
+                const marginBottom = Util.convertToInt(node.android('layout_marginBottom'));
+                const marginLeft = Util.convertToInt(node.android(marginLeft_RTL));
                 if (marginTop != 0 && marginTop == marginBottom && marginBottom == marginLeft && marginLeft == marginRight) {
                     node.delete('android', 'layout_margin*')
                         .android('layout_margin', `${marginTop}px`);
@@ -1641,10 +1196,10 @@ function setMarginPadding() {
                             .android('layout_marginHorizontal', `${marginLeft}px`);
                     }
                 }
-                const paddingTop = Utils.parseInt(node.android('paddingTop'));
-                const paddingRight = Utils.parseInt(node.android(paddingRight_RTL));
-                const paddingBottom = Utils.parseInt(node.android('paddingBottom'));
-                const paddingLeft = Utils.parseInt(node.android(paddingLeft_RTL));
+                const paddingTop = Util.convertToInt(node.android('paddingTop'));
+                const paddingRight = Util.convertToInt(node.android(paddingRight_RTL));
+                const paddingBottom = Util.convertToInt(node.android('paddingBottom'));
+                const paddingLeft = Util.convertToInt(node.android(paddingLeft_RTL));
                 if (paddingTop != 0 && paddingTop == paddingBottom && paddingBottom == paddingLeft && paddingLeft == paddingRight) {
                     node.delete('android', 'padding*')
                         .android('padding', `${paddingTop}px`);
@@ -1706,7 +1261,7 @@ function setNodeCache() {
             }
         }
         else {
-            if (Utils.isVisible(element)) {
+            if (Element.isVisible(element)) {
                 nodeTotal++;
             }   
         }
@@ -1718,7 +1273,7 @@ function setNodeCache() {
             continue;
         }
         
-        if (Utils.isVisible(element)) {
+        if (Element.isVisible(element)) {
             const node = new Node(generateNodeId(), element, SETTINGS.targetAPI);
             NODE_CACHE.push(node);
         }
@@ -1738,11 +1293,11 @@ function setNodeCache() {
         style.verticalAlign = node.styleMap.verticalAlign || '';
         node.element.style.verticalAlign = 'top';
         if (node.overflow != 0) {
-            if (Utils.hasValue(node.styleMap.width)) {
+            if (Util.hasValue(node.styleMap.width)) {
                 style.width = node.styleMap.width;
                 node.element.style.width = '';
             }
-            if (Utils.hasValue(node.styleMap.height)) {
+            if (Util.hasValue(node.styleMap.height)) {
                 style.height = node.styleMap.height;
                 node.element.style.height = '';
             }
@@ -1816,7 +1371,7 @@ function setNodeCache() {
             node.element.style[attr] = node.style[attr];
         }
     }
-    Utils.sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');
+    Util.sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');
     for (const node of NODE_CACHE) {
         let i = 0;
         Array.from(node.element.childNodes).forEach(item => {
@@ -1828,7 +1383,99 @@ function setNodeCache() {
     }
 }
 
-function parseDocument() {
+export function writeResourceStringXml() {
+    const resource = new Map([...RESOURCE['string'].entries()].sort());
+    if (resource.size > 0) {
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, value] of resource.entries()) {
+            xml.push(`\t<string name="${name}">${value}</string>`);
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/string.xml -->\n');
+        return xml.join('\n');
+    }
+    return '';
+}
+
+export function writeResourceArrayXml() {
+    const resource = new Map([...RESOURCE['array'].entries()].sort());
+    if (resource.size > 0) {
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, values] of resource.entries()) {
+            xml.push(`\t<string-array name="${name}">`);
+            for (const [name, value] of values.entries()) {
+                xml.push(`\t\t<item>${(value ? `@string/` : '') + name}</item>`);
+            }
+            xml.push('\t</string-array>');
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/string_array.xml -->\n');
+        return xml.join('\n');
+    }
+    return '';
+}
+
+export function writeResourceStyleXml() {
+    if (RESOURCE['style'].size > 0) {
+        let xml = [STRING_ANDROID.XML_DECLARATION,
+                   '<resources>'];
+        for (const [name, style] of RESOURCE['style'].entries()) {
+            xml.push(`\t<style name="${name}"${(style.parent != null ? ` parent="${style.parent}"` : '')}>`);
+            style.attributes.split(';').sort().forEach(value => {
+                const [name, setting] = value.split('=');
+                xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
+            });
+            xml.push('\t</style>');
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/styles.xml -->\n');
+        xml = xml.join('\n');
+        if (SETTINGS.useUnitDP) {
+            xml = Util.insetToDP(xml, SETTINGS.density, true);
+        }
+        return xml;
+    }
+    return '';
+}
+
+export function writeResourceColorXml() {
+    if (RESOURCE['color'].size > 0) {
+        const resource = new Map([...RESOURCE['color'].entries()].sort());
+        const xml = [STRING_ANDROID.XML_DECLARATION,
+                     '<resources>'];
+        for (const [name, value] of resource.entries()) {
+            xml.push(`\t<color name="${value}">${name}</color>`);
+        }
+        xml.push('</resources>',
+                 '<!-- filename: res/values/colors.xml -->\n');
+        return xml.join('\n');
+    }
+    return '';
+}
+
+export function writeResourceDrawableXml() {
+    if (RESOURCE['drawable'].size > 0 || RESOURCE['image'].size > 0) {
+        let xml = [];
+        for (const [name, value] of RESOURCE['drawable'].entries()) {
+            xml.push(value,
+                     `<!-- filename: res/drawable/${name}.xml -->\n`);
+        }
+        for (const [name, value] of RESOURCE['image'].entries()) {
+            xml.push(`<!-- image: ${value} -->`,
+                     `<!-- filename: res/drawable/${name + value.substring(value.lastIndexOf('.'))} -->\n`);
+        }
+        xml = xml.join('\n');
+        if (SETTINGS.useUnitDP) {
+            xml = Util.insetToDP(xml, SETTINGS.density);
+        }
+        return xml;
+    }
+    return '';
+}
+
+export function parseDocument() {
     let output = `${STRING_ANDROID.XML_DECLARATION}\n{0}`;
     const mapX = [];
     const mapY = [];
@@ -1875,7 +1522,7 @@ function parseDocument() {
                 }
                 return (a.parentIndex > b.parentIndex ? 1 : -1);
             })
-            axisY.push(...Utils.sortAsc(layers, 'style.zIndex', 'parentIndex'));
+            axisY.push(...Util.sortAsc(layers, 'style.zIndex', 'parentIndex'));
             for (let k = 0; k < axisY.length; k++) {
                 const nodeY = axisY[k];
                 if (!nodeY.renderParent) {
@@ -1884,7 +1531,7 @@ function parseDocument() {
                     let restart = false;
                     let xml = '';
                     if (tagName == null) {
-                        if ((nodeY.children.length == 0 && Utils.hasFreeFormText(nodeY.element)) || nodeY.children.every(item => INLINE_CHROME.includes(item.tagName))) {
+                        if ((nodeY.children.length == 0 && Element.hasFreeFormText(nodeY.element)) || nodeY.children.every(item => INLINE_CHROME.includes(item.tagName))) {
                             tagName = WIDGET_ANDROID.TEXT;
                         }
                         else if (nodeY.children.length > 0) {
@@ -2175,8 +1822,8 @@ function parseDocument() {
                                             wrapNode.render(parent);
                                             NODE_CACHE.push(wrapNode);
                                             for (const item of result) {
-                                                rowSpan += (Utils.parseInt(item.android('layout_rowSpan')) || 1) - 1;
-                                                columnSpan += (Utils.parseInt(item.android('layout_columnSpan')) || 1) - 1;
+                                                rowSpan += (Util.convertToInt(item.android('layout_rowSpan')) || 1) - 1;
+                                                columnSpan += (Util.convertToInt(item.android('layout_columnSpan')) || 1) - 1;
                                                 wrapNode.inheritGrid(item);
                                                 if (item.element.checked) {
                                                     checked = item;
@@ -2232,7 +1879,11 @@ function parseDocument() {
         output = output.replace(/{@[0-9]+}/g, '');
     }
     if (SETTINGS.useUnitDP) {
-        output = Utils.insetToDP(output);
+        output = Util.insetToDP(output, SETTINGS.density);
     }
     return output;
 }
+
+export const settings = SETTINGS;
+export const build = BUILD_ANDROID;
+export const density = DENSITY_ANDROID;

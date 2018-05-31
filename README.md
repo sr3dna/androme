@@ -2,31 +2,31 @@
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
-INSTALLATION
+INSTALLATION (global js variable: android)
 
 ```javascript
-<script src="utils.js"></script>
-<script src="color.js"></script>
-<script src="constants.js"></script>
-<script src="node.js"></script>
-<script src="layout.js"></script>
+<script src="/dist/chrome-android-layout.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log(parseDocument());
-        console.log(writeResourceStringXml());
-        console.log(writeResourceArrayXml());
-        console.log(writeResourceStyleXml());
-        console.log(writeResourceColorXml());
-        console.log(writeResourceDrawableXml());
+	android.settings.targetAPI = 19; /* android.build.KITKAT */
+	android.settings.density = 160; /* android.density.MDPI */
+
+	document.addEventListener('DOMContentLoaded', () => {
+        console.log(android.parseDocument());
+        console.log(android.writeResourceStringXml());
+        console.log(android.writeResourceArrayXml());
+        console.log(android.writeResourceStyleXml());
+        console.log(android.writeResourceColorXml());
+        console.log(android.writeResourceDrawableXml());
     });
 </script>
 ```
-These settings are available in layout.js to customize your desired XML structure. Android attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
+These settings are available in the global variable "android" to customize your desired XML structure. Compatible attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
 
 ```javascript
-const SETTINGS = {
-    targetAPI: BUILD_ANDROID.OREO,
-    density: DENSITY_ANDROID.MDPI,
+android.settings
+{
+    targetAPI: android.build.OREO,
+    density: android.density.MDPI,
     showAttributes: true,
     useConstraintLayout: true,
     useConstraintChain: true,
@@ -39,7 +39,7 @@ const SETTINGS = {
     constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14
-};
+}
 ```
 You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 

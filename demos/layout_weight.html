@@ -24,18 +24,14 @@
             margin: 4px;
         }
     </style>
-    <script src="../utils.js"></script>
-    <script src="../color.js"></script>
-    <script src="../constants.js"></script>
-    <script src="../node.js"></script>
-    <script src="../layout.js"></script>
+    <script src="../dist/chrome-android-layout.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('output').innerHTML = parseDocument().replace(/</g, '&lt;');
-            console.log(writeResourceStringXml());
-            console.log(writeResourceStyleXml());
-            console.log(writeResourceColorXml());
-            console.log(writeResourceDrawableXml());
+            document.getElementById('output').innerHTML = android.parseDocument().replace(/</g, '&lt;');
+            console.log(android.writeResourceStringXml());
+            console.log(android.writeResourceStyleXml());
+            console.log(android.writeResourceColorXml());
+            console.log(android.writeResourceDrawableXml());
         });
     </script>
 </head>
