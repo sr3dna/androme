@@ -36,8 +36,8 @@ androme.settings = {
     useUnitDP: true,
     useRTL: true,
     numberResourceValue: false,
-	whitespaceHorizontalOffset: 4,
-	whitespaceVerticalOffset: 14,
+    whitespaceHorizontalOffset: 4,
+    whitespaceVerticalOffset: 14,
     constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14
@@ -913,10 +913,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 	</FrameLayout>
 </LinearLayout>
 ```
-
-## auto-generated string resources
-
-Partial output of the string resources.
+## string resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -953,7 +950,7 @@ Partial output of the string resources.
 	<string name="version">Version:</string>
 	<string name="yes">Yes</string>
 </resources>
-<!-- filename: res/values/string.xml -->
+<!-- filename: res/values/strings.xml -->
 ```
 
 ```xml
@@ -1002,12 +999,9 @@ Partial output of the string resources.
 		<item>2018</item>
 	</string-array>
 </resources>
-<!-- filename: res/values/string_array.xml -->
+<!-- filename: res/values/string_arrays.xml -->
 ```
-
-## auto-generated styles and themes
-
-Styles are grouped by HTML element name and then by common properties.
+## styles and themes
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1065,10 +1059,7 @@ Styles are grouped by HTML element name and then by common properties.
 </resources>
 <!-- filename: res/values/styles.xml -->
 ```
-
-## auto-generated color resources
-
-Color names from the X11 and CSS3 specification are used to choose the nearest color for these color resources.
+## color resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1083,8 +1074,7 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 </resources>
 <!-- filename: res/values/colors.xml -->
 ```
-
-## auto-generated drawable resources
+## drawable resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1097,27 +1087,12 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 	<item>
 		<shape android:shape="rectangle">
-			<solid android:color="@color/white_smoke_1" />
+		    <solid android:color="@color/white" />
 		</shape>
 	</item>
 	<item>
 		<shape android:shape="rectangle">
-			<stroke android:width="2dp" android:color="@color/white_smoke_1" />
-		</shape>
-	</item>
-</layer-list>
-<!-- filename: res/drawable/input_button_1.xml -->
-
-<?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-	<item>
-		<shape android:shape="rectangle">
-			<solid android:color="@color/white" />
-		</shape>
-	</item>
-	<item>
-		<shape android:shape="rectangle">
-			<stroke android:width="2dp" android:color="@color/black" />
+		    <stroke android:width="2dp" android:color="@color/black" />
 		</shape>
 	</item>
 </layer-list>
@@ -1127,21 +1102,36 @@ Color names from the X11 and CSS3 specification are used to choose the nearest c
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 	<item>
 		<shape android:shape="rectangle">
-			<solid android:color="@color/white" />
+		    <solid android:color="@color/white" />
 		</shape>
 	</item>
 	<item>
 		<shape android:shape="rectangle">
-			<stroke android:width="1dp" android:color="@color/dark_gray" />
+		    <stroke android:width="1dp" android:color="@color/dark_gray" />
 		</shape>
 	</item>
 </layer-list>
 <!-- filename: res/drawable/select_hour.xml -->
+
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+	<item>
+		<shape android:shape="rectangle">
+		    <solid android:color="@color/white_smoke_1" />
+		</shape>
+	</item>
+	<item>
+		<shape android:shape="rectangle">
+		    <stroke android:width="2dp" android:color="@color/white_smoke_1" />
+		</shape>
+	</item>
+</layer-list>
+<!-- filename: res/drawable/input_button_1.xml -->
 ```
 
 ## user written html
 
-Using excessive DIV and FORM tags are not required for mobile devices which sometimes causes additional LinearLayouts to be auto-generated.
+Using excessive DIV and FORM tags are not required for mobile devices which can cause additional LinearLayouts to be auto-generated.
 
 https://www.w3.org/TR/html401/struct/global.html#h-7.5.3
 
@@ -1163,4 +1153,4 @@ NOT RECOMMENDED
 	klmno
 </span>
 ```
-You can use the /demos/*.html files provided to generate the same layout XML and resources.
+You can use the /demos/*.html files provided to preview some features of this library.

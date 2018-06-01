@@ -1,18 +1,34 @@
+import { hasValue } from './util';
+
 export function parseTemplateMatch(template) {
     const result = {};
     let pattern = null;
-    let match = null;
+    let match = false;
+    let section = 0;
+    let characters = template.length;
     do {
-        pattern = new RegExp(/(!([0-9]+)\n?)[\w\W]*\1/g);
-        if (match != null) {
-            template = match[0].replace(new RegExp(match[1], 'g'), '');
+        if (match) {
+            const segment = match[0].replace(new RegExp(match[1], 'g'), '');
             for (const index in result) {
                 result[index] = result[index].replace(new RegExp(match[0], 'g'), `{${match[2]}}`);
             }
-            result[match[2]] = template;
+            result[match[2]] = segment;
+            characters -= match[0].length;
         }
+        if (match == null || characters == 0) {
+            template = result[section++];
+            if (!hasValue(template)) {
+                break;
+            }
+            characters = template.length;
+            match = null;
+        }
+        if (!match) {
+            pattern = new RegExp(/(!([0-9]+)\n?)[\w\W]*\1/g);
+        }
+        match = pattern.exec(template);
     }
-    while ((match = pattern.exec(template)) != null);
+    while (true);
     return result;
 }
 
@@ -20,7 +36,11 @@ export function parseTemplateData(template, data, index) {
     let output = (index != null ? template[index] : '');
     for (const i in data) {
         let value = '';
-        if (Array.isArray(data[i])) {
+        if (data[i] === false) {
+            output = output.replace(`{${i}}`, '');
+            continue;
+        }
+        else if (Array.isArray(data[i])) {
             for (const j in data[i]) {
                 value += parseTemplateData(template, data[i][j], i);
             }
@@ -28,12 +48,15 @@ export function parseTemplateData(template, data, index) {
         else {
             value = data[i];
         }
-        if (value != '') {
+        if (hasValue(value)) {
             output = (index != null ? output.replace(new RegExp(`{[@&]*${i}}`), value) : value.trim());
         }
-        else if (new RegExp(`{&*${i}}`).test(output)) {
+        else if (new RegExp(`\\{${i}\\}`).test(output) || value === false) {
+            output = output.replace(`{${i}}`, '');
+        }
+        else if (new RegExp(`{&${i}}`).test(output)) {
             output = '';
         }
     }
-    return output.replace(/\s+\w+="{@\w+}"/g, '');
+    return output.replace(/\s+[\w:]+="{@\w+}"/g, '');
 }

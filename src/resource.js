@@ -1,23 +1,25 @@
-import { WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
+import { WIDGET_ANDROID } from './lib/constants';
 import { generateId, cameltoLowerCase, convertPX, insetDP, isNumber, padLeft, hasValue } from './lib/util';
 import { parseRGBA, findNearestColor } from './lib/color';
 import { getStyle, getBoxSpacing } from './lib/element';
 import { parseTemplateMatch, parseTemplateData } from './lib/xml';
 import SETTINGS from './settings';
 
-import STRING_TEMPLATE from './template/resources/string';
-import STRINGARRAY_TEMPLATE from './template/resources/string-array';
-import STYLE_TEMPLATE from './template/resources/style';
-import COLOR_TEMPLATE from './template/resources/color';
-import DRAWABLE_TEMPLATE from './template/resources/drawable';
+import STRING_TMPL from './tmpl/resources/string';
+import STRINGARRAY_TMPL from './tmpl/resources/string-array';
+import STYLE_TMPL from './tmpl/resources/style';
+import COLOR_TMPL from './tmpl/resources/color';
+import DRAWABLE_TMPL from './tmpl/resources/drawable';
+import SHAPERECTANGLE_TMPL from './tmpl/resources/shape-rectangle';
+import LAYERLIST_TMPL from './tmpl/resources/layer-list';
 
 export const RESOURCE = {
-    string: new Map(),
-    array: new Map(),
-    color: new Map(),
-    image: new Map(),
-    drawable: new Map(),
-    style: new Map()
+    STRING: new Map(),
+    ARRAY: new Map(),
+    COLOR: new Map(),
+    IMAGE: new Map(),
+    DRAWABLE: new Map(),
+    STYLE: new Map()
 };
 
 const PROPERTY_ANDROID =
@@ -164,12 +166,15 @@ function parseBorderStyle(value) {
 }
 
 function parseBoxDimensions(value) {
-    const match = value.match(/^([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em))$/);
-    if (match != null && match.length == 5) {
-        if (match[1] == match[2] && match[2] == match[3] && match[3] == match[4]) {
+    const match = value.match(/^([0-9]+(?:px|pt|em))( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?$/);
+    if (match != null) {
+        if (match[1] == '0px' && match[2] == null) {
+            return null;
+        }
+        if (match[2] == null || (match[1] == match[2] && match[2] == match[3] && match[3] == match[4])) {
             return [convertPX(match[1])];
         }
-        else if (match[1] == match[3] && match[2] == match[4]) {
+        else if (match[3] == null || (match[1] == match[3] && match[2] == match[4])) {
             return [convertPX(match[1]), convertPX(match[2])];
         }
         else {
@@ -177,6 +182,10 @@ function parseBoxDimensions(value) {
         }
     }
     return null;
+}
+
+export function getResource(name) {
+    return RESOURCE[name];
 }
 
 export function insertResourceAsset(resource, name, value) {
@@ -234,7 +243,7 @@ export function addResourceString(node, value) {
         const number = isNumber(value);
         if (SETTINGS.numberResourceValue || !number) {
             value = value.replace(/\s*style=".*?">/g, '>');
-            for (const [name, resourceValue] in RESOURCE['string'].entries()) {
+            for (const [name, resourceValue] in RESOURCE.STRING.entries()) {
                 if (resourceValue == value) {
                     return { text: name };
                 }
@@ -249,7 +258,7 @@ export function addResourceString(node, value) {
             else if (!/\w+/.test(name) && node != null) {
                 name = node.androidId;
             }
-            name = insertResourceAsset(RESOURCE['string'], name, value);
+            name = insertResourceAsset(RESOURCE.STRING, name, value);
         }
         if (element != null && element.nodeName == '#text') {
             const prevSibling = element.previousSibling;
@@ -292,7 +301,7 @@ export function addResourceStringArray(node) {
         }
     }
     if (stringArray.size > 0 || numberArray.size > 0) {
-        const name = insertResourceAsset(RESOURCE['array'], `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : numberArray));
+        const name = insertResourceAsset(RESOURCE.ARRAY, `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : numberArray));
         return { entries: name };
     }
     return null;
@@ -302,7 +311,7 @@ export function addResourceColor(value) {
     value = value.toUpperCase().trim();
     if (value != '') {
         let colorName = '';
-        if (!RESOURCE['color'].has(value)) {
+        if (!RESOURCE.COLOR.has(value)) {
             const color = findNearestColor(value);
             if (color != null) {
                 color.name = cameltoLowerCase(color.name);
@@ -314,118 +323,17 @@ export function addResourceColor(value) {
                 }
             }
             if (colorName != '') {
-                RESOURCE['color'].set(value, colorName);
+                RESOURCE.COLOR.set(value, colorName);
             }
         }
         else {
-            colorName = RESOURCE['color'].get(value);
+            colorName = RESOURCE.COLOR.get(value);
         }
         if (colorName != '') {
             return `@color/${colorName}`;
         }
     }
     return value;
-}
-
-export function setBackgroundStyle(node) {
-    const element = node.element;
-    const attributes = {
-        border: parseBorderStyle,
-        borderTop: parseBorderStyle,
-        borderRight: parseBorderStyle,
-        borderBottom: parseBorderStyle,
-        borderLeft: parseBorderStyle,
-        borderRadius: parseBoxDimensions,
-        backgroundColor: parseRGBA
-    };
-    let backgroundParent = [];
-    if (element.parentNode != null) {
-        backgroundParent = parseRGBA(getStyle(element.parentNode).backgroundColor);
-    }
-    const style = getStyle(element);
-    for (const i in attributes) {
-        attributes[i] = attributes[i](style[i]);
-    }
-    if (attributes.border[0] != 'none' || attributes.borderRadius != null) {
-        attributes.border[2] = addResourceColor(attributes.border[2]);
-        if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
-            attributes.backgroundColor = null;
-        }
-        else {
-            attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
-        }
-        const borderStyle = {
-            black: 'android:color="@android:color/black"',
-            solid: `android:color="${attributes.border[2]}"`
-        };
-        borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
-        borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
-        borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
-        let xml = '<?xml version="1.0" encoding="utf-8"?>\n';
-        if (attributes.border[0] != 'none' && attributes.borderRadius != null) {
-            xml += `<shape ${XMLNS_ANDROID.ANDROID} android:shape="rectangle">\n` +
-                   `\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
-                   (attributes.backgroundColor ? `\t<solid android:color="${attributes.backgroundColor[1]}" />\n` : '');
-            if (attributes.borderRadius.length == 1) {
-                xml += `\t<corners android:radius="${attributes.borderRadius[0]}" />\n`;
-            }
-            else {
-                if (attributes.borderRadius.length == 2) {
-                    attributes.borderRadius.push(...attributes.borderRadius.slice());
-                }
-                xml += '\t<corners';
-                attributes.borderRadius.forEach((value, index) => xml += ` android:${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius="${value}"`);
-            }
-            xml += ' />\n' +
-                   '</shape>';
-        }
-        else if (attributes.border[0] != 'none' && attributes.backgroundColor == null) {
-            xml += `<shape ${XMLNS_ANDROID.ANDROID} android:shape="rectangle">\n` +
-                   `\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
-                   '</shape>';
-        }
-        else {
-            xml += `<layer-list ${XMLNS_ANDROID.ANDROID}>\n`;
-            if (attributes.backgroundColor != null) {
-                xml += '\t<item>\n' +
-                       '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<solid android:color="${attributes.backgroundColor[1]}" />\n` +
-                       '\t\t</shape>\n' +
-                       '\t</item>\n';
-            }
-            if (attributes.border[0] != 'none') {
-                xml += '\t<item>\n' +
-                       '\t\t<shape android:shape="rectangle">\n' +
-                       `\t\t\t<stroke android:width="${attributes.border[1]}" ${borderStyle.default} />\n` +
-                       '\t\t</shape>\n' +
-                       '\t</item>\n';
-            }
-            else {
-                [attributes.borderTopWidth, attributes.borderRightWidth, attributes.borderBottomWidth, attributes.borderLeftWidth].forEach((item, index) => {
-                    xml += `\t<item android:${['top', 'right', 'bottom', 'left'][index]}="${item[2]}">\n` +
-                           '\t\t<shape android:shape="rectangle">\n' +
-                           `\t\t\t<stroke android:width="${item[1]}" ${borderStyle[item[0]] || borderStyle.black} />\n` +
-                           '\t\t</shape>\n' +
-                           '\t</item>\n';
-                });
-            }
-            xml += '</layer-list>';
-        }
-        let drawableName = null;
-        for (const [i, j] of RESOURCE['drawable'].entries()) {
-            if (j == xml) {
-                drawableName = i;
-                break;
-            }
-        }
-        if (drawableName == null) {
-            drawableName = `${node.tagName.toLowerCase()}_${node.androidId}`;
-            RESOURCE['drawable'].set(drawableName, xml);
-        }
-        node.drawable = drawableName;
-        return { backgroundColor: drawableName };
-    }
-    return null;
 }
 
 export function setComputedStyle(node) {
@@ -470,16 +378,139 @@ export function parseStyleAttribute(value) {
     return value;
 }
 
+export function setBackgroundStyle(node) {
+    const element = node.element;
+    const attributes = {
+        border: parseBorderStyle,
+        borderTop: parseBorderStyle,
+        borderRight: parseBorderStyle,
+        borderBottom: parseBorderStyle,
+        borderLeft: parseBorderStyle,
+        borderRadius: parseBoxDimensions,
+        backgroundColor: parseRGBA
+    };
+    let backgroundParent = [];
+    if (element.parentNode != null) {
+        backgroundParent = parseRGBA(getStyle(element.parentNode).backgroundColor);
+    }
+    const style = getStyle(element);
+    for (const i in attributes) {
+        attributes[i] = attributes[i](style[i]);
+    }
+    if (attributes.border[0] != 'none' || attributes.borderRadius != null) {
+        attributes.border[2] = addResourceColor(attributes.border[2]);
+        if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
+            attributes.backgroundColor = null;
+        }
+        else {
+            attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
+        }
+        const borderStyle = {
+            black: 'android:color="@android:color/black"',
+            solid: `android:color="${attributes.border[2]}"`
+        };
+        borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
+        borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
+        borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
+        let template = null;
+        let data = null;
+        if (attributes.border[0] != 'none' && attributes.borderRadius != null) {
+            template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
+            data = {
+                '0': [{
+                    '1': [{
+                        width: attributes.border[1],
+                        borderStyle: borderStyle.default
+                    }],
+                    '2': [{
+                        '3': [{
+                            color: (attributes.backgroundColor ? attributes.backgroundColor[1] : '')
+                        }],
+                        '4': [{
+                            radius: (attributes.borderRadius.length == 1 ? attributes.borderRadius[0] : '')
+                        }],
+                        '5': [{
+                            topLeftRadius: ''
+                        }]
+                    }]
+                }]
+            };
+            if (attributes.borderRadius.length > 1) {
+                if (attributes.borderRadius.length == 2) {
+                    attributes.borderRadius.push(...attributes.borderRadius.slice());
+                }
+                const borderRadiusItem = data['0'][0]['2'][0]['5'][0];
+                attributes.borderRadius.forEach((value, index) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+            }
+        }
+        else if (attributes.border[0] != 'none' && attributes.backgroundColor == null) {
+            template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
+            data = {
+                '0': [{
+                    '1': [{
+                        width: attributes.border[1],
+                        borderStyle: borderStyle.default
+                    }],
+                    '2': false
+                }]
+            };
+        }
+        else {
+            template = parseTemplateMatch(LAYERLIST_TMPL);
+            data = {
+                '0': [{
+                    '1': [],
+                    '2': []
+                }]
+            };
+            const rootItem = data['0'][0];
+            rootItem['1'].push({
+                color: (attributes.backgroundColor != null ? attributes.backgroundColor[1] : false)
+            });
+            if (attributes.border[0] != 'none') {
+                rootItem['2'].push({
+                    width: attributes.border[1],
+                    borderStyle: borderStyle.default
+                });
+            }
+            else {
+                [attributes.borderTopWidth, attributes.borderRightWidth, attributes.borderBottomWidth, attributes.borderLeftWidth].forEach((item, index) => {
+                    rootItem['2'].push({
+                        [['top', 'right', 'bottom', 'left'][index]]: item[2],
+                        width: item[1],
+                        borderStyle: borderStyle[item[0]] || borderStyle.black
+                    });
+                });
+            }
+        }
+        let xml = parseTemplateData(template, data);
+        let drawableName = null;
+        for (const [i, j] of RESOURCE.DRAWABLE.entries()) {
+            if (j == xml) {
+                drawableName = i;
+                break;
+            }
+        }
+        if (drawableName == null) {
+            drawableName = `${node.tagName.toLowerCase()}_${node.androidId}`;
+            RESOURCE.DRAWABLE.set(drawableName, xml);
+        }
+        node.drawable = drawableName;
+        return { backgroundColor: drawableName };
+    }
+    return null;
+}
+
 export function writeResourceStringXml() {
-    const resource = new Map([...RESOURCE['string'].entries()].sort());
-    if (resource.size > 0) {
-        const template = parseTemplateMatch(STRING_TEMPLATE);
+    RESOURCE.STRING = new Map([...RESOURCE.STRING.entries()].sort());
+    if (RESOURCE.STRING.size > 0) {
+        const template = parseTemplateMatch(STRING_TMPL);
         const data = {
             '0': [{ '1': [] }]
         };
-        const baseItem = data['0'][0];
-        for (const [name, value] of resource.entries()) {
-            baseItem['1'].push({ name, value });
+        const rootItem = data['0'][0];
+        for (const [name, value] of RESOURCE.STRING.entries()) {
+            rootItem['1'].push({ name, value });
         }
         return parseTemplateData(template, data);
     }
@@ -487,14 +518,16 @@ export function writeResourceStringXml() {
 }
 
 export function writeResourceArrayXml() {
-    const resource = new Map([...RESOURCE['array'].entries()].sort());
-    if (resource.size > 0) {
-        const template = parseTemplateMatch(STRINGARRAY_TEMPLATE);
+    RESOURCE.ARRAY = new Map([...RESOURCE.ARRAY.entries()].sort());
+    if (RESOURCE.ARRAY.size > 0) {
+        const template = parseTemplateMatch(STRINGARRAY_TMPL);
         const data = {
-            '0': [{ '1': [] }]
+            '0': [{
+                '1': []
+            }]
         };
-        const baseItem = data['0'][0];
-        for (const [name, values] of resource.entries()) {
+        const rootItem = data['0'][0];
+        for (const [name, values] of RESOURCE.ARRAY.entries()) {
             const stringArrayItem = {
                 name,
                 '2': []
@@ -503,7 +536,7 @@ export function writeResourceArrayXml() {
             for (const [name, value] of values.entries()) {
                 item.push({ value: (value ? `@string/` : '') + name });
             }
-            baseItem['1'].push(stringArrayItem);
+            rootItem['1'].push(stringArrayItem);
         }
         return parseTemplateData(template, data);
     }
@@ -511,13 +544,15 @@ export function writeResourceArrayXml() {
 }
 
 export function writeResourceStyleXml() {
-    if (RESOURCE['style'].size > 0) {
-        const template = parseTemplateMatch(STYLE_TEMPLATE);
+    if (RESOURCE.STYLE.size > 0) {
+        const template = parseTemplateMatch(STYLE_TMPL);
         const data = {
-            '0': [{ '1': [] }]
+            '0': [{
+                '1': []
+            }]
         };
-        const baseItem = data['0'][0];
-        for (const [name, style] of RESOURCE['style'].entries()) {
+        const rootItem = data['0'][0];
+        for (const [name, style] of RESOURCE.STYLE.entries()) {
             const styleItem = {
                 name,
                 parent: style.parent || '',
@@ -528,7 +563,7 @@ export function writeResourceStyleXml() {
                 const [name, value] = attr.split('=');
                 item.push({ name, value: value.replace(/"/g, '') });
             });
-            baseItem['1'].push(styleItem);
+            rootItem['1'].push(styleItem);
         }
         return parseTemplateData(template, data);
     }
@@ -536,15 +571,17 @@ export function writeResourceStyleXml() {
 }
 
 export function writeResourceColorXml() {
-    if (RESOURCE['color'].size > 0) {
-        const resource = new Map([...RESOURCE['color'].entries()].sort());
-        const template = parseTemplateMatch(COLOR_TEMPLATE);
+    if (RESOURCE.COLOR.size > 0) {
+        const resource = new Map([...RESOURCE.COLOR.entries()].sort());
+        const template = parseTemplateMatch(COLOR_TMPL);
         const data = {
-            '0': [{ '1': [] }]
+            '0': [{
+                '1': []
+            }]
         };
-        const baseItem = data['0'][0];
+        const rootItem = data['0'][0];
         for (const [name, value] of resource.entries()) {
-            baseItem['1'].push({ name, value });
+            rootItem['1'].push({ name, value });
         }
         return parseTemplateData(template, data);
     }
@@ -552,16 +589,17 @@ export function writeResourceColorXml() {
 }
 
 export function writeResourceDrawableXml() {
-    if (RESOURCE['drawable'].size > 0 || RESOURCE['image'].size > 0) {
-        const template = parseTemplateMatch(DRAWABLE_TEMPLATE);
+    if (RESOURCE.DRAWABLE.size > 0 || RESOURCE.IMAGE.size > 0) {
+        const template = parseTemplateMatch(DRAWABLE_TMPL);
         const data = {
             '0': []
         };
-        for (const [name, value] of RESOURCE['drawable'].entries()) {
-            data['0'].push({ name: `res/drawable/${name}.xml`, value});
+        const rootItem = data['0'];
+        for (const [name, value] of RESOURCE.DRAWABLE.entries()) {
+            rootItem.push({ name: `res/drawable/${name}.xml`, value});
         }
-        for (const [name, value] of RESOURCE['image'].entries()) {
-            data['0'].push({ name: `res/drawable/${name + value.substring(value.lastIndexOf('.'))}`, value: `<!-- image: ${value} -->` });
+        for (const [name, value] of RESOURCE.IMAGE.entries()) {
+            rootItem.push({ name: `res/drawable/${name + value.substring(value.lastIndexOf('.'))}`, value: `<!-- image: ${value} -->` });
         }
         let xml = parseTemplateData(template, data);
         if (SETTINGS.useUnitDP) {

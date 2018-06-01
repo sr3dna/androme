@@ -49,6 +49,71 @@ export const MAPPING_CHROME =
     'TEXTAREA': WIDGET_ANDROID.EDIT
 };
 
+export const BLOCK_CHROME =
+[
+    'ADDRESS',
+    'ARTICLE',
+    'ASIDE',
+    'BLOCKQUOTE',
+    'CANVAS',
+    'DD',
+    'DIV',
+    'DL',
+    'DT',
+    'FIELDSET',
+    'FIGCAPTION',
+    'FIGURE',
+    'FOOTER',
+    'FORM',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'HEADER',
+    'LI',
+    'MAIN',
+    'NAV',
+    'OL',
+    'OUTPUT',
+    'P',
+    'PRE',
+    'SECTION',
+    'TABLE',
+    'TFOOT',
+    'UL',
+    'VIDEO'
+];
+
+export const INLINE_CHROME =
+[
+    'STRONG',
+    'B',
+    'EM',
+    'CITE',
+    'DFN',
+    'I',
+    'BIG',
+    'SMALL',
+    'FONT',
+    'BLOCKQUOTE',
+    'TT',
+    'A',
+    'U',
+    'SUP',
+    'SUB',
+    'STRIKE',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'DEL',
+    'TEXT'
+];
+
 export const INHERIT_ANDROID =
 {
     'TextView': {
@@ -112,11 +177,6 @@ export const API_ANDROID = {
             }
         }
     }
-};
-
-export const STRING_ANDROID =
-{
-    XML_DECLARATION: '<?xml version="1.0" encoding="utf-8"?>'
 };
 
 export const XMLNS_ANDROID =

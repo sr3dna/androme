@@ -1,50 +1,13 @@
-import { WIDGET_ANDROID, MAPPING_CHROME, STRING_ANDROID, XMLNS_ANDROID, BUILD_ANDROID, DENSITY_ANDROID, API_ANDROID } from './lib/constants';
+import { WIDGET_ANDROID, BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, XMLNS_ANDROID, BUILD_ANDROID, DENSITY_ANDROID, API_ANDROID } from './lib/constants';
 import * as Util from './lib/util';
 import * as Color from './lib/color';
 import * as Element from './lib/element';
 import Node from './node';
 import NodeList from './nodelist';
 import { positionViews } from './constraint';
-import { RESOURCE, getViewAttributes, parseStyleAttribute, insertResourceAsset, writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml } from './resource';
+import { getResource, getViewAttributes, parseStyleAttribute, insertResourceAsset, writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml } from './resource';
 import RTL from './localization';
 import SETTINGS from './settings';
-
-const BLOCK_CHROME =
-[
-    'DIV',
-    'LI',
-    'TD',
-    'SECTION',
-    'SPAN'
-];
-
-const INLINE_CHROME =
-[
-    'STRONG',
-    'B',
-    'EM',
-    'CITE',
-    'DFN',
-    'I',
-    'BIG',
-    'SMALL',
-    'FONT',
-    'BLOCKQUOTE',
-    'TT',
-    'A',
-    'U',
-    'SUP',
-    'SUB',
-    'STRIKE',
-    'H1',
-    'H2',
-    'H3',
-    'H4',
-    'H5',
-    'H6',
-    'DEL',
-    'TEXT'
-];
 
 const NODE_CACHE = new NodeList();
 
@@ -185,7 +148,7 @@ function renderViewTag(node, parent, tagName) {
                 case 'jpg':
                 case 'png':
                 case 'webp':
-                    src = insertResourceAsset(RESOURCE['image'], src, element.src);
+                    src = insertResourceAsset(getResource('IMAGE'), src, element.src);
                     break;
                 default:
                     src = `(UNSUPPORTED: ${image})`;
@@ -554,7 +517,7 @@ function setResourceStyle() {
             const match = value.match(/^(\w+)_([0-9]+)$/);
             if (match != null) {
                 const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
-                RESOURCE['style'].set(value, { parent, attributes: style.attributes });
+                getResource('STYLE').set(value, { parent, attributes: style.attributes });
                 parent = value;
             }
         });
@@ -832,7 +795,7 @@ function setNodeCache() {
 }
 
 export function parseDocument() {
-    let output = `${STRING_ANDROID.XML_DECLARATION}\n{0}`;
+    let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
     const mapX = [];
     const mapY = [];
     setStyleMap();
@@ -892,7 +855,7 @@ export function parseDocument() {
                         }
                         else if (nodeY.children.length > 0) {
                             const rows = nodeY.children;
-                            if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every(item => (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                            if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every(item => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
                                 let columns = [];
                                 let columnEnd = [];
                                 if (SETTINGS.useLayoutWeight) {

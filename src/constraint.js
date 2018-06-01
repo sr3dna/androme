@@ -319,7 +319,7 @@ export function positionViews(node) {
                 const chainNodes = flexNodes || nodes.slice().sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                 for (const current of chainNodes) {
                     const chainDirection = current.constraint[value];
-                    if (chainDirection != null && (flex.enabled || (chainDirection.length > 1 && chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(item => item.id).join(''))).reduce((a, b) => (a == b ? a : 0)) > 0))) {
+                    if (chainDirection != null && chainDirection.length > 1 && (flex.enabled || chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(item => item.id).join(''))).reduce((a, b) => (a == b ? a : 0)) > 0)) {
                         chainDirection.parent = node;
                         const HV = CHAIN_MAP['horizontalVertical'][index];
                         const VH = CHAIN_MAP['horizontalVertical'][(index == 0 ? 1 : 0)];
