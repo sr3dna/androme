@@ -5,7 +5,7 @@ const template = [
 '!1',
 '	<string-array name="{@name}">',
 '!2',
-'		<item>{value}</item>',
+'		<item>{&value}</item>',
 '!2',
 '	</string-array>',
 '!1',

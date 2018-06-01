@@ -29,7 +29,10 @@ export function parseTemplateData(template, data, index) {
             value = data[i];
         }
         if (value != '') {
-            output = (index != null ? output.replace(new RegExp(`{@*${i}}`), value) : value.trim());
+            output = (index != null ? output.replace(new RegExp(`{[@&]*${i}}`), value) : value.trim());
+        }
+        else if (new RegExp(`{&*${i}}`).test(output)) {
+            output = '';
         }
     }
     return output.replace(/\s+\w+="{@\w+}"/g, '');

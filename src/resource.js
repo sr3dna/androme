@@ -477,8 +477,9 @@ export function writeResourceStringXml() {
         const data = {
             '0': [{ '1': [] }]
         };
+        const baseItem = data['0'][0];
         for (const [name, value] of resource.entries()) {
-            data['0'][0]['1'].push({ name, value });
+            baseItem['1'].push({ name, value });
         }
         return parseTemplateData(template, data);
     }
@@ -492,6 +493,7 @@ export function writeResourceArrayXml() {
         const data = {
             '0': [{ '1': [] }]
         };
+        const baseItem = data['0'][0];
         for (const [name, values] of resource.entries()) {
             const stringArrayItem = {
                 name,
@@ -501,7 +503,7 @@ export function writeResourceArrayXml() {
             for (const [name, value] of values.entries()) {
                 item.push({ value: (value ? `@string/` : '') + name });
             }
-            data['0'][0]['1'].push(stringArrayItem);
+            baseItem['1'].push(stringArrayItem);
         }
         return parseTemplateData(template, data);
     }
@@ -514,6 +516,7 @@ export function writeResourceStyleXml() {
         const data = {
             '0': [{ '1': [] }]
         };
+        const baseItem = data['0'][0];
         for (const [name, style] of RESOURCE['style'].entries()) {
             const styleItem = {
                 name,
@@ -525,7 +528,7 @@ export function writeResourceStyleXml() {
                 const [name, value] = attr.split('=');
                 item.push({ name, value: value.replace(/"/g, '') });
             });
-            data['0'][0]['1'].push(styleItem);
+            baseItem['1'].push(styleItem);
         }
         return parseTemplateData(template, data);
     }
@@ -539,8 +542,9 @@ export function writeResourceColorXml() {
         const data = {
             '0': [{ '1': [] }]
         };
+        const baseItem = data['0'][0];
         for (const [name, value] of resource.entries()) {
-            data['0'][0]['1'].push({ name, value });
+            baseItem['1'].push({ name, value });
         }
         return parseTemplateData(template, data);
     }

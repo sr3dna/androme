@@ -5,7 +5,7 @@ const template = [
 '!1',
 '	<style name="{@name}" parent="{@parent}">',
 '!2',
-'		<item name="{@name}">{value}</item>',
+'		<item name="{@name}">{&value}</item>',
 '!2',
 '	</style>',
 '!1',

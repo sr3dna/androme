@@ -811,9 +811,12 @@ function setNodeCache() {
         }
     }
     NODE_CACHE.push(...textNodes);
-    for (const node in preAlignment) {
-        for (const attr in node.style) {
-            node.element.style[attr] = node.style[attr];
+    for (const node of NODE_CACHE) {
+        const style = preAlignment[node.id];
+        if (style != null) {
+            for (const attr in style) {
+                node.element.style[attr] = style[attr];
+            }
         }
     }
     Util.sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');
