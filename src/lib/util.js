@@ -76,6 +76,11 @@ export function padLeft(n, value = '\t') {
     return value.repeat(n);
 }
 
+export function formatPX(value) {
+    value = parseFloat(value);
+    return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
+}
+
 export function convertToPX(value, unit = true) {
     if (hasValue(value)) {
         if (typeof value == 'number') {

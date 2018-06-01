@@ -1,6 +1,6 @@
 import { WIDGET_ANDROID, BUILD_ANDROID, INHERIT_ANDROID, MAPPING_CHROME, API_ANDROID, FIXED_ANDROID } from './lib/constants';
 import * as Util from './lib/util';
-import { getStyle } from './lib/element';
+import { getRangeBounds, parseStyle } from './lib/element';
 import * as Resource from './resource';
 import RTL from './localization';
 
@@ -234,7 +234,7 @@ export default class Node {
                 this.constraint.minWidth = 'match_parent';
             }
             else {
-                this.constraint.minWidth = `${Math.ceil(width)}px`;
+                this.constraint.minWidth = Util.formatPX(width);
             }
         }
         if (this.viewHeight < height) {
@@ -250,7 +250,7 @@ export default class Node {
                 this.constraint.minHeight = 'match_parent';
             }
             else {
-                this.constraint.minHeight = `${Math.ceil(height)}px`;
+                this.constraint.minHeight = Util.formatPX(height);
             }
         }
         if (calibrate) {
@@ -398,7 +398,7 @@ export default class Node {
                         this.android('layout_height', this.constraint.minHeight, true);
                     }
                     else {
-                        this.android('minHeight', `${this.constraint.minHeight}px`)
+                        this.android('minHeight', this.constraint.minHeight)
                             .android('layout_height', 'wrap_content', false);
                     }
                 }
@@ -467,7 +467,7 @@ export default class Node {
                             }
                             let value = data[j];
                             if (Util.hasValue(value)) {
-                                value = Node.parseStyle(element, j, value);
+                                value = parseStyle(element, j, value);
                                 if (value != null) {
                                     switch (action) {
                                         case 'setComputedStyle':
@@ -509,7 +509,7 @@ export default class Node {
     setBounds(element, calibrate = false) {
         if (this.wrapNode == null) {
             if (!calibrate) {
-                this.bounds = (element != null ?  Node.getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
+                this.bounds = (element != null ?  getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
             }
             this.linear = {
                 top: this.bounds.top - this.marginTop,
@@ -518,10 +518,10 @@ export default class Node {
                 left: this.bounds.left - this.marginLeft
             };
             this.box = {
-                top: this.bounds.top + (this.paddingTop + Util.convertToInt(this.css('borderTopWidth'))),
-                right: this.bounds.right - (this.paddingRight + Util.convertToInt(this.css('borderRightWidth'))),
-                bottom: this.bounds.bottom - (this.paddingBottom + Util.convertToInt(this.css('borderBottomWidth'))),
-                left: this.bounds.left + (this.paddingLeft + Util.convertToInt(this.css('borderLeftWidth')))
+                top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
+                right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
+                bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
+                left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth)
             };
         }
         else {
@@ -615,19 +615,20 @@ export default class Node {
                         break;
                     case WIDGET_ANDROID.CONSTRAINT:
                     case WIDGET_ANDROID.RELATIVE:
-                        this.android('gravity', [vertical, horizontal].join('|'));
+                        const gravity = [vertical, horizontal].map(value => value);
+                        this.android('gravity', (gravity.length == 2 ? 'center' : gravity[0]));
                         horizontal = null;
                         vertical = null;
                         break;
                     case WIDGET_ANDROID.GRID:
-                        if (parentTextAlign) {
+                        if (parentTextAlign && horizontal != null) {
                             layoutGravity.push(horizontal);
                         }
                         break;
                 }
                 if (vertical != null || layoutGravity.length > 0) {
                     layoutGravity.push(vertical);
-                    this.android('layout_gravity', layoutGravity.join('|'));
+                    this.android('layout_gravity', (layoutGravity.length == 2 ? 'center' : layoutGravity[0]));
                 }
                 if (horizontal != null) {
                     this.android('gravity', horizontal);
@@ -831,6 +832,19 @@ export default class Node {
     get paddingRight() {
         return Util.convertToInt(this.css('paddingRight'));
     }
+    get borderTopWidth() {
+        return Util.convertToInt(this.css('borderTopWidth'));
+    }
+    get borderRightWidth() {
+        return Util.convertToInt(this.css('borderRightWidth'));
+    }
+    get borderBottomWidth() {
+        return Util.convertToInt(this.css('borderBottomWidth'));
+    }
+    get borderLeftWidth() {
+        return Util.convertToInt(this.css('borderLeftWidth'));
+    }
+
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
     }
@@ -862,7 +876,7 @@ export default class Node {
             for (const prop in inherit) {
                 let value = parent.style[prop]; 
                 node.style[prop] = value;
-                value = Node.parseStyle(null, prop, value);
+                value = parseStyle(null, prop, value);
                 if (value != null) {
                     style.push(Util.formatString(inherit[prop], value));
                 }
@@ -871,28 +885,5 @@ export default class Node {
         }
         element.children = [];
         return node;
-    }
-    static getRangeBounds(element) {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        const domRect = range.getClientRects();
-        const bounds = JSON.parse(JSON.stringify(domRect[domRect.length - 1]));
-        if (domRect.length > 1) {
-            bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
-            bounds.left = bounds.x;
-            bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
-        }
-        return bounds;
-    }
-    static parseStyle(element, name, value) {
-        if (name == 'backgroundColor') {
-            if (element != null && element.parentNode != null && value == getStyle(element.parentNode).backgroundColor) {
-                return null;
-            }
-        }
-        else if (/(pt|em)$/.test(value)) {
-            value = Util.convertToPX(value);
-        }
-        return value;
     }
 }

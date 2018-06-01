@@ -1,5 +1,32 @@
+import { convertToPX } from './util';
+
+export function getRangeBounds(element) {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const domRect = range.getClientRects();
+    const bounds = JSON.parse(JSON.stringify(domRect[domRect.length - 1]));
+    if (domRect.length > 1) {
+        bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
+        bounds.left = bounds.x;
+        bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
+    }
+    return bounds;
+}
+
 export function getStyle(element) {
     return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
+}
+
+export function parseStyle(element, name, value) {
+    if (name == 'backgroundColor') {
+        if (element != null && element.parentNode != null && value == getStyle(element.parentNode).backgroundColor) {
+            return null;
+        }
+    }
+    else if (/(pt|em)$/.test(value)) {
+        value = convertToPX(value);
+    }
+    return value;
 }
 
 export function getBoxSpacing(element, rtl = false, complete = false) {

@@ -1,4 +1,4 @@
-/* androme: 1.2.2
+/* androme: 1.2.3
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -204,6 +204,11 @@
 
     function padLeft(n, value = '\t') {
         return value.repeat(n);
+    }
+
+    function formatPX(value) {
+        value = parseFloat(value);
+        return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
     }
 
     function convertToPX(value, unit = true) {
@@ -630,8 +635,33 @@
         return null;
     }
 
+    function getRangeBounds(element) {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const domRect = range.getClientRects();
+        const bounds = JSON.parse(JSON.stringify(domRect[domRect.length - 1]));
+        if (domRect.length > 1) {
+            bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
+            bounds.left = bounds.x;
+            bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
+        }
+        return bounds;
+    }
+
     function getStyle(element) {
         return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
+    }
+
+    function parseStyle(element, name, value) {
+        if (name == 'backgroundColor') {
+            if (element != null && element.parentNode != null && value == getStyle(element.parentNode).backgroundColor) {
+                return null;
+            }
+        }
+        else if (/(pt|em)$/.test(value)) {
+            value = convertToPX(value);
+        }
+        return value;
     }
 
     function getBoxSpacing(element, rtl = false, complete = false) {
@@ -680,9 +710,10 @@
         useRTL: true,
         numberResourceValue: false,
         whitespaceHorizontalOffset: 4,
-        constraintBiasBoxOffset: 14,
+        whitespaceVerticalOffset: 16,
+        constraintBiasBoxOffset: 16,
         chainPackedHorizontalOffset: 4,
-        chainPackedVerticalOffset: 14
+        chainPackedVerticalOffset: 16
     };
 
     const RESOURCE = {
@@ -1512,7 +1543,7 @@
                     this.constraint.minWidth = 'match_parent';
                 }
                 else {
-                    this.constraint.minWidth = `${Math.ceil(width)}px`;
+                    this.constraint.minWidth = formatPX(width);
                 }
             }
             if (this.viewHeight < height) {
@@ -1528,7 +1559,7 @@
                     this.constraint.minHeight = 'match_parent';
                 }
                 else {
-                    this.constraint.minHeight = `${Math.ceil(height)}px`;
+                    this.constraint.minHeight = formatPX(height);
                 }
             }
             if (calibrate) {
@@ -1676,7 +1707,7 @@
                             this.android('layout_height', this.constraint.minHeight, true);
                         }
                         else {
-                            this.android('minHeight', `${this.constraint.minHeight}px`)
+                            this.android('minHeight', this.constraint.minHeight)
                                 .android('layout_height', 'wrap_content', false);
                         }
                     }
@@ -1745,7 +1776,7 @@
                                 }
                                 let value = data[j];
                                 if (hasValue(value)) {
-                                    value = Node.parseStyle(element, j, value);
+                                    value = parseStyle(element, j, value);
                                     if (value != null) {
                                         switch (action) {
                                             case 'setComputedStyle':
@@ -1787,7 +1818,7 @@
         setBounds(element, calibrate = false) {
             if (this.wrapNode == null) {
                 if (!calibrate) {
-                    this.bounds = (element != null ?  Node.getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
+                    this.bounds = (element != null ?  getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
                 }
                 this.linear = {
                     top: this.bounds.top - this.marginTop,
@@ -1796,10 +1827,10 @@
                     left: this.bounds.left - this.marginLeft
                 };
                 this.box = {
-                    top: this.bounds.top + (this.paddingTop + convertToInt(this.css('borderTopWidth'))),
-                    right: this.bounds.right - (this.paddingRight + convertToInt(this.css('borderRightWidth'))),
-                    bottom: this.bounds.bottom - (this.paddingBottom + convertToInt(this.css('borderBottomWidth'))),
-                    left: this.bounds.left + (this.paddingLeft + convertToInt(this.css('borderLeftWidth')))
+                    top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
+                    right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
+                    bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
+                    left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth)
                 };
             }
             else {
@@ -1893,19 +1924,20 @@
                             break;
                         case WIDGET_ANDROID.CONSTRAINT:
                         case WIDGET_ANDROID.RELATIVE:
-                            this.android('gravity', [vertical, horizontal].join('|'));
+                            const gravity = [vertical, horizontal].map(value => value);
+                            this.android('gravity', (gravity.length == 2 ? 'center' : gravity[0]));
                             horizontal = null;
                             vertical = null;
                             break;
                         case WIDGET_ANDROID.GRID:
-                            if (parentTextAlign) {
+                            if (parentTextAlign && horizontal != null) {
                                 layoutGravity.push(horizontal);
                             }
                             break;
                     }
                     if (vertical != null || layoutGravity.length > 0) {
                         layoutGravity.push(vertical);
-                        this.android('layout_gravity', layoutGravity.join('|'));
+                        this.android('layout_gravity', (layoutGravity.length == 2 ? 'center' : layoutGravity[0]));
                     }
                     if (horizontal != null) {
                         this.android('gravity', horizontal);
@@ -2109,6 +2141,19 @@
         get paddingRight() {
             return convertToInt(this.css('paddingRight'));
         }
+        get borderTopWidth() {
+            return convertToInt(this.css('borderTopWidth'));
+        }
+        get borderRightWidth() {
+            return convertToInt(this.css('borderRightWidth'));
+        }
+        get borderBottomWidth() {
+            return convertToInt(this.css('borderBottomWidth'));
+        }
+        get borderLeftWidth() {
+            return convertToInt(this.css('borderLeftWidth'));
+        }
+
         get center() {
             return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
         }
@@ -2140,7 +2185,7 @@
                 for (const prop in inherit) {
                     let value = parent.style[prop]; 
                     node.style[prop] = value;
-                    value = Node.parseStyle(null, prop, value);
+                    value = parseStyle(null, prop, value);
                     if (value != null) {
                         style.push(formatString(inherit[prop], value));
                     }
@@ -2149,29 +2194,6 @@
             }
             element.children = [];
             return node;
-        }
-        static getRangeBounds(element) {
-            const range = document.createRange();
-            range.selectNodeContents(element);
-            const domRect = range.getClientRects();
-            const bounds = JSON.parse(JSON.stringify(domRect[domRect.length - 1]));
-            if (domRect.length > 1) {
-                bounds.x = Array.from(domRect).reduce((a, b) => Math.min(a, b.x), Number.MAX_VALUE);
-                bounds.left = bounds.x;
-                bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
-            }
-            return bounds;
-        }
-        static parseStyle(element, name, value) {
-            if (name == 'backgroundColor') {
-                if (element != null && element.parentNode != null && value == getStyle(element.parentNode).backgroundColor) {
-                    return null;
-                }
-            }
-            else if (/(pt|em)$/.test(value)) {
-                value = convertToPX(value);
-            }
-            return value;
         }
     }
 
@@ -2251,6 +2273,9 @@
                 return true;
             }
             return false;
+        }
+        get anchored() {
+            return this.filter(node => (node.anchors == 2));
         }
         get horizontalBias() {
             if (this.parent != null) {
@@ -2621,24 +2646,14 @@
                                     dimension = 'box';
                                     parent = true;
                                 }
-                                const withinY = (adjacent.androidId != 'parent' && current.withinY(adjacent.linear));
                                 if (!current.constraint.horizontal) {
-                                    if (withinFraction(current.linear.right, adjacent[dimension].left) || (withinY && withinRange(current.linear.right, adjacent[dimension].left, SETTINGS.whitespaceHorizontalOffset))) {
-                                        setNodePosition(current, LAYOUT['rightLeft'], adjacent);
-                                        if (parent) {
-                                            current.constraint.horizontal = true;
-                                        }
-                                    }
-                                    else if (withinFraction(current.linear.left, adjacent[dimension].right) || (withinY && withinRange(current.linear.left, adjacent[dimension].right, SETTINGS.whitespaceHorizontalOffset))) {
-                                        setNodePosition(current, LAYOUT['leftRight'], adjacent);
-                                        if (parent) {
-                                            current.constraint.horizontal = true;
-                                        }
-                                    }
                                     if (current.linear.left == adjacent[dimension].left) {
                                         setNodePosition(current, LAYOUT['left'], adjacent);
                                         if (parent) {
                                             current.constraint.horizontal = true;
+                                        }
+                                        else {
+                                            adjacent.constraint.left = current.stringId;
                                         }
                                     }
                                     else if (current.linear.right == adjacent[dimension].right) {
@@ -2646,17 +2661,23 @@
                                         if (parent) {
                                             current.constraint.horizontal = true;
                                         }
+                                        else {
+                                            adjacent.constraint.right = current.stringId;
+                                        }
+                                    }
+                                    if (!parent) {
+                                        const sameY = (current.linear.top == adjacent[dimension].top || current.linear.bottom == adjacent[dimension].bottom);
+                                        if (withinFraction(current.linear.right, adjacent[dimension].left) || (sameY && withinRange(current.linear.right, adjacent[dimension].left, SETTINGS.whitespaceHorizontalOffset))) {
+                                            setNodePosition(current, LAYOUT['rightLeft'], adjacent);
+                                            adjacent.constraint.rightLeft = current.stringId;
+                                        }
+                                        else if (withinFraction(current.linear.left, adjacent[dimension].right) || (sameY && withinRange(current.linear.left, adjacent[dimension].right, SETTINGS.whitespaceHorizontalOffset))) {
+                                            setNodePosition(current, LAYOUT['leftRight'], adjacent);
+                                            adjacent.constraint.leftRight = current.stringId;
+                                        }
                                     }
                                 }
                                 if (!current.constraint.vertical) {
-                                    if (!parent) {
-                                        if (current.linear.bottom == adjacent.linear.top) {
-                                            setNodePosition(current, LAYOUT['bottomTop'], adjacent);
-                                        }
-                                        else if (current.linear.top == adjacent.linear.bottom) {
-                                            setNodePosition(current, LAYOUT['topBottom'], adjacent);
-                                        }
-                                    }
                                     if (current.linear.top == adjacent[dimension].top) {
                                         if (!parent && current.isView(WIDGET_ANDROID.TEXT) && adjacent.isView(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.style.verticalAlign == 'baseline') {
                                             setNodePosition(current, LAYOUT['baseline'], adjacent);
@@ -2667,11 +2688,28 @@
                                         if (parent) {
                                             current.constraint.vertical = true;
                                         }
+                                        else {
+                                            adjacent.constraint.top = current.stringId;
+                                        }
                                     }
                                     else if (current.linear.bottom == adjacent[dimension].bottom) {
                                         setNodePosition(current, LAYOUT['bottom'], adjacent);
                                         if (parent) {
                                             current.constraint.vertical = true;
+                                        }
+                                        else {
+                                            adjacent.constraint.bottom = current.stringId;
+                                        }
+                                    }
+                                    if (!parent) {
+                                        const sameX = (current.linear.left == adjacent[dimension].left || current.linear.right == adjacent[dimension].right);
+                                        if (current.linear.bottom == adjacent[dimension].top || (sameX && withinRange(current.linear.bottom - current.borderBottomWidth, adjacent[dimension].top + adjacent.borderTopWidth, SETTINGS.whitespaceVerticalOffset))) {
+                                            setNodePosition(current, LAYOUT['bottomTop'], adjacent);
+                                            adjacent.constraint.bottomTop = current.stringId;
+                                        }
+                                        else if (current.linear.top == adjacent.linear.bottom || (sameX && withinRange(current.linear.top + current.borderTopWidth, adjacent[dimension].bottom - adjacent.borderBottomWidth, SETTINGS.whitespaceVerticalOffset))) {
+                                            setNodePosition(current, LAYOUT['topBottom'], adjacent);
+                                            adjacent.constraint.topBottom = current.stringId;
                                         }
                                     }
                                 }
@@ -2679,7 +2717,28 @@
                         }
                     }
                     nodes.shift();
-                    const anchored = ['parent', ...nodes.filter(item => (item.anchors == 2)).map(item => item.stringId)];
+                    for (let current of nodes) {
+                        if (current.anchors < 2) {
+                            if (!current.constraint.horizontal) {
+                                if (current.constraint.rightLeft != null || current.constraint.leftRight != null) {
+                                    current.delete('app', LAYOUT['left']);
+                                    current.delete('app', LAYOUT['right']);
+                                }
+                            }
+                            else {
+                                current.delete('app', LAYOUT['topBottom'], LAYOUT['bottomTop']);
+                            }
+                            if (!current.constraint.vertical) {
+                                if (current.constraint.top != null || current.constraint.bottom != null) {
+                                    current.delete('app', LAYOUT['topBottom'], LAYOUT['bottomTop']);
+                                }
+                            }
+                            else {
+                                current.delete('app', LAYOUT['left'], LAYOUT['right']);
+                            }
+                        }
+                    }
+                    const anchored = ['parent', ...nodes.anchored.map(item => item.stringId)];
                     do {
                         let restart = false;
                         for (const current of nodes) {
@@ -2687,13 +2746,24 @@
                                 const result = (constraint ? search(current.app(), '*constraint*') : search(current.android(), LAYOUT));
                                 if (result.length > 1) {
                                     const anchors = [];
+                                    let x = 0;
+                                    let y = 0;
                                     for (let i = 0; i < result.length; i++) {
                                         const item = result[i];
                                         if (anchored.includes(item[1])) {
-                                            anchors.push(item);
+                                            if (indexOf(item[0], RTL('Left'), RTL('Right')) != -1) {
+                                                if (x++ == 0) {
+                                                    anchors.push(item);
+                                                }
+                                            }
+                                            else if (indexOf(item[0], 'Top', 'Bottom', 'Baseline') != -1) {
+                                                if (y++ == 0) {
+                                                    anchors.push(item);
+                                                }
+                                            }
                                         }
                                     }
-                                    if (anchors.length >= 2) {
+                                    if (x + y >= 2) {
                                         anchored.push(current.stringId);
                                         if (constraint) {
                                             current.delete('app', '*constraint*');
@@ -2714,15 +2784,12 @@
                         }
                     }
                     while (true);
-                    for (const current of nodes) {
-                        if (!anchored.includes(current.stringId)) {
-                            if (constraint) {
-                                current.delete('app', '*constraint*');
-                            }
-                            else {
+                    if (relative) {
+                        nodes.forEach(current => {
+                            if (!anchored.includes(current.stringId)) {
                                 current.delete('android', LAYOUT);
                             }
-                        }
+                        });
                     }
                 }
                 if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect())) {
@@ -2755,16 +2822,16 @@
                     }
                     else {
                         nodes.forEach(current => {
-                            let horizontalChain = nodes.filter(item => (item != current && same(current, item, 'bounds.top')));
+                            let horizontalChain = nodes.filter(item => same(current, item, 'bounds.top'));
                             if (horizontalChain.length == 0) {
-                                horizontalChain = nodes.filter(item => (item != current && same(current, item, 'bounds.bottom')));
+                                horizontalChain = nodes.filter(item => same(current, item, 'bounds.bottom'));
                             }
                             if (horizontalChain.length > 0) {
                                 horizontalChain.sortAsc('bounds.x');
                             }
-                            let verticalChain = nodes.filter(item => (item != current && same(current, item, 'bounds.left')));
+                            let verticalChain = nodes.filter(item => same(current, item, 'bounds.left'));
                             if (verticalChain.length == 0) {
-                                verticalChain = nodes.filter(item => (item != current && same(current, item, 'bounds.right')));
+                                verticalChain = nodes.filter(item => same(current, item, 'bounds.right'));
                             }
                             if (verticalChain.length > 0) {
                                 verticalChain.sortAsc('bounds.y');
@@ -2787,18 +2854,18 @@
                                 const rightBottom = CHAIN_MAP['rightBottom'][index];
                                 const firstNode = chainDirection.first;
                                 const lastNode = chainDirection.last;
-                                firstNode
-                                    .app(LAYOUT[leftTop], 'parent')
-                                    .constraint[HV.toLowerCase()] = true;
-                                lastNode
-                                    .app(LAYOUT[rightBottom], 'parent')
-                                    .constraint[HV.toLowerCase()] = true;
                                 let maxOffset = -1;
                                 const unassigned = new NodeList();
                                 for (let i = 0; i < chainDirection.length; i++) {
                                     const chain = chainDirection[i];
                                     const chainNext = chainDirection[i + 1];
                                     const chainPrev = chainDirection[i - 1];
+                                    if (index == 0) {
+                                        chain.delete('app', `*constraint${RTL('Left')}*`, `*constraint${RTL('Right')}*`);
+                                    }
+                                    else {
+                                        chain.delete('app', '*constraintTop*', '*constraintBottom*', '*constraintBaseline*');
+                                    }
                                     if (chainNext != null) {
                                         chain.app(LAYOUT[CHAIN_MAP['rightLeftBottomTop'][index]], chainNext.stringId);
                                         maxOffset = Math.max(chainNext.linear[leftTop] - chain.linear[rightBottom], maxOffset);
@@ -2876,6 +2943,12 @@
                                         }
                                     }
                                 }
+                                firstNode
+                                    .app(LAYOUT[leftTop], 'parent')
+                                    .constraint[HV.toLowerCase()] = true;
+                                lastNode
+                                    .app(LAYOUT[rightBottom], 'parent')
+                                    .constraint[HV.toLowerCase()] = true;
                                 const chainStyle = `layout_constraint${HV}_chainStyle`;
                                 if (flex.enabled && flex.justifyContent != 'normal' && chainDirection.reduce((a, b) => Math.max(a, b.flex.grow), -1) == 0) {
                                     switch (flex.justifyContent) {
@@ -2884,7 +2957,7 @@
                                             unassigned.android(LAYOUT_WH, 'wrap_content');
                                             break;
                                         case 'space-evenly':
-                                            setConstraintPercent(node, chainDirection, (index == 0));
+                                            setConstraintPercent(node, chainDirection, index);
                                             break;
                                         case 'space-around':
                                             firstNode.app(chainStyle, 'spread');
@@ -2919,17 +2992,60 @@
                                     }
                                 }
                                 else {
-                                    if (withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
+                                    let adjustMargins = false;
+                                    if (flex.enabled && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
                                         firstNode.app(chainStyle, 'spread_inside');
                                     }
                                     else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
-                                        firstNode
-                                            .app(chainStyle, 'packed')
-                                            .app(`layout_constraint${HV}_bias`, chainDirection[`${HV.toLowerCase()}Bias`]);
-                                        unassigned.android(LAYOUT_WH, 'wrap_content');
+                                        adjustMargins = true;
+                                    }
+                                    else if (chainDirection.anchors.length == 0) {
+                                        setConstraintPercent(node, chainDirection, index);
                                     }
                                     else {
-                                        setConstraintPercent(node, chainDirection, (index == 0));
+                                        adjustMargins = true;
+                                    }
+                                    if (adjustMargins) {
+                                        const bias = chainDirection[`${HV.toLowerCase()}Bias`];
+                                        firstNode
+                                            .app(chainStyle, 'packed')
+                                            .app(`layout_constraint${HV}_bias`, bias);
+                                        for (let i = 1; i < chainDirection.length; i++) {
+                                            const chain = chainDirection[i];
+                                            let offset = (index == 0 ? chain.linear.left - chainDirection[i - 1].linear.right : chain.linear.top - chainDirection[i - 1].linear.bottom);
+                                            if (offset > 0) {
+                                                const margin = (index == 0 ? RTL('layout_marginLeft') : 'layout_marginTop');
+                                                offset += convertToInt(chain.android(margin));
+                                                chain.android(margin, formatPX(offset));
+                                            }
+                                        }
+                                        if (index == 0) {
+                                            if (!firstNode.constraint.vertical) {
+                                                firstNode
+                                                    .app(LAYOUT['top'], 'parent')
+                                                    .app(LAYOUT['bottom'], 'parent')
+                                                    .app(`layout_constraintVertical_bias`, firstNode.verticalBias);
+                                            }
+                                            if (bias == 1) {
+                                                node.constraint.minWidth = formatPX(node.bounds.width);
+                                                node.constraint.layoutWidth = true;
+                                            }
+                                        }
+                                        else {
+                                            if (!firstNode.constraint.horizontal) {
+                                                firstNode
+                                                    .app(LAYOUT['left'], 'parent')
+                                                    .app(LAYOUT['right'], 'parent')
+                                                    .app(`layout_constraintHorizontal_bias`, firstNode.horizontalBias);
+                                            }
+                                            if (bias == 1) {
+                                                node.constraint.minHeight = formatPX(node.bounds.height);
+                                                node.constraint.layoutHeight = true;
+                                            }
+                                        }
+                                        firstNode.constraint.horizontal = true;
+                                        firstNode.constraint.vertical = true;
+                                        unassigned.android(LAYOUT_WH, 'wrap_content');
                                     }
                                     if (!flex.enabled) {
                                         chainDirection.forEach(item => {
@@ -2943,7 +3059,7 @@
                     });
                 }
                 if (!flex.enabled) {
-                    const anchored = nodes.filter(item => (item.anchors == 2));
+                    const anchored = nodes.anchored;
                     if (constraint) {
                         if (anchored.length == 0) {
                             const unbound = nodes.reduce((a, b) => (a.anchors >= b.anchors ? a : b), nodes[0]);
@@ -2996,7 +3112,7 @@
                     if (constraint) {
                         nodes.forEach(opposite => {
                             if (opposite.anchors < 2) {
-                                const adjacent = nodes.find(item => (item.anchors == 2));
+                                const adjacent = nodes.anchored[0];
                                 const center1 = opposite.center;
                                 const center2 = adjacent.center;
                                 const x = Math.abs(center1.x - center2.x);
@@ -3042,7 +3158,7 @@
                                 opposite
                                     .delete('app', 'layout_constraint*')
                                     .app('layout_constraintCircle', adjacent.stringId)
-                                    .app('layout_constraintCircleRadius', `${radius}px`)
+                                    .app('layout_constraintCircleRadius', formatPX(radius))
                                     .app('layout_constraintCircleAngle', degrees);
                                 opposite.constraint.vertical = true;
                                 opposite.constraint.horizontal = true;
@@ -3064,8 +3180,8 @@
                                 current
                                     .android(LAYOUT['parentTop'], 'true')
                                     .android(LAYOUT['parentLeft'], 'true');
-                                const top = `${Math.floor(current.bounds.top - node.box.top)}px`;
-                                const left = `${Math.floor(current.bounds.left - node.box.left)}px`;
+                                const top = formatPX(current.bounds.top - node.box.top);
+                                const left = formatPX(current.bounds.left - node.box.left);
                                 current
                                     .css('marginTop', top)
                                     .css(RTL('marginLeft'), left)
@@ -3074,10 +3190,10 @@
                                 current.constraint.vertical = true;
                                 current.constraint.horizontal = true;
                             }
-                            if (current.android(LAYOUT['parentRight']) != null) {
+                            if (current.android(LAYOUT['parentRight']) == 'true') {
                                 node.constraint.layoutWidth = true;
                             }
-                            if (current.android(LAYOUT['parentBottom']) != null) {
+                            if (current.android(LAYOUT['parentBottom']) == 'true') {
                                 node.constraint.layoutHeight = true;
                             }
                         }
@@ -3087,17 +3203,26 @@
         }
     }
 
-    function setConstraintPercent(parent, nodes, width, full) {
-        nodes[0].app(`layout_constraint${(width ? 'Horizontal' : 'Vertical')}_chainStyle`, 'spread');
+    function setConstraintPercent(parent, nodes, index) {
         let percentTotal = 0;
+        let full = false;
+        switch (index) {
+            case 0:
+                full = (nodes.last.linear.right >= parent.flex.right);
+                break;
+            case 1:
+                full = (nodes.last.linear.bottom >= parent.box.bottom);
+                break;
+        }
+        nodes[0].app(`layout_constraint${(index ? 'Horizontal' : 'Vertical')}_chainStyle`, 'spread');
         for (let i = 0; i < nodes.length; i++) {
             const chain = nodes[i];
             const chainPrev = nodes[i - 1];
             let percent = ((chain.linear.right - parent.box.left) - (chainPrev != null ? chainPrev.linear.right - parent.box.left : 0)) / parent.box.width;
             percent = (full && i == nodes.length - 1 ? 1 - percentTotal : parseFloat(percent.toFixed(2)));
             chain
-                .android(`layout_${(width ? 'width' : 'height')}`, '0px')
-                .app(`layout_constraint${(width ? 'Width' : 'Height')}_percent`, percent);
+                .android(`layout_${(index == 0 ? 'width' : 'height')}`, (FIXED_ANDROID.includes(chain.widgetName) ? 'wrap_content' : '0px'))
+                .app(`layout_constraint${(index == 0 ? 'Width' : 'Height')}_percent`, percent);
             percentTotal += percent;
         }
     }
@@ -3446,7 +3571,7 @@
                     node.renderChildren.sortAsc('linear.top').forEach(item => {
                         const height = Math.ceil(item.linear.top - current);
                         if (height > 0) {
-                            item.android('layout_marginTop', `${node.marginTop + height}px`);
+                            item.android('layout_marginTop', formatPX(node.marginTop + height));
                         }
                         current = item.linear.bottom;
                     });
@@ -3457,7 +3582,7 @@
                         if (!item.floating) {
                             const width = Math.ceil(item.linear.left - current);
                             if (width > 0) {
-                                item.android(RTL('layout_marginLeft'), `${node.marginLeft + width}px`);
+                                item.android(RTL('layout_marginLeft'), formatPX(node.marginLeft + width));
                             }
                         }
                         current = (item.label || item).linear.right;
@@ -3476,16 +3601,16 @@
                     const marginLeft = convertToInt(node.android(marginLeft_RTL));
                     if (marginTop != 0 && marginTop == marginBottom && marginBottom == marginLeft && marginLeft == marginRight) {
                         node.delete('android', 'layout_margin*')
-                            .android('layout_margin', `${marginTop}px`);
+                            .android('layout_margin', formatPX(marginTop));
                     }
                     else {
                         if (marginTop != 0 && marginTop == marginBottom) {
                             node.delete('android', 'layout_marginTop', 'layout_marginBottom')
-                                .android('layout_marginVertical', `${marginTop}px`);
+                                .android('layout_marginVertical', formatPX(marginTop));
                         }
                         if (marginLeft != 0 && marginLeft == marginRight) {
                             node.delete('android', marginLeft_RTL, marginRight_RTL)
-                                .android('layout_marginHorizontal', `${marginLeft}px`);
+                                .android('layout_marginHorizontal', formatPX(marginLeft));
                         }
                     }
                     const paddingTop = convertToInt(node.android('paddingTop'));
@@ -3494,16 +3619,16 @@
                     const paddingLeft = convertToInt(node.android(paddingLeft_RTL));
                     if (paddingTop != 0 && paddingTop == paddingBottom && paddingBottom == paddingLeft && paddingLeft == paddingRight) {
                         node.delete('android', 'padding*')
-                            .android('padding', `${paddingTop}px`);
+                            .android('padding', formatPX(paddingTop));
                     }
                     else {
                         if (paddingTop != 0 && paddingTop == paddingBottom) {
                             node.delete('android', 'paddingTop', 'paddingBottom')
-                                .android('paddingVertical', `${paddingTop}px`);
+                                .android('paddingVertical', formatPX(paddingTop));
                         }
                         if (paddingLeft != 0 && paddingLeft == paddingRight) {
                             node.delete('android', paddingLeft_RTL, paddingRight_RTL)
-                                .android('paddingHorizontal', `${paddingLeft}px`);
+                                .android('paddingHorizontal', formatPX(paddingLeft));
                         }
                     }
                 }

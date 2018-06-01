@@ -78,6 +78,9 @@ export default class NodeList extends Array {
         }
         return false;
     }
+    get anchored() {
+        return this.filter(node => (node.anchors == 2));
+    }
     get horizontalBias() {
         if (this.parent != null) {
             const left = this.first.linear.left - this.parent.box.left;

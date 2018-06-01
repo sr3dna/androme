@@ -25,8 +25,7 @@ Library files are in the /dist folder. There is a babel minified for production 
 These settings are available in the global variable "androme" to customize your desired XML structure. Compatible attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
 
 ```javascript
-androme.settings
-{
+androme.settings = {
     targetAPI: androme.build.OREO,
     density: androme.density.MDPI,
     showAttributes: true,
@@ -37,15 +36,16 @@ androme.settings
     useUnitDP: true,
     useRTL: true,
     numberResourceValue: false,
-    whitespaceHorizontalOffset: 4,
-    constraintBiasBoxOffset: 14,
+	whitespaceHorizontalOffset: 4,
+	whitespaceVerticalOffset: 16,
+    constraintBiasBoxOffset: 16,
     chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 14
-}
+    chainPackedVerticalOffset: 16
+};
 ```
 You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 
-The Date fields have been modified to demonstrate the Constraint circle and bias capabilities. Constraint chain is also available as a setting although the current Android implementation does not support exact placement. It might be more ideal in some scenarios to disable Constraint chain and use Constraint circle. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate. ConstraintLayout and RelativeLayout should generate the same UI although ConstraintLayout is preferred for most scenarios.
+Constraint chain is also available as a setting although the current Android implementation does not support exact placement. It sometimes is better to disable Constraint chain and use Constraint circle which offers exact placement. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios.
 
 <img src="demos/android/form.png" alt="form" />
 
@@ -124,7 +124,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Label_1" />
 			<android.support.constraint.ConstraintLayout
 				android:id="@+id/constraintlayout_1"
-				android:layout_height="95dp"
+				android:layout_height="91dp"
 				android:layout_width="match_parent">
 				<Spinner
 					android:id="@+id/month0"
@@ -136,6 +136,9 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
+					app:layout_constraintEnd_toStartOf="@+id/day0"
+					app:layout_constraintHorizontal_bias="0"
+					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toTopOf="parent"
 					style="@style/Select_1" />
@@ -145,13 +148,14 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:entries="@array/day0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintCircle="@+id/month0"
-					app:layout_constraintCircleAngle="129"
-					app:layout_constraintCircleRadius="56dp"
+					app:layout_constraintEnd_toStartOf="@+id/year0"
+					app:layout_constraintStart_toEndOf="@+id/month0"
+					app:layout_constraintTop_toTopOf="parent"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/year0"
@@ -159,13 +163,110 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:entries="@array/year0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="4dp"
+					android:layout_marginStart="4dp"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/day0"
+					app:layout_constraintTop_toTopOf="parent"
+					style="@style/Select_1" />
+				<Spinner
+					android:id="@+id/month1"
+					android:background="@drawable/select_hour"
+					android:entries="@array/month1_array"
+					android:focusable="true"
+					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					app:layout_constraintBottom_toBottomOf="parent"
+					app:layout_constraintEnd_toStartOf="@+id/day1"
+					app:layout_constraintHorizontal_bias="0"
+					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
+					app:layout_constraintTop_toTopOf="parent"
+					app:layout_constraintVertical_bias="0.5"
+					style="@style/Select_1" />
+				<Spinner
+					android:id="@+id/day1"
+					android:background="@drawable/select_hour"
+					android:entries="@array/day1_array"
+					android:focusable="true"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintEnd_toStartOf="@+id/year1"
+					app:layout_constraintStart_toEndOf="@+id/month1"
+					app:layout_constraintTop_toTopOf="@+id/month1"
+					style="@style/Select_1" />
+				<Spinner
+					android:id="@+id/year1"
+					android:background="@drawable/select_hour"
+					android:entries="@array/year1_array"
+					android:focusable="true"
+					android:gravity="center"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/day1"
+					app:layout_constraintTop_toTopOf="@+id/month1"
+					style="@style/Select_1" />
+				<Spinner
+					android:id="@+id/month2"
+					android:background="@drawable/select_hour"
+					android:entries="@array/month2_array"
+					android:focusable="true"
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintBottom_toBottomOf="parent"
+					app:layout_constraintEnd_toStartOf="@+id/day2"
+					app:layout_constraintHorizontal_bias="0"
+					app:layout_constraintHorizontal_chainStyle="packed"
+					app:layout_constraintStart_toStartOf="parent"
+					style="@style/Select_1" />
+				<Spinner
+					android:id="@+id/day2"
+					android:background="@drawable/select_hour"
+					android:entries="@array/day2_array"
+					android:focusable="true"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintBottom_toBottomOf="parent"
+					app:layout_constraintEnd_toStartOf="@+id/year2"
+					app:layout_constraintStart_toEndOf="@+id/month2"
+					style="@style/Select_1" />
+				<Spinner
+					android:id="@+id/year2"
+					android:background="@drawable/select_hour"
+					android:entries="@array/year2_array"
+					android:focusable="true"
+					android:gravity="center"
+					android:layout_height="wrap_content"
+					android:layout_marginStart="4dp"
+					android:layout_width="wrap_content"
+					android:minWidth="37dp"
+					android:paddingBottom="2dp"
+					android:paddingTop="1dp"
+					app:layout_constraintBottom_toBottomOf="parent"
+					app:layout_constraintEnd_toEndOf="parent"
+					app:layout_constraintStart_toEndOf="@+id/day2"
 					style="@style/Select_1" />
 			</android.support.constraint.ConstraintLayout>
 			<Space
