@@ -12,10 +12,10 @@ const SETTINGS = {
     useRTL: true,
     numberResourceValue: false,
     whitespaceHorizontalOffset: 4,
-    whitespaceVerticalOffset: 16,
-    constraintBiasBoxOffset: 16,
+    whitespaceVerticalOffset: 14,
+    constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 16
+    chainPackedVerticalOffset: 14
 };
 
 export default SETTINGS;

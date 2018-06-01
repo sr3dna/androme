@@ -239,7 +239,7 @@ export function withinRange(a, b, n = 1) {
 }
 
 export function withinFraction(left, right) {
-    return (left == right || Math.ceil(left) == Math.floor(right));
+    return (left == right || Math.ceil(left) == Math.floor(right) || Math.ceil(right) == Math.floor(left));
 }
 
 export function isNumber(value) {

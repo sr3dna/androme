@@ -118,3 +118,10 @@ export const STRING_ANDROID =
 {
     XML_DECLARATION: '<?xml version="1.0" encoding="utf-8"?>'
 };
+
+export const XMLNS_ANDROID =
+{
+    ANDROID: 'xmlns:android="http://schemas.android.com/apk/res/android"',
+    APP: 'xmlns:app="http://schemas.android.com/apk/res-auto"',
+    TOOLS: 'xmlns:tools="http://schemas.android.com/tools"'
+};

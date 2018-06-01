@@ -1,4 +1,4 @@
-import { WIDGET_ANDROID, STRING_ANDROID } from './lib/constants';
+import { WIDGET_ANDROID, STRING_ANDROID, XMLNS_ANDROID } from './lib/constants';
 import { generateId, cameltoLowerCase, convertToPX, insetToDP, hasValue, isNumber, padLeft } from './lib/util';
 import { findNearestColor, parseRGBA } from './lib/color';
 import { getStyle, getBoxSpacing } from './lib/element';
@@ -11,13 +11,6 @@ export const RESOURCE = {
     image: new Map(),
     drawable: new Map(),
     style: new Map()
-};
-
-export const XMLNS_ANDROID =
-{
-    ANDROID: 'xmlns:android="http://schemas.android.com/apk/res/android"',
-    APP: 'xmlns:app="http://schemas.android.com/apk/res-auto"',
-    TOOLS: 'xmlns:tools="http://schemas.android.com/tools"'
 };
 
 const PROPERTY_ANDROID =
@@ -444,20 +437,14 @@ export function getViewAttributes(node) {
     let output = '';
     const attributes = node.combine();
     if (attributes.length > 0) {
+        const indent = padLeft(node.renderDepth + 1);
         for (let i = 0; i < attributes.length; i++) {
             if (attributes[i].startsWith('android:id=')) {
                 attributes.unshift(...attributes.splice(i, 1));
                 break;
             }
         }
-        const indent = padLeft(node.renderDepth + 1);
-        if (node.renderDepth == 0) {
-            if (SETTINGS.useConstraintLayout) {
-                attributes.unshift(XMLNS_ANDROID.APP);    
-            }
-            attributes.unshift(XMLNS_ANDROID.ANDROID);
-        }
-        output = attributes.map(value => `\n${indent + value}`).join('');
+        output = (node.renderDepth == 0 ? '{@0}' : '') + attributes.map(value => `\n${indent + value}`).join('');
     }
     return output;
 }

@@ -218,8 +218,8 @@ export default class Node {
                 height -= this.linear.top;
                 break;
         }
-        width += (this.paddingRight + Util.convertToInt(this.css('borderRightWidth')));
-        height += (this.paddingBottom + Util.convertToInt(this.css('borderBottomWidth')));
+        width += this.paddingRight + this.borderRightWidth;
+        height += this.paddingBottom + this.borderBottomWidth;
         let calibrate = false;
         if (this.viewWidth < width) {
             if (this.bounds.width < width) {
@@ -707,13 +707,23 @@ export default class Node {
         let maxRight = Number.MIN_VALUE;
         let minTop = Number.MAX_VALUE;
         let maxBottom = Number.MIN_VALUE;
-        this.children.forEach(node => {
+        for (const node of this.children) {
             minLeft = Math.min(node.bounds.left, minLeft);
             maxRight = Math.max(node.bounds.right, maxRight);
             minTop = Math.min(node.bounds.top, minTop);
             maxBottom = Math.max(node.bounds.bottom, maxBottom);
-        });
+        }
         return [maxRight - minLeft, maxBottom - minTop];
+    }
+    get namespaces() {
+        const result = [];
+        for (const obj of this._namespaces) {
+            const name = obj.replace(/^_+/, '');
+            if (name != '') {
+                result.push(name);
+            }
+        }
+        return result;
     }
     get outerNodes() {
         const children = this.children;
@@ -820,18 +830,6 @@ export default class Node {
     get marginRight() {
         return Util.convertToInt(this.css('marginRight'));
     }
-    get paddingTop() {
-        return Util.convertToInt(this.css('paddingTop'));
-    }
-    get paddingBottom() {
-        return Util.convertToInt(this.css('paddingBottom'));
-    }
-    get paddingLeft() {
-        return Util.convertToInt(this.css('paddingLeft'));
-    }
-    get paddingRight() {
-        return Util.convertToInt(this.css('paddingRight'));
-    }
     get borderTopWidth() {
         return Util.convertToInt(this.css('borderTopWidth'));
     }
@@ -844,7 +842,18 @@ export default class Node {
     get borderLeftWidth() {
         return Util.convertToInt(this.css('borderLeftWidth'));
     }
-
+    get paddingTop() {
+        return Util.convertToInt(this.css('paddingTop'));
+    }
+    get paddingBottom() {
+        return Util.convertToInt(this.css('paddingBottom'));
+    }
+    get paddingLeft() {
+        return Util.convertToInt(this.css('paddingLeft'));
+    }
+    get paddingRight() {
+        return Util.convertToInt(this.css('paddingRight'));
+    }
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
     }

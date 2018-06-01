@@ -37,10 +37,10 @@ androme.settings = {
     useRTL: true,
     numberResourceValue: false,
 	whitespaceHorizontalOffset: 4,
-	whitespaceVerticalOffset: 16,
-    constraintBiasBoxOffset: 16,
+	whitespaceVerticalOffset: 14,
+    constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 16
+    chainPackedVerticalOffset: 14
 };
 ```
 You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
