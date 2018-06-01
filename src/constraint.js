@@ -1,6 +1,6 @@
 import { WIDGET_ANDROID, FIXED_ANDROID } from './lib/constants';
 import RTL from './localization';
-import { withinFraction, withinRange, search, indexOf, same, convertPX, convertInt, formatPX } from './lib/util';
+import { convertPX, convertInt, formatPX, search, indexOf, same, withinFraction, withinRange  } from './lib/util';
 import NodeList from './nodelist';
 import SETTINGS from './settings';
 

@@ -1,4 +1,4 @@
-import { WIDGET_ANDROID, BUILD_ANDROID, INHERIT_ANDROID, MAPPING_CHROME, API_ANDROID, FIXED_ANDROID } from './lib/constants';
+import { WIDGET_ANDROID, BUILD_ANDROID, API_ANDROID, INHERIT_ANDROID, FIXED_ANDROID, MAPPING_CHROME } from './lib/constants';
 import * as Util from './lib/util';
 import { getRangeBounds, parseStyle } from './lib/element';
 import * as Resource from './resource';

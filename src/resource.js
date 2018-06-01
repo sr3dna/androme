@@ -1,8 +1,15 @@
-import { WIDGET_ANDROID, STRING_ANDROID, XMLNS_ANDROID } from './lib/constants';
-import { generateId, cameltoLowerCase, convertPX, insetDP, hasValue, isNumber, padLeft } from './lib/util';
-import { findNearestColor, parseRGBA } from './lib/color';
+import { WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
+import { generateId, cameltoLowerCase, convertPX, insetDP, isNumber, padLeft, hasValue } from './lib/util';
+import { parseRGBA, findNearestColor } from './lib/color';
 import { getStyle, getBoxSpacing } from './lib/element';
+import { parseTemplateMatch, parseTemplateData } from './lib/xml';
 import SETTINGS from './settings';
+
+import STRING_TEMPLATE from './template/resources/string';
+import STRINGARRAY_TEMPLATE from './template/resources/string-array';
+import STYLE_TEMPLATE from './template/resources/style';
+import COLOR_TEMPLATE from './template/resources/color';
+import DRAWABLE_TEMPLATE from './template/resources/drawable';
 
 export const RESOURCE = {
     string: new Map(),
@@ -226,7 +233,7 @@ export function addResourceString(node, value) {
         }
         const number = isNumber(value);
         if (SETTINGS.numberResourceValue || !number) {
-            value = value.replace(/\s*style=""/g, '');
+            value = value.replace(/\s*style=".*?">/g, '>');
             for (const [name, resourceValue] in RESOURCE['string'].entries()) {
                 if (resourceValue == value) {
                     return { text: name };
@@ -239,7 +246,7 @@ export function addResourceString(node, value) {
             else if (/^[0-9]/.test(value)) {
                 name = `__${name}`;
             }
-            else if (!/[a-zA-Z0-9]+/.test(name) && node != null) {
+            else if (!/\w+/.test(name) && node != null) {
                 name = node.androidId;
             }
             name = insertResourceAsset(RESOURCE['string'], name, value);
@@ -466,14 +473,14 @@ export function parseStyleAttribute(value) {
 export function writeResourceStringXml() {
     const resource = new Map([...RESOURCE['string'].entries()].sort());
     if (resource.size > 0) {
-        const xml = [STRING_ANDROID.XML_DECLARATION,
-                     '<resources>'];
+        const template = parseTemplateMatch(STRING_TEMPLATE);
+        const data = {
+            '0': [{ '1': [] }]
+        };
         for (const [name, value] of resource.entries()) {
-            xml.push(`\t<string name="${name}">${value}</string>`);
+            data['0'][0]['1'].push({ name, value });
         }
-        xml.push('</resources>',
-                 '<!-- filename: res/values/string.xml -->\n');
-        return xml.join('\n');
+        return parseTemplateData(template, data);
     }
     return '';
 }
@@ -481,41 +488,46 @@ export function writeResourceStringXml() {
 export function writeResourceArrayXml() {
     const resource = new Map([...RESOURCE['array'].entries()].sort());
     if (resource.size > 0) {
-        const xml = [STRING_ANDROID.XML_DECLARATION,
-                     '<resources>'];
+        const template = parseTemplateMatch(STRINGARRAY_TEMPLATE);
+        const data = {
+            '0': [{ '1': [] }]
+        };
         for (const [name, values] of resource.entries()) {
-            xml.push(`\t<string-array name="${name}">`);
+            const stringArrayItem = {
+                name,
+                '2': []
+            };
+            const item = stringArrayItem['2'];
             for (const [name, value] of values.entries()) {
-                xml.push(`\t\t<item>${(value ? `@string/` : '') + name}</item>`);
+                item.push({ value: (value ? `@string/` : '') + name });
             }
-            xml.push('\t</string-array>');
+            data['0'][0]['1'].push(stringArrayItem);
         }
-        xml.push('</resources>',
-                 '<!-- filename: res/values/string_array.xml -->\n');
-        return xml.join('\n');
+        return parseTemplateData(template, data);
     }
     return '';
 }
 
 export function writeResourceStyleXml() {
     if (RESOURCE['style'].size > 0) {
-        let xml = [STRING_ANDROID.XML_DECLARATION,
-                   '<resources>'];
+        const template = parseTemplateMatch(STYLE_TEMPLATE);
+        const data = {
+            '0': [{ '1': [] }]
+        };
         for (const [name, style] of RESOURCE['style'].entries()) {
-            xml.push(`\t<style name="${name}"${(style.parent != null ? ` parent="${style.parent}"` : '')}>`);
-            style.attributes.split(';').sort().forEach(value => {
-                const [name, setting] = value.split('=');
-                xml.push(`\t\t<item name="${name}">${setting.replace(/"/g, '')}</item>`);
+            const styleItem = {
+                name,
+                parent: style.parent || '',
+                '2': []
+            };
+            const item = styleItem['2'];
+            style.attributes.split(';').sort().forEach(attr => {
+                const [name, value] = attr.split('=');
+                item.push({ name, value: value.replace(/"/g, '') });
             });
-            xml.push('\t</style>');
+            data['0'][0]['1'].push(styleItem);
         }
-        xml.push('</resources>',
-                 '<!-- filename: res/values/styles.xml -->\n');
-        xml = xml.join('\n');
-        if (SETTINGS.useUnitDP) {
-            xml = insetDP(xml, SETTINGS.density, true);
-        }
-        return xml;
+        return parseTemplateData(template, data);
     }
     return '';
 }
@@ -523,30 +535,31 @@ export function writeResourceStyleXml() {
 export function writeResourceColorXml() {
     if (RESOURCE['color'].size > 0) {
         const resource = new Map([...RESOURCE['color'].entries()].sort());
-        const xml = [STRING_ANDROID.XML_DECLARATION,
-                     '<resources>'];
+        const template = parseTemplateMatch(COLOR_TEMPLATE);
+        const data = {
+            '0': [{ '1': [] }]
+        };
         for (const [name, value] of resource.entries()) {
-            xml.push(`\t<color name="${value}">${name}</color>`);
+            data['0'][0]['1'].push({ name, value });
         }
-        xml.push('</resources>',
-                 '<!-- filename: res/values/colors.xml -->\n');
-        return xml.join('\n');
+        return parseTemplateData(template, data);
     }
     return '';
 }
 
 export function writeResourceDrawableXml() {
     if (RESOURCE['drawable'].size > 0 || RESOURCE['image'].size > 0) {
-        let xml = [];
+        const template = parseTemplateMatch(DRAWABLE_TEMPLATE);
+        const data = {
+            '0': []
+        };
         for (const [name, value] of RESOURCE['drawable'].entries()) {
-            xml.push(value,
-                     `<!-- filename: res/drawable/${name}.xml -->\n`);
+            data['0'].push({ name: `res/drawable/${name}.xml`, value});
         }
         for (const [name, value] of RESOURCE['image'].entries()) {
-            xml.push(`<!-- image: ${value} -->`,
-                     `<!-- filename: res/drawable/${name + value.substring(value.lastIndexOf('.'))} -->\n`);
+            data['0'].push({ name: `res/drawable/${name + value.substring(value.lastIndexOf('.'))}`, value: `<!-- image: ${value} -->` });
         }
-        xml = xml.join('\n');
+        let xml = parseTemplateData(template, data);
         if (SETTINGS.useUnitDP) {
             xml = insetDP(xml, SETTINGS.density);
         }

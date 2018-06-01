@@ -1,11 +1,11 @@
-import { WIDGET_ANDROID, MAPPING_CHROME, STRING_ANDROID, XMLNS_ANDROID, BUILD_ANDROID, DENSITY_ANDROID } from './lib/constants';
+import { WIDGET_ANDROID, MAPPING_CHROME, STRING_ANDROID, XMLNS_ANDROID, BUILD_ANDROID, DENSITY_ANDROID, API_ANDROID } from './lib/constants';
 import * as Util from './lib/util';
 import * as Color from './lib/color';
 import * as Element from './lib/element';
 import Node from './node';
 import NodeList from './nodelist';
 import { positionViews } from './constraint';
-import { RESOURCE, insertResourceAsset, getViewAttributes, parseStyleAttribute, writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml } from './resource';
+import { RESOURCE, getViewAttributes, parseStyleAttribute, insertResourceAsset, writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml } from './resource';
 import RTL from './localization';
 import SETTINGS from './settings';
 
@@ -1238,5 +1238,5 @@ export function parseDocument() {
 }
 
 export const settings = SETTINGS;
-export { BUILD_ANDROID, DENSITY_ANDROID };
+export { BUILD_ANDROID, DENSITY_ANDROID, API_ANDROID };
 export { writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml };
