@@ -1,4 +1,4 @@
-import { convertToPX } from './util';
+import { convertPX } from './util';
 
 export function getRangeBounds(element) {
     const range = document.createRange();
@@ -24,7 +24,7 @@ export function parseStyle(element, name, value) {
         }
     }
     else if (/(pt|em)$/.test(value)) {
-        value = convertToPX(value);
+        value = convertPX(value);
     }
     return value;
 }

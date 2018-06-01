@@ -1,6 +1,6 @@
 import { WIDGET_ANDROID, FIXED_ANDROID } from './lib/constants';
 import RTL from './localization';
-import * as Util from './lib/util';
+import { withinFraction, withinRange, search, indexOf, same, convertPX, convertInt, formatPX } from './lib/util';
 import NodeList from './nodelist';
 import SETTINGS from './settings';
 
@@ -87,7 +87,7 @@ export function positionViews(node) {
         if (!flex.enabled) {
             node.expandToFit();
             for (const current of nodes) {
-                if (Util.withinRange(parseFloat(current.horizontalBias), 0.5, 0.01) && Util.withinRange(parseFloat(current.verticalBias), 0.5, 0.01)) {
+                if (withinRange(parseFloat(current.horizontalBias), 0.5, 0.01) && withinRange(parseFloat(current.verticalBias), 0.5, 0.01)) {
                     if (constraint) {
                         current
                             .app(LAYOUT['top'], 'parent')
@@ -161,10 +161,10 @@ export function positionViews(node) {
                             }
                             if (!parent) {
                                 const sameY = (current.linear.top == adjacent[dimension].top || current.linear.bottom == adjacent[dimension].bottom);
-                                if (Util.withinFraction(current.linear.right, adjacent[dimension].left) || (sameY && Util.withinRange(current.linear.right, adjacent[dimension].left, SETTINGS.whitespaceHorizontalOffset))) {
+                                if (withinFraction(current.linear.right, adjacent[dimension].left) || (sameY && withinRange(current.linear.right, adjacent[dimension].left, SETTINGS.whitespaceHorizontalOffset))) {
                                     setNodePosition(current, 'rightLeft', adjacent);
                                 }
-                                else if (Util.withinFraction(current.linear.left, adjacent[dimension].right) || (sameY && Util.withinRange(current.linear.left, adjacent[dimension].right, SETTINGS.whitespaceHorizontalOffset))) {
+                                else if (withinFraction(adjacent[dimension].right, current.linear.left) || (sameY && withinRange(current.linear.left, adjacent[dimension].right, SETTINGS.whitespaceHorizontalOffset))) {
                                     setNodePosition(current, 'leftRight', adjacent);
                                 }
                             }
@@ -189,10 +189,10 @@ export function positionViews(node) {
                             }
                             if (!parent) {
                                 const sameX = (current.linear.left == adjacent[dimension].left || current.linear.right == adjacent[dimension].right);
-                                if (current.linear.bottom == adjacent[dimension].top || (sameX && Util.withinRange(current.linear.bottom, adjacent[dimension].top, SETTINGS.whitespaceVerticalOffset))) {
+                                if (current.linear.bottom == adjacent[dimension].top || (sameX && withinRange(current.linear.bottom, adjacent[dimension].top, SETTINGS.whitespaceVerticalOffset))) {
                                     setNodePosition(current, 'bottomTop', adjacent);
                                 }
-                                else if (current.linear.top == adjacent[dimension].bottom || (sameX && Util.withinRange(current.linear.top, adjacent[dimension].bottom, SETTINGS.whitespaceVerticalOffset))) {
+                                else if (current.linear.top == adjacent[dimension].bottom || (sameX && withinRange(current.linear.top, adjacent[dimension].bottom, SETTINGS.whitespaceVerticalOffset))) {
                                     setNodePosition(current, 'topBottom', adjacent);
                                 }
                             }
@@ -227,7 +227,7 @@ export function positionViews(node) {
                 let restart = false;
                 for (const current of nodes) {
                     if (!anchored.includes(current.stringId)) {
-                        const result = (constraint ? Util.search(current.app(), '*constraint*') : Util.search(current.android(), LAYOUT));
+                        const result = (constraint ? search(current.app(), '*constraint*') : search(current.android(), LAYOUT));
                         if (result.length > 1) {
                             const anchors = [];
                             let x = 0;
@@ -235,12 +235,12 @@ export function positionViews(node) {
                             for (let i = 0; i < result.length; i++) {
                                 const current = result[i];
                                 if (anchored.includes(current[1])) {
-                                    if (Util.indexOf(current[0], RTL('Left'), RTL('Right')) != -1) {
+                                    if (indexOf(current[0], RTL('Left'), RTL('Right')) != -1) {
                                         if (x++ == 0) {
                                             anchors.push(current);
                                         }
                                     }
-                                    else if (Util.indexOf(current[0], 'Top', 'Bottom', 'Baseline') != -1) {
+                                    else if (indexOf(current[0], 'Top', 'Bottom', 'Baseline') != -1) {
                                         if (y++ == 0) {
                                             anchors.push(current);
                                         }
@@ -297,16 +297,16 @@ export function positionViews(node) {
             }
             else {
                 for (const current of nodes) {
-                    let horizontalChain = nodes.filter(item => Util.same(current, item, 'bounds.top'));
+                    let horizontalChain = nodes.filter(item => same(current, item, 'bounds.top'));
                     if (horizontalChain.length == 0) {
-                        horizontalChain = nodes.filter(item => Util.same(current, item, 'bounds.bottom'));
+                        horizontalChain = nodes.filter(item => same(current, item, 'bounds.bottom'));
                     }
                     if (horizontalChain.length > 0) {
                         horizontalChain.sortAsc('bounds.x');
                     }
-                    let verticalChain = nodes.filter(item => Util.same(current, item, 'bounds.left'));
+                    let verticalChain = nodes.filter(item => same(current, item, 'bounds.left'));
                     if (verticalChain.length == 0) {
-                        verticalChain = nodes.filter(item => Util.same(current, item, 'bounds.right'));
+                        verticalChain = nodes.filter(item => same(current, item, 'bounds.right'));
                     }
                     if (verticalChain.length > 0) {
                         verticalChain.sortAsc('bounds.y');
@@ -353,10 +353,10 @@ export function positionViews(node) {
                                 const min = current.styleMap[`min${WH}`];
                                 const max = current.styleMap[`max${WH}`];
                                 if (min != null) {
-                                    current.app(`layout_constraint${WH}_min`, Util.convertToPX(min));
+                                    current.app(`layout_constraint${WH}_min`, convertPX(min));
                                 }
                                 if (max != null) {
-                                    current.app(`layout_constraint${WH}_max`, Util.convertToPX(max));
+                                    current.app(`layout_constraint${WH}_max`, convertPX(max));
                                 }
                                 else {
                                     unassigned.push(current);
@@ -410,7 +410,7 @@ export function positionViews(node) {
                                         current.app(`layout_constraint${WH}_percent`, parseInt(current.flex.basis));
                                     }
                                     else {
-                                        const width = Util.convertToPX(current.flex.basis);
+                                        const width = convertPX(current.flex.basis);
                                         if (width != '0px') {
                                             current.app(`layout_constraintWidth_min`, width);
                                         }
@@ -468,7 +468,7 @@ export function positionViews(node) {
                         }
                         else {
                             let adjustMargins = false;
-                            if (flex.enabled && Util.withinFraction(node.box.left, firstNode.linear.left) && Util.withinFraction(lastNode.linear.right, node.box.right)) {
+                            if (flex.enabled && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
                                 firstNode.app(chainStyle, 'spread_inside');
                             }
                             else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
@@ -490,8 +490,8 @@ export function positionViews(node) {
                                     let offset = (index == 0 ? current.linear.left - chainDirection[i - 1].linear.right : current.linear.top - chainDirection[i - 1].linear.bottom);
                                     if (offset > 0) {
                                         const margin = (index == 0 ? RTL('layout_marginLeft') : 'layout_marginTop');
-                                        offset += Util.convertToInt(current.android(margin));
-                                        current.android(margin, Util.formatPX(offset));
+                                        offset += convertInt(current.android(margin));
+                                        current.android(margin, formatPX(offset));
                                     }
                                 }
                                 if (index == 0) {
@@ -502,7 +502,7 @@ export function positionViews(node) {
                                             .app(`layout_constraintVertical_bias`, firstNode.verticalBias);
                                     }
                                     if (bias == 1) {
-                                        node.constraint.minWidth = Util.formatPX(node.bounds.width);
+                                        node.constraint.minWidth = formatPX(node.bounds.width);
                                         node.constraint.layoutWidth = true;
                                     }
                                 }
@@ -514,7 +514,7 @@ export function positionViews(node) {
                                             .app(`layout_constraintHorizontal_bias`, firstNode.horizontalBias);
                                     }
                                     if (bias == 1) {
-                                        node.constraint.minHeight = Util.formatPX(node.bounds.height);
+                                        node.constraint.minHeight = formatPX(node.bounds.height);
                                         node.constraint.layoutHeight = true;
                                     }
                                 }
@@ -560,14 +560,14 @@ export function positionViews(node) {
                 let restart = false;
                 for (const current of nodes) {
                     if (current.anchors < 2) {
-                        const result = (constraint ? Util.search(current.app(), '*constraint*') : Util.search(current.android(), LAYOUT));
+                        const result = (constraint ? search(current.app(), '*constraint*') : search(current.android(), LAYOUT));
                         for (const [key, value] of result) {
                             if (value != 'parent') {
                                 if (anchored.find(anchor => anchor.stringId == value) != null) {
-                                    if (!current.constraint.horizontal && Util.indexOf(key, RTL('Left'), RTL('Right')) != -1) {
+                                    if (!current.constraint.horizontal && indexOf(key, RTL('Left'), RTL('Right')) != -1) {
                                         current.constraint.horizontal = true;
                                     }
-                                    if (!current.constraint.vertical && Util.indexOf(key, 'Top', 'Bottom', 'Baseline', 'above', 'below') != -1) {
+                                    if (!current.constraint.vertical && indexOf(key, 'Top', 'Bottom', 'Baseline', 'above', 'below') != -1) {
                                         current.constraint.vertical = true;
                                     }
                                 }
@@ -633,7 +633,7 @@ export function positionViews(node) {
                         opposite
                             .delete('app', 'layout_constraint*')
                             .app('layout_constraintCircle', adjacent.stringId)
-                            .app('layout_constraintCircleRadius', Util.formatPX(radius))
+                            .app('layout_constraintCircleRadius', formatPX(radius))
                             .app('layout_constraintCircleAngle', degrees);
                         opposite.constraint.vertical = true;
                         opposite.constraint.horizontal = true;
@@ -655,14 +655,14 @@ export function positionViews(node) {
                     if (!anchored.includes(current)) {
                         current.delete('android', LAYOUT);
                         if (parentBottom != 'true') {
-                            const top = Util.formatPX(current.bounds.top - node.box.top);
+                            const top = formatPX(current.bounds.top - node.box.top);
                             current
                                 .android('layout_alignParentTop', 'true')
                                 .android('layout_marginTop', top)
                                 .css('marginTop', top);
                         }
                         if (current.android(parentLeft) != 'true') {
-                            const left = Util.formatPX(current.bounds.left - node.box.left);
+                            const left = formatPX(current.bounds.left - node.box.left);
                             current
                                 .android(parentLeft, 'true')
                                 .android(RTL('layout_marginLeft'), left)

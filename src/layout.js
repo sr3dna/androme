@@ -264,13 +264,13 @@ function insertGridSpace(node) {
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                preXml += getSpaceTag(node.renderDepth, 'match_parent', Util.convertToPX(heightTop), node.renderParent.gridColumnCount, 1);
+                preXml += getSpaceTag(node.renderDepth, 'match_parent', Util.convertPX(heightTop), node.renderParent.gridColumnCount, 1);
             }
         }
         if (node.gridRowStart) {
             let marginLeft = dimensions[RTL('marginLeft')] + dimensions[RTL('paddingLeft')];
             if (marginLeft > 0) {
-                marginLeft = Util.convertToPX(marginLeft + node.marginLeft);
+                marginLeft = Util.convertPX(marginLeft + node.marginLeft);
                 node.android(RTL('layout_marginLeft'), marginLeft)
                     .css('marginLeft', marginLeft);
             }
@@ -279,10 +279,10 @@ function insertGridSpace(node) {
             const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             let marginRight = dimensions[RTL('marginRight')] + dimensions[RTL('paddingRight')];
             if (heightBottom > 0) {
-                postXml += getSpaceTag(node.renderDepth, 'match_parent', Util.convertToPX(heightBottom), node.renderParent.gridColumnCount, 1);
+                postXml += getSpaceTag(node.renderDepth, 'match_parent', Util.convertPX(heightBottom), node.renderParent.gridColumnCount, 1);
             }
             if (marginRight > 0) {
-                marginRight = Util.convertToPX(marginRight + node.marginRight);
+                marginRight = Util.convertPX(marginRight + node.marginRight);
                 node.android(RTL('layout_marginRight'), marginRight)
                     .css('marginRight', marginRight);
             }
@@ -542,7 +542,7 @@ function setResourceStyle() {
             if (tag != null) {
                 for (const attr in tag) {
                     if (tag[attr].includes(node.id)) {
-                        node.attr((SETTINGS.useUnitDP ? Util.insetToDP(attr, SETTINGS.density, true) : attr));
+                        node.attr((SETTINGS.useUnitDP ? Util.insetDP(attr, SETTINGS.density, true) : attr));
                     }
                 }
             }
@@ -624,10 +624,10 @@ function setMarginPadding() {
                 const marginRight_RTL = RTL('layout_marginRight');
                 const paddingLeft_RTL = RTL('paddingLeft');
                 const paddingRight_RTL = RTL('paddingRight');
-                const marginTop = Util.convertToInt(node.android('layout_marginTop'));
-                const marginRight = Util.convertToInt(node.android(marginRight_RTL));
-                const marginBottom = Util.convertToInt(node.android('layout_marginBottom'));
-                const marginLeft = Util.convertToInt(node.android(marginLeft_RTL));
+                const marginTop = Util.convertInt(node.android('layout_marginTop'));
+                const marginRight = Util.convertInt(node.android(marginRight_RTL));
+                const marginBottom = Util.convertInt(node.android('layout_marginBottom'));
+                const marginLeft = Util.convertInt(node.android(marginLeft_RTL));
                 if (marginTop != 0 && marginTop == marginBottom && marginBottom == marginLeft && marginLeft == marginRight) {
                     node.delete('android', 'layout_margin*')
                         .android('layout_margin', Util.formatPX(marginTop));
@@ -642,10 +642,10 @@ function setMarginPadding() {
                             .android('layout_marginHorizontal', Util.formatPX(marginLeft));
                     }
                 }
-                const paddingTop = Util.convertToInt(node.android('paddingTop'));
-                const paddingRight = Util.convertToInt(node.android(paddingRight_RTL));
-                const paddingBottom = Util.convertToInt(node.android('paddingBottom'));
-                const paddingLeft = Util.convertToInt(node.android(paddingLeft_RTL));
+                const paddingTop = Util.convertInt(node.android('paddingTop'));
+                const paddingRight = Util.convertInt(node.android(paddingRight_RTL));
+                const paddingBottom = Util.convertInt(node.android('paddingBottom'));
+                const paddingLeft = Util.convertInt(node.android(paddingLeft_RTL));
                 if (paddingTop != 0 && paddingTop == paddingBottom && paddingBottom == paddingLeft && paddingLeft == paddingRight) {
                     node.delete('android', 'padding*')
                         .android('padding', Util.formatPX(paddingTop));
@@ -1175,8 +1175,8 @@ export function parseDocument() {
                                             wrapNode.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
                                             wrapNode.render(parent);
                                             for (const node of result) {
-                                                rowSpan += (Util.convertToInt(node.android('layout_rowSpan')) || 1) - 1;
-                                                columnSpan += (Util.convertToInt(node.android('layout_columnSpan')) || 1) - 1;
+                                                rowSpan += (Util.convertInt(node.android('layout_rowSpan')) || 1) - 1;
+                                                columnSpan += (Util.convertInt(node.android('layout_columnSpan')) || 1) - 1;
                                                 wrapNode.inheritGrid(node);
                                                 if (node.element.checked) {
                                                     checked = node;
@@ -1232,7 +1232,7 @@ export function parseDocument() {
         output = output.replace(/{@[0-9]+}/g, '');
     }
     if (SETTINGS.useUnitDP) {
-        output = Util.insetToDP(output, SETTINGS.density);
+        output = Util.insetDP(output, SETTINGS.density);
     }
     return output;
 }

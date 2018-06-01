@@ -326,8 +326,8 @@ export default class Node {
                 height = this.element.offsetHeight + this.marginTop + this.marginBottom;
                 requireWrap = parent.isView(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
             }
-            const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Util.convertToInt(parent.style.borderLeftWidth) + Util.convertToInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
-            const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Util.convertToInt(parent.style.borderTopWidth) + Util.convertToInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
+            const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Util.convertInt(parent.style.borderLeftWidth) + Util.convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
+            const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Util.convertInt(parent.style.borderTopWidth) + Util.convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
             if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
                 this.android('layout_width', (this.isHorizontal() ? 'wrap_content' : 'match_parent'))
                     .android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
@@ -335,14 +335,14 @@ export default class Node {
             else {
                 if (this.android('layout_width') != '0px') {
                     if (styleMap.width != null) {
-                        this.android('layout_width', Util.convertToPX(styleMap.width));
+                        this.android('layout_width', Util.convertPX(styleMap.width));
                     }
                     if (styleMap.minWidth != null) {
-                        this.android('minWidth', Util.convertToPX(styleMap.minWidth), false)
+                        this.android('minWidth', Util.convertPX(styleMap.minWidth), false)
                             .android('layout_width', 'wrap_content', false);
                     }
                     if (styleMap.maxWidth != null) {
-                        this.android('maxWidth', Util.convertToPX(styleMap.maxWidth), false);
+                        this.android('maxWidth', Util.convertPX(styleMap.maxWidth), false);
                     }
                 }
                 if (this.constraint.minWidth != null) {
@@ -383,14 +383,14 @@ export default class Node {
                 }
                 if (this.android('layout_height') != '0px') {
                     if (styleMap.height != null) {
-                        this.android('layout_height', Util.convertToPX(styleMap.height));
+                        this.android('layout_height', Util.convertPX(styleMap.height));
                     }
                     if (styleMap.minHeight != null) {
-                        this.android('minHeight', Util.convertToPX(styleMap.minHeight), false)
+                        this.android('minHeight', Util.convertPX(styleMap.minHeight), false)
                             .android('layout_height', 'wrap_content', false);
                     }
                     if (styleMap.maxHeight != null) {
-                        this.android('maxHeight', Util.convertToPX(styleMap.maxHeight), false);
+                        this.android('maxHeight', Util.convertPX(styleMap.maxHeight), false);
                     }
                 }
                 if (this.constraint.minHeight != null) {
@@ -601,7 +601,7 @@ export default class Node {
                         vertical = 'bottom';
                         break;
                     default:
-                        if (this.style.height == this.style.lineHeight || Util.convertToInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
+                        if (this.style.height == this.style.lineHeight || Util.convertInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
                             vertical = 'center_vertical';
                         }
                 }
@@ -775,8 +775,8 @@ export default class Node {
                 enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
                 direction: this.style.flexDirection,
                 basis: this.style.flexBasis,
-                grow: Util.convertToInt(this.style.flexGrow),
-                shrink: Util.convertToInt(this.style.flexShrink),
+                grow: Util.convertInt(this.style.flexGrow),
+                shrink: Util.convertInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
                 alignSelf: (parent != null && this.styleMap.alignSelf == null && this.style.alignSelf == 'auto' ? parent.styleMap.alignItems : this.style.alignSelf),
                 justifyContent: this.style.justifyContent
@@ -813,46 +813,46 @@ export default class Node {
         return (this.constraint.horizontal ? 1 : 0) + (this.constraint.vertical ? 1 : 0);
     }
     get viewWidth() {
-        return Util.convertToInt(this.styleMap.width || this.styleMap.minWidth);
+        return Util.convertInt(this.styleMap.width || this.styleMap.minWidth);
     }
     get viewHeight() {
-        return Util.convertToInt(this.styleMap.height || this.styleMap.minHeight);
+        return Util.convertInt(this.styleMap.height || this.styleMap.minHeight);
     }
     get marginTop() {
-        return Util.convertToInt(this.css('marginTop'));
+        return Util.convertInt(this.css('marginTop'));
     }
     get marginBottom() {
-        return Util.convertToInt(this.css('marginBottom'));
+        return Util.convertInt(this.css('marginBottom'));
     }
     get marginLeft() {
-        return Util.convertToInt(this.css('marginLeft'));
+        return Util.convertInt(this.css('marginLeft'));
     }
     get marginRight() {
-        return Util.convertToInt(this.css('marginRight'));
+        return Util.convertInt(this.css('marginRight'));
     }
     get borderTopWidth() {
-        return Util.convertToInt(this.css('borderTopWidth'));
+        return Util.convertInt(this.css('borderTopWidth'));
     }
     get borderRightWidth() {
-        return Util.convertToInt(this.css('borderRightWidth'));
+        return Util.convertInt(this.css('borderRightWidth'));
     }
     get borderBottomWidth() {
-        return Util.convertToInt(this.css('borderBottomWidth'));
+        return Util.convertInt(this.css('borderBottomWidth'));
     }
     get borderLeftWidth() {
-        return Util.convertToInt(this.css('borderLeftWidth'));
+        return Util.convertInt(this.css('borderLeftWidth'));
     }
     get paddingTop() {
-        return Util.convertToInt(this.css('paddingTop'));
+        return Util.convertInt(this.css('paddingTop'));
     }
     get paddingBottom() {
-        return Util.convertToInt(this.css('paddingBottom'));
+        return Util.convertInt(this.css('paddingBottom'));
     }
     get paddingLeft() {
-        return Util.convertToInt(this.css('paddingLeft'));
+        return Util.convertInt(this.css('paddingLeft'));
     }
     get paddingRight() {
-        return Util.convertToInt(this.css('paddingRight'));
+        return Util.convertInt(this.css('paddingRight'));
     }
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};

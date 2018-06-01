@@ -1,5 +1,5 @@
 import { WIDGET_ANDROID, STRING_ANDROID, XMLNS_ANDROID } from './lib/constants';
-import { generateId, cameltoLowerCase, convertToPX, insetToDP, hasValue, isNumber, padLeft } from './lib/util';
+import { generateId, cameltoLowerCase, convertPX, insetDP, hasValue, isNumber, padLeft } from './lib/util';
 import { findNearestColor, parseRGBA } from './lib/color';
 import { getStyle, getBoxSpacing } from './lib/element';
 import SETTINGS from './settings';
@@ -148,7 +148,7 @@ function parseBorderStyle(value) {
         stroke = stroke[1];
     }
     if (width != null) {
-        width = convertToPX(width[1]);
+        width = convertPX(width[1]);
     }
     if (color != null) {
         color = color[1];
@@ -160,13 +160,13 @@ function parseBoxDimensions(value) {
     const match = value.match(/^([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em)) ([0-9]+(?:px|pt|em))$/);
     if (match != null && match.length == 5) {
         if (match[1] == match[2] && match[2] == match[3] && match[3] == match[4]) {
-            return [convertToPX(match[1])];
+            return [convertPX(match[1])];
         }
         else if (match[1] == match[3] && match[2] == match[4]) {
-            return [convertToPX(match[1]), convertToPX(match[2])];
+            return [convertPX(match[1]), convertPX(match[2])];
         }
         else {
-            return [convertToPX(match[1]), convertToPX(match[2]), convertToPX(match[3]), convertToPX(match[4])];
+            return [convertPX(match[1]), convertPX(match[2]), convertPX(match[3]), convertPX(match[4])];
         }
     }
     return null;
@@ -513,7 +513,7 @@ export function writeResourceStyleXml() {
                  '<!-- filename: res/values/styles.xml -->\n');
         xml = xml.join('\n');
         if (SETTINGS.useUnitDP) {
-            xml = insetToDP(xml, SETTINGS.density, true);
+            xml = insetDP(xml, SETTINGS.density, true);
         }
         return xml;
     }
@@ -548,7 +548,7 @@ export function writeResourceDrawableXml() {
         }
         xml = xml.join('\n');
         if (SETTINGS.useUnitDP) {
-            xml = insetToDP(xml, SETTINGS.density);
+            xml = insetDP(xml, SETTINGS.density);
         }
         return xml;
     }

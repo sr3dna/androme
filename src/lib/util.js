@@ -81,7 +81,7 @@ export function formatPX(value) {
     return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
 }
 
-export function convertToPX(value, unit = true) {
+export function convertPX(value, unit = true) {
     if (hasValue(value)) {
         if (typeof value == 'number') {
             value += 'px';
@@ -105,9 +105,9 @@ export function convertToPX(value, unit = true) {
     return (unit ? '0px' : 0);
 }
 
-export function convertToDP(value, dpi = 160, unit = true, font = false) {
+export function convertDP(value, dpi = 160, unit = true, font = false) {
     if (hasValue(value)) {
-        value = convertToPX(value, false);
+        value = convertPX(value, false);
         value = value / (dpi / 160);
         value = parseFloat(value.toFixed(2));
         if (!isNaN(value)) {
@@ -117,16 +117,20 @@ export function convertToDP(value, dpi = 160, unit = true, font = false) {
     return (unit ? '0dp' : 0);
 }
 
-export function convertToSP(value, dpi, unit = true) {
-    return convertToDP(value, dpi, unit, true);
+export function convertSP(value, dpi, unit = true) {
+    return convertDP(value, dpi, unit, true);
 }
 
-export function insetToDP(xml, dpi, font = false) {
-    return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertToDP(capture[1], dpi, true, font) + capture[2]);
+export function insetDP(xml, dpi, font = false) {
+    return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, true, font) + capture[2]);
 }
 
-export function convertToInt(value) {
+export function convertInt(value) {
     return parseInt(value) || 0;
+}
+
+export function isNumber(value) {
+    return /^[0-9]\d*(\.\d+)?/.test(value.trim());
 }
 
 export function search(obj, value) {
@@ -209,7 +213,7 @@ export function compare(obj1, obj2, attr) {
         }
     }
     if (!isNaN(parseInt(current1)) || !isNaN(parseInt(current2))) {
-        return [convertToInt(current1), convertToInt(current2)];
+        return [convertInt(current1), convertInt(current2)];
     }
     else {
         return [current1, current2];
@@ -238,10 +242,6 @@ export function withinRange(a, b, n = 1) {
     return (b >= (a - n) && b <= (a + n));
 }
 
-export function withinFraction(left, right) {
-    return (left == right || Math.ceil(left) == Math.floor(right) || Math.ceil(right) == Math.floor(left));
-}
-
-export function isNumber(value) {
-    return /^[0-9.]+$/.test(value.trim());
+export function withinFraction(lower, upper) {
+    return (lower == upper || Math.ceil(lower) == Math.floor(upper));
 }
