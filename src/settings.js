@@ -11,6 +11,7 @@ const SETTINGS = {
     useUnitDP: true,
     useRTL: true,
     numberResourceValue: false,
+    horizontalPerspective: true,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     constraintBiasBoxOffset: 14,

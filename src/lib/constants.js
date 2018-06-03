@@ -3,6 +3,7 @@ export const WIDGET_ANDROID =
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
+    GUIDELINE: 'android.support.constraint.Guideline',
     RELATIVE: 'RelativeLayout',
     GRID: 'GridLayout',
     SCROLL_VERTICAL: 'ScrollView',

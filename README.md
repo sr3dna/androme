@@ -9,10 +9,10 @@ Library files are in the /dist folder. There is a babel minified for production 
 ```javascript
 <script src="/dist/androme.js"></script>
 <script>
-	androme.settings.targetAPI = 19; /* androme.BUILD_ANDROID.KITKAT */
-	androme.settings.density = 160; /* androme.DENSITY_ANDROID.MDPI */
+    androme.settings.targetAPI = 19; /* androme.BUILD_ANDROID.KITKAT */
+    androme.settings.density = 160; /* androme.DENSITY_ANDROID.MDPI */
 
-	document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
         console.log(androme.parseDocument());
         console.log(androme.writeResourceStringXml());
         console.log(androme.writeResourceArrayXml());
@@ -36,6 +36,7 @@ androme.settings = {
     useUnitDP: true,
     useRTL: true,
     numberResourceValue: false,
+    horizontalPerspective: true,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     constraintBiasBoxOffset: 14,
@@ -45,7 +46,7 @@ androme.settings = {
 ```
 You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 
-Constraint chain is also available as a setting although the current Android implementation does not support exact placement. It sometimes is better to disable Constraint chain and use Constraint circle which offers exact placement. The same can be said for disabling GridLayout in favor of LinearLayout when the generated layout is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios.
+Constraint chain is available as a setting since the current Android implementation does not support exact placement. It sometimes is better to disable Constraint chain and use Constraint circle which offers exact placement. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios.
 
 <img src="demos/android/form.png" alt="form" />
 
@@ -125,7 +126,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<android.support.constraint.ConstraintLayout
 				android:id="@+id/constraintlayout_1"
 				android:layout_height="91dp"
-				android:layout_width="match_parent">
+				android:layout_width="138dp">
 				<Spinner
 					android:id="@+id/month0"
 					android:background="@drawable/select_hour"
@@ -201,6 +202,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
+					app:layout_constraintBottom_toBottomOf="@+id/month1"
 					app:layout_constraintEnd_toStartOf="@+id/year1"
 					app:layout_constraintStart_toEndOf="@+id/month1"
 					app:layout_constraintTop_toTopOf="@+id/month1"
@@ -217,6 +219,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
+					app:layout_constraintBottom_toBottomOf="@+id/month1"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day1"
 					app:layout_constraintTop_toTopOf="@+id/month1"
@@ -1131,7 +1134,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 ## user written html
 
-Using excessive DIV and FORM tags are not required for mobile devices which can cause additional LinearLayouts to be auto-generated.
+Using excessive DIV and FORM tags are not required for mobile devices which can cause additional LinearLayouts to be auto-generated. Block level elements are always rendered in order to preserve any CSS which is applied to the tag.
 
 https://www.w3.org/TR/html401/struct/global.html#h-7.5.3
 

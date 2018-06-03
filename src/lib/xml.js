@@ -1,5 +1,17 @@
 import { hasValue } from './util';
 
+export function getDataLevel(data, ...levels) {
+    let current = data;
+    for (const level of levels) {
+        let [index, array] = level.split('-');
+        if (array == null) {
+            array = 0;
+        }
+        current = current[index][array];
+    }
+    return current;
+}
+
 export function parseTemplateMatch(template) {
     const result = {};
     let pattern = null;

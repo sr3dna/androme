@@ -58,6 +58,9 @@ export default class NodeList extends Array {
     get parent() {
         return this._parent;
     }
+    get visible () {
+        return this.filter(node => node.visible);
+    }
     get linearX() {
         if (this.length > 0 && !this.intersect()) {
             if (this.length > 1) {

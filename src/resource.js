@@ -2,7 +2,7 @@ import { WIDGET_ANDROID } from './lib/constants';
 import { generateId, cameltoLowerCase, convertPX, insetDP, isNumber, padLeft, hasValue } from './lib/util';
 import { parseRGBA, findNearestColor } from './lib/color';
 import { getStyle, getBoxSpacing } from './lib/element';
-import { parseTemplateMatch, parseTemplateData } from './lib/xml';
+import { getDataLevel, parseTemplateMatch, parseTemplateData } from './lib/xml';
 import SETTINGS from './settings';
 
 import STRING_TMPL from './tmpl/resources/string';
@@ -418,20 +418,11 @@ export function setBackgroundStyle(node) {
             template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
             data = {
                 '0': [{
-                    '1': [{
-                        width: attributes.border[1],
-                        borderStyle: borderStyle.default
-                    }],
+                    '1': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
                     '2': [{
-                        '3': [{
-                            color: (attributes.backgroundColor ? attributes.backgroundColor[1] : '')
-                        }],
-                        '4': [{
-                            radius: (attributes.borderRadius.length == 1 ? attributes.borderRadius[0] : '')
-                        }],
-                        '5': [{
-                            topLeftRadius: ''
-                        }]
+                        '3': [{ color: (attributes.backgroundColor ? attributes.backgroundColor[1] : '') }],
+                        '4': [{ radius: (attributes.borderRadius.length == 1 ? attributes.borderRadius[0] : '') }],
+                        '5': [{ topLeftRadius: '' }]
                     }]
                 }]
             };
@@ -439,7 +430,7 @@ export function setBackgroundStyle(node) {
                 if (attributes.borderRadius.length == 2) {
                     attributes.borderRadius.push(...attributes.borderRadius.slice());
                 }
-                const borderRadiusItem = data['0'][0]['2'][0]['5'][0];
+                const borderRadiusItem = getDataLevel(data, '0', '2', '5');
                 attributes.borderRadius.forEach((value, index) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
             }
         }
@@ -447,10 +438,7 @@ export function setBackgroundStyle(node) {
             template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
             data = {
                 '0': [{
-                    '1': [{
-                        width: attributes.border[1],
-                        borderStyle: borderStyle.default
-                    }],
+                    '1': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
                     '2': false
                 }]
             };
@@ -463,10 +451,8 @@ export function setBackgroundStyle(node) {
                     '2': []
                 }]
             };
-            const rootItem = data['0'][0];
-            rootItem['1'].push({
-                color: (attributes.backgroundColor != null ? attributes.backgroundColor[1] : false)
-            });
+            const rootItem = getDataLevel(data, '0');
+            rootItem['1'].push({ color: (attributes.backgroundColor != null ? attributes.backgroundColor[1] : false) });
             if (attributes.border[0] != 'none') {
                 rootItem['2'].push({
                     width: attributes.border[1],
@@ -485,9 +471,9 @@ export function setBackgroundStyle(node) {
         }
         let xml = parseTemplateData(template, data);
         let drawableName = null;
-        for (const [i, j] of RESOURCE.DRAWABLE.entries()) {
-            if (j == xml) {
-                drawableName = i;
+        for (const [name, value] of RESOURCE.DRAWABLE.entries()) {
+            if (value == xml) {
+                drawableName = name;
                 break;
             }
         }
@@ -506,9 +492,11 @@ export function writeResourceStringXml() {
     if (RESOURCE.STRING.size > 0) {
         const template = parseTemplateMatch(STRING_TMPL);
         const data = {
-            '0': [{ '1': [] }]
+            '0': [{
+                '1': []
+            }]
         };
-        const rootItem = data['0'][0];
+        const rootItem = getDataLevel(data, '0');
         for (const [name, value] of RESOURCE.STRING.entries()) {
             rootItem['1'].push({ name, value });
         }
@@ -526,17 +514,17 @@ export function writeResourceArrayXml() {
                 '1': []
             }]
         };
-        const rootItem = data['0'][0];
+        const rootItem = getDataLevel(data, '0');
         for (const [name, values] of RESOURCE.ARRAY.entries()) {
-            const stringArrayItem = {
+            const arrayItem = {
                 name,
                 '2': []
             };
-            const item = stringArrayItem['2'];
+            const item = arrayItem['2'];
             for (const [name, value] of values.entries()) {
                 item.push({ value: (value ? `@string/` : '') + name });
             }
-            rootItem['1'].push(stringArrayItem);
+            rootItem['1'].push(arrayItem);
         }
         return parseTemplateData(template, data);
     }
@@ -551,17 +539,16 @@ export function writeResourceStyleXml() {
                 '1': []
             }]
         };
-        const rootItem = data['0'][0];
+        const rootItem = getDataLevel(data, '0');
         for (const [name, style] of RESOURCE.STYLE.entries()) {
             const styleItem = {
                 name,
                 parent: style.parent || '',
                 '2': []
             };
-            const item = styleItem['2'];
             style.attributes.split(';').sort().forEach(attr => {
                 const [name, value] = attr.split('=');
-                item.push({ name, value: value.replace(/"/g, '') });
+                styleItem['2'].push({ name, value: value.replace(/"/g, '') });
             });
             rootItem['1'].push(styleItem);
         }
@@ -572,15 +559,15 @@ export function writeResourceStyleXml() {
 
 export function writeResourceColorXml() {
     if (RESOURCE.COLOR.size > 0) {
-        const resource = new Map([...RESOURCE.COLOR.entries()].sort());
+        RESOURCE.COLOR = new Map([...RESOURCE.COLOR.entries()].sort());
         const template = parseTemplateMatch(COLOR_TMPL);
         const data = {
             '0': [{
                 '1': []
             }]
         };
-        const rootItem = data['0'][0];
-        for (const [name, value] of resource.entries()) {
+        const rootItem = getDataLevel(data, '0');
+        for (const [name, value] of RESOURCE.COLOR.entries()) {
             rootItem['1'].push({ name, value });
         }
         return parseTemplateData(template, data);
