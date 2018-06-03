@@ -343,7 +343,7 @@ export default class Node {
                     this.android('maxWidth', Util.convertPX(styleMap.maxWidth), false);
                 }
             }
-            if (this.constraint.layoutWidth != null) {
+            if (!this.flex.enabled && this.constraint.layoutWidth != null) {
                 this.android('layout_width', (this.constraint.layoutWidth ? this.constraint.minWidth : 'wrap_content'));
             }
             else if (this.android('layout_width') == null) {
@@ -385,7 +385,7 @@ export default class Node {
                     this.android('maxHeight', Util.convertPX(styleMap.maxHeight), false);
                 }
             }
-            if (this.constraint.layoutHeight != null) {
+            if (!this.flex.enabled && this.constraint.layoutHeight != null) {
                 this.android('layout_height', (this.constraint.layoutHeight ? this.constraint.minHeight : 'wrap_content'));
             }
             else if (this.android('layout_height') == null) {

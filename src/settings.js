@@ -6,6 +6,7 @@ const SETTINGS = {
     showAttributes: true,
     useConstraintLayout: true,
     useConstraintChain: true,
+    useConstraintGuideline: false,
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,

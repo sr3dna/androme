@@ -1,7 +1,8 @@
 import { WIDGET_ANDROID, FIXED_ANDROID } from './lib/constants';
-import parseRTL from './localization';
 import { convertPX, convertInt, formatPX, search, indexOf, same, withinFraction, withinRange } from './lib/util';
 import NodeList from './nodelist';
+import { getStaticTag, addRenderAfter } from './render';
+import parseRTL from './localization';
 import SETTINGS from './settings';
 
 const LAYOUT_MAP = {
@@ -65,6 +66,24 @@ function setConstraintPercent(parent, nodes, index) {
             .android(`layout_${(index == 0 ? 'width' : 'height')}`, (FIXED_ANDROID.includes(current.widgetName) ? 'wrap_content' : '0px'))
             .app(`layout_constraint${(index == 0 ? 'Width' : 'Height')}_percent`, percent);
         percentTotal += percent;
+    }
+}
+
+function createGuideline(parent, node, direction = '') {
+    const map = LAYOUT_MAP.constraint;
+    if (direction == '' || direction == 'vertical') {
+        let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, { android: { orientation: 'horizontal' }, app: { layout_constraintGuide_begin: formatPX(node.linear.top - parent.box.top) } });
+        addRenderAfter(node.id, xml);
+        node.app(map['top'], id);
+        node.delete('app', map['bottom']);
+        node.constraint.vertical = true;
+    }
+    if (direction == '' || direction == 'horizontal') {
+        let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, { android: { orientation: 'vertical' }, app: { layout_constraintGuide_begin: formatPX(node.linear.left - parent.box.left) } });
+        addRenderAfter(node.id, xml);
+        node.app(map['left'], id);
+        node.delete('app', map['right']);
+        node.constraint.horizontal = true;
     }
 }
 
@@ -392,24 +411,32 @@ export function positionViews(node) {
                             }
                         }
                         else {
-                            let adjustMargins = false;
+                            let useMargins = false;
                             if (flex.enabled && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
                                 firstNode.app(chainStyle, 'spread_inside');
                             }
                             else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
-                                adjustMargins = true;
+                                useMargins = true;
                             }
                             else if (chainDirection.anchored.length == 0) {
-                                setConstraintPercent(node, chainDirection, index);
+                                if (SETTINGS.useConstraintGuideline) {
+                                    useMargins = true;
+                                }
+                                else {
+                                    setConstraintPercent(node, chainDirection, index);
+                                }
                             }
                             else {
-                                adjustMargins = true;
+                                useMargins = true;
                             }
-                            if (adjustMargins) {
-                                const bias = chainDirection[`${HV.toLowerCase()}Bias`];
-                                firstNode
-                                    .app(chainStyle, 'packed')
-                                    .app(`layout_constraint${HV}_bias`, bias);
+                            if (useMargins) {
+                                firstNode.app(chainStyle, 'packed');
+                                if (SETTINGS.useConstraintGuideline) {
+                                    createGuideline(node, firstNode, (index == 0 ? 'horizontal' : 'vertical'));
+                                }
+                                else {
+                                    firstNode.app(`layout_constraint${HV}_bias`, chainDirection[`${HV.toLowerCase()}Bias`]);
+                                }
                                 for (let i = 1; i < chainDirection.length; i++) {
                                     const current = chainDirection[i];
                                     let offset = (index == 0 ? current.linear.left - chainDirection[i - 1].linear.right : current.linear.top - chainDirection[i - 1].linear.bottom);
@@ -421,27 +448,33 @@ export function positionViews(node) {
                                 }
                                 if (index == 0) {
                                     if (!firstNode.constraint.vertical) {
-                                        firstNode
-                                            .app(LAYOUT['top'], 'parent')
-                                            .app(LAYOUT['bottom'], 'parent')
-                                            .app(`layout_constraintVertical_bias`, firstNode.verticalBias);
+                                        if (SETTINGS.useConstraintGuideline) {
+                                            createGuideline(node, firstNode, 'vertical');
+                                        }
+                                        else {
+                                            firstNode
+                                                .app(LAYOUT['top'], 'parent')
+                                                .app(LAYOUT['bottom'], 'parent')
+                                                .app(`layout_constraintVertical_bias`, firstNode.verticalBias);
+                                            node.constraint.layoutHeight = true;
+                                        }
                                     }
-                                    if (bias == 1) {
-                                        node.constraint.minWidth = formatPX(node.bounds.width);
-                                        node.constraint.layoutWidth = true;
-                                    }
+                                    node.constraint.layoutWidth = true;
                                 }
                                 else {
                                     if (!firstNode.constraint.horizontal) {
-                                        firstNode
-                                            .app(LAYOUT['left'], 'parent')
-                                            .app(LAYOUT['right'], 'parent')
-                                            .app(`layout_constraintHorizontal_bias`, firstNode.horizontalBias);
+                                        if (SETTINGS.useConstraintGuideline) {
+                                            createGuideline(node, firstNode, 'horizontal');
+                                        }
+                                        else {
+                                            firstNode
+                                                .app(LAYOUT['left'], 'parent')
+                                                .app(LAYOUT['right'], 'parent')
+                                                .app(`layout_constraintHorizontal_bias`, firstNode.horizontalBias);
+                                        }
+                                        node.constraint.layoutWidth = true;
                                     }
-                                    if (bias == 1) {
-                                        node.constraint.minHeight = formatPX(node.bounds.height);
-                                        node.constraint.layoutHeight = true;
-                                    }
+                                    node.constraint.layoutHeight = true;
                                 }
                                 firstNode.constraint.horizontal = true;
                                 firstNode.constraint.vertical = true;
@@ -463,17 +496,21 @@ export function positionViews(node) {
             if (constraint) {
                 if (anchored.length == 0) {
                     const unbound = nodes.reduce((a, b) => (a.anchors >= b.anchors ? a : b), nodes[0]);
-                    unbound.delete('app', '*constraint*');
-                    unbound
-                        .app(LAYOUT['left'], 'parent')
-                        .app(LAYOUT['right'], 'parent')
-                        .app('layout_constraintHorizontal_bias', unbound.horizontalBias)
-                        .constraint.horizontal = true;
-                    unbound
-                        .app(LAYOUT['top'], 'parent')
-                        .app(LAYOUT['bottom'], 'parent')
-                        .app('layout_constraintVertical_bias', unbound.verticalBias)
-                        .constraint.vertical = true;
+                    if (SETTINGS.useConstraintGuideline) {
+                        createGuideline(node, unbound);
+                    }
+                    else {
+                        unbound
+                            .app(LAYOUT['left'], 'parent')
+                            .app(LAYOUT['right'], 'parent')
+                            .app('layout_constraintHorizontal_bias', unbound.horizontalBias)
+                            .constraint.horizontal = true;
+                        unbound
+                            .app(LAYOUT['top'], 'parent')
+                            .app(LAYOUT['bottom'], 'parent')
+                            .app('layout_constraintVertical_bias', unbound.verticalBias)
+                            .constraint.vertical = true;
+                    }
                     anchored.push(unbound);
                     node.constraint.layoutWidth = true;
                     node.constraint.layoutHeight = true;

@@ -11,7 +11,7 @@ export default [
             file: './dist/androme.min.js',
             name: 'androme',
             format: 'umd',
-            banner: `/* androme: ${version} */`
+            banner: `/* androme ${version} https://github.com/anpham6/androme */`
         },
         plugins: [
             eslint(),
@@ -28,7 +28,7 @@ export default [
             file: './dist/androme.js',
             name: 'androme',
             format: 'umd',
-            banner: `/* androme: ${version}\n   https://github.com/anpham6/androme */\n`
+            banner: `/* androme ${version}\n   https://github.com/anpham6/androme */\n`
         },
         plugins: [
             eslint()

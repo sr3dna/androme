@@ -6,6 +6,7 @@ import Node from './node';
 import { getResource, insertResourceAsset } from './resource';
 import parseRTL from './localization';
 import SETTINGS from './settings';
+
 const RENDER_AFTER = {};
 
 function getEnclosingTag(depth, tagName, id, content, space = ['', ''], preXml = '', postXml = '') {
@@ -35,7 +36,7 @@ function getGridSpace(node) {
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                preXml += getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop));
+                preXml += getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0];
             }
         }
         if (node.gridRowStart) {
@@ -50,7 +51,7 @@ function getGridSpace(node) {
             const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             let marginRight = dimensions[parseRTL('marginRight')] + dimensions[parseRTL('paddingRight')];
             if (heightBottom > 0) {
-                postXml += getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom));
+                postXml += getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0];
             }
             if (marginRight > 0) {
                 marginRight = convertPX(marginRight + node.marginRight);
@@ -244,9 +245,11 @@ export function renderViewTag(node, parent, tagName, recursive) {
 
 export function getStaticTag(widgetName, depth, options, width = 'wrap_content', height = 'wrap_content') {
     let attributes = '';
+    const node = new Node(0, null, SETTINGS.targetAPI);
+    node.setAndroidId(widgetName);
     if (SETTINGS.showAttributes) {
-        const node = new Node(0, null, SETTINGS.targetAPI);
         node.apply(options)
+            .android('id', node.stringId)
             .android('layout_width', width)
             .android('layout_height', height);
         const indent = padLeft(depth + 1);
@@ -254,7 +257,7 @@ export function getStaticTag(widgetName, depth, options, width = 'wrap_content',
             attributes += `\n${indent + attr}`;
         }
     }
-    return getEnclosingTag(depth, widgetName, 0, '').replace('{@0}', attributes);
+    return [getEnclosingTag(depth, widgetName, 0, '').replace('{@0}', attributes), node.stringId];
 }
 
 export function addRenderAfter(id, xml, index = -1) {

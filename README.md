@@ -26,11 +26,12 @@ These settings are available in the global variable "androme" to customize your 
 
 ```javascript
 androme.settings = {
-    targetAPI: androme.build.OREO,
-    density: androme.density.MDPI,
+    targetAPI: BUILD_ANDROID.OREO,
+    density: DENSITY_ANDROID.MDPI,
     showAttributes: true,
     useConstraintLayout: true,
     useConstraintChain: true,
+    useConstraintGuideline: false,
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
@@ -46,7 +47,7 @@ androme.settings = {
 ```
 You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 
-Constraint chain is available as a setting since the current Android implementation does not support exact placement. It sometimes is better to disable Constraint chain and use Constraint circle which offers exact placement. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios.
+Constraint chain is available as a setting since the current Android implementation does not support exact placement. It sometimes is better to disable Constraint chain and use Constraint circle which offers exact placement. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios. Most layout issues probably are due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system which is built for very wide screens and converting them to mobile devices is not that simple.
 
 <img src="demos/android/form.png" alt="form" />
 
@@ -111,6 +112,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingVertical="1dp"
 				style="@style/Input_5" />
 			<Space
+				android:id="@+id/space_1"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -273,6 +275,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					style="@style/Select_1" />
 			</android.support.constraint.ConstraintLayout>
 			<Space
+				android:id="@+id/space_2"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -315,6 +318,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					style="@style/Select_1" />
 			</LinearLayout>
 			<Space
+				android:id="@+id/space_3"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -339,6 +343,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_4"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -381,6 +386,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					style="@style/Select_1" />
 			</LinearLayout>
 			<Space
+				android:id="@+id/space_5"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -405,6 +411,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_6"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -429,6 +436,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_7"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -453,6 +461,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_8"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -492,6 +501,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_9"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -516,6 +526,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_10"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -572,6 +583,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					style="@style/Input_6" />
 			</LinearLayout>
 			<Space
+				android:id="@+id/space_11"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -596,6 +608,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_12"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -620,6 +633,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_13"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -644,6 +658,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
 			<Space
+				android:id="@+id/space_14"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -699,6 +714,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					style="@style/Input_4" />
 			</LinearLayout>
 			<Space
+				android:id="@+id/space_15"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -767,6 +783,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					style="@style/Input_4" />
 			</LinearLayout>
 			<Space
+				android:id="@+id/space_16"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -821,6 +838,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					style="@style/Select_1" />
 			</LinearLayout>
 			<Space
+				android:id="@+id/space_17"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
@@ -908,6 +926,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					style="@style/Input_4" />
 			</LinearLayout>
 			<Space
+				android:id="@+id/space_18"
 				android:layout_columnSpan="2"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
