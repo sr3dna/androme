@@ -5,9 +5,9 @@ import * as Element from './lib/element';
 import { NODE_CACHE, generateNodeId } from './cache';
 import Node from './node';
 import NodeList from './nodelist';
-import { positionViews } from './constraint';
+import { setConstraints } from './constraint';
 import { getResource, getViewAttributes, parseStyleAttribute, writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml } from './resource';
-import { renderViewLayout, renderViewTag, inlineRenderAfter } from './render';
+import { renderViewLayout, renderViewTag, insertViewBeforeAfter } from './render';
 import parseRTL from './localization';
 import SETTINGS from './settings';
 
@@ -50,12 +50,6 @@ function insetAttributes(output) {
         output = output.replace(`{@${node.id}}`, getViewAttributes(node));
     }
     return output.replace('{@0}', Object.keys(namespaces).sort().map(value => `\n\t${XMLNS_ANDROID[value.toUpperCase()]}`).join(''));
-}
-
-function setConstraints() {
-    for (const node of NODE_CACHE.visible) {
-        positionViews(node);
-    }
 }
 
 function deleteStyleAttribute(sorted, attributes, nodeIds) {
@@ -932,8 +926,8 @@ export function parseDocument() {
         setConstraints();
         output = insetAttributes(output);
     }
-    output = inlineRenderAfter(output);
-    output = output.replace(/{[:@]{1}[0-9]+}/g, '');
+    output = insertViewBeforeAfter(output);
+    output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
     if (SETTINGS.useUnitDP) {
         output = Util.insetDP(output, SETTINGS.density);
     }

@@ -489,6 +489,7 @@ export function setBackgroundStyle(node) {
 
 export function writeResourceStringXml() {
     RESOURCE.STRING = new Map([...RESOURCE.STRING.entries()].sort());
+    let xml = '';
     if (RESOURCE.STRING.size > 0) {
         const template = parseTemplateMatch(STRING_TMPL);
         const data = {
@@ -500,13 +501,14 @@ export function writeResourceStringXml() {
         for (const [name, value] of RESOURCE.STRING.entries()) {
             rootItem['1'].push({ name, value });
         }
-        return parseTemplateData(template, data);
+        xml = parseTemplateData(template, data);
     }
-    return '';
+    return xml;
 }
 
 export function writeResourceArrayXml() {
     RESOURCE.ARRAY = new Map([...RESOURCE.ARRAY.entries()].sort());
+    let xml = '';
     if (RESOURCE.ARRAY.size > 0) {
         const template = parseTemplateMatch(STRINGARRAY_TMPL);
         const data = {
@@ -526,12 +528,13 @@ export function writeResourceArrayXml() {
             }
             rootItem['1'].push(arrayItem);
         }
-        return parseTemplateData(template, data);
+        xml = parseTemplateData(template, data);
     }
-    return '';
+    return xml;
 }
 
 export function writeResourceStyleXml() {
+    let xml = '';
     if (RESOURCE.STYLE.size > 0) {
         const template = parseTemplateMatch(STYLE_TMPL);
         const data = {
@@ -552,12 +555,13 @@ export function writeResourceStyleXml() {
             });
             rootItem['1'].push(styleItem);
         }
-        return parseTemplateData(template, data);
+        xml = parseTemplateData(template, data);
     }
-    return '';
+    return xml;
 }
 
 export function writeResourceColorXml() {
+    let xml = '';
     if (RESOURCE.COLOR.size > 0) {
         RESOURCE.COLOR = new Map([...RESOURCE.COLOR.entries()].sort());
         const template = parseTemplateMatch(COLOR_TMPL);
@@ -570,12 +574,13 @@ export function writeResourceColorXml() {
         for (const [name, value] of RESOURCE.COLOR.entries()) {
             rootItem['1'].push({ name, value });
         }
-        return parseTemplateData(template, data);
+        xml = parseTemplateData(template, data);
     }
-    return '';
+    return xml;
 }
 
 export function writeResourceDrawableXml() {
+    let xml = '';
     if (RESOURCE.DRAWABLE.size > 0 || RESOURCE.IMAGE.size > 0) {
         const template = parseTemplateMatch(DRAWABLE_TMPL);
         const data = {
@@ -588,11 +593,10 @@ export function writeResourceDrawableXml() {
         for (const [name, value] of RESOURCE.IMAGE.entries()) {
             rootItem.push({ name: `res/drawable/${name + value.substring(value.lastIndexOf('.'))}`, value: `<!-- image: ${value} -->` });
         }
-        let xml = parseTemplateData(template, data);
+        xml = parseTemplateData(template, data);
         if (SETTINGS.useUnitDP) {
             xml = insetDP(xml, SETTINGS.density);
         }
-        return xml;
     }
-    return '';
+    return xml;
 }

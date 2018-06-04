@@ -7,12 +7,13 @@ import { getResource, insertResourceAsset } from './resource';
 import parseRTL from './localization';
 import SETTINGS from './settings';
 
-const RENDER_AFTER = {};
+const VIEW_BEFORE = {};
+const VIEW_AFTER = {};
 
-function getEnclosingTag(depth, tagName, id, content, space = ['', ''], preXml = '', postXml = '') {
+function getEnclosingTag(depth, tagName, id, content, space = ['', '']) {
     const indent = padLeft(depth);
     let xml = space[0] +
-              preXml;
+              `{<${id}}`;
     if (hasValue(content)) {
         xml += indent + `<${tagName}{@${id}}>\n` +
                         content +
@@ -21,8 +22,7 @@ function getEnclosingTag(depth, tagName, id, content, space = ['', ''], preXml =
     else {
         xml += indent + `<${tagName}{@${id}} />\n`;
     }
-    xml += `{:${id}}` +
-           postXml +
+    xml += `{>${id}}` +
            space[1];
     return xml;
 }
@@ -36,7 +36,7 @@ function getGridSpace(node) {
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
-                preXml += getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0];
+                addViewBefore(node.id, getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0]);
             }
         }
         if (node.gridRowStart) {
@@ -51,7 +51,7 @@ function getGridSpace(node) {
             const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
             let marginRight = dimensions[parseRTL('marginRight')] + dimensions[parseRTL('paddingRight')];
             if (heightBottom > 0) {
-                postXml += getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0];
+                addViewAfter(node.id, getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
             }
             if (marginRight > 0) {
                 marginRight = convertPX(marginRight + node.marginRight);
@@ -260,21 +260,36 @@ export function getStaticTag(widgetName, depth, options, width = 'wrap_content',
     return [getEnclosingTag(depth, widgetName, 0, '').replace('{@0}', attributes), node.stringId];
 }
 
-export function addRenderAfter(id, xml, index = -1) {
-    if (RENDER_AFTER[id] == null) {
-        RENDER_AFTER[id] = [];
+export function addViewBefore(id, xml, index = -1) {
+    if (VIEW_BEFORE[id] == null) {
+        VIEW_BEFORE[id] = [];
     }
-    if (index != -1 && index < RENDER_AFTER[id].length) {
-        RENDER_AFTER[id].splice(index, 0, xml);
+    if (index != -1 && index < VIEW_BEFORE[id].length) {
+        VIEW_BEFORE[id].splice(index, 0, xml);
     }
     else {
-        RENDER_AFTER[id].push(xml);
+        VIEW_BEFORE[id].push(xml);
     }
 }
 
-export function inlineRenderAfter(output) {
-    for (const id in RENDER_AFTER) {
-        output = output.replace(`{:${id}}`, RENDER_AFTER[id].join(''));
+export function addViewAfter(id, xml, index = -1) {
+    if (VIEW_AFTER[id] == null) {
+        VIEW_AFTER[id] = [];
+    }
+    if (index != -1 && index < VIEW_AFTER[id].length) {
+        VIEW_AFTER[id].splice(index, 0, xml);
+    }
+    else {
+        VIEW_AFTER[id].push(xml);
+    }
+}
+
+export function insertViewBeforeAfter(output) {
+    for (const id in VIEW_BEFORE) {
+        output = output.replace(`{<${id}}`, VIEW_BEFORE[id].join(''));
+    }
+    for (const id in VIEW_AFTER) {
+        output = output.replace(`{>${id}}`, VIEW_AFTER[id].join(''));
     }
     return output;
 }
