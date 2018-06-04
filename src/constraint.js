@@ -51,10 +51,10 @@ function setConstraintPercent(parent, nodes, index) {
     let full = false;
     switch (index) {
         case 0:
-            full = (nodes.last.linear.right >= parent.flex.right);
+            full = (nodes.last.linear.right == parent.box.right);
             break;
         case 1:
-            full = (nodes.last.linear.bottom >= parent.box.bottom);
+            full = (nodes.last.linear.bottom == parent.box.bottom);
             break;
     }
     nodes[0].app(`layout_constraint${(index ? 'Horizontal' : 'Vertical')}_chainStyle`, 'spread');

@@ -6,33 +6,26 @@
     <style>
         body {
             margin: 0px;
-            font-family: Arial, Helvetica, Tahoma;
-            font-size: 12px;
+            font-family: Tahoma;
+            font-size: 11px;
             padding: 5px;
             letter-spacing: 0.3px;
             -webkit-font-smoothing: antialiased;
         }
         ul {
             margin: 0px;
-            padding: 0px;
+            padding: 5px;
             list-style: none;
-        }
-        h1, h2, h3, h4 {
-            font-weight: normal;
-            margin: 0px;
-            padding: 0px;
-        }
-        h3, h4 {
-            font-size: 11px;
         }
         body > div {
             margin-top: 10px;
         }
-        body > div h2 {
-            font-size: 14px;
+        h2 {
+            font-size: 12px;
             color: #fff;
             background-color: slategray;
-            padding: 5px 8px;
+            margin: 0px;
+            padding: 8px;
         }
         a {
             color: blue;
@@ -44,7 +37,7 @@
         }
         select {
             min-width: 37px;
-            font-size: 12px;
+            font-size: 11px;
             padding: 1px 0px 2px 0px;
         }
         input[type=button], input[type=submit] {
@@ -68,13 +61,17 @@
             display: inline;
         }
         li input[type=button] {
-            font-size: 11px;
+            font-size: 10px;
         }
         input[type=text] {
             width: 40px;
         }
         hr {
-            margin: 0px;
+            height: 1px;
+            margin: 10px;
+            padding: 0px;
+            border: none;
+            background-color: #ccc;
         }
         input[type=radio], input[type=checkbox] {
             vertical-align: sub;
@@ -409,9 +406,7 @@
                     </select>
                 </li>
             </ul>
-        </form>
-        <br />
-        <form name="itemofentry" action="/admin/itemofentry" method="post" autocomplete="off">
+            <hr />
             <ul>
                 <li>
                     <label>Series:</label>
@@ -429,7 +424,7 @@
                 </li>
                 <li>
                     <label>Entries:</label>
-                    <select name="entry" class="req-pageurl-0" style="width: 277px;">
+                    <select name="entry" class="req-pageurl-0" style="width: 200px;">
                         <option value=""></option>
                         <option value="0">0</option>
                         <option value="1">1</option>

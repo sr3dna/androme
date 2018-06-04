@@ -25,7 +25,8 @@ export const RESOURCE = {
 const PROPERTY_ANDROID =
 {
     'backgroundStyle': {
-        'backgroundColor': 'android:background="@drawable/{0}"'
+        'background': 'android:background="@drawable/{0}"',
+        'backgroundColor': 'android:background="{0}"'
     },
     'computedStyle': {
         'fontFamily': 'android:fontFamily="{0}"',
@@ -397,24 +398,25 @@ export function setBackgroundStyle(node) {
     for (const i in attributes) {
         attributes[i] = attributes[i](style[i]);
     }
-    if (attributes.border[0] != 'none' || attributes.borderRadius != null) {
-        attributes.border[2] = addResourceColor(attributes.border[2]);
-        if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
-            attributes.backgroundColor = null;
-        }
-        else {
-            attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
-        }
-        const borderStyle = {
-            black: 'android:color="@android:color/black"',
-            solid: `android:color="${attributes.border[2]}"`
-        };
-        borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
-        borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
-        borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
+    attributes.border[2] = addResourceColor(attributes.border[2]);
+    if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
+        attributes.backgroundColor = null;
+    }
+    else {
+        attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
+    }
+    const borderStyle = {
+        black: 'android:color="@android:color/black"',
+        solid: `android:color="${attributes.border[2]}"`
+    };
+    borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
+    borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
+    borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
+    if (attributes.border[0] != 'none') {
         let template = null;
         let data = null;
-        if (attributes.border[0] != 'none' && attributes.borderRadius != null) {
+        let resourceName = null;
+        if (attributes.borderRadius != null) {
             template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
             data = {
                 '0': [{
@@ -434,7 +436,7 @@ export function setBackgroundStyle(node) {
                 attributes.borderRadius.forEach((value, index) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
             }
         }
-        else if (attributes.border[0] != 'none' && attributes.backgroundColor == null) {
+        else if (attributes.backgroundColor == null) {
             template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
             data = {
                 '0': [{
@@ -470,19 +472,21 @@ export function setBackgroundStyle(node) {
             }
         }
         let xml = parseTemplateData(template, data);
-        let drawableName = null;
         for (const [name, value] of RESOURCE.DRAWABLE.entries()) {
             if (value == xml) {
-                drawableName = name;
+                resourceName = name;
                 break;
             }
         }
-        if (drawableName == null) {
-            drawableName = `${node.tagName.toLowerCase()}_${node.androidId}`;
-            RESOURCE.DRAWABLE.set(drawableName, xml);
+        if (resourceName == null) {
+            resourceName = `${node.tagName.toLowerCase()}_${node.androidId}`;
+            RESOURCE.DRAWABLE.set(resourceName, xml);
         }
-        node.drawable = drawableName;
-        return { backgroundColor: drawableName };
+        node.drawable = resourceName;
+        return { background: resourceName };
+    }
+    else if (attributes.backgroundColor != null) {
+        return { backgroundColor: attributes.backgroundColor[1] };
     }
     return null;
 }
