@@ -23,62 +23,78 @@
             padding: 2px;
             margin: 4px;
         }
+        .output {
+            height: 600px;
+            border: solid 1px #ccc;
+            margin-left: 15px;
+            overflow: auto;
+            float: left;
+        }
+        .output pre {
+            font-size: 10px;
+            margin: 0px;
+            padding: 10px;
+        }
     </style>
     <script src="../dist/androme.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('output').innerHTML = androme.parseDocument().replace(/</g, '&lt;');
-            console.log(androme.writeResourceStringXml());
-            console.log(androme.writeResourceStyleXml());
-            console.log(androme.writeResourceColorXml());
-            console.log(androme.writeResourceDrawableXml());
+            document.getElementById('output').innerHTML = androme.parseDocument(document.getElementById('androme-root')).replace(/</g, '&lt;');
+            let resource = androme.writeResourceStringXml() + '\n\n' +
+                           androme.writeResourceStyleXml() + '\n\n' +
+                           androme.writeResourceColorXml() + '\n\n' +
+                           androme.writeResourceDrawableXml();
+            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
-    <ul>
-        <li>
-            <span>1</span>
-            <span>1111</span>
-            <span>---</span>
-            <span>1</span>
-            <span>----</span>
-        </li>
-        <li>
-            <span>2</span>
-            <span>2222</span>
-            <span>---</span>
-            <span>22</span>
-            <span>2</span>
-            <span>---</span>
-        </li>
-        <li>
-            <span>3</span>
-            <span>33</span>
-            <span>3</span>
-            <span>---</span>
-            <span>333</span>
-            <span>---</span>
-        </li>
-        <li>
-            <span>4</span>
-            <span>44</span>
-            <span>44</span>
-            <span>44</span>
-            <span>---</span>
-            <span>4444</span>
-            <span>4</span>
-            <span>4</span>
-            <span>----</span>
-        </li>
-        <li>
-            <span>5</span>
-            <span>555</span>
-            <span>---</span>
-            <span>55555</span>
-            <span>---</span>
-        </li>
-    </ul>
-    <pre id="output" style="font-size: 11px; margin: 15px;"></pre>
+    <div style="width: 500px; float: left;">
+        <ul id="androme-root">
+            <li>
+                <span>1</span>
+                <span>1111</span>
+                <span>---</span>
+                <span>1</span>
+                <span>----</span>
+            </li>
+            <li>
+                <span>2</span>
+                <span>2222</span>
+                <span>---</span>
+                <span>22</span>
+                <span>2</span>
+                <span>---</span>
+            </li>
+            <li>
+                <span>3</span>
+                <span>33</span>
+                <span>3</span>
+                <span>---</span>
+                <span>333</span>
+                <span>---</span>
+            </li>
+            <li>
+                <span>4</span>
+                <span>44</span>
+                <span>44</span>
+                <span>44</span>
+                <span>---</span>
+                <span>4444</span>
+                <span>4</span>
+                <span>4</span>
+                <span>----</span>
+            </li>
+            <li>
+                <span>5</span>
+                <span>555</span>
+                <span>---</span>
+                <span>55555</span>
+                <span>---</span>
+            </li>
+        </ul>
+    </div>
+    <div class="output"><pre id="output"></pre></div>
+    <div class="output"><pre id="resource"></pre></div>
 </body>
 </html>

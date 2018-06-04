@@ -5,12 +5,13 @@
     <title>https://github.com/anpham6/androme</title>
     <style type="text/css">
         body {
-            padding: 0px;
+            padding: 10px;
             margin: 0px;
         }
         .flex-container {
+            border: solid 1px #ccc;
             background-color: #F4F7F8;
-            margin: 4px;
+            margin: 0px;
             overflow: hidden;
             display: flex;
         }
@@ -76,126 +77,142 @@
             padding: 4px;
             margin: 4px;
         }
-        div .flex-container {
+        div div .flex-container {
             height: auto;
             padding: 0px;
             margin: 4px 0px;
             list-style: none;
             display: flex;
         }
-        div .flex-start {
+        div div .flex-start {
             justify-content: flex-start;
         }
-        div .flex-end {
+        div div .flex-end {
             justify-content: flex-end;
         }
-        div .flex-item {
+        div div .flex-item {
             width: 50px;
             height: 50px;
             line-height: 50px;
             text-align: center;
         }
-        div .center {
+        div div .center {
             justify-content: center;
         }
-        div .space-between {
+        div div .space-between {
             justify-content: space-between;
         }
-        div .space-around {
+        div div .space-around {
             justify-content: space-around;
         }
-        div .space-evenly {
+        div div .space-evenly {
             justify-content: space-evenly;
+        }
+        .output {
+            height: 600px;
+            border: solid 1px #ccc;
+            margin-left: 15px;
+            overflow: auto;
+            float: left;
+        }
+        .output pre {
+            font-size: 10px;
+            margin: 0px;
+            padding: 10px;
         }
     </style>
     <script src="../dist/androme.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('output').innerHTML = androme.parseDocument().replace(/</g, '&lt;');
-            console.log(androme.writeResourceStringXml());
-            console.log(androme.writeResourceStyleXml());
-            console.log(androme.writeResourceColorXml());
-            console.log(androme.writeResourceDrawableXml());
+            document.getElementById('output').innerHTML = androme.parseDocument(document.getElementById('androme-root')).replace(/</g, '&lt;');
+            let resource = androme.writeResourceStringXml() + '\n\n' +
+                           androme.writeResourceStyleXml() + '\n\n' +
+                           androme.writeResourceColorXml() + '\n\n' +
+                           androme.writeResourceDrawableXml();
+            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
-    <div class="flex-container">
-        <div class="item auto">auto</div>
-        <div class="item auto">auto</div>
-        <div class="item auto">auto</div>
-    </div>
-    <div class="flex-container">
-        <div class="item auto">auto</div>
-        <div class="item initial">initial</div>
-        <div class="item initial">initial</div>
-    </div>
-    <div class="flex-container">
-        <div class="item auto">auto</div>
-        <div class="item auto">auto</div>
-        <div class="item none">none</div>
-    </div>
-    <div class="flex-container">
-        <div class="item initial">initial</div>
-        <div class="item none">none</div>
-        <div class="item none">none</div>
-    </div>
-    <div class="flex-container">
-        <div class="item four">4</div>
-        <div class="item two">2</div>
-        <div class="item one">1</div>
-    </div>
-    <ul class="flex-container" style="align-items: stretch;">
-        <li class="flex-item flex-start">1</li>
-        <li class="flex-item flex-end">2</li>
-        <li class="flex-item center">3</li>
-        <li class="flex-item baseline">4</li>
-        <li class="flex-item stretch">5</li>
-    </ul>
-    <div>
-        <ul class="flex-container flex-start">
-            <li class="flex-item">1</li>
-            <li class="flex-item">2</li>
-            <li class="flex-item">3</li>
-            <li class="flex-item">4</li>
-            <li class="flex-item">5</li>
+    <div id="androme-root" style="width: 550px; float: left;">
+        <div class="flex-container">
+            <div class="item auto">auto</div>
+            <div class="item auto">auto</div>
+            <div class="item auto">auto</div>
+        </div>
+        <div class="flex-container">
+            <div class="item auto">auto</div>
+            <div class="item initial">initial</div>
+            <div class="item initial">initial</div>
+        </div>
+        <div class="flex-container">
+            <div class="item auto">auto</div>
+            <div class="item auto">auto</div>
+            <div class="item none">none</div>
+        </div>
+        <div class="flex-container">
+            <div class="item initial">initial</div>
+            <div class="item none">none</div>
+            <div class="item none">none</div>
+        </div>
+        <div class="flex-container">
+            <div class="item four">4</div>
+            <div class="item two">2</div>
+            <div class="item one">1</div>
+        </div>
+        <ul class="flex-container" style="align-items: stretch;">
+            <li class="flex-item flex-start">1</li>
+            <li class="flex-item flex-end">2</li>
+            <li class="flex-item center">3</li>
+            <li class="flex-item baseline">4</li>
+            <li class="flex-item stretch">5</li>
         </ul>
-        <ul class="flex-container flex-end">
-            <li class="flex-item">1</li>
-            <li class="flex-item">2</li>
-            <li class="flex-item">3</li>
-            <li class="flex-item">4</li>
-            <li class="flex-item">5</li>
-        </ul>
-        <ul class="flex-container center">
-            <li class="flex-item">1</li>
-            <li class="flex-item">2</li>
-            <li class="flex-item">3</li>
-            <li class="flex-item">4</li>
-            <li class="flex-item">5</li>
-        </ul>
-        <ul class="flex-container space-between">
-            <li class="flex-item">1</li>
-            <li class="flex-item">2</li>
-            <li class="flex-item">3</li>
-            <li class="flex-item">4</li>
-            <li class="flex-item">5</li>
-        </ul>
-        <ul class="flex-container space-around">
-            <li class="flex-item">1</li>
-            <li class="flex-item">2</li>
-            <li class="flex-item">3</li>
-            <li class="flex-item">4</li>
-            <li class="flex-item">5</li>
-        </ul>
-        <ul class="flex-container space-evenly">
-            <li class="flex-item">1</li>
-            <li class="flex-item">2</li>
-            <li class="flex-item">3</li>
-            <li class="flex-item">4</li>
-            <li class="flex-item">5</li>
-        </ul>
+        <div>
+            <ul class="flex-container flex-start">
+                <li class="flex-item">1</li>
+                <li class="flex-item">2</li>
+                <li class="flex-item">3</li>
+                <li class="flex-item">4</li>
+                <li class="flex-item">5</li>
+            </ul>
+            <ul class="flex-container flex-end">
+                <li class="flex-item">1</li>
+                <li class="flex-item">2</li>
+                <li class="flex-item">3</li>
+                <li class="flex-item">4</li>
+                <li class="flex-item">5</li>
+            </ul>
+            <ul class="flex-container center">
+                <li class="flex-item">1</li>
+                <li class="flex-item">2</li>
+                <li class="flex-item">3</li>
+                <li class="flex-item">4</li>
+                <li class="flex-item">5</li>
+            </ul>
+            <ul class="flex-container space-between">
+                <li class="flex-item">1</li>
+                <li class="flex-item">2</li>
+                <li class="flex-item">3</li>
+                <li class="flex-item">4</li>
+                <li class="flex-item">5</li>
+            </ul>
+            <ul class="flex-container space-around">
+                <li class="flex-item">1</li>
+                <li class="flex-item">2</li>
+                <li class="flex-item">3</li>
+                <li class="flex-item">4</li>
+                <li class="flex-item">5</li>
+            </ul>
+            <ul class="flex-container space-evenly">
+                <li class="flex-item">1</li>
+                <li class="flex-item">2</li>
+                <li class="flex-item">3</li>
+                <li class="flex-item">4</li>
+                <li class="flex-item">5</li>
+            </ul>
+        </div>
     </div>
-    <pre id="output" style="font-size: 11px; margin: 15px;"></pre>
+    <div class="output"><pre id="output"></pre></div>
+    <div class="output"><pre id="resource"></pre></div>
 </body>
 </html>

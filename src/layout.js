@@ -440,9 +440,16 @@ function setLayoutWeight() {
     }
 }
 
-function setNodeCache() {
+function createNode(element) {
+    if (Element.isVisible(element)) {
+        const node = new Node(generateNodeId(), element, SETTINGS.targetAPI);
+        NODE_CACHE.push(node);
+    }
+}
+
+function setNodeCache(element) {
     let nodeTotal = 0;
-    document.body.childNodes.forEach(element => {
+    (element || document.body).childNodes.forEach(element => {
         if (element.nodeName == '#text') {
             if (element.textContent.trim() != '') {
                 nodeTotal++;
@@ -451,19 +458,18 @@ function setNodeCache() {
         else {
             if (Element.isVisible(element)) {
                 nodeTotal++;
-            }   
+            }
         }
     });
-    const elements = document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *'));
+    const elements = (element != null ? element.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+    if (element != null) {
+        createNode(element);
+    }
     for (const i in elements) {
-        const element = elements[i];
-        if (INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
+        if (INLINE_CHROME.includes(elements[i].tagName) && (MAPPING_CHROME[elements[i].parentNode.tagName] != null || INLINE_CHROME.includes(elements[i].parentNode.tagName))) {
             continue;
         }
-        if (Element.isVisible(element)) {
-            const node = new Node(generateNodeId(), element, SETTINGS.targetAPI);
-            NODE_CACHE.push(node);
-        }
+        createNode(elements[i]);
     }
     const preAlignment = {};
     for (const node of NODE_CACHE) {
@@ -573,12 +579,12 @@ function setNodeCache() {
     }
 }
 
-export function parseDocument() {
+export function parseDocument(element) {
     let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
     const mapX = [];
     const mapY = [];
     setStyleMap();
-    setNodeCache();
+    setNodeCache(element);
     for (const node of NODE_CACHE) {
         const x = Math.floor(node.bounds.x);
         const y = node.parent.id;

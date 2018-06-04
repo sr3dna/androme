@@ -1,4 +1,4 @@
-/* androme 1.2.7
+/* androme 1.2.8
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -914,7 +914,7 @@
     '<?xml version="1.0" encoding="utf-8"?>',
     '<resources>',
     '!1',
-    '	<color name="{name}">{value}</color>',
+    '	<color name="{value}">{name}</color>',
     '!1',
     '</resources>',
     '<!-- filename: res/values/colors.xml -->',
@@ -992,7 +992,8 @@
     const PROPERTY_ANDROID =
     {
         'backgroundStyle': {
-            'backgroundColor': 'android:background="@drawable/{0}"'
+            'background': 'android:background="@drawable/{0}"',
+            'backgroundColor': 'android:background="{0}"'
         },
         'computedStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
@@ -1364,24 +1365,25 @@
         for (const i in attributes) {
             attributes[i] = attributes[i](style[i]);
         }
-        if (attributes.border[0] != 'none' || attributes.borderRadius != null) {
-            attributes.border[2] = addResourceColor(attributes.border[2]);
-            if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
-                attributes.backgroundColor = null;
-            }
-            else {
-                attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
-            }
-            const borderStyle = {
-                black: 'android:color="@android:color/black"',
-                solid: `android:color="${attributes.border[2]}"`
-            };
-            borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
-            borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
-            borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
+        attributes.border[2] = addResourceColor(attributes.border[2]);
+        if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
+            attributes.backgroundColor = null;
+        }
+        else {
+            attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
+        }
+        const borderStyle = {
+            black: 'android:color="@android:color/black"',
+            solid: `android:color="${attributes.border[2]}"`
+        };
+        borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
+        borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
+        borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
+        if (attributes.border[0] != 'none') {
             let template = null;
             let data = null;
-            if (attributes.border[0] != 'none' && attributes.borderRadius != null) {
+            let resourceName = null;
+            if (attributes.borderRadius != null) {
                 template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
                 data = {
                     '0': [{
@@ -1401,7 +1403,7 @@
                     attributes.borderRadius.forEach((value, index) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
                 }
             }
-            else if (attributes.border[0] != 'none' && attributes.backgroundColor == null) {
+            else if (attributes.backgroundColor == null) {
                 template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
                 data = {
                     '0': [{
@@ -1437,19 +1439,21 @@
                 }
             }
             let xml = parseTemplateData(template, data);
-            let drawableName = null;
             for (const [name, value] of RESOURCE.DRAWABLE.entries()) {
                 if (value == xml) {
-                    drawableName = name;
+                    resourceName = name;
                     break;
                 }
             }
-            if (drawableName == null) {
-                drawableName = `${node.tagName.toLowerCase()}_${node.androidId}`;
-                RESOURCE.DRAWABLE.set(drawableName, xml);
+            if (resourceName == null) {
+                resourceName = `${node.tagName.toLowerCase()}_${node.androidId}`;
+                RESOURCE.DRAWABLE.set(resourceName, xml);
             }
-            node.drawable = drawableName;
-            return { backgroundColor: drawableName };
+            node.drawable = resourceName;
+            return { background: resourceName };
+        }
+        else if (attributes.backgroundColor != null) {
+            return { backgroundColor: attributes.backgroundColor[1] };
         }
         return null;
     }
@@ -2928,10 +2932,10 @@
         let full = false;
         switch (index) {
             case 0:
-                full = (nodes.last.linear.right >= parent.flex.right);
+                full = (nodes.last.linear.right == parent.box.right);
                 break;
             case 1:
-                full = (nodes.last.linear.bottom >= parent.box.bottom);
+                full = (nodes.last.linear.bottom == parent.box.bottom);
                 break;
         }
         nodes[0].app(`layout_constraint${(index ? 'Horizontal' : 'Vertical')}_chainStyle`, 'spread');
@@ -3005,100 +3009,100 @@
                             current.constraint.vertical = true;
                         }
                     }
-                    nodes.unshift(node);
-                    for (let current of nodes) {
-                        for (let adjacent of nodes) {
-                            if (current == adjacent || (relative && current == node)) {
-                                continue;
+                }
+                nodes.unshift(node);
+                for (let current of nodes) {
+                    for (let adjacent of nodes) {
+                        if (current == adjacent || (relative && current == node)) {
+                            continue;
+                        }
+                        else if (relative && adjacent == node) {
+                            if (current.linear.left == node.box.left) {
+                                current
+                                    .android(parseRTL('layout_alignParentLeft'), 'true')
+                                    .constraint.horizontal = true;
                             }
-                            else if (relative && adjacent == node) {
-                                if (current.linear.left == node.box.left) {
-                                    current
-                                        .android(parseRTL('layout_alignParentLeft'), 'true')
-                                        .constraint.horizontal = true;
+                            if (withinRange(current.linear.right, node.box.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                current
+                                    .android(parseRTL('layout_alignParentRight'), 'true')
+                                    .constraint.horizontal = true;
+                            }
+                            if (current.linear.top == node.box.top) {
+                                current
+                                    .android('layout_alignParentTop', 'true')
+                                    .constraint.vertical = true;
+                            }
+                            if (current.linear.bottom == node.box.bottom) {
+                                current
+                                    .android('layout_alignParentBottom', 'true')
+                                    .constraint.vertical = true;
+                            }
+                        }
+                        else {
+                            let parent = false;
+                            let bounds1 = current.bounds;
+                            let bounds2 = adjacent.bounds;
+                            if (current == node || adjacent == node) {
+                                if (current == node) {
+                                    current = adjacent;
                                 }
-                                if (withinRange(current.linear.right, node.box.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                    current
-                                        .android(parseRTL('layout_alignParentRight'), 'true')
-                                        .constraint.horizontal = true;
+                                adjacent = Object.assign({}, node);
+                                adjacent.androidId = 'parent';
+                                bounds1 = current.linear;
+                                bounds2 = node.box;
+                                parent = true;
+                            }
+                            if (parent) {
+                                if (bounds1.left == bounds2.left) {
+                                    setNodePosition(current, 'left', adjacent);
+                                    current.constraint.horizontal = true;
                                 }
-                                if (current.linear.top == node.box.top) {
-                                    current
-                                        .android('layout_alignParentTop', 'true')
-                                        .constraint.vertical = true;
-                                }
-                                if (current.linear.bottom == node.box.bottom) {
-                                    current
-                                        .android('layout_alignParentBottom', 'true')
-                                        .constraint.vertical = true;
+                                if (withinRange(bounds1.right, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                    setNodePosition(current, 'right', adjacent);
+                                    current.constraint.horizontal = true;
                                 }
                             }
-                            else {
-                                let parent = false;
-                                let bounds1 = current.bounds;
-                                let bounds2 = adjacent.bounds;
-                                if (current == node || adjacent == node) {
-                                    if (current == node) {
-                                        current = adjacent;
-                                    }
-                                    adjacent = Object.assign({}, node);
-                                    adjacent.androidId = 'parent';
-                                    bounds1 = current.linear;
-                                    bounds2 = node.box;
-                                    parent = true;
+                            else if (!current.constraint.horizontal) {
+                                if (current.viewWidth == 0 && bounds1.left == bounds2.left && bounds1.right == bounds2.right) {
+                                    setNodePosition(current, 'left', adjacent);
+                                    setNodePosition(current, 'right', adjacent);
                                 }
-                                if (parent) {
-                                    if (bounds1.left == bounds2.left) {
-                                        setNodePosition(current, 'left', adjacent);
-                                        current.constraint.horizontal = true;
-                                    }
-                                    if (withinRange(bounds1.right, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                        setNodePosition(current, 'right', adjacent);
-                                        current.constraint.horizontal = true;
-                                    }
+                                const withinY = (SETTINGS.horizontalPerspective && (bounds1.top == bounds2.top || bounds1.bottom == bounds2.bottom));
+                                if (withinFraction(bounds1.right, bounds2.left) || (withinY && withinRange(bounds1.right, bounds2.left, SETTINGS.whitespaceHorizontalOffset))) {
+                                    setNodePosition(current, 'rightLeft', adjacent);
                                 }
-                                else if (!current.constraint.horizontal) {
-                                    if (current.viewWidth == 0 && bounds1.left == bounds2.left && bounds1.right == bounds2.right) {
-                                        setNodePosition(current, 'left', adjacent);
-                                        setNodePosition(current, 'right', adjacent);
-                                    }
-                                    const withinY = (SETTINGS.horizontalPerspective && (bounds1.top == bounds2.top || bounds1.bottom == bounds2.bottom));
-                                    if (withinFraction(bounds1.right, bounds2.left) || (withinY && withinRange(bounds1.right, bounds2.left, SETTINGS.whitespaceHorizontalOffset))) {
-                                        setNodePosition(current, 'rightLeft', adjacent);
-                                    }
-                                    if (withinFraction(bounds2.right, bounds1.left) || (withinY && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset))) {
-                                        setNodePosition(current, 'leftRight', adjacent);
-                                    }
+                                if (withinFraction(bounds2.right, bounds1.left) || (withinY && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset))) {
+                                    setNodePosition(current, 'leftRight', adjacent);
                                 }
-                                if (parent) {
-                                    if (bounds1.top == bounds2.top) {
-                                        setNodePosition(current, 'top', adjacent);
-                                        current.constraint.vertical = true;
-                                    }
-                                    if (bounds1.bottom == bounds2.bottom) {
-                                        setNodePosition(current, 'bottom', adjacent);
-                                        current.constraint.vertical = true;
-                                    }
+                            }
+                            if (parent) {
+                                if (bounds1.top == bounds2.top) {
+                                    setNodePosition(current, 'top', adjacent);
+                                    current.constraint.vertical = true;
                                 }
-                                else if (!current.constraint.vertical) {
-                                    if (current.viewHeight == 0 && bounds1.top == bounds2.top && bounds1.bottom == bounds2.bottom) {
-                                        const baseline = (current.isView(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.isView(WIDGET_ANDROID.TEXT) && adjacent.style.verticalAlign == 'baseline');
-                                        setNodePosition(current, (baseline ? 'baseline' : 'top'), adjacent);
-                                        setNodePosition(current, 'bottom', adjacent);
-                                    }
-                                    const withinX = (!SETTINGS.horizontalPerspective && (bounds1.left == bounds2.left || bounds1.right == bounds2.right));
-                                    if (bounds1.bottom == bounds2.top || (withinX && withinRange(bounds1.bottom, bounds2.top, SETTINGS.whitespaceVerticalOffset))) {
-                                        setNodePosition(current, 'bottomTop', adjacent);
-                                    }
-                                    if (bounds1.top == bounds2.bottom || (withinX && withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset))) {
-                                        setNodePosition(current, 'topBottom', adjacent);
-                                    }
+                                if (bounds1.bottom == bounds2.bottom) {
+                                    setNodePosition(current, 'bottom', adjacent);
+                                    current.constraint.vertical = true;
+                                }
+                            }
+                            else if (!current.constraint.vertical) {
+                                if (current.viewHeight == 0 && bounds1.top == bounds2.top && bounds1.bottom == bounds2.bottom) {
+                                    const baseline = (current.isView(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.isView(WIDGET_ANDROID.TEXT) && adjacent.style.verticalAlign == 'baseline');
+                                    setNodePosition(current, (baseline ? 'baseline' : 'top'), adjacent);
+                                    setNodePosition(current, 'bottom', adjacent);
+                                }
+                                const withinX = (!SETTINGS.horizontalPerspective && (bounds1.left == bounds2.left || bounds1.right == bounds2.right));
+                                if (bounds1.bottom == bounds2.top || (withinX && withinRange(bounds1.bottom, bounds2.top, SETTINGS.whitespaceVerticalOffset))) {
+                                    setNodePosition(current, 'bottomTop', adjacent);
+                                }
+                                if (bounds1.top == bounds2.bottom || (withinX && withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset))) {
+                                    setNodePosition(current, 'topBottom', adjacent);
                                 }
                             }
                         }
                     }
-                    nodes.shift();
                 }
+                nodes.shift();
                 if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect())) {
                     let flexNodes = null;
                     if (flex.enabled) {
@@ -3968,9 +3972,16 @@
         }
     }
 
-    function setNodeCache() {
+    function createNode(element) {
+        if (isVisible(element)) {
+            const node = new Node(generateNodeId(), element, SETTINGS.targetAPI);
+            NODE_CACHE.push(node);
+        }
+    }
+
+    function setNodeCache(element) {
         let nodeTotal = 0;
-        document.body.childNodes.forEach(element => {
+        (element || document.body).childNodes.forEach(element => {
             if (element.nodeName == '#text') {
                 if (element.textContent.trim() != '') {
                     nodeTotal++;
@@ -3979,19 +3990,18 @@
             else {
                 if (isVisible(element)) {
                     nodeTotal++;
-                }   
+                }
             }
         });
-        const elements = document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *'));
+        const elements = (element != null ? element.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+        if (element != null) {
+            createNode(element);
+        }
         for (const i in elements) {
-            const element = elements[i];
-            if (INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentNode.tagName] != null || INLINE_CHROME.includes(element.parentNode.tagName))) {
+            if (INLINE_CHROME.includes(elements[i].tagName) && (MAPPING_CHROME[elements[i].parentNode.tagName] != null || INLINE_CHROME.includes(elements[i].parentNode.tagName))) {
                 continue;
             }
-            if (isVisible(element)) {
-                const node = new Node(generateNodeId(), element, SETTINGS.targetAPI);
-                NODE_CACHE.push(node);
-            }
+            createNode(elements[i]);
         }
         const preAlignment = {};
         for (const node of NODE_CACHE) {
@@ -4101,12 +4111,12 @@
         }
     }
 
-    function parseDocument() {
+    function parseDocument(element) {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
         const mapX = [];
         const mapY = [];
         setStyleMap();
-        setNodeCache();
+        setNodeCache(element);
         for (const node of NODE_CACHE) {
             const x = Math.floor(node.bounds.x);
             const y = node.parent.id;

@@ -31,7 +31,7 @@
             color: blue;
         }
         form {
-            padding: 10px;
+            padding: 5px 10px;
             border: 1px solid #ccc;
             overflow: hidden;
         }
@@ -98,6 +98,18 @@
         input[value='Update'] {
             margin-left: 4px;
         }
+        .output {
+            height: 600px;
+            border: solid 1px #ccc;
+            margin-left: 15px;
+            overflow: auto;
+            float: left;
+        }
+        .output pre {
+            font-size: 10px;
+            margin: 0px;
+            padding: 10px;
+        }
     </style>
     <script src="../dist/androme.js"></script>
     <script>
@@ -105,17 +117,18 @@
         androme.settings.density = androme.DENSITY_ANDROID.MDPI;
         
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('output').innerHTML = androme.parseDocument().replace(/</g, '&lt;');
-            console.log(androme.writeResourceStringXml());
-            console.log(androme.writeResourceArrayXml());
-            console.log(androme.writeResourceStyleXml());
-            console.log(androme.writeResourceColorXml());
-            console.log(androme.writeResourceDrawableXml());
+            document.getElementById('output').innerHTML = androme.parseDocument(document.getElementById('androme-root')).replace(/</g, '&lt;');
+            let resource = androme.writeResourceStringXml() + '\n\n' +
+                           androme.writeResourceArrayXml() + '\n\n' +
+                           androme.writeResourceStyleXml() + '\n\n' +
+                           androme.writeResourceColorXml() + '\n\n' +
+                           androme.writeResourceDrawableXml();
+            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
-    <div style="width: 550px; float: left;">
+    <div id="androme-root" style="width: 550px; float: left;">
         <h2>Entry</h2>
         <form name="entry" autocomplete="off">
             <ul>
@@ -241,7 +254,7 @@
                             <option value="30">30</option>
                             <option value="31">31</option>
                         </select>
-                        <select name="year1" style="text-align: right;">
+                        <select name="year1">
                             <option value="2001">2001</option>
                             <option value="2002">2002</option>
                             <option value="2003">2003</option>
@@ -309,7 +322,7 @@
                             <option value="30">30</option>
                             <option value="31">31</option>
                         </select>
-                        <select name="year2" style="text-align: right;">
+                        <select name="year2">
                             <option value="2001">2001</option>
                             <option value="2002">2002</option>
                             <option value="2003">2003</option>
@@ -368,7 +381,7 @@
                 </li>
                 <li>
                     <label>Type:</label>
-                    <select name="typeofentry" style="width: 159px;">
+                    <select name="typeofentry" style="width: 160px;">
                         <option value=""></option>
                         <option value="0">0</option>
                         <option value="1">1</option>
@@ -386,7 +399,7 @@
                 </li>
                 <li>
                     <label>Series:</label>
-                    <select name="series" style="width: 203px;">
+                    <select name="series" style="width: 200px;">
                         <option value="0">00 - Inactive</option>
                         <option value="1">01 - Active</option>
                     </select>
@@ -410,7 +423,7 @@
             <ul>
                 <li>
                     <label>Series:</label>
-                    <select name="series" class="req-pageurl-4" style="width: 203px;">
+                    <select name="series" class="req-pageurl-4" style="width: 200px;">
                         <option value="0">00 - Inactive</option>
                         <option value="1">01 - Active</option>
                     </select>
@@ -577,6 +590,7 @@
             </ul>
         </form>
     </div>
-    <div style="width: 500px; margin-left: 20px; float: left;"><pre id="output" style="font-size: 11px; margin: 0px;"></pre></div>
+    <div class="output"><pre id="output"></pre></div>
+    <div class="output"><pre id="resource"></pre></div>
 </body>
 </html>
