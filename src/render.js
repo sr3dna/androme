@@ -31,7 +31,7 @@ function getGridSpace(node) {
     let preXml = '';
     let postXml = '';
     if (node.parent.isView(WIDGET_ANDROID.GRID)) {
-        const dimensions = getBoxSpacing(node.parentOriginal.element, SETTINGS.useRTL, true);
+        const dimensions = getBoxSpacing(node.parentOriginal.element, SETTINGS.supportRTL, true);
         const options = { android: { layout_columnSpan: node.renderParent.gridColumnSpan, layout_columnWeight: 1 } };
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
@@ -98,7 +98,6 @@ export function renderViewLayout(node, parent, tagName) {
                             .css('height', node.styleMap.height)
                             .css('minHeight', node.styleMap.minHeight)
                             .css('overflowY', node.styleMap.overflowY);
-                        break;
                 }
                 const indent = padLeft(scrollDepth--);
                 preXml = indent + `<${widgetName}{@${wrapNode.id}}>\n` + preXml;
@@ -136,7 +135,7 @@ export function renderViewTag(node, parent, tagName, recursive) {
     const element = node.element;
     node.setAndroidId(tagName);
     switch (element.tagName) {
-        case 'IMG':
+        case 'IMG': {
             const image = element.src.substring(element.src.lastIndexOf('/') + 1);
             const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
             let src = image.replace(/.\w+$/, '');
@@ -153,7 +152,8 @@ export function renderViewTag(node, parent, tagName, recursive) {
             }
             node.androidSrc = src;
             break;
-        case 'TEXTAREA':
+        }
+        case 'TEXTAREA': {
             node.android('minLines', 2);
             if (element.rows > 2) {
                 node.android('maxLines', element.rows);
@@ -168,12 +168,13 @@ export function renderViewTag(node, parent, tagName, recursive) {
                 node.android('scrollHorizontally', 'true');
             }
             break;
+        }
     }
     switch (node.widgetName) {
         case WIDGET_ANDROID.EDIT:
             node.android('inputType', 'text');
             break;
-        case WIDGET_ANDROID.BUTTON:
+        case WIDGET_ANDROID.BUTTON: {
             if (node.viewWidth == 0) {
                 node.android('minWidth', '0px');
             }
@@ -181,6 +182,7 @@ export function renderViewTag(node, parent, tagName, recursive) {
                 node.android('minHeight', '0px');
             }
             break;
+        }
     }
     if (node.overflow != 0) {
         let scrollbars = [];
@@ -193,7 +195,7 @@ export function renderViewTag(node, parent, tagName, recursive) {
         node.android('scrollbars', scrollbars.join('|'));
     }
     switch (element.type) {
-        case 'radio':
+        case 'radio': {
             if (!recursive) {
                 const result = node.parentOriginal.children.filter(item => (item.element.type == 'radio' && item.element.name == element.name));
                 let xml = '';
@@ -231,6 +233,7 @@ export function renderViewTag(node, parent, tagName, recursive) {
                 }
             }
             break;
+        }
         case 'password':
             node.android('inputType', 'textPassword');
             break;

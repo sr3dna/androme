@@ -52,32 +52,6 @@ function insetAttributes(output) {
     return output.replace('{@0}', Object.keys(namespaces).sort().map(value => `\n\t${XMLNS_ANDROID[value.toUpperCase()]}`).join(''));
 }
 
-function deleteStyleAttribute(sorted, attributes, nodeIds) {
-    attributes.split(';').forEach(value => {
-        for (let i = 0; i < sorted.length; i++) {
-            if (sorted[i] != null) {
-                let index = -1;
-                let key = '';
-                for (const j in sorted[i]) {
-                    if (j == value) {
-                        index = i;
-                        key = j;
-                        i = sorted.length;
-                        break;
-                    }
-                }
-                if (index != -1) {
-                    sorted[index][key] = sorted[index][key].filter(value => !nodeIds.includes(value));
-                    if (sorted[index][key].length == 0) {
-                        delete sorted[index][key];
-                    }
-                    break;
-                }
-            }
-        }
-    });
-}
-
 function setStyleMap() {
     for (const styleSheet of document.styleSheets) {
         for (const rule of styleSheet.rules) {
@@ -304,10 +278,36 @@ function setResourceStyle() {
     });
 }
 
+function deleteStyleAttribute(sorted, attributes, nodeIds) {
+    attributes.split(';').forEach(value => {
+        for (let i = 0; i < sorted.length; i++) {
+            if (sorted[i] != null) {
+                let index = -1;
+                let key = '';
+                for (const j in sorted[i]) {
+                    if (j == value) {
+                        index = i;
+                        key = j;
+                        i = sorted.length;
+                        break;
+                    }
+                }
+                if (index != -1) {
+                    sorted[index][key] = sorted[index][key].filter(value => !nodeIds.includes(value));
+                    if (sorted[index][key].length == 0) {
+                        delete sorted[index][key];
+                    }
+                    break;
+                }
+            }
+        }
+    });
+}
+
 function setAccessibility() {
     for (const node of NODE_CACHE.visible) {
         switch (node.widgetName) {
-            case WIDGET_ANDROID.EDIT:
+            case WIDGET_ANDROID.EDIT: {
                 let parent = node.renderParent;
                 let current = node;
                 let label = null;
@@ -323,6 +323,7 @@ function setAccessibility() {
                 if (label != null && label.isView(WIDGET_ANDROID.TEXT)) {
                     label.android('labelFor', node.stringId);
                 }
+            }
             case WIDGET_ANDROID.SPINNER:
             case WIDGET_ANDROID.CHECKBOX:
             case WIDGET_ANDROID.RADIO:
@@ -336,27 +337,31 @@ function setAccessibility() {
 function setMarginPadding() {
     for (const node of NODE_CACHE) {
         if (node.isView(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
-            if (node.android('orientation') == 'vertical') {
-                let current = node.box.top + node.paddingTop;
-                node.renderChildren.sortAsc('linear.top').forEach(item => {
-                    const height = Math.ceil(item.linear.top - current);
-                    if (height > 0) {
-                        item.android('layout_marginTop', Util.formatPX(node.marginTop + height));
-                    }
-                    current = item.linear.bottom;
-                });
-            }
-            else {
-                let current = node.box.left + node.paddingLeft;
-                node.renderChildren.sortAsc('linear.left').forEach(item => {
-                    if (!item.floating) {
-                        const width = Math.ceil(item.linear.left - current);
-                        if (width > 0) {
-                            item.android(parseRTL('layout_marginLeft'), Util.formatPX(node.marginLeft + width));
+            switch (node.android('orientation')) {
+                case 'horizontal': {
+                    let current = node.box.left + node.paddingLeft;
+                    node.renderChildren.sortAsc('linear.left').forEach(item => {
+                        if (!item.floating) {
+                            const width = Math.ceil(item.linear.left - current);
+                            if (width > 0) {
+                                item.android(parseRTL('layout_marginLeft'), Util.formatPX(node.marginLeft + width));
+                            }
                         }
-                    }
-                    current = (item.label || item).linear.right;
-                });
+                        current = (item.label || item).linear.right;
+                    });
+                    break;
+                }
+                case 'vertical': {
+                    let current = node.box.top + node.paddingTop;
+                    node.renderChildren.sortAsc('linear.top').forEach(item => {
+                        const height = Math.ceil(item.linear.top - current);
+                        if (height > 0) {
+                            item.android('layout_marginTop', Util.formatPX(node.marginTop + height));
+                        }
+                        current = item.linear.bottom;
+                    });
+                    break;
+                }
             }
         }
         if (SETTINGS.targetAPI >= BUILD_ANDROID.OREO) {

@@ -398,13 +398,14 @@ export default class Node {
                     case WIDGET_ANDROID.BUTTON:
                         this.android('layout_height', 'wrap_content');
                         break;
-                    default:
+                    default: {
                         if (parent.overflow == 0 && !requireWrap && height >= parentHeight) {
                             this.android('layout_height', 'match_parent');
                         }
                         else {
                             this.android('layout_height', 'wrap_content');
                         }
+                    }
                 }
             }
         }
@@ -455,11 +456,12 @@ export default class Node {
                                 value = parseStyle(element, j, value);
                                 if (value != null) {
                                     switch (action) {
-                                        case 'setComputedStyle':
+                                        case 'setComputedStyle': {
                                             if (!this.supported.apply(this, widget[action][j].split('=')[0].split(':'))) {
                                                 continue;
                                             }
                                             break;
+                                        }
                                         case 'addResourceString':
                                             value = Util.isNumber(value) ? value : `@string/${value}`;
                                             break;
@@ -585,10 +587,11 @@ export default class Node {
                     case 'text-bottom':
                         vertical = 'bottom';
                         break;
-                    default:
+                    default: {
                         if (this.style.height == this.style.lineHeight || Util.convertInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
                             vertical = 'center_vertical';
                         }
+                    }
                 }
                 const parentTextAlign = (this.styleMap.textAlign != textAlign && !this.renderParent.floating && !this.floating);
                 switch (this.renderParent.widgetName) {

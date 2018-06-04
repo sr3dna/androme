@@ -29,15 +29,15 @@ androme.settings = {
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
     showAttributes: true,
+    horizontalPerspective: true,
     useConstraintLayout: true,
     useConstraintChain: true,
     useConstraintGuideline: false,
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
-    useRTL: true,
+    supportRTL: true,
     numberResourceValue: false,
-    horizontalPerspective: true,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     constraintBiasBoxOffset: 14,
@@ -128,7 +128,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<android.support.constraint.ConstraintLayout
 				android:id="@+id/constraintlayout_1"
 				android:layout_height="91dp"
-				android:layout_width="138dp">
+				android:layout_width="wrap_content">
 				<Spinner
 					android:id="@+id/month0"
 					android:background="@drawable/select_hour"
@@ -140,7 +140,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					app:layout_constraintEnd_toStartOf="@+id/day0"
-					app:layout_constraintHorizontal_bias="0"
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toTopOf="parent"
@@ -187,7 +186,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingTop="1dp"
 					app:layout_constraintBottom_toBottomOf="parent"
 					app:layout_constraintEnd_toStartOf="@+id/day1"
-					app:layout_constraintHorizontal_bias="0"
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toTopOf="parent"
@@ -238,7 +236,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingTop="1dp"
 					app:layout_constraintBottom_toBottomOf="parent"
 					app:layout_constraintEnd_toStartOf="@+id/day2"
-					app:layout_constraintHorizontal_bias="0"
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					style="@style/Select_1" />

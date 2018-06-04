@@ -341,7 +341,7 @@ export function setComputedStyle(node) {
 }
 
 export function setBoxSpacing(node) {
-    const result = getBoxSpacing(node.element, SETTINGS.useRTL);
+    const result = getBoxSpacing(node.element, SETTINGS.supportRTL);
     for (const i in result) {
         result[i] += 'px';
     }

@@ -167,7 +167,7 @@ export function setConstraints() {
                                 adjacent = Object.assign({}, node);
                                 adjacent.androidId = 'parent';
                                 bounds1 = current.linear;
-                                bounds2 = { androidId: 'parent', box: node.box };
+                                bounds2 = node.box;
                                 parent = true;
                             }
                             if (parent) {
@@ -261,7 +261,14 @@ export function setConstraints() {
                         current.constraint.verticalChain = verticalChain;
                     }
                 }
-                CHAIN_MAP.direction.forEach((value, index) => {
+                const direction = CHAIN_MAP.direction.slice();
+                if (!SETTINGS.horizontalPerspective) {
+                    direction.reverse();
+                }
+                direction.forEach((value, index) => {
+                    if (!SETTINGS.horizontalPerspective) {
+                        index = (index == 0 ? 1 : 0);
+                    }
                     const chainNodes = flexNodes || nodes.slice().sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                     for (const current of chainNodes) {
                         const chainDirection = current.constraint[value];
@@ -270,6 +277,7 @@ export function setConstraints() {
                             const HV = CHAIN_MAP['horizontalVertical'][index];
                             const VH = CHAIN_MAP['horizontalVertical'][(index == 0 ? 1 : 0)];
                             const WH = CHAIN_MAP['widthHeight'][index];
+                            const LHV = HV.toLowerCase();
                             const LWH = `layout_${WH.toLowerCase()}`;
                             const leftTop = CHAIN_MAP['leftTop'][index];
                             const rightBottom = CHAIN_MAP['rightBottom'][index];
@@ -286,6 +294,14 @@ export function setConstraints() {
                                 }
                                 else {
                                     current.delete('app', '*constraintTop*', '*constraintBottom*', '*constraintBaseline*');
+                                    if (previous != null) {
+                                        if (firstNode.bounds.left == lastNode.bounds.right) {
+                                            current.app(LAYOUT['left'], previous.stringId);
+                                        }
+                                        else {
+                                            current.app(LAYOUT['right'], previous.stringId);
+                                        }
+                                    }
                                 }
                                 if (next != null) {
                                     current.app(LAYOUT[CHAIN_MAP['rightLeftBottomTop'][index]], next.stringId);
@@ -340,7 +356,7 @@ export function setConstraints() {
                                                 .constraint.vertical = true;
                                             break;
                                         case 'center':
-                                        case 'stretch':
+                                        case 'stretch': {
                                             if (current.flex.alignSelf == 'center') {
                                                 current.app(`layout_constraint${VH}_bias`, 0.5);
                                             }
@@ -352,6 +368,7 @@ export function setConstraints() {
                                                 .app(map[(index == 0 ? 'bottom' : 'right')], 'parent')
                                                 .constraint[LVH] = true;
                                             break;
+                                        }
                                     }
                                     if (current.flex.basis != 'auto') {
                                         if (/(100|[1-9][0-9]?)%/.test(current.flex.basis)) {
@@ -366,13 +383,10 @@ export function setConstraints() {
                                         }
                                     }
                                 }
+                                current.constraint[LHV] = true;
                             }
-                            firstNode
-                                .app(LAYOUT[leftTop], 'parent')
-                                .constraint[HV.toLowerCase()] = true;
-                            lastNode
-                                .app(LAYOUT[rightBottom], 'parent')
-                                .constraint[HV.toLowerCase()] = true;
+                            firstNode.app(LAYOUT[leftTop], 'parent');
+                            lastNode.app(LAYOUT[rightBottom], 'parent');
                             const chainStyle = `layout_constraint${HV}_chainStyle`;
                             if (flex.enabled && flex.justifyContent != 'normal' && chainDirection.reduce((a, b) => Math.max(a, b.flex.grow), -1) == 0) {
                                 switch (flex.justifyContent) {
@@ -388,7 +402,7 @@ export function setConstraints() {
                                         chainDirection.forEach(item => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
                                         unassigned.android(LWH, 'wrap_content');
                                         break;
-                                    default:
+                                    default: {
                                         let bias = 0.5;
                                         let justifyContent = flex.justifyContent;
                                         if (flex.direction == 'row-reverse' || flex.direction == 'column-reverse') {
@@ -413,6 +427,7 @@ export function setConstraints() {
                                             .app(chainStyle, 'packed')
                                             .app(`layout_constraint${HV}_bias`, bias, false);
                                         unassigned.android(LWH, 'wrap_content');
+                                    }
                                 }
                             }
                             else {
@@ -436,12 +451,6 @@ export function setConstraints() {
                                 }
                                 if (useMargins) {
                                     firstNode.app(chainStyle, 'packed');
-                                    if (SETTINGS.useConstraintGuideline) {
-                                        createGuideline(node, firstNode, (index == 0 ? 'horizontal' : 'vertical'));
-                                    }
-                                    else {
-                                        firstNode.app(`layout_constraint${HV}_bias`, chainDirection[`${HV.toLowerCase()}Bias`]);
-                                    }
                                     for (let i = 1; i < chainDirection.length; i++) {
                                         const current = chainDirection[i];
                                         let offset = (index == 0 ? current.linear.left - chainDirection[i - 1].linear.right : current.linear.top - chainDirection[i - 1].linear.bottom);
@@ -451,39 +460,42 @@ export function setConstraints() {
                                             current.android(margin, formatPX(offset));
                                         }
                                     }
-                                    if (index == 0) {
-                                        if (!firstNode.constraint.vertical) {
-                                            if (SETTINGS.useConstraintGuideline) {
-                                                createGuideline(node, firstNode, 'vertical');
-                                            }
-                                            else {
-                                                firstNode
-                                                    .app(LAYOUT['top'], 'parent')
-                                                    .app(LAYOUT['bottom'], 'parent')
-                                                    .app(`layout_constraintVertical_bias`, firstNode.verticalBias);
-                                                node.constraint.layoutHeight = true;
-                                            }
+                                }
+                                if (flex.enabled) {
+                                    if (chainDirection.every(item => item.flex.grow == 0)) {
+                                        if (firstNode.constraint.horizontal) {
+                                            firstNode.constraint.horizontal = false;
                                         }
-                                        node.constraint.layoutWidth = true;
+                                        if (firstNode.constraint.vertical) {
+                                            firstNode.constraint.vertical = false;
+                                        }
+                                    }
+                                }
+                                if (!firstNode.constraint.horizontal) {
+                                    if (SETTINGS.useConstraintGuideline) {
+                                        createGuideline(node, firstNode, 'horizontal');
                                     }
                                     else {
-                                        if (!firstNode.constraint.horizontal) {
-                                            if (SETTINGS.useConstraintGuideline) {
-                                                createGuideline(node, firstNode, 'horizontal');
-                                            }
-                                            else {
-                                                firstNode
-                                                    .app(LAYOUT['left'], 'parent')
-                                                    .app(LAYOUT['right'], 'parent')
-                                                    .app(`layout_constraintHorizontal_bias`, firstNode.horizontalBias);
-                                            }
-                                            node.constraint.layoutWidth = true;
-                                        }
-                                        node.constraint.layoutHeight = true;
+                                        firstNode
+                                            .app(LAYOUT['left'], 'parent')
+                                            .app(LAYOUT['right'], 'parent')
+                                            .app(`layout_constraintHorizontal_bias`, firstNode.horizontalBias);
+                                        node.constraint.layoutWidth = true;
                                     }
                                     firstNode.constraint.horizontal = true;
+                                }
+                                if (!firstNode.constraint.vertical) {
+                                    if (SETTINGS.useConstraintGuideline) {
+                                        createGuideline(node, firstNode, 'vertical');
+                                    }
+                                    else {
+                                        firstNode
+                                            .app(LAYOUT['top'], 'parent')
+                                            .app(LAYOUT['bottom'], 'parent')
+                                            .app(`layout_constraintVertical_bias`, firstNode.verticalBias);
+                                        node.constraint.layoutHeight = true;
+                                    }
                                     firstNode.constraint.vertical = true;
-                                    unassigned.android(LWH, 'wrap_content');
                                 }
                                 if (!flex.enabled) {
                                     for (const current of chainDirection) {
@@ -491,6 +503,7 @@ export function setConstraints() {
                                         current.constraint.verticalChain = [];
                                     }
                                 }
+                                unassigned.android(LWH, 'wrap_content');
                             }
                         }
                     }
@@ -600,14 +613,16 @@ export function setConstraints() {
                                 .app('layout_constraintCircle', adjacent.stringId)
                                 .app('layout_constraintCircleRadius', formatPX(radius))
                                 .app('layout_constraintCircleAngle', degrees);
+                            nodes.anchored.forEach(current => {
+                                if (current.constraint['right'] == 'parent') {
+                                    node.constraint.layoutWidth = true;
+                                }
+                                if (current.constraint['bottom'] == 'parent') {
+                                    node.constraint.layoutHeight = true;
+                                }
+                            });
                             opposite.constraint.vertical = true;
                             opposite.constraint.horizontal = true;
-                        }
-                        if (opposite.constraint['right'] == 'parent') {
-                            node.constraint.layoutWidth = true;
-                        }
-                        if (opposite.constraint['bottom'] == 'parent') {
-                            node.constraint.layoutHeight = true;
                         }
                     }
                 }

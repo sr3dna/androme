@@ -2,7 +2,7 @@ import { BUILD_ANDROID } from './lib/constants';
 import SETTINGS from './settings';
 
 export default function parseRTL(value) {
-    if (SETTINGS.useRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
+    if (SETTINGS.supportRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
         switch (value) {
             case 'left':
                 return 'start';
