@@ -23,18 +23,23 @@
             padding: 2px;
             margin: 4px;
         }
+        a {
+            font-size: 11px;
+            margin-top: 4px;
+            float: right;
+        }
         .output {
+            float: left;
+        }
+        .output pre {
             height: 600px;
+            font-size: 10px;
+            margin: 0px;
+            padding: 10px;
             background-color: floralwhite;
             border: solid 1px #ccc;
             margin-left: 15px;
             overflow: auto;
-            float: left;
-        }
-        .output pre {
-            font-size: 10px;
-            margin: 0px;
-            padding: 10px;
         }
     </style>
     <script src="../dist/androme.js"></script>
@@ -97,7 +102,23 @@
             </li>
         </ul>
     </div>
-    <div class="output"><pre id="output"></pre></div>
-    <div class="output"><pre id="resource"></pre></div>
+    <div class="output">
+        <pre id="output"></pre>
+        <a href="javascript:copy('output');" style="text-align: right;">Copy</a>
+    </div>
+    <div class="output">
+        <pre id="resource"></pre>
+        <a href="javascript:copy('resource');" style="text-align: right;">Copy</a>
+    </div>
+    <script>
+        function copy(id) {
+            const element = document.getElementById(id);
+            const range = document.createRange();  
+            range.selectNode(element);  
+            window.getSelection().addRange(range); 
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();  
+        }
+    </script>
 </body>
 </html>

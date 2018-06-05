@@ -307,7 +307,7 @@ function deleteStyleAttribute(sorted, attributes, nodeIds) {
 function setAccessibility() {
     for (const node of NODE_CACHE.visible) {
         switch (node.widgetName) {
-            case WIDGET_ANDROID.EDIT: {
+            case WIDGET_ANDROID.EDIT:
                 let parent = node.renderParent;
                 let current = node;
                 let label = null;
@@ -323,7 +323,6 @@ function setAccessibility() {
                 if (label != null && label.isView(WIDGET_ANDROID.TEXT)) {
                     label.android('labelFor', node.stringId);
                 }
-            }
             case WIDGET_ANDROID.SPINNER:
             case WIDGET_ANDROID.CHECKBOX:
             case WIDGET_ANDROID.RADIO:
@@ -338,30 +337,28 @@ function setMarginPadding() {
     for (const node of NODE_CACHE) {
         if (node.isView(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
             switch (node.android('orientation')) {
-                case 'horizontal': {
-                    let current = node.box.left + node.paddingLeft;
+                case 'horizontal':
+                    let left = node.box.left + node.paddingLeft;
                     node.renderChildren.sortAsc('linear.left').forEach(item => {
                         if (!item.floating) {
-                            const width = Math.ceil(item.linear.left - current);
-                            if (width > 0) {
-                                item.android(parseRTL('layout_marginLeft'), Util.formatPX(node.marginLeft + width));
+                            const width = Math.ceil(item.linear.left - left);
+                            if (width >= 1) {
+                                item.modifyBox('layout_marginLeft', width);
                             }
                         }
-                        current = (item.label || item).linear.right;
+                        left = (item.label || item).linear.right;
                     });
                     break;
-                }
-                case 'vertical': {
-                    let current = node.box.top + node.paddingTop;
+                case 'vertical':
+                    let top = node.box.top + node.paddingTop;
                     node.renderChildren.sortAsc('linear.top').forEach(item => {
-                        const height = Math.ceil(item.linear.top - current);
-                        if (height > 0) {
-                            item.android('layout_marginTop', Util.formatPX(node.marginTop + height));
+                        const height = Math.ceil(item.linear.top - top);
+                        if (height >= 1) {
+                            item.modifyBox('layout_marginTop', height);
                         }
-                        current = item.linear.bottom;
+                        top = item.linear.bottom;
                     });
                     break;
-                }
             }
         }
         if (SETTINGS.targetAPI >= BUILD_ANDROID.OREO) {

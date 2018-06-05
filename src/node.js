@@ -218,7 +218,7 @@ export default class Node {
         }
         return cascade(this);
     }
-    expandToFit() {
+    expandDimensions() {
         let [width, height] = [this.children.reduce((a, b) => Math.max(a, b.linear.right), 0), this.children.reduce((a, b) => Math.max(a, b.linear.bottom), 0)];
         switch (this.style.position) {
             case 'static':
@@ -253,8 +253,15 @@ export default class Node {
             this.constraint.minHeight = Util.formatPX(height);
         }
         if (calibrate) {
-            this.setBounds(null, true);
+            this.setBounds(true);
         }
+    }
+    modifyBox(dimension, offset) {
+        dimension = parseRTL(dimension);
+        const total = Util.formatPX(offset + Util.convertInt(this.android(dimension)));
+        this.android(dimension, total)
+            .css(dimension, total);
+        this.setBounds(true);
     }
     inheritGrid(node) {
         for (const prop in node) {
@@ -336,8 +343,8 @@ export default class Node {
                     this.android('layout_width', Util.convertPX(styleMap.width));
                 }
                 if (styleMap.minWidth != null) {
-                    this.android('minWidth', Util.convertPX(styleMap.minWidth), false)
-                        .android('layout_width', 'wrap_content', false);
+                    this.android('layout_width', 'wrap_content', false)
+                        .android('minWidth', Util.convertPX(styleMap.minWidth), false);
                 }
                 if (styleMap.maxWidth != null) {
                     this.android('maxWidth', Util.convertPX(styleMap.maxWidth), false);
@@ -378,8 +385,8 @@ export default class Node {
                     this.android('layout_height', Util.convertPX(styleMap.height || styleMap.lineHeight));
                 }
                 if (styleMap.minHeight != null) {
-                    this.android('minHeight', Util.convertPX(styleMap.minHeight), false)
-                        .android('layout_height', 'wrap_content', false);
+                    this.android('layout_height', 'wrap_content', false)
+                        .android('minHeight', Util.convertPX(styleMap.minHeight), false);
                 }
                 if (styleMap.maxHeight != null) {
                     this.android('maxHeight', Util.convertPX(styleMap.maxHeight), false);
@@ -398,14 +405,13 @@ export default class Node {
                     case WIDGET_ANDROID.BUTTON:
                         this.android('layout_height', 'wrap_content');
                         break;
-                    default: {
-                        if (parent.overflow == 0 && !requireWrap && height >= parentHeight) {
+                    default:
+                        if (!requireWrap && parent.overflow == 0 && height >= parentHeight) {
                             this.android('layout_height', 'match_parent');
                         }
                         else {
                             this.android('layout_height', 'wrap_content');
                         }
-                    }
                 }
             }
         }
@@ -456,12 +462,11 @@ export default class Node {
                                 value = parseStyle(element, j, value);
                                 if (value != null) {
                                     switch (action) {
-                                        case 'setComputedStyle': {
+                                        case 'setComputedStyle':
                                             if (!this.supported.apply(this, widget[action][j].split('=')[0].split(':'))) {
                                                 continue;
                                             }
                                             break;
-                                        }
                                         case 'addResourceString':
                                             value = Util.isNumber(value) ? value : `@string/${value}`;
                                             break;
@@ -493,7 +498,7 @@ export default class Node {
             }
         }
     }
-    setBounds(element, calibrate = false) {
+    setBounds(calibrate = false, element = null) {
         if (this.wrapNode == null) {
             if (!calibrate) {
                 this.bounds = (element != null ?  getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
@@ -587,11 +592,10 @@ export default class Node {
                     case 'text-bottom':
                         vertical = 'bottom';
                         break;
-                    default: {
+                    default:
                         if (this.style.height == this.style.lineHeight || Util.convertInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
                             vertical = 'center_vertical';
                         }
-                    }
                 }
                 const parentTextAlign = (this.styleMap.textAlign != textAlign && !this.renderParent.floating && !this.floating);
                 switch (this.renderParent.widgetName) {
@@ -866,7 +870,7 @@ export default class Node {
     static createTextNode(id, element, api, parent, actions = null) {
         const node = new Node(id, null, api, { element, parent, actions, tagName: 'TEXT' });
         node.setAndroidId(WIDGET_ANDROID.TEXT);
-        node.setBounds(element);
+        node.setBounds(false, element);
         if (parent != null) {
             const inherit = INHERIT_ANDROID[WIDGET_ANDROID.TEXT];
             const style = [];

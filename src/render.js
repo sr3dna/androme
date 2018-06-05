@@ -32,7 +32,12 @@ function getGridSpace(node) {
     let postXml = '';
     if (node.parent.isView(WIDGET_ANDROID.GRID)) {
         const dimensions = getBoxSpacing(node.parentOriginal.element, SETTINGS.supportRTL, true);
-        const options = { android: { layout_columnSpan: node.renderParent.gridColumnSpan, layout_columnWeight: 1 } };
+        const options = {
+            android: {
+                layout_columnSpan: node.renderParent.gridColumnSpan,
+                layout_columnWeight: 1
+            }
+        };
         if (node.gridFirst) {
             const heightTop = dimensions.paddingTop + dimensions.marginTop;
             if (heightTop > 0) {
@@ -195,7 +200,7 @@ export function renderViewTag(node, parent, tagName, recursive) {
         node.android('scrollbars', scrollbars.join('|'));
     }
     switch (element.type) {
-        case 'radio': {
+        case 'radio':
             if (!recursive) {
                 const result = node.parentOriginal.children.filter(item => (item.element.type == 'radio' && item.element.name == element.name));
                 let xml = '';
@@ -233,7 +238,6 @@ export function renderViewTag(node, parent, tagName, recursive) {
                 }
             }
             break;
-        }
         case 'password':
             node.android('inputType', 'textPassword');
             break;
