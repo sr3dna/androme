@@ -7,7 +7,7 @@ const SETTINGS = {
     horizontalPerspective: true,
     useConstraintLayout: true,
     useConstraintChain: true,
-    useConstraintGuideline: false,
+    useConstraintGuideline: true,
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,

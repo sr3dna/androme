@@ -41,6 +41,8 @@
     </style>
     <script src="../dist/androme.js"></script>
     <script>
+        androme.settings.useConstraintGuideline = false;
+
         document.addEventListener('DOMContentLoaded', () => {
             for (const span of document.getElementsByTagName('span')) {
                 span.style.top = `${400 * Math.random()}px`;

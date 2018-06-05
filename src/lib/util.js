@@ -233,7 +233,7 @@ export function parseUnit(value) {
 }
 
 export function calculateBias(start, end) {
-    return parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(3)));
+    return Math.max(parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2))), 0);
 }
 
 export function hasValue(value) {

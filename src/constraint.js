@@ -76,28 +76,13 @@ function setChainBias(nodes, index) {
 function createGuideline(parent, node, orientation = '', percent) {
     const map = LAYOUT_MAP.constraint;
     const beginPercent = `layout_constraintGuide_${(percent != null ? 'percent' : 'begin')}`;
-    if (orientation == '' || orientation == 'vertical') {
-        const options = {
-            android: {
-                orientation: 'horizontal'
-            },
-            app: {
-                [beginPercent]: (percent != null ? percent : formatPX(node.linear.top - parent.box.top))
-            }
-        };
-        let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
-        addViewAfter(node.id, xml);
-        node.app(map['top'], id)
-            .delete('app', map['bottom'])
-            .constraint.vertical = true;
-    }
-    if (orientation == '' || orientation == 'horizontal') {
+    if (!node.constraint.horizontal && (orientation == '' || orientation == 'horizontal')) {
         const options = {
             android: {
                 orientation: 'vertical'
             },
             app: {
-                [beginPercent]: (percent != null ? percent : formatPX(node.linear.left - parent.box.left))
+                [beginPercent]: (percent != null ? percent : formatPX(Math.max(node.bounds.left - parent.box.left, 0)))
             }
         };
         let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
@@ -105,6 +90,21 @@ function createGuideline(parent, node, orientation = '', percent) {
         node.app(map['left'], id)
             .delete('app', map['right'])
             .constraint.horizontal = true;
+    }
+    if (!node.constraint.vertical && (orientation == '' || orientation == 'vertical')) {
+        const options = {
+            android: {
+                orientation: 'horizontal'
+            },
+            app: {
+                [beginPercent]: (percent != null ? percent : formatPX(Math.max(node.bounds.top - parent.box.top, 0)))
+            }
+        };
+        let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
+        addViewAfter(node.id, xml);
+        node.app(map['top'], id)
+            .delete('app', map['bottom'])
+            .constraint.vertical = true;
     }
 }
 
@@ -330,7 +330,7 @@ export function setConstraints() {
                             const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][(index == 0 ? 1 : 0)]];
                             const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][(index == 0 ? 1 : 0)]];
                             const [WH, HW] = [CHAIN_MAP['widthHeight'][index], CHAIN_MAP['widthHeight'][(index == 0 ? 1 : 0)]];
-                            const LHV = HV.toLowerCase();
+                            const orientation = HV.toLowerCase();
                             const firstNode = chainDirection.first;
                             const lastNode = chainDirection.last;
                             let maxOffset = -1;
@@ -418,10 +418,10 @@ export function setConstraints() {
                             }
                             firstNode
                                 .app(LAYOUT[LT], 'parent')
-                                .constraint[LHV] = true;
+                                .constraint[orientation] = true;
                             lastNode
                                 .app(LAYOUT[RB], 'parent')
-                                .constraint[LHV] = true;
+                                .constraint[orientation] = true;
                             const chainStyle = `layout_constraint${HV}_chainStyle`;
                             if (flex.enabled && flex.justifyContent != 'normal' && chainDirection.reduce((a, b) => Math.max(a, b.flex.grow), -1) == 0) {
                                 switch (flex.justifyContent) {
@@ -489,7 +489,7 @@ export function setConstraints() {
                                     firstNode.app(chainStyle, 'spread');
                                 }
                                 if (requireBias) {
-                                    firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${LHV}Bias`]);
+                                    firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${orientation}Bias`]);
                                 }
                                 if (!flex.enabled) {
                                     for (const current of chainDirection) {
@@ -506,7 +506,7 @@ export function setConstraints() {
                 const anchored = nodes.anchored;
                 if (constraint) {
                     if (anchored.length == 0) {
-                        const unbound = nodes.reduce((a, b) => (a.anchors >= b.anchors ? a : b), nodes[0]);
+                        const unbound = nodes.sortAsc('bounds.x', 'bounds.y')[0];
                         if (SETTINGS.useConstraintGuideline) {
                             createGuideline(node, unbound);
                         }
@@ -547,66 +547,71 @@ export function setConstraints() {
                 if (constraint) {
                     for (const opposite of nodes) {
                         if (opposite.anchors < 2) {
-                            const adjacent = nodes.anchored[0];
-                            const center1 = opposite.center;
-                            const center2 = adjacent.center;
-                            const x = Math.abs(center1.x - center2.x);
-                            const y = Math.abs(center1.y - center2.y);
-                            let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
-                            const radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
-                            if (center1.y > center2.y) {
-                                if (center1.x > center2.x) {
-                                    if (x > y) {
-                                        degrees += 90;
-                                    }
-                                    else {
-                                        degrees = 180 - degrees;
-                                    }
-                                }
-                                else {
-                                    if (x > y) {
-                                        degrees = 270 - degrees;
-                                    }
-                                    else {
-                                        degrees += 180;
-                                    }
-                                }
-                            }
-                            else if (center1.y < center2.y) {
-                                if (center2.x > center1.x) {
-                                    if (x > y) {
-                                        degrees += 270;
-                                    }
-                                    else {
-                                        degrees = 360 - degrees;
-                                    }
-                                }
-                                else {
-                                    if (x > y) {
-                                        degrees = 90 - degrees;
-                                    }
-                                }
+                            if (SETTINGS.useConstraintGuideline) {
+                                createGuideline(node, opposite);
                             }
                             else {
-                                degrees = (center1.x > center2.x ? 90 : 270);
+                                const adjacent = nodes.anchored[0];
+                                const center1 = opposite.center;
+                                const center2 = adjacent.center;
+                                const x = Math.abs(center1.x - center2.x);
+                                const y = Math.abs(center1.y - center2.y);
+                                let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
+                                const radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
+                                if (center1.y > center2.y) {
+                                    if (center1.x > center2.x) {
+                                        if (x > y) {
+                                            degrees += 90;
+                                        }
+                                        else {
+                                            degrees = 180 - degrees;
+                                        }
+                                    }
+                                    else {
+                                        if (x > y) {
+                                            degrees = 270 - degrees;
+                                        }
+                                        else {
+                                            degrees += 180;
+                                        }
+                                    }
+                                }
+                                else if (center1.y < center2.y) {
+                                    if (center2.x > center1.x) {
+                                        if (x > y) {
+                                            degrees += 270;
+                                        }
+                                        else {
+                                            degrees = 360 - degrees;
+                                        }
+                                    }
+                                    else {
+                                        if (x > y) {
+                                            degrees = 90 - degrees;
+                                        }
+                                    }
+                                }
+                                else {
+                                    degrees = (center1.x > center2.x ? 90 : 270);
+                                }
+                                opposite
+                                    .delete('app', 'layout_constraint*')
+                                    .app('layout_constraintCircle', adjacent.stringId)
+                                    .app('layout_constraintCircleRadius', formatPX(radius))
+                                    .app('layout_constraintCircleAngle', degrees);
+                                opposite.constraint.vertical = true;
+                                opposite.constraint.horizontal = true;
                             }
-                            opposite
-                                .delete('app', 'layout_constraint*')
-                                .app('layout_constraintCircle', adjacent.stringId)
-                                .app('layout_constraintCircleRadius', formatPX(radius))
-                                .app('layout_constraintCircleAngle', degrees);
-                            opposite.constraint.vertical = true;
-                            opposite.constraint.horizontal = true;
+                            nodes.anchored.forEach(current => {
+                                if (current.anchor(LAYOUT['right']) == 'parent') {
+                                    node.constraint.layoutWidth = true;
+                                }
+                                if (current.anchor(LAYOUT['bottom']) == 'parent') {
+                                    node.constraint.layoutHeight = true;
+                                }
+                            });
                         }
                     }
-                    nodes.anchored.forEach(current => {
-                        if (!SETTINGS.horizontalPerspective && current.constraint['right'] == 'parent') {
-                            node.constraint.layoutWidth = true;
-                        }
-                        if (SETTINGS.horizontalPerspective && current.constraint['bottom'] == 'parent') {
-                            node.constraint.layoutHeight = true;
-                        }
-                    });
                 }
                 else {
                     for (const current of nodes) {
