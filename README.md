@@ -34,7 +34,7 @@ androme.settings = {
     useConstraintChain: true,
     useConstraintGuideline: false,
     useGridLayout: true,
-    useLayoutWeight: true,
+    useLayoutWeight: false,
     useUnitDP: true,
     supportRTL: true,
     numberResourceValue: false,
@@ -53,9 +53,7 @@ Constraint chain is available as a setting since the current Android implementat
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and also to use flexbox instead of floats.
 
-<img src="demos/android/flexbox_1.png" alt="flexbox" />
-
-<img src="demos/android/flexbox_2.png" alt="flexbox - justify-content" />
+<img src="demos/android/flexbox.png" alt="flexbox" />
 
 <img src="demos/android/flexbox_vertical.png" alt="flexbox - vertical" />
 
@@ -475,7 +473,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			android:layout_width="match_parent" />
 		<GridLayout
 			android:id="@+id/gridlayout_2"
-			android:columnCount="2"
+			android:columnCount="3"
 			android:layout_height="wrap_content"
 			android:layout_width="match_parent"
 			android:padding="5dp">
@@ -492,6 +490,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:background="@drawable/select_hour"
 				android:entries="@array/series_1_array"
 				android:focusable="true"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="200dp"
 				android:minWidth="37dp"
@@ -500,7 +499,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Select_1" />
 			<Space
 				android:id="@+id/space_9"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -517,6 +516,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:background="@drawable/select_hour"
 				android:entries="@array/subset_1_array"
 				android:focusable="true"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
@@ -525,7 +525,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Select_1" />
 			<Space
 				android:id="@+id/space_10"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -539,6 +539,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Label_1" />
 			<LinearLayout
 				android:id="@+id/linearlayout_3"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:orientation="horizontal">
@@ -582,7 +583,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_11"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -599,6 +600,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:background="@drawable/select_hour"
 				android:entries="@array/mode_array"
 				android:focusable="true"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
@@ -607,7 +609,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Select_1" />
 			<Space
 				android:id="@+id/space_12"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -624,6 +626,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:background="@drawable/select_hour"
 				android:entries="@array/style1_array"
 				android:focusable="true"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
@@ -632,7 +635,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Select_1" />
 			<Space
 				android:id="@+id/space_13"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -649,6 +652,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:background="@drawable/select_hour"
 				android:entries="@array/calendar_array"
 				android:focusable="true"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:minWidth="37dp"
@@ -657,7 +661,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Select_1" />
 			<Space
 				android:id="@+id/space_14"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -671,6 +675,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Label_1" />
 			<LinearLayout
 				android:id="@+id/linearlayout_4"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:orientation="horizontal">
@@ -713,7 +718,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_15"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -727,6 +732,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Label_1" />
 			<LinearLayout
 				android:id="@+id/linearlayout_5"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:orientation="horizontal">
@@ -782,7 +788,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_16"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -797,6 +803,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				style="@style/Label_1" />
 			<LinearLayout
 				android:id="@+id/linearlayout_6"
+				android:layout_columnSpan="2"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:orientation="horizontal">
@@ -837,7 +844,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_17"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
@@ -909,23 +916,23 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:text="@string/none"
 						style="@style/Input_2" />
 				</LinearLayout>
-				<Button
-					android:id="@+id/button_6"
-					android:background="@drawable/input_button_1"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="4dp"
-					android:layout_width="wrap_content"
-					android:minHeight="0dp"
-					android:minWidth="0dp"
-					android:paddingHorizontal="6dp"
-					android:paddingVertical="1dp"
-					android:text="@string/update"
-					style="@style/Input_4" />
 			</LinearLayout>
+			<Button
+				android:id="@+id/button_6"
+				android:background="@drawable/input_button_1"
+				android:focusable="true"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="4dp"
+				android:layout_width="wrap_content"
+				android:minHeight="0dp"
+				android:minWidth="0dp"
+				android:paddingHorizontal="6dp"
+				android:paddingVertical="1dp"
+				android:text="@string/update"
+				style="@style/Input_4" />
 			<Space
 				android:id="@+id/space_18"
-				android:layout_columnSpan="2"
+				android:layout_columnSpan="3"
 				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />

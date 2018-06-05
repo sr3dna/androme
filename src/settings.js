@@ -9,7 +9,7 @@ const SETTINGS = {
     useConstraintChain: true,
     useConstraintGuideline: false,
     useGridLayout: true,
-    useLayoutWeight: true,
+    useLayoutWeight: false,
     useUnitDP: true,
     supportRTL: true,
     numberResourceValue: false,

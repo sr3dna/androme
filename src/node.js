@@ -374,8 +374,8 @@ export default class Node {
                 }
             }
             if (this.android('layout_height') != '0px') {
-                if (styleMap.height != null) {
-                    this.android('layout_height', Util.convertPX(styleMap.height));
+                if (styleMap.height != null || styleMap.lineHeight != null) {
+                    this.android('layout_height', Util.convertPX(styleMap.height || styleMap.lineHeight));
                 }
                 if (styleMap.minHeight != null) {
                     this.android('minHeight', Util.convertPX(styleMap.minHeight), false)
@@ -804,7 +804,7 @@ export default class Node {
         return Util.convertInt(this.styleMap.width || this.styleMap.minWidth);
     }
     get viewHeight() {
-        return Util.convertInt(this.styleMap.height || this.styleMap.minHeight);
+        return Util.convertInt(this.styleMap.height || this.styleMap.lineHeight || this.styleMap.minHeight);
     }
     get marginTop() {
         return Util.convertInt(this.css('marginTop'));
