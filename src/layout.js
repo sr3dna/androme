@@ -854,10 +854,10 @@ export function parseDocument(element) {
                             }
                             if (!nodeY.renderParent) {
                                 const [linearX, linearY] = [nodeY.children.linearX, nodeY.children.linearY];
-                                if (linearX && linearY) {
+                                if (!nodeY.flex.enabled && linearX && linearY) {
                                     xml += writeFrameLayout(nodeY, parent);
                                 }
-                                else if (!nodeY.flex.enabled && (linearX || linearY)) {
+                                else if ((!nodeY.flex.enabled || nodeY.children.every(item => item.flex.enabled)) && (linearX || linearY)) {
                                     xml += writeLinearLayout(nodeY, parent, linearY);
                                 }
                                 else {

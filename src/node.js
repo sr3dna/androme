@@ -343,7 +343,7 @@ export default class Node {
                     this.android('maxWidth', Util.convertPX(styleMap.maxWidth), false);
                 }
             }
-            if (!this.flex.enabled && this.constraint.layoutWidth != null) {
+            if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
                 this.android('layout_width', (this.constraint.layoutWidth ? this.constraint.minWidth : 'wrap_content'));
             }
             else if (this.android('layout_width') == null) {
@@ -385,7 +385,7 @@ export default class Node {
                     this.android('maxHeight', Util.convertPX(styleMap.maxHeight), false);
                 }
             }
-            if (!this.flex.enabled && this.constraint.layoutHeight != null) {
+            if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutHeight != null) {
                 this.android('layout_height', (this.constraint.layoutHeight ? this.constraint.minHeight : 'wrap_content'));
             }
             else if (this.android('layout_height') == null) {
@@ -603,7 +603,7 @@ export default class Node {
                         break;
                     case WIDGET_ANDROID.CONSTRAINT:
                     case WIDGET_ANDROID.RELATIVE:
-                        const gravity = [vertical, horizontal].map(value => value);
+                        const gravity = [vertical, horizontal].filter(value => value);
                         this.android('gravity', (gravity.length == 2 ? 'center' : gravity[0]));
                         horizontal = null;
                         vertical = null;

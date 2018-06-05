@@ -1,4 +1,4 @@
-/* androme 1.2.8
+/* androme 1.2.9
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -1944,7 +1944,7 @@
                         this.android('maxWidth', convertPX(styleMap.maxWidth), false);
                     }
                 }
-                if (!this.flex.enabled && this.constraint.layoutWidth != null) {
+                if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
                     this.android('layout_width', (this.constraint.layoutWidth ? this.constraint.minWidth : 'wrap_content'));
                 }
                 else if (this.android('layout_width') == null) {
@@ -1986,7 +1986,7 @@
                         this.android('maxHeight', convertPX(styleMap.maxHeight), false);
                     }
                 }
-                if (!this.flex.enabled && this.constraint.layoutHeight != null) {
+                if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutHeight != null) {
                     this.android('layout_height', (this.constraint.layoutHeight ? this.constraint.minHeight : 'wrap_content'));
                 }
                 else if (this.android('layout_height') == null) {
@@ -2204,7 +2204,7 @@
                             break;
                         case WIDGET_ANDROID.CONSTRAINT:
                         case WIDGET_ANDROID.RELATIVE:
-                            const gravity = [vertical, horizontal].map(value => value);
+                            const gravity = [vertical, horizontal].filter(value => value);
                             this.android('gravity', (gravity.length == 2 ? 'center' : gravity[0]));
                             horizontal = null;
                             vertical = null;
@@ -2917,11 +2917,13 @@
     function setNodePosition(current, position, adjacent) {
         let androidId = (adjacent.androidId != 'parent' ? adjacent.stringId : 'parent');
         const overwrite = (androidId == 'parent');
-        if (current.renderParent.isView(WIDGET_ANDROID.CONSTRAINT)) {
-            current.app(LAYOUT_MAP.constraint[position], androidId, overwrite);
-        }
-        else {
-            current.android(LAYOUT_MAP.relative[position], androidId, overwrite);
+        switch (current.renderParent.widgetName) {
+            case WIDGET_ANDROID.CONSTRAINT:
+                current.app(LAYOUT_MAP.constraint[position], androidId, overwrite);
+                break;
+            case WIDGET_ANDROID.RELATIVE:
+                current.android(LAYOUT_MAP.relative[position], androidId, overwrite);
+                break;
         }
         current.constraint[position] = androidId;
         adjacent.constraint[position] = current.stringId;
@@ -2987,10 +2989,21 @@
             const relative = node.isView(WIDGET_ANDROID.RELATIVE);
             const flex = node.flex;
             if (constraint || relative || flex.enabled) {
+                node.expandToFit();
+                if (flex.enabled && node.isView(WIDGET_ANDROID.LINEAR)) {
+                    if (node.renderChildren.some(item => item.flex.direction.indexOf('column') != -1)) {
+                        node.constraint.layoutHeight = true;
+                        node.constraint.expand = true;
+                    }
+                    if (node.renderChildren.some(item => item.flex.direction.indexOf('row') != -1)) {
+                        node.constraint.layoutWidth = true;
+                        node.constraint.expand = true;
+                    }
+                    continue;
+                }
                 const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                 const nodes = node.renderChildren;
                 if (!flex.enabled) {
-                    node.expandToFit();
                     for (const current of nodes) {
                         if (withinRange(parseFloat(current.horizontalBias), 0.5, 0.01) && withinRange(parseFloat(current.verticalBias), 0.5, 0.01)) {
                             if (constraint) {
@@ -3009,100 +3022,100 @@
                             current.constraint.vertical = true;
                         }
                     }
-                }
-                nodes.unshift(node);
-                for (let current of nodes) {
-                    for (let adjacent of nodes) {
-                        if (current == adjacent || (relative && current == node)) {
-                            continue;
-                        }
-                        else if (relative && adjacent == node) {
-                            if (current.linear.left == node.box.left) {
-                                current
-                                    .android(parseRTL('layout_alignParentLeft'), 'true')
-                                    .constraint.horizontal = true;
+                    nodes.unshift(node);
+                    for (let current of nodes) {
+                        for (let adjacent of nodes) {
+                            if (current == adjacent || (relative && current == node)) {
+                                continue;
                             }
-                            if (withinRange(current.linear.right, node.box.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                current
-                                    .android(parseRTL('layout_alignParentRight'), 'true')
-                                    .constraint.horizontal = true;
-                            }
-                            if (current.linear.top == node.box.top) {
-                                current
-                                    .android('layout_alignParentTop', 'true')
-                                    .constraint.vertical = true;
-                            }
-                            if (current.linear.bottom == node.box.bottom) {
-                                current
-                                    .android('layout_alignParentBottom', 'true')
-                                    .constraint.vertical = true;
-                            }
-                        }
-                        else {
-                            let parent = false;
-                            let bounds1 = current.bounds;
-                            let bounds2 = adjacent.bounds;
-                            if (current == node || adjacent == node) {
-                                if (current == node) {
-                                    current = adjacent;
+                            else if (relative && adjacent == node) {
+                                if (current.linear.left == node.box.left) {
+                                    current
+                                        .android(parseRTL('layout_alignParentLeft'), 'true')
+                                        .constraint.horizontal = true;
                                 }
-                                adjacent = Object.assign({}, node);
-                                adjacent.androidId = 'parent';
-                                bounds1 = current.linear;
-                                bounds2 = node.box;
-                                parent = true;
-                            }
-                            if (parent) {
-                                if (bounds1.left == bounds2.left) {
-                                    setNodePosition(current, 'left', adjacent);
-                                    current.constraint.horizontal = true;
+                                if (withinRange(current.linear.right, node.box.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                    current
+                                        .android(parseRTL('layout_alignParentRight'), 'true')
+                                        .constraint.horizontal = true;
                                 }
-                                if (withinRange(bounds1.right, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                    setNodePosition(current, 'right', adjacent);
-                                    current.constraint.horizontal = true;
+                                if (current.linear.top == node.box.top) {
+                                    current
+                                        .android('layout_alignParentTop', 'true')
+                                        .constraint.vertical = true;
+                                }
+                                if (current.linear.bottom == node.box.bottom) {
+                                    current
+                                        .android('layout_alignParentBottom', 'true')
+                                        .constraint.vertical = true;
                                 }
                             }
-                            else if (!current.constraint.horizontal) {
-                                if (current.viewWidth == 0 && bounds1.left == bounds2.left && bounds1.right == bounds2.right) {
-                                    setNodePosition(current, 'left', adjacent);
-                                    setNodePosition(current, 'right', adjacent);
+                            else {
+                                let parent = false;
+                                let bounds1 = current.bounds;
+                                let bounds2 = adjacent.bounds;
+                                if (current == node || adjacent == node) {
+                                    if (current == node) {
+                                        current = adjacent;
+                                    }
+                                    adjacent = Object.assign({}, node);
+                                    adjacent.androidId = 'parent';
+                                    bounds1 = current.linear;
+                                    bounds2 = node.box;
+                                    parent = true;
                                 }
-                                const withinY = (SETTINGS.horizontalPerspective && (bounds1.top == bounds2.top || bounds1.bottom == bounds2.bottom));
-                                if (withinFraction(bounds1.right, bounds2.left) || (withinY && withinRange(bounds1.right, bounds2.left, SETTINGS.whitespaceHorizontalOffset))) {
-                                    setNodePosition(current, 'rightLeft', adjacent);
+                                if (parent) {
+                                    if (bounds1.left == bounds2.left) {
+                                        setNodePosition(current, 'left', adjacent);
+                                        current.constraint.horizontal = true;
+                                    }
+                                    if (withinRange(bounds1.right, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                        setNodePosition(current, 'right', adjacent);
+                                        current.constraint.horizontal = true;
+                                    }
                                 }
-                                if (withinFraction(bounds2.right, bounds1.left) || (withinY && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset))) {
-                                    setNodePosition(current, 'leftRight', adjacent);
+                                else if (!current.constraint.horizontal) {
+                                    if (current.viewWidth == 0 && bounds1.left == bounds2.left && bounds1.right == bounds2.right) {
+                                        setNodePosition(current, 'left', adjacent);
+                                        setNodePosition(current, 'right', adjacent);
+                                    }
+                                    const withinY = (SETTINGS.horizontalPerspective && (bounds1.top == bounds2.top || bounds1.bottom == bounds2.bottom));
+                                    if (withinFraction(bounds1.right, bounds2.left) || (withinY && withinRange(bounds1.right, bounds2.left, SETTINGS.whitespaceHorizontalOffset))) {
+                                        setNodePosition(current, 'rightLeft', adjacent);
+                                    }
+                                    if (withinFraction(bounds2.right, bounds1.left) || (withinY && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset))) {
+                                        setNodePosition(current, 'leftRight', adjacent);
+                                    }
                                 }
-                            }
-                            if (parent) {
-                                if (bounds1.top == bounds2.top) {
-                                    setNodePosition(current, 'top', adjacent);
-                                    current.constraint.vertical = true;
+                                if (parent) {
+                                    if (bounds1.top == bounds2.top) {
+                                        setNodePosition(current, 'top', adjacent);
+                                        current.constraint.vertical = true;
+                                    }
+                                    if (bounds1.bottom == bounds2.bottom) {
+                                        setNodePosition(current, 'bottom', adjacent);
+                                        current.constraint.vertical = true;
+                                    }
                                 }
-                                if (bounds1.bottom == bounds2.bottom) {
-                                    setNodePosition(current, 'bottom', adjacent);
-                                    current.constraint.vertical = true;
-                                }
-                            }
-                            else if (!current.constraint.vertical) {
-                                if (current.viewHeight == 0 && bounds1.top == bounds2.top && bounds1.bottom == bounds2.bottom) {
-                                    const baseline = (current.isView(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.isView(WIDGET_ANDROID.TEXT) && adjacent.style.verticalAlign == 'baseline');
-                                    setNodePosition(current, (baseline ? 'baseline' : 'top'), adjacent);
-                                    setNodePosition(current, 'bottom', adjacent);
-                                }
-                                const withinX = (!SETTINGS.horizontalPerspective && (bounds1.left == bounds2.left || bounds1.right == bounds2.right));
-                                if (bounds1.bottom == bounds2.top || (withinX && withinRange(bounds1.bottom, bounds2.top, SETTINGS.whitespaceVerticalOffset))) {
-                                    setNodePosition(current, 'bottomTop', adjacent);
-                                }
-                                if (bounds1.top == bounds2.bottom || (withinX && withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset))) {
-                                    setNodePosition(current, 'topBottom', adjacent);
+                                else if (!current.constraint.vertical) {
+                                    if (current.viewHeight == 0 && bounds1.top == bounds2.top && bounds1.bottom == bounds2.bottom) {
+                                        const baseline = (current.isView(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.isView(WIDGET_ANDROID.TEXT) && adjacent.style.verticalAlign == 'baseline');
+                                        setNodePosition(current, (baseline ? 'baseline' : 'top'), adjacent);
+                                        setNodePosition(current, 'bottom', adjacent);
+                                    }
+                                    const withinX = (!SETTINGS.horizontalPerspective && (bounds1.left == bounds2.left || bounds1.right == bounds2.right));
+                                    if (bounds1.bottom == bounds2.top || (withinX && withinRange(bounds1.bottom, bounds2.top, SETTINGS.whitespaceVerticalOffset))) {
+                                        setNodePosition(current, 'bottomTop', adjacent);
+                                    }
+                                    if (bounds1.top == bounds2.bottom || (withinX && withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset))) {
+                                        setNodePosition(current, 'topBottom', adjacent);
+                                    }
                                 }
                             }
                         }
                     }
+                    nodes.shift();
                 }
-                nodes.shift();
                 if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect())) {
                     let flexNodes = null;
                     if (flex.enabled) {
@@ -3153,35 +3166,46 @@
                         const chainNodes = flexNodes || nodes.slice().sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                         for (const current of chainNodes) {
                             const chainDirection = current.constraint[value];
-                            if (chainDirection != null && chainDirection.length > 1 && (flex.enabled || chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(item => item.id).join(''))).reduce((a, b) => (a == b ? a : 0)) > 0)) {
-                                chainDirection.parent = node;
+                            if (chainDirection != null && chainDirection.length > 0 && (flex.enabled || chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(item => item.id).join(''))).reduce((a, b) => (a == b ? a : 0)) > 0)) {
                                 const HV = CHAIN_MAP['horizontalVertical'][index];
                                 const VH = CHAIN_MAP['horizontalVertical'][(index == 0 ? 1 : 0)];
                                 const WH = CHAIN_MAP['widthHeight'][index];
-                                const LHV = HV.toLowerCase();
                                 const LWH = `layout_${WH.toLowerCase()}`;
                                 const leftTop = CHAIN_MAP['leftTop'][index];
                                 const rightBottom = CHAIN_MAP['rightBottom'][index];
                                 const firstNode = chainDirection.first;
                                 const lastNode = chainDirection.last;
-                                let maxOffset = -1;
                                 const unassigned = new NodeList$1();
+                                let maxOffset = -1;
+                                chainDirection.parent = node;
                                 for (let i = 0; i < chainDirection.length; i++) {
                                     const current = chainDirection[i];
                                     const next = chainDirection[i + 1];
                                     const previous = chainDirection[i - 1];
                                     if (index == 0) {
-                                        current.delete('app', `*constraint${parseRTL('Left')}*`, `*constraint${parseRTL('Right')}*`);
+                                        if (node.flex.enabled) {
+                                            if (current.linear.top == node.box.top && current.linear.bottom == node.box.bottom) {
+                                                current
+                                                    .app(LAYOUT['top'], 'parent')
+                                                    .app(LAYOUT['bottom'], 'parent')
+                                                    .constraint.vertical = true;
+                                            }
+                                        }
+                                        else {
+                                            current.delete('app', `*constraint${parseRTL('Left')}*`, `*constraint${parseRTL('Right')}*`);
+                                        }
                                     }
                                     else {
-                                        current.delete('app', '*constraintTop*', '*constraintBottom*', '*constraintBaseline*');
-                                        if (previous != null) {
-                                            if (firstNode.bounds.left == lastNode.bounds.right) {
-                                                current.app(LAYOUT['left'], previous.stringId);
+                                        if (node.flex.enabled) {
+                                            if (current.linear.left == node.box.left && current.linear.right == node.box.right) {
+                                                current
+                                                    .app(LAYOUT['left'], 'parent')
+                                                    .app(LAYOUT['right'], 'parent')
+                                                    .constraint.horizontal = true;
                                             }
-                                            else {
-                                                current.app(LAYOUT['right'], previous.stringId);
-                                            }
+                                        }
+                                        else {
+                                            current.delete('app', '*constraintTop*', '*constraintBottom*', '*constraintBaseline*');
                                         }
                                     }
                                     if (next != null) {
@@ -3264,7 +3288,6 @@
                                             }
                                         }
                                     }
-                                    current.constraint[LHV] = true;
                                 }
                                 firstNode.app(LAYOUT[leftTop], 'parent');
                                 lastNode.app(LAYOUT[rightBottom], 'parent');
@@ -3342,17 +3365,7 @@
                                             }
                                         }
                                     }
-                                    if (flex.enabled) {
-                                        if (chainDirection.every(item => item.flex.grow == 0)) {
-                                            if (firstNode.constraint.horizontal) {
-                                                firstNode.constraint.horizontal = false;
-                                            }
-                                            if (firstNode.constraint.vertical) {
-                                                firstNode.constraint.vertical = false;
-                                            }
-                                        }
-                                    }
-                                    if (!firstNode.constraint.horizontal) {
+                                    if (!firstNode.constraint.horizontal && (!node.flex.enabled || (node.flex.direction.indexOf('row') != -1 && chainDirection.every(item => item.flex.grow == 0)))) {
                                         if (SETTINGS.useConstraintGuideline) {
                                             createGuideline(node, firstNode, 'horizontal');
                                         }
@@ -3365,7 +3378,7 @@
                                         }
                                         firstNode.constraint.horizontal = true;
                                     }
-                                    if (!firstNode.constraint.vertical) {
+                                    if (!firstNode.constraint.vertical && (!node.flex.enabled || (node.flex.direction.indexOf('column') != -1 && chainDirection.every(item => item.flex.grow == 0)))) {
                                         if (SETTINGS.useConstraintGuideline) {
                                             createGuideline(node, firstNode, 'vertical');
                                         }
@@ -4386,10 +4399,10 @@
                                 }
                                 if (!nodeY.renderParent) {
                                     const [linearX, linearY] = [nodeY.children.linearX, nodeY.children.linearY];
-                                    if (linearX && linearY) {
+                                    if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += writeFrameLayout(nodeY, parent);
                                     }
-                                    else if (!nodeY.flex.enabled && (linearX || linearY)) {
+                                    else if ((!nodeY.flex.enabled || nodeY.children.every(item => item.flex.enabled)) && (linearX || linearY)) {
                                         xml += writeLinearLayout(nodeY, parent, linearY);
                                     }
                                     else {

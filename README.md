@@ -57,6 +57,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/flexbox_2.png" alt="flexbox - justify-content" />
 
+<img src="demos/android/flexbox_vertical.png" alt="flexbox - vertical" />
+
 <img src="demos/android/layout_weight.png" alt="GridLayout - layout weight" />
 
 <img src="demos/android/position_absolute.png" alt="ConstraintLayout - position: absolute" />
