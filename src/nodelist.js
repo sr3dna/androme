@@ -37,6 +37,9 @@ export default class NodeList extends Array {
         }
         return false;
     }
+    findById(androidId) {
+        return this.find(node => node.android('id') == androidId);
+    }
     sortAsc(...attr) {
         return sortAsc(this, ...attr);
     }

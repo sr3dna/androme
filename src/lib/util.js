@@ -166,10 +166,12 @@ export function search(obj, value) {
 }
 
 export function indexOf(value, ...terms) {
-    for (const term of terms) {
-        const index = value.indexOf(term);
-        if (index != -1) {
-            return index;
+    if (hasValue(value)) {
+        for (const term of terms) {
+            const index = value.indexOf(term);
+            if (index != -1) {
+                return index;
+            }
         }
     }
     return -1;
@@ -231,7 +233,7 @@ export function parseUnit(value) {
 }
 
 export function calculateBias(start, end) {
-    return parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2)));
+    return parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(3)));
 }
 
 export function hasValue(value) {

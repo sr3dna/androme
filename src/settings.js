@@ -9,13 +9,12 @@ const SETTINGS = {
     useConstraintChain: true,
     useConstraintGuideline: false,
     useGridLayout: true,
-    useLayoutWeight: false,
+    useLayoutWeight: true,
     useUnitDP: true,
     supportRTL: true,
     numberResourceValue: false,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
-    constraintBiasBoxOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14
 };

@@ -64,7 +64,7 @@ function setStyleMap() {
                 for (const i of element.style) {
                     attributes.add(Util.hyphenToCamelCase(i));
                 }
-                const style = Element.getStyle(element);
+                const style = getComputedStyle(element);
                 const styleMap = {};
                 for (const name of attributes) {
                     if (name.toLowerCase().indexOf('color') != -1) {
@@ -80,7 +80,12 @@ function setStyleMap() {
                         styleMap[name] = style[name];
                     }
                 }
-                element.styleMap = styleMap;
+                if (element.styleMap != null) {
+                    Object.assign(element.styleMap, styleMap);
+                }
+                else {
+                    element.styleMap = styleMap;
+                }
             }
         }
     }
@@ -577,6 +582,9 @@ function setNodeCache(element) {
 }
 
 export function parseDocument(element) {
+    if (typeof element == 'string') {
+        element = document.getElementById(element);
+    }
     let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
     const mapX = [];
     const mapY = [];

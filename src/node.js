@@ -9,7 +9,7 @@ export default class Node {
         let style = {};
         let styleMap = {};
         if (element != null) {
-            style = window.getComputedStyle(element);
+            style = getComputedStyle(element);
             styleMap = element.styleMap || {};
             for (const inline of element.style) {
                 styleMap[Util.hyphenToCamelCase(inline)] = element.style[inline];
@@ -256,6 +256,27 @@ export default class Node {
             this.setBounds(true);
         }
     }
+    anchor(position, adjacent = {}, orientation = '') {
+        const overwrite = (adjacent.stringId == 'parent');
+        switch (this.renderParent.widgetName) {
+            case WIDGET_ANDROID.CONSTRAINT:
+                if (arguments.length == 1) {
+                    return this.app(position);
+                }
+                this.app(position, adjacent.stringId, overwrite);
+                break;
+            case WIDGET_ANDROID.RELATIVE:
+                if (arguments.length == 1) {
+                    return this.android(position);
+                }
+                this.android(position, adjacent.stringId, overwrite);
+                break;
+        }
+        if (orientation != '') {
+            this.constraint[orientation] = true;
+        }
+        return this;
+    }
     modifyBox(dimension, offset) {
         dimension = parseRTL(dimension);
         const total = Util.formatPX(offset + Util.convertInt(this.android(dimension)));
@@ -351,7 +372,7 @@ export default class Node {
                 }
             }
             if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
-                this.android('layout_width', (this.constraint.layoutWidth ? this.constraint.minWidth : 'wrap_content'));
+                this.android('layout_width', (this.constraint.layoutWidth ? this.constraint.minWidth : 'wrap_content'), this.constraint.layoutWidth);
             }
             else if (this.android('layout_width') == null) {
                 if (requireWrap) {
@@ -393,7 +414,7 @@ export default class Node {
                 }
             }
             if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutHeight != null) {
-                this.android('layout_height', (this.constraint.layoutHeight ? this.constraint.minHeight : 'wrap_content'));
+                this.android('layout_height', (this.constraint.layoutHeight ? this.constraint.minHeight : 'wrap_content'), this.constraint.layoutHeight);
             }
             else if (this.android('layout_height') == null) {
                 switch (this.widgetName) {
@@ -770,7 +791,7 @@ export default class Node {
                 grow: Util.convertInt(this.style.flexGrow),
                 shrink: Util.convertInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
-                alignSelf: (parent != null && this.styleMap.alignSelf == null && this.style.alignSelf == 'auto' ? parent.styleMap.alignItems : this.style.alignSelf),
+                alignSelf: (parent != null && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf == 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
                 justifyContent: this.style.justifyContent
             };
         }
