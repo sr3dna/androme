@@ -721,7 +721,7 @@ export function parseDocument(element) {
             setLayoutWeight();
         }
         setAccessibility();
-        setConstraints(NODE_CACHE);
+        setConstraints();
         output = insetAttributes(output);
     }
     output = insertViewBeforeAfter(output);

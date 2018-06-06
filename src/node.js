@@ -47,20 +47,20 @@ export default class Node {
 
     add(obj, attr, value, overwrite = true) {
         const name = `_${obj || '_'}`;
-        if (this[name] == null) {
-            this._namespaces.add(obj);
-            this[name] = {};
-        }
         if (Util.hasValue(value)) {
             if (!this.supported(obj, attr)) {
                 return false;
+            }
+            if (this[name] == null) {
+                this._namespaces.add(obj);
+                this[name] = {};
             }
             if (!overwrite && this[name][attr] != null) {
                 return null;
             }
             this[name][attr] = value;
         }
-        return this[name][attr];
+        return (this[name] != null ? this[name][attr] : null);
     }
     delete(obj, ...attributes) {
         const name = `_${obj}`;

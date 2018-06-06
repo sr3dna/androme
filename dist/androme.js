@@ -1,4 +1,4 @@
-/* androme 1.2.12
+/* androme 1.2.13
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -431,7 +431,7 @@
     }
 
     function calculateBias(start, end) {
-        return parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(3)));
+        return Math.max(parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2))), 0);
     }
 
     function hasValue(value) {
@@ -848,7 +848,7 @@
         horizontalPerspective: true,
         useConstraintLayout: true,
         useConstraintChain: true,
-        useConstraintGuideline: false,
+        useConstraintGuideline: true,
         useGridLayout: true,
         useLayoutWeight: true,
         useUnitDP: true,
@@ -981,15 +981,6 @@
 
     var LAYERLIST_TMPL = template$6.join('\n');
 
-    const RESOURCE = {
-        STRING: new Map(),
-        ARRAY: new Map(),
-        COLOR: new Map(),
-        IMAGE: new Map(),
-        DRAWABLE: new Map(),
-        STYLE: new Map()
-    };
-
     const PROPERTY_ANDROID =
     {
         'backgroundStyle': {
@@ -1118,6 +1109,15 @@
         }
     };
 
+    const RESOURCE = {
+        STRING: new Map(),
+        ARRAY: new Map(),
+        COLOR: new Map(),
+        IMAGE: new Map(),
+        DRAWABLE: new Map(),
+        STYLE: new Map()
+    };
+
     function parseBorderStyle(value) {
         let stroke = value.match(/(none|dotted|dashed|solid)/);
         let width = value.match(/([0-9.]+(?:px|pt|em))/);
@@ -1151,6 +1151,224 @@
             }
         }
         return null;
+    }
+
+    function deleteStyleAttribute(sorted, attributes, nodeIds) {
+        attributes.split(';').forEach(value => {
+            for (let i = 0; i < sorted.length; i++) {
+                if (sorted[i] != null) {
+                    let index = -1;
+                    let key = '';
+                    for (const j in sorted[i]) {
+                        if (j == value) {
+                            index = i;
+                            key = j;
+                            i = sorted.length;
+                            break;
+                        }
+                    }
+                    if (index != -1) {
+                        sorted[index][key] = sorted[index][key].filter(value => !nodeIds.includes(value));
+                        if (sorted[index][key].length == 0) {
+                            delete sorted[index][key];
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    function setResourceStyle(NODE_CACHE) {
+        const cache = {};
+        const style = {};
+        const layout = {};
+        for (const node of NODE_CACHE) {
+            if (node.styleAttributes.length > 0) {
+                if (cache[node.tagName] == null) {
+                    cache[node.tagName] = [];
+                }
+                cache[node.tagName].push(node);
+            }
+        }
+        for (const tag in cache) {
+            const nodes = cache[tag];
+            let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => {
+                value = {};
+                return value;
+            });
+            for (const node of nodes) {
+                for (let i = 0; i < node.styleAttributes.length; i++) {
+                    const attr = parseStyleAttribute(node.styleAttributes[i]);
+                    if (sorted[i][attr] == null) {
+                        sorted[i][attr] = [];
+                    }
+                    sorted[i][attr].push(node.id);
+                }
+            }
+            style[tag] = {};
+            layout[tag] = {};
+            do {
+                if (sorted.length == 1) {
+                    for (const attr in sorted[0]) {
+                        const value = sorted[0][attr];
+                        if (value.length > 2) {
+                            style[tag][attr] = value;
+                        }
+                        else {
+                            layout[tag][attr] = value;
+                        }
+                    }
+                    sorted.length = 0;
+                }
+                else {
+                    const styleKey = {};
+                    const layoutKey = {};
+                    for (let i = 0; i < sorted.length; i++) {
+                        const filtered = {};
+                        for (const attr1 in sorted[i]) {
+                            if (sorted[i] == null) {
+                                continue;
+                            }
+                            const ids = sorted[i][attr1];
+                            let revalidate = false;
+                            if (ids == null) {
+                                continue;
+                            }
+                            else if (ids.length == nodes.length) {
+                                styleKey[attr1] = ids;
+                                sorted[i] = null;
+                                revalidate = true;
+                            }
+                            else if (ids.length == 1) {
+                                layoutKey[attr1] = ids;
+                                sorted[i] = null;
+                                revalidate = true;
+                            }
+                            if (!revalidate) {
+                                const found = {};
+                                for (let j = 0; j < sorted.length; j++) {
+                                    if (i != j) {
+                                        for (const attr in sorted[j]) {
+                                            const compare$$1 = sorted[j][attr];
+                                            for (let k = 0; k < ids.length; k++) {
+                                                if (compare$$1.includes(ids[k])) {
+                                                    if (found[attr] == null) {
+                                                        found[attr] = [];
+                                                    }
+                                                    found[attr].push(ids[k]);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                for (const attr2 in found) {
+                                    if (found[attr2].length > 1) {
+                                        filtered[[attr1, attr2].sort().join(';')] = found[attr2];
+                                    }
+                                }
+                            }
+                        }
+                        const combined = {};
+                        const deleteKeys = new Set();
+                        for (const attr1 in filtered) {
+                            for (const attr2 in filtered) {
+                                if (attr1 != attr2 && filtered[attr1].join('') == filtered[attr2].join('')) {
+                                    const shared = filtered[attr1].join(',');
+                                    if (combined[shared] != null) {
+                                        combined[shared] = new Set([...combined[shared], ...attr2.split(';')]);
+                                    }
+                                    else {
+                                        combined[shared] = new Set([...attr1.split(';'), ...attr2.split(';')]);
+                                    }
+                                    deleteKeys.add(attr1).add(attr2);
+                                }
+                            }
+                        }
+                        deleteKeys.forEach(value => delete filtered[value]);
+                        for (const attributes in filtered) {
+                            deleteStyleAttribute(sorted, attributes, filtered[attributes]);
+                            style[tag][attributes] = filtered[attributes];
+                        }
+                        for (const ids in combined) {
+                            const attributes = Array.from(combined[ids]).sort().join(';');
+                            const nodeIds = ids.split(',').map(id => parseInt(id));
+                            deleteStyleAttribute(sorted, attributes, nodeIds);
+                            style[tag][attributes] = nodeIds;
+                        }
+                    }
+                    const combined = Object.keys(styleKey);
+                    if (combined.length > 0) {
+                        style[tag][combined.join(';')] = styleKey[combined[0]];
+                    }
+                    for (const attribute in layoutKey) {
+                        layout[tag][attribute] = layoutKey[attribute];
+                    }
+                    for (let i = 0; i < sorted.length; i++) {
+                        if (sorted[i] != null && Object.keys(sorted[i]).length == 0) {
+                            delete sorted[i];
+                        }
+                    }
+                    sorted = sorted.filter(item => item);
+                }
+            }
+            while (sorted.length > 0);
+        }
+        const resource = new Map();
+        for (const name in style) {
+            const tag = style[name];
+            const tagData = [];
+            for (const attributes in tag) {
+                tagData.push({ attributes, ids: tag[attributes]});
+            }
+            tagData.sort((a, b) => {
+                let [c, d] = [a.ids.length, b.ids.length];
+                if (c == d) {
+                    [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
+                }
+                return (c >= d ? -1 : 1);
+            });
+            tagData.forEach((item, index) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
+            resource.set(name, tagData);
+        }
+        const inherit = new Set();
+        for (const node of NODE_CACHE.visible) {
+            const tagName = node.tagName;
+            if (resource.has(tagName)) {
+                const styles = [];
+                for (const tag of resource.get(tagName)) {
+                    if (tag.ids.includes(node.id)) {
+                        styles.push(tag.name);
+                    }
+                }
+                if (styles.length > 0) {
+                    inherit.add(styles.join('.'));
+                    node.androidStyle = styles.pop();
+                    if (node.androidStyle != '') {
+                        node.attr(`style="@style/${node.androidStyle}"`);
+                    }
+                }
+            }
+            const tag = layout[tagName];
+            if (tag != null) {
+                for (const attr in tag) {
+                    if (tag[attr].includes(node.id)) {
+                        node.attr((SETTINGS.useUnitDP ? insetDP(attr, SETTINGS.density, true) : attr));
+                    }
+                }
+            }
+        }
+        inherit.forEach(styles => {
+            let parent = null;
+            styles.split('.').forEach(value => {
+                const match = value.match(/^(\w+)_([0-9]+)$/);
+                if (match != null) {
+                    const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
+                    RESOURCE.STYLE.set(value, { parent, attributes: style.attributes });
+                    parent = value;
+                }
+            });
+        });
     }
 
     function getResource(name) {
@@ -1574,8 +1792,9 @@
     }
 
     var Resource = /*#__PURE__*/Object.freeze({
-        RESOURCE: RESOURCE,
         ACTION_ANDROID: ACTION_ANDROID,
+        RESOURCE: RESOURCE,
+        setResourceStyle: setResourceStyle,
         getResource: getResource,
         insertResourceAsset: insertResourceAsset,
         addResourceString: addResourceString,
@@ -1649,20 +1868,20 @@
 
         add(obj, attr, value, overwrite = true) {
             const name = `_${obj || '_'}`;
-            if (this[name] == null) {
-                this._namespaces.add(obj);
-                this[name] = {};
-            }
             if (hasValue(value)) {
                 if (!this.supported(obj, attr)) {
                     return false;
+                }
+                if (this[name] == null) {
+                    this._namespaces.add(obj);
+                    this[name] = {};
                 }
                 if (!overwrite && this[name][attr] != null) {
                     return null;
                 }
                 this[name][attr] = value;
             }
-            return this[name][attr];
+            return (this[name] != null ? this[name][attr] : null);
         }
         delete(obj, ...attributes) {
             const name = `_${obj}`;
@@ -2979,25 +3198,39 @@
     function setChainBias(nodes, index) {
         const widthHeight = (index == 0 ? 'width' : 'height');
         const horizontalVertical = (index == 0 ? 'Horizontal' : 'Vertical');
-        for (let i = 0; i < nodes.length; i++) {
-            const current = nodes[i];
-            let bias = parseFloat(((current.bounds.left - nodes.parent.box.left) + (current.bounds[widthHeight] / 2)) / nodes.parent.box[widthHeight]).toFixed(2);
-            deleteConstraints(current, horizontalVertical.toLowerCase());
-            setAlignParent(current, horizontalVertical.toLowerCase());
-            current.app(`layout_constraint${horizontalVertical}_bias`, bias);
+        for (const node of nodes) {
+            const bias = parseFloat(((node.bounds.left - nodes.parent.box.left) + (node.bounds[widthHeight] / 2)) / nodes.parent.box[widthHeight]).toFixed(2);
+            deleteConstraints(node, horizontalVertical.toLowerCase());
+            setAlignParent(node, horizontalVertical.toLowerCase());
+            node.app(`layout_constraint${horizontalVertical}_bias`, bias);
         }
     }
 
     function createGuideline(parent, node, orientation = '', percent) {
         const map = LAYOUT_MAP.constraint;
         const beginPercent = `layout_constraintGuide_${(percent != null ? 'percent' : 'begin')}`;
-        if (orientation == '' || orientation == 'vertical') {
+        if (!node.constraint.horizontal && (orientation == '' || orientation == 'horizontal')) {
+            const options = {
+                android: {
+                    orientation: 'vertical'
+                },
+                app: {
+                    [beginPercent]: (percent != null ? percent : formatPX(Math.max(node.bounds.left - parent.box.left, 0)))
+                }
+            };
+            let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
+            addViewAfter(node.id, xml);
+            node.app(map['left'], id)
+                .delete('app', map['right'])
+                .constraint.horizontal = true;
+        }
+        if (!node.constraint.vertical && (orientation == '' || orientation == 'vertical')) {
             const options = {
                 android: {
                     orientation: 'horizontal'
                 },
                 app: {
-                    [beginPercent]: (percent != null ? percent : formatPX(node.linear.top - parent.box.top))
+                    [beginPercent]: (percent != null ? percent : formatPX(Math.max(node.bounds.top - parent.box.top, 0)))
                 }
             };
             let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
@@ -3006,20 +3239,22 @@
                 .delete('app', map['bottom'])
                 .constraint.vertical = true;
         }
-        if (orientation == '' || orientation == 'horizontal') {
-            const options = {
-                android: {
-                    orientation: 'vertical'
-                },
-                app: {
-                    [beginPercent]: (percent != null ? percent : formatPX(node.linear.left - parent.box.left))
+    }
+
+    function adjustMargins(nodes) {
+        for (const node of nodes) {
+            if (node.constraint.marginHorizontal != null) {
+                let offset = node.linear.left - NODE_CACHE.findById(node.constraint.marginHorizontal).linear.right;
+                if (offset >= 1) {
+                    node.modifyBox('layout_marginLeft', offset);
                 }
-            };
-            let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
-            addViewAfter(node.id, xml);
-            node.app(map['left'], id)
-                .delete('app', map['right'])
-                .constraint.horizontal = true;
+            }
+            if (node.constraint.marginVertical != null) {
+                let offset = node.linear.top - NODE_CACHE.findById(node.constraint.marginVertical).linear.bottom;
+                if (offset >= 1) {
+                    node.modifyBox('layout_marginTop', offset);
+                }
+            }
         }
     }
 
@@ -3073,25 +3308,10 @@
                     nodes.unshift(node);
                     for (let current of nodes) {
                         for (let adjacent of nodes) {
-                            if (current == adjacent || (relative && current == node)) {
+                            if (current == adjacent) {
                                 continue;
                             }
-                            else if (relative && adjacent == node) {
-                                adjacent = { stringId: 'true' };
-                                if (current.linear.left == node.box.left) {
-                                    current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
-                                }
-                                if (withinRange(current.linear.right, node.box.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                    current.anchor(parseRTL('layout_alignParentRight'), adjacent, 'horizontal');
-                                }
-                                if (current.linear.top == node.box.top) {
-                                    current.anchor('layout_alignParentTop', adjacent, 'vertical');
-                                }
-                                if (current.linear.bottom == node.box.bottom) {
-                                    current.anchor('layout_alignParentBottom', adjacent, 'vertical');
-                                }
-                            }
-                            else {
+                            else if (constraint) {
                                 let bounds1 = current.bounds;
                                 let bounds2 = adjacent.bounds;
                                 let parent = false;
@@ -3126,11 +3346,11 @@
                                         }
                                     }
                                     const withinY = (bounds1.top == bounds2.top || bounds1.bottom == bounds2.bottom);
-                                    if (withinFraction(bounds1.right, bounds2.left) || (withinY && withinRange(bounds1.right, bounds2.left, SETTINGS.whitespaceHorizontalOffset))) {
-                                        current.anchor(LAYOUT['rightLeft'], adjacent);
-                                    }
-                                    if (withinFraction(bounds2.right, bounds1.left) || (withinY && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset))) {
+                                    if (withinY && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
                                         current.anchor(LAYOUT['leftRight'], adjacent);
+                                    }
+                                    if (withinY && withinRange(bounds1.right, bounds2.left, SETTINGS.whitespaceHorizontalOffset)) {
+                                        current.anchor(LAYOUT['rightLeft'], adjacent);
                                     }
                                 }
                                 if (parent) {
@@ -3147,12 +3367,52 @@
                                         current.anchor(LAYOUT[(baseline ? 'baseline' : 'top')], adjacent);
                                         current.anchor(LAYOUT['bottom'], adjacent);
                                     }
-                                    const withinX = (bounds1.left == bounds2.left || bounds1.right == bounds2.right);
-                                    if (bounds1.bottom == bounds2.top || (withinX && withinRange(bounds1.bottom, bounds2.top, SETTINGS.whitespaceVerticalOffset))) {
-                                        current.anchor(LAYOUT['bottomTop'], adjacent);
-                                    }
-                                    if (bounds1.top == bounds2.bottom || (withinX && withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset))) {
+                                    if (withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                         current.anchor(LAYOUT['topBottom'], adjacent);
+                                    }
+                                }
+                            }
+                            else {
+                                if (current == node) {
+                                    continue;
+                                }
+                                if (adjacent == node) {
+                                    adjacent = { stringId: 'true' };
+                                    if (current.linear.left == node.box.left) {
+                                        current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
+                                    }
+                                    if (current.linear.right == node.box.right) {
+                                        current.anchor(parseRTL('layout_alignParentRight'), adjacent, 'horizontal');
+                                    }
+                                    if (current.linear.top == node.box.top) {
+                                        current.anchor('layout_alignParentTop', adjacent, 'vertical');
+                                    }
+                                    if (current.linear.bottom == node.box.bottom) {
+                                        current.anchor('layout_alignParentBottom', adjacent, 'vertical');
+                                    }
+                                }
+                                else {
+                                    const bounds1 = current.bounds;
+                                    const bounds2 = adjacent.bounds;
+                                    if ((bounds1.top == bounds2.top || bounds1.bottom == bounds2.bottom) && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                        current.anchor(LAYOUT['leftRight'], adjacent, (adjacent.constraint.horizontal ? 'horizontal' : null));
+                                        if (adjacent.constraint.horizontal) {
+                                            current.delete('android', parseRTL('layout_alignParentRight'));
+                                        }
+                                    }
+                                    if (adjacent.constraint.vertical && withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : null));
+                                        if (adjacent.constraint.vertical) {
+                                            current.delete('android', 'layout_alignParentBottom');
+                                        }
+                                    }
+                                    if (adjacent.constraint.horizontal) {
+                                        if (bounds1.bottom == bounds2.bottom) {
+                                            current.anchor(LAYOUT['bottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : null));
+                                            if (adjacent.constraint.vertical) {
+                                                current.delete('android', 'layout_alignParentBottom');
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -3161,33 +3421,35 @@
                     nodes.shift();
                     for (let current of nodes) {
                         const leftRight = current.anchor(LAYOUT['leftRight']);
-                        if (leftRight != null && (current.anchor(LAYOUT['rightLeft']) != null || current.app(LAYOUT['right']) == 'parent' || current.android(parseRTL('layout_alignParentRight')) == 'true')) {
+                        if (leftRight != null) {
                             current.constraint.horizontal = true;
                             current.constraint.marginHorizontal = leftRight;
                         }
                         const topBottom = current.anchor(LAYOUT['topBottom']);
-                        if (topBottom != null && (current.anchor(LAYOUT['bottomTop']) != null || current.app(LAYOUT['bottom']) == 'parent' || current.android('layout_alignParentBottom') == 'true')) {
+                        if (topBottom != null) {
                             current.constraint.vertical = true;
                             current.constraint.marginVertical = topBottom;
                         }
-                        const position = [];
-                        if (current.constraint.horizontal) {
-                            if (current.anchor(LAYOUT['left']) != 'parent') {
-                                position.push(LAYOUT['left']);
+                        if (constraint) {
+                            const position = [];
+                            if (current.constraint.horizontal) {
+                                if (current.anchor(LAYOUT['left']) != 'parent') {
+                                    position.push(LAYOUT['left']);
+                                }
+                                if (current.anchor(LAYOUT['right']) != 'parent') {
+                                    position.push(LAYOUT['right']);
+                                }
                             }
-                            if (current.anchor(LAYOUT['right']) != 'parent') {
-                                position.push(LAYOUT['right']);
+                            if (current.constraint.vertical) {
+                                if (current.anchor(LAYOUT['top']) != 'parent') {
+                                    position.push(LAYOUT['top']);
+                                }
+                                if (current.anchor(LAYOUT['bottom']) != 'parent') {
+                                    position.push(LAYOUT['bottom']);
+                                }
                             }
+                            current.delete((relative ? 'android' : 'app'), ...position);
                         }
-                        if (current.constraint.vertical) {
-                            if (current.anchor(LAYOUT['top']) != 'parent') {
-                                position.push(LAYOUT['top']);
-                            }
-                            if (current.anchor(LAYOUT['bottom']) != 'parent') {
-                                position.push(LAYOUT['bottom']);
-                            }
-                        }
-                        current.delete((relative ? 'android' : 'app'), ...position);
                     }
                 }
                 if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect())) {
@@ -3207,7 +3469,7 @@
                                 horizontalChain = null;
                                 break;
                         }
-                        flexNodes = [{ constraint: { horizontalChain, verticalChain }}];
+                        flexNodes = [{ constraint: { horizontalChain, verticalChain } }];
                     }
                     else {
                         for (const current of nodes) {
@@ -3245,7 +3507,7 @@
                                 const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][(index == 0 ? 1 : 0)]];
                                 const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][(index == 0 ? 1 : 0)]];
                                 const [WH, HW] = [CHAIN_MAP['widthHeight'][index], CHAIN_MAP['widthHeight'][(index == 0 ? 1 : 0)]];
-                                const LHV = HV.toLowerCase();
+                                const orientation = HV.toLowerCase();
                                 const firstNode = chainDirection.first;
                                 const lastNode = chainDirection.last;
                                 let maxOffset = -1;
@@ -3333,10 +3595,10 @@
                                 }
                                 firstNode
                                     .app(LAYOUT[LT], 'parent')
-                                    .constraint[LHV] = true;
+                                    .constraint[orientation] = true;
                                 lastNode
                                     .app(LAYOUT[RB], 'parent')
-                                    .constraint[LHV] = true;
+                                    .constraint[orientation] = true;
                                 const chainStyle = `layout_constraint${HV}_chainStyle`;
                                 if (flex.enabled && flex.justifyContent != 'normal' && chainDirection.reduce((a, b) => Math.max(a, b.flex.grow), -1) == 0) {
                                     switch (flex.justifyContent) {
@@ -3384,27 +3646,13 @@
                                     }
                                     else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
                                         firstNode.app(chainStyle, 'packed');
-                                        for (let i = 0; i < chainDirection.length; i++) {
-                                            const current = chainDirection[i];
-                                            if (current.constraint.marginHorizontal != null) {
-                                                let offset = current.linear.left - NODE_CACHE.findById(current.constraint.marginHorizontal).linear.right;
-                                                if (offset >= 1) {
-                                                    current.modifyBox('layout_marginLeft', offset);
-                                                }
-                                            }
-                                            if (current.constraint.marginVertical != null) {
-                                                let offset = current.linear.top - NODE_CACHE.findById(current.constraint.marginVertical).linear.bottom;
-                                                if (offset >= 1) {
-                                                    current.modifyBox('layout_marginTop', offset);
-                                                }
-                                            }
-                                        }
+                                        adjustMargins(chainDirection);
                                     }
                                     else {
                                         firstNode.app(chainStyle, 'spread');
                                     }
                                     if (requireBias) {
-                                        firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${LHV}Bias`]);
+                                        firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${orientation}Bias`]);
                                     }
                                     if (!flex.enabled) {
                                         for (const current of chainDirection) {
@@ -3421,7 +3669,7 @@
                     const anchored = nodes.anchored;
                     if (constraint) {
                         if (anchored.length == 0) {
-                            const unbound = nodes.reduce((a, b) => (a.anchors >= b.anchors ? a : b), nodes[0]);
+                            const unbound = nodes.sortAsc('bounds.x', 'bounds.y')[0];
                             if (SETTINGS.useConstraintGuideline) {
                                 createGuideline(node, unbound);
                             }
@@ -3462,66 +3710,71 @@
                     if (constraint) {
                         for (const opposite of nodes) {
                             if (opposite.anchors < 2) {
-                                const adjacent = nodes.anchored[0];
-                                const center1 = opposite.center;
-                                const center2 = adjacent.center;
-                                const x = Math.abs(center1.x - center2.x);
-                                const y = Math.abs(center1.y - center2.y);
-                                let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
-                                const radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
-                                if (center1.y > center2.y) {
-                                    if (center1.x > center2.x) {
-                                        if (x > y) {
-                                            degrees += 90;
-                                        }
-                                        else {
-                                            degrees = 180 - degrees;
-                                        }
-                                    }
-                                    else {
-                                        if (x > y) {
-                                            degrees = 270 - degrees;
-                                        }
-                                        else {
-                                            degrees += 180;
-                                        }
-                                    }
-                                }
-                                else if (center1.y < center2.y) {
-                                    if (center2.x > center1.x) {
-                                        if (x > y) {
-                                            degrees += 270;
-                                        }
-                                        else {
-                                            degrees = 360 - degrees;
-                                        }
-                                    }
-                                    else {
-                                        if (x > y) {
-                                            degrees = 90 - degrees;
-                                        }
-                                    }
+                                if (SETTINGS.useConstraintGuideline) {
+                                    createGuideline(node, opposite);
                                 }
                                 else {
-                                    degrees = (center1.x > center2.x ? 90 : 270);
+                                    const adjacent = nodes.anchored[0];
+                                    const center1 = opposite.center;
+                                    const center2 = adjacent.center;
+                                    const x = Math.abs(center1.x - center2.x);
+                                    const y = Math.abs(center1.y - center2.y);
+                                    let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
+                                    const radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
+                                    if (center1.y > center2.y) {
+                                        if (center1.x > center2.x) {
+                                            if (x > y) {
+                                                degrees += 90;
+                                            }
+                                            else {
+                                                degrees = 180 - degrees;
+                                            }
+                                        }
+                                        else {
+                                            if (x > y) {
+                                                degrees = 270 - degrees;
+                                            }
+                                            else {
+                                                degrees += 180;
+                                            }
+                                        }
+                                    }
+                                    else if (center1.y < center2.y) {
+                                        if (center2.x > center1.x) {
+                                            if (x > y) {
+                                                degrees += 270;
+                                            }
+                                            else {
+                                                degrees = 360 - degrees;
+                                            }
+                                        }
+                                        else {
+                                            if (x > y) {
+                                                degrees = 90 - degrees;
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        degrees = (center1.x > center2.x ? 90 : 270);
+                                    }
+                                    opposite
+                                        .delete('app', 'layout_constraint*')
+                                        .app('layout_constraintCircle', adjacent.stringId)
+                                        .app('layout_constraintCircleRadius', formatPX(radius))
+                                        .app('layout_constraintCircleAngle', degrees);
+                                    opposite.constraint.vertical = true;
+                                    opposite.constraint.horizontal = true;
                                 }
-                                opposite
-                                    .delete('app', 'layout_constraint*')
-                                    .app('layout_constraintCircle', adjacent.stringId)
-                                    .app('layout_constraintCircleRadius', formatPX(radius))
-                                    .app('layout_constraintCircleAngle', degrees);
-                                opposite.constraint.vertical = true;
-                                opposite.constraint.horizontal = true;
+                                nodes.anchored.forEach(current => {
+                                    if (current.anchor(LAYOUT['right']) == 'parent') {
+                                        node.constraint.layoutWidth = true;
+                                    }
+                                    if (current.anchor(LAYOUT['bottom']) == 'parent') {
+                                        node.constraint.layoutHeight = true;
+                                    }
+                                });
                             }
                         }
-                        nodes.anchored.forEach(current => {
-                            if (!SETTINGS.horizontalPerspective && current.constraint['right'] == 'parent') {
-                                node.constraint.layoutWidth = true;
-                            }
-                            if (SETTINGS.horizontalPerspective && current.constraint['bottom'] == 'parent') {
-                                node.constraint.layoutHeight = true;
-                            }
-                        });
                     }
                     else {
                         for (const current of nodes) {
@@ -3545,6 +3798,9 @@
                                 }
                                 current.constraint.vertical = true;
                                 current.constraint.horizontal = true;
+                            }
+                            else {
+                                adjustMargins([current]);
                             }
                             if (current.android(parseRTL('layout_alignParentRight')) == 'true') {
                                 node.constraint.layoutWidth = true;
@@ -3637,224 +3893,6 @@
                 }
             }
         }
-    }
-
-    function setResourceStyle() {
-        const cache = {};
-        const style = {};
-        const layout = {};
-        for (const node of NODE_CACHE) {
-            if (node.styleAttributes.length > 0) {
-                if (cache[node.tagName] == null) {
-                    cache[node.tagName] = [];
-                }
-                cache[node.tagName].push(node);
-            }
-        }
-        for (const tag in cache) {
-            const nodes = cache[tag];
-            let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => {
-                value = {};
-                return value;
-            });
-            for (const node of nodes) {
-                for (let i = 0; i < node.styleAttributes.length; i++) {
-                    const attr = parseStyleAttribute(node.styleAttributes[i]);
-                    if (sorted[i][attr] == null) {
-                        sorted[i][attr] = [];
-                    }
-                    sorted[i][attr].push(node.id);
-                }
-            }
-            style[tag] = {};
-            layout[tag] = {};
-            do {
-                if (sorted.length == 1) {
-                    for (const attr in sorted[0]) {
-                        const value = sorted[0][attr];
-                        if (value.length > 2) {
-                            style[tag][attr] = value;
-                        }
-                        else {
-                            layout[tag][attr] = value;
-                        }
-                    }
-                    sorted.length = 0;
-                }
-                else {
-                    const styleKey = {};
-                    const layoutKey = {};
-                    for (let i = 0; i < sorted.length; i++) {
-                        const filtered = {};
-                        for (const attr1 in sorted[i]) {
-                            if (sorted[i] == null) {
-                                continue;
-                            }
-                            const ids = sorted[i][attr1];
-                            let revalidate = false;
-                            if (ids == null) {
-                                continue;
-                            }
-                            else if (ids.length == nodes.length) {
-                                styleKey[attr1] = ids;
-                                sorted[i] = null;
-                                revalidate = true;
-                            }
-                            else if (ids.length == 1) {
-                                layoutKey[attr1] = ids;
-                                sorted[i] = null;
-                                revalidate = true;
-                            }
-                            if (!revalidate) {
-                                const found = {};
-                                for (let j = 0; j < sorted.length; j++) {
-                                    if (i != j) {
-                                        for (const attr in sorted[j]) {
-                                            const compare$$1 = sorted[j][attr];
-                                            for (let k = 0; k < ids.length; k++) {
-                                                if (compare$$1.includes(ids[k])) {
-                                                    if (found[attr] == null) {
-                                                        found[attr] = [];
-                                                    }
-                                                    found[attr].push(ids[k]);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                for (const attr2 in found) {
-                                    if (found[attr2].length > 1) {
-                                        filtered[[attr1, attr2].sort().join(';')] = found[attr2];
-                                    }
-                                }
-                            }
-                        }
-                        const combined = {};
-                        const deleteKeys = new Set();
-                        for (const attr1 in filtered) {
-                            for (const attr2 in filtered) {
-                                if (attr1 != attr2 && filtered[attr1].join('') == filtered[attr2].join('')) {
-                                    const shared = filtered[attr1].join(',');
-                                    if (combined[shared] != null) {
-                                        combined[shared] = new Set([...combined[shared], ...attr2.split(';')]);
-                                    }
-                                    else {
-                                        combined[shared] = new Set([...attr1.split(';'), ...attr2.split(';')]);
-                                    }
-                                    deleteKeys.add(attr1).add(attr2);
-                                }
-                            }
-                        }
-                        deleteKeys.forEach(value => delete filtered[value]);
-                        for (const attributes in filtered) {
-                            deleteStyleAttribute(sorted, attributes, filtered[attributes]);
-                            style[tag][attributes] = filtered[attributes];
-                        }
-                        for (const ids in combined) {
-                            const attributes = Array.from(combined[ids]).sort().join(';');
-                            const nodeIds = ids.split(',').map(id => parseInt(id));
-                            deleteStyleAttribute(sorted, attributes, nodeIds);
-                            style[tag][attributes] = nodeIds;
-                        }
-                    }
-                    const combined = Object.keys(styleKey);
-                    if (combined.length > 0) {
-                        style[tag][combined.join(';')] = styleKey[combined[0]];
-                    }
-                    for (const attribute in layoutKey) {
-                        layout[tag][attribute] = layoutKey[attribute];
-                    }
-                    for (let i = 0; i < sorted.length; i++) {
-                        if (sorted[i] != null && Object.keys(sorted[i]).length == 0) {
-                            delete sorted[i];
-                        }
-                    }
-                    sorted = sorted.filter(item => item);
-                }
-            }
-            while (sorted.length > 0);
-        }
-        const resource = new Map();
-        for (const name in style) {
-            const tag = style[name];
-            const tagData = [];
-            for (const attributes in tag) {
-                tagData.push({ attributes, ids: tag[attributes]});
-            }
-            tagData.sort((a, b) => {
-                let [c, d] = [a.ids.length, b.ids.length];
-                if (c == d) {
-                    [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
-                }
-                return (c >= d ? -1 : 1);
-            });
-            tagData.forEach((item, index) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
-            resource.set(name, tagData);
-        }
-        const inherit = new Set();
-        for (const node of NODE_CACHE.visible) {
-            const tagName = node.tagName;
-            if (resource.has(tagName)) {
-                const styles = [];
-                for (const tag of resource.get(tagName)) {
-                    if (tag.ids.includes(node.id)) {
-                        styles.push(tag.name);
-                    }
-                }
-                if (styles.length > 0) {
-                    inherit.add(styles.join('.'));
-                    node.androidStyle = styles.pop();
-                    if (node.androidStyle != '') {
-                        node.attr(`style="@style/${node.androidStyle}"`);
-                    }
-                }
-            }
-            const tag = layout[tagName];
-            if (tag != null) {
-                for (const attr in tag) {
-                    if (tag[attr].includes(node.id)) {
-                        node.attr((SETTINGS.useUnitDP ? insetDP(attr, SETTINGS.density, true) : attr));
-                    }
-                }
-            }
-        }
-        inherit.forEach(styles => {
-            let parent = null;
-            styles.split('.').forEach(value => {
-                const match = value.match(/^(\w+)_([0-9]+)$/);
-                if (match != null) {
-                    const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
-                    getResource('STYLE').set(value, { parent, attributes: style.attributes });
-                    parent = value;
-                }
-            });
-        });
-    }
-
-    function deleteStyleAttribute(sorted, attributes, nodeIds) {
-        attributes.split(';').forEach(value => {
-            for (let i = 0; i < sorted.length; i++) {
-                if (sorted[i] != null) {
-                    let index = -1;
-                    let key = '';
-                    for (const j in sorted[i]) {
-                        if (j == value) {
-                            index = i;
-                            key = j;
-                            i = sorted.length;
-                            break;
-                        }
-                    }
-                    if (index != -1) {
-                        sorted[index][key] = sorted[index][key].filter(value => !nodeIds.includes(value));
-                        if (sorted[index][key].length == 0) {
-                            delete sorted[index][key];
-                        }
-                        break;
-                    }
-                }
-            }
-        });
     }
 
     function setAccessibility() {
@@ -4480,7 +4518,7 @@
                 output = output.replace(`{${id}}`, views.join(''));
             }
         }
-        setResourceStyle();
+        setResourceStyle(NODE_CACHE);
         if (SETTINGS.showAttributes) {
             setMarginPadding();
             if (SETTINGS.useLayoutWeight) {

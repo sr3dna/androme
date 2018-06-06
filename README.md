@@ -13,7 +13,7 @@ Library files are in the /dist folder. There is a babel minified for production 
     androme.settings.density = 160; // androme.DENSITY_ANDROID.MDPI
 
     document.addEventListener('DOMContentLoaded', () => {
-        androme.parseDocument(/* document.getElementById('root-node') */)); // default: document.body
+        androme.parseDocument(/* document.getElementById('root-node') */); // default: document.body
         androme.writeResourceStringXml(); // console.log();
         androme.writeResourceArrayXml();
         androme.writeResourceStyleXml();
@@ -32,7 +32,7 @@ androme.settings = {
     horizontalPerspective: true,
     useConstraintLayout: true,
     useConstraintChain: true,
-    useConstraintGuideline: false,
+    useConstraintGuideline: true,
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
@@ -139,7 +139,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toTopOf="@+id/month1"
 					app:layout_constraintEnd_toStartOf="@+id/day0"
 					app:layout_constraintHorizontal_bias="0"
 					app:layout_constraintHorizontal_chainStyle="packed"
@@ -157,7 +156,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toTopOf="@+id/day1"
 					app:layout_constraintEnd_toStartOf="@+id/year0"
 					app:layout_constraintStart_toEndOf="@+id/month0"
 					app:layout_constraintTop_toTopOf="parent"
@@ -173,7 +171,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toTopOf="@+id/year1"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day0"
 					app:layout_constraintTop_toTopOf="parent"
@@ -189,7 +186,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toTopOf="@+id/month2"
 					app:layout_constraintEnd_toStartOf="@+id/day1"
 					app:layout_constraintHorizontal_bias="0"
 					app:layout_constraintHorizontal_chainStyle="packed"
@@ -208,10 +204,9 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toTopOf="@+id/day2"
 					app:layout_constraintEnd_toStartOf="@+id/year1"
 					app:layout_constraintStart_toEndOf="@+id/month1"
-					app:layout_constraintTop_toBottomOf="@+id/day0"
+					app:layout_constraintTop_toBottomOf="@+id/month0"
 					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
@@ -225,10 +220,9 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toTopOf="@+id/year2"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day1"
-					app:layout_constraintTop_toBottomOf="@+id/year0"
+					app:layout_constraintTop_toBottomOf="@+id/month0"
 					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
@@ -263,7 +257,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					app:layout_constraintBottom_toBottomOf="parent"
 					app:layout_constraintEnd_toStartOf="@+id/year2"
 					app:layout_constraintStart_toEndOf="@+id/month2"
-					app:layout_constraintTop_toBottomOf="@+id/day1"
+					app:layout_constraintTop_toBottomOf="@+id/month1"
 					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
@@ -280,7 +274,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					app:layout_constraintBottom_toBottomOf="parent"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day2"
-					app:layout_constraintTop_toBottomOf="@+id/year1"
+					app:layout_constraintTop_toBottomOf="@+id/month1"
 					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 			</android.support.constraint.ConstraintLayout>
