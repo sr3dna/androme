@@ -68,7 +68,7 @@ export default class NodeList extends Array {
         if (this.length > 0 && !this.intersect()) {
             if (this.length > 1) {
                 const minBottom = this.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
-                return !this.some(item => (item.linear.top >= minBottom));
+                return !this.some(item => item.linear.top >= minBottom);
             }
             return true;
         }
@@ -78,14 +78,14 @@ export default class NodeList extends Array {
         if (this.length > 0 && !this.intersect()) {
             if (this.length > 1) {
                 const minRight = this.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
-                return !this.some(item => (item.linear.left >= minRight));
+                return !this.some(item => item.linear.left >= minRight);
             }
             return true;
         }
         return false;
     }
-    get anchored() {
-        return this.filter(node => (node.anchors == 2));
+    get anchors() {
+        return this.filter(node => node.anchored);
     }
     get horizontalBias() {
         if (this.parent != null) {

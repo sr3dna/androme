@@ -3,6 +3,7 @@ import { convertPX, convertInt, padLeft, hasValue } from './lib/util';
 import { getBoxSpacing } from './lib/element';
 import { NODE_CACHE, generateNodeId } from './cache';
 import Node from './node';
+import NodeList from './nodelist';
 import { getResource, insertResourceAsset } from './resource';
 import parseRTL from './localization';
 import SETTINGS from './settings';
@@ -10,9 +11,9 @@ import SETTINGS from './settings';
 const VIEW_BEFORE = {};
 const VIEW_AFTER = {};
 
-function getEnclosingTag(depth, tagName, id, content, space = ['', '']) {
+function getEnclosingTag(depth, tagName, id, content = '', preXml = '', postXml = '') {
     const indent = padLeft(depth);
-    let xml = space[0] +
+    let xml = preXml +
               `{<${id}}`;
     if (hasValue(content)) {
         xml += indent + `<${tagName}{@${id}}>\n` +
@@ -23,13 +24,11 @@ function getEnclosingTag(depth, tagName, id, content, space = ['', '']) {
         xml += indent + `<${tagName}{@${id}} />\n`;
     }
     xml += `{>${id}}` +
-           space[1];
+           postXml;
     return xml;
 }
 
-function getGridSpace(node) {
-    let preXml = '';
-    let postXml = '';
+function setGridSpace(node) {
     if (node.parent.isView(WIDGET_ANDROID.GRID)) {
         const dimensions = getBoxSpacing(node.parentOriginal.element, SETTINGS.supportRTL, true);
         const options = {
@@ -65,7 +64,6 @@ function getGridSpace(node) {
             }
         }
     }
-    return [preXml, postXml];
 }
 
 export function renderViewLayout(node, parent, tagName) {
@@ -133,7 +131,8 @@ export function renderViewLayout(node, parent, tagName) {
     node.applyCustomizations();
     node.render(renderParent);
     node.setGravity();
-    return getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, getGridSpace(node), preXml, postXml);
+    setGridSpace(node);
+    return getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, preXml, postXml);
 }
 
 export function renderViewTag(node, parent, tagName, recursive) {
@@ -203,7 +202,7 @@ export function renderViewTag(node, parent, tagName, recursive) {
         case 'radio':
             if (!recursive) {
                 const result = node.parentOriginal.children.filter(item => (item.element.type == 'radio' && item.element.name == element.name));
-                let xml = '';
+                let content = '';
                 if (result.length > 1) {
                     let rowSpan = 1;
                     let columnSpan = 1;
@@ -221,7 +220,7 @@ export function renderViewTag(node, parent, tagName, recursive) {
                         }
                         radio.parent = wrapNode;
                         radio.render(wrapNode);
-                        xml += renderViewTag(radio, wrapNode, WIDGET_ANDROID.RADIO, true);
+                        content += renderViewTag(radio, wrapNode, WIDGET_ANDROID.RADIO, true);
                     }
                     if (rowSpan > 1) {
                         wrapNode.android('layout_rowSpan', rowSpan);
@@ -234,7 +233,8 @@ export function renderViewTag(node, parent, tagName, recursive) {
                         .android('checkedButton', checked.stringId);
                     wrapNode.setBounds();
                     wrapNode.setAttributes();
-                    return getEnclosingTag(wrapNode.renderDepth, WIDGET_ANDROID.RADIO_GROUP, wrapNode.id, xml, getGridSpace(wrapNode));
+                    setGridSpace(wrapNode);
+                    return getEnclosingTag(wrapNode.renderDepth, WIDGET_ANDROID.RADIO_GROUP, wrapNode.id, content);
                 }
             }
             break;
@@ -247,7 +247,8 @@ export function renderViewTag(node, parent, tagName, recursive) {
     node.render(parent);
     node.setGravity();
     node.cascade().forEach(item => item.hide());
-    return getEnclosingTag(node.renderDepth, node.widgetName, node.id, '', getGridSpace(node));
+    setGridSpace(node);
+    return getEnclosingTag(node.renderDepth, node.widgetName, node.id);
 }
 
 export function getStaticTag(widgetName, depth, options, width = 'wrap_content', height = 'wrap_content') {
@@ -264,7 +265,7 @@ export function getStaticTag(widgetName, depth, options, width = 'wrap_content',
             attributes += `\n${indent + attr}`;
         }
     }
-    return [getEnclosingTag(depth, widgetName, 0, '').replace('{@0}', attributes), node.stringId];
+    return [getEnclosingTag(depth, widgetName, 0).replace('{@0}', attributes), node.stringId];
 }
 
 export function addViewBefore(id, xml, index = -1) {

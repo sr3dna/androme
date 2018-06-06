@@ -12,9 +12,11 @@ Library files are in the /dist folder. There is a babel minified for production 
     androme.settings.targetAPI = 19; // androme.BUILD_ANDROID.KITKAT
     androme.settings.density = 160; // androme.DENSITY_ANDROID.MDPI
 
+	// use either console.log() or element.innerHTML to display
+
     document.addEventListener('DOMContentLoaded', () => {
         androme.parseDocument(/* document.getElementById('root-node') */); // default: document.body
-        androme.writeResourceStringXml(); // console.log();
+        androme.writeResourceStringXml();
         androme.writeResourceArrayXml();
         androme.writeResourceStyleXml();
         androme.writeResourceColorXml();
@@ -39,14 +41,16 @@ androme.settings = {
     supportRTL: true,
     numberResourceValue: false,
     whitespaceHorizontalOffset: 4,
-	whitespaceVerticalOffset: 14,
+    whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14
 };
 ```
 You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
 
-Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. To use Constraint circle you have to disable "useConstraintGuideline". The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios. Most layout issues probably are due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system which is built for very wide screens and converting them to mobile devices is not that simple.
+Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios. To use Constraint circle for placement you have to disable "useConstraintGuideline".
+
+Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices.
 
 <img src="demos/android/form.png" alt="form" />
 

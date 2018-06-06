@@ -53,11 +53,12 @@ function setAlignParent(node, orientation = '', bias = false) {
 }
 
 function deleteConstraints(node, orientation = '') {
+    const map = LAYOUT_MAP.constraint;
     if (orientation == '' || orientation == 'horizontal') {
-        node.delete('app', `*constraint${parseRTL('Left')}*`, `*constraint${parseRTL('Right')}*`);
+        node.delete('app', map['leftRight'], map['rightLeft']);
     }
     if (orientation == '' || orientation == 'vertical') {
-        node.delete('app', '*constraintTop*', '*constraintBottom*', '*constraintBaseline*');
+        node.delete('app', map['bottomTop'], map['topBottom'], map['baseline']);
     }
 }
 
@@ -143,7 +144,7 @@ export function setConstraints() {
         const flex = node.flex;
         if (constraint || relative || flex.enabled) {
             node.expandDimensions();
-            if (flex.enabled && node.isView(WIDGET_ANDROID.LINEAR)) {
+            if (node.isView(WIDGET_ANDROID.LINEAR)) {
                 if (node.renderChildren.some(item => item.flex.direction.indexOf('row') != -1)) {
                     node.constraint.layoutWidth = true;
                     node.constraint.expand = true;
@@ -238,11 +239,11 @@ export function setConstraints() {
                                 }
                             }
                         }
-                        else {
+                        else if (relative) {
                             if (current == node) {
                                 continue;
                             }
-                            if (adjacent == node) {
+                            else if (adjacent == node) {
                                 adjacent = { stringId: 'true' };
                                 if (current.linear.left == node.box.left) {
                                     current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
@@ -365,14 +366,15 @@ export function setConstraints() {
                     if (!SETTINGS.horizontalPerspective) {
                         index = (index == 0 ? 1 : 0);
                     }
+                    const inverse = (index == 0 ? 1 : 0);
                     const chainNodes = flexNodes || nodes.slice().sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                     for (const current of chainNodes) {
                         const chainDirection = current.constraint[value];
                         if (chainDirection != null && chainDirection.length > 0 && (flex.enabled || chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(item => item.id).join(''))).reduce((a, b) => (a == b ? a : 0)) > 0)) {
-                            const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][(index == 0 ? 1 : 0)]];
-                            const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][(index == 0 ? 1 : 0)]];
-                            const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][(index == 0 ? 1 : 0)]];
-                            const [WH, HW] = [CHAIN_MAP['widthHeight'][index], CHAIN_MAP['widthHeight'][(index == 0 ? 1 : 0)]];
+                            const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
+                            const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][inverse]];
+                            const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][inverse]];
+                            const [WH, HW] = [CHAIN_MAP['widthHeight'][index], CHAIN_MAP['widthHeight'][inverse]];
                             const orientation = HV.toLowerCase();
                             const firstNode = chainDirection.first;
                             const lastNode = chainDirection.last;
@@ -413,7 +415,7 @@ export function setConstraints() {
                                         current.android(`layout_${WH.toLowerCase()}`, 'wrap_content');
                                     }
                                     else if (current.flex.grow > 0) {
-                                        current.android(`layout_${WH.toLowerCase()}`, '0px');
+                                        current.android(`layout_${WH.toLowerCase()}`, (node.renderParent.isView(WIDGET_ANDROID.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') != -1 ? 'wrap_content' : '0px'));
                                     }
                                     if (current.flex.shrink == 0) {
                                         current.app(`layout_constrained${WH}`, 'true');
@@ -532,9 +534,9 @@ export function setConstraints() {
                 });
             }
             if (!flex.enabled) {
-                const anchored = nodes.anchored;
+                const anchors = nodes.anchors;
                 if (constraint) {
-                    if (anchored.length == 0) {
+                    if (anchors.length == 0) {
                         const unbound = nodes.sortAsc('bounds.x', 'bounds.y')[0];
                         if (SETTINGS.useConstraintGuideline) {
                             createGuideline(node, unbound);
@@ -542,17 +544,17 @@ export function setConstraints() {
                         else {
                             setAlignParent(unbound, '', true);
                         }
-                        anchored.push(unbound);
+                        anchors.push(unbound);
                     }
                 }
                 do {
                     let restart = false;
                     for (const current of nodes) {
-                        if (current.anchors < 2) {
+                        if (!current.anchored) {
                             const result = (constraint ? search(current.app(), '*constraint*') : search(current.android(), LAYOUT));
                             for (const [key, value] of result) {
                                 if (value != 'parent') {
-                                    if (anchored.find(anchor => anchor.stringId == value) != null) {
+                                    if (anchors.find(anchor => anchor.stringId == value) != null) {
                                         if (!current.constraint.horizontal && indexOf(key, parseRTL('Left'), parseRTL('Right')) != -1) {
                                             current.constraint.horizontal = true;
                                         }
@@ -562,8 +564,8 @@ export function setConstraints() {
                                     }
                                 }
                             }
-                            if (current.anchors == 2) {
-                                anchored.push(current);
+                            if (current.anchored) {
+                                anchors.push(current);
                                 restart = true;
                             }
                         }
@@ -575,12 +577,13 @@ export function setConstraints() {
                 while (true);
                 if (constraint) {
                     for (const opposite of nodes) {
-                        if (opposite.anchors < 2) {
+                        if (!opposite.anchored) {
+                            deleteConstraints(node);
                             if (SETTINGS.useConstraintGuideline) {
                                 createGuideline(node, opposite);
                             }
                             else {
-                                const adjacent = nodes.anchored[0];
+                                const adjacent = nodes.anchors[0];
                                 const center1 = opposite.center;
                                 const center2 = adjacent.center;
                                 const x = Math.abs(center1.x - center2.x);
@@ -624,28 +627,28 @@ export function setConstraints() {
                                     degrees = (center1.x > center2.x ? 90 : 270);
                                 }
                                 opposite
-                                    .delete('app', 'layout_constraint*')
                                     .app('layout_constraintCircle', adjacent.stringId)
                                     .app('layout_constraintCircleRadius', formatPX(radius))
                                     .app('layout_constraintCircleAngle', degrees);
                                 opposite.constraint.vertical = true;
                                 opposite.constraint.horizontal = true;
                             }
-                            nodes.anchored.forEach(current => {
-                                if (current.anchor(LAYOUT['right']) == 'parent') {
-                                    node.constraint.layoutWidth = true;
-                                }
-                                if (current.anchor(LAYOUT['bottom']) == 'parent') {
-                                    node.constraint.layoutHeight = true;
-                                }
-                            });
                         }
                     }
+                    nodes.forEach(current => {
+                        if (current.app(LAYOUT['right']) == 'parent' && current.app(LAYOUT['leftRight']) == null) {
+                            node.constraint.layoutWidth = true;
+                        }
+                        if (current.app(LAYOUT['bottom']) == 'parent' && current.app(LAYOUT['topBottom']) == null) {
+                            node.constraint.layoutHeight = true;
+                        }
+                    });
                 }
                 else {
                     for (const current of nodes) {
+                        const parentRight = current.android(parseRTL('layout_alignParentRight'));
                         const parentBottom = current.android('layout_alignParentBottom');
-                        if (!anchored.includes(current)) {
+                        if (!anchors.includes(current)) {
                             const parentLeft = parseRTL('layout_alignParentLeft');
                             current.delete('android', LAYOUT);
                             if (parentBottom != 'true') {
@@ -668,10 +671,10 @@ export function setConstraints() {
                         else {
                             adjustMargins([current]);
                         }
-                        if (current.android(parseRTL('layout_alignParentRight')) == 'true') {
+                        if (parentRight == 'true' && current.android(LAYOUT['leftRight']) == null) {
                             node.constraint.layoutWidth = true;
                         }
-                        if (parentBottom == 'true') {
+                        if (parentBottom == 'true' && current.android(LAYOUT['topBottom']) == null) {
                             node.constraint.layoutHeight = true;
                         }
                     }

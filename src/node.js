@@ -372,7 +372,12 @@ export default class Node {
                 }
             }
             if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
-                this.android('layout_width', (this.constraint.layoutWidth ? this.constraint.minWidth : 'wrap_content'), this.constraint.layoutWidth);
+                if (this.constraint.layoutWidth) {
+                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') == 'right') || Util.convertPX(this.constraint.minWidth) >= parentWidth ? 'match_parent' : this.constraint.minWidth));
+                }
+                else {
+                    this.android('layout_width', 'wrap_content', false);
+                }
             }
             else if (this.android('layout_width') == null) {
                 if (requireWrap) {
@@ -822,8 +827,8 @@ export default class Node {
     get overflowY() {
         return ((this._overflow & 4) == 4);
     }
-    get anchors() {
-        return (this.constraint.horizontal ? 1 : 0) + (this.constraint.vertical ? 1 : 0);
+    get anchored() {
+        return (this.constraint.horizontal && this.constraint.vertical);
     }
     get viewWidth() {
         return Util.convertInt(this.styleMap.width || this.styleMap.minWidth);
