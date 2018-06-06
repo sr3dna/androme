@@ -6,7 +6,7 @@ import { NODE_CACHE, generateNodeId } from './cache';
 import Node from './node';
 import NodeList from './nodelist';
 import { setConstraints } from './constraint';
-import { getResource, getViewAttributes, parseStyleAttribute, writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml } from './resource';
+import { setResourceStyle, getViewAttributes, writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml } from './resource';
 import { renderViewLayout, renderViewTag, insertViewBeforeAfter } from './render';
 import parseRTL from './localization';
 import SETTINGS from './settings';
@@ -89,224 +89,6 @@ function setStyleMap() {
             }
         }
     }
-}
-
-function setResourceStyle() {
-    const cache = {};
-    const style = {};
-    const layout = {};
-    for (const node of NODE_CACHE) {
-        if (node.styleAttributes.length > 0) {
-            if (cache[node.tagName] == null) {
-                cache[node.tagName] = [];
-            }
-            cache[node.tagName].push(node);
-        }
-    }
-    for (const tag in cache) {
-        const nodes = cache[tag];
-        let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => {
-            value = {};
-            return value;
-        });
-        for (const node of nodes) {
-            for (let i = 0; i < node.styleAttributes.length; i++) {
-                const attr = parseStyleAttribute(node.styleAttributes[i]);
-                if (sorted[i][attr] == null) {
-                    sorted[i][attr] = [];
-                }
-                sorted[i][attr].push(node.id);
-            }
-        }
-        style[tag] = {};
-        layout[tag] = {};
-        do {
-            if (sorted.length == 1) {
-                for (const attr in sorted[0]) {
-                    const value = sorted[0][attr];
-                    if (value.length > 2) {
-                        style[tag][attr] = value;
-                    }
-                    else {
-                        layout[tag][attr] = value;
-                    }
-                }
-                sorted.length = 0;
-            }
-            else {
-                const styleKey = {};
-                const layoutKey = {};
-                for (let i = 0; i < sorted.length; i++) {
-                    const filtered = {};
-                    for (const attr1 in sorted[i]) {
-                        if (sorted[i] == null) {
-                            continue;
-                        }
-                        const ids = sorted[i][attr1];
-                        let revalidate = false;
-                        if (ids == null) {
-                            continue;
-                        }
-                        else if (ids.length == nodes.length) {
-                            styleKey[attr1] = ids;
-                            sorted[i] = null;
-                            revalidate = true;
-                        }
-                        else if (ids.length == 1) {
-                            layoutKey[attr1] = ids;
-                            sorted[i] = null;
-                            revalidate = true;
-                        }
-                        if (!revalidate) {
-                            const found = {};
-                            for (let j = 0; j < sorted.length; j++) {
-                                if (i != j) {
-                                    for (const attr in sorted[j]) {
-                                        const compare = sorted[j][attr];
-                                        for (let k = 0; k < ids.length; k++) {
-                                            if (compare.includes(ids[k])) {
-                                                if (found[attr] == null) {
-                                                    found[attr] = [];
-                                                }
-                                                found[attr].push(ids[k]);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            for (const attr2 in found) {
-                                if (found[attr2].length > 1) {
-                                    filtered[[attr1, attr2].sort().join(';')] = found[attr2];
-                                }
-                            }
-                        }
-                    }
-                    const combined = {};
-                    const deleteKeys = new Set();
-                    for (const attr1 in filtered) {
-                        for (const attr2 in filtered) {
-                            if (attr1 != attr2 && filtered[attr1].join('') == filtered[attr2].join('')) {
-                                const shared = filtered[attr1].join(',');
-                                if (combined[shared] != null) {
-                                    combined[shared] = new Set([...combined[shared], ...attr2.split(';')]);
-                                }
-                                else {
-                                    combined[shared] = new Set([...attr1.split(';'), ...attr2.split(';')]);
-                                }
-                                deleteKeys.add(attr1).add(attr2);
-                            }
-                        }
-                    }
-                    deleteKeys.forEach(value => delete filtered[value]);
-                    for (const attributes in filtered) {
-                        deleteStyleAttribute(sorted, attributes, filtered[attributes]);
-                        style[tag][attributes] = filtered[attributes];
-                    }
-                    for (const ids in combined) {
-                        const attributes = Array.from(combined[ids]).sort().join(';');
-                        const nodeIds = ids.split(',').map(id => parseInt(id));
-                        deleteStyleAttribute(sorted, attributes, nodeIds);
-                        style[tag][attributes] = nodeIds;
-                    }
-                }
-                const combined = Object.keys(styleKey);
-                if (combined.length > 0) {
-                    style[tag][combined.join(';')] = styleKey[combined[0]];
-                }
-                for (const attribute in layoutKey) {
-                    layout[tag][attribute] = layoutKey[attribute];
-                }
-                for (let i = 0; i < sorted.length; i++) {
-                    if (sorted[i] != null && Object.keys(sorted[i]).length == 0) {
-                        delete sorted[i];
-                    }
-                }
-                sorted = sorted.filter(item => item);
-            }
-        }
-        while (sorted.length > 0);
-    }
-    const resource = new Map();
-    for (const name in style) {
-        const tag = style[name];
-        const tagData = [];
-        for (const attributes in tag) {
-            tagData.push({ attributes, ids: tag[attributes]});
-        }
-        tagData.sort((a, b) => {
-            let [c, d] = [a.ids.length, b.ids.length];
-            if (c == d) {
-                [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
-            }
-            return (c >= d ? -1 : 1);
-        });
-        tagData.forEach((item, index) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
-        resource.set(name, tagData);
-    }
-    const inherit = new Set();
-    for (const node of NODE_CACHE.visible) {
-        const tagName = node.tagName;
-        if (resource.has(tagName)) {
-            const styles = [];
-            for (const tag of resource.get(tagName)) {
-                if (tag.ids.includes(node.id)) {
-                    styles.push(tag.name);
-                }
-            }
-            if (styles.length > 0) {
-                inherit.add(styles.join('.'));
-                node.androidStyle = styles.pop();
-                if (node.androidStyle != '') {
-                    node.attr(`style="@style/${node.androidStyle}"`);
-                }
-            }
-        }
-        const tag = layout[tagName];
-        if (tag != null) {
-            for (const attr in tag) {
-                if (tag[attr].includes(node.id)) {
-                    node.attr((SETTINGS.useUnitDP ? Util.insetDP(attr, SETTINGS.density, true) : attr));
-                }
-            }
-        }
-    }
-    inherit.forEach(styles => {
-        let parent = null;
-        styles.split('.').forEach(value => {
-            const match = value.match(/^(\w+)_([0-9]+)$/);
-            if (match != null) {
-                const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
-                getResource('STYLE').set(value, { parent, attributes: style.attributes });
-                parent = value;
-            }
-        });
-    });
-}
-
-function deleteStyleAttribute(sorted, attributes, nodeIds) {
-    attributes.split(';').forEach(value => {
-        for (let i = 0; i < sorted.length; i++) {
-            if (sorted[i] != null) {
-                let index = -1;
-                let key = '';
-                for (const j in sorted[i]) {
-                    if (j == value) {
-                        index = i;
-                        key = j;
-                        i = sorted.length;
-                        break;
-                    }
-                }
-                if (index != -1) {
-                    sorted[index][key] = sorted[index][key].filter(value => !nodeIds.includes(value));
-                    if (sorted[index][key].length == 0) {
-                        delete sorted[index][key];
-                    }
-                    break;
-                }
-            }
-        }
-    });
 }
 
 function setAccessibility() {
@@ -932,14 +714,14 @@ export function parseDocument(element) {
             output = output.replace(`{${id}}`, views.join(''));
         }
     }
-    setResourceStyle();
+    setResourceStyle(NODE_CACHE);
     if (SETTINGS.showAttributes) {
         setMarginPadding();
         if (SETTINGS.useLayoutWeight) {
             setLayoutWeight();
         }
         setAccessibility();
-        setConstraints();
+        setConstraints(NODE_CACHE);
         output = insetAttributes(output);
     }
     output = insertViewBeforeAfter(output);

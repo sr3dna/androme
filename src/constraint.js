@@ -1,6 +1,5 @@
 import { WIDGET_ANDROID } from './lib/constants';
 import { convertPX, formatPX, search, indexOf, same, withinFraction, withinRange } from './lib/util';
-import { NODE_CACHE } from './cache';
 import { getStaticTag, addViewAfter } from './render';
 import parseRTL from './localization';
 import SETTINGS from './settings';
@@ -108,7 +107,7 @@ function createGuideline(parent, node, orientation = '', percent) {
     }
 }
 
-export function setConstraints() {
+export function setConstraints(NODE_CACHE) {
     Object.assign(LAYOUT_MAP.relative, {
         left: parseRTL('layout_alignLeft'),
         right: parseRTL('layout_alignRight'),
