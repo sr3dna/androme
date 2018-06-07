@@ -14,6 +14,8 @@ const SETTINGS = {
     useFontAlias: true,
     supportRTL: true,
     numberResourceValue: false,
+    excludeTextColor: ['#000000'],
+    excludeBackgroundColor: ['#FFFFFF'],
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,

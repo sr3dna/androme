@@ -42,6 +42,8 @@ androme.settings = {
     useFontAlias: true,
     supportRTL: true,
     numberResourceValue: false,
+    excludeTextColor: ['#000000'],
+    excludeBackgroundColor: ['#FFFFFF'],
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,
@@ -117,7 +119,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:layout_height="wrap_content"
 				android:layout_width="40dp"
 				android:paddingVertical="1dp"
-				style="@style/Input_4" />
+				style="@style/Input_3" />
 			<Space
 				android:id="@+id/space_1"
 				android:layout_columnSpan="2"
@@ -381,7 +383,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_marginEnd="5dp"
 					android:layout_width="130dp"
 					android:paddingVertical="1dp"
-					style="@style/Input_4" />
+					style="@style/Input_3" />
 				<Spinner
 					android:id="@+id/prominence0"
 					android:background="@drawable/select_hour"
@@ -575,7 +577,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/open"
-					style="@style/Input_6" />
+					style="@style/Input_5" />
 				<Button
 					android:id="@+id/button_2"
 					android:background="@drawable/input_button_1"
@@ -588,7 +590,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/all"
-					style="@style/Input_6" />
+					style="@style/Input_5" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_11"
@@ -719,7 +721,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/update"
-					style="@style/Input_3" />
+					style="@style/Input_2" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_15"
@@ -775,7 +777,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/update"
-					style="@style/Input_3" />
+					style="@style/Input_2" />
 				<Button
 					android:id="@+id/button_5"
 					android:background="@drawable/input_button_1"
@@ -788,7 +790,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/clone"
-					style="@style/Input_3" />
+					style="@style/Input_2" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_16"
@@ -819,7 +821,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_marginEnd="5dp"
 					android:layout_width="130dp"
 					android:paddingVertical="1dp"
-					style="@style/Input_4" />
+					style="@style/Input_3" />
 				<Spinner
 					android:id="@+id/custommonth0"
 					android:background="@drawable/select_hour"
@@ -896,7 +898,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
 							android:text="@string/birth"
-							style="@style/Input_5" />
+							style="@style/Input_4" />
 						<RadioButton
 							android:id="@+id/c3"
 							android:focusable="true"
@@ -906,7 +908,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
 							android:text="@string/death"
-							style="@style/Input_5" />
+							style="@style/Input_4" />
 					</RadioGroup>
 					<CheckBox
 						android:id="@+id/c4"
@@ -917,7 +919,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:layout_marginVertical="3dp"
 						android:layout_width="wrap_content"
 						android:text="@string/none"
-						style="@style/Input_5" />
+						style="@style/Input_4" />
 				</LinearLayout>
 				<Button
 					android:id="@+id/button_6"
@@ -931,7 +933,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/update"
-					style="@style/Input_3" />
+					style="@style/Input_2" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_18"
@@ -1037,19 +1039,18 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <resources>
 	<style name="H2_1">
 		<item name="android:background">@color/slate_gray</item>
-		<item name="android:fontFamily">@font/tahoma_bold</item>
+		<item name="android:fontFamily">tahoma</item>
 		<item name="android:fontWeight">700</item>
 		<item name="android:textColor">@color/white</item>
 		<item name="android:textSize">12sp</item>
 		<item name="android:textStyle">normal</item>
 	</style>
 	<style name="Label_1">
+		<item name="android:fontFamily">arial</item>
 		<item name="android:fontWeight">400</item>
-		<item name="android:textColor">@color/black</item>
 		<item name="android:textSize">11sp</item>
 	</style>
 	<style name="Label_3" parent="Label_1">
-		<item name="android:fontFamily">@font/arial_italic</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">italic</item>
 	</style>
@@ -1057,40 +1058,31 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
 	</style>
-	<style name="Input_2" parent="Input_1">
-		<item name="android:fontFamily">@font/arial</item>
-		<item name="android:textColor">@color/black</item>
-	</style>
-	<style name="Input_4" parent="Input_2">
-		<item name="android:background">@color/white</item>
-		<item name="android:fontFamily">@font/arial</item>
+	<style name="Input_3" parent="Input_1">
+		<item name="android:fontFamily">arial</item>
 		<item name="android:textSize">13.33sp</item>
 	</style>
 	<style name="Label_2" parent="Label_1">
-		<item name="android:fontFamily">@font/arial</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textStyle">normal</item>
 	</style>
 	<style name="Select_1">
-		<item name="android:background">@color/white</item>
-		<item name="android:fontFamily">@font/arial</item>
+		<item name="android:fontFamily">arial</item>
 		<item name="android:fontWeight">400</item>
-		<item name="android:textColor">@color/black</item>
 		<item name="android:textSize">11sp</item>
 		<item name="android:textStyle">normal</item>
 	</style>
-	<style name="Input_3" parent="Input_2">
+	<style name="Input_2" parent="Input_1">
 		<item name="android:background">@color/white_smoke_1</item>
-		<item name="android:fontFamily">@font/arial</item>
+		<item name="android:fontFamily">arial</item>
 		<item name="android:textSize">10sp</item>
 	</style>
-	<style name="Input_6" parent="Input_3">
-		<item name="android:fontFamily">@font/arial</item>
+	<style name="Input_5" parent="Input_2">
+		<item name="android:fontFamily">arial</item>
 		<item name="android:textColor">@color/gray</item>
 	</style>
-	<style name="Input_5" parent="Input_1">
+	<style name="Input_4" parent="Input_1">
 		<item name="android:fontFamily">sans-serif</item>
-		<item name="android:textColor">@color/black</item>
 		<item name="android:textSize">11sp</item>
 	</style>
 </resources>
@@ -1137,33 +1129,15 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <!-- filename: res/drawable/form_entry.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-	<item>
-		<shape android:shape="rectangle">
-		    <solid android:color="@color/white" />
-		</shape>
-	</item>
-	<item>
-		<shape android:shape="rectangle">
-		    <stroke android:width="2dp" android:color="@color/black" />
-		</shape>
-	</item>
-</layer-list>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	<stroke android:width="2dp" android:color="@color/black" />
+</shape>
 <!-- filename: res/drawable/input_order.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-	<item>
-		<shape android:shape="rectangle">
-		    <solid android:color="@color/white" />
-		</shape>
-	</item>
-	<item>
-		<shape android:shape="rectangle">
-		    <stroke android:width="1dp" android:color="@color/dark_gray" />
-		</shape>
-	</item>
-</layer-list>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	<stroke android:width="1dp" android:color="@color/dark_gray" />
+</shape>
 <!-- filename: res/drawable/select_hour.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>

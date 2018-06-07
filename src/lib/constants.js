@@ -115,17 +115,6 @@ export const INLINE_CHROME =
     'TEXT'
 ];
 
-export const INHERIT_ANDROID =
-{
-    'TextView': {
-        'fontFamily': 'android:fontFamily="{0}"',
-        'fontSize': 'android:textSize="{0}"',
-        'fontWeight': 'android:fontWeight="{0}"',
-        'fontStyle': 'android:textStyle="{0}"',
-        'color': 'android:textColor="{0}"'
-    }
-};
-
 export const DENSITY_ANDROID =
 {
     LDPI: 120,
@@ -155,27 +144,6 @@ export const BUILD_ANDROID =
 };
 
 BUILD_ANDROID.LATEST = BUILD_ANDROID.OREO_1;
-
-export const API_ANDROID = {
-    [BUILD_ANDROID.OREO]: {
-        android: ['fontWeight'],
-        customizations: {}
-    },
-    [BUILD_ANDROID.JELLYBEAN_1]: {
-        android: ['labelFor'],
-        customizations: {}
-    },
-    [BUILD_ANDROID.LOLLIPOP]: {
-        android: ['layout_columnWeight'],
-        customizations: {
-            'Button': {
-                android: {
-                    textAllCaps: 'false'
-                }
-            }
-        }
-    }
-};
 
 export const XMLNS_ANDROID =
 {

@@ -1,4 +1,4 @@
-import { WIDGET_ANDROID, BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, XMLNS_ANDROID, BUILD_ANDROID, DENSITY_ANDROID, API_ANDROID } from './lib/constants';
+import { WIDGET_ANDROID, BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, XMLNS_ANDROID, BUILD_ANDROID, DENSITY_ANDROID } from './lib/constants';
 import * as Util from './lib/util';
 import * as Color from './lib/color';
 import * as Element from './lib/element';
@@ -9,6 +9,7 @@ import { setConstraints } from './constraint';
 import { setResourceStyle, getViewAttributes, writeResourceStringXml, writeResourceArrayXml, writeResourceStyleXml, writeResourceFontXml, writeResourceColorXml, writeResourceDrawableXml } from './resource';
 import { renderViewLayout, renderViewTag, insertViewBeforeAfter } from './render';
 import parseRTL from './localization';
+import { API_ANDROID } from './customizations';
 import SETTINGS from './settings';
 
 function writeFrameLayout(node, parent) {
@@ -28,7 +29,7 @@ function writeConstraintLayout(node, parent) {
     return renderViewLayout(node, parent, WIDGET_ANDROID.CONSTRAINT);
 }
 
-function writeGridLayout(node, parent, columnCount = 2) {
+function writeGridLayout(node, parent, columnCount) {
     node.android('columnCount', columnCount);
     return renderViewLayout(node, parent, WIDGET_ANDROID.GRID);
 }
@@ -727,7 +728,7 @@ export function parseDocument(element) {
     output = insertViewBeforeAfter(output);
     output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
     if (SETTINGS.useUnitDP) {
-        output = Util.insetDP(output, SETTINGS.density);
+        output = Util.replaceDP(output, SETTINGS.density);
     }
     return output;
 }

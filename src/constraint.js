@@ -76,10 +76,11 @@ function createGuideline(parent, node, orientation = '', opposite = false, perce
                 [beginPercent]: (percent != -1 ? percent : formatPX(Math.max(node.bounds.left - parent.box.left, 0)))
             }
         };
+        const leftRight = (opposite ? 'right' : 'left');
         let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
         addViewAfter(node.id, xml);
-        node.app(map[(opposite ? 'right' : 'left')], id)
-            .delete('app', map[(opposite ? 'left' : 'right')])
+        node.app(map[leftRight], id)
+            .delete('app', map[leftRight])
             .constraint.horizontal = true;
     }
     if (!node.constraint.vertical && (orientation == '' || orientation == 'vertical')) {
@@ -91,10 +92,11 @@ function createGuideline(parent, node, orientation = '', opposite = false, perce
                 [beginPercent]: (percent != -1 ? percent : formatPX(Math.max(node.bounds.top - parent.box.top, 0)))
             }
         };
+        const topBottom = (opposite ? 'bottom' : 'top');
         let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
         addViewAfter(node.id, xml);
-        node.app(map[(opposite ? 'bottom' : 'top')], id)
-            .delete('app', map[(opposite ? 'top' : 'bottom')])
+        node.app(map[topBottom], id)
+            .delete('app', map[topBottom])
             .constraint.vertical = true;
     }
 }

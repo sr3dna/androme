@@ -1,6 +1,6 @@
 import { WIDGET_ANDROID, BUILD_ANDROID } from './lib/constants';
-import { generateId, cameltoLowerCase, convertPX, insetDP, isNumber, padLeft, hasValue } from './lib/util';
-import { parseRGBA, findNearestColor } from './lib/color';
+import { generateId, cameltoLowerCase, convertPX, replaceDP, isNumber, padLeft, hasValue } from './lib/util';
+import { parseRGBA, convertRGBtoHex, findNearestColor } from './lib/color';
 import { getStyle, getBoxSpacing } from './lib/element';
 import { getDataLevel, parseTemplateMatch, parseTemplateData } from './lib/xml';
 import SETTINGS from './settings';
@@ -307,19 +307,22 @@ export function setResourceStyle(NODE_CACHE) {
                         }
                         break;
                     case 2:
-                        if ((match = value.match(/fontFamily="(.*?)"$/)) != null) {
-                            fontName = match[1].toLowerCase().split(',')[0].trim();
+                        if ((match = value.match(/fontFamily=("+(.*?)"+)$/)) != null) {
+                            fontName = match[2].toLowerCase().split(',')[0].replace(/"/g, '').trim();
                             if ((FONT_ANDROID[fontName] != null && SETTINGS.targetAPI >= FONT_ANDROID[fontName]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontName] != null && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontName]])) {
                                 system = true;
-                                value = value.replace(`"${match[1]}"`, `"${fontName}"`);
+                                value = value.replace(match[1], `"${fontName}"`);
                             }
                             else {
-                                value = value.replace(`"${match[1]}"`, `"@font/${fontName + (fontStyle != 'normal' ? `_${fontStyle}` : '') + (fontWeight != '400' ? `_${FONTWEIGHT_ANDROID[fontWeight] || fontWeight}` : '')}"`);
+                                value = value.replace(match[1], `"@font/${fontName.replace(/ /g, '_') + (fontStyle != 'normal' ? `_${fontStyle}` : '') + (fontWeight != '400' ? `_${FONTWEIGHT_ANDROID[fontWeight] || fontWeight}` : '')}"`);
                             }
                         }
                         break;
                     case 4:
                         if ((match = parseRGBA(value)) != null) {
+                            if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(match[1])) {
+                                continue;
+                            }
                             const name = addResourceColor(match[1]);
                             value = value.replace(match[0], name);
                         }
@@ -328,7 +331,10 @@ export function setResourceStyle(NODE_CACHE) {
                         if (labelFor != null) {
                             value = labelFor.styleAttributes[i];
                         }
-                        if ((match = parseRGBA(value)) != null) {
+                        if (hasValue(value) && (match = parseRGBA(value)) != null) {
+                            if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(match[1])) {
+                                continue;
+                            }
                             const name = addResourceColor(match[1]);
                             value = value.replace(match[0], name);
                         }
@@ -495,7 +501,7 @@ export function setResourceStyle(NODE_CACHE) {
         if (tag != null) {
             for (const attr in tag) {
                 if (tag[attr].includes(node.id)) {
-                    node.attr((SETTINGS.useUnitDP ? insetDP(attr, SETTINGS.density, true) : attr));
+                    node.attr((SETTINGS.useUnitDP ? replaceDP(attr, SETTINGS.density, true) : attr));
                 }
             }
         }
@@ -694,7 +700,7 @@ export function setBackgroundStyle(node) {
         attributes[i] = attributes[i](style[i]);
     }
     attributes.border[2] = addResourceColor(attributes.border[2]);
-    if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0) {
+    if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(attributes.backgroundColor[0])))) {
         attributes.backgroundColor = null;
     }
     else {
@@ -872,7 +878,7 @@ export function writeResourceStyleXml() {
         }
         xml = parseTemplateData(template, data);
         if (SETTINGS.useUnitDP) {
-            xml = insetDP(xml, SETTINGS.density, true);
+            xml = replaceDP(xml, SETTINGS.density, true);
         }
     }
     return xml;
@@ -944,7 +950,7 @@ export function writeResourceDrawableXml() {
         }
         xml = parseTemplateData(template, data);
         if (SETTINGS.useUnitDP) {
-            xml = insetDP(xml, SETTINGS.density);
+            xml = replaceDP(xml, SETTINGS.density);
         }
     }
     return xml;

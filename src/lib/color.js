@@ -147,43 +147,22 @@ const HSL_SORTED = [];
 for (const i in X11_CSS3) {
     const x11 = X11_CSS3[i];
     for (const j in x11) {
-        x11.rgb = HextoRGB(x11[j]);
-        x11.hsl = RGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
+        x11.rgb = convertHextoRGB(x11[j]);
+        x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
         HSL_SORTED.push({ name: i, hex: x11.hex, hsl: x11.hsl });
     }
 }
 HSL_SORTED.sort(sortHSL);
 
-function RGBtoHex(n) {
-    const hex = '0123456789ABCDEF';
-    n = parseInt(n);
-    if (isNaN(n)) {
-        return '00';
-    }
-    n = Math.max(0, Math.min(n, 255));
-    return hex.charAt((n - (n % 16)) / 16) + hex.charAt(n % 16);
-}
-
-function HextoRGB(value) {
-    value = value.replace('#', '').trim();
-    if (value.length == 3) {
-        value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
-    }
-    if (value.length == 6) {
-        return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
-    }
-    return null;
-}
-
-function HextoHSL(value) {
-    const rgb = HextoRGB(value);
+function convertHextoHSL(value) {
+    const rgb = convertHextoRGB(value);
     if (rgb != null) {
-        return RGBtoHSL(rgb.r, rgb.g, rgb.b);
+        return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
     }
     return null;
 }
 
-function RGBtoHSL(r, g, b) {
+function convertRGBtoHSL(r, g, b) {
     r = parseInt(r) / 255;
     g = parseInt(g) / 255;
     b = parseInt(b) / 255;
@@ -225,7 +204,7 @@ function sortHSL(a, b) {
 }
 
 export function findNearestColor(value) {
-    const hsl = HextoHSL(value);
+    const hsl = convertHextoHSL(value);
     if (hsl) {
         const result = HSL_SORTED.slice();
         result.push({ name: '', hsl });
@@ -252,7 +231,28 @@ export function convertRGB({ rgb }) {
 export function parseRGBA(value) {
     const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
     if (match != null && match.length >= 4) {
-        return [match[0], `#${RGBtoHex(match[1])}${RGBtoHex(match[2])}${RGBtoHex(match[3])}`, parseInt((match[4] != null ? match[4] : 1))];
+        return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, parseInt((match[4] != null ? match[4] : 1))];
+    }
+    return null;
+}
+
+export function convertRGBtoHex(n) {
+    const hex = '0123456789ABCDEF';
+    n = parseInt(n);
+    if (isNaN(n)) {
+        return '00';
+    }
+    n = Math.max(0, Math.min(n, 255));
+    return hex.charAt((n - (n % 16)) / 16) + hex.charAt(n % 16);
+}
+
+export function convertHextoRGB(value) {
+    value = value.replace('#', '').trim();
+    if (value.length == 3) {
+        value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
+    }
+    if (value.length == 6) {
+        return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
     }
     return null;
 }

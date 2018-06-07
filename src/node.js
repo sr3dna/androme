@@ -1,8 +1,9 @@
-import { WIDGET_ANDROID, BUILD_ANDROID, API_ANDROID, INHERIT_ANDROID, FIXED_ANDROID, MAPPING_CHROME } from './lib/constants';
+import { WIDGET_ANDROID, FIXED_ANDROID, MAPPING_CHROME, BUILD_ANDROID } from './lib/constants';
 import * as Util from './lib/util';
 import { getRangeBounds, parseStyle } from './lib/element';
 import * as Resource from './resource';
 import parseRTL from './localization';
+import { API_ANDROID } from './customizations';
 
 export default class Node {
     constructor(id, element, api, options = {}) {
@@ -906,7 +907,7 @@ export default class Node {
         node.setAndroidId(WIDGET_ANDROID.TEXT);
         node.setBounds(false, element);
         if (parent != null) {
-            const inherit = INHERIT_ANDROID[WIDGET_ANDROID.TEXT];
+            const inherit = Resource.ACTION_ANDROID['TextView']['setComputedStyle'];
             const style = [];
             for (const prop in inherit) {
                 let value = parent.style[prop]; 

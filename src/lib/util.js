@@ -121,7 +121,7 @@ export function convertSP(value, dpi, unit = true) {
     return convertDP(value, dpi, unit, true);
 }
 
-export function insetDP(xml, dpi, font = false) {
+export function replaceDP(xml, dpi, font = false) {
     return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, true, font) + capture[2]);
 }
 
