@@ -139,12 +139,12 @@ export function setConstraints() {
         rightLeft: parseRTL('layout_constraintRight_toLeftOf')
     });
     for (const node of NODE_CACHE.visible) {
-        const constraint = node.isView(WIDGET_ANDROID.CONSTRAINT);
-        const relative = node.isView(WIDGET_ANDROID.RELATIVE);
+        const constraint = node.is(WIDGET_ANDROID.CONSTRAINT);
+        const relative = node.is(WIDGET_ANDROID.RELATIVE);
         const flex = node.flex;
         if (constraint || relative || flex.enabled) {
             node.expandDimensions();
-            if (node.isView(WIDGET_ANDROID.LINEAR)) {
+            if (node.is(WIDGET_ANDROID.LINEAR)) {
                 if (node.renderChildren.some(item => item.flex.direction.indexOf('row') != -1)) {
                     node.constraint.layoutWidth = true;
                     node.constraint.expand = true;
@@ -230,7 +230,7 @@ export function setConstraints() {
                             }
                             else {
                                 if (current.viewHeight == 0 && bounds1.top == bounds2.top && bounds1.bottom == bounds2.bottom) {
-                                    const baseline = (current.isView(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.isView(WIDGET_ANDROID.TEXT) && adjacent.style.verticalAlign == 'baseline');
+                                    const baseline = (current.is(WIDGET_ANDROID.TEXT) && current.style.verticalAlign == 'baseline' && adjacent.is(WIDGET_ANDROID.TEXT) && adjacent.style.verticalAlign == 'baseline');
                                     current.anchor(LAYOUT[(baseline ? 'baseline' : 'top')], adjacent);
                                     current.anchor(LAYOUT['bottom'], adjacent);
                                 }
@@ -415,7 +415,7 @@ export function setConstraints() {
                                         current.android(`layout_${WH.toLowerCase()}`, 'wrap_content');
                                     }
                                     else if (current.flex.grow > 0) {
-                                        current.android(`layout_${WH.toLowerCase()}`, (node.renderParent.isView(WIDGET_ANDROID.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') != -1 ? 'wrap_content' : '0px'));
+                                        current.android(`layout_${WH.toLowerCase()}`, (node.renderParent.is(WIDGET_ANDROID.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') != -1 ? 'wrap_content' : '0px'));
                                     }
                                     if (current.flex.shrink == 0) {
                                         current.app(`layout_constrained${WH}`, 'true');

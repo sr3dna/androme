@@ -6,7 +6,7 @@
     <style>
         body {
             margin: 0px;
-            font-family: Tahoma;
+            font-family: Arial;
             font-size: 11px;
             padding: 10px;
         }
@@ -16,7 +16,9 @@
             list-style: none;
         }
         h2 {
+            font-family: Tahoma;
             font-size: 12px;
+            font-weight: bold;
             color: #fff;
             background-color: slategray;
             margin: 0px;
@@ -47,6 +49,7 @@
             overflow: hidden;
         }
         li > label {
+            font-family: Arial;
             width: 100px;
             padding-top: 3px;
             margin-right: 5px;
@@ -72,6 +75,7 @@
             vertical-align: sub;
         }
         div > label {
+            font-family: sans-serif;
             margin-right: 1px;
         }
         .empty {
@@ -122,6 +126,7 @@
             let resource = androme.writeResourceStringXml() + '\n\n' +
                            androme.writeResourceArrayXml() + '\n\n' +
                            androme.writeResourceStyleXml() + '\n\n' +
+                           androme.writeResourceFontXml() + '\n\n' +
                            androme.writeResourceColorXml() + '\n\n' +
                            androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
@@ -134,7 +139,7 @@
         <form name="entry" autocomplete="off">
             <ul>
                 <li>
-                    <label>Order:</label>
+                    <label style="font-style: italic;">Order:</label>
                     <input type="text" name="order" class="null-allowed" />
                 </li>
                 <li>
@@ -423,7 +428,7 @@
             <hr />
             <ul>
                 <li>
-                    <label>Series:</label>
+                    <label style="font-style: italic;">Series:</label>
                     <select name="series" class="req-pageurl-4" style="width: 200px;">
                         <option value="0">00 - Inactive</option>
                         <option value="1">01 - Active</option>

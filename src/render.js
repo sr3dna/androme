@@ -29,7 +29,7 @@ function getEnclosingTag(depth, tagName, id, content = '', preXml = '', postXml 
 }
 
 function setGridSpace(node) {
-    if (node.parent.isView(WIDGET_ANDROID.GRID)) {
+    if (node.parent.is(WIDGET_ANDROID.GRID)) {
         const dimensions = getBoxSpacing(node.parentOriginal.element, SETTINGS.supportRTL, true);
         const options = {
             android: {

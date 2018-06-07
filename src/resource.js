@@ -1,4 +1,4 @@
-import { WIDGET_ANDROID } from './lib/constants';
+import { WIDGET_ANDROID, BUILD_ANDROID } from './lib/constants';
 import { generateId, cameltoLowerCase, convertPX, insetDP, isNumber, padLeft, hasValue } from './lib/util';
 import { parseRGBA, findNearestColor } from './lib/color';
 import { getStyle, getBoxSpacing } from './lib/element';
@@ -8,10 +8,21 @@ import SETTINGS from './settings';
 import STRING_TMPL from './tmpl/resources/string';
 import STRINGARRAY_TMPL from './tmpl/resources/string-array';
 import STYLE_TMPL from './tmpl/resources/style';
+import FONT_TMPL from './tmpl/resources/font';
 import COLOR_TMPL from './tmpl/resources/color';
 import DRAWABLE_TMPL from './tmpl/resources/drawable';
 import SHAPERECTANGLE_TMPL from './tmpl/resources/shape-rectangle';
 import LAYERLIST_TMPL from './tmpl/resources/layer-list';
+
+const RESOURCE = {
+    STRING: new Map(),
+    ARRAY: new Map(),
+    COLOR: new Map(),
+    FONT: new Map(),
+    IMAGE: new Map(),
+    DRAWABLE: new Map(),
+    STYLE: new Map()
+};
 
 const PROPERTY_ANDROID =
 {
@@ -20,10 +31,10 @@ const PROPERTY_ANDROID =
         'backgroundColor': 'android:background="{0}"'
     },
     'computedStyle': {
-        'fontFamily': 'android:fontFamily="{0}"',
-        'fontSize': 'android:textSize="{0}"',
         'fontWeight': 'android:fontWeight="{0}"',
         'fontStyle': 'android:textStyle="{0}"',
+        'fontFamily': 'android:fontFamily="{0}"',
+        'fontSize': 'android:textSize="{0}"',
         'color': 'android:textColor="{0}"',
         'backgroundColor': 'android:background="{0}"'
     },
@@ -141,13 +152,52 @@ export const ACTION_ANDROID =
     }
 };
 
-export const RESOURCE = {
-    STRING: new Map(),
-    ARRAY: new Map(),
-    COLOR: new Map(),
-    IMAGE: new Map(),
-    DRAWABLE: new Map(),
-    STYLE: new Map()
+const FONT_ANDROID = {
+    'sans-serif': BUILD_ANDROID.ICE_CREAM_SANDWICH,
+    'sans-serif-thin': BUILD_ANDROID.JELLYBEAN,
+    'sans-serif-light': BUILD_ANDROID.JELLYBEAN,
+    'sans-serif-condensed': BUILD_ANDROID.JELLYBEAN,
+    'sans-serif-condensed-light': BUILD_ANDROID.JELLYBEAN,
+    'sans-serif-medium': BUILD_ANDROID.LOLLIPOP,
+    'sans-serif-black': BUILD_ANDROID.LOLLIPOP,
+    'sans-serif-smallcaps': BUILD_ANDROID.LOLLIPOP,
+    'serif-monospace' : BUILD_ANDROID.LOLLIPOP,
+    'serif': BUILD_ANDROID.LOLLIPOP,
+    'casual' : BUILD_ANDROID.LOLLIPOP,
+    'cursive': BUILD_ANDROID.LOLLIPOP,
+    'monospace': BUILD_ANDROID.LOLLIPOP,
+    'sans-serif-condensed-medium': BUILD_ANDROID.OREO
+};
+
+const FONTALIAS_ANDROID = {
+    'arial': 'sans-serif',
+    'helvetica': 'sans-serif',
+    'tahoma': 'sans-serif',
+    'verdana': 'sans-serif',
+    'times': 'serif',
+    'times new roman': 'serif',
+    'palatino': 'serif',
+    'georgia': 'serif',
+    'baskerville': 'serif',
+    'goudy': 'serif',
+    'fantasy': 'serif',
+    'itc stone serif': 'serif',
+    'sans-serif-monospace': 'monospace',
+    'monaco': 'monospace',
+    'courier': 'serif-monospace',
+    'courier new': 'serif-monospace'
+};
+
+const FONTWEIGHT_ANDROID = {
+    '100': 'thin',
+    '200': 'extra_light',
+    '300': 'light',
+    '400': 'normal',
+    '500': 'medium',
+    '600': 'semi_bold',
+    '700': 'bold',
+    '800': 'extra_bold',
+    '900': 'black'
 };
 
 function parseBorderStyle(value) {
@@ -229,13 +279,73 @@ export function setResourceStyle(NODE_CACHE) {
             value = {};
             return value;
         });
-        for (const node of nodes) {
+        for (let node of nodes) {
+            if (node.labelFor != null) {
+                continue;
+            }
+            let system = false;
+            let fontName = null;
+            let fontWeight = null;
+            let fontStyle = null;
+            let labelFor = null;
+            if (node.label != null) {
+                labelFor = node;
+                node = node.label;
+            }
             for (let i = 0; i < node.styleAttributes.length; i++) {
-                const attr = parseStyleAttribute(node.styleAttributes[i]);
-                if (sorted[i][attr] == null) {
-                    sorted[i][attr] = [];
+                let value = node.styleAttributes[i];
+                let match = null;
+                switch (i) {
+                    case 0:
+                        if ((match = value.match(/fontWeight="(.*?)"$/)) != null) {
+                            fontWeight = match[1];
+                        }
+                        break;
+                    case 1:
+                        if ((match = value.match(/textStyle="(.*?)"$/)) != null) {
+                            fontStyle = match[1];
+                        }
+                        break;
+                    case 2:
+                        if ((match = value.match(/fontFamily="(.*?)"$/)) != null) {
+                            fontName = match[1].toLowerCase().split(',')[0].trim();
+                            if ((FONT_ANDROID[fontName] != null && SETTINGS.targetAPI >= FONT_ANDROID[fontName]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontName] != null && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontName]])) {
+                                system = true;
+                                value = value.replace(`"${match[1]}"`, `"${fontName}"`);
+                            }
+                            else {
+                                value = value.replace(`"${match[1]}"`, `"@font/${fontName + (fontStyle != 'normal' ? `_${fontStyle}` : '') + (fontWeight != '400' ? `_${FONTWEIGHT_ANDROID[fontWeight] || fontWeight}` : '')}"`);
+                            }
+                        }
+                        break;
+                    case 4:
+                        if ((match = parseRGBA(value)) != null) {
+                            const name = addResourceColor(match[1]);
+                            value = value.replace(match[0], name);
+                        }
+                        break;
+                    case 5:
+                        if (labelFor != null) {
+                            value = labelFor.styleAttributes[i];
+                        }
+                        if ((match = parseRGBA(value)) != null) {
+                            const name = addResourceColor(match[1]);
+                            value = value.replace(match[0], name);
+                        }
+                        break;
                 }
-                sorted[i][attr].push(node.id);
+                if (hasValue(value)) {
+                    if (sorted[i][value] == null) {
+                        sorted[i][value] = [];
+                    }
+                    sorted[i][value].push((labelFor || node).id);
+                }
+            }
+            if (!system) {
+                if (!RESOURCE.FONT.has(fontName)) {
+                    RESOURCE.FONT.set(fontName, {});
+                }
+                RESOURCE.FONT.get(fontName)[`${fontStyle}-${fontWeight}`] = true;
             }
         }
         style[tag] = {};
@@ -445,7 +555,7 @@ export function addResourceString(node, value) {
     }
     if (hasValue(value)) {
         if (node != null) {
-            if (node.isView(WIDGET_ANDROID.TEXT)) {
+            if (node.is(WIDGET_ANDROID.TEXT)) {
                 const match = (node.style.textDecoration != null ? node.style.textDecoration.match(/(underline|line-through)/) : null);
                 if (match != null) {
                     switch (match[0]) {
@@ -468,10 +578,7 @@ export function addResourceString(node, value) {
                 }
             }
             name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-            if (number) {
-                name = `number_${name}`;
-            }
-            else if (/^[0-9]/.test(value)) {
+            if (number || /^[0-9]/.test(value)) {
                 name = `__${name}`;
             }
             else if (!/\w+/.test(name) && node != null) {
@@ -520,7 +627,7 @@ export function addResourceStringArray(node) {
         }
     }
     if (stringArray.size > 0 || numberArray.size > 0) {
-        const name = insertResourceAsset(RESOURCE.ARRAY, `${element.androidNode.androidId}_array`, (stringArray.size ? stringArray : numberArray));
+        const name = insertResourceAsset(RESOURCE.ARRAY, `${node.androidId}_array`, (stringArray.size ? stringArray : numberArray));
         return { entries: name };
     }
     return null;
@@ -565,36 +672,6 @@ export function setBoxSpacing(node) {
         result[i] += 'px';
     }
     return result;
-}
-
-export function getViewAttributes(node) {
-    let output = '';
-    const attributes = node.combine();
-    if (attributes.length > 0) {
-        const indent = padLeft(node.renderDepth + 1);
-        for (let i = 0; i < attributes.length; i++) {
-            if (attributes[i].startsWith('android:id=')) {
-                attributes.unshift(...attributes.splice(i, 1));
-                break;
-            }
-        }
-        output = (node.renderDepth == 0 ? '{@0}' : '') + attributes.map(value => `\n${indent + value}`).join('');
-    }
-    return output;
-}
-
-export function parseStyleAttribute(value) {
-    const rgb = parseRGBA(value);
-    if (rgb != null) {
-        const name = addResourceColor(rgb[1]);
-        return value.replace(rgb[0], name);
-    }
-    const match = value.match(/#[A-Z0-9]{6}/);
-    if (match != null) {
-        const name = addResourceColor(match[0]);
-        return value.replace(match[0], name);
-    }
-    return value;
 }
 
 export function setBackgroundStyle(node) {
@@ -709,6 +786,22 @@ export function setBackgroundStyle(node) {
     return null;
 }
 
+export function getViewAttributes(node) {
+    let output = '';
+    const attributes = node.combine();
+    if (attributes.length > 0) {
+        const indent = padLeft(node.renderDepth + 1);
+        for (let i = 0; i < attributes.length; i++) {
+            if (attributes[i].startsWith('android:id=')) {
+                attributes.unshift(...attributes.splice(i, 1));
+                break;
+            }
+        }
+        output = (node.renderDepth == 0 ? '{@0}' : '') + attributes.map(value => `\n${indent + value}`).join('');
+    }
+    return output;
+}
+
 export function writeResourceStringXml() {
     RESOURCE.STRING = new Map([...RESOURCE.STRING.entries()].sort());
     let xml = '';
@@ -778,9 +871,43 @@ export function writeResourceStyleXml() {
             rootItem['1'].push(styleItem);
         }
         xml = parseTemplateData(template, data);
+        if (SETTINGS.useUnitDP) {
+            xml = insetDP(xml, SETTINGS.density, true);
+        }
     }
     return xml;
 }
+
+export function writeResourceFontXml() {
+    RESOURCE.FONT = new Map([...RESOURCE.FONT.entries()].sort());
+    let xml = '';
+    if (RESOURCE.FONT.size > 0) {
+        const template = parseTemplateMatch(FONT_TMPL);
+        for (const [name, font] of RESOURCE.FONT.entries()) {
+            const data = {
+                '#include': {},
+                '#exclude': {},
+                '0': [{
+                    name,
+                    '1': []
+                }]
+            };
+            data[(SETTINGS.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
+            const rootItem = getDataLevel(data, '0');
+            for (const attr in font) {
+                const [style, weight] = attr.split('-');
+                rootItem['1'].push({
+                    style,
+                    weight,
+                    font: `@font/${name + (style == 'normal' && weight == '400' ? `_${style}` : (style != 'normal' ? `_${style}` : '') + (weight != '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
+                });
+            }
+            xml += '\n\n' + parseTemplateData(template, data);
+        }
+    }
+    return xml.trim();
+}
+
 
 export function writeResourceColorXml() {
     let xml = '';

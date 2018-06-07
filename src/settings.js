@@ -11,6 +11,7 @@ const SETTINGS = {
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
+    useFontAlias: true,
     supportRTL: true,
     numberResourceValue: false,
     whitespaceHorizontalOffset: 4,

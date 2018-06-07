@@ -6,7 +6,7 @@ import { NODE_CACHE, generateNodeId } from './cache';
 import Node from './node';
 import NodeList from './nodelist';
 import { setConstraints } from './constraint';
-import { setResourceStyle, getViewAttributes, writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml } from './resource';
+import { setResourceStyle, getViewAttributes, writeResourceStringXml, writeResourceArrayXml, writeResourceStyleXml, writeResourceFontXml, writeResourceColorXml, writeResourceDrawableXml } from './resource';
 import { renderViewLayout, renderViewTag, insertViewBeforeAfter } from './render';
 import parseRTL from './localization';
 import SETTINGS from './settings';
@@ -107,7 +107,7 @@ function setAccessibility() {
                     current = parent;
                     parent = parent.renderParent;
                 }
-                if (label != null && label.isView(WIDGET_ANDROID.TEXT)) {
+                if (label != null && label.is(WIDGET_ANDROID.TEXT)) {
                     label.android('labelFor', node.stringId);
                 }
             case WIDGET_ANDROID.SPINNER:
@@ -122,7 +122,7 @@ function setAccessibility() {
 
 function setMarginPadding() {
     for (const node of NODE_CACHE) {
-        if (node.isView(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
+        if (node.is(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
             switch (node.android('orientation')) {
                 case 'horizontal':
                     let left = node.box.left + node.paddingLeft;
@@ -201,7 +201,7 @@ function setLayoutWeight() {
         if (rows.length > 1) {
             const columnLength = rows[0].renderChildren.length;
             if (rows.reduce((a, b) => (a && a == b.renderChildren.length ? a: 0), columnLength) > 0) {
-                const horizontal = !node.isHorizontal();
+                const horizontal = !node.horizontal;
                 const columnDimension = new Array(columnLength).fill(Number.MIN_VALUE);
                 for (const row of rows) {
                     for (let i = 0; i < row.renderChildren.length; i++) {
@@ -657,7 +657,7 @@ export function parseDocument(element) {
                         }
                     }
                     if (!nodeY.renderParent) {
-                        if (parent.isView(WIDGET_ANDROID.GRID)) {
+                        if (parent.is(WIDGET_ANDROID.GRID)) {
                             let siblings = null;
                             if (SETTINGS.useLayoutWeight) {
                                 siblings = new NodeList(nodeY.gridSiblings);
@@ -734,4 +734,4 @@ export function parseDocument(element) {
 
 export const settings = SETTINGS;
 export { BUILD_ANDROID, DENSITY_ANDROID, API_ANDROID };
-export { writeResourceDrawableXml, writeResourceColorXml, writeResourceStyleXml, writeResourceArrayXml, writeResourceStringXml };
+export { writeResourceStringXml, writeResourceArrayXml, writeResourceStyleXml, writeResourceFontXml, writeResourceColorXml, writeResourceDrawableXml };

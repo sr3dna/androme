@@ -130,7 +130,7 @@ export function convertInt(value) {
 }
 
 export function isNumber(value) {
-    return /^[0-9]\d*(\.\d+)?/.test(value.trim());
+    return /^[0-9]+\.?[0-9]*$/.test(value.trim());
 }
 
 export function search(obj, value) {

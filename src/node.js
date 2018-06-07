@@ -26,12 +26,13 @@ export default class Node {
         this.styleMap = styleMap;
         this.visible = true;
         this.styleAttributes = [];
-        this.label = null;
         this.constraint = {};
         this.wrapNode = null;
+        this.labelFor = null;
         this.parentIndex = Number.MAX_VALUE;
 
         this._tagName = null;
+        this._label = null;
         this._parent = null;
         this._parentOriginal = null;
         this._flex = null;
@@ -86,7 +87,7 @@ export default class Node {
         return this;
     }
     attr(value, overwrite = true) {
-        const match = value.match(/^(?:([a-z]+):)?([a-zA-Z_]+)="((?:@+?[a-z]+\/)?.+)"$/);
+        const match = value.match(/^(?:([a-z]+):)?(\w+)="((?:@+?[a-z]+\/)?.+)"$/);
         if (match != null) {
             this.add(match[1] || '_', match[2], match[3], overwrite);
         }
@@ -102,48 +103,26 @@ export default class Node {
         return this;
     }
     android(attr, value, overwrite = true) {
-        if (arguments.length == 0) {
-            return this._android;
-        }
-        else {
-            const result = this.add('android', attr, value, overwrite);
-            if (arguments.length >= 2) {
+        switch (arguments.length) {
+            case 0:
+                return this._android;
+            case 1:
+                return (this._android != null ? this._android[attr] : null);
+            default:
+                this.add('android', attr, value, overwrite);
                 return this;
-            }
-            else {
-                return result;
-            }
         }
     }
     app(attr, value, overwrite = true) {
-        if (arguments.length == 0) {
-            return this._app;
-        }
-        else {
-            const result = this.add('app', attr, value, overwrite);
-            if (arguments.length >= 2) {
+        switch (arguments.length) {
+            case 0:
+                return this._app;
+            case 1:
+                return (this._app != null ? this._app[attr] : null);
+            default:
+                this.add('app', attr, value, overwrite);
                 return this;
-            }
-            else {
-                return result;
-            }
         }
-    }
-    combine() {
-        const result = [];
-        this._namespaces.forEach(value => {
-            const obj = this[`_${value}`];
-            for (const attr in obj) {
-                if (value != '_') {
-                    result.push(`${value}:${attr}="${obj[attr]}"`);
-                }
-                else {
-                    result.push(`${attr}="${obj[attr]}"`);
-                }
-            }
-        });
-        result.sort();
-        return result;
     }
     css(attr, value) {
         if (arguments.length == 2) {
@@ -156,31 +135,9 @@ export default class Node {
             return (this.styleMap[attr] || this.style[attr]);
         }
     }
-    supported(obj, attr) {
-        for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
-            const version = API_ANDROID[i];
-            if (version != null && version[obj] != null && version[obj].includes(attr)) {
-                return false;
-            }
-        }
-        return true;
-    }
-    applyCustomizations() {
-        const api = API_ANDROID[this.api];
-        if (api != null) {
-            const customizations = api.customizations[this.widgetName];
-            if (customizations != null) {
-                for (const obj in customizations) {
-                    for (const attr in customizations[obj]) {
-                        this.add(obj, attr, customizations[obj][attr], false);
-                    }
-                }
-            }
-        }
-    }
     render(parent) {
         if (Node.is(parent)) {
-            if (parent.isView(WIDGET_ANDROID.LINEAR) && parent.id != 0) {
+            if (parent.is(WIDGET_ANDROID.LINEAR) && parent.id != 0) {
                 switch (this.widgetName) {
                     case WIDGET_ANDROID.LINEAR:
                     case WIDGET_ANDROID.RADIO_GROUP:
@@ -191,70 +148,12 @@ export default class Node {
             this.renderParent = parent;
             this.renderDepth = (parent.id == 0 ? 0 : parent.renderDepth + 1);
         }
+        return this;
     }
     hide() {
         this.renderParent = true;
         this.visible = false;
-    }
-    ascend() {
-        const result = [];
-        let current = this.parent;
-        while (current != null) {
-            if (current.id != 0) {
-                result.push(current);
-                current = current.parent;
-            }
-            else {
-                break;
-            }
-        }
-        return result;
-    }
-    cascade() {
-        function cascade(node) {
-            const current = [...node.children];
-            node.children.forEach(item => current.push(...cascade(item)));
-            return current;
-        }
-        return cascade(this);
-    }
-    expandDimensions() {
-        let [width, height] = [this.children.reduce((a, b) => Math.max(a, b.linear.right), 0), this.children.reduce((a, b) => Math.max(a, b.linear.bottom), 0)];
-        switch (this.style.position) {
-            case 'static':
-            case 'relative':
-                width -= this.linear.left;
-                height -= this.linear.top;
-                break;
-        }
-        width += this.paddingRight + this.borderRightWidth;
-        height += this.paddingBottom + this.borderBottomWidth;
-        let calibrate = false;
-        if (this.viewWidth < width) {
-            if (this.bounds.width < width) {
-                this.bounds.width = width;
-                this.bounds.right = this.bounds.left + this.bounds.width;
-                calibrate = true;
-            }
-            else {
-                width = this.bounds.width;
-            }
-            this.constraint.minWidth = Util.formatPX(width);
-        }
-        if (this.viewHeight < height) {
-            if (this.bounds.height < height) {
-                this.bounds.height = height;
-                this.bounds.bottom = this.bounds.top + this.bounds.height;
-                calibrate = true;
-            }
-            else {
-                height = this.bounds.height;
-            }
-            this.constraint.minHeight = Util.formatPX(height);
-        }
-        if (calibrate) {
-            this.setBounds(true);
-        }
+        return this;
     }
     anchor(position, adjacent = {}, orientation = '') {
         const overwrite = (adjacent.stringId == 'parent');
@@ -283,16 +182,55 @@ export default class Node {
         this.android(dimension, total)
             .css(dimension, total);
         this.setBounds(true);
+        return this;
     }
-    inheritGrid(node) {
-        for (const prop in node) {
-            if (prop.startsWith('grid')) {
-                if (node[prop] !== false) {
-                    this[prop] = node[prop];
+
+    combine() {
+        const result = [];
+        this._namespaces.forEach(value => {
+            const obj = this[`_${value}`];
+            for (const attr in obj) {
+                if (value != '_') {
+                    result.push(`${value}:${attr}="${obj[attr]}"`);
                 }
-                delete node[prop];
+                else {
+                    result.push(`${attr}="${obj[attr]}"`);
+                }
+            }
+        });
+        result.sort();
+        return result;
+    }
+    supported(obj, attr) {
+        for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
+            const version = API_ANDROID[i];
+            if (version != null && version[obj] != null && version[obj].includes(attr)) {
+                return false;
             }
         }
+        return true;
+    }
+    ascend() {
+        const result = [];
+        let current = this.parent;
+        while (current != null) {
+            if (current.id != 0) {
+                result.push(current);
+                current = current.parent;
+            }
+            else {
+                break;
+            }
+        }
+        return result;
+    }
+    cascade() {
+        function cascade(node) {
+            const current = [...node.children];
+            node.children.forEach(item => current.push(...cascade(item)));
+            return current;
+        }
+        return cascade(this);
     }
     intersect(rect, dimension = 'bounds') {
         const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
@@ -317,10 +255,7 @@ export default class Node {
             (rect.left >= this[dimension].left && rect.right <= this[dimension].right)
         );
     }
-    isHorizontal() {
-        return (this._android.orientation == 'horizontal');
-    }
-    isView(...views) {
+    is(...views) {
         for (const viewName of views) {
             if (this.widgetName == viewName) {
                 return true;
@@ -344,19 +279,19 @@ export default class Node {
         if (this.wrapNode != null) {
             parent = this.wrapNode.parentOriginal;
             [width, height] = this.childrenBox;
-            requireWrap = this.parent.isView(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
+            requireWrap = this.parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
         }
         else {
             parent = this.parent;
             width = this.element.offsetWidth + this.marginLeft + this.marginRight;
             height = this.element.offsetHeight + this.marginTop + this.marginBottom;
-            requireWrap = parent.isView(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
+            requireWrap = parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
         }
         const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + Util.convertInt(parent.style.borderLeftWidth) + Util.convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
         const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + Util.convertInt(parent.style.borderTopWidth) + Util.convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
-        if (this.overflow != 0 && !this.isView(WIDGET_ANDROID.TEXT)) {
-            this.android('layout_width', (this.isHorizontal() ? 'wrap_content' : 'match_parent'))
-                .android('layout_height', (this.isHorizontal() ? 'match_parent' : 'wrap_content'));
+        if (this.overflow != 0 && !this.is(WIDGET_ANDROID.TEXT)) {
+            this.android('layout_width', (this.horizontal ? 'wrap_content' : 'match_parent'))
+                .android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
         }
         else {
             if (this.android('layout_width') != '0px') {
@@ -442,7 +377,7 @@ export default class Node {
             }
         }
     }
-    setAttributes(...actions) {
+    setAttributes(actions) {
         const widget = Resource.ACTION_ANDROID[this.widgetName];
         const element = this.element;
         const result = {};
@@ -450,7 +385,7 @@ export default class Node {
             const nextElement = element.nextElementSibling;
             if (nextElement != null && nextElement.htmlFor == element.id) {
                 const node = nextElement.androidNode;
-                node.setAttributes(4);
+                node.setAttributes([2, 4]);
                 node.setAndroidId(WIDGET_ANDROID.TEXT);
                 const attributes = node.combine();
                 if (attributes.length > 0) {
@@ -654,6 +589,67 @@ export default class Node {
             }
         }
     }
+    applyCustomizations() {
+        const api = API_ANDROID[this.api];
+        if (api != null) {
+            const customizations = api.customizations[this.widgetName];
+            if (customizations != null) {
+                for (const obj in customizations) {
+                    for (const attr in customizations[obj]) {
+                        this.add(obj, attr, customizations[obj][attr], false);
+                    }
+                }
+            }
+        }
+    }
+    expandDimensions() {
+        let [width, height] = [this.children.reduce((a, b) => Math.max(a, b.linear.right), 0), this.children.reduce((a, b) => Math.max(a, b.linear.bottom), 0)];
+        switch (this.style.position) {
+            case 'static':
+            case 'relative':
+                width -= this.linear.left;
+                height -= this.linear.top;
+                break;
+        }
+        width += this.paddingRight + this.borderRightWidth;
+        height += this.paddingBottom + this.borderBottomWidth;
+        let calibrate = false;
+        if (this.viewWidth < width) {
+            if (this.bounds.width < width) {
+                this.bounds.width = width;
+                this.bounds.right = this.bounds.left + this.bounds.width;
+                calibrate = true;
+            }
+            else {
+                width = this.bounds.width;
+            }
+            this.constraint.minWidth = Util.formatPX(width);
+        }
+        if (this.viewHeight < height) {
+            if (this.bounds.height < height) {
+                this.bounds.height = height;
+                this.bounds.bottom = this.bounds.top + this.bounds.height;
+                calibrate = true;
+            }
+            else {
+                height = this.bounds.height;
+            }
+            this.constraint.minHeight = Util.formatPX(height);
+        }
+        if (calibrate) {
+            this.setBounds(true);
+        }
+    }
+    inheritGrid(node) {
+        for (const prop in node) {
+            if (prop.startsWith('grid')) {
+                if (node[prop] !== false) {
+                    this[prop] = node[prop];
+                }
+                delete node[prop];
+            }
+        }
+    }
 
     get horizontalBias() {
         const parent = this.renderParent;
@@ -732,6 +728,15 @@ export default class Node {
             maxBottom = Math.max(node.bounds.bottom, maxBottom);
         }
         return [maxRight - minLeft, maxBottom - minTop];
+    }
+    get label() {
+        return this._label;
+    }
+    set label(value) {
+        if (Node.is(value)) {
+            this._label = value;
+            value.labelFor = this;
+        }
     }
     get namespaces() {
         const result = [];
@@ -826,6 +831,9 @@ export default class Node {
     }
     get overflowY() {
         return ((this._overflow & 4) == 4);
+    }
+    get horizontal() {
+        return (this._android.orientation == 'horizontal');
     }
     get anchored() {
         return (this.constraint.horizontal && this.constraint.vertical);
