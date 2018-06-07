@@ -56,39 +56,30 @@ function deleteConstraints(node, orientation = '') {
     const map = LAYOUT_MAP.constraint;
     if (orientation == '' || orientation == 'horizontal') {
         node.delete('app', map['leftRight'], map['rightLeft']);
+        node.constraint.horizontal = false;
     }
     if (orientation == '' || orientation == 'vertical') {
         node.delete('app', map['bottomTop'], map['topBottom'], map['baseline']);
+        node.constraint.vertical = false;
     }
 }
 
-function setChainBias(nodes, index) {
-    const widthHeight = (index == 0 ? 'width' : 'height');
-    const horizontalVertical = (index == 0 ? 'Horizontal' : 'Vertical');
-    for (const node of nodes) {
-        const bias = parseFloat(((node.bounds.left - nodes.parent.box.left) + (node.bounds[widthHeight] / 2)) / nodes.parent.box[widthHeight]).toFixed(2);
-        deleteConstraints(node, horizontalVertical.toLowerCase());
-        setAlignParent(node, horizontalVertical.toLowerCase());
-        node.app(`layout_constraint${horizontalVertical}_bias`, bias);
-    }
-}
-
-function createGuideline(parent, node, orientation = '', percent) {
+function createGuideline(parent, node, orientation = '', opposite = false, percent = -1) {
     const map = LAYOUT_MAP.constraint;
-    const beginPercent = `layout_constraintGuide_${(percent != null ? 'percent' : 'begin')}`;
+    const beginPercent = `layout_constraintGuide_${(percent != -1 ? 'percent' : 'begin')}`;
     if (!node.constraint.horizontal && (orientation == '' || orientation == 'horizontal')) {
         const options = {
             android: {
                 orientation: 'vertical'
             },
             app: {
-                [beginPercent]: (percent != null ? percent : formatPX(Math.max(node.bounds.left - parent.box.left, 0)))
+                [beginPercent]: (percent != -1 ? percent : formatPX(Math.max(node.bounds.left - parent.box.left, 0)))
             }
         };
         let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
         addViewAfter(node.id, xml);
-        node.app(map['left'], id)
-            .delete('app', map['right'])
+        node.app(map[(opposite ? 'right' : 'left')], id)
+            .delete('app', map[(opposite ? 'left' : 'right')])
             .constraint.horizontal = true;
     }
     if (!node.constraint.vertical && (orientation == '' || orientation == 'vertical')) {
@@ -97,13 +88,13 @@ function createGuideline(parent, node, orientation = '', percent) {
                 orientation: 'horizontal'
             },
             app: {
-                [beginPercent]: (percent != null ? percent : formatPX(Math.max(node.bounds.top - parent.box.top, 0)))
+                [beginPercent]: (percent != -1 ? percent : formatPX(Math.max(node.bounds.top - parent.box.top, 0)))
             }
         };
         let [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
         addViewAfter(node.id, xml);
-        node.app(map['top'], id)
-            .delete('app', map['bottom'])
+        node.app(map[(opposite ? 'bottom' : 'top')], id)
+            .delete('app', map[(opposite ? 'top' : 'bottom')])
             .constraint.vertical = true;
     }
 }
@@ -474,11 +465,17 @@ export function setConstraints() {
                                         firstNode.app(chainStyle, 'spread_inside');
                                         break;
                                     case 'space-evenly':
-                                        setChainBias(chainDirection, index);
-                                        break;
-                                    case 'space-around':
                                         firstNode.app(chainStyle, 'spread');
                                         chainDirection.forEach(item => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
+                                        break;
+                                    case 'space-around':
+                                        firstNode
+                                            .app(`layout_constraint${HV}_chainStyle`, 'spread_inside')
+                                            .constraint[HV.toLowerCase()] = false;
+                                        lastNode.constraint[HV.toLowerCase()] = false;
+                                        const percent = (firstNode.bounds.left - node.box.left) / node.box[WH];
+                                        createGuideline(node, firstNode, HV.toLowerCase(), false, percent.toFixed(2));
+                                        createGuideline(node, lastNode, HV.toLowerCase(), true, (1 - percent).toFixed(2));
                                         break;
                                     default:
                                         let bias = 0.5;

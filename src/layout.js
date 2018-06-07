@@ -42,7 +42,7 @@ function writeDefaultLayout(node, parent) {
     }
 }
 
-function insetAttributes(output) {
+function setInlineAttributes(output) {
     const namespaces = {};
     for (const node of NODE_CACHE.visible) {
         node.setAndroidDimensions();
@@ -722,7 +722,7 @@ export function parseDocument(element) {
         }
         setAccessibility();
         setConstraints();
-        output = insetAttributes(output);
+        output = setInlineAttributes(output);
     }
     output = insertViewBeforeAfter(output);
     output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
