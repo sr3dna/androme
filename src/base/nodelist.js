@@ -1,4 +1,4 @@
-import { sortAsc, sortDesc, calculateBias } from '../lib/util';
+import { sortAsc, sortDesc } from '../lib/util';
 import Node from './node';
 
 export default class NodeList extends Array {
@@ -12,15 +12,6 @@ export default class NodeList extends Array {
     push(...value) {
         for (const node of value) {
             if (Node.is(node)) {
-                if (node.children == null) {
-                    node.children = new NodeList(null, node);
-                }
-                if (node.linearRows == null) {
-                    node.linearRows = new NodeList(null, node);
-                }
-                if (node.renderChildren == null) {
-                    node.renderChildren = new NodeList(null, node);
-                }
                 super.push(node);
             }
         }
@@ -42,12 +33,6 @@ export default class NodeList extends Array {
         return sortDesc(this, ...attr);
     }
 
-    get first() {
-        return (this.length > 0 ? this[0] : null);
-    }
-    get last() {
-        return (this.length > 0 ? this[this.length - 1] : null);
-    }
     set parent(value) {
         if (Node.is(value)) {
             this._parent = value;
@@ -58,6 +43,12 @@ export default class NodeList extends Array {
     }
     get visible () {
         return this.filter(node => node.visible);
+    }
+    get first() {
+        return (this.length > 0 ? this[0] : null);
+    }
+    get last() {
+        return (this.length > 0 ? this[this.length - 1] : null);
     }
     get linearX() {
         if (this.length > 0 && !this.intersect()) {
@@ -78,28 +69,5 @@ export default class NodeList extends Array {
             return true;
         }
         return false;
-    }
-    get anchors() {
-        return this.filter(node => node.anchored);
-    }
-    get horizontalBias() {
-        if (this.parent != null) {
-            const left = this.first.linear.left - this.parent.box.left;
-            const right = this.parent.box.right - this.last.linear.right;
-            return calculateBias(left, right);
-        }
-        return 0.5;
-    }
-    get verticalBias() {
-        if (this.parent != null) {
-            const top = this.first.linear.top - this.parent.box.top;
-            const bottom = this.parent.box.bottom - this.last.linear.bottom;
-            return calculateBias(top, bottom);
-        }
-        return 0.5;
-    }
-
-    static is(object) {
-        return (object instanceof NodeList);
     }
 }

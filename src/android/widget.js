@@ -90,6 +90,19 @@ export default class Widget extends Node {
         this.setBounds(true);
         return this;
     }
+    inheritStyle(node) {
+        const inherit = Resource.ACTION_ANDROID[this.widgetName]['setComputedStyle'];
+        const style = [];
+        for (const attr in inherit) {
+            let value = node.style[attr]; 
+            this.style[attr] = value;
+            value = parseStyle(null, attr, value);
+            if (hasValue(value)) {
+                style.push(formatString(inherit[attr], value));
+            }
+        }
+        this.styleAttributes = style;
+    }
 
     combine() {
         const result = [];
@@ -104,8 +117,7 @@ export default class Widget extends Node {
                 }
             }
         });
-        result.sort();
-        return result;
+        return result.sort();
     }
     supported(obj, attr) {
         for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
@@ -417,7 +429,7 @@ export default class Widget extends Node {
         return (this.constraint.horizontal && this.constraint.vertical);
     }
     get horizontal() {
-        return (this._android.orientation == 'horizontal');
+        return (this._android != null && this._android.orientation == 'horizontal');
     }
     get label() {
         return this._label;
@@ -461,25 +473,5 @@ export default class Widget extends Node {
 
     static is(object) {
         return (object instanceof Widget);
-    }
-    static createTextNode(id, element, api, parent, actions = null) {
-        const node = new Widget(id, null, api, { element, parent, actions, tagName: 'TEXT' });
-        node.setAndroidId(WIDGET_ANDROID.TEXT);
-        node.setBounds(false, element);
-        if (parent != null) {
-            const inherit = Resource.ACTION_ANDROID['TextView']['setComputedStyle'];
-            const style = [];
-            for (const prop in inherit) {
-                let value = parent.style[prop]; 
-                node.style[prop] = value;
-                value = parseStyle(null, prop, value);
-                if (value != null) {
-                    style.push(formatString(inherit[prop], value));
-                }
-            }
-            node.styleAttributes = style;
-        }
-        element.children = [];
-        return node;
     }
 }

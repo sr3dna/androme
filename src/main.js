@@ -7,8 +7,8 @@ import * as Element from './lib/element';
 import { setConstraints } from './constraint';
 import { setResourceStyle, getViewAttributes, writeResourceStringXml, writeResourceArrayXml, writeResourceStyleXml, writeResourceFontXml, writeResourceColorXml, writeResourceDrawableXml } from './resource';
 import { renderViewLayout, renderViewTag, insertViewBeforeAfter } from './render';
-import NodeList from './base/nodelist';
 import Widget from './android/widget';
+import WidgetList from './android/widgetlist';
 import Layout from './android/layout';
 import parseRTL from './localization';
 import SETTINGS from './settings';
@@ -285,7 +285,7 @@ function setNodeCache(element) {
         }
     }
     const parentNodes = {};
-    const textNodes = new NodeList();
+    const textNodes = new WidgetList();
     for (const parent of NODE_CACHE) {
         if (parent.bounds == null) {
             parent.setBounds();
@@ -337,9 +337,13 @@ function setNodeCache(element) {
         if (node.element.children.length > 1) {
             node.element.childNodes.forEach(element => {
                 if (element.nodeName == '#text' && element.textContent.trim() != '') {
-                    const textNode = Node.createTextNode(generateNodeId() + textNodes.length, element, SETTINGS.targetAPI, node, [0, 4]);
-                    textNodes.push(textNode);
-                    node.children.push(textNode);
+                    const widget = new Widget(generateNodeId() + textNodes.length, null, SETTINGS.targetAPI, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
+                    widget.setAndroidId(WIDGET_ANDROID.TEXT);
+                    widget.setBounds(false, element);
+                    widget.inheritStyle(node);
+                    element.children = [];
+                    textNodes.push(widget);
+                    node.children.push(widget);
                 }
             });
         }
@@ -356,9 +360,9 @@ function setNodeCache(element) {
     Util.sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');
     for (const node of NODE_CACHE) {
         let i = 0;
-        Array.from(node.element.childNodes).forEach(item => {
-            if (item.__Node != null && item.__Node.parent.element == node.element) {
-                item.__Node.parentIndex = i++;
+        Array.from(node.element.childNodes).forEach(element => {
+            if (element.__Node != null && (element.__Node.parent.element == node.element)) {
+                element.__Node.parentIndex = i++;
             }
         });
         node.children.sortAsc('parentIndex');
@@ -384,10 +388,10 @@ export function parseDocument(element) {
             mapY[node.depth] = {};
         }
         if (mapX[node.depth][x] == null) {
-            mapX[node.depth][x] = new NodeList();
+            mapX[node.depth][x] = new WidgetList();
         }
         if (mapY[node.depth][y] == null) {
-            mapY[node.depth][y] = new NodeList();
+            mapY[node.depth][y] = new WidgetList();
         }
         mapX[node.depth][x].push(node);
         mapY[node.depth][y].push(node);
@@ -661,11 +665,13 @@ export function parseDocument(element) {
                     if (!nodeY.renderParent) {
                         if (parent.is(WIDGET_ANDROID.GRID)) {
                             let siblings = null;
+                            const rowSpan = nodeY.android('layout_rowSpan') || 1;
+                            const columnSpan = nodeY.android('layout_columnSpan') || 1;
                             if (SETTINGS.useLayoutWeight) {
-                                siblings = new NodeList(nodeY.gridSiblings);
+                                siblings = new WidgetList(nodeY.gridSiblings);
                             }
                             else {
-                                const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + (nodeY.android('layout_columnSpan') || 1) - 1];
+                                const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + (columnSpan - 1)];
                                 siblings = nodeY.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
                             }
                             if (siblings.length > 0) {
@@ -674,8 +680,6 @@ export function parseDocument(element) {
                                 const renderParent = parent;
                                 const layout = new Layout(generateNodeId(), nodeY, SETTINGS.targetAPI, parent, siblings, [0]);
                                 NODE_CACHE.push(layout);
-                                const rowSpan = nodeY.android('layout_rowSpan');
-                                const columnSpan = nodeY.android('layout_columnSpan');
                                 if (rowSpan > 1) {
                                     nodeY.delete('android', 'layout_rowSpan');
                                     layout.android('layout_rowSpan', rowSpan);

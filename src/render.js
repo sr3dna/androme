@@ -3,8 +3,8 @@ import { NODE_CACHE, generateNodeId } from './cache';
 import { convertPX, convertInt, padLeft, hasValue } from './lib/util';
 import { getBoxSpacing } from './lib/element';
 import { getResource, insertResourceAsset } from './resource';
-import NodeList from './base/nodelist';
 import Widget from './android/widget';
+import WidgetList from './android/widgetlist';
 import Layout from './android/layout';
 import parseRTL from './localization';
 import SETTINGS from './settings';
@@ -84,7 +84,7 @@ export function renderViewLayout(node, parent, tagName) {
         let scrollDepth = parent.renderDepth + scrollView.length;
         scrollView
             .map(widgetName => {
-                const layout = new Layout(generateNodeId(), current, SETTINGS.targetAPI, null, new NodeList([current]));
+                const layout = new Layout(generateNodeId(), current, SETTINGS.targetAPI, null, new WidgetList([current]));
                 NODE_CACHE.push(layout);
                 layout.setAndroidId(widgetName);
                 layout.setBounds();
