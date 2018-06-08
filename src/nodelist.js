@@ -24,6 +24,7 @@ export default class NodeList extends Array {
                 super.push(node);
             }
         }
+        return this.length;
     }
 
     android(name, value, overwrite = true) {

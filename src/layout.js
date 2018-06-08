@@ -1,15 +1,15 @@
 import { WIDGET_ANDROID, BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, XMLNS_ANDROID, BUILD_ANDROID, DENSITY_ANDROID } from './lib/constants';
+import { API_ANDROID } from './customizations';
+import { NODE_CACHE, generateNodeId } from './cache';
 import * as Util from './lib/util';
 import * as Color from './lib/color';
 import * as Element from './lib/element';
-import { NODE_CACHE, generateNodeId } from './cache';
-import Node from './node';
-import NodeList from './nodelist';
 import { setConstraints } from './constraint';
 import { setResourceStyle, getViewAttributes, writeResourceStringXml, writeResourceArrayXml, writeResourceStyleXml, writeResourceFontXml, writeResourceColorXml, writeResourceDrawableXml } from './resource';
 import { renderViewLayout, renderViewTag, insertViewBeforeAfter } from './render';
+import Node from './node';
+import NodeList from './nodelist';
 import parseRTL from './localization';
-import { API_ANDROID } from './customizations';
 import SETTINGS from './settings';
 
 function writeFrameLayout(node, parent) {
@@ -126,7 +126,7 @@ function setMarginPadding() {
         if (node.is(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
             switch (node.android('orientation')) {
                 case 'horizontal':
-                    let left = node.box.left + node.paddingLeft;
+                    let left = node.box.left;
                     node.renderChildren.sortAsc('linear.left').forEach(item => {
                         if (!item.floating) {
                             const width = Math.ceil(item.linear.left - left);
@@ -138,7 +138,7 @@ function setMarginPadding() {
                     });
                     break;
                 case 'vertical':
-                    let top = node.box.top + node.paddingTop;
+                    let top = node.box.top;
                     node.renderChildren.sortAsc('linear.top').forEach(item => {
                         const height = Math.ceil(item.linear.top - top);
                         if (height >= 1) {

@@ -1,6 +1,6 @@
 import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/constants';
 
-const SETTINGS = {
+export default {
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
     showAttributes: true,
@@ -21,5 +21,3 @@ const SETTINGS = {
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14
 };
-
-export default SETTINGS;

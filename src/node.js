@@ -1,9 +1,9 @@
 import { WIDGET_ANDROID, FIXED_ANDROID, MAPPING_CHROME, BUILD_ANDROID } from './lib/constants';
 import * as Util from './lib/util';
-import { getRangeBounds, parseStyle } from './lib/element';
 import * as Resource from './resource';
-import parseRTL from './localization';
+import { getRangeBounds, parseStyle } from './lib/element';
 import { API_ANDROID } from './customizations';
+import parseRTL from './localization';
 
 export default class Node {
     constructor(id, element, api, options = {}) {
@@ -127,13 +127,11 @@ export default class Node {
     }
     css(attr, value) {
         if (arguments.length == 2) {
-            if (Util.hasValue(value)) {
-                this.styleMap[attr] = value;
-            }
+            this.styleMap[attr] = (Util.hasValue(value) ? value : null);
             return this;
         }
         else {
-            return (this.styleMap[attr] || this.style[attr]);
+            return this.styleMap[attr] || this.style[attr];
         }
     }
     render(parent) {
@@ -703,7 +701,7 @@ export default class Node {
         }
     }
     get parentOriginal() {
-        return (this._parentOriginal || this._parent);
+        return this._parentOriginal || this._parent;
     }
     get parentElement() {
         return this.element.parentNode;

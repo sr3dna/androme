@@ -1,10 +1,10 @@
 import { WIDGET_ANDROID } from './lib/constants';
+import { NODE_CACHE, generateNodeId } from './cache';
 import { convertPX, convertInt, padLeft, hasValue } from './lib/util';
 import { getBoxSpacing } from './lib/element';
-import { NODE_CACHE, generateNodeId } from './cache';
+import { getResource, insertResourceAsset } from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { getResource, insertResourceAsset } from './resource';
 import parseRTL from './localization';
 import SETTINGS from './settings';
 
