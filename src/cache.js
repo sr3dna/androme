@@ -1,4 +1,4 @@
-import NodeList from './nodelist';
+import NodeList from './base/nodelist';
 
 export const NODE_CACHE = new NodeList();
 

@@ -1,4 +1,4 @@
-import { sortAsc, sortDesc, calculateBias } from './lib/util';
+import { sortAsc, sortDesc, calculateBias } from '../lib/util';
 import Node from './node';
 
 export default class NodeList extends Array {
@@ -27,9 +27,6 @@ export default class NodeList extends Array {
         return this.length;
     }
 
-    android(name, value, overwrite = true) {
-        this.forEach(node => node.android(name, value, overwrite));
-    }
     intersect(dimension = 'linear') {
         for (const node of this) {
             if (this.some(item => (item != node && node.intersect(item[dimension])))) {
@@ -37,9 +34,6 @@ export default class NodeList extends Array {
             }
         }
         return false;
-    }
-    findById(androidId) {
-        return this.find(node => node.android('id') == androidId);
     }
     sortAsc(...attr) {
         return sortAsc(this, ...attr);
@@ -105,7 +99,7 @@ export default class NodeList extends Array {
         return 0.5;
     }
 
-    static is(nodes) {
-        return (nodes != null && nodes instanceof NodeList);
+    static is(object) {
+        return (object instanceof NodeList);
     }
 }

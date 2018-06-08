@@ -14,7 +14,7 @@ export function getRangeBounds(element) {
 }
 
 export function getStyle(element) {
-    return (element.androidNode != null ? element.androidNode.style : getComputedStyle(element));
+    return (element.__Node != null ? element.__Node.style : getComputedStyle(element));
 }
 
 export function parseStyle(element, name, value) {

@@ -595,7 +595,7 @@ export function addResourceString(node, value) {
         if (element != null && element.nodeName == '#text') {
             const prevSibling = element.previousSibling;
             if (prevSibling != null) {
-                const prevNode = prevSibling.androidNode;
+                const prevNode = prevSibling.__Node;
                 switch (prevNode.widgetName) {
                     case WIDGET_ANDROID.CHECKBOX:
                     case WIDGET_ANDROID.RADIO:

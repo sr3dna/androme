@@ -7,8 +7,9 @@ import * as Element from './lib/element';
 import { setConstraints } from './constraint';
 import { setResourceStyle, getViewAttributes, writeResourceStringXml, writeResourceArrayXml, writeResourceStyleXml, writeResourceFontXml, writeResourceColorXml, writeResourceDrawableXml } from './resource';
 import { renderViewLayout, renderViewTag, insertViewBeforeAfter } from './render';
-import Node from './node';
-import NodeList from './nodelist';
+import NodeList from './base/nodelist';
+import Widget from './android/widget';
+import Layout from './android/layout';
 import parseRTL from './localization';
 import SETTINGS from './settings';
 
@@ -99,7 +100,7 @@ function setAccessibility() {
                 let parent = node.renderParent;
                 let current = node;
                 let label = null;
-                while (parent != null && typeof parent == 'object') {
+                while (parent != null && parent.renderChildren != null) {
                     const index = parent.renderChildren.findIndex(item => item == current);
                     if (index > 0) {
                         label = parent.renderChildren[index - 1];
@@ -227,7 +228,7 @@ function setLayoutWeight() {
 
 function createNode(element) {
     if (Element.isVisible(element)) {
-        const node = new Node(generateNodeId(), element, SETTINGS.targetAPI);
+        const node = new Widget(generateNodeId(), element, SETTINGS.targetAPI);
         NODE_CACHE.push(node);
     }
 }
@@ -307,7 +308,7 @@ function setNodeCache(element) {
     for (const node of NODE_CACHE) {
         const nodes = parentNodes[node.id];
         if (nodes != null) {
-            let parent = node.parentElement.androidNode;
+            let parent = node.parentElement.__Node;
             if (node.fixed) {
                 if (nodes.length > 1) {
                     let minArea = Number.MAX_VALUE;
@@ -356,8 +357,8 @@ function setNodeCache(element) {
     for (const node of NODE_CACHE) {
         let i = 0;
         Array.from(node.element.childNodes).forEach(item => {
-            if (item.androidNode != null && item.androidNode.parent.element == node.element) {
-                item.androidNode.parentIndex = i++;
+            if (item.__Node != null && item.__Node.parent.element == node.element) {
+                item.__Node.parentIndex = i++;
             }
         });
         node.children.sortAsc('parentIndex');
@@ -671,28 +672,28 @@ export function parseDocument(element) {
                                 siblings.unshift(nodeY);
                                 siblings.sortAsc('bounds.x');
                                 const renderParent = parent;
-                                const wrapNode = Node.createWrapNode(generateNodeId(), nodeY, SETTINGS.targetAPI, parent, siblings, [0]);
-                                NODE_CACHE.push(wrapNode);
+                                const layout = new Layout(generateNodeId(), nodeY, SETTINGS.targetAPI, parent, siblings, [0]);
+                                NODE_CACHE.push(layout);
                                 const rowSpan = nodeY.android('layout_rowSpan');
                                 const columnSpan = nodeY.android('layout_columnSpan');
                                 if (rowSpan > 1) {
                                     nodeY.delete('android', 'layout_rowSpan');
-                                    wrapNode.android('layout_rowSpan', rowSpan);
+                                    layout.android('layout_rowSpan', rowSpan);
                                 }
                                 if (columnSpan > 1) {
                                     nodeY.delete('android', 'layout_columnSpan');
-                                    wrapNode.android('layout_columnSpan', columnSpan);
+                                    layout.android('layout_columnSpan', columnSpan);
                                 }
                                 for (const node of siblings) {
-                                    node.parent = wrapNode;
-                                    wrapNode.inheritGrid(node);
+                                    node.parent = layout;
+                                    layout.inheritGrid(node);
                                 }
-                                wrapNode.setBounds();
+                                layout.setBounds();
                                 if (siblings.linearX || siblings.linearY) {
-                                    xml += writeLinearLayout(wrapNode, renderParent, siblings.linearY);
+                                    xml += writeLinearLayout(layout, renderParent, siblings.linearY);
                                 }
                                 else {
-                                    xml += writeDefaultLayout(wrapNode, renderParent);
+                                    xml += writeDefaultLayout(layout, renderParent);
                                 }
                                 k--;
                                 restart = true;

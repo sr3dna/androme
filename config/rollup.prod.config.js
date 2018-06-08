@@ -5,7 +5,7 @@ import minify from 'rollup-plugin-babel-minify';
 
 export default [
     {
-        input: './src/layout.js',
+        input: './src/main.js',
         treeshake: false,
         output: {
             file: './dist/androme.min.js',
@@ -22,7 +22,7 @@ export default [
         ]
     },
     {
-        input: './src/layout.js',
+        input: './src/main.js',
         treeshake: false,
         output: {
             file: './dist/androme.js',

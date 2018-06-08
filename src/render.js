@@ -3,8 +3,9 @@ import { NODE_CACHE, generateNodeId } from './cache';
 import { convertPX, convertInt, padLeft, hasValue } from './lib/util';
 import { getBoxSpacing } from './lib/element';
 import { getResource, insertResourceAsset } from './resource';
-import Node from './node';
-import NodeList from './nodelist';
+import NodeList from './base/nodelist';
+import Widget from './android/widget';
+import Layout from './android/layout';
 import parseRTL from './localization';
 import SETTINGS from './settings';
 
@@ -47,8 +48,8 @@ function setGridSpace(node) {
             let marginLeft = dimensions[parseRTL('marginLeft')] + dimensions[parseRTL('paddingLeft')];
             if (marginLeft > 0) {
                 marginLeft = convertPX(marginLeft + node.marginLeft);
-                node.android(parseRTL('layout_marginLeft'), marginLeft)
-                    .css('marginLeft', marginLeft);
+                node.css('marginLeft', marginLeft)
+                    .android(parseRTL('layout_marginLeft'), marginLeft);
             }
         }
         if (node.gridRowEnd) {
@@ -59,8 +60,8 @@ function setGridSpace(node) {
             }
             if (marginRight > 0) {
                 marginRight = convertPX(marginRight + node.marginRight);
-                node.android(parseRTL('layout_marginRight'), marginRight)
-                    .css('marginRight', marginRight);
+                node.css('marginRight', marginRight)
+                    .android(parseRTL('layout_marginRight'), marginRight);
             }
         }
     }
@@ -83,34 +84,34 @@ export function renderViewLayout(node, parent, tagName) {
         let scrollDepth = parent.renderDepth + scrollView.length;
         scrollView
             .map(widgetName => {
-                const wrapNode = Node.createWrapNode(generateNodeId(), current, SETTINGS.targetAPI, null, new NodeList([current]));
-                NODE_CACHE.push(wrapNode);
-                wrapNode.setAndroidId(widgetName);
-                wrapNode.setBounds();
-                wrapNode.android('fadeScrollbars', 'false');
-                wrapNode.setAttributes();
+                const layout = new Layout(generateNodeId(), current, SETTINGS.targetAPI, null, new NodeList([current]));
+                NODE_CACHE.push(layout);
+                layout.setAndroidId(widgetName);
+                layout.setBounds();
+                layout.android('fadeScrollbars', 'false');
+                layout.setAttributes();
                 switch (widgetName) {
                     case WIDGET_ANDROID.SCROLL_HORIZONTAL:
-                        wrapNode
+                        layout
                             .css('width', node.styleMap.width)
                             .css('minWidth', node.styleMap.minWidth)
                             .css('overflowX', node.styleMap.overflowX);
                         break;
                     default:
-                        wrapNode
+                        layout
                             .css('height', node.styleMap.height)
                             .css('minHeight', node.styleMap.minHeight)
                             .css('overflowY', node.styleMap.overflowY);
                 }
                 const indent = padLeft(scrollDepth--);
-                preXml = indent + `<${widgetName}{@${wrapNode.id}}>\n` + preXml;
+                preXml = indent + `<${widgetName}{@${layout.id}}>\n` + preXml;
                 postXml += indent + `</${widgetName}>\n`;
                 if (current == node) {
-                    node.parent = wrapNode;
-                    renderParent = wrapNode;
+                    node.parent = layout;
+                    renderParent = layout;
                 }
-                current = wrapNode;
-                return wrapNode;
+                current = layout;
+                return layout;
             })
             .reverse()
             .forEach((item, index) => {
@@ -207,34 +208,34 @@ export function renderViewTag(node, parent, tagName, recursive) {
                     let rowSpan = 1;
                     let columnSpan = 1;
                     let checked = null;
-                    const wrapNode = Node.createWrapNode(generateNodeId(), node, SETTINGS.targetAPI, parent, result);
-                    NODE_CACHE.push(wrapNode);
-                    wrapNode.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
-                    wrapNode.render(parent);
+                    const layout = new Layout(generateNodeId(), node, SETTINGS.targetAPI, parent, result);
+                    NODE_CACHE.push(layout);
+                    layout.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
+                    layout.render(parent);
                     for (const radio of result) {
                         rowSpan += (convertInt(radio.android('layout_rowSpan')) || 1) - 1;
                         columnSpan += (convertInt(radio.android('layout_columnSpan')) || 1) - 1;
-                        wrapNode.inheritGrid(radio);
+                        layout.inheritGrid(radio);
                         if (radio.element.checked) {
                             checked = radio;
                         }
-                        radio.parent = wrapNode;
-                        radio.render(wrapNode);
-                        content += renderViewTag(radio, wrapNode, WIDGET_ANDROID.RADIO, true);
+                        radio.parent = layout;
+                        radio.render(layout);
+                        content += renderViewTag(radio, layout, WIDGET_ANDROID.RADIO, true);
                     }
                     if (rowSpan > 1) {
-                        wrapNode.android('layout_rowSpan', rowSpan);
+                        layout.android('layout_rowSpan', rowSpan);
                     }
                     if (columnSpan > 1) {
-                        wrapNode.android('layout_columnSpan', columnSpan);
+                        layout.android('layout_columnSpan', columnSpan);
                     }
-                    wrapNode
+                    layout
                         .android('orientation', (result.linearX ? 'horizontal' : 'vertical'))
                         .android('checkedButton', checked.stringId);
-                    wrapNode.setBounds();
-                    wrapNode.setAttributes();
-                    setGridSpace(wrapNode);
-                    return getEnclosingTag(wrapNode.renderDepth, WIDGET_ANDROID.RADIO_GROUP, wrapNode.id, content);
+                    layout.setBounds();
+                    layout.setAttributes();
+                    setGridSpace(layout);
+                    return getEnclosingTag(layout.renderDepth, WIDGET_ANDROID.RADIO_GROUP, layout.id, content);
                 }
             }
             break;
@@ -253,7 +254,7 @@ export function renderViewTag(node, parent, tagName, recursive) {
 
 export function getStaticTag(widgetName, depth, options, width = 'wrap_content', height = 'wrap_content') {
     let attributes = '';
-    const node = new Node(0, null, SETTINGS.targetAPI);
+    const node = new Widget(0, null, SETTINGS.targetAPI);
     node.setAndroidId(widgetName);
     if (SETTINGS.showAttributes) {
         node.apply(options)

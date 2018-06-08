@@ -83,16 +83,20 @@ function deleteConstraints(node, orientation = '') {
     }
 }
 
+function findByAndroidId(androidId) {
+    return NODE_CACHE.find(node => node.android('id') == androidId);
+}
+
 function adjustMargins(nodes) {
     for (const node of nodes) {
         if (node.constraint.marginHorizontal != null) {
-            let offset = node.linear.left - NODE_CACHE.findById(node.constraint.marginHorizontal).linear.right;
+            let offset = node.linear.left - findByAndroidId(node.constraint.marginHorizontal).linear.right;
             if (offset >= 1) {
                 node.modifyBox('layout_marginLeft', offset);
             }
         }
         if (node.constraint.marginVertical != null) {
-            let offset = node.linear.top - NODE_CACHE.findById(node.constraint.marginVertical).linear.bottom;
+            let offset = node.linear.top - findByAndroidId(node.constraint.marginVertical).linear.bottom;
             if (offset >= 1) {
                 node.modifyBox('layout_marginTop', offset);
             }
@@ -635,16 +639,16 @@ export function setConstraints() {
                             if (parentBottom != 'true') {
                                 const top = formatPX(current.bounds.top - node.box.top);
                                 current
+                                    .css('marginTop', top)
                                     .android('layout_alignParentTop', 'true')
-                                    .android('layout_marginTop', top)
-                                    .css('marginTop', top);
+                                    .android('layout_marginTop', top);
                             }
                             if (current.android(parentLeft) != 'true') {
                                 const left = formatPX(current.bounds.left - node.box.left);
                                 current
+                                    .css(parseRTL('marginLeft'), left)
                                     .android(parentLeft, 'true')
-                                    .android(parseRTL('layout_marginLeft'), left)
-                                    .css(parseRTL('marginLeft'), left);
+                                    .android(parseRTL('layout_marginLeft'), left);
                             }
                             current.constraint.vertical = true;
                             current.constraint.horizontal = true;
