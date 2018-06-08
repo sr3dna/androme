@@ -44,7 +44,7 @@ export function parseTemplateMatch(template) {
     return result;
 }
 
-export function parseTemplateData(template, data, index, include = {}, exclude = {}) {
+export function parseTemplateData(template, data, index = null, include = {}, exclude = {}) {
     let output = (index != null ? template[index] : '');
     if (data['#include'] != null) {
         include = data['#include'];

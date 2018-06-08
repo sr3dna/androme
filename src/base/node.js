@@ -34,7 +34,7 @@ export default class Node {
         Object.assign(this, options);
     }
 
-    add(obj, attr, value, overwrite = true) {
+    add(obj, attr, value = null, overwrite = true) {
         const name = `_${obj || '_'}`;
         if (hasValue(value)) {
             if (!this.supported(obj, attr)) {
@@ -86,7 +86,7 @@ export default class Node {
         }
         return this;
     }
-    css(attr, value) {
+    css(attr, value = null) {
         if (arguments.length == 2) {
             this.styleMap[attr] = (hasValue(value) ? value : null);
             return this;

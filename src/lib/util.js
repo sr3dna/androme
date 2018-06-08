@@ -117,11 +117,11 @@ export function convertDP(value, dpi = 160, unit = true, font = false) {
     return (unit ? '0dp' : 0);
 }
 
-export function convertSP(value, dpi, unit = true) {
+export function convertSP(value, dpi = 160, unit = true) {
     return convertDP(value, dpi, unit, true);
 }
 
-export function replaceDP(xml, dpi, font = false) {
+export function replaceDP(xml, dpi = 160, font = false) {
     return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, true, font) + capture[2]);
 }
 

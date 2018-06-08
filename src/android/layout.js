@@ -2,7 +2,7 @@ import { WIDGET_ANDROID } from '../lib/constants';
 import Widget from './widget';
 
 export default class Layout extends Widget {
-    constructor(id, node, api, parent, children, actions = null) {
+    constructor(id, node = null, api = 0, parent = null, children = null, actions = null) {
         const options = {
             parent,
             children,

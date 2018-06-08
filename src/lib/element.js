@@ -17,8 +17,8 @@ export function getStyle(element) {
     return (element.__Node != null ? element.__Node.style : getComputedStyle(element));
 }
 
-export function parseStyle(element, name, value) {
-    if (name == 'backgroundColor') {
+export function parseStyle(element, attr, value) {
+    if (attr == 'backgroundColor') {
         if (element != null && element.parentNode != null && value == getStyle(element.parentNode).backgroundColor) {
             return null;
         }

@@ -205,7 +205,7 @@ function sortHSL(a, b) {
 
 export function findNearestColor(value) {
     const hsl = convertHextoHSL(value);
-    if (hsl) {
+    if (hsl != null) {
         const result = HSL_SORTED.slice();
         result.push({ name: '', hsl });
         result.sort(sortHSL);
@@ -236,14 +236,14 @@ export function parseRGBA(value) {
     return null;
 }
 
-export function convertRGBtoHex(n) {
+export function convertRGBtoHex(value) {
     const hex = '0123456789ABCDEF';
-    n = parseInt(n);
-    if (isNaN(n)) {
+    value = parseInt(value);
+    if (isNaN(value)) {
         return '00';
     }
-    n = Math.max(0, Math.min(n, 255));
-    return hex.charAt((n - (n % 16)) / 16) + hex.charAt(n % 16);
+    value = Math.max(0, Math.min(value, 255));
+    return hex.charAt((value - (value % 16)) / 16) + hex.charAt(value % 16);
 }
 
 export function convertHextoRGB(value) {

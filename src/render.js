@@ -136,7 +136,7 @@ export function renderViewLayout(node, parent, tagName) {
     return getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, preXml, postXml);
 }
 
-export function renderViewTag(node, parent, tagName, recursive) {
+export function renderViewTag(node, parent, tagName, recursive = false) {
     const element = node.element;
     node.setAndroidId(tagName);
     switch (element.tagName) {

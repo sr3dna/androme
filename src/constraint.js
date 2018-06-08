@@ -83,8 +83,8 @@ function deleteConstraints(node, orientation = '') {
     }
 }
 
-function findByAndroidId(androidId) {
-    return NODE_CACHE.find(node => node.android('id') == androidId);
+function findByAndroidId(id) {
+    return NODE_CACHE.find(node => node.android('id') == id);
 }
 
 function adjustMargins(nodes) {

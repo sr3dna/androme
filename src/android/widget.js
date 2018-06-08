@@ -16,7 +16,7 @@ export default class Widget extends Node {
 
         this._label = null;
 
-        if (options.element != null || arguments[1] != null) {
+        if (options.element != null || element != null) {
             this.element.__Node = this;
         }
     }
@@ -28,7 +28,7 @@ export default class Widget extends Node {
         }
         return this;
     }
-    android(attr, value, overwrite = true) {
+    android(attr, value = null, overwrite = true) {
         switch (arguments.length) {
             case 0:
                 return this._android;
@@ -39,7 +39,7 @@ export default class Widget extends Node {
                 return this;
         }
     }
-    app(attr, value, overwrite = true) {
+    app(attr, value = null, overwrite = true) {
         switch (arguments.length) {
             case 0:
                 return this._app;
@@ -253,17 +253,12 @@ export default class Widget extends Node {
                         this.android('layout_height', 'wrap_content');
                         break;
                     default:
-                        if (!requireWrap && parent.overflow == 0 && height >= parentHeight) {
-                            this.android('layout_height', 'match_parent');
-                        }
-                        else {
-                            this.android('layout_height', 'wrap_content');
-                        }
+                        this.android('layout_height', (!requireWrap && parent.overflow == 0 && height >= parentHeight ? 'match_parent' : 'wrap_content'));
                 }
             }
         }
     }
-    setAttributes(actions) {
+    setAttributes(actions = null) {
         const widget = Resource.ACTION_ANDROID[this.widgetName];
         const element = this.element;
         const result = {};

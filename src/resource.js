@@ -235,7 +235,7 @@ function parseBoxDimensions(value) {
     return null;
 }
 
-function deleteStyleAttribute(sorted, attributes, nodeIds) {
+function deleteStyleAttribute(sorted, attributes, ids) {
     attributes.split(';').forEach(value => {
         for (let i = 0; i < sorted.length; i++) {
             if (sorted[i] != null) {
@@ -250,7 +250,7 @@ function deleteStyleAttribute(sorted, attributes, nodeIds) {
                     }
                 }
                 if (index != -1) {
-                    sorted[index][key] = sorted[index][key].filter(value => !nodeIds.includes(value));
+                    sorted[index][key] = sorted[index][key].filter(value => !ids.includes(value));
                     if (sorted[index][key].length == 0) {
                         delete sorted[index][key];
                     }
@@ -261,20 +261,20 @@ function deleteStyleAttribute(sorted, attributes, nodeIds) {
     });
 }
 
-export function setResourceStyle(NODE_CACHE) {
-    const cache = {};
+export function setResourceStyle(cache) {
+    const tagName = {};
     const style = {};
     const layout = {};
-    for (const node of NODE_CACHE) {
+    for (const node of cache) {
         if (node.styleAttributes.length > 0) {
-            if (cache[node.tagName] == null) {
-                cache[node.tagName] = [];
+            if (tagName[node.tagName] == null) {
+                tagName[node.tagName] = [];
             }
-            cache[node.tagName].push(node);
+            tagName[node.tagName].push(node);
         }
     }
-    for (const tag in cache) {
-        const nodes = cache[tag];
+    for (const tag in tagName) {
+        const nodes = tagName[tag];
         let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => {
             value = {};
             return value;
@@ -480,7 +480,7 @@ export function setResourceStyle(NODE_CACHE) {
         resource.set(name, tagData);
     }
     const inherit = new Set();
-    for (const node of NODE_CACHE.visible) {
+    for (const node of cache.visible) {
         const tagName = node.tagName;
         if (resource.has(tagName)) {
             const styles = [];

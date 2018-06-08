@@ -285,7 +285,6 @@ function setNodeCache(element) {
         }
     }
     const parentNodes = {};
-    const textNodes = new WidgetList();
     for (const parent of NODE_CACHE) {
         if (parent.bounds == null) {
             parent.setBounds();
@@ -337,18 +336,17 @@ function setNodeCache(element) {
         if (node.element.children.length > 1) {
             node.element.childNodes.forEach(element => {
                 if (element.nodeName == '#text' && element.textContent.trim() != '') {
-                    const widget = new Widget(generateNodeId() + textNodes.length, null, SETTINGS.targetAPI, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
+                    const widget = new Widget(generateNodeId(), null, SETTINGS.targetAPI, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
                     widget.setAndroidId(WIDGET_ANDROID.TEXT);
                     widget.setBounds(false, element);
                     widget.inheritStyle(node);
                     element.children = [];
-                    textNodes.push(widget);
+                    NODE_CACHE.push(widget);
                     node.children.push(widget);
                 }
             });
         }
     }
-    NODE_CACHE.push(...textNodes);
     for (const node of NODE_CACHE) {
         const style = preAlignment[node.id];
         if (style != null) {
