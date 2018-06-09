@@ -194,7 +194,7 @@ export default class Widget extends Node {
             }
             if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
                 if (this.constraint.layoutWidth) {
-                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') == 'right') || convertPX(this.constraint.minWidth) >= parentWidth ? 'match_parent' : this.constraint.minWidth));
+                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') == 'right') || convertPX(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
                 }
                 else {
                     this.android('layout_width', 'wrap_content', false);
@@ -240,7 +240,7 @@ export default class Widget extends Node {
                 }
             }
             if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutHeight != null) {
-                this.android('layout_height', (this.constraint.layoutHeight ? this.constraint.minHeight : 'wrap_content'), this.constraint.layoutHeight);
+                this.android('layout_height', (this.constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), this.constraint.layoutHeight);
             }
             else if (this.android('layout_height') == null) {
                 switch (this.widgetName) {

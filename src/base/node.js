@@ -205,7 +205,7 @@ export default class Node {
             else {
                 width = this.bounds.width;
             }
-            this.constraint.minWidth = formatPX(width);
+            this.bounds.minWidth = formatPX(width);
         }
         if (this.viewHeight < height) {
             if (this.bounds.height < height) {
@@ -216,7 +216,7 @@ export default class Node {
             else {
                 height = this.bounds.height;
             }
-            this.constraint.minHeight = formatPX(height);
+            this.bounds.minHeight = formatPX(height);
         }
         if (calibrate) {
             this.setBounds(true);

@@ -216,11 +216,19 @@ function parseBorderStyle(value) {
     return [stroke || 'solid', width || '1px', color || '#000'];
 }
 
+function parseImageURL(value) {
+    const match = value.match(/^url\("(.*?)"\)$/);
+    if (match != null) {
+        return addResourceImage(match[1]);
+    }
+    return null;
+}
+
 function parseBoxDimensions(value) {
     const match = value.match(/^([0-9]+(?:px|pt|em))( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?$/);
     if (match != null) {
         if (match[1] == '0px' && match[2] == null) {
-            return null;
+            return [];
         }
         if (match[2] == null || (match[1] == match[2] && match[2] == match[3] && match[3] == match[4])) {
             return [convertPX(match[1])];
@@ -232,7 +240,7 @@ function parseBoxDimensions(value) {
             return [convertPX(match[1]), convertPX(match[2]), convertPX(match[3]), convertPX(match[4])];
         }
     }
-    return null;
+    return [];
 }
 
 function deleteStyleAttribute(sorted, attributes, ids) {
@@ -525,6 +533,9 @@ export function getResource(name) {
 
 export function insertResourceAsset(resource, name, value) {
     let resourceName = null;
+    if (isNumber(name)) {
+        name = `__${name}`;
+    }
     if (hasValue(value)) {
         let i = 0;
         do {
@@ -611,6 +622,24 @@ export function addResourceString(node, value) {
     return null;
 }
 
+export function addResourceImage(value) {
+    const image = value.substring(value.lastIndexOf('/') + 1);
+    const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
+    let src = image.replace(/.\w+$/, '');
+    switch (format) {
+        case 'bmp':
+        case 'gif':
+        case 'jpg':
+        case 'png':
+        case 'webp':
+            src = insertResourceAsset(RESOURCE.IMAGE, src, value);
+            break;
+        default:
+            src = null;
+    }
+    return src;
+}
+
 export function addResourceStringArray(node) {
     const element = node.element;
     const stringArray = new Map();
@@ -689,7 +718,9 @@ export function setBackgroundStyle(node) {
         borderBottom: parseBorderStyle,
         borderLeft: parseBorderStyle,
         borderRadius: parseBoxDimensions,
-        backgroundColor: parseRGBA
+        backgroundColor: parseRGBA,
+        backgroundImage: parseImageURL,
+        backgroundSize: parseBoxDimensions
     };
     let backgroundParent = [];
     if (element.parentNode != null) {
@@ -704,7 +735,7 @@ export function setBackgroundStyle(node) {
         attributes.backgroundColor = null;
     }
     else {
-        attributes.backgroundColor[1] = addResourceColor(attributes.backgroundColor[1]);
+        attributes.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(attributes.backgroundColor[1]) ? addResourceColor(attributes.backgroundColor[1]) : null);
     }
     const borderStyle = {
         black: 'android:color="@android:color/black"',
@@ -717,27 +748,7 @@ export function setBackgroundStyle(node) {
         let template = null;
         let data = null;
         let resourceName = null;
-        if (attributes.borderRadius != null) {
-            template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
-            data = {
-                '0': [{
-                    '1': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
-                    '2': [{
-                        '3': [{ color: (attributes.backgroundColor ? attributes.backgroundColor[1] : '') }],
-                        '4': [{ radius: (attributes.borderRadius.length == 1 ? attributes.borderRadius[0] : '') }],
-                        '5': [{ topLeftRadius: '' }]
-                    }]
-                }]
-            };
-            if (attributes.borderRadius.length > 1) {
-                if (attributes.borderRadius.length == 2) {
-                    attributes.borderRadius.push(...attributes.borderRadius.slice());
-                }
-                const borderRadiusItem = getDataLevel(data, '0', '2', '5');
-                attributes.borderRadius.forEach((value, index) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
-            }
-        }
-        else if (attributes.backgroundColor == null) {
+        if (attributes.backgroundColor == null && attributes.backgroundImage == null && attributes.borderRadius.length == 0) {
             template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
             data = {
                 '0': [{
@@ -750,26 +761,25 @@ export function setBackgroundStyle(node) {
             template = parseTemplateMatch(LAYERLIST_TMPL);
             data = {
                 '0': [{
-                    '1': [],
-                    '2': []
+                    '1': [{
+                        '2': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
+                        '3': (attributes.backgroundColor != null ? [{ color: attributes.backgroundColor }] : false),
+                        '4': (attributes.borderRadius.length == 1 ? [{ radius: attributes.borderRadius[0] }] : false),
+                        '5': (attributes.borderRadius.length > 1 ? [{ topLeftRadius: '' }] : false)
+                    }],
+                    '6': (attributes.backgroundImage != null ? [{ image: attributes.backgroundImage, width: attributes.backgroundSize[0], height: attributes.backgroundSize[1] }] : false)
                 }]
             };
             const rootItem = getDataLevel(data, '0');
-            rootItem['1'].push({ color: (attributes.backgroundColor != null ? attributes.backgroundColor[1] : false) });
-            if (attributes.border[0] != 'none') {
-                rootItem['2'].push({
-                    width: attributes.border[1],
-                    borderStyle: borderStyle.default
-                });
-            }
-            else {
-                [attributes.borderTopWidth, attributes.borderRightWidth, attributes.borderBottomWidth, attributes.borderLeftWidth].forEach((item, index) => {
-                    rootItem['2'].push({
-                        [['top', 'right', 'bottom', 'left'][index]]: item[2],
-                        width: item[1],
-                        borderStyle: borderStyle[item[0]] || borderStyle.black
-                    });
-                });
+            [attributes.borderTopWidth, attributes.borderRightWidth, attributes.borderBottomWidth, attributes.borderLeftWidth].forEach((item, index) => {
+                rootItem[['top', 'right', 'bottom', 'left'][index]] = (item != null ? item[2] : null);
+            });
+            if (attributes.borderRadius.length > 1) {
+                if (attributes.borderRadius.length == 2) {
+                    attributes.borderRadius.push(...attributes.borderRadius.slice());
+                }
+                const borderRadiusItem = getDataLevel(data, '0', '1', '5');
+                attributes.borderRadius.forEach((value, index) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
             }
         }
         let xml = parseTemplateData(template, data);
@@ -787,7 +797,7 @@ export function setBackgroundStyle(node) {
         return { background: resourceName };
     }
     else if (attributes.backgroundColor != null) {
-        return { backgroundColor: attributes.backgroundColor[1] };
+        return { backgroundColor: attributes.backgroundColor };
     }
     return null;
 }

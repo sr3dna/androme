@@ -539,7 +539,7 @@ export function setConstraints() {
                             const result = (constraint ? search(current.app(), '*constraint*') : search(current.android(), LAYOUT));
                             for (const [key, value] of result) {
                                 if (value != 'parent') {
-                                    if (anchors.find(anchor => anchor.stringId == value) != null) {
+                                    if (anchors.find(item => item.stringId == value) != null) {
                                         if (!current.constraint.horizontal && indexOf(key, parseRTL('Left'), parseRTL('Right')) != -1) {
                                             current.constraint.horizontal = true;
                                         }
@@ -636,19 +636,19 @@ export function setConstraints() {
                         if (!anchors.includes(current)) {
                             const parentLeft = parseRTL('layout_alignParentLeft');
                             current.delete('android', LAYOUT);
-                            if (parentBottom != 'true') {
-                                const top = formatPX(current.bounds.top - node.box.top);
-                                current
-                                    .css('marginTop', top)
-                                    .android('layout_alignParentTop', 'true')
-                                    .android('layout_marginTop', top);
-                            }
                             if (current.android(parentLeft) != 'true') {
                                 const left = formatPX(current.bounds.left - node.box.left);
                                 current
                                     .css(parseRTL('marginLeft'), left)
                                     .android(parentLeft, 'true')
                                     .android(parseRTL('layout_marginLeft'), left);
+                            }
+                            if (parentBottom != 'true') {
+                                const top = formatPX(current.bounds.top - node.box.top);
+                                current
+                                    .css('marginTop', top)
+                                    .android('layout_alignParentTop', 'true')
+                                    .android('layout_marginTop', top);
                             }
                             current.constraint.vertical = true;
                             current.constraint.horizontal = true;

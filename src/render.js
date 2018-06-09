@@ -2,7 +2,7 @@ import { WIDGET_ANDROID } from './lib/constants';
 import { NODE_CACHE, generateNodeId } from './cache';
 import { convertPX, convertInt, padLeft, hasValue } from './lib/util';
 import { getBoxSpacing } from './lib/element';
-import { getResource, insertResourceAsset } from './resource';
+import { addResourceImage } from './resource';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import Layout from './android/layout';
@@ -140,25 +140,14 @@ export function renderViewTag(node, parent, tagName, recursive = false) {
     const element = node.element;
     node.setAndroidId(tagName);
     switch (element.tagName) {
-        case 'IMG': {
-            const image = element.src.substring(element.src.lastIndexOf('/') + 1);
-            const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
-            let src = image.replace(/.\w+$/, '');
-            switch (format) {
-                case 'bmp':
-                case 'gif':
-                case 'jpg':
-                case 'png':
-                case 'webp':
-                    src = insertResourceAsset(getResource('IMAGE'), src, element.src);
-                    break;
-                default:
-                    src = `(UNSUPPORTED: ${image})`;
+        case 'IMG':
+            let image = addResourceImage(element.src);
+            if (image == null) {
+                image = `(UNSUPPORTED: ${element.src})`;
             }
-            node.androidSrc = src;
+            node.androidSrc = image;
             break;
-        }
-        case 'TEXTAREA': {
+        case 'TEXTAREA':
             node.android('minLines', 2);
             if (element.rows > 2) {
                 node.android('maxLines', element.rows);
@@ -173,13 +162,12 @@ export function renderViewTag(node, parent, tagName, recursive = false) {
                 node.android('scrollHorizontally', 'true');
             }
             break;
-        }
     }
     switch (node.widgetName) {
         case WIDGET_ANDROID.EDIT:
             node.android('inputType', 'text');
             break;
-        case WIDGET_ANDROID.BUTTON: {
+        case WIDGET_ANDROID.BUTTON:
             if (node.viewWidth == 0) {
                 node.android('minWidth', '0px');
             }
@@ -187,7 +175,6 @@ export function renderViewTag(node, parent, tagName, recursive = false) {
                 node.android('minHeight', '0px');
             }
             break;
-        }
     }
     if (node.overflow != 0) {
         let scrollbars = [];

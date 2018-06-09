@@ -1144,12 +1144,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 	<item>
 		<shape android:shape="rectangle">
-		    <solid android:color="@color/white_smoke_1" />
-		</shape>
-	</item>
-	<item>
-		<shape android:shape="rectangle">
-		    <stroke android:width="2dp" android:color="@color/white_smoke_1" />
+			<stroke android:width="2dp" android:color="@color/white_smoke_1" />
+			<solid android:color="@color/white_smoke_1" />
 		</shape>
 	</item>
 </layer-list>
