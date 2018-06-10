@@ -2,7 +2,7 @@ const ID = {
     android: ['parent']
 };
 
-function sort(list, asc = 0, ...attributes) {
+function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
     return list.sort((a, b) => {
         for (const attr of attributes) {
             const result = compare(a, b, attr);
@@ -19,7 +19,7 @@ function sort(list, asc = 0, ...attributes) {
     });
 }
 
-export function generateId(section, name) {
+export function generateId(section: string, name: string) {
     let prefix = name;
     let i = 1;
     const match = name.match(/^([a-zA-Z0-9_]+)_([0-9]+)$/);
@@ -43,14 +43,14 @@ export function generateId(section, name) {
     return name;
 }
 
-export function formatString(value, ...params) {
+export function formatString(value: string, ...params: string[]) {
     for (let i = 0; i < params.length; i++) {
         value = value.replace(`{${i}}`, params[i]);
     }
     return value;
 }
 
-export function cameltoLowerCase(value) {
+export function cameltoLowerCase(value: string) {
     value = value.charAt(0).toLowerCase() + value.substring(1);
     const result = value.match(/([a-z]{1}[A-Z]{1})/g);
     if (result != null) {
@@ -61,7 +61,7 @@ export function cameltoLowerCase(value) {
     return value;
 }
 
-export function hyphenToCamelCase(value) {
+export function hyphenToCamelCase(value: string) {
     value = value.replace(/$-+/, '');
     const result = value.match(/(-{1}[a-z]{1})/g);
     if (result != null) {
@@ -72,19 +72,19 @@ export function hyphenToCamelCase(value) {
     return value;
 }
 
-export function padLeft(n, value = '\t') {
+export function padLeft(n: number, value = '\t') {
     return value.repeat(n);
 }
 
-export function formatPX(value) {
+export function formatPX(value: any) {
     value = parseFloat(value);
     return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
 }
 
-export function convertPX(value, unit = true) {
+export function convertPX(value: any, unit = true) {
     if (hasValue(value)) {
         if (typeof value == 'number') {
-            value += 'px';
+            value = `${value}px`;
         }
         const match = value.match(/(pt|em)/);
         value = parseFloat(value);
@@ -94,7 +94,7 @@ export function convertPX(value, unit = true) {
                     value *= (4 / 3);
                     break;
                 case 'em':
-                    value * 16;
+                    value *= 16;
                     break;
             }
         }
@@ -105,7 +105,7 @@ export function convertPX(value, unit = true) {
     return (unit ? '0px' : 0);
 }
 
-export function convertDP(value, dpi = 160, unit = true, font = false) {
+export function convertDP(value: any, dpi = 160, unit = true, font = false) {
     if (hasValue(value)) {
         value = convertPX(value, false);
         value = value / (dpi / 160);
@@ -117,23 +117,23 @@ export function convertDP(value, dpi = 160, unit = true, font = false) {
     return (unit ? '0dp' : 0);
 }
 
-export function convertSP(value, dpi = 160, unit = true) {
+export function convertSP(value: any, dpi = 160, unit = true) {
     return convertDP(value, dpi, unit, true);
 }
 
-export function replaceDP(xml, dpi = 160, font = false) {
+export function replaceDP(xml: string, dpi = 160, font = false) {
     return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, true, font) + capture[2]);
 }
 
-export function convertInt(value) {
+export function convertInt(value: any) {
     return parseInt(value) || 0;
 }
 
-export function isNumber(value) {
-    return /^[0-9]+\.?[0-9]*$/.test(value.trim());
+export function isNumber(value: string) {
+    return /^[0-9]+\.?[0-9]*$/.test(value.toString().trim());
 }
 
-export function search(obj, value) {
+export function search(obj: {}, value: any) {
     const result = [];
     if (typeof value == 'object') {
         for (const term in value) {
@@ -144,15 +144,15 @@ export function search(obj, value) {
         }
     }
     else {
-        let filter = null;
+        let filter: (a: string) => boolean = null;
         if (/^\*.+\*$/.test(value)) {
-            filter = attr => attr.indexOf(value.replace(/\*/g, '')) != -1;
+            filter = (a: string): boolean => a.indexOf(value.replace(/\*/g, '')) != -1;
         }
         else if (/^\*/.test(value)) {
-            filter = attr => attr.endsWith(value.replace(/\*/, ''));
+            filter = (a: string): boolean => a.endsWith(value.replace(/\*/, ''));
         }
         else if (/\*$/.test(value)) {
-            filter = attr => attr.startsWith(value.replace(/\*/, ''));
+            filter = (a: string): boolean => a.startsWith(value.replace(/\*/, ''));
         }
         if (filter != null) {
             for (const i in obj) {
@@ -165,7 +165,7 @@ export function search(obj, value) {
     return result;
 }
 
-export function indexOf(value, ...terms) {
+export function indexOf<T>(value: T[], ...terms: T[]) {
     if (hasValue(value)) {
         for (const term of terms) {
             const index = value.indexOf(term);
@@ -177,15 +177,23 @@ export function indexOf(value, ...terms) {
     return -1;
 }
 
-export function sortAsc(list, ...attributes) {
-    return sort(list, 0, ...attributes);
+export function remove<T>(list: T[], value: any) {
+    const index = list.indexOf(value);
+    if (index != -1) {
+        list.splice(index, 1);
+    }
+    return list;
 }
 
-export function sortDesc(list, ...attributes) {
-    return sort(list, 1, ...attributes);
+export function sortAsc<T>(list: T[], ...attributes: string[]) {
+    return sort<T>(list, 0, ...attributes);
 }
 
-export function same(obj1, obj2, ...attributes) {
+export function sortDesc<T>(list: T[], ...attributes: string[]) {
+    return sort<T>(list, 1, ...attributes);
+}
+
+export function same(obj1: {}, obj2: {}, ...attributes: string[]) {
     for (const attr of attributes) {
         const result = compare(obj1, obj2, attr);
         if (!result || result[0] !== result[1]) {
@@ -195,10 +203,10 @@ export function same(obj1, obj2, ...attributes) {
     return true;
 }
 
-export function compare(obj1, obj2, attr) {
+export function compare(obj1: {}, obj2: {}, attr: string) {
     const namespaces = attr.split('.');
-    let current1 = obj1;
-    let current2 = obj2;
+    let current1: any = obj1;
+    let current2: any = obj2;
     for (const name of namespaces) {
         if (current1[name] != null && current2[name] != null) {
             current1 = current1[name];
@@ -222,7 +230,7 @@ export function compare(obj1, obj2, attr) {
     }
 }
 
-export function parseUnit(value) {
+export function parseUnit(value: string) {
     if (hasValue(value)) {
         const match = value.match(/(?:"|>)([0-9]+)(?:(px|pt|em|dp|sp))(?:"|<)/);
         if (match != null) {
@@ -232,18 +240,18 @@ export function parseUnit(value) {
     return 0;
 }
 
-export function calculateBias(start, end) {
-    return Math.max(parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2))), 0);
+export function calculateBias(start: number, end: number) {
+    return parseFloat(Math.max(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end))), 0).toFixed(2));
 }
 
-export function hasValue(value) {
-    return (typeof value !== 'undefined' && value !== null && value !== '');
+export function hasValue<T>(value: T) {
+    return (typeof value !== 'undefined' && value !== null && value.toString() !== '');
 }
 
-export function withinRange(a, b, n = 1) {
+export function withinRange(a: number, b: number, n = 1) {
     return (b >= (a - n) && b <= (a + n));
 }
 
-export function withinFraction(lower, upper) {
+export function withinFraction(lower: number, upper: number) {
     return (lower == upper || Math.ceil(lower) == Math.floor(upper));
 }

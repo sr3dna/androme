@@ -1,8 +1,40 @@
-import { hyphenToCamelCase, hasValue, search, formatPX, convertInt } from '../lib/util';
+import { IClientRect, IBoxModel } from '../lib/types';
+import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { getRangeBounds } from '../lib/element';
 
-export default class Node {
-    constructor(id, element = null, api = 0, options = {}) {
+export default abstract class Node implements IBoxModel {
+    public static is(object: any) {
+        return (object instanceof Node);
+    }
+
+    public depth: number;
+    public style: any;
+    public styleMap: any;
+    public visible: boolean;
+    public parentIndex: number;
+    public bounds: IClientRect;
+    public linear: IClientRect;
+    public box: IClientRect;
+    public renderDepth: number;
+
+    public children: Node[];
+    public renderChildren: Node[];
+
+    public gridFirst: boolean;
+    public gridLast: boolean;
+    public gridRowEnd: boolean;
+    public gridRowStart: boolean;
+    public gridSiblings: Node[];
+
+    private _flex: any;
+    private _namespaces: Set<string>;
+    private _overflow: number;
+    private _parent: Node;
+    private _parentOriginal: Node;
+    private _renderParent: any;
+    private _tagName: string;
+
+    constructor(public id: number, public element: any = null, public api = 0, options = {}) {
         let style = {};
         let styleMap = {};
         if (element != null) {
@@ -34,12 +66,9 @@ export default class Node {
         Object.assign(this, options);
     }
 
-    add(obj, attr, value = null, overwrite = true) {
+    public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
         if (hasValue(value)) {
-            if (!this.supported(obj, attr)) {
-                return false;
-            }
             if (this[name] == null) {
                 this._namespaces.add(obj);
                 this[name] = {};
@@ -51,8 +80,8 @@ export default class Node {
         }
         return (this[name] != null ? this[name][attr] : null);
     }
-    delete(obj, ...attributes) {
-        const name = `_${obj}`;
+    public delete(obj: string, ...attributes: any[]) {
+        const name = `_${obj || '_'}`;
         if (this[name] != null) {
             if (typeof attributes[0] == 'object') {
                 for (const key in attributes[0]) {
@@ -74,10 +103,7 @@ export default class Node {
         }
         return this;
     }
-    attr() {
-        return this;
-    }
-    apply(options) {
+    public apply(options: {}) {
         for (const namespace in options) {
             const obj = options[namespace];
             for (const attr in obj) {
@@ -86,30 +112,17 @@ export default class Node {
         }
         return this;
     }
-    css(attr, value = null) {
-        if (arguments.length == 2) {
-            this.styleMap[attr] = (hasValue(value) ? value : null);
-            return this;
-        }
-        else {
-            return this.styleMap[attr] || this.style[attr];
-        }
-    }
-    supported() {
-        return true;
-    }
-    render(parent) {
+    public render(parent: Node): Node {
         this.renderParent = parent;
         this.renderDepth = (parent.id == 0 ? 0 : parent.renderDepth + 1);
         return this;
     }
-    hide() {
+    public hide() {
         this.renderParent = true;
         this.visible = false;
         return this;
     }
-
-    ascend() {
+    public ascend() {
         const result = [];
         let current = this.parent;
         while (current != null) {
@@ -123,22 +136,22 @@ export default class Node {
         }
         return result;
     }
-    cascade() {
-        function cascade(node) {
+    public cascade() {
+        function cascade(node: Node) {
             const current = [...node.children];
-            node.children.forEach(item => current.push(...cascade(item)));
+            node.children.forEach((item: Node) => current.push(...cascade(item)));
             return current;
         }
         return cascade(this);
     }
-    intersect(rect, dimension = 'bounds') {
+    public intersect(rect: IClientRect, dimension = 'bounds') {
         const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
         const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
         const left = (rect.left >= this[dimension].left && rect.left < this[dimension].right);
         const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
         return (top && (left || right)) || (bottom && (left || right));
     }
-    withinX(rect, dimension = 'linear') {
+    public withinX(rect: IClientRect, dimension = 'linear') {
         return (
             (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
             (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
@@ -146,7 +159,7 @@ export default class Node {
             (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom)
         );
     }
-    withinY(rect, dimension = 'linear') {
+    public withinY(rect: IClientRect, dimension = 'linear') {
         return (
             (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
             (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
@@ -154,11 +167,17 @@ export default class Node {
             (rect.left >= this[dimension].left && rect.right <= this[dimension].right)
         );
     }
-    is() {
-        return (this.id != 0 && Node.is(this));
+    public css(attr: string, value = '') {
+        if (arguments.length == 2) {
+            this.styleMap[attr] = (hasValue(value) ? value : null);
+            return this;
+        }
+        else {
+            return this.styleMap[attr] || this.style[attr];
+        }
     }
 
-    setBounds(calibrate = false, element = null) {
+    public setBounds(calibrate: boolean = false, element: HTMLElement = null) {
         if (!calibrate) {
             this.bounds = (element != null ?  getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
         }
@@ -176,7 +195,7 @@ export default class Node {
         };
         this.setDimensions();
     }
-    setDimensions() {
+    public setDimensions() {
         const linear = this.linear;
         linear.width = linear.right - linear.left;
         linear.height = linear.bottom - linear.top;
@@ -184,8 +203,8 @@ export default class Node {
         box.width = box.right - box.left;
         box.height = box.bottom - box.top;
     }
-    expandDimensions() {
-        let [width, height] = [this.children.reduce((a, b) => Math.max(a, b.linear.right), 0), this.children.reduce((a, b) => Math.max(a, b.linear.bottom), 0)];
+    public expandDimensions() {
+        let [width, height] = [this.children.reduce((a: number, b: Node) => Math.max(a, b.linear.right), 0), this.children.reduce((a: number, b: Node) => Math.max(a, b.linear.bottom), 0)];
         switch (this.style.position) {
             case 'static':
             case 'relative':
@@ -236,7 +255,7 @@ export default class Node {
         }
     }
     get parent() {
-        return (this._parent != null ? this._parent : new Node(0));
+        return this._parent;
     }
     set parentOriginal(value) {
         if (Node.is(value)) {
@@ -249,7 +268,7 @@ export default class Node {
     get parentElement() {
         return this.element.parentNode;
     }
-    set renderParent(value) {
+    set renderParent(value: any) {
         if (Node.is(value) && value.visible && value.renderChildren != null) {
             value.renderChildren.push(this);
         }
@@ -272,14 +291,7 @@ export default class Node {
         return [maxRight - minLeft, maxBottom - minTop];
     }
     get namespaces() {
-        const result = [];
-        for (const obj of this._namespaces) {
-            const name = obj.replace(/^_+/, '');
-            if (name != '') {
-                result.push(name);
-            }
-        }
-        return result;
+        return Array.from(this._namespaces);
     }
     set tagName(value) {
         this._tagName = value;
@@ -289,7 +301,7 @@ export default class Node {
     }
     get flex() {
         if (this._flex == null) {
-            let parent = (this.parentElement != null ? this.parentElement.__Node : null);
+            const parent = (this.parentElement != null ? this.parentElement.__node : null);
             this._flex = {
                 parent,
                 enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
@@ -373,9 +385,5 @@ export default class Node {
     }
     get center() {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
-    }
-
-    static is(object) {
-        return (object instanceof Node);
     }
 }

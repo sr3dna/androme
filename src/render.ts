@@ -1,18 +1,18 @@
 import { WIDGET_ANDROID } from './lib/constants';
-import { NODE_CACHE, generateNodeId } from './cache';
-import { convertPX, convertInt, padLeft, hasValue } from './lib/util';
+import { convertInt, convertPX, hasValue, padLeft } from './lib/util';
 import { getBoxSpacing } from './lib/element';
+import { generateNodeId, NODE_CACHE } from './cache';
 import { addResourceImage } from './resource';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import Layout from './android/layout';
-import parseRTL from './localization';
+import parseRTL from './lib/localization';
 import SETTINGS from './settings';
 
 const VIEW_BEFORE = {};
 const VIEW_AFTER = {};
 
-function getEnclosingTag(depth, tagName, id, content = '', preXml = '', postXml = '') {
+function getEnclosingTag(depth: number, tagName: string, id: number, content = '', preXml = '', postXml = '') {
     const indent = padLeft(depth);
     let xml = preXml +
               `{<${id}}`;
@@ -29,9 +29,9 @@ function getEnclosingTag(depth, tagName, id, content = '', preXml = '', postXml 
     return xml;
 }
 
-function setGridSpace(node) {
+function setGridSpace(node: Widget) {
     if (node.parent.is(WIDGET_ANDROID.GRID)) {
-        const dimensions = getBoxSpacing(node.parentOriginal.element, SETTINGS.supportRTL, true);
+        const dimensions = getBoxSpacing(node.parentOriginal.element, true);
         const options = {
             android: {
                 layout_columnSpan: node.renderParent.gridColumnSpan,
@@ -67,7 +67,7 @@ function setGridSpace(node) {
     }
 }
 
-export function renderViewLayout(node, parent, tagName) {
+export function renderViewLayout(node: Widget, parent: Widget, tagName: string) {
     let preXml = '';
     let postXml = '';
     let renderParent = parent;
@@ -78,7 +78,7 @@ export function renderViewLayout(node, parent, tagName) {
             scrollView.push(WIDGET_ANDROID.SCROLL_HORIZONTAL);
         }
         if (node.overflowY) {
-            scrollView.push((node.ascend().some(item => item.overflow != 0) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
+            scrollView.push((node.ascend().some((item: Widget) => item.overflow != 0) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
         }
         let current = node;
         let scrollDepth = parent.renderDepth + scrollView.length;
@@ -136,7 +136,7 @@ export function renderViewLayout(node, parent, tagName) {
     return getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, preXml, postXml);
 }
 
-export function renderViewTag(node, parent, tagName, recursive = false) {
+export function renderViewTag(node: Widget, parent: Widget, tagName: string, recursive = false) {
     const element = node.element;
     node.setAndroidId(tagName);
     switch (element.tagName) {
@@ -148,12 +148,12 @@ export function renderViewTag(node, parent, tagName, recursive = false) {
             node.androidSrc = image;
             break;
         case 'TEXTAREA':
-            node.android('minLines', 2);
+            node.android('minLines', '2');
             if (element.rows > 2) {
                 node.android('maxLines', element.rows);
             }
             if (element.maxlength != null) {
-                node.android('maxLength', parseInt(element.maxlength));
+                node.android('maxLength', element.maxlength);
             }
             node.android('hint', element.placeholder)
                 .android('scrollbars', 'vertical')
@@ -177,7 +177,7 @@ export function renderViewTag(node, parent, tagName, recursive = false) {
             break;
     }
     if (node.overflow != 0) {
-        let scrollbars = [];
+        const scrollbars = [];
         if (node.overflowX) {
             scrollbars.push('horizontal');
         }
@@ -189,12 +189,12 @@ export function renderViewTag(node, parent, tagName, recursive = false) {
     switch (element.type) {
         case 'radio':
             if (!recursive) {
-                const result = node.parentOriginal.children.filter(item => (item.element.type == 'radio' && item.element.name == element.name));
+                const result = node.parentOriginal.children.filter((item: Widget) => (item.element.type == 'radio' && item.element.name == element.name)) as WidgetList;
                 let content = '';
                 if (result.length > 1) {
                     let rowSpan = 1;
                     let columnSpan = 1;
-                    let checked = null;
+                    let checked: Widget = null;
                     const layout = new Layout(generateNodeId(), node, SETTINGS.targetAPI, parent, result);
                     NODE_CACHE.push(layout);
                     layout.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
@@ -211,10 +211,10 @@ export function renderViewTag(node, parent, tagName, recursive = false) {
                         content += renderViewTag(radio, layout, WIDGET_ANDROID.RADIO, true);
                     }
                     if (rowSpan > 1) {
-                        layout.android('layout_rowSpan', rowSpan);
+                        layout.android('layout_rowSpan', rowSpan.toString());
                     }
                     if (columnSpan > 1) {
-                        layout.android('layout_columnSpan', columnSpan);
+                        layout.android('layout_columnSpan', columnSpan.toString());
                     }
                     layout
                         .android('orientation', (result.linearX ? 'horizontal' : 'vertical'))
@@ -234,12 +234,12 @@ export function renderViewTag(node, parent, tagName, recursive = false) {
     node.applyCustomizations();
     node.render(parent);
     node.setGravity();
-    node.cascade().forEach(item => item.hide());
+    node.cascade().forEach((item: Widget) => item.hide());
     setGridSpace(node);
     return getEnclosingTag(node.renderDepth, node.widgetName, node.id);
 }
 
-export function getStaticTag(widgetName, depth, options, width = 'wrap_content', height = 'wrap_content') {
+export function getStaticTag(widgetName: string, depth: number, options: {}, width = 'wrap_content', height = 'wrap_content') {
     let attributes = '';
     const node = new Widget(0, null, SETTINGS.targetAPI);
     node.setAndroidId(widgetName);
@@ -256,7 +256,7 @@ export function getStaticTag(widgetName, depth, options, width = 'wrap_content',
     return [getEnclosingTag(depth, widgetName, 0).replace('{@0}', attributes), node.stringId];
 }
 
-export function addViewBefore(id, xml, index = -1) {
+export function addViewBefore(id: number, xml: string, index = -1) {
     if (VIEW_BEFORE[id] == null) {
         VIEW_BEFORE[id] = [];
     }
@@ -268,7 +268,7 @@ export function addViewBefore(id, xml, index = -1) {
     }
 }
 
-export function addViewAfter(id, xml, index = -1) {
+export function addViewAfter(id: number, xml: string, index = -1) {
     if (VIEW_AFTER[id] == null) {
         VIEW_AFTER[id] = [];
     }
@@ -280,7 +280,7 @@ export function addViewAfter(id, xml, index = -1) {
     }
 }
 
-export function insertViewBeforeAfter(output) {
+export function insertViewBeforeAfter(output: string) {
     for (const id in VIEW_BEFORE) {
         output = output.replace(`{<${id}}`, VIEW_BEFORE[id].join(''));
     }

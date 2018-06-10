@@ -1,12 +1,13 @@
 import { calculateBias } from '../lib/util';
+import Widget from './widget';
 import NodeList from '../base/nodelist';
 
 export default class WidgetList extends NodeList {
-    constructor(nodes, parent = null) {
+    constructor(nodes: Widget[] = null, parent: Widget = null) {
         super(nodes, parent);
     }
 
-    push(...value) {
+    public push(...value: Widget[]) {
         for (const node of value) {
             if (node.children == null) {
                 node.children = new WidgetList(null, node);

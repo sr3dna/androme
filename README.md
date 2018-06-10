@@ -58,7 +58,7 @@ Most layout issues are probably due to layout_width and layout_height not being 
 
 <img src="demos/android/form.png" alt="form" />
 
-Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and also to use flexbox instead of floats.
+Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and to use single row flexbox layouts instead of floating "right".
 
 <img src="demos/android/flexbox.png" alt="flexbox" />
 
@@ -68,7 +68,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/position_absolute.png" alt="ConstraintLayout - position: absolute" />
 
-## auto-generated layout xml
+## auto-generated layout
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1039,51 +1039,40 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <resources>
 	<style name="H2_1">
 		<item name="android:background">@color/slate_gray</item>
-		<item name="android:fontFamily">tahoma</item>
-		<item name="android:fontWeight">700</item>
+		<item name="android:fontFamily">@font/tahoma_bold</item>
 		<item name="android:textColor">@color/white</item>
 		<item name="android:textSize">12sp</item>
-		<item name="android:textStyle">normal</item>
 	</style>
-	<style name="Label_1">
-		<item name="android:fontFamily">arial</item>
-		<item name="android:fontWeight">400</item>
+	<style name="Label_2">
+		<item name="android:fontFamily">@font/arial_italic</item>
 		<item name="android:textSize">11sp</item>
 	</style>
-	<style name="Label_3" parent="Label_1">
-		<item name="android:fontWeight">400</item>
-		<item name="android:textStyle">italic</item>
-	</style>
-	<style name="Input_1">
-		<item name="android:fontWeight">400</item>
-		<item name="android:textStyle">normal</item>
-	</style>
-	<style name="Input_3" parent="Input_1">
-		<item name="android:fontFamily">arial</item>
+	<style name="Input_3">
+		<item name="android:fontFamily">@font/arial</item>
 		<item name="android:textSize">13.33sp</item>
 	</style>
-	<style name="Label_2" parent="Label_1">
-		<item name="android:fontWeight">400</item>
-		<item name="android:textStyle">normal</item>
+	<style name="Label_1">
+		<item name="android:fontFamily">@font/arial</item>
+		<item name="android:textSize">11sp</item>
 	</style>
 	<style name="Select_1">
-		<item name="android:fontFamily">arial</item>
+		<item name="android:fontFamily">@font/arial</item>
+		<item name="android:textSize">11sp</item>
+	</style>
+	<style name="Input_1">
+		<item name="android:background">@color/white_smoke_1</item>
+		<item name="android:fontFamily">@font/arial</item>
+		<item name="android:textSize">10sp</item>
+	</style>
+	<style name="Input_4" parent="Input_1">
+		<item name="android:fontFamily">@font/arial</item>
+		<item name="android:textColor">@color/gray</item>
+	</style>
+	<style name="Input_2">
+		<item name="android:fontFamily">sans-serif</item>
 		<item name="android:fontWeight">400</item>
 		<item name="android:textSize">11sp</item>
 		<item name="android:textStyle">normal</item>
-	</style>
-	<style name="Input_2" parent="Input_1">
-		<item name="android:background">@color/white_smoke_1</item>
-		<item name="android:fontFamily">arial</item>
-		<item name="android:textSize">10sp</item>
-	</style>
-	<style name="Input_5" parent="Input_2">
-		<item name="android:fontFamily">arial</item>
-		<item name="android:textColor">@color/gray</item>
-	</style>
-	<style name="Input_4" parent="Input_1">
-		<item name="android:fontFamily">sans-serif</item>
-		<item name="android:textSize">11sp</item>
 	</style>
 </resources>
 <!-- filename: res/values/styles.xml -->

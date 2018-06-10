@@ -1,7 +1,9 @@
 .vscode/
-/node_modules/
-*.code-workspace
+/build/
 /config/
-package-lock.json
+/node_modules/
 .babelrc
-.eslintrc.json
+*.code-workspace
+package-lock.json
+tsconfig.json
+tslint.json

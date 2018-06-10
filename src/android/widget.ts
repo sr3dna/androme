@@ -1,34 +1,50 @@
-import { WIDGET_ANDROID, FIXED_ANDROID, MAPPING_CHROME, BUILD_ANDROID } from '../lib/constants';
+import { BUILD_ANDROID, FIXED_ANDROID, MAPPING_CHROME, WIDGET_ANDROID } from '../lib/constants';
 import { API_ANDROID } from '../customizations';
-import { formatPX, convertInt, generateId, convertPX, hasValue, formatString, isNumber, calculateBias } from '../lib/util';
+import { calculateBias, convertInt, convertPX, formatPX, formatString, generateId, hasValue, isNumber } from '../lib/util';
 import { parseStyle } from '../lib/element';
 import * as Resource from '../resource';
+import parseRTL from '../lib/localization';
 import Node from '../base/node';
-import parseRTL from '../localization';
 
 export default class Widget extends Node {
-    constructor(id, element, api, options = {}) {
-        super(...arguments);
+    public static is(object: any) {
+        return (object instanceof Widget);
+    }
+
+    public actions: number[];
+    public constraint: any;
+    public labelFor: Widget;
+    public linearRows: Widget[];
+    public styleAttributes: string[];
+
+    public androidId: string;
+    public androidWidgetName: string;
+    public androidSrc: string;
+
+    private _android: any;
+    private _app: any;
+    private _label: Widget;
+
+    constructor(id: number, element: any = null, api: number = 0, options: any = {}) {
+        super(id, element, api, options);
 
         this.labelFor = null;
         this.styleAttributes = [];
         this.constraint = {};
-
         this._label = null;
 
         if (options.element != null || element != null) {
-            this.element.__Node = this;
+            this.element.__node = this;
         }
     }
 
-    attr(value, overwrite = true) {
-        const match = value.match(/^(?:([a-z]+):)?(\w+)="((?:@+?[a-z]+\/)?.+)"$/);
-        if (match != null) {
-            this.add(match[1] || '_', match[2], match[3], overwrite);
+    public add(obj: string, attr: string, value = '', overwrite = true) {
+        if (hasValue(attr) && !this.supported(obj, attr)) {
+            return false;
         }
-        return this;
+        return super.add(obj, attr, value, overwrite);
     }
-    android(attr, value = null, overwrite = true) {
+    public android(attr: string, value: string = null, overwrite = true) {
         switch (arguments.length) {
             case 0:
                 return this._android;
@@ -39,7 +55,7 @@ export default class Widget extends Node {
                 return this;
         }
     }
-    app(attr, value = null, overwrite = true) {
+    public app(attr: string, value: string = null, overwrite = true) {
         switch (arguments.length) {
             case 0:
                 return this._app;
@@ -50,7 +66,29 @@ export default class Widget extends Node {
                 return this;
         }
     }
-    render(parent) {
+    public attr(value: string, overwrite = true) {
+        const match = value.match(/^(?:([a-z]+):)?(\w+)="((?:@+?[a-z]+\/)?.+)"$/);
+        if (match != null) {
+            this.add(match[1] || '_', match[2], match[3], overwrite);
+        }
+        return this;
+    }
+    public combine() {
+        const result: string[] = [];
+        this.namespaces.forEach(value => {
+            const obj: {} = this[`_${value}`];
+            for (const attr in obj) {
+                if (value != '_') {
+                    result.push(`${value}:${attr}="${obj[attr]}"`);
+                }
+                else {
+                    result.push(`${attr}="${obj[attr]}"`);
+                }
+            }
+        });
+        return result.sort();
+    }
+    public render(parent: Widget) {
         if (Widget.is(parent) && parent.is(WIDGET_ANDROID.LINEAR) && parent.id != 0) {
             switch (this.widgetName) {
                 case WIDGET_ANDROID.LINEAR:
@@ -59,9 +97,10 @@ export default class Widget extends Node {
                     break;
             }
         }
-        return super.render(parent);
+        super.render(parent);
+        return this;
     }
-    anchor(position, adjacent = {}, orientation = '') {
+    public anchor(position: string, adjacent: any = {}, orientation = '') {
         const overwrite = (adjacent.stringId == 'parent');
         switch (this.renderParent.widgetName) {
             case WIDGET_ANDROID.CONSTRAINT:
@@ -82,45 +121,8 @@ export default class Widget extends Node {
         }
         return this;
     }
-    modifyBox(dimension, offset) {
-        dimension = parseRTL(dimension);
-        const total = formatPX(offset + convertInt(this.android(dimension)));
-        this.css(dimension, total)
-            .android(dimension, total);
-        this.setBounds(true);
-        return this;
-    }
-    inheritStyle(node) {
-        const inherit = Resource.ACTION_ANDROID[this.widgetName]['setComputedStyle'];
-        const style = [];
-        for (const attr in inherit) {
-            let value = node.style[attr]; 
-            this.style[attr] = value;
-            value = parseStyle(null, attr, value);
-            if (hasValue(value)) {
-                style.push(formatString(inherit[attr], value));
-            }
-        }
-        this.styleAttributes = style;
-    }
-
-    combine() {
-        const result = [];
-        this._namespaces.forEach(value => {
-            const obj = this[`_${value}`];
-            for (const attr in obj) {
-                if (value != '_') {
-                    result.push(`${value}:${attr}="${obj[attr]}"`);
-                }
-                else {
-                    result.push(`${attr}="${obj[attr]}"`);
-                }
-            }
-        });
-        return result.sort();
-    }
-    supported(obj, attr) {
-        for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
+    public supported(obj: string, attr: string) {
+        for (let i = this.api + 1; i < BUILD_ANDROID.OREO_1; i++) {
             const version = API_ANDROID[i];
             if (version != null && version[obj] != null && version[obj].includes(attr)) {
                 return false;
@@ -128,7 +130,7 @@ export default class Widget extends Node {
         }
         return true;
     }
-    applyCustomizations() {
+    public applyCustomizations() {
         const api = API_ANDROID[this.api];
         if (api != null) {
             const customizations = api.customizations[this.widgetName];
@@ -141,7 +143,28 @@ export default class Widget extends Node {
             }
         }
     }
-    is(...views) {
+    public modifyBox(dimension: string, offset: number) {
+        dimension = parseRTL(dimension);
+        const total = formatPX(offset + convertInt(this.android(dimension)));
+        this.css(dimension, total)
+            .android(dimension, total);
+        this.setBounds(true);
+        return this;
+    }
+    public inheritStyle(node: Widget) {
+        const inherit = Resource.ACTION_ANDROID[this.widgetName]['setComputedStyle'];
+        const style = [];
+        for (const attr in inherit) {
+            let value = node.style[attr];
+            this.style[attr] = value;
+            value = parseStyle(null, attr, value);
+            if (hasValue(value)) {
+                style.push(formatString(inherit[attr], value));
+            }
+        }
+        this.styleAttributes = style;
+    }
+    public is(...views: string[]) {
         for (const viewName of views) {
             if (this.widgetName == viewName) {
                 return true;
@@ -149,16 +172,16 @@ export default class Widget extends Node {
         }
         return false;
     }
-    
-    setAndroidId(widgetName) {
+
+    public setAndroidId(widgetName: string) {
         this.androidWidgetName = widgetName || this.widgetName;
         if (this.androidId == null) {
             this.androidId = generateId('android', this.element.id || this.element.name || `${this.androidWidgetName.substring(this.androidWidgetName.lastIndexOf('.') + 1).toLowerCase()}_1`);
         }
     }
-    setAndroidDimensions(options) {
+    public setAndroidDimensions(options: any) {
         const styleMap = this.styleMap;
-        let parent = null;
+        let parent: Widget = null;
         let width = 0;
         let height = 0;
         let requireWrap = false;
@@ -194,7 +217,7 @@ export default class Widget extends Node {
             }
             if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
                 if (this.constraint.layoutWidth) {
-                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') == 'right') || convertPX(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
+                    this.android('layout_width', (this.renderChildren.some((node: Widget) => node.css('float') == 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
                 }
                 else {
                     this.android('layout_width', 'wrap_content', false);
@@ -258,14 +281,14 @@ export default class Widget extends Node {
             }
         }
     }
-    setAttributes(actions = null) {
+    public setAttributes(actions: number[] = null) {
         const widget = Resource.ACTION_ANDROID[this.widgetName];
         const element = this.element;
         const result = {};
         if (element.tagName == 'INPUT' && element.id != '') {
             const nextElement = element.nextElementSibling;
             if (nextElement != null && nextElement.htmlFor == element.id) {
-                const node = nextElement.__Node;
+                const node = nextElement.__node;
                 node.setAttributes([2, 4]);
                 node.setAndroidId(WIDGET_ANDROID.TEXT);
                 const attributes = node.combine();
@@ -336,13 +359,13 @@ export default class Widget extends Node {
                 if (!Array.isArray(value)) {
                     value = [value];
                 }
-                value.forEach(attr => this.attr(attr, false));
+                value.forEach((attr: string) => this.attr(attr, false));
             }
         }
     }
-    setGravity() {
+    public setGravity() {
         const verticalAlign = this.styleMap.verticalAlign;
-        let textAlign = null;
+        let textAlign = '';
         let element = this.element;
         while (element != null && element.styleMap != null) {
             textAlign = element.styleMap.textAlign || textAlign;
@@ -353,15 +376,15 @@ export default class Widget extends Node {
             element = element.parentNode;
         }
         if (hasValue(verticalAlign) || hasValue(textAlign)) {
-            let horizontal = null;
-            let vertical = null;
-            let layoutGravity = [];
+            let horizontal = '';
+            let vertical = '';
+            const layoutGravity = [];
             switch (textAlign) {
                 case 'start':
                     horizontal = 'start';
                     break;
                 case 'right':
-                    horizontal = parseRTL('right', 'end');
+                    horizontal = parseRTL('right');
                     break;
                 case 'end':
                     horizontal = 'end';
@@ -420,21 +443,6 @@ export default class Widget extends Node {
     get stringId() {
         return (this.androidId != null ? `@+id/${this.androidId}` : '');
     }
-    get anchored() {
-        return (this.constraint.horizontal && this.constraint.vertical);
-    }
-    get horizontal() {
-        return (this._android != null && this._android.orientation == 'horizontal');
-    }
-    get label() {
-        return this._label;
-    }
-    set label(value) {
-        if (Widget.is(value)) {
-            this._label = value;
-            value.labelFor = this;
-        }
-    }
     get widgetName() {
         if (this.androidWidgetName != null) {
             return this.androidWidgetName;
@@ -446,6 +454,27 @@ export default class Widget extends Node {
             }
             return widgetName;
         }
+    }
+    set label(value) {
+        if (Widget.is(value)) {
+            this._label = value;
+            value.labelFor = this;
+        }
+    }
+    get label() {
+        return this._label;
+    }
+    set parent(value) {
+        super.parent = value;
+    }
+    get parent(): Widget {
+        return super.parent as Widget || new Widget(0);
+    }
+    get horizontal() {
+        return (this._android != null && this._android.orientation == 'horizontal');
+    }
+    get anchored() {
+        return (this.constraint.horizontal && this.constraint.vertical);
     }
     get horizontalBias() {
         const parent = this.renderParent;
@@ -464,9 +493,5 @@ export default class Widget extends Node {
             return calculateBias(top, bottom);
         }
         return 0.5;
-    }
-
-    static is(object) {
-        return (object instanceof Widget);
     }
 }

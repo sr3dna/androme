@@ -1,21 +1,18 @@
 import { hasValue } from './util';
 
-export function getDataLevel(data, ...levels) {
+export function getDataLevel(data: {}, ...levels: string[]) {
     let current = data;
     for (const level of levels) {
-        let [index, array] = level.split('-');
-        if (array == null) {
-            array = 0;
-        }
+        const [index, array = '0'] = level.split('-');
         current = current[index][array];
     }
     return current;
 }
 
-export function parseTemplateMatch(template) {
+export function parseTemplateMatch(template: string) {
     const result = {};
-    let pattern = null;
-    let match = false;
+    let pattern: RegExp = null;
+    let match: any = false;
     let section = 0;
     let characters = template.length;
     do {
@@ -44,8 +41,8 @@ export function parseTemplateMatch(template) {
     return result;
 }
 
-export function parseTemplateData(template, data, index = null, include = {}, exclude = {}) {
-    let output = (index != null ? template[index] : '');
+export function parseTemplateData(template: {}, data: {}, index: string = null, include = {}, exclude = {}) {
+    let output: string = (index != null ? template[index] : '');
     if (data['#include'] != null) {
         include = data['#include'];
         delete data['#include'];
@@ -55,7 +52,7 @@ export function parseTemplateData(template, data, index = null, include = {}, ex
         delete data['#exclude'];
     }
     for (const i in data) {
-        let value = '';
+        let value: any = '';
         if (data[i] === false) {
             output = output.replace(`{%${i}}`, '');
             continue;
@@ -77,8 +74,8 @@ export function parseTemplateData(template, data, index = null, include = {}, ex
         else if (new RegExp(`{&${i}}`).test(output)) {
             output = '';
         }
-        let pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-        let match = null;
+        const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
+        let match: RegExpExecArray = null;
         while ((match = pattern.exec(output)) != null) {
             if (include[match[1]]) {
                 const attribute = `{#${match[1]}=${match[2]}}`;

@@ -11,7 +11,7 @@ export default {
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
-    useFontAlias: true,
+    useFontAlias: false,
     supportRTL: true,
     numberResourceValue: false,
     excludeTextColor: ['#000000'],

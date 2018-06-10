@@ -1,7 +1,5 @@
-import { version } from '../package.json';
-
 export default {
-    input: './src/main.js',
+    input: './build/main.js',
     treeshake: false,
     output: {
         file: './dist/androme.js',
@@ -10,7 +8,7 @@ export default {
         sourcemap: 'inline'
     },
     watch: {
-        include: './src/**',
+        include: './build/**',
         clearScreen: false
     }
 };

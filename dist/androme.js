@@ -1,4 +1,4 @@
-/* androme 1.3.1
+/* androme 1.5.0
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -7,47 +7,72 @@
     (factory((global.androme = {})));
 }(this, (function (exports) { 'use strict';
 
-    const WIDGET_ANDROID =
-    {
-        FRAME: 'FrameLayout',
-        LINEAR: 'LinearLayout',
-        CONSTRAINT: 'android.support.constraint.ConstraintLayout',
-        GUIDELINE: 'android.support.constraint.Guideline',
-        RELATIVE: 'RelativeLayout',
-        GRID: 'GridLayout',
-        SCROLL_VERTICAL: 'ScrollView',
-        SCROLL_HORIZONTAL: 'HorizontalScrollView',
-        SCROLL_NESTED: 'NestedScrollView',
-        RADIO_GROUP: 'RadioGroup',
-        TEXT: 'TextView',
-        EDIT: 'EditText',
-        IMAGE: 'ImageView',
-        SPINNER: 'Spinner',
-        CHECKBOX: 'CheckBox',
-        RADIO: 'RadioButton',
-        BUTTON: 'Button',
-        VIEW: 'View',
-        SPACE: 'Space'
-    };
-
-    const FIXED_ANDROID =
-    [
+    (function (BUILD_ANDROID) {
+        BUILD_ANDROID[BUILD_ANDROID["OREO_1"] = 27] = "OREO_1";
+        BUILD_ANDROID[BUILD_ANDROID["OREO"] = 26] = "OREO";
+        BUILD_ANDROID[BUILD_ANDROID["NOUGAT_1"] = 25] = "NOUGAT_1";
+        BUILD_ANDROID[BUILD_ANDROID["NOUGAT"] = 24] = "NOUGAT";
+        BUILD_ANDROID[BUILD_ANDROID["MARSHMALLOW"] = 23] = "MARSHMALLOW";
+        BUILD_ANDROID[BUILD_ANDROID["LOLLIPOP_1"] = 22] = "LOLLIPOP_1";
+        BUILD_ANDROID[BUILD_ANDROID["LOLLIPOP"] = 21] = "LOLLIPOP";
+        BUILD_ANDROID[BUILD_ANDROID["KITKAT_1"] = 20] = "KITKAT_1";
+        BUILD_ANDROID[BUILD_ANDROID["KITKAT"] = 19] = "KITKAT";
+        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN_2"] = 18] = "JELLYBEAN_2";
+        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN_1"] = 17] = "JELLYBEAN_1";
+        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN"] = 16] = "JELLYBEAN";
+        BUILD_ANDROID[BUILD_ANDROID["ICE_CREAM_SANDWICH_1"] = 15] = "ICE_CREAM_SANDWICH_1";
+        BUILD_ANDROID[BUILD_ANDROID["ICE_CREAM_SANDWICH"] = 14] = "ICE_CREAM_SANDWICH";
+    })(exports.BUILD_ANDROID || (exports.BUILD_ANDROID = {}));
+    (function (DENSITY_ANDROID) {
+        DENSITY_ANDROID[DENSITY_ANDROID["LDPI"] = 120] = "LDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["MDPI"] = 160] = "MDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["HDPI"] = 240] = "HDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["XHDPI"] = 320] = "XHDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["XXHDPI"] = 480] = "XXHDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["XXXHDPI"] = 640] = "XXXHDPI";
+    })(exports.DENSITY_ANDROID || (exports.DENSITY_ANDROID = {}));
+    var WIDGET_ANDROID;
+    (function (WIDGET_ANDROID) {
+        WIDGET_ANDROID["FRAME"] = "FrameLayout";
+        WIDGET_ANDROID["LINEAR"] = "LinearLayout";
+        WIDGET_ANDROID["CONSTRAINT"] = "android.support.constraint.ConstraintLayout";
+        WIDGET_ANDROID["GUIDELINE"] = "android.support.constraint.Guideline";
+        WIDGET_ANDROID["RELATIVE"] = "RelativeLayout";
+        WIDGET_ANDROID["GRID"] = "GridLayout";
+        WIDGET_ANDROID["SCROLL_VERTICAL"] = "ScrollView";
+        WIDGET_ANDROID["SCROLL_HORIZONTAL"] = "HorizontalScrollView";
+        WIDGET_ANDROID["SCROLL_NESTED"] = "NestedScrollView";
+        WIDGET_ANDROID["RADIO_GROUP"] = "RadioGroup";
+        WIDGET_ANDROID["TEXT"] = "TextView";
+        WIDGET_ANDROID["EDIT"] = "EditText";
+        WIDGET_ANDROID["IMAGE"] = "ImageView";
+        WIDGET_ANDROID["SPINNER"] = "Spinner";
+        WIDGET_ANDROID["CHECKBOX"] = "CheckBox";
+        WIDGET_ANDROID["RADIO"] = "RadioButton";
+        WIDGET_ANDROID["BUTTON"] = "Button";
+        WIDGET_ANDROID["VIEW"] = "View";
+        WIDGET_ANDROID["SPACE"] = "Space";
+    })(WIDGET_ANDROID || (WIDGET_ANDROID = {}));
+    const FIXED_ANDROID = [
         WIDGET_ANDROID.EDIT,
         WIDGET_ANDROID.SPINNER,
         WIDGET_ANDROID.CHECKBOX,
         WIDGET_ANDROID.RADIO,
         WIDGET_ANDROID.BUTTON
     ];
-
-    const MAPPING_CHROME =
-    {
+    const XMLNS_ANDROID = {
+        'ANDROID': 'xmlns:android="http://schemas.android.com/apk/res/android"',
+        'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"',
+        'TOOLS': 'xmlns:tools="http://schemas.android.com/tools"'
+    };
+    const MAPPING_CHROME = {
         'TEXT': WIDGET_ANDROID.TEXT,
         'LABEL': WIDGET_ANDROID.TEXT,
         'P': WIDGET_ANDROID.TEXT,
         'HR': WIDGET_ANDROID.VIEW,
         'IMG': WIDGET_ANDROID.IMAGE,
         'SELECT': WIDGET_ANDROID.SPINNER,
-        'INPUT' : {
+        'INPUT': {
             'text': WIDGET_ANDROID.EDIT,
             'password': WIDGET_ANDROID.EDIT,
             'checkbox': WIDGET_ANDROID.CHECKBOX,
@@ -58,9 +83,7 @@
         'BUTTON': WIDGET_ANDROID.BUTTON,
         'TEXTAREA': WIDGET_ANDROID.EDIT
     };
-
-    const BLOCK_CHROME =
-    [
+    const BLOCK_CHROME = [
         'ADDRESS',
         'ARTICLE',
         'ASIDE',
@@ -95,9 +118,7 @@
         'UL',
         'VIDEO'
     ];
-
-    const INLINE_CHROME =
-    [
+    const INLINE_CHROME = [
         'STRONG',
         'B',
         'EM',
@@ -124,72 +145,9 @@
         'TEXT'
     ];
 
-    const DENSITY_ANDROID =
-    {
-        LDPI: 120,
-        MDPI: 160,
-        HDPI: 240,
-        XHDPI: 320,
-        XXHDPI: 480,
-        XXXHDPI: 640
-    };
-
-    const BUILD_ANDROID =
-    {
-        OREO_1: 27,
-        OREO: 26,
-        NOUGAT_1: 25,
-        NOUGAT: 24,
-        MARSHMALLOW: 23,
-        LOLLIPOP_1: 22,
-        LOLLIPOP: 21,
-        KITKAT_1: 20,
-        KITKAT: 19,
-        JELLYBEAN_2: 18,   
-        JELLYBEAN_1: 17,
-        JELLYBEAN: 16,
-        ICE_CREAM_SANDWICH_1: 15,
-        ICE_CREAM_SANDWICH: 14
-    };
-
-    BUILD_ANDROID.LATEST = BUILD_ANDROID.OREO_1;
-
-    const XMLNS_ANDROID =
-    {
-        ANDROID: 'xmlns:android="http://schemas.android.com/apk/res/android"',
-        APP: 'xmlns:app="http://schemas.android.com/apk/res-auto"',
-        TOOLS: 'xmlns:tools="http://schemas.android.com/tools"'
-    };
-
-    const API_ANDROID =
-    {
-        [BUILD_ANDROID.OREO]:
-        {
-            android: ['fontWeight'],
-            customizations: {}
-        },
-        [BUILD_ANDROID.JELLYBEAN_1]:
-        {
-            android: ['labelFor'],
-            customizations: {}
-        },
-        [BUILD_ANDROID.LOLLIPOP]:
-        {
-            android: ['layout_columnWeight'],
-            customizations: {
-                'Button': {
-                    android: {
-                        textAllCaps: 'false'
-                    }
-                }
-            }
-        }
-    };
-
     const ID = {
         android: ['parent']
     };
-
     function sort(list, asc = 0, ...attributes) {
         return list.sort((a, b) => {
             for (const attr of attributes) {
@@ -206,7 +164,6 @@
             return 0;
         });
     }
-
     function generateId(section, name) {
         let prefix = name;
         let i = 1;
@@ -226,18 +183,15 @@
             else {
                 name = `${prefix}_${i++}`;
             }
-        }
-        while (true);
+        } while (true);
         return name;
     }
-
     function formatString(value, ...params) {
         for (let i = 0; i < params.length; i++) {
             value = value.replace(`{${i}}`, params[i]);
         }
         return value;
     }
-
     function cameltoLowerCase(value) {
         value = value.charAt(0).toLowerCase() + value.substring(1);
         const result = value.match(/([a-z]{1}[A-Z]{1})/g);
@@ -248,7 +202,6 @@
         }
         return value;
     }
-
     function hyphenToCamelCase(value) {
         value = value.replace(/$-+/, '');
         const result = value.match(/(-{1}[a-z]{1})/g);
@@ -259,20 +212,17 @@
         }
         return value;
     }
-
     function padLeft(n, value = '\t') {
         return value.repeat(n);
     }
-
     function formatPX(value) {
         value = parseFloat(value);
         return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
     }
-
     function convertPX(value, unit = true) {
         if (hasValue(value)) {
             if (typeof value == 'number') {
-                value += 'px';
+                value = `${value}px`;
             }
             const match = value.match(/(pt|em)/);
             value = parseFloat(value);
@@ -282,7 +232,7 @@
                         value *= (4 / 3);
                         break;
                     case 'em':
-                        value * 16;
+                        value *= 16;
                         break;
                 }
             }
@@ -292,7 +242,6 @@
         }
         return (unit ? '0px' : 0);
     }
-
     function convertDP(value, dpi = 160, unit = true, font = false) {
         if (hasValue(value)) {
             value = convertPX(value, false);
@@ -304,23 +253,18 @@
         }
         return (unit ? '0dp' : 0);
     }
-
     function convertSP(value, dpi = 160, unit = true) {
         return convertDP(value, dpi, unit, true);
     }
-
     function replaceDP(xml, dpi = 160, font = false) {
         return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, true, font) + capture[2]);
     }
-
     function convertInt(value) {
         return parseInt(value) || 0;
     }
-
     function isNumber(value) {
-        return /^[0-9]+\.?[0-9]*$/.test(value.trim());
+        return /^[0-9]+\.?[0-9]*$/.test(value.toString().trim());
     }
-
     function search(obj, value) {
         const result = [];
         if (typeof value == 'object') {
@@ -334,13 +278,13 @@
         else {
             let filter = null;
             if (/^\*.+\*$/.test(value)) {
-                filter = attr => attr.indexOf(value.replace(/\*/g, '')) != -1;
+                filter = (a) => a.indexOf(value.replace(/\*/g, '')) != -1;
             }
             else if (/^\*/.test(value)) {
-                filter = attr => attr.endsWith(value.replace(/\*/, ''));
+                filter = (a) => a.endsWith(value.replace(/\*/, ''));
             }
             else if (/\*$/.test(value)) {
-                filter = attr => attr.startsWith(value.replace(/\*/, ''));
+                filter = (a) => a.startsWith(value.replace(/\*/, ''));
             }
             if (filter != null) {
                 for (const i in obj) {
@@ -352,7 +296,6 @@
         }
         return result;
     }
-
     function indexOf(value, ...terms) {
         if (hasValue(value)) {
             for (const term of terms) {
@@ -364,15 +307,19 @@
         }
         return -1;
     }
-
+    function remove(list, value) {
+        const index = list.indexOf(value);
+        if (index != -1) {
+            list.splice(index, 1);
+        }
+        return list;
+    }
     function sortAsc(list, ...attributes) {
         return sort(list, 0, ...attributes);
     }
-
     function sortDesc(list, ...attributes) {
         return sort(list, 1, ...attributes);
     }
-
     function same(obj1, obj2, ...attributes) {
         for (const attr of attributes) {
             const result = compare(obj1, obj2, attr);
@@ -382,7 +329,6 @@
         }
         return true;
     }
-
     function compare(obj1, obj2, attr) {
         const namespaces = attr.split('.');
         let current1 = obj1;
@@ -409,7 +355,6 @@
             return [current1, current2];
         }
     }
-
     function parseUnit(value) {
         if (hasValue(value)) {
             const match = value.match(/(?:"|>)([0-9]+)(?:(px|pt|em|dp|sp))(?:"|<)/);
@@ -419,21 +364,302 @@
         }
         return 0;
     }
-
     function calculateBias(start, end) {
-        return Math.max(parseFloat(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end)).toFixed(2))), 0);
+        return parseFloat(Math.max(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end))), 0).toFixed(2));
     }
-
     function hasValue(value) {
-        return (typeof value !== 'undefined' && value !== null && value !== '');
+        return (typeof value !== 'undefined' && value !== null && value.toString() !== '');
     }
-
     function withinRange(a, b, n = 1) {
         return (b >= (a - n) && b <= (a + n));
     }
-
     function withinFraction(lower, upper) {
         return (lower == upper || Math.ceil(lower) == Math.floor(upper));
+    }
+
+    const X11_CSS3 = {
+        'Pink': { 'hex': '#FFC0CB' },
+        'LightPink': { 'hex': '#FFB6C1' },
+        'HotPink': { 'hex': '#FF69B4' },
+        'DeepPink': { 'hex': '#FF1493' },
+        'PaleVioletRed': { 'hex': '#DB7093' },
+        'MediumVioletRed': { 'hex': '#C71585' },
+        'LightSalmon': { 'hex': '#FFA07A' },
+        'Salmon': { 'hex': '#FA8072' },
+        'DarkSalmon': { 'hex': '#E9967A' },
+        'LightCoral': { 'hex': '#F08080' },
+        'IndianRed': { 'hex': '#CD5C5C' },
+        'Crimson': { 'hex': '#DC143C' },
+        'Firebrick': { 'hex': '#B22222' },
+        'DarkRed': { 'hex': '#8B0000' },
+        'Red': { 'hex': '#FF0000' },
+        'OrangeRed': { 'hex': '#FF4500' },
+        'Tomato': { 'hex': '#FF6347' },
+        'Coral': { 'hex': '#FF7F50' },
+        'Orange': { 'hex': '#FFA500' },
+        'DarkOrange': { 'hex': '#FF8C00' },
+        'Yellow': { 'hex': '#FFFF00' },
+        'LightYellow': { 'hex': '#FFFFE0' },
+        'LemonChiffon': { 'hex': '#FFFACD' },
+        'LightGoldenrodYellow': { 'hex': '#FAFAD2' },
+        'PapayaWhip': { 'hex': '#FFEFD5' },
+        'Moccasin': { 'hex': '#FFE4B5' },
+        'PeachPuff': { 'hex': '#FFDAB9' },
+        'PaleGoldenrod': { 'hex': '#EEE8AA' },
+        'Khaki': { 'hex': '#F0E68C' },
+        'DarkKhaki': { 'hex': '#BDB76B' },
+        'Gold': { 'hex': '#FFD700' },
+        'Cornsilk': { 'hex': '#FFF8DC' },
+        'BlanchedAlmond': { 'hex': '#FFEBCD' },
+        'Bisque': { 'hex': '#FFE4C4' },
+        'NavajoWhite': { 'hex': '#FFDEAD' },
+        'Wheat': { 'hex': '#F5DEB3' },
+        'Burlywood': { 'hex': '#DEB887' },
+        'Tan': { 'hex': '#D2B48C' },
+        'RosyBrown': { 'hex': '#BC8F8F' },
+        'SandyBrown': { 'hex': '#F4A460' },
+        'Goldenrod': { 'hex': '#DAA520' },
+        'DarkGoldenrod': { 'hex': '#B8860B' },
+        'Peru': { 'hex': '#CD853F' },
+        'Chocolate': { 'hex': '#D2691E' },
+        'SaddleBrown': { 'hex': '#8B4513' },
+        'Sienna': { 'hex': '#A0522D' },
+        'Brown': { 'hex': '#A52A2A' },
+        'Maroon': { 'hex': '#800000' },
+        'DarkOliveGreen': { 'hex': '#556B2F' },
+        'Olive': { 'hex': '#808000' },
+        'OliveDrab': { 'hex': '#6B8E23' },
+        'YellowGreen': { 'hex': '#9ACD32' },
+        'LimeGreen': { 'hex': '#32CD32' },
+        'Lime': { 'hex': '#00FF00' },
+        'LawnGreen': { 'hex': '#7CFC00' },
+        'Chartreuse': { 'hex': '#7FFF00' },
+        'GreenYellow': { 'hex': '#ADFF2F' },
+        'SpringGreen': { 'hex': '#00FF7F' },
+        'MediumSpringGreen': { 'hex': '#00FA9A' },
+        'LightGreen': { 'hex': '#90EE90' },
+        'PaleGreen': { 'hex': '#98FB98' },
+        'DarkSeaGreen': { 'hex': '#8FBC8F' },
+        'MediumAquamarine': { 'hex': '#66CDAA' },
+        'MediumSeaGreen': { 'hex': '#3CB371' },
+        'SeaGreen': { 'hex': '#2E8B57' },
+        'ForestGreen': { 'hex': '#228B22' },
+        'Green': { 'hex': '#008000' },
+        'DarkGreen': { 'hex': '#006400' },
+        'Aqua': { 'hex': '#00FFFF' },
+        'Cyan': { 'hex': '#00FFFF' },
+        'LightCyan': { 'hex': '#E0FFFF' },
+        'PaleTurquoise': { 'hex': '#AFEEEE' },
+        'Aquamarine': { 'hex': '#7FFFD4' },
+        'Turquoise': { 'hex': '#40E0D0' },
+        'DarkTurquoise': { 'hex': '#00CED1' },
+        'MediumTurquoise': { 'hex': '#48D1CC' },
+        'LightSeaGreen': { 'hex': '#20B2AA' },
+        'CadetBlue': { 'hex': '#5F9EA0' },
+        'DarkCyan': { 'hex': '#008B8B' },
+        'Teal': { 'hex': '#008080' },
+        'LightSteelBlue': { 'hex': '#B0C4DE' },
+        'PowderBlue': { 'hex': '#B0E0E6' },
+        'LightBlue': { 'hex': '#ADD8E6' },
+        'SkyBlue': { 'hex': '#87CEEB' },
+        'LightSkyBlue': { 'hex': '#87CEFA' },
+        'DeepSkyBlue': { 'hex': '#00BFFF' },
+        'DodgerBlue': { 'hex': '#1E90FF' },
+        'Cornflower': { 'hex': '#6495ED' },
+        'SteelBlue': { 'hex': '#4682B4' },
+        'RoyalBlue': { 'hex': '#4169E1' },
+        'Blue': { 'hex': '#0000FF' },
+        'MediumBlue': { 'hex': '#0000CD' },
+        'DarkBlue': { 'hex': '#00008B' },
+        'Navy': { 'hex': '#000080' },
+        'MidnightBlue': { 'hex': '#191970' },
+        'Lavender': { 'hex': '#E6E6FA' },
+        'Thistle': { 'hex': '#D8BFD8' },
+        'Plum': { 'hex': '#DDA0DD' },
+        'Violet': { 'hex': '#EE82EE' },
+        'Orchid': { 'hex': '#DA70D6' },
+        'Fuchsia': { 'hex': '#FF00FF' },
+        'Magenta': { 'hex': '#FF00FF' },
+        'MediumOrchid': { 'hex': '#BA55D3' },
+        'MediumPurple': { 'hex': '#9370DB' },
+        'BlueViolet': { 'hex': '#8A2BE2' },
+        'DarkViolet': { 'hex': '#9400D3' },
+        'DarkOrchid': { 'hex': '#9932CC' },
+        'DarkMagenta': { 'hex': '#8B008B' },
+        'Purple': { 'hex': '#800080' },
+        'RebeccaPurple': { 'hex': '#663399' },
+        'Indigo': { 'hex': '#4B0082' },
+        'DarkSlateBlue': { 'hex': '#483D8B' },
+        'SlateBlue': { 'hex': '#6A5ACD' },
+        'MediumSlateBlue': { 'hex': '#7B68EE' },
+        'White': { 'hex': '#FFFFFF' },
+        'Snow': { 'hex': '#FFFAFA' },
+        'Honeydew': { 'hex': '#F0FFF0' },
+        'MintCream': { 'hex': '#F5FFFA' },
+        'Azure': { 'hex': '#F0FFFF' },
+        'AliceBlue': { 'hex': '#F0F8FF' },
+        'GhostWhite': { 'hex': '#F8F8FF' },
+        'WhiteSmoke': { 'hex': '#F5F5F5' },
+        'Seashell': { 'hex': '#FFF5EE' },
+        'Beige': { 'hex': '#F5F5DC' },
+        'OldLace': { 'hex': '#FDF5E6' },
+        'FloralWhite': { 'hex': '#FFFAF0' },
+        'Ivory': { 'hex': '#FFFFF0' },
+        'AntiqueWhite': { 'hex': '#FAEBD7' },
+        'Linen': { 'hex': '#FAF0E6' },
+        'LavenderBlush': { 'hex': '#FFF0F5' },
+        'MistyRose': { 'hex': '#FFE4E1' },
+        'Gainsboro': { 'hex': '#DCDCDC' },
+        'LightGray': { 'hex': '#D3D3D3' },
+        'Silver': { 'hex': '#C0C0C0' },
+        'DarkGray': { 'hex': '#A9A9A9' },
+        'Gray': { 'hex': '#808080' },
+        'DimGray': { 'hex': '#696969' },
+        'LightSlateGray': { 'hex': '#778899' },
+        'SlateGray': { 'hex': '#708090' },
+        'DarkSlateGray': { 'hex': '#2F4F4F' },
+        'Black': { 'hex': '#000000' }
+    };
+    const HSL_SORTED = [];
+    for (const i in X11_CSS3) {
+        const x11 = X11_CSS3[i];
+        for (const j in x11) {
+            x11.rgb = convertHextoRGB(x11[j]);
+            x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
+            HSL_SORTED.push({ name: i, rgb: x11.rgb, hex: x11.hex, hsl: x11.hsl });
+        }
+    }
+    HSL_SORTED.sort(sortHSL);
+    function convertHextoHSL(value) {
+        const rgb = convertHextoRGB(value);
+        if (rgb != null) {
+            return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
+        }
+        return null;
+    }
+    function convertRGBtoHSL(r, g, b) {
+        r = r / 255;
+        g = g / 255;
+        b = b / 255;
+        const min = Math.min(r, g, b);
+        const max = Math.max(r, g, b);
+        let h = (max + min) / 2;
+        let s = h;
+        const l = h;
+        if (max == min) {
+            h = 0;
+            s = 0;
+        }
+        else {
+            const d = max - min;
+            s = (l > 0.5 ? d / (2 - max - min) : d / (max + min));
+            switch (max) {
+                case r:
+                    h = (g - b) / d + (g < b ? 6 : 0);
+                    break;
+                case g:
+                    h = (b - r) / d + 2;
+                    break;
+                case b:
+                    h = (r - g) / d + 4;
+                    break;
+            }
+            h /= 6;
+        }
+        return { h: (h * 360), s: (s * 100), l: (l * 100) };
+    }
+    function sortHSL(a, b) {
+        let [c, d] = [a.hsl.h, b.hsl.h];
+        if (c == d) {
+            [c, d] = [a.hsl.s, b.hsl.s];
+            if (c == d) {
+                [c, d] = [a.hsl.l, b.hsl.l];
+            }
+        }
+        return (c >= d ? 1 : -1);
+    }
+    function findNearestColor(value) {
+        const hsl = convertHextoHSL(value);
+        if (hsl != null) {
+            const result = HSL_SORTED.slice();
+            result.push({ name: '', hsl });
+            result.sort(sortHSL);
+            const index = result.findIndex((item) => item.name == '');
+            return result[Math.min(index + 1, result.length - 1)];
+        }
+        return null;
+    }
+    function getByColorName(value) {
+        for (const color in X11_CSS3) {
+            if (color.toLowerCase() == value.toLowerCase()) {
+                return X11_CSS3[color];
+            }
+        }
+        return null;
+    }
+    function convertRGB({ rgb }) {
+        return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+    }
+    function parseRGBA(value) {
+        const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
+        if (match != null && match.length >= 4) {
+            return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[4] || '1'];
+        }
+        return null;
+    }
+    function convertRGBtoHex(value) {
+        const hex = '0123456789ABCDEF';
+        let rgb = parseInt(value);
+        if (isNaN(rgb)) {
+            return '00';
+        }
+        rgb = Math.max(0, Math.min(rgb, 255));
+        return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
+    }
+    function convertHextoRGB(value) {
+        value = value.replace('#', '').trim();
+        if (value.length == 3) {
+            value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
+        }
+        if (value.length == 6) {
+            return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
+        }
+        return null;
+    }
+
+    var SETTINGS = {
+        targetAPI: exports.BUILD_ANDROID.OREO,
+        density: exports.DENSITY_ANDROID.MDPI,
+        showAttributes: true,
+        horizontalPerspective: true,
+        useConstraintLayout: true,
+        useConstraintChain: true,
+        useConstraintGuideline: true,
+        useGridLayout: true,
+        useLayoutWeight: true,
+        useUnitDP: true,
+        useFontAlias: false,
+        supportRTL: true,
+        numberResourceValue: false,
+        excludeTextColor: ['#000000'],
+        excludeBackgroundColor: ['#FFFFFF'],
+        whitespaceHorizontalOffset: 4,
+        whitespaceVerticalOffset: 14,
+        chainPackedHorizontalOffset: 4,
+        chainPackedVerticalOffset: 14
+    };
+
+    function parseRTL(value) {
+        if (SETTINGS.supportRTL && SETTINGS.targetAPI >= exports.BUILD_ANDROID.JELLYBEAN_1) {
+            switch (value) {
+                case 'left':
+                    return 'start';
+                case 'right':
+                    return 'end';
+            }
+            value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
+        }
+        return value;
     }
 
     function getRangeBounds(element) {
@@ -448,11 +674,9 @@
         }
         return bounds;
     }
-
     function getStyle(element) {
-        return (element.__Node != null ? element.__Node.style : getComputedStyle(element));
+        return (element.__node != null ? element.__node.style : getComputedStyle(element));
     }
-
     function parseStyle(element, attr, value) {
         if (attr == 'backgroundColor') {
             if (element != null && element.parentNode != null && value == getStyle(element.parentNode).backgroundColor) {
@@ -464,25 +688,22 @@
         }
         return value;
     }
-
-    function getBoxSpacing(element, rtl = false, complete = false) {
+    function getBoxSpacing(element, complete = false) {
         const result = {};
         ['padding', 'margin'].forEach(border => {
             ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
                 const attr = border + side;
                 const value = parseInt(getStyle(element)[attr]) || 0;
                 if (complete || value != 0) {
-                    result[(rtl ? attr.replace('Left', 'Start').replace('Right', 'End') : attr)] = value;
+                    result[parseRTL(attr)] = value;
                 }
             });
         });
         return result;
     }
-
     function hasFreeFormText(element) {
         return Array.from(element.childNodes).some(item => (item.nodeName == '#text' && item.textContent.trim() != ''));
     }
-
     function isVisible(element) {
         if (typeof element.getBoundingClientRect == 'function') {
             const bounds = element.getBoundingClientRect();
@@ -501,6 +722,9 @@
 
     class Node {
         constructor(id, element = null, api = 0, options = {}) {
+            this.id = id;
+            this.element = element;
+            this.api = api;
             let style = {};
             let styleMap = {};
             if (element != null) {
@@ -521,23 +745,20 @@
             this.styleMap = styleMap;
             this.visible = true;
             this.parentIndex = Number.MAX_VALUE;
-
             this._tagName = null;
             this._parent = null;
             this._parentOriginal = null;
             this._flex = null;
             this._overflow = null;
             this._namespaces = new Set();
-
             Object.assign(this, options);
         }
-
-        add(obj, attr, value = null, overwrite = true) {
+        static is(object) {
+            return (object instanceof Node);
+        }
+        add(obj, attr, value = '', overwrite = true) {
             const name = `_${obj || '_'}`;
             if (hasValue(value)) {
-                if (!this.supported(obj, attr)) {
-                    return false;
-                }
                 if (this[name] == null) {
                     this._namespaces.add(obj);
                     this[name] = {};
@@ -550,7 +771,7 @@
             return (this[name] != null ? this[name][attr] : null);
         }
         delete(obj, ...attributes) {
-            const name = `_${obj}`;
+            const name = `_${obj || '_'}`;
             if (this[name] != null) {
                 if (typeof attributes[0] == 'object') {
                     for (const key in attributes[0]) {
@@ -572,9 +793,6 @@
             }
             return this;
         }
-        attr() {
-            return this;
-        }
         apply(options) {
             for (const namespace in options) {
                 const obj = options[namespace];
@@ -583,18 +801,6 @@
                 }
             }
             return this;
-        }
-        css(attr, value = null) {
-            if (arguments.length == 2) {
-                this.styleMap[attr] = (hasValue(value) ? value : null);
-                return this;
-            }
-            else {
-                return this.styleMap[attr] || this.style[attr];
-            }
-        }
-        supported() {
-            return true;
         }
         render(parent) {
             this.renderParent = parent;
@@ -606,7 +812,6 @@
             this.visible = false;
             return this;
         }
-
         ascend() {
             const result = [];
             let current = this.parent;
@@ -624,7 +829,7 @@
         cascade() {
             function cascade(node) {
                 const current = [...node.children];
-                node.children.forEach(item => current.push(...cascade(item)));
+                node.children.forEach((item) => current.push(...cascade(item)));
                 return current;
             }
             return cascade(this);
@@ -637,28 +842,29 @@
             return (top && (left || right)) || (bottom && (left || right));
         }
         withinX(rect, dimension = 'linear') {
-            return (
-                (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
+            return ((rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
                 (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
                 (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) ||
-                (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom)
-            );
+                (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom));
         }
         withinY(rect, dimension = 'linear') {
-            return (
-                (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
+            return ((rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
                 (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
                 (this[dimension].left >= rect.left && this[dimension].right <= rect.right) ||
-                (rect.left >= this[dimension].left && rect.right <= this[dimension].right)
-            );
+                (rect.left >= this[dimension].left && rect.right <= this[dimension].right));
         }
-        is() {
-            return (this.id != 0 && Node.is(this));
+        css(attr, value = '') {
+            if (arguments.length == 2) {
+                this.styleMap[attr] = (hasValue(value) ? value : null);
+                return this;
+            }
+            else {
+                return this.styleMap[attr] || this.style[attr];
+            }
         }
-
         setBounds(calibrate = false, element = null) {
             if (!calibrate) {
-                this.bounds = (element != null ?  getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
+                this.bounds = (element != null ? getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
             }
             this.linear = {
                 top: this.bounds.top - this.marginTop,
@@ -720,7 +926,6 @@
                 this.setBounds(true);
             }
         }
-
         set parent(value) {
             if (!Node.is(value) || value == this._parent) {
                 return;
@@ -734,7 +939,7 @@
             }
         }
         get parent() {
-            return (this._parent != null ? this._parent : new Node(0));
+            return this._parent;
         }
         set parentOriginal(value) {
             if (Node.is(value)) {
@@ -770,14 +975,7 @@
             return [maxRight - minLeft, maxBottom - minTop];
         }
         get namespaces() {
-            const result = [];
-            for (const obj of this._namespaces) {
-                const name = obj.replace(/^_+/, '');
-                if (name != '') {
-                    result.push(name);
-                }
-            }
-            return result;
+            return Array.from(this._namespaces);
         }
         set tagName(value) {
             this._tagName = value;
@@ -787,7 +985,7 @@
         }
         get flex() {
             if (this._flex == null) {
-                let parent = (this.parentElement != null ? this.parentElement.__Node : null);
+                const parent = (this.parentElement != null ? this.parentElement.__node : null);
                 this._flex = {
                     parent,
                     enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
@@ -870,11 +1068,7 @@
             return convertInt(this.css('paddingRight'));
         }
         get center() {
-            return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
-        }
-
-        static is(object) {
-            return (object instanceof Node);
+            return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2) };
         }
     }
 
@@ -894,7 +1088,6 @@
             }
             return this.length;
         }
-
         intersect(dimension = 'linear') {
             for (const node of this) {
                 if (this.some(item => (item != node && node.intersect(item[dimension])))) {
@@ -909,7 +1102,6 @@
         sortDesc(...attr) {
             return sortDesc(this, ...attr);
         }
-
         set parent(value) {
             if (Node.is(value)) {
                 this._parent = value;
@@ -918,7 +1110,7 @@
         get parent() {
             return this._parent;
         }
-        get visible () {
+        get visible() {
             return this.filter(node => node.visible);
         }
         get first() {
@@ -950,10 +1142,9 @@
     }
 
     class WidgetList extends NodeList {
-        constructor(nodes, parent = null) {
+        constructor(nodes = null, parent = null) {
             super(nodes, parent);
         }
-
         push(...value) {
             for (const node of value) {
                 if (node.children == null) {
@@ -968,7 +1159,6 @@
             }
             return super.push(...value);
         }
-
         get anchors() {
             return this.filter(node => node.anchored);
         }
@@ -991,282 +1181,18 @@
     }
 
     const NODE_CACHE = new WidgetList();
-
     function generateNodeId() {
         return NODE_CACHE.length + 1;
-    }
-
-    const X11_CSS3 =
-    {
-        'Pink':                 { 'hex': '#FFC0CB' },
-        'LightPink':            { 'hex': '#FFB6C1' },
-        'HotPink':              { 'hex': '#FF69B4' },
-        'DeepPink':             { 'hex': '#FF1493' },
-        'PaleVioletRed':        { 'hex': '#DB7093' },
-        'MediumVioletRed':      { 'hex': '#C71585' },
-        'LightSalmon':          { 'hex': '#FFA07A' },
-        'Salmon':               { 'hex': '#FA8072' },
-        'DarkSalmon':           { 'hex': '#E9967A' },
-        'LightCoral':           { 'hex': '#F08080' },
-        'IndianRed':            { 'hex': '#CD5C5C' },
-        'Crimson':              { 'hex': '#DC143C' },
-        'Firebrick':            { 'hex': '#B22222' },
-        'DarkRed':              { 'hex': '#8B0000' },
-        'Red':                  { 'hex': '#FF0000' },
-        'OrangeRed':            { 'hex': '#FF4500' },
-        'Tomato':               { 'hex': '#FF6347' },
-        'Coral':                { 'hex': '#FF7F50' },
-        'Orange':               { 'hex': '#FFA500' },
-        'DarkOrange':           { 'hex': '#FF8C00' },
-        'Yellow':               { 'hex': '#FFFF00' },
-        'LightYellow':          { 'hex': '#FFFFE0' },
-        'LemonChiffon':         { 'hex': '#FFFACD' },
-        'LightGoldenrodYellow': { 'hex': '#FAFAD2' },
-        'PapayaWhip':           { 'hex': '#FFEFD5' },
-        'Moccasin':             { 'hex': '#FFE4B5' },
-        'PeachPuff':            { 'hex': '#FFDAB9' },
-        'PaleGoldenrod':        { 'hex': '#EEE8AA' },
-        'Khaki':                { 'hex': '#F0E68C' },
-        'DarkKhaki':            { 'hex': '#BDB76B' },
-        'Gold':                 { 'hex': '#FFD700' },
-        'Cornsilk':             { 'hex': '#FFF8DC' },
-        'BlanchedAlmond':       { 'hex': '#FFEBCD' },
-        'Bisque':               { 'hex': '#FFE4C4' },
-        'NavajoWhite':          { 'hex': '#FFDEAD' },
-        'Wheat':                { 'hex': '#F5DEB3' },
-        'Burlywood':            { 'hex': '#DEB887' },
-        'Tan':                  { 'hex': '#D2B48C' },
-        'RosyBrown':            { 'hex': '#BC8F8F' },
-        'SandyBrown':           { 'hex': '#F4A460' },
-        'Goldenrod':            { 'hex': '#DAA520' },
-        'DarkGoldenrod':        { 'hex': '#B8860B' },
-        'Peru':                 { 'hex': '#CD853F' },
-        'Chocolate':            { 'hex': '#D2691E' },
-        'SaddleBrown':          { 'hex': '#8B4513' },
-        'Sienna':               { 'hex': '#A0522D' },
-        'Brown':                { 'hex': '#A52A2A' },
-        'Maroon':               { 'hex': '#800000' },
-        'DarkOliveGreen':       { 'hex': '#556B2F' },
-        'Olive':                { 'hex': '#808000' },
-        'OliveDrab':            { 'hex': '#6B8E23' },
-        'YellowGreen':          { 'hex': '#9ACD32' },
-        'LimeGreen':            { 'hex': '#32CD32' },
-        'Lime':                 { 'hex': '#00FF00' },
-        'LawnGreen':            { 'hex': '#7CFC00' },
-        'Chartreuse':           { 'hex': '#7FFF00' },
-        'GreenYellow':          { 'hex': '#ADFF2F' },
-        'SpringGreen':          { 'hex': '#00FF7F' },
-        'MediumSpringGreen':    { 'hex': '#00FA9A' },
-        'LightGreen':           { 'hex': '#90EE90' },
-        'PaleGreen':            { 'hex': '#98FB98' },
-        'DarkSeaGreen':         { 'hex': '#8FBC8F' },
-        'MediumAquamarine':     { 'hex': '#66CDAA' },
-        'MediumSeaGreen':       { 'hex': '#3CB371' },
-        'SeaGreen':             { 'hex': '#2E8B57' },
-        'ForestGreen':          { 'hex': '#228B22' },
-        'Green':                { 'hex': '#008000' },
-        'DarkGreen':            { 'hex': '#006400' },
-        'Aqua':                 { 'hex': '#00FFFF' },
-        'Cyan':                 { 'hex': '#00FFFF' },
-        'LightCyan':            { 'hex': '#E0FFFF' },
-        'PaleTurquoise':        { 'hex': '#AFEEEE' },
-        'Aquamarine':           { 'hex': '#7FFFD4' },
-        'Turquoise':            { 'hex': '#40E0D0' },
-        'DarkTurquoise':        { 'hex': '#00CED1' },
-        'MediumTurquoise':      { 'hex': '#48D1CC' },
-        'LightSeaGreen':        { 'hex': '#20B2AA' },
-        'CadetBlue':            { 'hex': '#5F9EA0' },
-        'DarkCyan':             { 'hex': '#008B8B' },
-        'Teal':                 { 'hex': '#008080' },
-        'LightSteelBlue':       { 'hex': '#B0C4DE' },
-        'PowderBlue':           { 'hex': '#B0E0E6' },
-        'LightBlue':            { 'hex': '#ADD8E6' },
-        'SkyBlue':              { 'hex': '#87CEEB' },
-        'LightSkyBlue':         { 'hex': '#87CEFA' },
-        'DeepSkyBlue':          { 'hex': '#00BFFF' },
-        'DodgerBlue':           { 'hex': '#1E90FF' },
-        'Cornflower':           { 'hex': '#6495ED' },
-        'SteelBlue':            { 'hex': '#4682B4' },
-        'RoyalBlue':            { 'hex': '#4169E1' },
-        'Blue':                 { 'hex': '#0000FF' },
-        'MediumBlue':           { 'hex': '#0000CD' },
-        'DarkBlue':             { 'hex': '#00008B' },
-        'Navy':                 { 'hex': '#000080' },
-        'MidnightBlue':         { 'hex': '#191970' },
-        'Lavender':             { 'hex': '#E6E6FA' },
-        'Thistle':              { 'hex': '#D8BFD8' },
-        'Plum':                 { 'hex': '#DDA0DD' },
-        'Violet':               { 'hex': '#EE82EE' },
-        'Orchid':               { 'hex': '#DA70D6' },
-        'Fuchsia':              { 'hex': '#FF00FF' },
-        'Magenta':              { 'hex': '#FF00FF' },
-        'MediumOrchid':         { 'hex': '#BA55D3' },
-        'MediumPurple':         { 'hex': '#9370DB' },
-        'BlueViolet':           { 'hex': '#8A2BE2' },
-        'DarkViolet':           { 'hex': '#9400D3' },
-        'DarkOrchid':           { 'hex': '#9932CC' },
-        'DarkMagenta':          { 'hex': '#8B008B' },
-        'Purple':               { 'hex': '#800080' },
-        'RebeccaPurple':        { 'hex': '#663399' },
-        'Indigo':               { 'hex': '#4B0082' },
-        'DarkSlateBlue':        { 'hex': '#483D8B' },
-        'SlateBlue':            { 'hex': '#6A5ACD' },
-        'MediumSlateBlue':      { 'hex': '#7B68EE' },
-        'White':                { 'hex': '#FFFFFF' },
-        'Snow':                 { 'hex': '#FFFAFA' },
-        'Honeydew':             { 'hex': '#F0FFF0' },
-        'MintCream':            { 'hex': '#F5FFFA' },
-        'Azure':                { 'hex': '#F0FFFF' },
-        'AliceBlue':            { 'hex': '#F0F8FF' },
-        'GhostWhite':           { 'hex': '#F8F8FF' },
-        'WhiteSmoke':           { 'hex': '#F5F5F5' },
-        'Seashell':             { 'hex': '#FFF5EE' },
-        'Beige':                { 'hex': '#F5F5DC' },
-        'OldLace':              { 'hex': '#FDF5E6' },
-        'FloralWhite':          { 'hex': '#FFFAF0' },
-        'Ivory':                { 'hex': '#FFFFF0' },
-        'AntiqueWhite':         { 'hex': '#FAEBD7' },
-        'Linen':                { 'hex': '#FAF0E6' },
-        'LavenderBlush':        { 'hex': '#FFF0F5' },
-        'MistyRose':            { 'hex': '#FFE4E1' },
-        'Gainsboro':            { 'hex': '#DCDCDC' },
-        'LightGray':            { 'hex': '#D3D3D3' },
-        'Silver':               { 'hex': '#C0C0C0' },
-        'DarkGray':             { 'hex': '#A9A9A9' },
-        'Gray':                 { 'hex': '#808080' },
-        'DimGray':              { 'hex': '#696969' },
-        'LightSlateGray':       { 'hex': '#778899' },
-        'SlateGray':            { 'hex': '#708090' },
-        'DarkSlateGray':        { 'hex': '#2F4F4F' },
-        'Black':                { 'hex': '#000000' }
-    };
-        
-    const HSL_SORTED = [];
-    for (const i in X11_CSS3) {
-        const x11 = X11_CSS3[i];
-        for (const j in x11) {
-            x11.rgb = convertHextoRGB(x11[j]);
-            x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
-            HSL_SORTED.push({ name: i, hex: x11.hex, hsl: x11.hsl });
-        }
-    }
-    HSL_SORTED.sort(sortHSL);
-
-    function convertHextoHSL(value) {
-        const rgb = convertHextoRGB(value);
-        if (rgb != null) {
-            return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
-        }
-        return null;
-    }
-
-    function convertRGBtoHSL(r, g, b) {
-        r = parseInt(r) / 255;
-        g = parseInt(g) / 255;
-        b = parseInt(b) / 255;
-        const min = Math.min(r, g, b);
-        const max = Math.max(r, g, b);
-        let h, s, l = (max + min) / 2;
-        if (max == min) {
-            h = 0;
-            s = 0;
-        }
-        else {
-            const d = max - min;
-            s = (l > 0.5 ? d / (2 - max - min) : d / (max + min));
-            switch(max) {
-                case r:
-                    h = (g - b) / d + (g < b ? 6 : 0);
-                    break;
-                case g:
-                    h = (b - r) / d + 2;
-                    break;
-                case b:
-                    h = (r - g) / d + 4;
-                    break;
-            }
-            h /= 6;
-        }
-        return { h: (h * 360), s: (s * 100), l: (l * 100) };
-    }
-
-    function sortHSL(a, b) {
-        let [c, d] = [a.hsl.h, b.hsl.h];
-        if (c == d) {
-            [c, d] = [a.hsl.s, b.hsl.s];
-            if (c == d) {
-                [c, d] = [a.hsl.l, b.hsl.l];
-            }
-        }
-        return (c >= d ? 1 : -1);
-    }
-
-    function findNearestColor(value) {
-        const hsl = convertHextoHSL(value);
-        if (hsl != null) {
-            const result = HSL_SORTED.slice();
-            result.push({ name: '', hsl });
-            result.sort(sortHSL);
-            const index = result.findIndex(item => item.name == '');
-            return result[Math.min(index + 1, result.length - 1)];
-        }
-        return null;
-    }
-
-    function getByColorName(value) {
-        for (const color in X11_CSS3) {
-            if (color.toLowerCase() == value.toLowerCase()) {
-                return X11_CSS3[color];
-            }
-        }
-        return null;
-    }
-
-    function convertRGB({ rgb }) {
-        return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-    }
-
-    function parseRGBA(value) {
-        const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
-        if (match != null && match.length >= 4) {
-            return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, parseInt((match[4] != null ? match[4] : 1))];
-        }
-        return null;
-    }
-
-    function convertRGBtoHex(value) {
-        const hex = '0123456789ABCDEF';
-        value = parseInt(value);
-        if (isNaN(value)) {
-            return '00';
-        }
-        value = Math.max(0, Math.min(value, 255));
-        return hex.charAt((value - (value % 16)) / 16) + hex.charAt(value % 16);
-    }
-
-    function convertHextoRGB(value) {
-        value = value.replace('#', '').trim();
-        if (value.length == 3) {
-            value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
-        }
-        if (value.length == 6) {
-            return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
-        }
-        return null;
     }
 
     function getDataLevel(data, ...levels) {
         let current = data;
         for (const level of levels) {
-            let [index, array] = level.split('-');
-            if (array == null) {
-                array = 0;
-            }
+            const [index, array = '0'] = level.split('-');
             current = current[index][array];
         }
         return current;
     }
-
     function parseTemplateMatch(template) {
         const result = {};
         let pattern = null;
@@ -1294,11 +1220,9 @@
                 pattern = /(!([0-9]+)\n?)[\w\W]*\1/g;
             }
             match = pattern.exec(template);
-        }
-        while (true);
+        } while (true);
         return result;
     }
-
     function parseTemplateData(template, data, index = null, include = {}, exclude = {}) {
         let output = (index != null ? template[index] : '');
         if (data['#include'] != null) {
@@ -1332,7 +1256,7 @@
             else if (new RegExp(`{&${i}}`).test(output)) {
                 output = '';
             }
-            let pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
+            const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
             let match = null;
             while ((match = pattern.exec(output)) != null) {
                 if (include[match[1]]) {
@@ -1352,123 +1276,95 @@
         return output.replace(/\s+[\w:]+="{@\w+}"/g, '');
     }
 
-    var SETTINGS = {
-        targetAPI: BUILD_ANDROID.OREO,
-        density: DENSITY_ANDROID.MDPI,
-        showAttributes: true,
-        horizontalPerspective: true,
-        useConstraintLayout: true,
-        useConstraintChain: true,
-        useConstraintGuideline: true,
-        useGridLayout: true,
-        useLayoutWeight: true,
-        useUnitDP: true,
-        useFontAlias: true,
-        supportRTL: true,
-        numberResourceValue: false,
-        excludeTextColor: ['#000000'],
-        excludeBackgroundColor: ['#FFFFFF'],
-        whitespaceHorizontalOffset: 4,
-        whitespaceVerticalOffset: 14,
-        chainPackedHorizontalOffset: 4,
-        chainPackedVerticalOffset: 14
-    };
-
     const template = [
-    '!0',
-    '<?xml version="1.0" encoding="utf-8"?>',
-    '<resources>',
-    '!1',
-    '	<string name="{name}">{value}</string>',
-    '!1',
-    '</resources>',
-    '<!-- filename: res/values/strings.xml -->',
-    '!0'
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<string name="{name}">{value}</string>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/strings.xml -->',
+        '!0'
     ];
-
     var STRING_TMPL = template.join('\n');
 
     const template$1 = [
-    '!0',
-    '<?xml version="1.0" encoding="utf-8"?>',
-    '<resources>',
-    '!1',
-    '	<string-array name="{name}">',
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<string-array name="{name}">',
         '!2',
-    '		<item>{value}</item>',
+        '		<item>{value}</item>',
         '!2',
-    '	</string-array>',
-    '!1',
-    '</resources>',
-    '<!-- filename: res/values/string_arrays.xml -->',
-    '!0'
+        '	</string-array>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/string_arrays.xml -->',
+        '!0'
     ];
-
     var STRINGARRAY_TMPL = template$1.join('\n');
 
     const template$2 = [
-    '!0',
-    '<?xml version="1.0" encoding="utf-8"?>',
-    '<resources>',
-    '!1',
-    '	<style name="{name}" parent="{@parent}">',
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<style name="{name1}" parent="{@parent}">',
         '!2',
-    '		<item name="{name}">{value}</item>',
+        '		<item name="{name2}">{value}</item>',
         '!2',
-    '	</style>',
-    '!1',
-    '</resources>',
-    '<!-- filename: res/values/styles.xml -->',
-    '!0'
+        '	</style>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/styles.xml -->',
+        '!0'
     ];
-
     var STYLE_TMPL = template$2.join('\n');
 
     const template$3 = [
-    '!0',
-    '<?xml version="1.0" encoding="utf-8"?>',
-    '<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
-    '!1',
-    '	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" app:fontStyle="{#app=style}" app:fontWeight="{#app=weight}" app:font="{#app=font}" />',
-    '!1',
-    '</font-family>',
-    '<!-- filename: res/font/{name}.xml -->',
-    '!0'
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
+        '!1',
+        '	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" app:fontStyle="{#app=style}" app:fontWeight="{#app=weight}" app:font="{#app=font}" />',
+        '!1',
+        '</font-family>',
+        '<!-- filename: res/font/{name}.xml -->',
+        '!0'
     ];
-
     var FONT_TMPL = template$3.join('\n');
 
     const template$4 = [
-    '!0',
-    '<?xml version="1.0" encoding="utf-8"?>',
-    '<resources>',
-    '!1',
-    '	<color name="{value}">{name}</color>',
-    '!1',
-    '</resources>',
-    '<!-- filename: res/values/colors.xml -->',
-    '!0'
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<color name="{value}">{name}</color>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/colors.xml -->',
+        '!0'
     ];
-
     var COLOR_TMPL = template$4.join('\n');
 
     const template$5 = [
-    '!0',
-    '{value}',
-    '<!-- filename: {name} -->',
-    '!0'
+        '!0',
+        '{value}',
+        '<!-- filename: {name} -->',
+        '!0'
     ];
-
     var DRAWABLE_TMPL = template$5.join('\n');
 
     const template$6 = [
-    '!0',
-    '<?xml version="1.0" encoding="utf-8"?>',
-    '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">',
-    '!1',
-    '	<stroke android:width="{&width}" {borderStyle} />',
-    '!1',
-    '!2',
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">',
+        '!1',
+        '	<stroke android:width="{&width}" {borderStyle} />',
+        '!1',
+        '!2',
         '!3',
         '	<solid android:color="{&color}" />',
         '!3',
@@ -1478,42 +1374,40 @@
         '!5',
         '	<corners android:topLeftRadius="{&topLeftRadius}" android:topRightRadius="{&topRightRadius}" android:bottomRightRadius="{&bottomRightRadius}" android:bottomLeftRadius="{&bottomLeftRadius}" />',
         '!5',
-    '!2',
-    '</shape>',
-    '!0'
+        '!2',
+        '</shape>',
+        '!0'
     ];
-
     var SHAPERECTANGLE_TMPL = template$6.join('\n');
 
     const template$7 = [
-    '!0',
-    '<?xml version="1.0" encoding="utf-8"?>',
-    '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">',
-    '!1',
-    '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}">',
-    '		<shape android:shape="rectangle">',
-            '!2',
-    '			<stroke android:width="{&width}" {borderStyle} />',
-            '!2',
-            '!3',
-    '			<solid android:color="{&color}" />',
-            '!3',
-            '!4',
-    '			<corners android:radius="{&radius}" />',
-            '!4',
-            '!5',
-    '			<corners android:topLeftRadius="{&topLeftRadius}" android:topRightRadius="{&topRightRadius}" android:bottomRightRadius="{&bottomRightRadius}" android:bottomLeftRadius="{&bottomLeftRadius}" />',
-            '!5',
-    '		</shape>',
-    '	</item>',
-    '!1',
-    '!6',
-    '	<item android:drawable="@drawable/{image}" width="{@width}" height="{@height}" />',
-    '!6',
-    '</layer-list>',
-    '!0'
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">',
+        '!1',
+        '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}">',
+        '		<shape android:shape="rectangle">',
+        '!2',
+        '			<stroke android:width="{&width}" {borderStyle} />',
+        '!2',
+        '!3',
+        '			<solid android:color="{&color}" />',
+        '!3',
+        '!4',
+        '			<corners android:radius="{&radius}" />',
+        '!4',
+        '!5',
+        '			<corners android:topLeftRadius="{&topLeftRadius}" android:topRightRadius="{&topRightRadius}" android:bottomRightRadius="{&bottomRightRadius}" android:bottomLeftRadius="{&bottomLeftRadius}" />',
+        '!5',
+        '		</shape>',
+        '	</item>',
+        '!1',
+        '!6',
+        '	<item android:drawable="@drawable/{image}" width="{@width}" height="{@height}" />',
+        '!6',
+        '</layer-list>',
+        '!0'
     ];
-
     var LAYERLIST_TMPL = template$7.join('\n');
 
     const RESOURCE = {
@@ -1525,9 +1419,7 @@
         DRAWABLE: new Map(),
         STYLE: new Map()
     };
-
-    const PROPERTY_ANDROID =
-    {
+    const PROPERTY_ANDROID = {
         'backgroundStyle': {
             'background': 'android:background="@drawable/{0}"',
             'backgroundColor': 'android:background="{0}"'
@@ -1563,9 +1455,7 @@
             'entries': 'android:entries="@array/{0}"'
         }
     };
-
-    const ACTION_ANDROID =
-    {
+    const ACTION_ANDROID = {
         'FrameLayout': {
             'androidId': 'android:id="@+id/{0}"',
             'setBackgroundStyle': PROPERTY_ANDROID['backgroundStyle'],
@@ -1653,24 +1543,22 @@
             'setBoxSpacing': PROPERTY_ANDROID['boxSpacing']
         }
     };
-
     const FONT_ANDROID = {
-        'sans-serif': BUILD_ANDROID.ICE_CREAM_SANDWICH,
-        'sans-serif-thin': BUILD_ANDROID.JELLYBEAN,
-        'sans-serif-light': BUILD_ANDROID.JELLYBEAN,
-        'sans-serif-condensed': BUILD_ANDROID.JELLYBEAN,
-        'sans-serif-condensed-light': BUILD_ANDROID.JELLYBEAN,
-        'sans-serif-medium': BUILD_ANDROID.LOLLIPOP,
-        'sans-serif-black': BUILD_ANDROID.LOLLIPOP,
-        'sans-serif-smallcaps': BUILD_ANDROID.LOLLIPOP,
-        'serif-monospace' : BUILD_ANDROID.LOLLIPOP,
-        'serif': BUILD_ANDROID.LOLLIPOP,
-        'casual' : BUILD_ANDROID.LOLLIPOP,
-        'cursive': BUILD_ANDROID.LOLLIPOP,
-        'monospace': BUILD_ANDROID.LOLLIPOP,
-        'sans-serif-condensed-medium': BUILD_ANDROID.OREO
+        'sans-serif': exports.BUILD_ANDROID.ICE_CREAM_SANDWICH,
+        'sans-serif-thin': exports.BUILD_ANDROID.JELLYBEAN,
+        'sans-serif-light': exports.BUILD_ANDROID.JELLYBEAN,
+        'sans-serif-condensed': exports.BUILD_ANDROID.JELLYBEAN,
+        'sans-serif-condensed-light': exports.BUILD_ANDROID.JELLYBEAN,
+        'sans-serif-medium': exports.BUILD_ANDROID.LOLLIPOP,
+        'sans-serif-black': exports.BUILD_ANDROID.LOLLIPOP,
+        'sans-serif-smallcaps': exports.BUILD_ANDROID.LOLLIPOP,
+        'serif-monospace': exports.BUILD_ANDROID.LOLLIPOP,
+        'serif': exports.BUILD_ANDROID.LOLLIPOP,
+        'casual': exports.BUILD_ANDROID.LOLLIPOP,
+        'cursive': exports.BUILD_ANDROID.LOLLIPOP,
+        'monospace': exports.BUILD_ANDROID.LOLLIPOP,
+        'sans-serif-condensed-medium': exports.BUILD_ANDROID.OREO
     };
-
     const FONTALIAS_ANDROID = {
         'arial': 'sans-serif',
         'helvetica': 'sans-serif',
@@ -1689,7 +1577,6 @@
         'courier': 'serif-monospace',
         'courier new': 'serif-monospace'
     };
-
     const FONTWEIGHT_ANDROID = {
         '100': 'thin',
         '200': 'extra_light',
@@ -1701,23 +1588,12 @@
         '800': 'extra_bold',
         '900': 'black'
     };
-
     function parseBorderStyle(value) {
-        let stroke = value.match(/(none|dotted|dashed|solid)/);
-        let width = value.match(/([0-9.]+(?:px|pt|em))/);
-        let color = parseRGBA(value);
-        if (stroke != null) {
-            stroke = stroke[1];
-        }
-        if (width != null) {
-            width = convertPX(width[1]);
-        }
-        if (color != null) {
-            color = color[1];
-        }
-        return [stroke || 'solid', width || '1px', color || '#000'];
+        const stroke = value.match(/(none|dotted|dashed|solid)/);
+        const width = value.match(/([0-9.]+(?:px|pt|em))/);
+        const color = parseRGBA(value);
+        return [(stroke != null ? stroke[1] : 'solid'), (width != null ? convertPX(width[1]) : '1px'), (color != null ? color[1] : '#000')];
     }
-
     function parseImageURL(value) {
         const match = value.match(/^url\("(.*?)"\)$/);
         if (match != null) {
@@ -1725,7 +1601,6 @@
         }
         return null;
     }
-
     function parseBoxDimensions(value) {
         const match = value.match(/^([0-9]+(?:px|pt|em))( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?$/);
         if (match != null) {
@@ -1744,7 +1619,6 @@
         }
         return [];
     }
-
     function deleteStyleAttribute(sorted, attributes, ids) {
         attributes.split(';').forEach(value => {
             for (let i = 0; i < sorted.length; i++) {
@@ -1760,7 +1634,7 @@
                         }
                     }
                     if (index != -1) {
-                        sorted[index][key] = sorted[index][key].filter(value => !ids.includes(value));
+                        sorted[index][key] = sorted[index][key].filter((id) => !ids.includes(id));
                         if (sorted[index][key].length == 0) {
                             delete sorted[index][key];
                         }
@@ -1770,7 +1644,6 @@
             }
         });
     }
-
     function setResourceStyle(cache) {
         const tagName = {};
         const style = {};
@@ -1794,26 +1667,27 @@
                     continue;
                 }
                 let system = false;
-                let fontName = null;
-                let fontWeight = null;
-                let fontStyle = null;
+                let fontName = '';
+                let fontWeight = [];
+                let fontStyle = [];
                 let labelFor = null;
                 if (node.label != null) {
                     labelFor = node;
                     node = node.label;
                 }
+                const id = (labelFor || node).id;
                 for (let i = 0; i < node.styleAttributes.length; i++) {
                     let value = node.styleAttributes[i];
                     let match = null;
                     switch (i) {
                         case 0:
                             if ((match = value.match(/fontWeight="(.*?)"$/)) != null) {
-                                fontWeight = match[1];
+                                fontWeight = [value, match[1]];
                             }
                             break;
                         case 1:
                             if ((match = value.match(/textStyle="(.*?)"$/)) != null) {
-                                fontStyle = match[1];
+                                fontStyle = [value, match[1]];
                             }
                             break;
                         case 2:
@@ -1824,16 +1698,18 @@
                                     value = value.replace(match[1], `"${fontName}"`);
                                 }
                                 else {
-                                    value = value.replace(match[1], `"@font/${fontName.replace(/ /g, '_') + (fontStyle != 'normal' ? `_${fontStyle}` : '') + (fontWeight != '400' ? `_${FONTWEIGHT_ANDROID[fontWeight] || fontWeight}` : '')}"`);
+                                    value = value.replace(match[1], `"@font/${fontName.replace(/ /g, '_') + (fontStyle[1] != 'normal' ? `_${fontStyle[1]}` : '') + (fontWeight[1] != '400' ? `_${FONTWEIGHT_ANDROID[fontWeight[1]] || fontWeight[1]}` : '')}"`);
+                                    remove(sorted[0][fontWeight[0]], id);
+                                    remove(sorted[1][fontStyle[0]], id);
                                 }
                             }
                             break;
                         case 4:
                             if ((match = parseRGBA(value)) != null) {
-                                if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(match[1])) {
+                                if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(match[1].toString())) {
                                     continue;
                                 }
-                                const name = addResourceColor(match[1]);
+                                const name = addResourceColor(match[1].toString());
                                 value = value.replace(match[0], name);
                             }
                             break;
@@ -1842,10 +1718,10 @@
                                 value = labelFor.styleAttributes[i];
                             }
                             if (hasValue(value) && (match = parseRGBA(value)) != null) {
-                                if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(match[1])) {
+                                if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(match[1].toString())) {
                                     continue;
                                 }
-                                const name = addResourceColor(match[1]);
+                                const name = addResourceColor(match[1].toString());
                                 value = value.replace(match[0], name);
                             }
                             break;
@@ -1854,14 +1730,14 @@
                         if (sorted[i][value] == null) {
                             sorted[i][value] = [];
                         }
-                        sorted[i][value].push((labelFor || node).id);
+                        sorted[i][value].push(id);
                     }
                 }
                 if (!system) {
                     if (!RESOURCE.FONT.has(fontName)) {
                         RESOURCE.FONT.set(fontName, {});
                     }
-                    RESOURCE.FONT.get(fontName)[`${fontStyle}-${fontWeight}`] = true;
+                    RESOURCE.FONT.get(fontName)[`${fontStyle[1]}-${fontWeight[1]}`] = true;
                 }
             }
             style[tag] = {};
@@ -1890,7 +1766,7 @@
                             }
                             const ids = sorted[i][attr1];
                             let revalidate = false;
-                            if (ids == null) {
+                            if (ids == null || ids.length == 0) {
                                 continue;
                             }
                             else if (ids.length == nodes.length) {
@@ -1909,12 +1785,12 @@
                                     if (i != j) {
                                         for (const attr in sorted[j]) {
                                             const compare$$1 = sorted[j][attr];
-                                            for (let k = 0; k < ids.length; k++) {
-                                                if (compare$$1.includes(ids[k])) {
+                                            for (const id of ids) {
+                                                if (compare$$1.includes(id)) {
                                                     if (found[attr] == null) {
                                                         found[attr] = [];
                                                     }
-                                                    found[attr].push(ids[k]);
+                                                    found[attr].push(id);
                                                 }
                                             }
                                         }
@@ -1932,12 +1808,12 @@
                         for (const attr1 in filtered) {
                             for (const attr2 in filtered) {
                                 if (attr1 != attr2 && filtered[attr1].join('') == filtered[attr2].join('')) {
-                                    const shared = filtered[attr1].join(',');
-                                    if (combined[shared] != null) {
-                                        combined[shared] = new Set([...combined[shared], ...attr2.split(';')]);
+                                    const index = filtered[attr1].join(',');
+                                    if (combined[index] != null) {
+                                        combined[index] = new Set([...combined[index], ...attr2.split(';')]);
                                     }
                                     else {
-                                        combined[shared] = new Set([...attr1.split(';'), ...attr2.split(';')]);
+                                        combined[index] = new Set([...attr1.split(';'), ...attr2.split(';')]);
                                     }
                                     deleteKeys.add(attr1).add(attr2);
                                 }
@@ -1955,9 +1831,9 @@
                             style[tag][attributes] = nodeIds;
                         }
                     }
-                    const combined = Object.keys(styleKey);
-                    if (combined.length > 0) {
-                        style[tag][combined.join(';')] = styleKey[combined[0]];
+                    const shared = Object.keys(styleKey);
+                    if (shared.length > 0) {
+                        style[tag][shared.join(';')] = styleKey[shared[0]];
                     }
                     for (const attribute in layoutKey) {
                         layout[tag][attribute] = layoutKey[attribute];
@@ -1967,17 +1843,16 @@
                             delete sorted[i];
                         }
                     }
-                    sorted = sorted.filter(item => item);
+                    sorted = sorted.filter((item) => item && item.length > 0);
                 }
-            }
-            while (sorted.length > 0);
+            } while (sorted.length > 0);
         }
         const resource = new Map();
         for (const name in style) {
             const tag = style[name];
             const tagData = [];
             for (const attributes in tag) {
-                tagData.push({ attributes, ids: tag[attributes]});
+                tagData.push({ attributes, ids: tag[attributes] });
             }
             tagData.sort((a, b) => {
                 let [c, d] = [a.ids.length, b.ids.length];
@@ -1991,23 +1866,19 @@
         }
         const inherit = new Set();
         for (const node of cache.visible) {
-            const tagName = node.tagName;
-            if (resource.has(tagName)) {
+            if (resource.has(node.tagName)) {
                 const styles = [];
-                for (const tag of resource.get(tagName)) {
-                    if (tag.ids.includes(node.id)) {
-                        styles.push(tag.name);
+                for (const item of resource.get(node.tagName)) {
+                    if (item.ids.includes(node.id)) {
+                        styles.push(item.name);
                     }
                 }
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
-                    node.androidStyle = styles.pop();
-                    if (node.androidStyle != '') {
-                        node.attr(`style="@style/${node.androidStyle}"`);
-                    }
+                    node.attr(`style="@style/${styles.pop()}"`);
                 }
             }
-            const tag = layout[tagName];
+            const tag = layout[node.tagName];
             if (tag != null) {
                 for (const attr in tag) {
                     if (tag[attr].includes(node.id)) {
@@ -2018,23 +1889,21 @@
         }
         inherit.forEach(styles => {
             let parent = null;
-            styles.split('.').forEach(value => {
+            styles.split('.').forEach((value) => {
                 const match = value.match(/^(\w+)_([0-9]+)$/);
                 if (match != null) {
-                    const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
-                    RESOURCE.STYLE.set(value, { parent, attributes: style.attributes });
+                    const item = resource.get(match[1].toUpperCase())[parseInt(match[2]) - 1];
+                    RESOURCE.STYLE.set(value, { parent, attributes: item.attributes });
                     parent = value;
                 }
             });
         });
     }
-
-    function getResource(name) {
-        return RESOURCE[name];
+    function getResource(module) {
+        return RESOURCE[module];
     }
-
     function insertResourceAsset(resource, name, value) {
-        let resourceName = null;
+        let resourceName = '';
         if (isNumber(name)) {
             name = `__${name}`;
         }
@@ -2049,12 +1918,10 @@
                     resource.set(resourceName, value);
                 }
                 i++;
-            }
-            while (resource.has(resourceName) && resource.get(resourceName) != value);
+            } while (resource.has(resourceName) && resource.get(resourceName) != value);
         }
         return resourceName;
     }
-
     function addResourceString(node, value) {
         const element = (node != null ? node.element : null);
         let name = value;
@@ -2088,16 +1955,16 @@
                     }
                 }
             }
-            const number = isNumber(value);
-            if (SETTINGS.numberResourceValue || !number) {
+            const num = isNumber(value);
+            if (SETTINGS.numberResourceValue || !num) {
                 value = value.replace(/\s*style=".*?">/g, '>');
-                for (const [name, resourceValue] in RESOURCE.STRING.entries()) {
+                for (const [resourceName, resourceValue] of RESOURCE.STRING.entries()) {
                     if (resourceValue == value) {
-                        return { text: name };
+                        return { text: resourceName };
                     }
                 }
                 name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-                if (number || /^[0-9]/.test(value)) {
+                if (num || /^[0-9]/.test(value)) {
                     name = `__${name}`;
                 }
                 else if (!/\w+/.test(name) && node != null) {
@@ -2108,11 +1975,11 @@
             if (element != null && element.nodeName == '#text') {
                 const prevSibling = element.previousSibling;
                 if (prevSibling != null) {
-                    const prevNode = prevSibling.__Node;
+                    const prevNode = prevSibling.__node;
                     switch (prevNode.widgetName) {
                         case WIDGET_ANDROID.CHECKBOX:
                         case WIDGET_ANDROID.RADIO:
-                            prevNode.android('text', (!SETTINGS.numberResourceValue && number ? name : `@string/${name}`));
+                            prevNode.android('text', (!SETTINGS.numberResourceValue && num ? name : `@string/${name}`));
                             prevNode.label = node;
                             node.hide();
                             break;
@@ -2123,7 +1990,6 @@
         }
         return null;
     }
-
     function addResourceImage(value) {
         const image = value.substring(value.lastIndexOf('/') + 1);
         const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
@@ -2141,14 +2007,13 @@
         }
         return src;
     }
-
     function addResourceStringArray(node) {
         const element = node.element;
         const stringArray = new Map();
         let numberArray = new Map();
         for (let i = 0; i < element.children.length; i++) {
             const item = element.children[i];
-            let value = item.text.trim() || item.value.trim();
+            const value = item.text.trim() || item.value.trim();
             if (value != '') {
                 if (numberArray != null && !stringArray.size && isNumber(value)) {
                     numberArray.set(value, false);
@@ -2169,7 +2034,6 @@
         }
         return null;
     }
-
     function addResourceColor(value) {
         value = value.toUpperCase().trim();
         if (value != '') {
@@ -2198,19 +2062,16 @@
         }
         return value;
     }
-
     function setComputedStyle(node) {
         return getStyle(node.element);
     }
-
     function setBoxSpacing(node) {
-        const result = getBoxSpacing(node.element, SETTINGS.supportRTL);
+        const result = getBoxSpacing(node.element);
         for (const i in result) {
             result[i] += 'px';
         }
         return result;
     }
-
     function setBackgroundStyle(node) {
         const element = node.element;
         const attributes = {
@@ -2249,28 +2110,28 @@
         if (attributes.border[0] != 'none') {
             let template = null;
             let data = null;
-            let resourceName = null;
+            let resourceName = '';
             if (attributes.backgroundColor == null && attributes.backgroundImage == null && attributes.borderRadius.length == 0) {
                 template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
                 data = {
                     '0': [{
-                        '1': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
-                        '2': false
-                    }]
+                            '1': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
+                            '2': false
+                        }]
                 };
             }
             else {
                 template = parseTemplateMatch(LAYERLIST_TMPL);
                 data = {
                     '0': [{
-                        '1': [{
-                            '2': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
-                            '3': (attributes.backgroundColor != null ? [{ color: attributes.backgroundColor }] : false),
-                            '4': (attributes.borderRadius.length == 1 ? [{ radius: attributes.borderRadius[0] }] : false),
-                            '5': (attributes.borderRadius.length > 1 ? [{ topLeftRadius: '' }] : false)
-                        }],
-                        '6': (attributes.backgroundImage != null ? [{ image: attributes.backgroundImage, width: attributes.backgroundSize[0], height: attributes.backgroundSize[1] }] : false)
-                    }]
+                            '1': [{
+                                    '2': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
+                                    '3': (attributes.backgroundColor != null ? [{ color: attributes.backgroundColor }] : false),
+                                    '4': (attributes.borderRadius.length == 1 ? [{ radius: attributes.borderRadius[0] }] : false),
+                                    '5': (attributes.borderRadius.length > 1 ? [{ topLeftRadius: '' }] : false)
+                                }],
+                            '6': (attributes.backgroundImage != null ? [{ image: attributes.backgroundImage, width: attributes.backgroundSize[0], height: attributes.backgroundSize[1] }] : false)
+                        }]
                 };
                 const rootItem = getDataLevel(data, '0');
                 [attributes.borderTopWidth, attributes.borderRightWidth, attributes.borderBottomWidth, attributes.borderLeftWidth].forEach((item, index) => {
@@ -2284,18 +2145,17 @@
                     attributes.borderRadius.forEach((value, index) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
                 }
             }
-            let xml = parseTemplateData(template, data);
+            const xml = parseTemplateData(template, data);
             for (const [name, value] of RESOURCE.DRAWABLE.entries()) {
                 if (value == xml) {
                     resourceName = name;
                     break;
                 }
             }
-            if (resourceName == null) {
+            if (resourceName == '') {
                 resourceName = `${node.tagName.toLowerCase()}_${node.androidId}`;
                 RESOURCE.DRAWABLE.set(resourceName, xml);
             }
-            node.drawable = resourceName;
             return { background: resourceName };
         }
         else if (attributes.backgroundColor != null) {
@@ -2303,7 +2163,6 @@
         }
         return null;
     }
-
     function getViewAttributes(node) {
         let output = '';
         const attributes = node.combine();
@@ -2315,11 +2174,10 @@
                     break;
                 }
             }
-            output = (node.renderDepth == 0 ? '{@0}' : '') + attributes.map(value => `\n${indent + value}`).join('');
+            output = (node.renderDepth == 0 ? '{@0}' : '') + attributes.map((value) => `\n${indent + value}`).join('');
         }
         return output;
     }
-
     function writeResourceStringXml() {
         RESOURCE.STRING = new Map([...RESOURCE.STRING.entries()].sort());
         let xml = '';
@@ -2327,8 +2185,8 @@
             const template = parseTemplateMatch(STRING_TMPL);
             const data = {
                 '0': [{
-                    '1': []
-                }]
+                        '1': []
+                    }]
             };
             const rootItem = getDataLevel(data, '0');
             for (const [name, value] of RESOURCE.STRING.entries()) {
@@ -2338,7 +2196,6 @@
         }
         return xml;
     }
-
     function writeResourceArrayXml() {
         RESOURCE.ARRAY = new Map([...RESOURCE.ARRAY.entries()].sort());
         let xml = '';
@@ -2346,8 +2203,8 @@
             const template = parseTemplateMatch(STRINGARRAY_TMPL);
             const data = {
                 '0': [{
-                    '1': []
-                }]
+                        '1': []
+                    }]
             };
             const rootItem = getDataLevel(data, '0');
             for (const [name, values] of RESOURCE.ARRAY.entries()) {
@@ -2356,8 +2213,8 @@
                     '2': []
                 };
                 const item = arrayItem['2'];
-                for (const [name, value] of values.entries()) {
-                    item.push({ value: (value ? `@string/` : '') + name });
+                for (const [text, value] of values.entries()) {
+                    item.push({ value: (value ? `@string/` : '') + text });
                 }
                 rootItem['1'].push(arrayItem);
             }
@@ -2365,26 +2222,25 @@
         }
         return xml;
     }
-
     function writeResourceStyleXml() {
         let xml = '';
         if (RESOURCE.STYLE.size > 0) {
             const template = parseTemplateMatch(STYLE_TMPL);
             const data = {
                 '0': [{
-                    '1': []
-                }]
+                        '1': []
+                    }]
             };
             const rootItem = getDataLevel(data, '0');
-            for (const [name, style] of RESOURCE.STYLE.entries()) {
+            for (const [name1, style] of RESOURCE.STYLE.entries()) {
                 const styleItem = {
-                    name,
+                    name1,
                     parent: style.parent || '',
                     '2': []
                 };
-                style.attributes.split(';').sort().forEach(attr => {
-                    const [name, value] = attr.split('=');
-                    styleItem['2'].push({ name, value: value.replace(/"/g, '') });
+                style.attributes.split(';').sort().forEach((attr) => {
+                    const [name2, value] = attr.split('=');
+                    styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
                 });
                 rootItem['1'].push(styleItem);
             }
@@ -2395,7 +2251,6 @@
         }
         return xml;
     }
-
     function writeResourceFontXml() {
         RESOURCE.FONT = new Map([...RESOURCE.FONT.entries()].sort());
         let xml = '';
@@ -2406,11 +2261,11 @@
                     '#include': {},
                     '#exclude': {},
                     '0': [{
-                        name,
-                        '1': []
-                    }]
+                            name,
+                            '1': []
+                        }]
                 };
-                data[(SETTINGS.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
+                data[(SETTINGS.targetAPI < exports.BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
                 const rootItem = getDataLevel(data, '0');
                 for (const attr in font) {
                     const [style, weight] = attr.split('-');
@@ -2425,8 +2280,6 @@
         }
         return xml.trim();
     }
-
-
     function writeResourceColorXml() {
         let xml = '';
         if (RESOURCE.COLOR.size > 0) {
@@ -2434,8 +2287,8 @@
             const template = parseTemplateMatch(COLOR_TMPL);
             const data = {
                 '0': [{
-                    '1': []
-                }]
+                        '1': []
+                    }]
             };
             const rootItem = getDataLevel(data, '0');
             for (const [name, value] of RESOURCE.COLOR.entries()) {
@@ -2445,7 +2298,6 @@
         }
         return xml;
     }
-
     function writeResourceDrawableXml() {
         let xml = '';
         if (RESOURCE.DRAWABLE.size > 0 || RESOURCE.IMAGE.size > 0) {
@@ -2455,7 +2307,7 @@
             };
             const rootItem = data['0'];
             for (const [name, value] of RESOURCE.DRAWABLE.entries()) {
-                rootItem.push({ name: `res/drawable/${name}.xml`, value});
+                rootItem.push({ name: `res/drawable/${name}.xml`, value });
             }
             for (const [name, value] of RESOURCE.IMAGE.entries()) {
                 rootItem.push({ name: `res/drawable/${name + value.substring(value.lastIndexOf('.'))}`, value: `<!-- image: ${value} -->` });
@@ -2489,40 +2341,46 @@
         writeResourceDrawableXml: writeResourceDrawableXml
     });
 
-    function parseRTL(value) {
-        if (SETTINGS.supportRTL && SETTINGS.targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
-            switch (value) {
-                case 'left':
-                    return 'start';
-                case 'right':
-                    return 'end';
+    const API_ANDROID = {
+        [exports.BUILD_ANDROID.OREO]: {
+            android: ['fontWeight'],
+            customizations: {}
+        },
+        [exports.BUILD_ANDROID.JELLYBEAN_1]: {
+            android: ['labelFor'],
+            customizations: {}
+        },
+        [exports.BUILD_ANDROID.LOLLIPOP]: {
+            android: ['layout_columnWeight'],
+            customizations: {
+                'Button': {
+                    android: {
+                        textAllCaps: 'false'
+                    }
+                }
             }
-            value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
         }
-        return value;
-    }
+    };
 
     class Widget extends Node {
-        constructor(id, element, api, options = {}) {
-            super(...arguments);
-
+        static is(object) {
+            return (object instanceof Widget);
+        }
+        constructor(id, element = null, api = 0, options = {}) {
+            super(id, element, api, options);
             this.labelFor = null;
             this.styleAttributes = [];
             this.constraint = {};
-
             this._label = null;
-
             if (options.element != null || element != null) {
-                this.element.__Node = this;
+                this.element.__node = this;
             }
         }
-
-        attr(value, overwrite = true) {
-            const match = value.match(/^(?:([a-z]+):)?(\w+)="((?:@+?[a-z]+\/)?.+)"$/);
-            if (match != null) {
-                this.add(match[1] || '_', match[2], match[3], overwrite);
+        add(obj, attr, value = '', overwrite = true) {
+            if (hasValue(attr) && !this.supported(obj, attr)) {
+                return false;
             }
-            return this;
+            return super.add(obj, attr, value, overwrite);
         }
         android(attr, value = null, overwrite = true) {
             switch (arguments.length) {
@@ -2546,6 +2404,28 @@
                     return this;
             }
         }
+        attr(value, overwrite = true) {
+            const match = value.match(/^(?:([a-z]+):)?(\w+)="((?:@+?[a-z]+\/)?.+)"$/);
+            if (match != null) {
+                this.add(match[1] || '_', match[2], match[3], overwrite);
+            }
+            return this;
+        }
+        combine() {
+            const result = [];
+            this.namespaces.forEach(value => {
+                const obj = this[`_${value}`];
+                for (const attr in obj) {
+                    if (value != '_') {
+                        result.push(`${value}:${attr}="${obj[attr]}"`);
+                    }
+                    else {
+                        result.push(`${attr}="${obj[attr]}"`);
+                    }
+                }
+            });
+            return result.sort();
+        }
         render(parent) {
             if (Widget.is(parent) && parent.is(WIDGET_ANDROID.LINEAR) && parent.id != 0) {
                 switch (this.widgetName) {
@@ -2555,7 +2435,8 @@
                         break;
                 }
             }
-            return super.render(parent);
+            super.render(parent);
+            return this;
         }
         anchor(position, adjacent = {}, orientation = '') {
             const overwrite = (adjacent.stringId == 'parent');
@@ -2578,45 +2459,8 @@
             }
             return this;
         }
-        modifyBox(dimension, offset) {
-            dimension = parseRTL(dimension);
-            const total = formatPX(offset + convertInt(this.android(dimension)));
-            this.css(dimension, total)
-                .android(dimension, total);
-            this.setBounds(true);
-            return this;
-        }
-        inheritStyle(node) {
-            const inherit = ACTION_ANDROID[this.widgetName]['setComputedStyle'];
-            const style = [];
-            for (const attr in inherit) {
-                let value = node.style[attr]; 
-                this.style[attr] = value;
-                value = parseStyle(null, attr, value);
-                if (hasValue(value)) {
-                    style.push(formatString(inherit[attr], value));
-                }
-            }
-            this.styleAttributes = style;
-        }
-
-        combine() {
-            const result = [];
-            this._namespaces.forEach(value => {
-                const obj = this[`_${value}`];
-                for (const attr in obj) {
-                    if (value != '_') {
-                        result.push(`${value}:${attr}="${obj[attr]}"`);
-                    }
-                    else {
-                        result.push(`${attr}="${obj[attr]}"`);
-                    }
-                }
-            });
-            return result.sort();
-        }
         supported(obj, attr) {
-            for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
+            for (let i = this.api + 1; i < exports.BUILD_ANDROID.OREO_1; i++) {
                 const version = API_ANDROID[i];
                 if (version != null && version[obj] != null && version[obj].includes(attr)) {
                     return false;
@@ -2637,6 +2481,27 @@
                 }
             }
         }
+        modifyBox(dimension, offset) {
+            dimension = parseRTL(dimension);
+            const total = formatPX(offset + convertInt(this.android(dimension)));
+            this.css(dimension, total)
+                .android(dimension, total);
+            this.setBounds(true);
+            return this;
+        }
+        inheritStyle(node) {
+            const inherit = ACTION_ANDROID[this.widgetName]['setComputedStyle'];
+            const style = [];
+            for (const attr in inherit) {
+                let value = node.style[attr];
+                this.style[attr] = value;
+                value = parseStyle(null, attr, value);
+                if (hasValue(value)) {
+                    style.push(formatString(inherit[attr], value));
+                }
+            }
+            this.styleAttributes = style;
+        }
         is(...views) {
             for (const viewName of views) {
                 if (this.widgetName == viewName) {
@@ -2645,7 +2510,6 @@
             }
             return false;
         }
-        
         setAndroidId(widgetName) {
             this.androidWidgetName = widgetName || this.widgetName;
             if (this.androidId == null) {
@@ -2690,7 +2554,7 @@
                 }
                 if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
                     if (this.constraint.layoutWidth) {
-                        this.android('layout_width', (this.renderChildren.some(node => node.css('float') == 'right') || convertPX(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
+                        this.android('layout_width', (this.renderChildren.some((node) => node.css('float') == 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
                     }
                     else {
                         this.android('layout_width', 'wrap_content', false);
@@ -2761,7 +2625,7 @@
             if (element.tagName == 'INPUT' && element.id != '') {
                 const nextElement = element.nextElementSibling;
                 if (nextElement != null && nextElement.htmlFor == element.id) {
-                    const node = nextElement.__Node;
+                    const node = nextElement.__node;
                     node.setAttributes([2, 4]);
                     node.setAndroidId(WIDGET_ANDROID.TEXT);
                     const attributes = node.combine();
@@ -2832,13 +2696,13 @@
                     if (!Array.isArray(value)) {
                         value = [value];
                     }
-                    value.forEach(attr => this.attr(attr, false));
+                    value.forEach((attr) => this.attr(attr, false));
                 }
             }
         }
         setGravity() {
             const verticalAlign = this.styleMap.verticalAlign;
-            let textAlign = null;
+            let textAlign = '';
             let element = this.element;
             while (element != null && element.styleMap != null) {
                 textAlign = element.styleMap.textAlign || textAlign;
@@ -2849,15 +2713,15 @@
                 element = element.parentNode;
             }
             if (hasValue(verticalAlign) || hasValue(textAlign)) {
-                let horizontal = null;
-                let vertical = null;
-                let layoutGravity = [];
+                let horizontal = '';
+                let vertical = '';
+                const layoutGravity = [];
                 switch (textAlign) {
                     case 'start':
                         horizontal = 'start';
                         break;
                     case 'right':
-                        horizontal = parseRTL('right', 'end');
+                        horizontal = parseRTL('right');
                         break;
                     case 'end':
                         horizontal = 'end';
@@ -2912,24 +2776,8 @@
                 }
             }
         }
-
         get stringId() {
             return (this.androidId != null ? `@+id/${this.androidId}` : '');
-        }
-        get anchored() {
-            return (this.constraint.horizontal && this.constraint.vertical);
-        }
-        get horizontal() {
-            return (this._android != null && this._android.orientation == 'horizontal');
-        }
-        get label() {
-            return this._label;
-        }
-        set label(value) {
-            if (Widget.is(value)) {
-                this._label = value;
-                value.labelFor = this;
-            }
         }
         get widgetName() {
             if (this.androidWidgetName != null) {
@@ -2942,6 +2790,27 @@
                 }
                 return widgetName;
             }
+        }
+        set label(value) {
+            if (Widget.is(value)) {
+                this._label = value;
+                value.labelFor = this;
+            }
+        }
+        get label() {
+            return this._label;
+        }
+        set parent(value) {
+            super.parent = value;
+        }
+        get parent() {
+            return super.parent || new Widget(0);
+        }
+        get horizontal() {
+            return (this._android != null && this._android.orientation == 'horizontal');
+        }
+        get anchored() {
+            return (this.constraint.horizontal && this.constraint.vertical);
         }
         get horizontalBias() {
             const parent = this.renderParent;
@@ -2961,13 +2830,12 @@
             }
             return 0.5;
         }
-
-        static is(object) {
-            return (object instanceof Widget);
-        }
     }
 
     class Layout extends Widget {
+        static is(object) {
+            return (object instanceof Layout);
+        }
         constructor(id, node = null, api = 0, parent = null, children = null, actions = null) {
             const options = {
                 parent,
@@ -2978,7 +2846,26 @@
             };
             super(id, null, api, options);
         }
-
+        inheritGrid(node) {
+            for (const prop in node) {
+                if (prop.startsWith('grid')) {
+                    if (node[prop] !== false) {
+                        this[prop] = node[prop];
+                    }
+                    delete node[prop];
+                }
+            }
+        }
+        setAndroidDimensions() {
+            const [width, height] = this.childrenBox;
+            const options = {
+                parent: this.parentOriginal,
+                width,
+                height,
+                requireWrap: this.parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
+            };
+            super.setAndroidDimensions(options);
+        }
         setBounds(calibrate = false) {
             const nodes = this.outerRegion;
             if (!calibrate) {
@@ -3007,28 +2894,6 @@
             };
             this.setDimensions();
         }
-
-        setAndroidDimensions() {
-            const [width, height] = this.childrenBox;
-            const options = {
-                parent: this.parentOriginal,
-                width,
-                height,
-                requireWrap: this.parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
-            };
-            super.setAndroidDimensions(options);
-        }
-        inheritGrid(node) {
-            for (const prop in node) {
-                if (prop.startsWith('grid')) {
-                    if (node[prop] !== false) {
-                        this[prop] = node[prop];
-                    }
-                    delete node[prop];
-                }
-            }
-        }
-        
         get outerRegion() {
             const children = this.children;
             let top = [children[0]];
@@ -3065,35 +2930,29 @@
             }
             return { top, right, bottom, left, children };
         }
-
-        static is(object) {
-            return (object instanceof Layout);
-        }
     }
 
     const VIEW_BEFORE = {};
     const VIEW_AFTER = {};
-
     function getEnclosingTag(depth, tagName, id, content = '', preXml = '', postXml = '') {
         const indent = padLeft(depth);
         let xml = preXml +
-                  `{<${id}}`;
+            `{<${id}}`;
         if (hasValue(content)) {
             xml += indent + `<${tagName}{@${id}}>\n` +
-                            content +
-                   indent + `</${tagName}>\n`;
+                content +
+                indent + `</${tagName}>\n`;
         }
         else {
             xml += indent + `<${tagName}{@${id}} />\n`;
         }
         xml += `{>${id}}` +
-               postXml;
+            postXml;
         return xml;
     }
-
     function setGridSpace(node) {
         if (node.parent.is(WIDGET_ANDROID.GRID)) {
-            const dimensions = getBoxSpacing(node.parentOriginal.element, SETTINGS.supportRTL, true);
+            const dimensions = getBoxSpacing(node.parentOriginal.element, true);
             const options = {
                 android: {
                     layout_columnSpan: node.renderParent.gridColumnSpan,
@@ -3128,7 +2987,6 @@
             }
         }
     }
-
     function renderViewLayout(node, parent, tagName) {
         let preXml = '';
         let postXml = '';
@@ -3140,55 +2998,55 @@
                 scrollView.push(WIDGET_ANDROID.SCROLL_HORIZONTAL);
             }
             if (node.overflowY) {
-                scrollView.push((node.ascend().some(item => item.overflow != 0) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
+                scrollView.push((node.ascend().some((item) => item.overflow != 0) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
             }
             let current = node;
             let scrollDepth = parent.renderDepth + scrollView.length;
             scrollView
                 .map(widgetName => {
-                    const layout = new Layout(generateNodeId(), current, SETTINGS.targetAPI, null, new WidgetList([current]));
-                    NODE_CACHE.push(layout);
-                    layout.setAndroidId(widgetName);
-                    layout.setBounds();
-                    layout.android('fadeScrollbars', 'false');
-                    layout.setAttributes();
-                    switch (widgetName) {
-                        case WIDGET_ANDROID.SCROLL_HORIZONTAL:
-                            layout
-                                .css('width', node.styleMap.width)
-                                .css('minWidth', node.styleMap.minWidth)
-                                .css('overflowX', node.styleMap.overflowX);
-                            break;
-                        default:
-                            layout
-                                .css('height', node.styleMap.height)
-                                .css('minHeight', node.styleMap.minHeight)
-                                .css('overflowY', node.styleMap.overflowY);
-                    }
-                    const indent = padLeft(scrollDepth--);
-                    preXml = indent + `<${widgetName}{@${layout.id}}>\n` + preXml;
-                    postXml += indent + `</${widgetName}>\n`;
-                    if (current == node) {
-                        node.parent = layout;
-                        renderParent = layout;
-                    }
-                    current = layout;
-                    return layout;
-                })
+                const layout = new Layout(generateNodeId(), current, SETTINGS.targetAPI, null, new WidgetList([current]));
+                NODE_CACHE.push(layout);
+                layout.setAndroidId(widgetName);
+                layout.setBounds();
+                layout.android('fadeScrollbars', 'false');
+                layout.setAttributes();
+                switch (widgetName) {
+                    case WIDGET_ANDROID.SCROLL_HORIZONTAL:
+                        layout
+                            .css('width', node.styleMap.width)
+                            .css('minWidth', node.styleMap.minWidth)
+                            .css('overflowX', node.styleMap.overflowX);
+                        break;
+                    default:
+                        layout
+                            .css('height', node.styleMap.height)
+                            .css('minHeight', node.styleMap.minHeight)
+                            .css('overflowY', node.styleMap.overflowY);
+                }
+                const indent = padLeft(scrollDepth--);
+                preXml = indent + `<${widgetName}{@${layout.id}}>\n` + preXml;
+                postXml += indent + `</${widgetName}>\n`;
+                if (current == node) {
+                    node.parent = layout;
+                    renderParent = layout;
+                }
+                current = layout;
+                return layout;
+            })
                 .reverse()
                 .forEach((item, index) => {
-                    switch (index) {
-                        case 0:
-                            item.parent = parent;
-                            item.render(parent);
-                            break;
-                        case 1:
-                            item.parent = current;
-                            item.render(current);
-                            break;
-                    }
-                    current = item;
-                });
+                switch (index) {
+                    case 0:
+                        item.parent = parent;
+                        item.render(parent);
+                        break;
+                    case 1:
+                        item.parent = current;
+                        item.render(current);
+                        break;
+                }
+                current = item;
+            });
         }
         node.setAttributes();
         node.applyCustomizations();
@@ -3197,7 +3055,6 @@
         setGridSpace(node);
         return getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, preXml, postXml);
     }
-
     function renderViewTag(node, parent, tagName, recursive = false) {
         const element = node.element;
         node.setAndroidId(tagName);
@@ -3210,12 +3067,12 @@
                 node.androidSrc = image;
                 break;
             case 'TEXTAREA':
-                node.android('minLines', 2);
+                node.android('minLines', '2');
                 if (element.rows > 2) {
                     node.android('maxLines', element.rows);
                 }
                 if (element.maxlength != null) {
-                    node.android('maxLength', parseInt(element.maxlength));
+                    node.android('maxLength', element.maxlength);
                 }
                 node.android('hint', element.placeholder)
                     .android('scrollbars', 'vertical')
@@ -3239,7 +3096,7 @@
                 break;
         }
         if (node.overflow != 0) {
-            let scrollbars = [];
+            const scrollbars = [];
             if (node.overflowX) {
                 scrollbars.push('horizontal');
             }
@@ -3251,7 +3108,7 @@
         switch (element.type) {
             case 'radio':
                 if (!recursive) {
-                    const result = node.parentOriginal.children.filter(item => (item.element.type == 'radio' && item.element.name == element.name));
+                    const result = node.parentOriginal.children.filter((item) => (item.element.type == 'radio' && item.element.name == element.name));
                     let content = '';
                     if (result.length > 1) {
                         let rowSpan = 1;
@@ -3273,10 +3130,10 @@
                             content += renderViewTag(radio, layout, WIDGET_ANDROID.RADIO, true);
                         }
                         if (rowSpan > 1) {
-                            layout.android('layout_rowSpan', rowSpan);
+                            layout.android('layout_rowSpan', rowSpan.toString());
                         }
                         if (columnSpan > 1) {
-                            layout.android('layout_columnSpan', columnSpan);
+                            layout.android('layout_columnSpan', columnSpan.toString());
                         }
                         layout
                             .android('orientation', (result.linearX ? 'horizontal' : 'vertical'))
@@ -3296,11 +3153,10 @@
         node.applyCustomizations();
         node.render(parent);
         node.setGravity();
-        node.cascade().forEach(item => item.hide());
+        node.cascade().forEach((item) => item.hide());
         setGridSpace(node);
         return getEnclosingTag(node.renderDepth, node.widgetName, node.id);
     }
-
     function getStaticTag(widgetName, depth, options, width = 'wrap_content', height = 'wrap_content') {
         let attributes = '';
         const node = new Widget(0, null, SETTINGS.targetAPI);
@@ -3317,7 +3173,6 @@
         }
         return [getEnclosingTag(depth, widgetName, 0).replace('{@0}', attributes), node.stringId];
     }
-
     function addViewBefore(id, xml, index = -1) {
         if (VIEW_BEFORE[id] == null) {
             VIEW_BEFORE[id] = [];
@@ -3329,7 +3184,6 @@
             VIEW_BEFORE[id].push(xml);
         }
     }
-
     function addViewAfter(id, xml, index = -1) {
         if (VIEW_AFTER[id] == null) {
             VIEW_AFTER[id] = [];
@@ -3341,7 +3195,6 @@
             VIEW_AFTER[id].push(xml);
         }
     }
-
     function insertViewBeforeAfter(output) {
         for (const id in VIEW_BEFORE) {
             output = output.replace(`{<${id}}`, VIEW_BEFORE[id].join(''));
@@ -3368,9 +3221,8 @@
             topBottom: 'layout_constraintTop_toBottomOf'
         }
     };
-
     const CHAIN_MAP = {
-        orientation: ['horizontalChain', 'verticalChain'],
+        direction: ['horizontalChain', 'verticalChain'],
         leftTop: ['left', 'top'],
         rightBottom: ['right', 'bottom'],
         rightLeftBottomTop: ['rightLeft', 'bottomTop'],
@@ -3378,7 +3230,6 @@
         widthHeight: ['Width', 'Height'],
         horizontalVertical: ['Horizontal', 'Vertical']
     };
-
     function setAlignParent(node, orientation = '', bias = false) {
         const map = LAYOUT_MAP.constraint;
         ['horizontal', 'vertical'].forEach((value, index) => {
@@ -3392,7 +3243,6 @@
             }
         });
     }
-
     function createGuideline(parent, node, orientation = '', opposite = false, percent = -1) {
         const map = LAYOUT_MAP.constraint;
         const beginPercent = `layout_constraintGuide_${(percent != -1 ? 'percent' : 'begin')}`;
@@ -3417,7 +3267,6 @@
             }
         });
     }
-
     function deleteConstraints(node, orientation = '') {
         const map = LAYOUT_MAP.constraint;
         if (orientation == '' || orientation == 'horizontal') {
@@ -3429,28 +3278,25 @@
                 .constraint.vertical = false;
         }
     }
-
     function findByAndroidId(id) {
         return NODE_CACHE.find(node => node.android('id') == id);
     }
-
     function adjustMargins(nodes) {
         for (const node of nodes) {
             if (node.constraint.marginHorizontal != null) {
-                let offset = node.linear.left - findByAndroidId(node.constraint.marginHorizontal).linear.right;
+                const offset = node.linear.left - findByAndroidId(node.constraint.marginHorizontal).linear.right;
                 if (offset >= 1) {
                     node.modifyBox('layout_marginLeft', offset);
                 }
             }
             if (node.constraint.marginVertical != null) {
-                let offset = node.linear.top - findByAndroidId(node.constraint.marginVertical).linear.bottom;
+                const offset = node.linear.top - findByAndroidId(node.constraint.marginVertical).linear.bottom;
                 if (offset >= 1) {
                     node.modifyBox('layout_marginTop', offset);
                 }
             }
         }
     }
-
     function setConstraints() {
         Object.assign(LAYOUT_MAP.relative, {
             left: parseRTL('layout_alignLeft'),
@@ -3471,11 +3317,11 @@
             if (constraint || relative || flex.enabled) {
                 node.expandDimensions();
                 if (node.is(WIDGET_ANDROID.LINEAR)) {
-                    if (node.renderChildren.some(item => item.flex.direction.indexOf('row') != -1)) {
+                    if (node.renderChildren.some((item) => item.flex.direction.indexOf('row') != -1)) {
                         node.constraint.layoutWidth = true;
                         node.constraint.expand = true;
                     }
-                    if (node.renderChildren.some(item => item.flex.direction.indexOf('column') != -1)) {
+                    if (node.renderChildren.some((item) => item.flex.direction.indexOf('column') != -1)) {
                         node.constraint.layoutHeight = true;
                         node.constraint.expand = true;
                     }
@@ -3612,7 +3458,7 @@
                         }
                     }
                     nodes.shift();
-                    for (let current of nodes) {
+                    for (const current of nodes) {
                         const leftRight = current.anchor(LAYOUT['leftRight']);
                         if (leftRight != null) {
                             current.constraint.horizontal = true;
@@ -3666,16 +3512,16 @@
                     }
                     else {
                         for (const current of nodes) {
-                            let horizontalChain = nodes.filter(item => same(current, item, 'bounds.top'));
+                            let horizontalChain = nodes.filter((item) => same(current, item, 'bounds.top'));
                             if (horizontalChain.length == 0) {
-                                horizontalChain = nodes.filter(item => same(current, item, 'bounds.bottom'));
+                                horizontalChain = nodes.filter((item) => same(current, item, 'bounds.bottom'));
                             }
                             if (horizontalChain.length > 0) {
                                 horizontalChain.sortAsc('bounds.x');
                             }
-                            let verticalChain = nodes.filter(item => same(current, item, 'bounds.left'));
+                            let verticalChain = nodes.filter((item) => same(current, item, 'bounds.left'));
                             if (verticalChain.length == 0) {
-                                verticalChain = nodes.filter(item => same(current, item, 'bounds.right'));
+                                verticalChain = nodes.filter((item) => same(current, item, 'bounds.right'));
                             }
                             if (verticalChain.length > 0) {
                                 verticalChain.sortAsc('bounds.y');
@@ -3684,11 +3530,11 @@
                             current.constraint.verticalChain = verticalChain;
                         }
                     }
-                    const orientation = CHAIN_MAP.orientation.slice();
+                    const direction = CHAIN_MAP.direction.slice();
                     if (!SETTINGS.horizontalPerspective) {
-                        orientation.reverse();
+                        direction.reverse();
                     }
-                    orientation.forEach((value, index) => {
+                    direction.forEach((value, index) => {
                         if (!SETTINGS.horizontalPerspective) {
                             index = (index == 0 ? 1 : 0);
                         }
@@ -3696,7 +3542,7 @@
                         const chainNodes = flexNodes || nodes.slice().sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                         for (const current of chainNodes) {
                             const chainDirection = current.constraint[value];
-                            if (chainDirection != null && chainDirection.length > 0 && (flex.enabled || chainDirection.map(item => parseInt((item.constraint[value] || [{ id: 0 }]).map(item => item.id).join(''))).reduce((a, b) => (a == b ? a : 0)) > 0)) {
+                            if (chainDirection != null && chainDirection.length > 0 && (flex.enabled || chainDirection.map((item) => parseInt((item.constraint[value] || [{ id: 0 }]).map((result) => result.id).join(''))).reduce((a, b) => (a == b ? a : 0)) > 0)) {
                                 const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
                                 const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][inverse]];
                                 const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][inverse]];
@@ -3709,81 +3555,81 @@
                                 let maxOffset = -1;
                                 chainDirection.parent = node;
                                 for (let i = 0; i < chainDirection.length; i++) {
-                                    const current = chainDirection[i];
+                                    const chain = chainDirection[i];
                                     const next = chainDirection[i + 1];
                                     const previous = chainDirection[i - 1];
                                     if (node.flex.enabled) {
-                                        if (current.linear[TL] == node.box[TL] && current.linear[BR] == node.box[BR]) {
-                                            setAlignParent(current, orientationInverse);
+                                        if (chain.linear[TL] == node.box[TL] && chain.linear[BR] == node.box[BR]) {
+                                            setAlignParent(chain, orientationInverse);
                                         }
                                     }
                                     if (next != null) {
-                                        current.app(LAYOUT[CHAIN_MAP['rightLeftBottomTop'][index]], next.stringId);
-                                        maxOffset = Math.max(next.linear[LT] - current.linear[RB], maxOffset);
+                                        chain.app(LAYOUT[CHAIN_MAP['rightLeftBottomTop'][index]], next.stringId);
+                                        maxOffset = Math.max(next.linear[LT] - chain.linear[RB], maxOffset);
                                     }
                                     if (previous != null) {
-                                        current.app(LAYOUT[CHAIN_MAP['leftRightTopBottom'][index]], previous.stringId);
+                                        chain.app(LAYOUT[CHAIN_MAP['leftRightTopBottom'][index]], previous.stringId);
                                     }
-                                    if (current.styleMap[dimension] == null) {
-                                        const min = current.styleMap[`min${WH}`];
-                                        const max = current.styleMap[`max${WH}`];
+                                    if (chain.styleMap[dimension] == null) {
+                                        const min = chain.styleMap[`min${WH}`];
+                                        const max = chain.styleMap[`max${WH}`];
                                         if (min != null) {
-                                            current.app(`layout_constraint${WH}_min`, convertPX(min));
-                                            current.styleMap[`min${WH}`] = null;
+                                            chain.app(`layout_constraint${WH}_min`, convertPX(min));
+                                            chain.styleMap[`min${WH}`] = null;
                                         }
                                         if (max != null) {
-                                            current.app(`layout_constraint${WH}_max`, convertPX(max));
-                                            current.styleMap[`max${WH}`] = null;
+                                            chain.app(`layout_constraint${WH}_max`, convertPX(max));
+                                            chain.styleMap[`max${WH}`] = null;
                                         }
                                     }
                                     if (flex.enabled) {
                                         const map = LAYOUT_MAP.constraint;
-                                        current.app(`layout_constraint${HV}_weight`, current.flex.grow);
-                                        if (current[`view${WH}`] == null && current.flex.grow == 0 && current.flex.shrink <= 1) {
-                                            current.android(`layout_${dimension}`, 'wrap_content');
+                                        chain.app(`layout_constraint${HV}_weight`, chain.flex.grow);
+                                        if (chain[`view${WH}`] == null && chain.flex.grow == 0 && chain.flex.shrink <= 1) {
+                                            chain.android(`layout_${dimension}`, 'wrap_content');
                                         }
-                                        else if (current.flex.grow > 0) {
-                                            current.android(`layout_${dimension}`, (node.renderParent.is(WIDGET_ANDROID.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') != -1 ? 'wrap_content' : '0px'));
+                                        else if (chain.flex.grow > 0) {
+                                            chain.android(`layout_${dimension}`, (node.renderParent.is(WIDGET_ANDROID.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') != -1 ? 'wrap_content' : '0px'));
                                         }
-                                        if (current.flex.shrink == 0) {
-                                            current.app(`layout_constrained${WH}`, 'true');
+                                        if (chain.flex.shrink == 0) {
+                                            chain.app(`layout_constrained${WH}`, 'true');
                                         }
-                                        switch (current.flex.alignSelf) {
+                                        switch (chain.flex.alignSelf) {
                                             case 'flex-start':
-                                                current
+                                                chain
                                                     .app(map[TL], 'parent')
                                                     .constraint[orientationInverse] = true;
                                                 break;
                                             case 'flex-end':
-                                                current
+                                                chain
                                                     .app(map[BR], 'parent')
                                                     .constraint[orientationInverse] = true;
                                                 break;
                                             case 'baseline':
-                                                current
+                                                chain
                                                     .app(map['baseline'], 'parent')
                                                     .constraint.vertical = true;
                                                 break;
                                             case 'center':
                                             case 'stretch':
-                                                if (current.flex.alignSelf == 'center') {
-                                                    current.app(`layout_constraint${VH}_bias`, 0.5);
+                                                if (chain.flex.alignSelf == 'center') {
+                                                    chain.app(`layout_constraint${VH}_bias`, 0.5);
                                                 }
                                                 else {
-                                                    current.android(`layout_${HW.toLowerCase()}`, '0px');
+                                                    chain.android(`layout_${HW.toLowerCase()}`, '0px');
                                                 }
-                                                setAlignParent(current, orientationInverse);
+                                                setAlignParent(chain, orientationInverse);
                                                 break;
                                         }
-                                        if (current.flex.basis != 'auto') {
-                                            if (/(100|[1-9][0-9]?)%/.test(current.flex.basis)) {
-                                                current.app(`layout_constraint${WH}_percent`, parseInt(current.flex.basis));
+                                        if (chain.flex.basis != 'auto') {
+                                            if (/(100|[1-9][0-9]?)%/.test(chain.flex.basis)) {
+                                                chain.app(`layout_constraint${WH}_percent`, parseInt(chain.flex.basis));
                                             }
                                             else {
-                                                const width = convertPX(current.flex.basis);
+                                                const width = convertPX(chain.flex.basis);
                                                 if (width != '0px') {
-                                                    current.app(`layout_constraintWidth_min`, width);
-                                                    current.styleMap.minWidth = null;
+                                                    chain.app(`layout_constraintWidth_min`, width);
+                                                    chain.styleMap.minWidth = null;
                                                 }
                                             }
                                         }
@@ -3803,14 +3649,14 @@
                                             break;
                                         case 'space-evenly':
                                             firstNode.app(chainStyle, 'spread');
-                                            chainDirection.forEach(item => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
+                                            chainDirection.forEach((item) => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
                                             break;
                                         case 'space-around':
                                             const leftTop = (index == 0 ? 'left' : 'top');
                                             const percent = (firstNode.bounds[leftTop] - node.box[leftTop]) / node.box[dimension];
                                             firstNode.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
-                                            createGuideline(node, firstNode, orientation, false, percent.toFixed(2));
-                                            createGuideline(node, lastNode, orientation, true, (1 - percent).toFixed(2));
+                                            createGuideline(node, firstNode, orientation, false, parseFloat(percent.toFixed(2)));
+                                            createGuideline(node, lastNode, orientation, true, parseFloat((1 - percent).toFixed(2)));
                                             break;
                                         default:
                                             let bias = 0.5;
@@ -3855,9 +3701,9 @@
                                         firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${orientation}Bias`]);
                                     }
                                     if (!flex.enabled) {
-                                        for (const current of chainDirection) {
-                                            current.constraint.horizontalChain = [];
-                                            current.constraint.verticalChain = [];
+                                        for (const chain of chainDirection) {
+                                            chain.constraint.horizontalChain = [];
+                                            chain.constraint.verticalChain = [];
                                         }
                                     }
                                 }
@@ -3886,7 +3732,7 @@
                                 const result = (constraint ? search(current.app(), '*constraint*') : search(current.android(), LAYOUT));
                                 for (const [key, value] of result) {
                                     if (value != 'parent') {
-                                        if (anchors.find(item => item.stringId == value) != null) {
+                                        if (anchors.find((item) => item.stringId == value) != null) {
                                             if (!current.constraint.horizontal && indexOf(key, parseRTL('Left'), parseRTL('Right')) != -1) {
                                                 current.constraint.horizontal = true;
                                             }
@@ -3905,8 +3751,7 @@
                         if (!restart) {
                             break;
                         }
-                    }
-                    while (true);
+                    } while (true);
                     if (constraint) {
                         for (const opposite of nodes) {
                             if (!opposite.anchored) {
@@ -3967,7 +3812,7 @@
                                 }
                             }
                         }
-                        nodes.forEach(current => {
+                        nodes.forEach((current) => {
                             if (current.app(LAYOUT['right']) == 'parent' && current.app(LAYOUT['leftRight']) == null) {
                                 node.constraint.layoutWidth = true;
                             }
@@ -4019,25 +3864,20 @@
     function writeFrameLayout(node, parent) {
         return renderViewLayout(node, parent, WIDGET_ANDROID.FRAME);
     }
-
     function writeLinearLayout(node, parent, vertical) {
         node.android('orientation', (vertical ? 'vertical' : 'horizontal'));
         return renderViewLayout(node, parent, WIDGET_ANDROID.LINEAR);
     }
-
     function writeRelativeLayout(node, parent) {
         return renderViewLayout(node, parent, WIDGET_ANDROID.RELATIVE);
     }
-
     function writeConstraintLayout(node, parent) {
         return renderViewLayout(node, parent, WIDGET_ANDROID.CONSTRAINT);
     }
-
     function writeGridLayout(node, parent, columnCount) {
-        node.android('columnCount', columnCount);
+        node.android('columnCount', columnCount.toString());
         return renderViewLayout(node, parent, WIDGET_ANDROID.GRID);
     }
-
     function writeDefaultLayout(node, parent) {
         if (SETTINGS.useConstraintLayout || node.flex.enabled) {
             return writeConstraintLayout(node, parent);
@@ -4046,28 +3886,26 @@
             return writeRelativeLayout(node, parent);
         }
     }
-
     function setInlineAttributes(output) {
         const namespaces = {};
         for (const node of NODE_CACHE.visible) {
             node.setAndroidDimensions();
-            node.namespaces.forEach(value => namespaces[value] = true);
+            node.namespaces.forEach((value) => namespaces[value] = true);
             output = output.replace(`{@${node.id}}`, getViewAttributes(node));
         }
-        return output.replace('{@0}', Object.keys(namespaces).sort().map(value => `\n\t${XMLNS_ANDROID[value.toUpperCase()]}`).join(''));
+        return output.replace('{@0}', Object.keys(namespaces).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join(''));
     }
-
     function setStyleMap() {
-        for (const styleSheet of document.styleSheets) {
+        for (const styleSheet of Array.from(document.styleSheets)) {
             for (const rule of styleSheet.rules) {
                 const elements = document.querySelectorAll(rule.selectorText);
                 const attributes = new Set();
-                for (const i of rule.styleMap) {
-                    attributes.add(hyphenToCamelCase(i[0]));
+                for (const style of rule.styleMap) {
+                    attributes.add(hyphenToCamelCase(style[0]));
                 }
-                for (const element of elements) {
-                    for (const i of element.style) {
-                        attributes.add(hyphenToCamelCase(i));
+                for (const element of Array.from(elements)) {
+                    for (const attr of element.style) {
+                        attributes.add(hyphenToCamelCase(attr));
                     }
                     const style = getComputedStyle(element);
                     const styleMap = {};
@@ -4095,7 +3933,6 @@
             }
         }
     }
-
     function setAccessibility() {
         for (const node of NODE_CACHE.visible) {
             switch (node.widgetName) {
@@ -4104,7 +3941,7 @@
                     let current = node;
                     let label = null;
                     while (parent != null && parent.renderChildren != null) {
-                        const index = parent.renderChildren.findIndex(item => item == current);
+                        const index = parent.renderChildren.findIndex((item) => item == current);
                         if (index > 0) {
                             label = parent.renderChildren[index - 1];
                             break;
@@ -4124,14 +3961,13 @@
             }
         }
     }
-
     function setMarginPadding() {
         for (const node of NODE_CACHE) {
             if (node.is(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
                 switch (node.android('orientation')) {
                     case 'horizontal':
                         let left = node.box.left;
-                        node.renderChildren.sortAsc('linear.left').forEach(item => {
+                        node.renderChildren.sortAsc('linear.left').forEach((item) => {
                             if (!item.floating) {
                                 const width = Math.ceil(item.linear.left - left);
                                 if (width >= 1) {
@@ -4143,7 +3979,7 @@
                         break;
                     case 'vertical':
                         let top = node.box.top;
-                        node.renderChildren.sortAsc('linear.top').forEach(item => {
+                        node.renderChildren.sortAsc('linear.top').forEach((item) => {
                             const height = Math.ceil(item.linear.top - top);
                             if (height >= 1) {
                                 item.modifyBox('layout_marginTop', height);
@@ -4153,16 +3989,16 @@
                         break;
                 }
             }
-            if (SETTINGS.targetAPI >= BUILD_ANDROID.OREO) {
+            if (SETTINGS.targetAPI >= exports.BUILD_ANDROID.OREO) {
                 if (node.visible) {
-                    const marginLeft_RTL = parseRTL('layout_marginLeft');
-                    const marginRight_RTL = parseRTL('layout_marginRight');
-                    const paddingLeft_RTL = parseRTL('paddingLeft');
-                    const paddingRight_RTL = parseRTL('paddingRight');
+                    const marginLeftRtl = parseRTL('layout_marginLeft');
+                    const marginRightRtl = parseRTL('layout_marginRight');
+                    const paddingLeftRtl = parseRTL('paddingLeft');
+                    const paddingRightRtl = parseRTL('paddingRight');
                     const marginTop = convertInt(node.android('layout_marginTop'));
-                    const marginRight = convertInt(node.android(marginRight_RTL));
+                    const marginRight = convertInt(node.android(marginRightRtl));
                     const marginBottom = convertInt(node.android('layout_marginBottom'));
-                    const marginLeft = convertInt(node.android(marginLeft_RTL));
+                    const marginLeft = convertInt(node.android(marginLeftRtl));
                     if (marginTop != 0 && marginTop == marginBottom && marginBottom == marginLeft && marginLeft == marginRight) {
                         node.delete('android', 'layout_margin*')
                             .android('layout_margin', formatPX(marginTop));
@@ -4173,14 +4009,14 @@
                                 .android('layout_marginVertical', formatPX(marginTop));
                         }
                         if (marginLeft != 0 && marginLeft == marginRight) {
-                            node.delete('android', marginLeft_RTL, marginRight_RTL)
+                            node.delete('android', marginLeftRtl, marginRightRtl)
                                 .android('layout_marginHorizontal', formatPX(marginLeft));
                         }
                     }
                     const paddingTop = convertInt(node.android('paddingTop'));
-                    const paddingRight = convertInt(node.android(paddingRight_RTL));
+                    const paddingRight = convertInt(node.android(paddingRightRtl));
                     const paddingBottom = convertInt(node.android('paddingBottom'));
-                    const paddingLeft = convertInt(node.android(paddingLeft_RTL));
+                    const paddingLeft = convertInt(node.android(paddingLeftRtl));
                     if (paddingTop != 0 && paddingTop == paddingBottom && paddingBottom == paddingLeft && paddingLeft == paddingRight) {
                         node.delete('android', 'padding*')
                             .android('padding', formatPX(paddingTop));
@@ -4191,7 +4027,7 @@
                                 .android('paddingVertical', formatPX(paddingTop));
                         }
                         if (paddingLeft != 0 && paddingLeft == paddingRight) {
-                            node.delete('android', paddingLeft_RTL, paddingRight_RTL)
+                            node.delete('android', paddingLeftRtl, paddingRightRtl)
                                 .android('paddingHorizontal', formatPX(paddingLeft));
                         }
                     }
@@ -4199,13 +4035,12 @@
             }
         }
     }
-
     function setLayoutWeight() {
         for (const node of NODE_CACHE) {
             const rows = node.linearRows;
             if (rows.length > 1) {
                 const columnLength = rows[0].renderChildren.length;
-                if (rows.reduce((a, b) => (a && a == b.renderChildren.length ? a: 0), columnLength) > 0) {
+                if (rows.reduce((a, b) => (a && a == b.renderChildren.length ? a : 0), columnLength) > 0) {
                     const horizontal = !node.horizontal;
                     const columnDimension = new Array(columnLength).fill(Number.MIN_VALUE);
                     for (const row of rows) {
@@ -4228,31 +4063,29 @@
             }
         }
     }
-
     function createNode(element) {
         if (isVisible(element)) {
             const node = new Widget(generateNodeId(), element, SETTINGS.targetAPI);
             NODE_CACHE.push(node);
         }
     }
-
-    function setNodeCache(element) {
+    function setNodeCache(documentRoot) {
         let nodeTotal = 0;
-        (element || document.body).childNodes.forEach(element => {
-            if (element.nodeName == '#text') {
-                if (element.textContent.trim() != '') {
+        Array.from((documentRoot || document.body).childNodes).forEach((item) => {
+            if (item.nodeName == '#text') {
+                if (item.textContent.trim() != '') {
                     nodeTotal++;
                 }
             }
             else {
-                if (isVisible(element)) {
+                if (isVisible(item)) {
                     nodeTotal++;
                 }
             }
         });
-        const elements = (element != null ? element.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
-        if (element != null) {
-            createNode(element);
+        const elements = (documentRoot != null ? documentRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+        if (documentRoot != null) {
+            createNode(documentRoot);
         }
         for (const i in elements) {
             if (INLINE_CHROME.includes(elements[i].tagName) && (MAPPING_CHROME[elements[i].parentNode.tagName] != null || INLINE_CHROME.includes(elements[i].parentNode.tagName))) {
@@ -4310,7 +4143,7 @@
         for (const node of NODE_CACHE) {
             const nodes = parentNodes[node.id];
             if (nodes != null) {
-                let parent = node.parentElement.__Node;
+                let parent = node.parentElement.__node;
                 if (node.fixed) {
                     if (nodes.length > 1) {
                         let minArea = Number.MAX_VALUE;
@@ -4336,14 +4169,13 @@
                     node.parent = parent;
                 }
             }
-            if (node.element.children.length > 1) {
-                node.element.childNodes.forEach(element => {
+            if (node.element.children != null && node.element.children.length > 1) {
+                node.element.childNodes.forEach((element) => {
                     if (element.nodeName == '#text' && element.textContent.trim() != '') {
                         const widget = new Widget(generateNodeId(), null, SETTINGS.targetAPI, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
                         widget.setAndroidId(WIDGET_ANDROID.TEXT);
                         widget.setBounds(false, element);
                         widget.inheritStyle(node);
-                        element.children = [];
                         NODE_CACHE.push(widget);
                         node.children.push(widget);
                     }
@@ -4361,15 +4193,14 @@
         sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');
         for (const node of NODE_CACHE) {
             let i = 0;
-            Array.from(node.element.childNodes).forEach(element => {
-                if (element.__Node != null && (element.__Node.parent.element == node.element)) {
-                    element.__Node.parentIndex = i++;
+            Array.from(node.element.childNodes).forEach((element) => {
+                if (element.__node != null && (element.__node.parent.element == node.element)) {
+                    element.__node.parentIndex = i++;
                 }
             });
             node.children.sortAsc('parentIndex');
         }
     }
-
     function parseDocument(element) {
         if (typeof element == 'string') {
             element = document.getElementById(element);
@@ -4429,14 +4260,14 @@
                         let restart = false;
                         let xml = '';
                         if (tagName == null) {
-                            if ((nodeY.children.length == 0 && hasFreeFormText(nodeY.element)) || nodeY.children.every(item => INLINE_CHROME.includes(item.tagName))) {
+                            if ((nodeY.children.length == 0 && hasFreeFormText(nodeY.element)) || nodeY.children.every((item) => INLINE_CHROME.includes(item.tagName))) {
                                 tagName = WIDGET_ANDROID.TEXT;
                             }
                             else if (nodeY.children.length > 0) {
                                 const rows = nodeY.children;
-                                if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every(item => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                                if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every((item) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
                                     let columns = [];
-                                    let columnEnd = [];
+                                    const columnEnd = [];
                                     if (SETTINGS.useLayoutWeight) {
                                         const dimensions = [];
                                         for (let l = 0; l < rows.length; l++) {
@@ -4447,17 +4278,16 @@
                                             }
                                             columns.push(children);
                                         }
-                                        const base = columns[
-                                            dimensions.findIndex(item => {
-                                                return (item == dimensions.reduce((a, b) => {
-                                                    if (a.length == b.length) {
-                                                        return (a.reduce((c, d) => c + d, 0) < b.reduce((c, d) => c + d, 0) ? a : b);
-                                                    }
-                                                    else {
-                                                        return (a.length < b.length ? a : b);
-                                                    }
-                                                }));
-                                            })];
+                                        const base = columns[dimensions.findIndex((item) => {
+                                            return (item == dimensions.reduce((a, b) => {
+                                                if (a.length == b.length) {
+                                                    return (a.reduce((c, d) => c + d, 0) < b.reduce((c, d) => c + d, 0) ? a : b);
+                                                }
+                                                else {
+                                                    return (a.length < b.length ? a : b);
+                                                }
+                                            }));
+                                        })];
                                         if (base.length > 1) {
                                             let maxIndex = -1;
                                             let assigned = [];
@@ -4471,9 +4301,9 @@
                                                             found.push(l);
                                                         }
                                                         else {
-                                                            const index = columns[m].findIndex((item, index) => (index >= l && item.bounds.width == bounds.width && index < columns[m].length - 1));
-                                                            if (index != -1) {
-                                                                found.push(index);
+                                                            const result = columns[m].findIndex((item, index) => (index >= l && item.bounds.width == bounds.width && index < columns[m].length - 1));
+                                                            if (result != -1) {
+                                                                found.push(result);
                                                             }
                                                             else {
                                                                 found.length = 0;
@@ -4651,7 +4481,7 @@
                                     if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += writeFrameLayout(nodeY, parent);
                                     }
-                                    else if ((!nodeY.flex.enabled || nodeY.children.every(item => item.flex.enabled)) && (linearX || linearY)) {
+                                    else if ((!nodeY.flex.enabled || nodeY.children.every((item) => item.flex.enabled)) && (linearX || linearY)) {
                                         xml += writeLinearLayout(nodeY, parent, linearY);
                                     }
                                     else {
@@ -4673,7 +4503,7 @@
                                 }
                                 else {
                                     const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + (columnSpan - 1)];
-                                    siblings = nodeY.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
+                                    siblings = nodeY.parentOriginal.children.filter((item) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
                                 }
                                 if (siblings.length > 0) {
                                     siblings.unshift(nodeY);
@@ -4738,13 +4568,10 @@
         }
         return output;
     }
-
     const settings = SETTINGS;
 
     exports.parseDocument = parseDocument;
     exports.settings = settings;
-    exports.BUILD_ANDROID = BUILD_ANDROID;
-    exports.DENSITY_ANDROID = DENSITY_ANDROID;
     exports.API_ANDROID = API_ANDROID;
     exports.writeResourceStringXml = writeResourceStringXml;
     exports.writeResourceArrayXml = writeResourceArrayXml;

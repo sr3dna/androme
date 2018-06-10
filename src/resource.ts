@@ -1,8 +1,10 @@
 import { WIDGET_ANDROID, BUILD_ANDROID } from './lib/constants';
-import { generateId, cameltoLowerCase, convertPX, replaceDP, isNumber, padLeft, hasValue } from './lib/util';
-import { parseRGBA, convertRGBtoHex, findNearestColor } from './lib/color';
-import { getStyle, getBoxSpacing } from './lib/element';
-import { getDataLevel, parseTemplateMatch, parseTemplateData } from './lib/xml';
+import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber, padLeft, remove, replaceDP } from './lib/util';
+import { convertRGBtoHex, findNearestColor, parseRGBA } from './lib/color';
+import { getBoxSpacing, getStyle } from './lib/element';
+import { getDataLevel, parseTemplateData, parseTemplateMatch } from './lib/xml';
+import Widget from './android/widget';
+import WidgetList from './android/widgetlist';
 import SETTINGS from './settings';
 
 import STRING_TMPL from './tmpl/resources/string';
@@ -200,23 +202,14 @@ const FONTWEIGHT_ANDROID = {
     '900': 'black'
 };
 
-function parseBorderStyle(value) {
-    let stroke = value.match(/(none|dotted|dashed|solid)/);
-    let width = value.match(/([0-9.]+(?:px|pt|em))/);
-    let color = parseRGBA(value);
-    if (stroke != null) {
-        stroke = stroke[1];
-    }
-    if (width != null) {
-        width = convertPX(width[1]);
-    }
-    if (color != null) {
-        color = color[1];
-    }
-    return [stroke || 'solid', width || '1px', color || '#000'];
+function parseBorderStyle(value: string) {
+    const stroke = value.match(/(none|dotted|dashed|solid)/);
+    const width = value.match(/([0-9.]+(?:px|pt|em))/);
+    const color = parseRGBA(value);
+    return [(stroke != null ? stroke[1] : 'solid'), (width != null ? convertPX(width[1]) : '1px'), (color != null ? color[1] : '#000')];
 }
 
-function parseImageURL(value) {
+function parseImageURL(value: string) {
     const match = value.match(/^url\("(.*?)"\)$/);
     if (match != null) {
         return addResourceImage(match[1]);
@@ -224,7 +217,7 @@ function parseImageURL(value) {
     return null;
 }
 
-function parseBoxDimensions(value) {
+function parseBoxDimensions(value: string) {
     const match = value.match(/^([0-9]+(?:px|pt|em))( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?$/);
     if (match != null) {
         if (match[1] == '0px' && match[2] == null) {
@@ -243,7 +236,7 @@ function parseBoxDimensions(value) {
     return [];
 }
 
-function deleteStyleAttribute(sorted, attributes, ids) {
+function deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {
     attributes.split(';').forEach(value => {
         for (let i = 0; i < sorted.length; i++) {
             if (sorted[i] != null) {
@@ -258,7 +251,7 @@ function deleteStyleAttribute(sorted, attributes, ids) {
                     }
                 }
                 if (index != -1) {
-                    sorted[index][key] = sorted[index][key].filter(value => !ids.includes(value));
+                    sorted[index][key] = sorted[index][key].filter((id: number) => !ids.includes(id));
                     if (sorted[index][key].length == 0) {
                         delete sorted[index][key];
                     }
@@ -269,7 +262,7 @@ function deleteStyleAttribute(sorted, attributes, ids) {
     });
 }
 
-export function setResourceStyle(cache) {
+export function setResourceStyle(cache: WidgetList) {
     const tagName = {};
     const style = {};
     const layout = {};
@@ -283,7 +276,7 @@ export function setResourceStyle(cache) {
     }
     for (const tag in tagName) {
         const nodes = tagName[tag];
-        let sorted = Array.from({ length: nodes.reduce((a, b) => Math.max(a, b.styleAttributes.length), 0) }, value => {
+        let sorted = Array.from({ length: nodes.reduce((a: number, b: Widget) => Math.max(a, b.styleAttributes.length), 0) }, value => {
             value = {};
             return value;
         });
@@ -292,26 +285,27 @@ export function setResourceStyle(cache) {
                 continue;
             }
             let system = false;
-            let fontName = null;
-            let fontWeight = null;
-            let fontStyle = null;
-            let labelFor = null;
+            let fontName = '';
+            let fontWeight: string[] = [];
+            let fontStyle: string[] = [];
+            let labelFor: Widget = null;
             if (node.label != null) {
                 labelFor = node;
                 node = node.label;
             }
+            const id = (labelFor || node).id;
             for (let i = 0; i < node.styleAttributes.length; i++) {
                 let value = node.styleAttributes[i];
-                let match = null;
+                let match: any = null;
                 switch (i) {
                     case 0:
                         if ((match = value.match(/fontWeight="(.*?)"$/)) != null) {
-                            fontWeight = match[1];
+                            fontWeight = [value, match[1]];
                         }
                         break;
                     case 1:
                         if ((match = value.match(/textStyle="(.*?)"$/)) != null) {
-                            fontStyle = match[1];
+                            fontStyle = [value, match[1]];
                         }
                         break;
                     case 2:
@@ -322,16 +316,18 @@ export function setResourceStyle(cache) {
                                 value = value.replace(match[1], `"${fontName}"`);
                             }
                             else {
-                                value = value.replace(match[1], `"@font/${fontName.replace(/ /g, '_') + (fontStyle != 'normal' ? `_${fontStyle}` : '') + (fontWeight != '400' ? `_${FONTWEIGHT_ANDROID[fontWeight] || fontWeight}` : '')}"`);
+                                value = value.replace(match[1], `"@font/${fontName.replace(/ /g, '_') + (fontStyle[1] != 'normal' ? `_${fontStyle[1]}` : '') + (fontWeight[1] != '400' ? `_${FONTWEIGHT_ANDROID[fontWeight[1]] || fontWeight[1]}` : '')}"`);
+                                remove(sorted[0][fontWeight[0]], id);
+                                remove(sorted[1][fontStyle[0]], id);
                             }
                         }
                         break;
                     case 4:
                         if ((match = parseRGBA(value)) != null) {
-                            if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(match[1])) {
+                            if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(match[1].toString())) {
                                 continue;
                             }
-                            const name = addResourceColor(match[1]);
+                            const name = addResourceColor(match[1].toString());
                             value = value.replace(match[0], name);
                         }
                         break;
@@ -340,10 +336,10 @@ export function setResourceStyle(cache) {
                             value = labelFor.styleAttributes[i];
                         }
                         if (hasValue(value) && (match = parseRGBA(value)) != null) {
-                            if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(match[1])) {
+                            if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(match[1].toString())) {
                                 continue;
                             }
-                            const name = addResourceColor(match[1]);
+                            const name = addResourceColor(match[1].toString());
                             value = value.replace(match[0], name);
                         }
                         break;
@@ -352,14 +348,14 @@ export function setResourceStyle(cache) {
                     if (sorted[i][value] == null) {
                         sorted[i][value] = [];
                     }
-                    sorted[i][value].push((labelFor || node).id);
+                    sorted[i][value].push(id);
                 }
             }
             if (!system) {
                 if (!RESOURCE.FONT.has(fontName)) {
                     RESOURCE.FONT.set(fontName, {});
                 }
-                RESOURCE.FONT.get(fontName)[`${fontStyle}-${fontWeight}`] = true;
+                RESOURCE.FONT.get(fontName)[`${fontStyle[1]}-${fontWeight[1]}`] = true;
             }
         }
         style[tag] = {};
@@ -388,7 +384,7 @@ export function setResourceStyle(cache) {
                         }
                         const ids = sorted[i][attr1];
                         let revalidate = false;
-                        if (ids == null) {
+                        if (ids == null || ids.length == 0) {
                             continue;
                         }
                         else if (ids.length == nodes.length) {
@@ -407,12 +403,12 @@ export function setResourceStyle(cache) {
                                 if (i != j) {
                                     for (const attr in sorted[j]) {
                                         const compare = sorted[j][attr];
-                                        for (let k = 0; k < ids.length; k++) {
-                                            if (compare.includes(ids[k])) {
+                                        for (const id of ids) {
+                                            if (compare.includes(id)) {
                                                 if (found[attr] == null) {
                                                     found[attr] = [];
                                                 }
-                                                found[attr].push(ids[k]);
+                                                found[attr].push(id);
                                             }
                                         }
                                     }
@@ -430,12 +426,12 @@ export function setResourceStyle(cache) {
                     for (const attr1 in filtered) {
                         for (const attr2 in filtered) {
                             if (attr1 != attr2 && filtered[attr1].join('') == filtered[attr2].join('')) {
-                                const shared = filtered[attr1].join(',');
-                                if (combined[shared] != null) {
-                                    combined[shared] = new Set([...combined[shared], ...attr2.split(';')]);
+                                const index = filtered[attr1].join(',');
+                                if (combined[index] != null) {
+                                    combined[index] = new Set([...combined[index], ...attr2.split(';')]);
                                 }
                                 else {
-                                    combined[shared] = new Set([...attr1.split(';'), ...attr2.split(';')]);
+                                    combined[index] = new Set([...attr1.split(';'), ...attr2.split(';')]);
                                 }
                                 deleteKeys.add(attr1).add(attr2);
                             }
@@ -453,9 +449,9 @@ export function setResourceStyle(cache) {
                         style[tag][attributes] = nodeIds;
                     }
                 }
-                const combined = Object.keys(styleKey);
-                if (combined.length > 0) {
-                    style[tag][combined.join(';')] = styleKey[combined[0]];
+                const shared = Object.keys(styleKey);
+                if (shared.length > 0) {
+                    style[tag][shared.join(';')] = styleKey[shared[0]];
                 }
                 for (const attribute in layoutKey) {
                     layout[tag][attribute] = layoutKey[attribute];
@@ -465,7 +461,7 @@ export function setResourceStyle(cache) {
                         delete sorted[i];
                     }
                 }
-                sorted = sorted.filter(item => item);
+                sorted = sorted.filter((item: number[]) => item && item.length > 0);
             }
         }
         while (sorted.length > 0);
@@ -473,39 +469,35 @@ export function setResourceStyle(cache) {
     const resource = new Map();
     for (const name in style) {
         const tag = style[name];
-        const tagData = [];
+        const tagData: any = [];
         for (const attributes in tag) {
             tagData.push({ attributes, ids: tag[attributes]});
         }
-        tagData.sort((a, b) => {
+        tagData.sort((a: any, b: any) => {
             let [c, d] = [a.ids.length, b.ids.length];
             if (c == d) {
                 [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
             }
             return (c >= d ? -1 : 1);
         });
-        tagData.forEach((item, index) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
+        tagData.forEach((item: any, index: number) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
         resource.set(name, tagData);
     }
     const inherit = new Set();
     for (const node of cache.visible) {
-        const tagName = node.tagName;
-        if (resource.has(tagName)) {
-            const styles = [];
-            for (const tag of resource.get(tagName)) {
-                if (tag.ids.includes(node.id)) {
-                    styles.push(tag.name);
+        if (resource.has(node.tagName)) {
+            const styles: string[] = [];
+            for (const item of resource.get(node.tagName)) {
+                if (item.ids.includes(node.id)) {
+                    styles.push(item.name);
                 }
             }
             if (styles.length > 0) {
                 inherit.add(styles.join('.'));
-                node.androidStyle = styles.pop();
-                if (node.androidStyle != '') {
-                    node.attr(`style="@style/${node.androidStyle}"`);
-                }
+                node.attr(`style="@style/${styles.pop()}"`);
             }
         }
-        const tag = layout[tagName];
+        const tag: {} = layout[node.tagName];
         if (tag != null) {
             for (const attr in tag) {
                 if (tag[attr].includes(node.id)) {
@@ -515,24 +507,24 @@ export function setResourceStyle(cache) {
         }
     }
     inherit.forEach(styles => {
-        let parent = null;
-        styles.split('.').forEach(value => {
+        let parent: string = null;
+        styles.split('.').forEach((value: string) => {
             const match = value.match(/^(\w+)_([0-9]+)$/);
             if (match != null) {
-                const style = resource.get(match[1].toUpperCase())[parseInt(match[2] - 1)];
-                RESOURCE.STYLE.set(value, { parent, attributes: style.attributes });
+                const item = resource.get(match[1].toUpperCase())[parseInt(match[2]) - 1];
+                RESOURCE.STYLE.set(value, { parent, attributes: item.attributes });
                 parent = value;
             }
         });
     });
 }
 
-export function getResource(name) {
-    return RESOURCE[name];
+export function getResource(module: string) {
+    return RESOURCE[module];
 }
 
-export function insertResourceAsset(resource, name, value) {
-    let resourceName = null;
+export function insertResourceAsset(resource: Map<string, any>, name: string, value: any) {
+    let resourceName = '';
     if (isNumber(name)) {
         name = `__${name}`;
     }
@@ -553,7 +545,7 @@ export function insertResourceAsset(resource, name, value) {
     return resourceName;
 }
 
-export function addResourceString(node, value) {
+export function addResourceString(node: Widget, value: string) {
     const element = (node != null ? node.element : null);
     let name = value;
     if (value == null) {
@@ -586,16 +578,16 @@ export function addResourceString(node, value) {
                 }
             }
         }
-        const number = isNumber(value);
-        if (SETTINGS.numberResourceValue || !number) {
+        const num = isNumber(value);
+        if (SETTINGS.numberResourceValue || !num) {
             value = value.replace(/\s*style=".*?">/g, '>');
-            for (const [name, resourceValue] in RESOURCE.STRING.entries()) {
+            for (const [resourceName, resourceValue] of RESOURCE.STRING.entries()) {
                 if (resourceValue == value) {
-                    return { text: name };
+                    return { text: resourceName };
                 }
             }
             name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-            if (number || /^[0-9]/.test(value)) {
+            if (num || /^[0-9]/.test(value)) {
                 name = `__${name}`;
             }
             else if (!/\w+/.test(name) && node != null) {
@@ -606,11 +598,11 @@ export function addResourceString(node, value) {
         if (element != null && element.nodeName == '#text') {
             const prevSibling = element.previousSibling;
             if (prevSibling != null) {
-                const prevNode = prevSibling.__Node;
+                const prevNode = prevSibling.__node;
                 switch (prevNode.widgetName) {
                     case WIDGET_ANDROID.CHECKBOX:
                     case WIDGET_ANDROID.RADIO:
-                        prevNode.android('text', (!SETTINGS.numberResourceValue && number ? name : `@string/${name}`));
+                        prevNode.android('text', (!SETTINGS.numberResourceValue && num ? name : `@string/${name}`));
                         prevNode.label = node;
                         node.hide();
                         break;
@@ -622,7 +614,7 @@ export function addResourceString(node, value) {
     return null;
 }
 
-export function addResourceImage(value) {
+export function addResourceImage(value: string) {
     const image = value.substring(value.lastIndexOf('/') + 1);
     const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
     let src = image.replace(/.\w+$/, '');
@@ -640,13 +632,13 @@ export function addResourceImage(value) {
     return src;
 }
 
-export function addResourceStringArray(node) {
+export function addResourceStringArray(node: Widget) {
     const element = node.element;
     const stringArray = new Map();
     let numberArray = new Map();
     for (let i = 0; i < element.children.length; i++) {
         const item = element.children[i];
-        let value = item.text.trim() || item.value.trim();
+        const value = item.text.trim() || item.value.trim();
         if (value != '') {
             if (numberArray != null && !stringArray.size && isNumber(value)) {
                 numberArray.set(value, false);
@@ -668,7 +660,7 @@ export function addResourceStringArray(node) {
     return null;
 }
 
-export function addResourceColor(value) {
+export function addResourceColor(value: string) {
     value = value.toUpperCase().trim();
     if (value != '') {
         let colorName = '';
@@ -697,21 +689,21 @@ export function addResourceColor(value) {
     return value;
 }
 
-export function setComputedStyle(node) {
+export function setComputedStyle(node: Widget) {
     return getStyle(node.element);
 }
 
-export function setBoxSpacing(node) {
-    const result = getBoxSpacing(node.element, SETTINGS.supportRTL);
+export function setBoxSpacing(node: Widget) {
+    const result = getBoxSpacing(node.element);
     for (const i in result) {
         result[i] += 'px';
     }
     return result;
 }
 
-export function setBackgroundStyle(node) {
+export function setBackgroundStyle(node: Widget) {
     const element = node.element;
-    const attributes = {
+    const attributes: any = {
         border: parseBorderStyle,
         borderTop: parseBorderStyle,
         borderRight: parseBorderStyle,
@@ -722,7 +714,7 @@ export function setBackgroundStyle(node) {
         backgroundImage: parseImageURL,
         backgroundSize: parseBoxDimensions
     };
-    let backgroundParent = [];
+    let backgroundParent: string[] = [];
     if (element.parentNode != null) {
         backgroundParent = parseRGBA(getStyle(element.parentNode).backgroundColor);
     }
@@ -737,7 +729,7 @@ export function setBackgroundStyle(node) {
     else {
         attributes.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(attributes.backgroundColor[1]) ? addResourceColor(attributes.backgroundColor[1]) : null);
     }
-    const borderStyle = {
+    const borderStyle: any = {
         black: 'android:color="@android:color/black"',
         solid: `android:color="${attributes.border[2]}"`
     };
@@ -745,9 +737,9 @@ export function setBackgroundStyle(node) {
     borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
     borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
     if (attributes.border[0] != 'none') {
-        let template = null;
-        let data = null;
-        let resourceName = null;
+        let template: {} = null;
+        let data: {} = null;
+        let resourceName = '';
         if (attributes.backgroundColor == null && attributes.backgroundImage == null && attributes.borderRadius.length == 0) {
             template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
             data = {
@@ -779,21 +771,20 @@ export function setBackgroundStyle(node) {
                     attributes.borderRadius.push(...attributes.borderRadius.slice());
                 }
                 const borderRadiusItem = getDataLevel(data, '0', '1', '5');
-                attributes.borderRadius.forEach((value, index) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                attributes.borderRadius.forEach((value: string, index: number) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
             }
         }
-        let xml = parseTemplateData(template, data);
+        const xml = parseTemplateData(template, data);
         for (const [name, value] of RESOURCE.DRAWABLE.entries()) {
             if (value == xml) {
                 resourceName = name;
                 break;
             }
         }
-        if (resourceName == null) {
+        if (resourceName == '') {
             resourceName = `${node.tagName.toLowerCase()}_${node.androidId}`;
             RESOURCE.DRAWABLE.set(resourceName, xml);
         }
-        node.drawable = resourceName;
         return { background: resourceName };
     }
     else if (attributes.backgroundColor != null) {
@@ -802,7 +793,7 @@ export function setBackgroundStyle(node) {
     return null;
 }
 
-export function getViewAttributes(node) {
+export function getViewAttributes(node: Widget) {
     let output = '';
     const attributes = node.combine();
     if (attributes.length > 0) {
@@ -813,7 +804,7 @@ export function getViewAttributes(node) {
                 break;
             }
         }
-        output = (node.renderDepth == 0 ? '{@0}' : '') + attributes.map(value => `\n${indent + value}`).join('');
+        output = (node.renderDepth == 0 ? '{@0}' : '') + attributes.map((value: string) => `\n${indent + value}`).join('');
     }
     return output;
 }
@@ -823,7 +814,7 @@ export function writeResourceStringXml() {
     let xml = '';
     if (RESOURCE.STRING.size > 0) {
         const template = parseTemplateMatch(STRING_TMPL);
-        const data = {
+        const data: {} = {
             '0': [{
                 '1': []
             }]
@@ -842,20 +833,20 @@ export function writeResourceArrayXml() {
     let xml = '';
     if (RESOURCE.ARRAY.size > 0) {
         const template = parseTemplateMatch(STRINGARRAY_TMPL);
-        const data = {
+        const data: {} = {
             '0': [{
                 '1': []
             }]
         };
         const rootItem = getDataLevel(data, '0');
         for (const [name, values] of RESOURCE.ARRAY.entries()) {
-            const arrayItem = {
+            const arrayItem: {} = {
                 name,
                 '2': []
             };
             const item = arrayItem['2'];
-            for (const [name, value] of values.entries()) {
-                item.push({ value: (value ? `@string/` : '') + name });
+            for (const [text, value] of values.entries()) {
+                item.push({ value: (value ? `@string/` : '') + text });
             }
             rootItem['1'].push(arrayItem);
         }
@@ -868,21 +859,21 @@ export function writeResourceStyleXml() {
     let xml = '';
     if (RESOURCE.STYLE.size > 0) {
         const template = parseTemplateMatch(STYLE_TMPL);
-        const data = {
+        const data: {} = {
             '0': [{
                 '1': []
             }]
         };
         const rootItem = getDataLevel(data, '0');
-        for (const [name, style] of RESOURCE.STYLE.entries()) {
-            const styleItem = {
-                name,
+        for (const [name1, style] of RESOURCE.STYLE.entries()) {
+            const styleItem: {} = {
+                name1,
                 parent: style.parent || '',
                 '2': []
             };
-            style.attributes.split(';').sort().forEach(attr => {
-                const [name, value] = attr.split('=');
-                styleItem['2'].push({ name, value: value.replace(/"/g, '') });
+            style.attributes.split(';').sort().forEach((attr: string) => {
+                const [name2, value] = attr.split('=');
+                styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
             });
             rootItem['1'].push(styleItem);
         }
@@ -900,7 +891,7 @@ export function writeResourceFontXml() {
     if (RESOURCE.FONT.size > 0) {
         const template = parseTemplateMatch(FONT_TMPL);
         for (const [name, font] of RESOURCE.FONT.entries()) {
-            const data = {
+            const data: {} = {
                 '#include': {},
                 '#exclude': {},
                 '0': [{
@@ -924,13 +915,12 @@ export function writeResourceFontXml() {
     return xml.trim();
 }
 
-
 export function writeResourceColorXml() {
     let xml = '';
     if (RESOURCE.COLOR.size > 0) {
         RESOURCE.COLOR = new Map([...RESOURCE.COLOR.entries()].sort());
         const template = parseTemplateMatch(COLOR_TMPL);
-        const data = {
+        const data: {} = {
             '0': [{
                 '1': []
             }]
@@ -948,7 +938,7 @@ export function writeResourceDrawableXml() {
     let xml = '';
     if (RESOURCE.DRAWABLE.size > 0 || RESOURCE.IMAGE.size > 0) {
         const template = parseTemplateMatch(DRAWABLE_TMPL);
-        const data = {
+        const data: {} = {
             '0': []
         };
         const rootItem = data['0'];

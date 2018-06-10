@@ -2,14 +2,17 @@ import { sortAsc, sortDesc } from '../lib/util';
 import Node from './node';
 
 export default class NodeList extends Array {
-    constructor(nodes, parent = null) {
+    private _parent: Node;
+
+    constructor(nodes: Node[], parent: Node = null) {
         super();
         if (Array.isArray(nodes)) {
             this.push(...nodes);
         }
         this.parent = parent;
     }
-    push(...value) {
+
+    public push(...value: Node[]) {
         for (const node of value) {
             if (Node.is(node)) {
                 super.push(node);
@@ -18,7 +21,7 @@ export default class NodeList extends Array {
         return this.length;
     }
 
-    intersect(dimension = 'linear') {
+    public intersect(dimension = 'linear') {
         for (const node of this) {
             if (this.some(item => (item != node && node.intersect(item[dimension])))) {
                 return true;
@@ -26,10 +29,10 @@ export default class NodeList extends Array {
         }
         return false;
     }
-    sortAsc(...attr) {
+    public sortAsc(...attr: string[]) {
         return sortAsc(this, ...attr);
     }
-    sortDesc(...attr) {
+    public sortDesc(...attr: string[]) {
         return sortDesc(this, ...attr);
     }
 
@@ -41,7 +44,7 @@ export default class NodeList extends Array {
     get parent() {
         return this._parent;
     }
-    get visible () {
+    get visible() {
         return this.filter(node => node.visible);
     }
     get first() {

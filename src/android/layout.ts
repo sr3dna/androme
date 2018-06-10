@@ -2,7 +2,11 @@ import { WIDGET_ANDROID } from '../lib/constants';
 import Widget from './widget';
 
 export default class Layout extends Widget {
-    constructor(id, node = null, api = 0, parent = null, children = null, actions = null) {
+    public static is(object: any) {
+        return (object instanceof Layout);
+    }
+
+    constructor(id: number, node: Widget = null, api = 0, parent: Widget = null, children: Widget[] = null, actions: number[] = null) {
         const options = {
             parent,
             children,
@@ -13,7 +17,27 @@ export default class Layout extends Widget {
         super(id, null, api, options);
     }
 
-    setBounds(calibrate = false) {
+    public inheritGrid(node: Widget) {
+        for (const prop in node) {
+            if (prop.startsWith('grid')) {
+                if (node[prop] !== false) {
+                    this[prop] = node[prop];
+                }
+                delete node[prop];
+            }
+        }
+    }
+    public setAndroidDimensions() {
+        const [width, height] = this.childrenBox;
+        const options = {
+            parent: this.parentOriginal,
+            width,
+            height,
+            requireWrap: this.parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
+        };
+        super.setAndroidDimensions(options);
+    }
+    public setBounds(calibrate = false) {
         const nodes = this.outerRegion;
         if (!calibrate) {
             this.bounds = {
@@ -42,27 +66,6 @@ export default class Layout extends Widget {
         this.setDimensions();
     }
 
-    setAndroidDimensions() {
-        const [width, height] = this.childrenBox;
-        const options = {
-            parent: this.parentOriginal,
-            width,
-            height,
-            requireWrap: this.parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
-        };
-        super.setAndroidDimensions(options);
-    }
-    inheritGrid(node) {
-        for (const prop in node) {
-            if (prop.startsWith('grid')) {
-                if (node[prop] !== false) {
-                    this[prop] = node[prop];
-                }
-                delete node[prop];
-            }
-        }
-    }
-    
     get outerRegion() {
         const children = this.children;
         let top = [children[0]];
@@ -70,7 +73,7 @@ export default class Layout extends Widget {
         let bottom = [children[0]];
         let left = [children[0]];
         for (let i = 1; i < children.length; i++) {
-            const node = children[i];
+            const node = children[i] as Widget;
             const nodeRight = node.label || node;
             if (top[0].bounds.top == node.bounds.top) {
                 top.push(node);
@@ -98,9 +101,5 @@ export default class Layout extends Widget {
             }
         }
         return { top, right, bottom, left, children };
-    }
-
-    static is(object) {
-        return (object instanceof Layout);
     }
 }
