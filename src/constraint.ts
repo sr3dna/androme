@@ -351,6 +351,10 @@ export function setConstraints() {
                     for (const current of chainNodes) {
                         const chainDirection = current.constraint[value];
                         if (chainDirection != null && chainDirection.length > 0 && (flex.enabled || chainDirection.map((item: Widget) => parseInt((item.constraint[value] || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
+                            chainDirection.parent = node;
+                            if (flex.enabled && chainDirection.some((item: Widget) => item.flex.direction > 0)) {
+                                chainDirection[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
+                            }
                             const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
                             const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][inverse]];
                             const [RB, BR] = [CHAIN_MAP['rightBottom'][index], CHAIN_MAP['rightBottom'][inverse]];
@@ -361,7 +365,6 @@ export function setConstraints() {
                             const firstNode = chainDirection.first;
                             const lastNode = chainDirection.last;
                             let maxOffset = -1;
-                            chainDirection.parent = node;
                             for (let i = 0; i < chainDirection.length; i++) {
                                 const chain = chainDirection[i];
                                 const next = chainDirection[i + 1];

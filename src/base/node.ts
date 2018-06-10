@@ -312,7 +312,8 @@ export default abstract class Node implements IBoxModel {
                 shrink: convertInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
                 alignSelf: (parent != null && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
-                justifyContent: this.style.justifyContent
+                justifyContent: this.style.justifyContent,
+                order: convertInt(this.style.order)
             };
         }
         return this._flex;
