@@ -7,7 +7,7 @@ function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
         for (const attr of attributes) {
             const result = compare(a, b, attr);
             if (result && result[0] !== result[1]) {
-                if (asc == 0) {
+                if (asc === 0) {
                     return (result[0] >= result[1] ? 1 : -1);
                 }
                 else {
@@ -83,7 +83,7 @@ export function formatPX(value: any) {
 
 export function convertPX(value: any, unit = true) {
     if (hasValue(value)) {
-        if (typeof value == 'number') {
+        if (typeof value === 'number') {
             value = `${value}px`;
         }
         const match = value.match(/(pt|em)/);
@@ -135,7 +135,7 @@ export function isNumber(value: string) {
 
 export function search(obj: {}, value: any) {
     const result = [];
-    if (typeof value == 'object') {
+    if (typeof value === 'object') {
         for (const term in value) {
             const i = value[term];
             if (hasValue(obj[i])) {
@@ -146,7 +146,7 @@ export function search(obj: {}, value: any) {
     else {
         let filter: (a: string) => boolean = null;
         if (/^\*.+\*$/.test(value)) {
-            filter = (a: string): boolean => a.indexOf(value.replace(/\*/g, '')) != -1;
+            filter = (a: string): boolean => a.indexOf(value.replace(/\*/g, '')) !== -1;
         }
         else if (/^\*/.test(value)) {
             filter = (a: string): boolean => a.endsWith(value.replace(/\*/, ''));
@@ -169,7 +169,7 @@ export function indexOf<T>(value: T[], ...terms: T[]) {
     if (hasValue(value)) {
         for (const term of terms) {
             const index = value.indexOf(term);
-            if (index != -1) {
+            if (index !== -1) {
                 return index;
             }
         }
@@ -179,7 +179,7 @@ export function indexOf<T>(value: T[], ...terms: T[]) {
 
 export function remove<T>(list: T[], value: any) {
     const index = list.indexOf(value);
-    if (index != -1) {
+    if (index !== -1) {
         list.splice(index, 1);
     }
     return list;
@@ -241,7 +241,7 @@ export function parseUnit(value: string) {
 }
 
 export function calculateBias(start: number, end: number) {
-    return parseFloat(Math.max(start == 0 ? 0 : (end == 0 ? 1 : (start / (start + end))), 0).toFixed(2));
+    return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(2));
 }
 
 export function hasValue<T>(value: T) {
@@ -253,5 +253,5 @@ export function withinRange(a: number, b: number, n = 1) {
 }
 
 export function withinFraction(lower: number, upper: number) {
-    return (lower == upper || Math.ceil(lower) == Math.floor(upper));
+    return (lower === upper || Math.ceil(lower) === Math.floor(upper));
 }

@@ -23,7 +23,7 @@ export default class NodeList extends Array {
 
     public intersect(dimension = 'linear') {
         for (const node of this) {
-            if (this.some(item => (item != node && node.intersect(item[dimension])))) {
+            if (this.some(item => (item !== node && node.intersect(item[dimension])))) {
                 return true;
             }
         }
@@ -56,7 +56,7 @@ export default class NodeList extends Array {
     get linearX() {
         if (this.length > 0 && !this.intersect()) {
             if (this.length > 1) {
-                const minBottom = this.reduce((a, b) => Math.min(a, b.linear.bottom), Number.MAX_VALUE);
+                const minBottom = Math.min.apply(null, this.map((item: Node) => item.linear.bottom));
                 return !this.some(item => item.linear.top >= minBottom);
             }
             return true;
@@ -66,7 +66,7 @@ export default class NodeList extends Array {
     get linearY() {
         if (this.length > 0 && !this.intersect()) {
             if (this.length > 1) {
-                const minRight = this.reduce((a, b) => Math.min(a, b.linear.right), Number.MAX_VALUE);
+                const minRight = Math.min.apply(null, this.map((item: Node) => item.linear.right));
                 return !this.some(item => item.linear.left >= minRight);
             }
             return true;

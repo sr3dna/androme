@@ -24,7 +24,7 @@ export function parseTemplateMatch(template: string) {
             result[match[2]] = segment;
             characters -= match[0].length;
         }
-        if (match == null || characters == 0) {
+        if (match == null || characters === 0) {
             template = result[section++];
             if (!hasValue(template)) {
                 break;

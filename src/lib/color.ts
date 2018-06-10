@@ -186,14 +186,14 @@ function convertRGBtoHSL(r: number, g: number, b: number) {
     let h = (max + min) / 2;
     let s = h;
     const l = h;
-    if (max == min) {
+    if (max === min) {
         h = 0;
         s = 0;
     }
     else {
         const d = max - min;
         s = (l > 0.5 ? d / (2 - max - min) : d / (max + min));
-        switch(max) {
+        switch (max) {
             case r:
                 h = (g - b) / d + (g < b ? 6 : 0);
                 break;
@@ -211,9 +211,9 @@ function convertRGBtoHSL(r: number, g: number, b: number) {
 
 function sortHSL(a: IColor, b: IColor) {
     let [c, d] = [a.hsl.h, b.hsl.h];
-    if (c == d) {
+    if (c === d) {
         [c, d] = [a.hsl.s, b.hsl.s];
-        if (c == d) {
+        if (c === d) {
             [c, d] = [a.hsl.l, b.hsl.l];
         }
     }
@@ -226,7 +226,7 @@ export function findNearestColor(value: string) {
         const result = HSL_SORTED.slice();
         result.push({ name: '', hsl });
         result.sort(sortHSL);
-        const index = result.findIndex((item: IColor) => item.name == '');
+        const index = result.findIndex((item: IColor) => item.name === '');
         return result[Math.min(index + 1, result.length - 1)];
     }
     return null;
@@ -234,7 +234,7 @@ export function findNearestColor(value: string) {
 
 export function getByColorName(value: string) {
     for (const color in X11_CSS3) {
-        if (color.toLowerCase() == value.toLowerCase()) {
+        if (color.toLowerCase() === value.toLowerCase()) {
             return X11_CSS3[color];
         }
     }
@@ -265,10 +265,10 @@ export function convertRGBtoHex(value: string) {
 
 export function convertHextoRGB(value: string) {
     value = value.replace('#', '').trim();
-    if (value.length == 3) {
+    if (value.length === 3) {
         value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
     }
-    if (value.length == 6) {
+    if (value.length === 6) {
         return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
     }
     return null;

@@ -1,4 +1,4 @@
-import { WIDGET_ANDROID } from './lib/constants';
+import { OVERFLOW_CHROME, WIDGET_ANDROID } from './lib/constants';
 import { convertInt, convertPX, hasValue, padLeft } from './lib/util';
 import { getBoxSpacing } from './lib/element';
 import { generateNodeId, NODE_CACHE } from './cache';
@@ -72,13 +72,13 @@ export function renderViewLayout(node: Widget, parent: Widget, tagName: string) 
     let postXml = '';
     let renderParent = parent;
     node.setAndroidId(tagName);
-    if (node.overflow != 0) {
+    if (node.overflow !== OVERFLOW_CHROME.NONE) {
         const scrollView = [];
         if (node.overflowX) {
             scrollView.push(WIDGET_ANDROID.SCROLL_HORIZONTAL);
         }
         if (node.overflowY) {
-            scrollView.push((node.ascend().some((item: Widget) => item.overflow != 0) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
+            scrollView.push((node.ascend().some((item: Widget) => item.overflow !== OVERFLOW_CHROME.NONE) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
         }
         let current = node;
         let scrollDepth = parent.renderDepth + scrollView.length;
@@ -106,7 +106,7 @@ export function renderViewLayout(node: Widget, parent: Widget, tagName: string) 
                 const indent = padLeft(scrollDepth--);
                 preXml = indent + `<${widgetName}{@${layout.id}}>\n` + preXml;
                 postXml += indent + `</${widgetName}>\n`;
-                if (current == node) {
+                if (current === node) {
                     node.parent = layout;
                     renderParent = layout;
                 }
@@ -158,7 +158,7 @@ export function renderViewTag(node: Widget, parent: Widget, tagName: string, rec
             node.android('hint', element.placeholder)
                 .android('scrollbars', 'vertical')
                 .android('inputType', 'textMultiLine');
-            if (node.styleMap.overflowX == 'scroll') {
+            if (node.overflowX) {
                 node.android('scrollHorizontally', 'true');
             }
             break;
@@ -168,15 +168,15 @@ export function renderViewTag(node: Widget, parent: Widget, tagName: string, rec
             node.android('inputType', 'text');
             break;
         case WIDGET_ANDROID.BUTTON:
-            if (node.viewWidth == 0) {
+            if (node.viewWidth === 0) {
                 node.android('minWidth', '0px');
             }
-            if (node.viewHeight == 0) {
+            if (node.viewHeight === 0) {
                 node.android('minHeight', '0px');
             }
             break;
     }
-    if (node.overflow != 0) {
+    if (node.overflow !== OVERFLOW_CHROME.NONE) {
         const scrollbars = [];
         if (node.overflowX) {
             scrollbars.push('horizontal');
@@ -189,7 +189,7 @@ export function renderViewTag(node: Widget, parent: Widget, tagName: string, rec
     switch (element.type) {
         case 'radio':
             if (!recursive) {
-                const result = node.parentOriginal.children.filter((item: Widget) => (item.element.type == 'radio' && item.element.name == element.name)) as WidgetList;
+                const result = node.parentOriginal.children.filter((item: Widget) => (item.element.type === 'radio' && item.element.name === element.name)) as WidgetList;
                 let content = '';
                 if (result.length > 1) {
                     let rowSpan = 1;
@@ -260,7 +260,7 @@ export function addViewBefore(id: number, xml: string, index = -1) {
     if (VIEW_BEFORE[id] == null) {
         VIEW_BEFORE[id] = [];
     }
-    if (index != -1 && index < VIEW_BEFORE[id].length) {
+    if (index !== -1 && index < VIEW_BEFORE[id].length) {
         VIEW_BEFORE[id].splice(index, 0, xml);
     }
     else {
@@ -272,7 +272,7 @@ export function addViewAfter(id: number, xml: string, index = -1) {
     if (VIEW_AFTER[id] == null) {
         VIEW_AFTER[id] = [];
     }
-    if (index != -1 && index < VIEW_AFTER[id].length) {
+    if (index !== -1 && index < VIEW_AFTER[id].length) {
         VIEW_AFTER[id].splice(index, 0, xml);
     }
     else {

@@ -49,6 +49,12 @@ export enum WIDGET_ANDROID
     SPACE = 'Space'
 }
 
+export enum OVERFLOW_CHROME {
+    NONE = 0,
+    HORIZONTAL = 2,
+    VERTICAL = 4
+}
+
 export const FIXED_ANDROID =
 [
     WIDGET_ANDROID.EDIT,

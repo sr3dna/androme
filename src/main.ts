@@ -1,4 +1,4 @@
-import { BLOCK_CHROME, BUILD_ANDROID, DENSITY_ANDROID, INLINE_CHROME, MAPPING_CHROME, WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
+import { BLOCK_CHROME, BUILD_ANDROID, DENSITY_ANDROID, INLINE_CHROME, MAPPING_CHROME, OVERFLOW_CHROME, WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
 import * as Util from './lib/util';
 import * as Color from './lib/color';
 import * as Element from './lib/element';
@@ -22,17 +22,17 @@ function writeLinearLayout(node: Widget, parent: Widget, vertical: boolean) {
     return renderViewLayout(node, parent, WIDGET_ANDROID.LINEAR);
 }
 
+function writeGridLayout(node: Widget, parent: Widget, columnCount: number) {
+    node.android('columnCount', columnCount.toString());
+    return renderViewLayout(node, parent, WIDGET_ANDROID.GRID);
+}
+
 function writeRelativeLayout(node: Widget, parent: Widget) {
     return renderViewLayout(node, parent, WIDGET_ANDROID.RELATIVE);
 }
 
 function writeConstraintLayout(node: Widget, parent: Widget) {
     return renderViewLayout(node, parent, WIDGET_ANDROID.CONSTRAINT);
-}
-
-function writeGridLayout(node: Widget, parent: Widget, columnCount: number) {
-    node.android('columnCount', columnCount.toString());
-    return renderViewLayout(node, parent, WIDGET_ANDROID.GRID);
 }
 
 function writeDefaultLayout(node: Widget, parent: Widget) {
@@ -69,7 +69,7 @@ function setStyleMap() {
                 const style = getComputedStyle(element);
                 const styleMap = {};
                 for (const name of attributes) {
-                    if (name.toLowerCase().indexOf('color') != -1) {
+                    if (name.toLowerCase().indexOf('color') !== -1) {
                         const color = Color.getByColorName(rule.style[name]);
                         if (color != null) {
                             rule.style[name] = Color.convertRGB(color);
@@ -78,7 +78,7 @@ function setStyleMap() {
                     if (Util.hasValue(element.style[name])) {
                         styleMap[name] = element.style[name];
                     }
-                    else if (style[name] == rule.style[name]) {
+                    else if (style[name] === rule.style[name]) {
                         styleMap[name] = style[name];
                     }
                 }
@@ -101,7 +101,7 @@ function setAccessibility() {
                 let current: Widget = node;
                 let label: Widget = null;
                 while (parent != null && parent.renderChildren != null) {
-                    const index = parent.renderChildren.findIndex((item: Widget) => item == current);
+                    const index = parent.renderChildren.findIndex((item: Widget) => item === current);
                     if (index > 0) {
                         label = parent.renderChildren[index - 1] as Widget;
                         break;
@@ -160,16 +160,16 @@ function setMarginPadding() {
                 const marginRight = Util.convertInt(node.android(marginRightRtl));
                 const marginBottom = Util.convertInt(node.android('layout_marginBottom'));
                 const marginLeft = Util.convertInt(node.android(marginLeftRtl));
-                if (marginTop != 0 && marginTop == marginBottom && marginBottom == marginLeft && marginLeft == marginRight) {
+                if (marginTop !== 0 && marginTop === marginBottom && marginBottom === marginLeft && marginLeft === marginRight) {
                     node.delete('android', 'layout_margin*')
                         .android('layout_margin', Util.formatPX(marginTop));
                 }
                 else {
-                    if (marginTop != 0 && marginTop == marginBottom) {
+                    if (marginTop !== 0 && marginTop === marginBottom) {
                         node.delete('android', 'layout_marginTop', 'layout_marginBottom')
                             .android('layout_marginVertical', Util.formatPX(marginTop));
                     }
-                    if (marginLeft != 0 && marginLeft == marginRight) {
+                    if (marginLeft !== 0 && marginLeft === marginRight) {
                         node.delete('android', marginLeftRtl, marginRightRtl)
                             .android('layout_marginHorizontal', Util.formatPX(marginLeft));
                     }
@@ -178,16 +178,16 @@ function setMarginPadding() {
                 const paddingRight = Util.convertInt(node.android(paddingRightRtl));
                 const paddingBottom = Util.convertInt(node.android('paddingBottom'));
                 const paddingLeft = Util.convertInt(node.android(paddingLeftRtl));
-                if (paddingTop != 0 && paddingTop == paddingBottom && paddingBottom == paddingLeft && paddingLeft == paddingRight) {
+                if (paddingTop !== 0 && paddingTop === paddingBottom && paddingBottom === paddingLeft && paddingLeft === paddingRight) {
                     node.delete('android', 'padding*')
                         .android('padding', Util.formatPX(paddingTop));
                 }
                 else {
-                    if (paddingTop != 0 && paddingTop == paddingBottom) {
+                    if (paddingTop !== 0 && paddingTop === paddingBottom) {
                         node.delete('android', 'paddingTop', 'paddingBottom')
                             .android('paddingVertical', Util.formatPX(paddingTop));
                     }
-                    if (paddingLeft != 0 && paddingLeft == paddingRight) {
+                    if (paddingLeft !== 0 && paddingLeft === paddingRight) {
                         node.delete('android', paddingLeftRtl, paddingRightRtl)
                             .android('paddingHorizontal', Util.formatPX(paddingLeft));
                     }
@@ -202,7 +202,7 @@ function setLayoutWeight() {
         const rows = node.linearRows;
         if (rows.length > 1) {
             const columnLength = rows[0].renderChildren.length;
-            if (rows.reduce((a: number, b: Widget) => (a && a == b.renderChildren.length ? a : 0), columnLength) > 0) {
+            if (rows.reduce((a: number, b: Widget) => (a && a === b.renderChildren.length ? a : 0), columnLength) > 0) {
                 const horizontal = !node.horizontal;
                 const columnDimension = new Array(columnLength).fill(Number.MIN_VALUE);
                 for (const row of rows) {
@@ -236,8 +236,8 @@ function createNode(element: HTMLElement) {
 function setNodeCache(documentRoot: HTMLElement) {
     let nodeTotal = 0;
     Array.from((documentRoot || document.body).childNodes).forEach((item: HTMLElement) => {
-        if (item.nodeName == '#text') {
-            if (item.textContent.trim() != '') {
+        if (item.nodeName === '#text') {
+            if (item.textContent.trim() !== '') {
                 nodeTotal++;
             }
         }
@@ -271,7 +271,7 @@ function setNodeCache(documentRoot: HTMLElement) {
         }
         style.verticalAlign = node.styleMap.verticalAlign || '';
         node.element.style.verticalAlign = 'top';
-        if (node.overflow != 0) {
+        if (node.overflow !== OVERFLOW_CHROME.NONE) {
             if (Util.hasValue(node.styleMap.width)) {
                 style.width = node.styleMap.width;
                 node.element.style.width = '';
@@ -290,11 +290,11 @@ function setNodeCache(documentRoot: HTMLElement) {
             parent.setBounds();
         }
         for (const child of NODE_CACHE) {
-            if (parent != child) {
+            if (parent !== child) {
                 if (child.bounds == null) {
                     child.setBounds();
                 }
-                if ((!child.fixed && child.parentElement == parent.element) || (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom)) {
+                if ((!child.fixed && child.parentElement === parent.element) || (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom)) {
                     if (parentNodes[child.id] == null) {
                         parentNodes[child.id] = [];
                     }
@@ -317,8 +317,8 @@ function setNodeCache(documentRoot: HTMLElement) {
                             parent = current;
                             minArea = area;
                         }
-                        else if (area == minArea) {
-                            if (current.element == node.parentElement) {
+                        else if (area === minArea) {
+                            if (current.element === node.parentElement) {
                                 parent = current;
                             }
                         }
@@ -335,7 +335,7 @@ function setNodeCache(documentRoot: HTMLElement) {
         }
         if (node.element.children != null && node.element.children.length > 1) {
             node.element.childNodes.forEach((element: HTMLElement) => {
-                if (element.nodeName == '#text' && element.textContent.trim() != '') {
+                if (element.nodeName === '#text' && element.textContent.trim() !== '') {
                     const widget = new Widget(generateNodeId(), null, SETTINGS.targetAPI, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
                     widget.setAndroidId(WIDGET_ANDROID.TEXT);
                     widget.setBounds(false, element);
@@ -358,7 +358,7 @@ function setNodeCache(documentRoot: HTMLElement) {
     for (const node of NODE_CACHE) {
         let i = 0;
         Array.from(node.element.childNodes).forEach((element: any) => {
-            if (element.__node != null && (element.__node.parent.element == node.element)) {
+            if (element.__node != null && (element.__node.parent.element === node.element)) {
                 element.__node.parentIndex = i++;
             }
         });
@@ -367,7 +367,7 @@ function setNodeCache(documentRoot: HTMLElement) {
 }
 
 export function parseDocument(element: any) {
-    if (typeof element == 'string') {
+    if (typeof element === 'string') {
         element = document.getElementById(element);
     }
     let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
@@ -425,7 +425,7 @@ export function parseDocument(element: any) {
                     let restart = false;
                     let xml = '';
                     if (tagName == null) {
-                        if ((nodeY.children.length == 0 && Element.hasFreeFormText(nodeY.element)) || nodeY.children.every((item: Widget) => INLINE_CHROME.includes(item.tagName))) {
+                        if ((nodeY.children.length === 0 && Element.hasFreeFormText(nodeY.element)) || nodeY.children.every((item: Widget) => INLINE_CHROME.includes(item.tagName))) {
                             tagName = WIDGET_ANDROID.TEXT;
                         }
                         else if (nodeY.children.length > 0) {
@@ -445,8 +445,8 @@ export function parseDocument(element: any) {
                                     }
                                     const base = columns[
                                         dimensions.findIndex((item: number[]) => {
-                                            return (item == dimensions.reduce((a: number[], b: number[]) => {
-                                                if (a.length == b.length) {
+                                            return (item === dimensions.reduce((a: number[], b: number[]) => {
+                                                if (a.length === b.length) {
                                                     return (a.reduce((c: number, d: number) => c + d, 0) < b.reduce((c: number, d: number) => c + d, 0) ? a : b);
                                                 }
                                                 else {
@@ -463,12 +463,12 @@ export function parseDocument(element: any) {
                                             const found = [];
                                             if (l < base.length - 1) {
                                                 for (let m = 0; m < columns.length; m++) {
-                                                    if (columns[m] == base) {
+                                                    if (columns[m] === base) {
                                                         found.push(l);
                                                     }
                                                     else {
-                                                        const result = columns[m].findIndex((item: Widget, index: number) => (index >= l && item.bounds.width == bounds.width && index < columns[m].length - 1));
-                                                        if (result != -1) {
+                                                        const result = columns[m].findIndex((item: Widget, index: number) => (index >= l && item.bounds.width === bounds.width && index < columns[m].length - 1));
+                                                        if (result !== -1) {
                                                             found.push(result);
                                                         }
                                                         else {
@@ -486,7 +486,7 @@ export function parseDocument(element: any) {
                                                     }
                                                 }
                                             }
-                                            if (found.length == columns.length) {
+                                            if (found.length === columns.length) {
                                                 const minIndex = found.reduce((a, b) => Math.min(a, b));
                                                 maxIndex = found.reduce((a, b) => Math.max(a, b));
                                                 if (maxIndex > minIndex) {
@@ -517,12 +517,12 @@ export function parseDocument(element: any) {
                                         const columnRight: number[] = [];
                                         for (let l = 0; l < nextCoordsX.length; l++) {
                                             const nextAxisX = nextMapX[nextCoordsX[l]].sortAsc('bounds.top');
-                                            columnRight[l] = (l == 0 ? Number.MIN_VALUE : columnRight[l - 1]);
+                                            columnRight[l] = (l === 0 ? Number.MIN_VALUE : columnRight[l - 1]);
                                             for (let m = 0; m < nextAxisX.length; m++) {
                                                 const nextX = nextAxisX[m];
-                                                if (nextX.parent.parent != null && nodeY.id == nextX.parent.parent.id) {
+                                                if (nextX.parent.parent != null && nodeY.id === nextX.parent.parent.id) {
                                                     const [left, right] = [nextX.bounds.left, nextX.bounds.right];
-                                                    if (l == 0 || left >= columnRight[l - 1]) {
+                                                    if (l === 0 || left >= columnRight[l - 1]) {
                                                         if (columns[l] == null) {
                                                             columns[l] = [];
                                                         }
@@ -533,16 +533,16 @@ export function parseDocument(element: any) {
                                             }
                                         }
                                         for (let l = 0, m = -1; l < columnRight.length; l++) {
-                                            if (m == -1 && columns[l] == null) {
+                                            if (m === -1 && columns[l] == null) {
                                                 m = l - 1;
                                             }
                                             else if (columns[l] == null) {
-                                                if (m != -1 && l == columnRight.length - 1) {
+                                                if (m !== -1 && l === columnRight.length - 1) {
                                                     columnRight[m] = columnRight[l];
                                                 }
                                                 continue;
                                             }
-                                            else if (m != -1) {
+                                            else if (m !== -1) {
                                                 columnRight[m] = columnRight[l - 1];
                                                 m = -1;
                                             }
@@ -562,9 +562,9 @@ export function parseDocument(element: any) {
                                                     if (top == null) {
                                                         top = nodeX.bounds.top;
                                                     }
-                                                    else if (nodeX.bounds.top != top) {
+                                                    else if (nodeX.bounds.top !== top) {
                                                         const nextRowX = columns[m - 1][l + 1];
-                                                        if (columns[m][l - 1] == null || (nextRowX != null && nextRowX.bounds.top == nodeX.bounds.top)) {
+                                                        if (columns[m][l - 1] == null || (nextRowX != null && nextRowX.bounds.top === nodeX.bounds.top)) {
                                                             columns[m].splice(l, 0, { spacer: 1 });
                                                         }
                                                         else if (columns[m][l + 1] == null) {
@@ -592,17 +592,17 @@ export function parseDocument(element: any) {
                                                 node.parent.hide();
                                                 node.parent = nodeY;
                                                 if (SETTINGS.useLayoutWeight) {
-                                                    node.gridRowStart = (m == 0);
-                                                    node.gridRowEnd = (m == columns[l].length - 1);
-                                                    node.gridFirst = (l == 0 && m == 0);
-                                                    node.gridLast = (l == columns.length - 1 && node.gridRowEnd);
+                                                    node.gridRowStart = (m === 0);
+                                                    node.gridRowEnd = (m === columns[l].length - 1);
+                                                    node.gridFirst = (l === 0 && m === 0);
+                                                    node.gridLast = (l === columns.length - 1 && node.gridRowEnd);
                                                     node.gridIndex = m;
                                                 }
                                                 else {
                                                     let rowSpan = 1;
                                                     let columnSpan = 1 + spacer;
                                                     for (let n = l + 1; n < columns.length; n++) {
-                                                        if (columns[n][m].spacer == 1) {
+                                                        if (columns[n][m].spacer === 1) {
                                                             columnSpan++;
                                                             columns[n][m].spacer = 2;
                                                         }
@@ -610,9 +610,9 @@ export function parseDocument(element: any) {
                                                             break;
                                                         }
                                                     }
-                                                    if (columnSpan == 1) {
+                                                    if (columnSpan === 1) {
                                                         for (let n = m + 1; n < columns[l].length; n++) {
-                                                            if (columns[l][n].spacer == 1) {
+                                                            if (columns[l][n].spacer === 1) {
                                                                 rowSpan++;
                                                                 columns[l][n].spacer = 2;
                                                             }
@@ -627,15 +627,15 @@ export function parseDocument(element: any) {
                                                     if (columnSpan > 1) {
                                                         node.android('layout_columnSpan', columnSpan);
                                                     }
-                                                    node.gridRowStart = (start++ == 0);
-                                                    node.gridRowEnd = (columnSpan + l == columns.length);
-                                                    node.gridFirst = (count++ == 0);
-                                                    node.gridLast = (node.gridRowEnd && m == columns[l].length - 1);
+                                                    node.gridRowStart = (start++ === 0);
+                                                    node.gridRowEnd = (columnSpan + l === columns.length);
+                                                    node.gridFirst = (count++ === 0);
+                                                    node.gridLast = (node.gridRowEnd && m === columns[l].length - 1);
                                                     node.gridIndex = l;
                                                     spacer = 0;
                                                 }
                                             }
-                                            else if (node.spacer == 1) {
+                                            else if (node.spacer === 1) {
                                                 spacer++;
                                             }
                                         }
@@ -704,7 +704,7 @@ export function parseDocument(element: any) {
                             xml += renderViewTag(nodeY, parent, tagName);
                         }
                     }
-                    if (xml != '') {
+                    if (xml !== '') {
                         if (!partial.has(parent.id)) {
                             partial.set(parent.id, []);
                         }

@@ -1,4 +1,5 @@
 import { IClientRect, IBoxModel } from '../lib/types';
+import { OVERFLOW_CHROME } from '../lib/constants';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { getRangeBounds } from '../lib/element';
 
@@ -28,7 +29,7 @@ export default abstract class Node implements IBoxModel {
 
     private _flex: any;
     private _namespaces: Set<string>;
-    private _overflow: number;
+    private _overflow: OVERFLOW_CHROME;
     private _parent: Node;
     private _parentOriginal: Node;
     private _renderParent: any;
@@ -83,14 +84,14 @@ export default abstract class Node implements IBoxModel {
     public delete(obj: string, ...attributes: any[]) {
         const name = `_${obj || '_'}`;
         if (this[name] != null) {
-            if (typeof attributes[0] == 'object') {
+            if (typeof attributes[0] === 'object') {
                 for (const key in attributes[0]) {
                     delete this[name][attributes[0][key]];
                 }
             }
             else {
                 for (const attr of attributes) {
-                    if (attr.indexOf('*') != -1) {
+                    if (attr.indexOf('*') !== -1) {
                         for (const [key] of search(this[name], attr)) {
                             delete this[name][key];
                         }
@@ -114,7 +115,7 @@ export default abstract class Node implements IBoxModel {
     }
     public render(parent: Node): Node {
         this.renderParent = parent;
-        this.renderDepth = (parent.id == 0 ? 0 : parent.renderDepth + 1);
+        this.renderDepth = (parent.id === 0 ? 0 : parent.renderDepth + 1);
         return this;
     }
     public hide() {
@@ -126,7 +127,7 @@ export default abstract class Node implements IBoxModel {
         const result = [];
         let current = this.parent;
         while (current != null) {
-            if (current.id != 0) {
+            if (current.id !== 0) {
                 result.push(current);
                 current = current.parent;
             }
@@ -168,7 +169,7 @@ export default abstract class Node implements IBoxModel {
         );
     }
     public css(attr: string, value = '') {
-        if (arguments.length == 2) {
+        if (arguments.length === 2) {
             this.styleMap[attr] = (hasValue(value) ? value : null);
             return this;
         }
@@ -204,7 +205,7 @@ export default abstract class Node implements IBoxModel {
         box.height = box.bottom - box.top;
     }
     public expandDimensions() {
-        let [width, height] = [this.children.reduce((a: number, b: Node) => Math.max(a, b.linear.right), 0), this.children.reduce((a: number, b: Node) => Math.max(a, b.linear.bottom), 0)];
+        let [width, height] = [Math.max.apply(null, this.children.map((item: Node) => item.linear.right)), Math.max.apply(null, this.children.map((item: Node) => item.linear.bottom))];
         switch (this.style.position) {
             case 'static':
             case 'relative':
@@ -243,14 +244,14 @@ export default abstract class Node implements IBoxModel {
     }
 
     set parent(value) {
-        if (!Node.is(value) || value == this._parent) {
+        if (!Node.is(value) || value === this._parent) {
             return;
         }
         if (this._parent != null && this._parentOriginal == null) {
             this._parentOriginal = this._parent;
         }
         this._parent = value;
-        if (this.depth == 0) {
+        if (this.depth === 0) {
             this.depth = value.depth + 1;
         }
     }
@@ -304,42 +305,42 @@ export default abstract class Node implements IBoxModel {
             const parent = (this.parentElement != null ? this.parentElement.__node : null);
             this._flex = {
                 parent,
-                enabled: (this.style.display != null && this.style.display.indexOf('flex') != -1),
+                enabled: (this.style.display != null && this.style.display.indexOf('flex') !== -1),
                 direction: this.style.flexDirection,
                 basis: this.style.flexBasis,
                 grow: convertInt(this.style.flexGrow),
                 shrink: convertInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
-                alignSelf: (parent != null && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf == 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
+                alignSelf: (parent != null && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
                 justifyContent: this.style.justifyContent
             };
         }
         return this._flex;
     }
     get floating() {
-        return (this.styleMap.float == 'left' || this.styleMap.float == 'right');
+        return (this.styleMap.float === 'left' || this.styleMap.float === 'right');
     }
     get fixed() {
-        return (this.style.display == 'fixed');
+        return (this.style.display === 'fixed');
     }
     get overflow() {
         if (this._overflow == null) {
-            let value = 0;
-            if (this.style.overflow == 'scroll' || (this.style.overflowX == 'auto' && this.element.clientWidth != this.element.scrollWidth)) {
-                value |= 2;
+            let value = OVERFLOW_CHROME.NONE;
+            if (this.style.overflow === 'scroll' || (this.style.overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+                value |= OVERFLOW_CHROME.HORIZONTAL;
             }
-            if (this.style.overflow == 'scroll' || (this.style.overflowY == 'auto' && this.element.clientHeight != this.element.scrollHeight)) {
-                value |= 4;
+            if (this.style.overflow === 'scroll' || (this.style.overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+                value |= OVERFLOW_CHROME.VERTICAL;
             }
             this._overflow = value;
         }
         return this._overflow;
     }
     get overflowX() {
-        return ((this._overflow & 2) == 2);
+        return ((this._overflow & OVERFLOW_CHROME.HORIZONTAL) === OVERFLOW_CHROME.HORIZONTAL);
     }
     get overflowY() {
-        return ((this._overflow & 4) == 4);
+        return ((this._overflow & OVERFLOW_CHROME.VERTICAL) === OVERFLOW_CHROME.VERTICAL);
     }
     get viewWidth() {
         return convertInt(this.styleMap.width || this.styleMap.minWidth);
@@ -383,7 +384,7 @@ export default abstract class Node implements IBoxModel {
     get paddingRight() {
         return convertInt(this.css('paddingRight'));
     }
-    get center() {
+    get center(): IClientRect {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
     }
 }

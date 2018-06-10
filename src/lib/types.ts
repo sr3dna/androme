@@ -1,3 +1,5 @@
+import Node from '../base/node';
+
 export interface IBoxModel {
     marginTop?: number;
     marginRight?: number;
@@ -14,6 +16,7 @@ export interface IBoxModel {
 }
 
 export interface IClientRect {
+
     x?: number;
     y?: number;
     top?: number;

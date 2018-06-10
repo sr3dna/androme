@@ -6,7 +6,7 @@ export default class Layout extends Widget {
         return (object instanceof Layout);
     }
 
-    constructor(id: number, node: Widget = null, api = 0, parent: Widget = null, children: Widget[] = null, actions: number[] = null) {
+    constructor(id: number, node: Widget, api = 0, parent: Widget | null, children: Widget[], actions?: number[]) {
         const options = {
             parent,
             children,
@@ -75,25 +75,25 @@ export default class Layout extends Widget {
         for (let i = 1; i < children.length; i++) {
             const node = children[i] as Widget;
             const nodeRight = node.label || node;
-            if (top[0].bounds.top == node.bounds.top) {
+            if (top[0].bounds.top === node.bounds.top) {
                 top.push(node);
             }
             else if (node.bounds.top < top[0].bounds.top) {
                 top = [node];
             }
-            if (right[0].bounds.right == nodeRight.bounds.right) {
+            if (right[0].bounds.right === nodeRight.bounds.right) {
                 right.push(nodeRight);
             }
             else if (nodeRight.bounds.right > right[0].bounds.right) {
                 right = [nodeRight];
             }
-            if (bottom[0].bounds.bottom == node.bounds.bottom) {
+            if (bottom[0].bounds.bottom === node.bounds.bottom) {
                 bottom.push(node);
             }
             else if (node.bounds.bottom > bottom[0].bounds.bottom) {
                 bottom = [node];
             }
-            if (left[0].bounds.left == node.bounds.left) {
+            if (left[0].bounds.left === node.bounds.left) {
                 left.push(node);
             }
             else if (node.bounds.left < left[0].bounds.left) {

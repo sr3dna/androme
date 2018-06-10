@@ -1,4 +1,4 @@
-import { BUILD_ANDROID, FIXED_ANDROID, MAPPING_CHROME, WIDGET_ANDROID } from '../lib/constants';
+import { BUILD_ANDROID, FIXED_ANDROID, MAPPING_CHROME, OVERFLOW_CHROME, WIDGET_ANDROID } from '../lib/constants';
 import { API_ANDROID } from '../customizations';
 import { calculateBias, convertInt, convertPX, formatPX, formatString, generateId, hasValue, isNumber } from '../lib/util';
 import { parseStyle } from '../lib/element';
@@ -78,7 +78,7 @@ export default class Widget extends Node {
         this.namespaces.forEach(value => {
             const obj: {} = this[`_${value}`];
             for (const attr in obj) {
-                if (value != '_') {
+                if (value !== '_') {
                     result.push(`${value}:${attr}="${obj[attr]}"`);
                 }
                 else {
@@ -89,7 +89,7 @@ export default class Widget extends Node {
         return result.sort();
     }
     public render(parent: Widget) {
-        if (Widget.is(parent) && parent.is(WIDGET_ANDROID.LINEAR) && parent.id != 0) {
+        if (Widget.is(parent) && parent.is(WIDGET_ANDROID.LINEAR) && parent.id !== 0) {
             switch (this.widgetName) {
                 case WIDGET_ANDROID.LINEAR:
                 case WIDGET_ANDROID.RADIO_GROUP:
@@ -101,22 +101,22 @@ export default class Widget extends Node {
         return this;
     }
     public anchor(position: string, adjacent: any = {}, orientation = '') {
-        const overwrite = (adjacent.stringId == 'parent');
+        const overwrite = (adjacent.stringId === 'parent');
         switch (this.renderParent.widgetName) {
             case WIDGET_ANDROID.CONSTRAINT:
-                if (arguments.length == 1) {
+                if (arguments.length === 1) {
                     return this.app(position);
                 }
                 this.app(position, adjacent.stringId, overwrite);
                 break;
             case WIDGET_ANDROID.RELATIVE:
-                if (arguments.length == 1) {
+                if (arguments.length === 1) {
                     return this.android(position);
                 }
                 this.android(position, adjacent.stringId, overwrite);
                 break;
         }
-        if (orientation != '') {
+        if (orientation !== '') {
             this.constraint[orientation] = true;
         }
         return this;
@@ -166,7 +166,7 @@ export default class Widget extends Node {
     }
     public is(...views: string[]) {
         for (const viewName of views) {
-            if (this.widgetName == viewName) {
+            if (this.widgetName === viewName) {
                 return true;
             }
         }
@@ -196,14 +196,14 @@ export default class Widget extends Node {
             height = this.element.offsetHeight + this.marginTop + this.marginBottom;
             requireWrap = parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
         }
-        const parentWidth = (parent.id != 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
-        const parentHeight = (parent.id != 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
-        if (this.overflow != 0 && !this.is(WIDGET_ANDROID.TEXT)) {
+        const parentWidth = (parent.id !== 0 ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
+        const parentHeight = (parent.id !== 0 ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
+        if (this.overflow !== OVERFLOW_CHROME.NONE && !this.is(WIDGET_ANDROID.TEXT)) {
             this.android('layout_width', (this.horizontal ? 'wrap_content' : 'match_parent'))
                 .android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
         }
         else {
-            if (this.android('layout_width') != '0px') {
+            if (this.android('layout_width') !== '0px') {
                 if (styleMap.width != null) {
                     this.android('layout_width', convertPX(styleMap.width));
                 }
@@ -217,7 +217,7 @@ export default class Widget extends Node {
             }
             if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
                 if (this.constraint.layoutWidth) {
-                    this.android('layout_width', (this.renderChildren.some((node: Widget) => node.css('float') == 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
+                    this.android('layout_width', (this.renderChildren.some((node: Widget) => node.css('float') === 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
                 }
                 else {
                     this.android('layout_width', 'wrap_content', false);
@@ -232,7 +232,7 @@ export default class Widget extends Node {
                         this.android('layout_width', 'wrap_content');
                     }
                     else {
-                        if (parent.overflow == 0 && width >= parentWidth) {
+                        if (parent.overflow === OVERFLOW_CHROME.NONE && width >= parentWidth) {
                             this.android('layout_width', 'match_parent');
                         }
                         else {
@@ -250,7 +250,7 @@ export default class Widget extends Node {
                     }
                 }
             }
-            if (this.android('layout_height') != '0px') {
+            if (this.android('layout_height') !== '0px') {
                 if (styleMap.height != null || styleMap.lineHeight != null) {
                     this.android('layout_height', convertPX(styleMap.height || styleMap.lineHeight));
                 }
@@ -276,7 +276,7 @@ export default class Widget extends Node {
                         this.android('layout_height', 'wrap_content');
                         break;
                     default:
-                        this.android('layout_height', (!requireWrap && parent.overflow == 0 && height >= parentHeight ? 'match_parent' : 'wrap_content'));
+                        this.android('layout_height', (!requireWrap && parent.overflow === OVERFLOW_CHROME.NONE && height >= parentHeight ? 'match_parent' : 'wrap_content'));
                 }
             }
         }
@@ -285,9 +285,9 @@ export default class Widget extends Node {
         const widget = Resource.ACTION_ANDROID[this.widgetName];
         const element = this.element;
         const result = {};
-        if (element.tagName == 'INPUT' && element.id != '') {
+        if (element.tagName === 'INPUT' && element.id !== '') {
             const nextElement = element.nextElementSibling;
-            if (nextElement != null && nextElement.htmlFor == element.id) {
+            if (nextElement != null && nextElement.htmlFor === element.id) {
                 const node = nextElement.__node;
                 node.setAttributes([2, 4]);
                 node.setAndroidId(WIDGET_ANDROID.TEXT);
@@ -314,7 +314,7 @@ export default class Widget extends Node {
                 if (hasValue(this[action])) {
                     result[action] = formatString(widget[action], this[action]);
                 }
-                else if (typeof Resource[action] == 'function') {
+                else if (typeof Resource[action] === 'function') {
                     const data = Resource[action](this);
                     if (data != null) {
                         const output = [];
@@ -369,8 +369,8 @@ export default class Widget extends Node {
         let element = this.element;
         while (element != null && element.styleMap != null) {
             textAlign = element.styleMap.textAlign || textAlign;
-            const float = (element != this.element ? element.styleMap.float : '');
-            if (float == 'left' || float == 'right' || hasValue(textAlign)) {
+            const float = (element !== this.element ? element.styleMap.float : '');
+            if (float === 'left' || float === 'right' || hasValue(textAlign)) {
                 break;
             }
             element = element.parentNode;
@@ -405,11 +405,11 @@ export default class Widget extends Node {
                     vertical = 'bottom';
                     break;
                 default:
-                    if (this.style.height == this.style.lineHeight || convertInt(this.style.lineHeight) == (this.box.bottom - this.box.top)) {
+                    if (this.style.height === this.style.lineHeight || convertInt(this.style.lineHeight) === (this.box.bottom - this.box.top)) {
                         vertical = 'center_vertical';
                     }
             }
-            const parentTextAlign = (this.styleMap.textAlign != textAlign && !this.renderParent.floating && !this.floating);
+            const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating);
             switch (this.renderParent.widgetName) {
                 case WIDGET_ANDROID.RADIO_GROUP:
                 case WIDGET_ANDROID.LINEAR:
@@ -420,7 +420,7 @@ export default class Widget extends Node {
                 case WIDGET_ANDROID.CONSTRAINT:
                 case WIDGET_ANDROID.RELATIVE:
                     const gravity = [vertical, horizontal].filter(value => value);
-                    this.android('gravity', (gravity.length == 2 ? 'center' : gravity[0]));
+                    this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
                     horizontal = null;
                     vertical = null;
                     break;
@@ -432,7 +432,7 @@ export default class Widget extends Node {
             }
             if (vertical != null || layoutGravity.length > 0) {
                 layoutGravity.push(vertical);
-                this.android('layout_gravity', (layoutGravity.length == 2 ? 'center' : layoutGravity[0]));
+                this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]));
             }
             if (horizontal != null) {
                 this.android('gravity', horizontal);
@@ -449,7 +449,7 @@ export default class Widget extends Node {
         }
         else {
             let widgetName = MAPPING_CHROME[this.tagName];
-            if (typeof widgetName == 'object') {
+            if (typeof widgetName === 'object') {
                 widgetName = widgetName[this.element.type];
             }
             return widgetName;
@@ -471,7 +471,7 @@ export default class Widget extends Node {
         return super.parent as Widget || new Widget(0);
     }
     get horizontal() {
-        return (this._android != null && this._android.orientation == 'horizontal');
+        return (this._android != null && this._android.orientation === 'horizontal');
     }
     get anchored() {
         return (this.constraint.horizontal && this.constraint.vertical);

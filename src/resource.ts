@@ -220,13 +220,13 @@ function parseImageURL(value: string) {
 function parseBoxDimensions(value: string) {
     const match = value.match(/^([0-9]+(?:px|pt|em))( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?$/);
     if (match != null) {
-        if (match[1] == '0px' && match[2] == null) {
+        if (match[1] === '0px' && match[2] == null) {
             return [];
         }
-        if (match[2] == null || (match[1] == match[2] && match[2] == match[3] && match[3] == match[4])) {
+        if (match[2] == null || (match[1] === match[2] && match[2] === match[3] && match[3] === match[4])) {
             return [convertPX(match[1])];
         }
-        else if (match[3] == null || (match[1] == match[3] && match[2] == match[4])) {
+        else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
             return [convertPX(match[1]), convertPX(match[2])];
         }
         else {
@@ -243,16 +243,16 @@ function deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {
                 let index = -1;
                 let key = '';
                 for (const j in sorted[i]) {
-                    if (j == value) {
+                    if (j === value) {
                         index = i;
                         key = j;
                         i = sorted.length;
                         break;
                     }
                 }
-                if (index != -1) {
+                if (index !== -1) {
                     sorted[index][key] = sorted[index][key].filter((id: number) => !ids.includes(id));
-                    if (sorted[index][key].length == 0) {
+                    if (sorted[index][key].length === 0) {
                         delete sorted[index][key];
                     }
                     break;
@@ -276,7 +276,7 @@ export function setResourceStyle(cache: WidgetList) {
     }
     for (const tag in tagName) {
         const nodes = tagName[tag];
-        let sorted = Array.from({ length: nodes.reduce((a: number, b: Widget) => Math.max(a, b.styleAttributes.length), 0) }, value => {
+        let sorted = Array.from({ length: Math.max.apply(null, nodes.map((item: Widget) => item.styleAttributes.length)) }, value => {
             value = {};
             return value;
         });
@@ -316,7 +316,7 @@ export function setResourceStyle(cache: WidgetList) {
                                 value = value.replace(match[1], `"${fontName}"`);
                             }
                             else {
-                                value = value.replace(match[1], `"@font/${fontName.replace(/ /g, '_') + (fontStyle[1] != 'normal' ? `_${fontStyle[1]}` : '') + (fontWeight[1] != '400' ? `_${FONTWEIGHT_ANDROID[fontWeight[1]] || fontWeight[1]}` : '')}"`);
+                                value = value.replace(match[1], `"@font/${fontName.replace(/ /g, '_') + (fontStyle[1] !== 'normal' ? `_${fontStyle[1]}` : '') + (fontWeight[1] !== '400' ? `_${FONTWEIGHT_ANDROID[fontWeight[1]] || fontWeight[1]}` : '')}"`);
                                 remove(sorted[0][fontWeight[0]], id);
                                 remove(sorted[1][fontStyle[0]], id);
                             }
@@ -361,7 +361,7 @@ export function setResourceStyle(cache: WidgetList) {
         style[tag] = {};
         layout[tag] = {};
         do {
-            if (sorted.length == 1) {
+            if (sorted.length === 1) {
                 for (const attr in sorted[0]) {
                     const value = sorted[0][attr];
                     if (value.length > 2) {
@@ -384,15 +384,15 @@ export function setResourceStyle(cache: WidgetList) {
                         }
                         const ids = sorted[i][attr1];
                         let revalidate = false;
-                        if (ids == null || ids.length == 0) {
+                        if (ids == null || ids.length === 0) {
                             continue;
                         }
-                        else if (ids.length == nodes.length) {
+                        else if (ids.length === nodes.length) {
                             styleKey[attr1] = ids;
                             sorted[i] = null;
                             revalidate = true;
                         }
-                        else if (ids.length == 1) {
+                        else if (ids.length === 1) {
                             layoutKey[attr1] = ids;
                             sorted[i] = null;
                             revalidate = true;
@@ -400,7 +400,7 @@ export function setResourceStyle(cache: WidgetList) {
                         if (!revalidate) {
                             const found = {};
                             for (let j = 0; j < sorted.length; j++) {
-                                if (i != j) {
+                                if (i !== j) {
                                     for (const attr in sorted[j]) {
                                         const compare = sorted[j][attr];
                                         for (const id of ids) {
@@ -425,7 +425,7 @@ export function setResourceStyle(cache: WidgetList) {
                     const deleteKeys = new Set();
                     for (const attr1 in filtered) {
                         for (const attr2 in filtered) {
-                            if (attr1 != attr2 && filtered[attr1].join('') == filtered[attr2].join('')) {
+                            if (attr1 !== attr2 && filtered[attr1].join('') === filtered[attr2].join('')) {
                                 const index = filtered[attr1].join(',');
                                 if (combined[index] != null) {
                                     combined[index] = new Set([...combined[index], ...attr2.split(';')]);
@@ -457,7 +457,7 @@ export function setResourceStyle(cache: WidgetList) {
                     layout[tag][attribute] = layoutKey[attribute];
                 }
                 for (let i = 0; i < sorted.length; i++) {
-                    if (sorted[i] != null && Object.keys(sorted[i]).length == 0) {
+                    if (sorted[i] != null && Object.keys(sorted[i]).length === 0) {
                         delete sorted[i];
                     }
                 }
@@ -475,7 +475,7 @@ export function setResourceStyle(cache: WidgetList) {
         }
         tagData.sort((a: any, b: any) => {
             let [c, d] = [a.ids.length, b.ids.length];
-            if (c == d) {
+            if (c === d) {
                 [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
             }
             return (c >= d ? -1 : 1);
@@ -540,7 +540,7 @@ export function insertResourceAsset(resource: Map<string, any>, name: string, va
             }
             i++;
         }
-        while (resource.has(resourceName) && resource.get(resourceName) != value);
+        while (resource.has(resourceName) && resource.get(resourceName) !== value);
     }
     return resourceName;
 }
@@ -549,11 +549,11 @@ export function addResourceString(node: Widget, value: string) {
     const element = (node != null ? node.element : null);
     let name = value;
     if (value == null) {
-        if (element.tagName == 'INPUT' || element.tagName == 'TEXTAREA') {
+        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
             name = element.value;
             value = name;
         }
-        else if (element.nodeName == '#text') {
+        else if (element.nodeName === '#text') {
             name = element.textContent.trim();
             value = name;
         }
@@ -582,7 +582,7 @@ export function addResourceString(node: Widget, value: string) {
         if (SETTINGS.numberResourceValue || !num) {
             value = value.replace(/\s*style=".*?">/g, '>');
             for (const [resourceName, resourceValue] of RESOURCE.STRING.entries()) {
-                if (resourceValue == value) {
+                if (resourceValue === value) {
                     return { text: resourceName };
                 }
             }
@@ -595,7 +595,7 @@ export function addResourceString(node: Widget, value: string) {
             }
             name = insertResourceAsset(RESOURCE.STRING, name, value);
         }
-        if (element != null && element.nodeName == '#text') {
+        if (element != null && element.nodeName === '#text') {
             const prevSibling = element.previousSibling;
             if (prevSibling != null) {
                 const prevNode = prevSibling.__node;
@@ -639,7 +639,7 @@ export function addResourceStringArray(node: Widget) {
     for (let i = 0; i < element.children.length; i++) {
         const item = element.children[i];
         const value = item.text.trim() || item.value.trim();
-        if (value != '') {
+        if (value !== '') {
             if (numberArray != null && !stringArray.size && isNumber(value)) {
                 numberArray.set(value, false);
             }
@@ -662,27 +662,27 @@ export function addResourceStringArray(node: Widget) {
 
 export function addResourceColor(value: string) {
     value = value.toUpperCase().trim();
-    if (value != '') {
+    if (value !== '') {
         let colorName = '';
         if (!RESOURCE.COLOR.has(value)) {
             const color = findNearestColor(value);
             if (color != null) {
                 color.name = cameltoLowerCase(color.name);
-                if (value.toUpperCase().trim() == color.hex) {
+                if (value.toUpperCase().trim() === color.hex) {
                     colorName = color.name;
                 }
                 else {
                     colorName = generateId('color', `${color.name}_1`);
                 }
             }
-            if (colorName != '') {
+            if (colorName !== '') {
                 RESOURCE.COLOR.set(value, colorName);
             }
         }
         else {
             colorName = RESOURCE.COLOR.get(value);
         }
-        if (colorName != '') {
+        if (colorName !== '') {
             return `@color/${colorName}`;
         }
     }
@@ -723,7 +723,7 @@ export function setBackgroundStyle(node: Widget) {
         attributes[i] = attributes[i](style[i]);
     }
     attributes.border[2] = addResourceColor(attributes.border[2]);
-    if (backgroundParent[0] == attributes.backgroundColor[0] || attributes.backgroundColor[4] == 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(attributes.backgroundColor[0])))) {
+    if (backgroundParent[0] === attributes.backgroundColor[0] || attributes.backgroundColor[4] === 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(attributes.backgroundColor[0])))) {
         attributes.backgroundColor = null;
     }
     else {
@@ -736,11 +736,11 @@ export function setBackgroundStyle(node: Widget) {
     borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
     borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
     borderStyle.default = borderStyle[attributes.border[0]] || borderStyle.black;
-    if (attributes.border[0] != 'none') {
+    if (attributes.border[0] !== 'none') {
         let template: {} = null;
         let data: {} = null;
         let resourceName = '';
-        if (attributes.backgroundColor == null && attributes.backgroundImage == null && attributes.borderRadius.length == 0) {
+        if (attributes.backgroundColor == null && attributes.backgroundImage == null && attributes.borderRadius.length === 0) {
             template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
             data = {
                 '0': [{
@@ -756,7 +756,7 @@ export function setBackgroundStyle(node: Widget) {
                     '1': [{
                         '2': [{ width: attributes.border[1], borderStyle: borderStyle.default }],
                         '3': (attributes.backgroundColor != null ? [{ color: attributes.backgroundColor }] : false),
-                        '4': (attributes.borderRadius.length == 1 ? [{ radius: attributes.borderRadius[0] }] : false),
+                        '4': (attributes.borderRadius.length === 1 ? [{ radius: attributes.borderRadius[0] }] : false),
                         '5': (attributes.borderRadius.length > 1 ? [{ topLeftRadius: '' }] : false)
                     }],
                     '6': (attributes.backgroundImage != null ? [{ image: attributes.backgroundImage, width: attributes.backgroundSize[0], height: attributes.backgroundSize[1] }] : false)
@@ -767,7 +767,7 @@ export function setBackgroundStyle(node: Widget) {
                 rootItem[['top', 'right', 'bottom', 'left'][index]] = (item != null ? item[2] : null);
             });
             if (attributes.borderRadius.length > 1) {
-                if (attributes.borderRadius.length == 2) {
+                if (attributes.borderRadius.length === 2) {
                     attributes.borderRadius.push(...attributes.borderRadius.slice());
                 }
                 const borderRadiusItem = getDataLevel(data, '0', '1', '5');
@@ -776,12 +776,12 @@ export function setBackgroundStyle(node: Widget) {
         }
         const xml = parseTemplateData(template, data);
         for (const [name, value] of RESOURCE.DRAWABLE.entries()) {
-            if (value == xml) {
+            if (value === xml) {
                 resourceName = name;
                 break;
             }
         }
-        if (resourceName == '') {
+        if (resourceName === '') {
             resourceName = `${node.tagName.toLowerCase()}_${node.androidId}`;
             RESOURCE.DRAWABLE.set(resourceName, xml);
         }
@@ -804,7 +804,7 @@ export function getViewAttributes(node: Widget) {
                 break;
             }
         }
-        output = (node.renderDepth == 0 ? '{@0}' : '') + attributes.map((value: string) => `\n${indent + value}`).join('');
+        output = (node.renderDepth === 0 ? '{@0}' : '') + attributes.map((value: string) => `\n${indent + value}`).join('');
     }
     return output;
 }
@@ -906,7 +906,7 @@ export function writeResourceFontXml() {
                 rootItem['1'].push({
                     style,
                     weight,
-                    font: `@font/${name + (style == 'normal' && weight == '400' ? `_${style}` : (style != 'normal' ? `_${style}` : '') + (weight != '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
+                    font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
                 });
             }
             xml += '\n\n' + parseTemplateData(template, data);
