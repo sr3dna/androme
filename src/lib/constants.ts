@@ -26,7 +26,7 @@ export enum DENSITY_ANDROID
     XXXHDPI = 640
 }
 
-export enum WIDGET_ANDROID
+export const enum WIDGET_ANDROID
 {
     FRAME = 'FrameLayout',
     LINEAR = 'LinearLayout',
@@ -49,7 +49,7 @@ export enum WIDGET_ANDROID
     SPACE = 'Space'
 }
 
-export enum OVERFLOW_CHROME {
+export const enum OVERFLOW_CHROME {
     NONE = 0,
     HORIZONTAL = 2,
     VERTICAL = 4

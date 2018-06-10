@@ -9,8 +9,8 @@ Library files are in the /dist folder. There is a babel minified for production 
 ```javascript
 <script src="/dist/androme.js"></script>
 <script>
-    androme.settings.targetAPI = 19; // androme.BUILD_ANDROID.KITKAT
-    androme.settings.density = 160; // androme.DENSITY_ANDROID.MDPI
+    androme.settings.targetAPI = 19; // androme.build.KITKAT
+    androme.settings.density = 160; // androme.density.MDPI
 
     // use either console.log() or element.innerHTML to display
 

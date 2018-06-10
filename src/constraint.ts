@@ -1,8 +1,9 @@
+import { IPoint } from './lib/types';
+import Widget from './android/widget';
 import { WIDGET_ANDROID } from './lib/constants';
 import { convertPX, formatPX, indexOf, same, search, withinFraction, withinRange } from './lib/util';
-import { NODE_CACHE } from './cache';
-import { addViewAfter, getStaticTag } from './render';
-import Widget from './android/widget';
+import NODE_CACHE from './cache';
+import { viewHandler } from './render';
 import parseRTL from './lib/localization';
 import SETTINGS from './settings';
 
@@ -63,8 +64,8 @@ function createGuideline(parent: Widget, node: Widget, orientation = '', opposit
             };
             const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
             const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-            const [xml, id] = getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
-            addViewAfter(node.id, xml);
+            const [xml, id] = viewHandler.getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
+            viewHandler.after(node.id, xml, -1);
             node.app(map[LRTB], id)
                 .delete('app', map[RLBT])
                 .constraint[value] = true;
@@ -350,7 +351,7 @@ export function setConstraints() {
                     const chainNodes = flexNodes || nodes.slice().sort((a: Widget, b: Widget) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                     for (const current of chainNodes) {
                         const chainDirection = current.constraint[value];
-                        if (chainDirection != null && chainDirection.length > 0 && (flex.enabled || chainDirection.map((item: Widget) => parseInt((item.constraint[value] || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
+                        if (chainDirection && chainDirection.length > 0 && (flex.enabled || chainDirection.map((item: Widget) => parseInt((item.constraint[value] || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
                             chainDirection.parent = node;
                             if (flex.enabled && chainDirection.some((item: Widget) => item.flex.direction > 0)) {
                                 chainDirection[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
@@ -369,7 +370,7 @@ export function setConstraints() {
                                 const chain = chainDirection[i];
                                 const next = chainDirection[i + 1];
                                 const previous = chainDirection[i - 1];
-                                if (node.flex.enabled) {
+                                if (flex.enabled) {
                                     if (chain.linear[TL] === node.box[TL] && chain.linear[BR] === node.box[BR]) {
                                         setAlignParent(chain, orientationInverse);
                                     }
@@ -573,8 +574,8 @@ export function setConstraints() {
                             }
                             else {
                                 const adjacent = nodes.anchors[0];
-                                const center1 = opposite.center;
-                                const center2 = adjacent.center;
+                                const center1: IPoint = opposite.center;
+                                const center2: IPoint = adjacent.center;
                                 const x = Math.abs(center1.x - center2.x);
                                 const y = Math.abs(center1.y - center2.y);
                                 let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));

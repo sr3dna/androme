@@ -1,7 +1,7 @@
-import { IClientRect, IBoxModel } from '../lib/types';
+import { IClientRect, IBoxModel, IPoint } from '../lib/types';
 import { OVERFLOW_CHROME } from '../lib/constants';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
-import { getRangeBounds } from '../lib/element';
+import { getRangeBounds } from '../lib/dom';
 
 export default abstract class Node implements IBoxModel {
     public static is(object: any) {
@@ -21,6 +21,9 @@ export default abstract class Node implements IBoxModel {
     public children: Node[];
     public renderChildren: Node[];
 
+    public gridRowSpan: number;
+    public gridColumnSpan: number;
+    public gridColumnCount: number;
     public gridFirst: boolean;
     public gridLast: boolean;
     public gridRowEnd: boolean;
@@ -175,23 +178,19 @@ export default abstract class Node implements IBoxModel {
             top: this.bounds.top - this.marginTop,
             right: this.bounds.right + this.marginRight,
             bottom: this.bounds.bottom + this.marginBottom,
-            left: this.bounds.left - this.marginLeft
+            left: this.bounds.left - this.marginLeft,
+            width: 0,
+            height: 0
         };
         this.box = {
             top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
             right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
             bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
-            left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth)
+            left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth),
+            width: 0,
+            height: 0
         };
         this.setDimensions();
-    }
-    public setDimensions() {
-        const linear = this.linear;
-        linear.width = linear.right - linear.left;
-        linear.height = linear.bottom - linear.top;
-        const box = this.box;
-        box.width = box.right - box.left;
-        box.height = box.bottom - box.top;
     }
     public expandDimensions() {
         let [width, height] = [Math.max.apply(null, this.children.map((item: Node) => item.linear.right)), Math.max.apply(null, this.children.map((item: Node) => item.linear.bottom))];
@@ -231,12 +230,29 @@ export default abstract class Node implements IBoxModel {
             this.setBounds(true);
         }
     }
+    public is(...views: string[]) {
+        for (const name of views) {
+            if (this.nodeName === name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected setDimensions() {
+        const linear = this.linear;
+        linear.width = linear.right - linear.left;
+        linear.height = linear.bottom - linear.top;
+        const box = this.box;
+        box.width = box.right - box.left;
+        box.height = box.bottom - box.top;
+    }
 
     set parent(value) {
         if (!Node.is(value) || value === this._parent) {
             return;
         }
-        if (this._parent != null && this._parentOriginal == null) {
+        if (this._parent && this._parentOriginal == null) {
             this._parentOriginal = this._parent;
         }
         this._parent = value;
@@ -267,40 +283,27 @@ export default abstract class Node implements IBoxModel {
     get renderParent() {
         return this._renderParent;
     }
-    get childrenBox() {
-        let minLeft = Number.MAX_VALUE;
-        let maxRight = Number.MIN_VALUE;
-        let minTop = Number.MAX_VALUE;
-        let maxBottom = Number.MIN_VALUE;
-        for (const node of this.children) {
-            minLeft = Math.min(node.bounds.left, minLeft);
-            maxRight = Math.max(node.bounds.right, maxRight);
-            minTop = Math.min(node.bounds.top, minTop);
-            maxBottom = Math.max(node.bounds.bottom, maxBottom);
-        }
-        return [maxRight - minLeft, maxBottom - minTop];
-    }
     get namespaces() {
         return Array.from(this._namespaces);
     }
-    set tagName(value) {
-        this._tagName = value;
-    }
     get tagName() {
-        return this._tagName || this.element.tagName;
+        return this.element.tagName;
+    }
+    get nodeName() {
+        return this.tagName;
     }
     get flex() {
         if (this._flex == null) {
             const parent = this.parentElement && this.parentElement.__node;
             this._flex = {
                 parent,
-                enabled: (this.style.display != null && this.style.display.indexOf('flex') !== -1),
+                enabled: (this.style.display && this.style.display.indexOf('flex') !== -1),
                 direction: this.style.flexDirection,
                 basis: this.style.flexBasis,
                 grow: convertInt(this.style.flexGrow),
                 shrink: convertInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
-                alignSelf: (parent != null && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
+                alignSelf: (parent && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
                 justifyContent: this.style.justifyContent,
                 order: convertInt(this.style.order)
             };
@@ -374,7 +377,7 @@ export default abstract class Node implements IBoxModel {
     get paddingRight() {
         return convertInt(this.css('paddingRight'));
     }
-    get center(): IClientRect {
+    get center(): IPoint {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
     }
 }

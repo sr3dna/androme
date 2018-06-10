@@ -1,10 +1,10 @@
 import { WIDGET_ANDROID, BUILD_ANDROID } from './lib/constants';
-import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber, padLeft, remove, replaceDP } from './lib/util';
-import { convertRGBtoHex, findNearestColor, parseRGBA } from './lib/color';
-import { getBoxSpacing, getStyle } from './lib/element';
-import { getDataLevel, parseTemplateData, parseTemplateMatch } from './lib/xml';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
+import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber, padLeft, remove, replaceDP } from './lib/util';
+import { convertRGBtoHex, findNearestColor, parseRGBA } from './lib/color';
+import { getBoxSpacing, getStyle } from './lib/dom';
+import { getDataLevel, parseTemplateData, parseTemplateMatch } from './lib/xml';
 import SETTINGS from './settings';
 
 import STRING_TMPL from './tmpl/resources/string';
@@ -311,7 +311,7 @@ export function setResourceStyle(cache: WidgetList) {
                     case 2:
                         if ((match = value.match(/fontFamily=("+(.*?)"+)$/)) != null) {
                             fontName = match[2].toLowerCase().split(',')[0].replace(/"/g, '').trim();
-                            if ((FONT_ANDROID[fontName] != null && SETTINGS.targetAPI >= FONT_ANDROID[fontName]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontName] != null && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontName]])) {
+                            if ((FONT_ANDROID[fontName] && SETTINGS.targetAPI >= FONT_ANDROID[fontName]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontName] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontName]])) {
                                 system = true;
                                 value = value.replace(match[1], `"${fontName}"`);
                             }
@@ -457,7 +457,7 @@ export function setResourceStyle(cache: WidgetList) {
                     layout[tag][attribute] = layoutKey[attribute];
                 }
                 for (let i = 0; i < sorted.length; i++) {
-                    if (sorted[i] != null && Object.keys(sorted[i]).length === 0) {
+                    if (sorted[i] && Object.keys(sorted[i]).length === 0) {
                         delete sorted[i];
                     }
                 }
@@ -595,11 +595,11 @@ export function addResourceString(node: Widget, value: string) {
             }
             name = insertResourceAsset(RESOURCE.STRING, name, value);
         }
-        if (element != null && element.nodeName === '#text') {
+        if (element && element.nodeName === '#text') {
             const prevSibling = element.previousSibling;
             if (prevSibling != null) {
                 const prevNode = prevSibling.__node;
-                switch (prevNode.widgetName) {
+                switch (prevNode.nodeName) {
                     case WIDGET_ANDROID.CHECKBOX:
                     case WIDGET_ANDROID.RADIO:
                         prevNode.android('text', (!SETTINGS.numberResourceValue && num ? name : `@string/${name}`));
@@ -640,11 +640,11 @@ export function addResourceStringArray(node: Widget) {
         const item = element.children[i];
         const value = item.text.trim() || item.value.trim();
         if (value !== '') {
-            if (numberArray != null && !stringArray.size && isNumber(value)) {
+            if (numberArray && !stringArray.size && isNumber(value)) {
                 numberArray.set(value, false);
             }
             else {
-                if (numberArray != null && numberArray.size > 0) {
+                if (numberArray && numberArray.size > 0) {
                     i = -1;
                     numberArray = null;
                     continue;

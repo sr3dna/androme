@@ -20,10 +20,16 @@ export default class Layout extends Widget {
     public inheritGrid(node: Widget) {
         for (const prop in node) {
             if (prop.startsWith('grid')) {
-                if (node[prop] !== false) {
-                    this[prop] = node[prop];
+                if (typeof node[prop] === 'number') {
+                    this[prop] += node[prop];
+                    node[prop] = 0;
                 }
-                delete node[prop];
+                else {
+                    if (node[prop] !== false) {
+                        this[prop] = node[prop];
+                        node[prop] = false;
+                    }
+                }
             }
         }
     }
@@ -33,7 +39,7 @@ export default class Layout extends Widget {
             parent: this.parentOriginal,
             width,
             height,
-            requireWrap: (<Widget> this.parent).is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
+            requireWrap: this.parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
         };
         super.setAndroidDimensions(options);
     }
@@ -41,12 +47,14 @@ export default class Layout extends Widget {
         const nodes = this.outerRegion;
         if (!calibrate) {
             this.bounds = {
+                x: nodes.left[0].bounds.x,
+                y: nodes.top[0].bounds.y,
                 top: nodes.top[0].bounds.top,
                 right: nodes.right[0].bounds.right,
                 bottom: nodes.bottom[0].bounds.bottom,
                 left: nodes.left[0].bounds.left,
-                x: nodes.left[0].bounds.x,
-                y: nodes.top[0].bounds.y
+                width: 0,
+                height: 0
             };
             this.bounds.width = this.bounds.right - this.bounds.left;
             this.bounds.height = this.bounds.bottom - this.bounds.top;
@@ -55,17 +63,34 @@ export default class Layout extends Widget {
             top: nodes.top[0].linear.top,
             right: nodes.right[0].linear.right,
             bottom: nodes.bottom[0].linear.bottom,
-            left: nodes.left[0].linear.left
+            left: nodes.left[0].linear.left,
+            width: 0,
+            height: 0
         };
         this.box = {
             top: nodes.top[0].box.top,
             right: nodes.right[0].box.right,
             bottom: nodes.bottom[0].box.bottom,
-            left: nodes.left[0].box.left
+            left: nodes.left[0].box.left,
+            width: 0,
+            height: 0
         };
         this.setDimensions();
     }
 
+    get childrenBox() {
+        let minLeft = Number.MAX_VALUE;
+        let maxRight = Number.MIN_VALUE;
+        let minTop = Number.MAX_VALUE;
+        let maxBottom = Number.MIN_VALUE;
+        for (const node of this.children) {
+            minLeft = Math.min(node.bounds.left, minLeft);
+            maxRight = Math.max(node.bounds.right, maxRight);
+            minTop = Math.min(node.bounds.top, minTop);
+            maxBottom = Math.max(node.bounds.bottom, maxBottom);
+        }
+        return [maxRight - minLeft, maxBottom - minTop];
+    }
     get outerRegion() {
         const children = this.children;
         let top = [children[0]];

@@ -1,48 +1,17 @@
-import { BLOCK_CHROME, BUILD_ANDROID, DENSITY_ANDROID, INLINE_CHROME, MAPPING_CHROME, OVERFLOW_CHROME, WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
-import * as Util from './lib/util';
-import * as Color from './lib/color';
-import * as Element from './lib/element';
-import { NODE_CACHE, generateNodeId } from './cache';
-import { getViewAttributes, setResourceStyle, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './resource';
-import { setConstraints } from './constraint';
-import { insertViewBeforeAfter, renderViewLayout, renderViewTag } from './render';
+import { BLOCK_CHROME, BUILD_ANDROID as build, DENSITY_ANDROID as density, INLINE_CHROME, MAPPING_CHROME, OVERFLOW_CHROME, WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import Layout from './android/layout';
+import { convertInt, hasValue, hyphenToCamelCase, formatPX, replaceDP, sortAsc } from './lib/util';
+import { convertRGB, getByColorName } from './lib/color';
+import { hasFreeFormText, isVisible } from './lib/dom';
+import NODE_CACHE from './cache';
+import { getViewAttributes, setResourceStyle, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './resource';
+import { setConstraints } from './constraint';
+import { insertViewBeforeAfter, writeFrameLayout, writeLinearLayout, writeGridLayout, writeDefaultLayout, writeViewTag } from './render';
 import parseRTL from './lib/localization';
-import { API_ANDROID } from './customizations';
-import SETTINGS from './settings';
-
-function writeFrameLayout(node: Widget, parent: Widget) {
-    return renderViewLayout(node, parent, WIDGET_ANDROID.FRAME);
-}
-
-function writeLinearLayout(node: Widget, parent: Widget, vertical: boolean) {
-    node.android('orientation', (vertical ? 'vertical' : 'horizontal'));
-    return renderViewLayout(node, parent, WIDGET_ANDROID.LINEAR);
-}
-
-function writeGridLayout(node: Widget, parent: Widget, columnCount: number) {
-    node.android('columnCount', columnCount.toString());
-    return renderViewLayout(node, parent, WIDGET_ANDROID.GRID);
-}
-
-function writeRelativeLayout(node: Widget, parent: Widget) {
-    return renderViewLayout(node, parent, WIDGET_ANDROID.RELATIVE);
-}
-
-function writeConstraintLayout(node: Widget, parent: Widget) {
-    return renderViewLayout(node, parent, WIDGET_ANDROID.CONSTRAINT);
-}
-
-function writeDefaultLayout(node: Widget, parent: Widget) {
-    if (SETTINGS.useConstraintLayout || node.flex.enabled) {
-        return writeConstraintLayout(node, parent);
-    }
-    else {
-        return writeRelativeLayout(node, parent);
-    }
-}
+import api from './android/customizations';
+import settings from './settings';
 
 function setInlineAttributes(output: string) {
     const namespaces = {};
@@ -60,22 +29,22 @@ function setStyleMap() {
             const elements = document.querySelectorAll(rule.selectorText);
             const attributes = new Set();
             for (const style of rule.styleMap) {
-                attributes.add(Util.hyphenToCamelCase(style[0]));
+                attributes.add(hyphenToCamelCase(style[0]));
             }
             for (const element of Array.from(elements)) {
                 for (const attr of element.style) {
-                    attributes.add(Util.hyphenToCamelCase(attr));
+                    attributes.add(hyphenToCamelCase(attr));
                 }
                 const style = getComputedStyle(element);
                 const styleMap = {};
                 for (const name of attributes) {
                     if (name.toLowerCase().indexOf('color') !== -1) {
-                        const color = Color.getByColorName(rule.style[name]);
+                        const color = getByColorName(rule.style[name]);
                         if (color != null) {
-                            rule.style[name] = Color.convertRGB(color);
+                            rule.style[name] = convertRGB(color);
                         }
                     }
-                    if (Util.hasValue(element.style[name])) {
+                    if (hasValue(element.style[name])) {
                         styleMap[name] = element.style[name];
                     }
                     else if (style[name] === rule.style[name]) {
@@ -95,12 +64,12 @@ function setStyleMap() {
 
 function setAccessibility() {
     for (const node of NODE_CACHE.visible) {
-        switch (node.widgetName) {
+        switch (node.nodeName) {
             case WIDGET_ANDROID.EDIT:
                 let parent: Widget = node.renderParent;
                 let current: Widget = node;
                 let label: Widget = null;
-                while (parent != null && parent.renderChildren != null) {
+                while (parent && parent.renderChildren != null) {
                     const index = parent.renderChildren.findIndex((item: Widget) => item === current);
                     if (index > 0) {
                         label = parent.renderChildren[index - 1] as Widget;
@@ -109,7 +78,7 @@ function setAccessibility() {
                     current = parent;
                     parent = parent.renderParent;
                 }
-                if (label != null && label.is(WIDGET_ANDROID.TEXT)) {
+                if (label && label.is(WIDGET_ANDROID.TEXT)) {
                     label.android('labelFor', node.stringId);
                 }
             case WIDGET_ANDROID.SPINNER:
@@ -150,46 +119,46 @@ function setMarginPadding() {
                     break;
             }
         }
-        if (SETTINGS.targetAPI >= BUILD_ANDROID.OREO) {
+        if (settings.targetAPI >= build.OREO) {
             if (node.visible) {
                 const marginLeftRtl = parseRTL('layout_marginLeft');
                 const marginRightRtl = parseRTL('layout_marginRight');
                 const paddingLeftRtl = parseRTL('paddingLeft');
                 const paddingRightRtl = parseRTL('paddingRight');
-                const marginTop = Util.convertInt(node.android('layout_marginTop'));
-                const marginRight = Util.convertInt(node.android(marginRightRtl));
-                const marginBottom = Util.convertInt(node.android('layout_marginBottom'));
-                const marginLeft = Util.convertInt(node.android(marginLeftRtl));
+                const marginTop = convertInt(node.android('layout_marginTop'));
+                const marginRight = convertInt(node.android(marginRightRtl));
+                const marginBottom = convertInt(node.android('layout_marginBottom'));
+                const marginLeft = convertInt(node.android(marginLeftRtl));
                 if (marginTop !== 0 && marginTop === marginBottom && marginBottom === marginLeft && marginLeft === marginRight) {
                     node.delete('android', 'layout_margin*')
-                        .android('layout_margin', Util.formatPX(marginTop));
+                        .android('layout_margin', formatPX(marginTop));
                 }
                 else {
                     if (marginTop !== 0 && marginTop === marginBottom) {
                         node.delete('android', 'layout_marginTop', 'layout_marginBottom')
-                            .android('layout_marginVertical', Util.formatPX(marginTop));
+                            .android('layout_marginVertical', formatPX(marginTop));
                     }
                     if (marginLeft !== 0 && marginLeft === marginRight) {
                         node.delete('android', marginLeftRtl, marginRightRtl)
-                            .android('layout_marginHorizontal', Util.formatPX(marginLeft));
+                            .android('layout_marginHorizontal', formatPX(marginLeft));
                     }
                 }
-                const paddingTop = Util.convertInt(node.android('paddingTop'));
-                const paddingRight = Util.convertInt(node.android(paddingRightRtl));
-                const paddingBottom = Util.convertInt(node.android('paddingBottom'));
-                const paddingLeft = Util.convertInt(node.android(paddingLeftRtl));
+                const paddingTop = convertInt(node.android('paddingTop'));
+                const paddingRight = convertInt(node.android(paddingRightRtl));
+                const paddingBottom = convertInt(node.android('paddingBottom'));
+                const paddingLeft = convertInt(node.android(paddingLeftRtl));
                 if (paddingTop !== 0 && paddingTop === paddingBottom && paddingBottom === paddingLeft && paddingLeft === paddingRight) {
                     node.delete('android', 'padding*')
-                        .android('padding', Util.formatPX(paddingTop));
+                        .android('padding', formatPX(paddingTop));
                 }
                 else {
                     if (paddingTop !== 0 && paddingTop === paddingBottom) {
                         node.delete('android', 'paddingTop', 'paddingBottom')
-                            .android('paddingVertical', Util.formatPX(paddingTop));
+                            .android('paddingVertical', formatPX(paddingTop));
                     }
                     if (paddingLeft !== 0 && paddingLeft === paddingRight) {
                         node.delete('android', paddingLeftRtl, paddingRightRtl)
-                            .android('paddingHorizontal', Util.formatPX(paddingLeft));
+                            .android('paddingHorizontal', formatPX(paddingLeft));
                     }
                 }
             }
@@ -227,8 +196,8 @@ function setLayoutWeight() {
 }
 
 function createNode(element: HTMLElement) {
-    if (Element.isVisible(element)) {
-        const node = new Widget(generateNodeId(), SETTINGS.targetAPI, element);
+    if (isVisible(element)) {
+        const node = new Widget(NODE_CACHE.nextId, settings.targetAPI, element);
         NODE_CACHE.push(node);
         return node;
     }
@@ -243,7 +212,7 @@ function setNodeCache(documentRoot: HTMLElement) {
             }
         }
         else {
-            if (Element.isVisible(item)) {
+            if (isVisible(item)) {
                 nodeTotal++;
             }
         }
@@ -274,11 +243,11 @@ function setNodeCache(documentRoot: HTMLElement) {
         style.verticalAlign = node.styleMap.verticalAlign || '';
         node.element.style.verticalAlign = 'top';
         if (node.overflow !== OVERFLOW_CHROME.NONE) {
-            if (Util.hasValue(node.styleMap.width)) {
+            if (hasValue(node.styleMap.width)) {
                 style.width = node.styleMap.width;
                 node.element.style.width = '';
             }
-            if (Util.hasValue(node.styleMap.height)) {
+            if (hasValue(node.styleMap.height)) {
                 style.height = node.styleMap.height;
                 node.element.style.height = '';
             }
@@ -335,10 +304,10 @@ function setNodeCache(documentRoot: HTMLElement) {
                 node.parent = parent;
             }
         }
-        if (node.element.children != null && node.element.children.length > 1) {
+        if (node.element.children && node.element.children.length > 1) {
             node.element.childNodes.forEach((element: HTMLElement) => {
                 if (element.nodeName === '#text' && element.textContent.trim() !== '') {
-                    const widget = new Widget(generateNodeId(), SETTINGS.targetAPI, null, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
+                    const widget = new Widget(NODE_CACHE.nextId, settings.targetAPI, null, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
                     widget.setAndroidId(WIDGET_ANDROID.TEXT);
                     widget.setBounds(false, element);
                     widget.inheritStyle(node);
@@ -356,7 +325,7 @@ function setNodeCache(documentRoot: HTMLElement) {
             }
         }
     }
-    Util.sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');
+    sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');
     for (const node of NODE_CACHE) {
         let i = 0;
         Array.from(node.element.childNodes).forEach((element: any) => {
@@ -418,24 +387,24 @@ export function parseDocument(element: any) {
                 }
                 return (a.parentIndex > b.parentIndex ? 1 : -1);
             });
-            axisY.push(...Util.sortAsc(layers, 'style.zIndex', 'parentIndex'));
+            axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
             for (let k = 0; k < axisY.length; k++) {
                 const nodeY = axisY[k];
                 if (!nodeY.renderParent) {
                     const parent = nodeY.parent;
-                    let tagName = nodeY.widgetName;
+                    let tagName = nodeY.nodeName;
                     let restart = false;
                     let xml = '';
                     if (tagName == null) {
-                        if ((nodeY.children.length === 0 && Element.hasFreeFormText(nodeY.element)) || nodeY.children.every((item: Widget) => INLINE_CHROME.includes(item.tagName))) {
+                        if ((nodeY.children.length === 0 && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: Widget) => INLINE_CHROME.includes(item.tagName))) {
                             tagName = WIDGET_ANDROID.TEXT;
                         }
                         else if (nodeY.children.length > 0) {
                             const rows = nodeY.children;
-                            if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every((item: Widget) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                            if (settings.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every((item: Widget) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
                                 let columns: any[][] = [];
                                 const columnEnd = [];
-                                if (SETTINGS.useLayoutWeight) {
+                                if (settings.useLayoutWeight) {
                                     const dimensions: number[][] = [];
                                     for (let l = 0; l < rows.length; l++) {
                                         const children = rows[l].children;
@@ -522,7 +491,7 @@ export function parseDocument(element: any) {
                                             columnRight[l] = (l === 0 ? Number.MIN_VALUE : columnRight[l - 1]);
                                             for (let m = 0; m < nextAxisX.length; m++) {
                                                 const nextX = nextAxisX[m];
-                                                if (nextX.parent.parent != null && nodeY.id === nextX.parent.parent.id) {
+                                                if (nextX.parent.parent && nodeY.id === nextX.parent.parent.id) {
                                                     const [left, right] = [nextX.bounds.left, nextX.bounds.right];
                                                     if (l === 0 || left >= columnRight[l - 1]) {
                                                         if (columns[l] == null) {
@@ -566,7 +535,7 @@ export function parseDocument(element: any) {
                                                     }
                                                     else if (nodeX.bounds.top !== top) {
                                                         const nextRowX = columns[m - 1][l + 1];
-                                                        if (columns[m][l - 1] == null || (nextRowX != null && nextRowX.bounds.top === nodeX.bounds.top)) {
+                                                        if (columns[m][l - 1] == null || (nextRowX && nextRowX.bounds.top === nodeX.bounds.top)) {
                                                             columns[m].splice(l, 0, { spacer: 1 });
                                                         }
                                                         else if (columns[m][l + 1] == null) {
@@ -584,8 +553,8 @@ export function parseDocument(element: any) {
                                 }
                                 if (columns.length > 1) {
                                     nodeY.gridColumnEnd = columnEnd;
-                                    nodeY.gridColumnSpan = (SETTINGS.useLayoutWeight ? columns[0].length : columns.length);
-                                    xml += writeGridLayout(nodeY, parent, nodeY.gridColumnSpan);
+                                    nodeY.gridColumnCount = (settings.useLayoutWeight ? columns[0].length : columns.length);
+                                    xml += writeGridLayout(nodeY, parent, nodeY.gridColumnCount);
                                     for (let l = 0, count = 0; l < columns.length; l++) {
                                         let spacer = 0;
                                         for (let m = 0, start = 0; m < columns[l].length; m++) {
@@ -593,7 +562,7 @@ export function parseDocument(element: any) {
                                             if (!node.spacer) {
                                                 node.parent.hide();
                                                 node.parent = nodeY;
-                                                if (SETTINGS.useLayoutWeight) {
+                                                if (settings.useLayoutWeight) {
                                                     node.gridRowStart = (m === 0);
                                                     node.gridRowEnd = (m === columns[l].length - 1);
                                                     node.gridFirst = (l === 0 && m === 0);
@@ -624,10 +593,10 @@ export function parseDocument(element: any) {
                                                         }
                                                     }
                                                     if (rowSpan > 1) {
-                                                        node.android('layout_rowSpan', rowSpan);
+                                                        node.gridRowSpan = rowSpan;
                                                     }
                                                     if (columnSpan > 1) {
-                                                        node.android('layout_columnSpan', columnSpan);
+                                                        node.gridColumnSpan = columnSpan;
                                                     }
                                                     node.gridRowStart = (start++ === 0);
                                                     node.gridRowEnd = (columnSpan + l === columns.length);
@@ -664,29 +633,19 @@ export function parseDocument(element: any) {
                     if (!nodeY.renderParent) {
                         if (parent.is(WIDGET_ANDROID.GRID)) {
                             let siblings: WidgetList = null;
-                            const rowSpan = nodeY.android('layout_rowSpan') || 1;
-                            const columnSpan = nodeY.android('layout_columnSpan') || 1;
-                            if (SETTINGS.useLayoutWeight) {
+                            if (settings.useLayoutWeight) {
                                 siblings = new WidgetList(nodeY.gridSiblings);
                             }
                             else {
-                                const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + (columnSpan - 1)];
+                                const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
                                 siblings = nodeY.parentOriginal.children.filter((item: Widget) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
                             }
                             if (siblings.length > 0) {
                                 siblings.unshift(nodeY);
                                 siblings.sortAsc('bounds.x');
                                 const renderParent = parent;
-                                const layout = new Layout(generateNodeId(), nodeY, parent, siblings, [0]);
+                                const layout = new Layout(NODE_CACHE.nextId, nodeY, parent, siblings, [0]);
                                 NODE_CACHE.push(layout);
-                                if (rowSpan > 1) {
-                                    nodeY.delete('android', 'layout_rowSpan');
-                                    layout.android('layout_rowSpan', rowSpan);
-                                }
-                                if (columnSpan > 1) {
-                                    nodeY.delete('android', 'layout_columnSpan');
-                                    layout.android('layout_columnSpan', columnSpan);
-                                }
                                 for (const node of siblings) {
                                     node.parent = layout;
                                     layout.inheritGrid(node);
@@ -703,7 +662,7 @@ export function parseDocument(element: any) {
                             }
                         }
                         if (!nodeY.renderParent && !restart) {
-                            xml += renderViewTag(nodeY, parent, tagName);
+                            xml += writeViewTag(nodeY, parent, tagName);
                         }
                     }
                     if (xml !== '') {
@@ -720,9 +679,9 @@ export function parseDocument(element: any) {
         }
     }
     setResourceStyle(NODE_CACHE);
-    if (SETTINGS.showAttributes) {
+    if (settings.showAttributes) {
         setMarginPadding();
-        if (SETTINGS.useLayoutWeight) {
+        if (settings.useLayoutWeight) {
             setLayoutWeight();
         }
         setAccessibility();
@@ -731,12 +690,11 @@ export function parseDocument(element: any) {
     }
     output = insertViewBeforeAfter(output);
     output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
-    if (SETTINGS.useUnitDP) {
-        output = Util.replaceDP(output, SETTINGS.density);
+    if (settings.useUnitDP) {
+        output = replaceDP(output, settings.density);
     }
     return output;
 }
 
-export const settings = SETTINGS;
-export { BUILD_ANDROID, DENSITY_ANDROID, API_ANDROID };
-export { writeResourceStringXml, writeResourceArrayXml, writeResourceStyleXml, writeResourceFontXml, writeResourceColorXml, writeResourceDrawableXml };
+export { api, build, density, settings as settings };
+export { writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml };

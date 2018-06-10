@@ -73,4 +73,7 @@ export default class NodeList extends Array {
         }
         return false;
     }
+    get nextId() {
+        return this.length + 1;
+    }
 }

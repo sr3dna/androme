@@ -1,6 +1,6 @@
-import { BUILD_ANDROID } from './lib/constants';
+import { BUILD_ANDROID } from '../lib/constants';
 
-export const API_ANDROID =
+export default
 {
     [BUILD_ANDROID.OREO]:
     {

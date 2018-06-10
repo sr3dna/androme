@@ -23,7 +23,8 @@
     "no-angle-bracket-type-assertion": false,
     "variable-name": [true, "ban-keywords", "check-format", "allow-leading-underscore"],
     "no-bitwise": false,
-    "no-console": false
+    "no-console": false,
+    "no-empty": false
   },
   "rulesDirectory": []
 }
