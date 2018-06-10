@@ -119,10 +119,11 @@ export function setConstraints() {
         rightLeft: parseRTL('layout_constraintRight_toLeftOf')
     });
     for (const node of NODE_CACHE.visible) {
+        const nodes = node.renderChildren;
         const constraint = node.is(WIDGET_ANDROID.CONSTRAINT);
         const relative = node.is(WIDGET_ANDROID.RELATIVE);
         const flex = node.flex;
-        if (constraint || relative || flex.enabled) {
+        if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
             node.expandDimensions();
             if (node.is(WIDGET_ANDROID.LINEAR)) {
                 if (node.renderChildren.some((item: Widget) => item.flex.direction.indexOf('row') !== -1)) {
@@ -136,7 +137,6 @@ export function setConstraints() {
                 continue;
             }
             const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
-            const nodes = node.renderChildren;
             if (!flex.enabled) {
                 for (const current of nodes) {
                     if (withinRange(parseFloat(current.horizontalBias), 0.5, 0.01) && withinRange(parseFloat(current.verticalBias), 0.5, 0.01)) {

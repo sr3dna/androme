@@ -546,7 +546,7 @@ export function insertResourceAsset(resource: Map<string, any>, name: string, va
 }
 
 export function addResourceString(node: Widget, value: string) {
-    const element = (node != null ? node.element : null);
+    const element = node && node.element;
     let name = value;
     if (value == null) {
         if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
@@ -565,7 +565,7 @@ export function addResourceString(node: Widget, value: string) {
     if (hasValue(value)) {
         if (node != null) {
             if (node.is(WIDGET_ANDROID.TEXT)) {
-                const match = (node.style.textDecoration != null ? node.style.textDecoration.match(/(underline|line-through)/) : null);
+                const match = node.style.textDecoration && node.style.textDecoration.match(/(underline|line-through)/);
                 if (match != null) {
                     switch (match[0]) {
                         case 'underline':
@@ -764,7 +764,7 @@ export function setBackgroundStyle(node: Widget) {
             };
             const rootItem = getDataLevel(data, '0');
             [attributes.borderTopWidth, attributes.borderRightWidth, attributes.borderBottomWidth, attributes.borderLeftWidth].forEach((item, index) => {
-                rootItem[['top', 'right', 'bottom', 'left'][index]] = (item != null ? item[2] : null);
+                rootItem[['top', 'right', 'bottom', 'left'][index]] = item && item[2];
             });
             if (attributes.borderRadius.length > 1) {
                 if (attributes.borderRadius.length === 2) {

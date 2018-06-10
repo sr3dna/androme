@@ -86,7 +86,7 @@ function setStyleMap() {
                     Object.assign(element.styleMap, styleMap);
                 }
                 else {
-                    element.styleMap = styleMap;
+                    element.__styleMap = styleMap;
                 }
             }
         }
@@ -228,8 +228,9 @@ function setLayoutWeight() {
 
 function createNode(element: HTMLElement) {
     if (Element.isVisible(element)) {
-        const node = new Widget(generateNodeId(), element, SETTINGS.targetAPI);
+        const node = new Widget(generateNodeId(), SETTINGS.targetAPI, element);
         NODE_CACHE.push(node);
+        return node;
     }
 }
 
@@ -249,7 +250,8 @@ function setNodeCache(documentRoot: HTMLElement) {
     });
     const elements: any = (documentRoot != null ? documentRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
     if (documentRoot != null) {
-        createNode(documentRoot);
+        const node = createNode(documentRoot);
+        node.parent = new Widget(0, 0);
     }
     for (const i in elements) {
         if (INLINE_CHROME.includes(elements[i].tagName) && (MAPPING_CHROME[elements[i].parentNode.tagName] != null || INLINE_CHROME.includes(elements[i].parentNode.tagName))) {
@@ -336,7 +338,7 @@ function setNodeCache(documentRoot: HTMLElement) {
         if (node.element.children != null && node.element.children.length > 1) {
             node.element.childNodes.forEach((element: HTMLElement) => {
                 if (element.nodeName === '#text' && element.textContent.trim() !== '') {
-                    const widget = new Widget(generateNodeId(), null, SETTINGS.targetAPI, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
+                    const widget = new Widget(generateNodeId(), SETTINGS.targetAPI, null, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
                     widget.setAndroidId(WIDGET_ANDROID.TEXT);
                     widget.setBounds(false, element);
                     widget.inheritStyle(node);
@@ -675,7 +677,7 @@ export function parseDocument(element: any) {
                                 siblings.unshift(nodeY);
                                 siblings.sortAsc('bounds.x');
                                 const renderParent = parent;
-                                const layout = new Layout(generateNodeId(), nodeY, SETTINGS.targetAPI, parent, siblings, [0]);
+                                const layout = new Layout(generateNodeId(), nodeY, parent, siblings, [0]);
                                 NODE_CACHE.push(layout);
                                 if (rowSpan > 1) {
                                     nodeY.delete('android', 'layout_rowSpan');

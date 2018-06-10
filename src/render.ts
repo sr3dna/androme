@@ -30,7 +30,7 @@ function getEnclosingTag(depth: number, tagName: string, id: number, content = '
 }
 
 function setGridSpace(node: Widget) {
-    if (node.parent.is(WIDGET_ANDROID.GRID)) {
+    if ((<Widget> node.parent).is(WIDGET_ANDROID.GRID)) {
         const dimensions = getBoxSpacing(node.parentOriginal.element, true);
         const options = {
             android: {
@@ -84,7 +84,7 @@ export function renderViewLayout(node: Widget, parent: Widget, tagName: string) 
         let scrollDepth = parent.renderDepth + scrollView.length;
         scrollView
             .map(widgetName => {
-                const layout = new Layout(generateNodeId(), current, SETTINGS.targetAPI, null, new WidgetList([current]));
+                const layout = new Layout(generateNodeId(), current, null, new WidgetList([current]));
                 NODE_CACHE.push(layout);
                 layout.setAndroidId(widgetName);
                 layout.setBounds();
@@ -195,7 +195,7 @@ export function renderViewTag(node: Widget, parent: Widget, tagName: string, rec
                     let rowSpan = 1;
                     let columnSpan = 1;
                     let checked: Widget = null;
-                    const layout = new Layout(generateNodeId(), node, SETTINGS.targetAPI, parent, result);
+                    const layout = new Layout(generateNodeId(), node, parent, result);
                     NODE_CACHE.push(layout);
                     layout.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
                     layout.render(parent);
@@ -241,7 +241,7 @@ export function renderViewTag(node: Widget, parent: Widget, tagName: string, rec
 
 export function getStaticTag(widgetName: string, depth: number, options: {}, width = 'wrap_content', height = 'wrap_content') {
     let attributes = '';
-    const node = new Widget(0, null, SETTINGS.targetAPI);
+    const node = new Widget(0, SETTINGS.targetAPI);
     node.setAndroidId(widgetName);
     if (SETTINGS.showAttributes) {
         node.apply(options)

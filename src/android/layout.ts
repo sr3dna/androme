@@ -6,7 +6,7 @@ export default class Layout extends Widget {
         return (object instanceof Layout);
     }
 
-    constructor(id: number, node: Widget, api = 0, parent: Widget | null, children: Widget[], actions?: number[]) {
+    constructor(id: number, node: Widget, parent: Widget | null, children: Widget[], actions?: number[]) {
         const options = {
             parent,
             children,
@@ -14,7 +14,7 @@ export default class Layout extends Widget {
             parentOriginal: node.parentOriginal,
             actions
         };
-        super(id, null, api, options);
+        super(id, node.api, null, options);
     }
 
     public inheritGrid(node: Widget) {
@@ -33,7 +33,7 @@ export default class Layout extends Widget {
             parent: this.parentOriginal,
             width,
             height,
-            requireWrap: this.parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
+            requireWrap: (<Widget> this.parent).is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
         };
         super.setAndroidDimensions(options);
     }

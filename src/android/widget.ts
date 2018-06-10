@@ -12,10 +12,10 @@ export default class Widget extends Node {
     }
 
     public actions: number[];
-    public constraint: any;
+    public constraint: any = {};
     public labelFor: Widget;
     public linearRows: Widget[];
-    public styleAttributes: string[];
+    public styleAttributes: string[] = [];
 
     public androidId: string;
     public androidWidgetName: string;
@@ -25,13 +25,8 @@ export default class Widget extends Node {
     private _app: any;
     private _label: Widget;
 
-    constructor(id: number, element: any = null, api: number = 0, options: any = {}) {
-        super(id, element, api, options);
-
-        this.labelFor = null;
-        this.styleAttributes = [];
-        this.constraint = {};
-        this._label = null;
+    constructor(id: number, public api: number, element: any = null, options: any = {}) {
+        super(id, element, options);
 
         if (options.element != null || element != null) {
             this.element.__node = this;
@@ -49,7 +44,7 @@ export default class Widget extends Node {
             case 0:
                 return this._android;
             case 1:
-                return (this._android != null ? this._android[attr] : null);
+                return this._android && this._android[attr];
             default:
                 this.add('android', attr, value, overwrite);
                 return this;
@@ -60,7 +55,7 @@ export default class Widget extends Node {
             case 0:
                 return this._app;
             case 1:
-                return (this._app != null ? this._app[attr] : null);
+                return this._app && this._app[attr];
             default:
                 this.add('app', attr, value, overwrite);
                 return this;
@@ -89,7 +84,7 @@ export default class Widget extends Node {
         return result.sort();
     }
     public render(parent: Widget) {
-        if (Widget.is(parent) && parent.is(WIDGET_ANDROID.LINEAR) && parent.id !== 0) {
+        if (parent.is(WIDGET_ANDROID.LINEAR)) {
             switch (this.widgetName) {
                 case WIDGET_ANDROID.LINEAR:
                 case WIDGET_ANDROID.RADIO_GROUP:
@@ -191,7 +186,7 @@ export default class Widget extends Node {
             requireWrap = options.requireWrap;
         }
         else {
-            parent = this.parent;
+            parent = this.parent as Widget;
             width = this.element.offsetWidth + this.marginLeft + this.marginRight;
             height = this.element.offsetHeight + this.marginTop + this.marginBottom;
             requireWrap = parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
@@ -236,7 +231,7 @@ export default class Widget extends Node {
                             this.android('layout_width', 'match_parent');
                         }
                         else {
-                            const display = (this.style != null ? this.style.display : '');
+                            const display = this.style && this.style.display;
                             switch (display) {
                                 case 'line-item':
                                 case 'block':
@@ -463,12 +458,6 @@ export default class Widget extends Node {
     }
     get label() {
         return this._label;
-    }
-    set parent(value) {
-        super.parent = value;
-    }
-    get parent(): Widget {
-        return super.parent as Widget || new Widget(0);
     }
     get horizontal() {
         return (this._android != null && this._android.orientation === 'horizontal');

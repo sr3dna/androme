@@ -8,11 +8,11 @@ export default abstract class Node implements IBoxModel {
         return (object instanceof Node);
     }
 
-    public depth: number;
+    public depth: number = -1;
     public style: any;
     public styleMap: any;
-    public visible: boolean;
-    public parentIndex: number;
+    public visible: boolean = true;
+    public parentIndex: number = Number.MAX_VALUE;
     public bounds: IClientRect;
     public linear: IClientRect;
     public box: IClientRect;
@@ -28,19 +28,19 @@ export default abstract class Node implements IBoxModel {
     public gridSiblings: Node[];
 
     private _flex: any;
-    private _namespaces: Set<string>;
+    private _namespaces = new Set<string>();
     private _overflow: OVERFLOW_CHROME;
     private _parent: Node;
     private _parentOriginal: Node;
     private _renderParent: any;
     private _tagName: string;
 
-    constructor(public id: number, public element: any = null, public api = 0, options = {}) {
+    constructor(public id: number, public element: any = null, options = {}) {
         let style = {};
         let styleMap = {};
         if (element != null) {
             style = getComputedStyle(element);
-            styleMap = element.styleMap || {};
+            styleMap = element.__styleMap || {};
             for (const inline of element.style) {
                 styleMap[hyphenToCamelCase(inline)] = element.style[inline];
             }
@@ -50,19 +50,8 @@ export default abstract class Node implements IBoxModel {
         }
         this.id = id;
         this.element = element;
-        this.api = api;
-        this.depth = 0;
         this.style = style;
         this.styleMap = styleMap;
-        this.visible = true;
-        this.parentIndex = Number.MAX_VALUE;
-
-        this._tagName = null;
-        this._parent = null;
-        this._parentOriginal = null;
-        this._flex = null;
-        this._overflow = null;
-        this._namespaces = new Set();
 
         Object.assign(this, options);
     }
@@ -79,7 +68,7 @@ export default abstract class Node implements IBoxModel {
             }
             this[name][attr] = value;
         }
-        return (this[name] != null ? this[name][attr] : null);
+        return this[name] && this[name][attr];
     }
     public delete(obj: string, ...attributes: any[]) {
         const name = `_${obj || '_'}`;
@@ -113,7 +102,7 @@ export default abstract class Node implements IBoxModel {
         }
         return this;
     }
-    public render(parent: Node): Node {
+    public render(parent: Node) {
         this.renderParent = parent;
         this.renderDepth = (parent.id === 0 ? 0 : parent.renderDepth + 1);
         return this;
@@ -251,7 +240,7 @@ export default abstract class Node implements IBoxModel {
             this._parentOriginal = this._parent;
         }
         this._parent = value;
-        if (this.depth === 0) {
+        if (this.depth === -1) {
             this.depth = value.depth + 1;
         }
     }
@@ -298,11 +287,11 @@ export default abstract class Node implements IBoxModel {
         this._tagName = value;
     }
     get tagName() {
-        return (this._tagName != null ? this._tagName : this.element.tagName);
+        return this._tagName || this.element.tagName;
     }
     get flex() {
         if (this._flex == null) {
-            const parent = (this.parentElement != null ? this.parentElement.__node : null);
+            const parent = this.parentElement && this.parentElement.__node;
             this._flex = {
                 parent,
                 enabled: (this.style.display != null && this.style.display.indexOf('flex') !== -1),

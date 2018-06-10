@@ -2,6 +2,7 @@
   "compileOnSave": true,
   "compilerOptions": {
     "target": "es6",
+    "module": "es6",
     "outDir": "./build",
     "moduleResolution": "node",
     "inlineSourceMap": true,
@@ -9,6 +10,7 @@
     "experimentalDecorators": true,
     "lib": ["es6", "es2016", "dom"],
     "noImplicitAny": true,
+    "downlevelIteration": true,
     "suppressImplicitAnyIndexErrors": true
   },
   "include": [
