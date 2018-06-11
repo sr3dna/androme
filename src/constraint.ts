@@ -1,5 +1,6 @@
 import { IPoint } from './lib/types';
 import Widget from './android/widget';
+import WidgetList from './android/widgetlist';
 import { WIDGET_ANDROID } from './lib/constants';
 import { convertPX, formatPX, indexOf, same, search, withinFraction, withinRange } from './lib/util';
 import NODE_CACHE from './cache';
@@ -120,7 +121,7 @@ export function setConstraints() {
         rightLeft: parseRTL('layout_constraintRight_toLeftOf')
     });
     for (const node of NODE_CACHE.visible) {
-        const nodes = node.renderChildren;
+        const nodes = new WidgetList(node.renderChildren, node);
         const constraint = node.is(WIDGET_ANDROID.CONSTRAINT);
         const relative = node.is(WIDGET_ANDROID.RELATIVE);
         const flex = node.flex;
@@ -321,16 +322,16 @@ export function setConstraints() {
                 }
                 else {
                     for (const current of nodes) {
-                        let horizontalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.top'));
+                        let horizontalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.top')) as WidgetList<Widget>;
                         if (horizontalChain.length === 0) {
-                            horizontalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.bottom'));
+                            horizontalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.bottom')) as WidgetList<Widget>;
                         }
                         if (horizontalChain.length > 0) {
                             horizontalChain.sortAsc('bounds.x');
                         }
-                        let verticalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.left'));
+                        let verticalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.left')) as WidgetList<Widget>;
                         if (verticalChain.length === 0) {
-                            verticalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.right'));
+                            verticalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.right')) as WidgetList<Widget>;
                         }
                         if (verticalChain.length > 0) {
                             verticalChain.sortAsc('bounds.y');

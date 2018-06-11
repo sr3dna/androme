@@ -97,7 +97,7 @@ function setMarginPadding() {
             switch (node.android('orientation')) {
                 case 'horizontal':
                     let left = node.box.left;
-                    node.renderChildren.sortAsc('linear.left').forEach((item: Widget) => {
+                    sortAsc(node.renderChildren, 'linear.left').forEach((item: Widget) => {
                         if (!item.floating) {
                             const width = Math.ceil(item.linear.left - left);
                             if (width >= 1) {
@@ -109,7 +109,7 @@ function setMarginPadding() {
                     break;
                 case 'vertical':
                     let top = node.box.top;
-                    node.renderChildren.sortAsc('linear.top').forEach((item: Widget) => {
+                    sortAsc(node.renderChildren, 'linear.top').forEach((item: Widget) => {
                         const height = Math.ceil(item.linear.top - top);
                         if (height >= 1) {
                             item.modifyBox('layout_marginTop', height);
@@ -333,7 +333,7 @@ function setNodeCache(documentRoot: HTMLElement) {
                 element.__node.parentIndex = i++;
             }
         });
-        node.children.sortAsc('parentIndex');
+        sortAsc(node.children, 'parentIndex');
     }
 }
 
@@ -614,7 +614,8 @@ export function parseDocument(element: any) {
                                 }
                             }
                             if (!nodeY.renderParent) {
-                                const [linearX, linearY] = [nodeY.children.linearX, nodeY.children.linearY];
+                                const children = new WidgetList(nodeY.children);
+                                const [linearX, linearY] = [children.linearX, children.linearY];
                                 if (!nodeY.flex.enabled && linearX && linearY) {
                                     xml += writeFrameLayout(nodeY, parent);
                                 }
@@ -632,7 +633,7 @@ export function parseDocument(element: any) {
                     }
                     if (!nodeY.renderParent) {
                         if (parent.is(WIDGET_ANDROID.GRID)) {
-                            let siblings: WidgetList = null;
+                            let siblings: WidgetList<Widget>;
                             if (settings.useLayoutWeight) {
                                 siblings = new WidgetList(nodeY.gridSiblings);
                             }

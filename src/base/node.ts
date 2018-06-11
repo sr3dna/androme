@@ -18,8 +18,8 @@ export default abstract class Node implements IBoxModel {
     public box: IClientRect;
     public renderDepth: number;
 
-    public children: Node[];
-    public renderChildren: Node[];
+    public abstract children: Node[];
+    public abstract renderChildren: Node[];
 
     public gridRowSpan: number;
     public gridColumnSpan: number;

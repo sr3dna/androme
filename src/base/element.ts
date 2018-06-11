@@ -1,12 +1,11 @@
 import { hasValue, padLeft } from '../lib/util';
-import Node from './node';
 
-export default abstract class Element {
+export default abstract class Element<T> {
     constructor() {
     }
 
-    public abstract renderLayout(node: Node, parent: Node, tagName: string): string;
-    public abstract renderTag(node: Node, parent: Node, tagName: string): string;
+    public abstract renderLayout(node: T, parent: T, tagName: string): string;
+    public abstract renderTag(node: T, parent: T, tagName: string): string;
     public abstract getStaticTag(nodeName: string, depth: number, options: {}, width: any, height: any): any;
 
     protected getEnclosingTag(depth: number, tagName: string, id: number, content = '', preXml = '', postXml = '') {

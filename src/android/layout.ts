@@ -1,38 +1,21 @@
-import { WIDGET_ANDROID } from '../lib/constants';
 import Widget from './widget';
+import WidgetList from './widgetlist';
+import { WIDGET_ANDROID } from '../lib/constants';
 
 export default class Layout extends Widget {
-    public static is(object: any) {
-        return (object instanceof Layout);
-    }
-
     constructor(id: number, node: Widget, parent: Widget | null, children: Widget[], actions?: number[]) {
         const options = {
             parent,
-            children,
             depth: node.depth,
             parentOriginal: node.parentOriginal,
             actions
         };
         super(id, node.api, null, options);
-    }
-
-    public inheritGrid(node: Widget) {
-        for (const prop in node) {
-            if (prop.startsWith('grid')) {
-                if (typeof node[prop] === 'number') {
-                    this[prop] += node[prop];
-                    node[prop] = 0;
-                }
-                else {
-                    if (node[prop] !== false) {
-                        this[prop] = node[prop];
-                        node[prop] = false;
-                    }
-                }
-            }
+        if (children != null) {
+            this.children = new WidgetList(children);
         }
     }
+
     public setAndroidDimensions() {
         const [width, height] = this.childrenBox;
         const options = {
@@ -76,6 +59,22 @@ export default class Layout extends Widget {
             height: 0
         };
         this.setDimensions();
+    }
+    public inheritGrid(node: Widget) {
+        for (const attr in node) {
+            if (attr.startsWith('grid')) {
+                if (typeof node[attr] === 'number') {
+                    this[attr] += node[attr];
+                    node[attr] = 0;
+                }
+                else {
+                    if (node[attr] !== false) {
+                        this[attr] = node[attr];
+                        node[attr] = false;
+                    }
+                }
+            }
+        }
     }
 
     get childrenBox() {

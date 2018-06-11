@@ -13,7 +13,9 @@ export default class Widget extends Node {
 
     public constraint: any = {};
     public labelFor: Widget;
-    public linearRows: Widget[];
+    public children: Widget[] = [];
+    public renderChildren: Widget[] = [];
+    public linearRows: Widget[] = [];
     public styleAttributes: string[] = [];
 
     public androidId: string;

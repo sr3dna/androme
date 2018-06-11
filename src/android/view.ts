@@ -9,12 +9,12 @@ import { addResourceImage } from '../resource';
 import parseRTL from '../lib/localization';
 import SETTINGS from '../settings';
 
-export default class View extends Element {
-    constructor(private cache: WidgetList, public before: (id: number, xml: string, index: number) => void, public after: (id: number, xml: string, index: number) => void, ) {
+export default class View<T extends Widget> extends Element<T> {
+    constructor(private cache: WidgetList<T>, public before: (id: number, xml: string, index: number) => void, public after: (id: number, xml: string, index: number) => void) {
         super();
     }
 
-    public renderLayout(node: Widget, parent: Widget, tagName: string) {
+    public renderLayout(node: T, parent: T, tagName: string) {
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
@@ -25,13 +25,13 @@ export default class View extends Element {
                 scrollView.push(WIDGET_ANDROID.SCROLL_HORIZONTAL);
             }
             if (node.overflowY) {
-                scrollView.push((node.ascend().some((item: Widget) => item.overflow !== OVERFLOW_CHROME.NONE) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
+                scrollView.push((node.ascend().some((item: T) => item.overflow !== OVERFLOW_CHROME.NONE) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
             }
-            let current = node;
+            let current = <Widget> node as T;
             let scrollDepth = parent.renderDepth + scrollView.length;
             scrollView
                 .map(nodeName => {
-                    const layout = new Layout(this.cache.nextId, current, null, new WidgetList([current]));
+                    const layout = <Widget> new Layout(this.cache.nextId, current, null, [current]) as T;
                     this.cache.push(layout);
                     layout.setAndroidId(nodeName);
                     layout.setBounds();
@@ -55,7 +55,7 @@ export default class View extends Element {
                     postXml += indent + `</${nodeName}>\n`;
                     if (current === node) {
                         node.parent = layout;
-                        renderParent = layout;
+                        renderParent = <Widget> layout as T;
                     }
                     current = layout;
                     return layout;
@@ -82,7 +82,7 @@ export default class View extends Element {
         this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, preXml, postXml);
     }
-    public renderTag(node: Widget, parent: Widget, tagName: string, recursive = false) {
+    public renderTag(node: T, parent: T, tagName: string, recursive = false) {
         const element = node.element;
         node.setAndroidId(tagName);
         switch (element.tagName) {
@@ -135,12 +135,13 @@ export default class View extends Element {
         switch (element.type) {
             case 'radio':
                 if (!recursive) {
-                    const result = node.parentOriginal.children.filter((item: Widget) => (item.element.type === 'radio' && item.element.name === element.name)) as WidgetList;
+                    const result = node.parentOriginal.children.filter((radio: T) => (radio.element.type === 'radio' && radio.element.name === element.name)) as T[];
                     let content = '';
                     if (result.length > 1) {
-                        let checked: Widget = null;
+                        let checked: T = null;
                         const layout = new Layout(this.cache.nextId, node, parent, result);
-                        this.cache.push(layout);
+                        const widget = <Widget> layout as T;
+                        this.cache.push(widget);
                         layout.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
                         layout.render(parent);
                         for (const radio of result) {
@@ -150,14 +151,14 @@ export default class View extends Element {
                             }
                             radio.parent = layout;
                             radio.render(layout);
-                            content += this.renderTag(radio, layout, WIDGET_ANDROID.RADIO, true);
+                            content += this.renderTag(radio, widget, WIDGET_ANDROID.RADIO, true);
                         }
                         layout
-                            .android('orientation', (result.linearX ? 'horizontal' : 'vertical'))
+                            .android('orientation', (layout.children as WidgetList<T>).linearX ? 'horizontal' : 'vertical')
                             .android('checkedButton', checked.stringId);
                         layout.setBounds();
                         layout.setAttributes();
-                        this.setGridSpace(layout);
+                        this.setGridSpace(widget);
                         return this.getEnclosingTag(layout.renderDepth, WIDGET_ANDROID.RADIO_GROUP, layout.id, content);
                     }
                 }
@@ -191,7 +192,7 @@ export default class View extends Element {
         return [this.getEnclosingTag(depth, nodeName, 0).replace('{@0}', attributes), node.stringId];
     }
 
-    private setGridSpace(node: Widget) {
+    private setGridSpace(node: T) {
         if (node.parent.is(WIDGET_ANDROID.GRID)) {
             const dimensions = getBoxSpacing(node.parentOriginal.element, true);
             const options = {

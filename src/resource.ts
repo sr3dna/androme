@@ -262,7 +262,7 @@ function deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {
     });
 }
 
-export function setResourceStyle(cache: WidgetList) {
+export function setResourceStyle(cache: WidgetList<Widget>) {
     const tagName = {};
     const style = {};
     const layout = {};
