@@ -3,17 +3,18 @@ import Widget from './widget';
 import WidgetList from './widgetlist';
 import Layout from './layout';
 import { OVERFLOW_CHROME, WIDGET_ANDROID } from '../lib/constants';
-import { convertPX, hasValue, padLeft } from '../lib/util';
+import { convertPX, padLeft } from '../lib/util';
 import { getBoxSpacing } from '../lib/dom';
 import { addResourceImage } from '../resource';
 import parseRTL from '../lib/localization';
 import SETTINGS from '../settings';
 
-export default class View<T extends Widget> extends Element<T> {
+export default class View<T extends Widget, U extends WidgetList<T>> extends Element<T, U> {
+    public cache: U;
+
     constructor(
-        private cache: WidgetList<T>,
-        public before: (id: number, xml: string, index: number) => void,
-        public after: (id: number, xml: string, index: number) => void)
+        public before: (id: number, xml: string, index?: number) => void,
+        public after: (id: number, xml: string, index?: number) => void)
     {
         super();
     }
@@ -31,7 +32,7 @@ export default class View<T extends Widget> extends Element<T> {
             if (node.overflowY) {
                 scrollView.push((node.ascend().some((item: T) => item.overflow !== OVERFLOW_CHROME.NONE) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
             }
-            let current = <Widget> node as T;
+            let current = <T> node;
             let scrollDepth = parent.renderDepth + scrollView.length;
             scrollView
                 .map(nodeName => {
@@ -59,7 +60,7 @@ export default class View<T extends Widget> extends Element<T> {
                     postXml += indent + `</${nodeName}>\n`;
                     if (current === node) {
                         node.parent = layout;
-                        renderParent = <Widget> layout as T;
+                        renderParent = layout;
                     }
                     current = layout;
                     return layout;
@@ -86,11 +87,13 @@ export default class View<T extends Widget> extends Element<T> {
         this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, preXml, postXml);
     }
+
     public renderTag(node: T, parent: T, tagName: string, recursive = false) {
-        const element: any = node.element;
+        let element: any = node.element;
         node.setAndroidId(tagName);
         switch (element.tagName) {
             case 'IMG':
+                element = <HTMLImageElement> element;
                 let image = addResourceImage(element.src);
                 if (image == null) {
                     image = `(UNSUPPORTED: ${element.src})`;
@@ -98,12 +101,13 @@ export default class View<T extends Widget> extends Element<T> {
                 node.androidSrc = image;
                 break;
             case 'TEXTAREA':
+                element = <HTMLTextAreaElement> element;
                 node.android('minLines', '2');
                 if (element.rows > 2) {
-                    node.android('maxLines', element.rows);
+                    node.android('maxLines', element.rows.toString());
                 }
-                if (element.maxlength != null) {
-                    node.android('maxLength', element.maxlength);
+                if (element.maxLength > 0) {
+                    node.android('maxLength', element.maxLength.toString());
                 }
                 node.android('hint', element.placeholder)
                     .android('scrollbars', 'vertical')
@@ -139,7 +143,7 @@ export default class View<T extends Widget> extends Element<T> {
         switch (element.type) {
             case 'radio':
                 if (!recursive) {
-                    const result = node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name)) as T[];
+                    const result = <U> node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name));
                     let xml = '';
                     if (result.length > 1) {
                         const layout = new Layout(this.cache.nextId, node, parent, result);
@@ -158,7 +162,7 @@ export default class View<T extends Widget> extends Element<T> {
                             xml += this.renderTag(radio, widget, WIDGET_ANDROID.RADIO, true);
                         }
                         layout
-                            .android('orientation', (layout.children as WidgetList<T>).linearX ? 'horizontal' : 'vertical')
+                            .android('orientation', (<U> layout.children).linearX ? 'horizontal' : 'vertical')
                             .android('checkedButton', checked.stringId);
                         layout.setBounds();
                         layout.setAttributes();
@@ -180,6 +184,17 @@ export default class View<T extends Widget> extends Element<T> {
         this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, node.nodeName, node.id);
     }
+
+    public createWrapper(node: T, parent: T, children: U) {
+        const layout = new Layout(this.cache.nextId, node, parent, children, [0]);
+        for (const child of children) {
+            child.parent = layout;
+            layout.inheritGrid(child);
+        }
+        layout.setBounds();
+        return <Widget> layout as T;
+    }
+
     public getStaticTag(nodeName: string, depth: number, options: {}, width = 'wrap_content', height = 'wrap_content') {
         const node = new Widget(0, SETTINGS.targetAPI);
         node.setAndroidId(nodeName);
@@ -195,6 +210,28 @@ export default class View<T extends Widget> extends Element<T> {
         return [this.getEnclosingTag(depth, nodeName, 0).replace('{@0}', attributes), node.stringId];
     }
 
+    public setInlineAttributes(output: string, node: T, namespaces?: {}) {
+        node.setAndroidDimensions();
+        node.namespaces.forEach((value: string) => namespaces[value] = true);
+        return output.replace(`{@${node.id}}`, this.parseAttributes(node));
+    }
+
+    private parseAttributes(node: T) {
+        let output = '';
+        const attributes = node.combine();
+        if (attributes.length > 0) {
+            const indent = padLeft(node.renderDepth + 1);
+            for (let i = 0; i < attributes.length; i++) {
+                if (attributes[i].startsWith('android:id=')) {
+                    attributes.unshift(...attributes.splice(i, 1));
+                    break;
+                }
+            }
+            output = (node.renderDepth === 0 ? '{@0}' : '') + attributes.map((value: string) => `\n${indent + value}`).join('');
+        }
+        return output;
+    }
+
     private setGridSpace(node: T) {
         if (node.parent.is(WIDGET_ANDROID.GRID)) {
             const dimensions = getBoxSpacing(node.parentOriginal.element, true);
@@ -206,7 +243,7 @@ export default class View<T extends Widget> extends Element<T> {
             if (node.gridFirst) {
                 const heightTop = dimensions.paddingTop + dimensions.marginTop;
                 if (heightTop > 0) {
-                    this.before(node.id, this.getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0], -1);
+                    this.before(node.id, this.getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0]);
                 }
             }
             if (node.gridRowStart) {
@@ -221,7 +258,7 @@ export default class View<T extends Widget> extends Element<T> {
                 const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
                 let marginRight = dimensions[parseRTL('marginRight')] + dimensions[parseRTL('paddingRight')];
                 if (heightBottom > 0) {
-                    this.after(node.id, this.getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0], -1);
+                    this.after(node.id, this.getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
                 }
                 if (marginRight > 0) {
                     marginRight = convertPX(marginRight + node.marginRight);

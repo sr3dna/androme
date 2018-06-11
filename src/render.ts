@@ -1,14 +1,7 @@
-import { WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
 import View from './android/view';
-import Widget from './android/widget';
-import NODE_CACHE from './cache';
-import { getViewAttributes } from './resource';
-import SETTINGS from './settings';
 
 const VIEW_BEFORE = {};
 const VIEW_AFTER = {};
-
-export const viewHandler = new View(NODE_CACHE, addViewBefore, addViewAfter);
 
 function addViewBefore(id: number, xml: string, index = -1) {
     if (VIEW_BEFORE[id] == null) {
@@ -34,52 +27,7 @@ function addViewAfter(id: number, xml: string, index = -1) {
     }
 }
 
-export function setInlineAttributes(output: string) {
-    const namespaces = {};
-    for (const node of NODE_CACHE.visible) {
-        node.setAndroidDimensions();
-        node.namespaces.forEach((value: string) => namespaces[value] = true);
-        output = output.replace(`{@${node.id}}`, getViewAttributes(node));
-    }
-    return output.replace('{@0}', Object.keys(namespaces).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join(''));
-}
-
-export function writeFrameLayout(node: Widget, parent: Widget) {
-    return viewHandler.renderLayout(node, parent, WIDGET_ANDROID.FRAME);
-}
-
-export function writeLinearLayout(node: Widget, parent: Widget, vertical: boolean) {
-    node.android('orientation', (vertical ? 'vertical' : 'horizontal'));
-    return viewHandler.renderLayout(node, parent, WIDGET_ANDROID.LINEAR);
-}
-
-export function writeGridLayout(node: Widget, parent: Widget, columnCount: number) {
-    node.android('columnCount', columnCount.toString());
-    return viewHandler.renderLayout(node, parent, WIDGET_ANDROID.GRID);
-}
-
-export function writeRelativeLayout(node: Widget, parent: Widget) {
-    return viewHandler.renderLayout(node, parent, WIDGET_ANDROID.RELATIVE);
-}
-
-export function writeConstraintLayout(node: Widget, parent: Widget) {
-    return viewHandler.renderLayout(node, parent, WIDGET_ANDROID.CONSTRAINT);
-}
-
-export function writeDefaultLayout(node: Widget, parent: Widget) {
-    if (SETTINGS.useConstraintLayout || node.flex.enabled) {
-        return writeConstraintLayout(node, parent);
-    }
-    else {
-        return writeRelativeLayout(node, parent);
-    }
-}
-
-export function writeViewTag(node: Widget, parent: Widget, tagName: string) {
-    return viewHandler.renderTag(node, parent, tagName);
-}
-
-export function insertViewBeforeAfter(output: string) {
+export function appendViewsBeforeAfter(output: string) {
     for (const id in VIEW_BEFORE) {
         output = output.replace(`{<${id}}`, VIEW_BEFORE[id].join(''));
     }
@@ -88,3 +36,5 @@ export function insertViewBeforeAfter(output: string) {
     }
     return output;
 }
+
+export const viewHandler = new View(addViewBefore, addViewAfter);

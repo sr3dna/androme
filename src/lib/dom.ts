@@ -21,7 +21,7 @@ export function getStyle(element: any) {
 
 export function parseStyle(element: HTMLElement, attr: string, value: string) {
     if (attr === 'backgroundColor') {
-        if (element && element.parentNode && value === getStyle(element.parentNode).backgroundColor) {
+        if (element && element.parentElement && value === getStyle(element.parentElement).backgroundColor) {
             return null;
         }
     }

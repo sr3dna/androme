@@ -16,6 +16,12 @@ import DRAWABLE_TMPL from './tmpl/resources/drawable';
 import SHAPERECTANGLE_TMPL from './tmpl/resources/shape-rectangle';
 import LAYERLIST_TMPL from './tmpl/resources/layer-list';
 
+interface IStyleTag {
+    name?: string;
+    attributes: string;
+    ids: number[];
+}
+
 const RESOURCE = {
     STRING: new Map(),
     ARRAY: new Map(),
@@ -296,7 +302,8 @@ export function setResourceStyle(cache: WidgetList<Widget>) {
             const id = (labelFor || node).id;
             for (let i = 0; i < node.styleAttributes.length; i++) {
                 let value = node.styleAttributes[i];
-                let match: any = null;
+                let match: RegExpExecArray;
+                let rgba: string[];
                 switch (i) {
                     case 0:
                         if ((match = value.match(/fontWeight="(.*?)"$/)) != null) {
@@ -323,24 +330,24 @@ export function setResourceStyle(cache: WidgetList<Widget>) {
                         }
                         break;
                     case 4:
-                        if ((match = parseRGBA(value)) != null) {
-                            if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(match[1].toString())) {
+                        if ((rgba = parseRGBA(value)) != null) {
+                            if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(rgba[1])) {
                                 continue;
                             }
-                            const name = addResourceColor(match[1].toString());
-                            value = value.replace(match[0], name);
+                            const name = addResourceColor(rgba[1]);
+                            value = value.replace(rgba[0], name);
                         }
                         break;
                     case 5:
                         if (labelFor != null) {
                             value = labelFor.styleAttributes[i];
                         }
-                        if (hasValue(value) && (match = parseRGBA(value)) != null) {
-                            if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(match[1].toString())) {
+                        if (hasValue(value) && (rgba = parseRGBA(value)) != null) {
+                            if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(rgba[1])) {
                                 continue;
                             }
-                            const name = addResourceColor(match[1].toString());
-                            value = value.replace(match[0], name);
+                            const name = addResourceColor(rgba[1]);
+                            value = value.replace(rgba[0], name);
                         }
                         break;
                 }
@@ -469,25 +476,25 @@ export function setResourceStyle(cache: WidgetList<Widget>) {
     const resource = new Map();
     for (const name in style) {
         const tag = style[name];
-        const tagData: any = [];
+        const tagData: IStyleTag[] = [];
         for (const attributes in tag) {
             tagData.push({ attributes, ids: tag[attributes]});
         }
-        tagData.sort((a: any, b: any) => {
+        tagData.sort((a: IStyleTag, b: IStyleTag) => {
             let [c, d] = [a.ids.length, b.ids.length];
             if (c === d) {
                 [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
             }
             return (c >= d ? -1 : 1);
         });
-        tagData.forEach((item: any, index: number) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
+        tagData.forEach((item: IStyleTag, index: number) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
         resource.set(name, tagData);
     }
     const inherit = new Set();
     for (const node of cache.visible) {
         if (resource.has(node.tagName)) {
             const styles: string[] = [];
-            for (const item of resource.get(node.tagName)) {
+            for (const item of <IStyleTag[]> resource.get(node.tagName)) {
                 if (item.ids.includes(node.id)) {
                     styles.push(item.name);
                 }
@@ -711,8 +718,8 @@ export function setBackgroundStyle(node: Widget) {
         backgroundSize: parseBoxDimensions
     };
     let backgroundParent: string[] = [];
-    if (element.parentNode != null) {
-        backgroundParent = parseRGBA(getStyle(element.parentNode).backgroundColor);
+    if (element.parentElement != null) {
+        backgroundParent = parseRGBA(getStyle(element.parentElement).backgroundColor);
     }
     const style = getStyle(element);
     for (const i in attributes) {
@@ -787,22 +794,6 @@ export function setBackgroundStyle(node: Widget) {
         return { backgroundColor: attributes.backgroundColor };
     }
     return null;
-}
-
-export function getViewAttributes(node: Widget) {
-    let output = '';
-    const attributes = node.combine();
-    if (attributes.length > 0) {
-        const indent = padLeft(node.renderDepth + 1);
-        for (let i = 0; i < attributes.length; i++) {
-            if (attributes[i].startsWith('android:id=')) {
-                attributes.unshift(...attributes.splice(i, 1));
-                break;
-            }
-        }
-        output = (node.renderDepth === 0 ? '{@0}' : '') + attributes.map((value: string) => `\n${indent + value}`).join('');
-    }
-    return output;
 }
 
 export function writeResourceStringXml() {

@@ -32,6 +32,7 @@ export default class Layout extends Widget {
         };
         super.setAndroidDimensions(options);
     }
+
     public setBounds(calibrate = false) {
         const nodes = this.outerRegion;
         if (!calibrate) {
@@ -66,6 +67,7 @@ export default class Layout extends Widget {
         };
         this.setDimensions();
     }
+
     public inheritGrid(node: Widget) {
         for (const attr in node) {
             if (attr.startsWith('grid')) {
@@ -103,7 +105,7 @@ export default class Layout extends Widget {
         let bottom = [children[0]];
         let left = [children[0]];
         for (let i = 1; i < children.length; i++) {
-            const node = children[i] as Widget;
+            const node = <Widget> children[i];
             const nodeRight = node.label || node;
             if (top[0].bounds.top === node.bounds.top) {
                 top.push(node);

@@ -23,9 +23,11 @@ export default abstract class NodeList<T extends Node> extends Array {
     public sortAsc(...attr: string[]) {
         return sortAsc<T>(this, ...attr);
     }
+
     public sortDesc(...attr: string[]) {
         return sortDesc<T>(this, ...attr);
     }
+
     public intersect(dimension = 'linear') {
         for (const node of this) {
             if (this.some(item => (item !== node && node.intersect(item[dimension])))) {

@@ -14,9 +14,6 @@ export default abstract class Node implements IBoxModel {
     public box: IClientRect;
     public renderDepth: number;
 
-    public abstract children: Node[];
-    public abstract renderChildren: Node[];
-
     public gridRowSpan: number;
     public gridColumnSpan: number;
     public gridColumnCount: number;
@@ -25,6 +22,9 @@ export default abstract class Node implements IBoxModel {
     public gridRowEnd: boolean;
     public gridRowStart: boolean;
     public gridSiblings: Node[];
+
+    public abstract children: Node[];
+    public abstract renderChildren: Node[];
 
     private _flex: any;
     private _namespaces = new Set<string>();
@@ -41,16 +41,21 @@ export default abstract class Node implements IBoxModel {
     {
         Object.assign(this, options);
         if (element != null || (options != null && (<any> options).element != null)) {
-            const style = getComputedStyle(this.element);
-            const styleMap = (<any> this.element).__styleMap || {};
-            for (const inline of <any> this.element.style) {
-                styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
+            if (this.element instanceof HTMLElement) {
+                const style = getComputedStyle(this.element);
+                const styleMap = (<any> this.element).__styleMap || {};
+                for (const inline of <any> this.element.style) {
+                    styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
+                }
+                this.style = style;
+                this.styleMap = styleMap;
             }
-            this.style = style;
-            this.styleMap = styleMap;
             (<any> this.element).__node = this;
         }
     }
+
+    public abstract inheritStyle(node: Node): void;
+    public abstract setLayoutWeight(horizontal: boolean, percent: number): void;
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
@@ -66,6 +71,7 @@ export default abstract class Node implements IBoxModel {
         }
         return this[name] && this[name][attr];
     }
+
     public delete(obj: string, ...attributes: any[]) {
         const name = `_${obj || '_'}`;
         if (this[name] != null) {
@@ -89,6 +95,7 @@ export default abstract class Node implements IBoxModel {
         }
         return this;
     }
+
     public apply(options: {}) {
         for (const namespace in options) {
             const obj = options[namespace];
@@ -98,16 +105,19 @@ export default abstract class Node implements IBoxModel {
         }
         return this;
     }
+
     public render(parent: Node) {
         this.renderParent = parent;
         this.renderDepth = (parent.id === 0 ? 0 : parent.renderDepth + 1);
         return this;
     }
+
     public hide() {
         this.renderParent = true;
         this.visible = false;
         return this;
     }
+
     public ascend() {
         const result = [];
         let current = this.parent;
@@ -122,6 +132,7 @@ export default abstract class Node implements IBoxModel {
         }
         return result;
     }
+
     public cascade() {
         function cascade(node: Node) {
             const current = [...node.children];
@@ -130,6 +141,7 @@ export default abstract class Node implements IBoxModel {
         }
         return cascade(this);
     }
+
     public intersect(rect: IClientRect, dimension = 'bounds') {
         const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
         const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
@@ -137,6 +149,7 @@ export default abstract class Node implements IBoxModel {
         const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
         return (top && (left || right)) || (bottom && (left || right));
     }
+
     public withinX(rect: IClientRect, dimension = 'linear') {
         return (
             (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
@@ -145,6 +158,7 @@ export default abstract class Node implements IBoxModel {
             (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom)
         );
     }
+
     public withinY(rect: IClientRect, dimension = 'linear') {
         return (
             (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
@@ -153,6 +167,7 @@ export default abstract class Node implements IBoxModel {
             (rect.left >= this[dimension].left && rect.right <= this[dimension].right)
         );
     }
+
     public css(attr: string, value = '') {
         if (arguments.length === 2) {
             this.styleMap[attr] = (hasValue(value) ? value : null);
@@ -185,6 +200,7 @@ export default abstract class Node implements IBoxModel {
         };
         this.setDimensions();
     }
+
     public expandDimensions() {
         let [width, height] = [Math.max.apply(null, this.children.map((item: Node) => item.linear.right)), Math.max.apply(null, this.children.map((item: Node) => item.linear.bottom))];
         switch (this.style.position) {
@@ -223,6 +239,7 @@ export default abstract class Node implements IBoxModel {
             this.setBounds(true);
         }
     }
+
     public is(...views: string[]) {
         for (const name of views) {
             if (this.nodeName === name) {
@@ -263,7 +280,7 @@ export default abstract class Node implements IBoxModel {
         return this._parentOriginal || this._parent;
     }
     get parentElement() {
-        return this.element.parentNode;
+        return this.element.parentElement;
     }
     set renderParent(value: any) {
         if (value instanceof Node) {
@@ -277,15 +294,18 @@ export default abstract class Node implements IBoxModel {
     get namespaces() {
         return Array.from(this._namespaces);
     }
+    set tagName(value) {
+        this._tagName = value;
+    }
     get tagName() {
-        return (this.element != null ? this.element.tagName : '');
+        return this._tagName || (this.element != null ? this.element.tagName : '');
     }
     get nodeName() {
         return this.tagName;
     }
     get flex() {
         if (this._flex == null) {
-            const parent = this.element && (<any> this.element.parentNode).__node;
+            const parent = this.element && (<any> this.element.parentElement).__node;
             this._flex = {
                 parent,
                 enabled: (this.style.display && this.style.display.indexOf('flex') !== -1),

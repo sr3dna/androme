@@ -322,16 +322,16 @@ export function setConstraints() {
                 }
                 else {
                     for (const current of nodes) {
-                        let horizontalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.top')) as WidgetList<Widget>;
+                        let horizontalChain = <WidgetList<Widget>> nodes.filter((item: Widget) => same(current, item, 'bounds.top'));
                         if (horizontalChain.length === 0) {
-                            horizontalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.bottom')) as WidgetList<Widget>;
+                            horizontalChain = <WidgetList<Widget>> nodes.filter((item: Widget) => same(current, item, 'bounds.bottom'));
                         }
                         if (horizontalChain.length > 0) {
                             horizontalChain.sortAsc('bounds.x');
                         }
-                        let verticalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.left')) as WidgetList<Widget>;
+                        let verticalChain = <WidgetList<Widget>> nodes.filter((item: Widget) => same(current, item, 'bounds.left'));
                         if (verticalChain.length === 0) {
-                            verticalChain = nodes.filter((item: Widget) => same(current, item, 'bounds.right')) as WidgetList<Widget>;
+                            verticalChain = <WidgetList<Widget>> nodes.filter((item: Widget) => same(current, item, 'bounds.right'));
                         }
                         if (verticalChain.length > 0) {
                             verticalChain.sortAsc('bounds.y');
