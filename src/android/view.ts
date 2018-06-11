@@ -10,7 +10,11 @@ import parseRTL from '../lib/localization';
 import SETTINGS from '../settings';
 
 export default class View<T extends Widget> extends Element<T> {
-    constructor(private cache: WidgetList<T>, public before: (id: number, xml: string, index: number) => void, public after: (id: number, xml: string, index: number) => void) {
+    constructor(
+        private cache: WidgetList<T>,
+        public before: (id: number, xml: string, index: number) => void,
+        public after: (id: number, xml: string, index: number) => void)
+    {
         super();
     }
 
@@ -136,11 +140,11 @@ export default class View<T extends Widget> extends Element<T> {
             case 'radio':
                 if (!recursive) {
                     const result = node.parentOriginal.children.filter((radio: T) => (radio.element.type === 'radio' && radio.element.name === element.name)) as T[];
-                    let content = '';
+                    let xml = '';
                     if (result.length > 1) {
-                        let checked: T = null;
                         const layout = new Layout(this.cache.nextId, node, parent, result);
                         const widget = <Widget> layout as T;
+                        let checked: T = null;
                         this.cache.push(widget);
                         layout.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
                         layout.render(parent);
@@ -151,7 +155,7 @@ export default class View<T extends Widget> extends Element<T> {
                             }
                             radio.parent = layout;
                             radio.render(layout);
-                            content += this.renderTag(radio, widget, WIDGET_ANDROID.RADIO, true);
+                            xml += this.renderTag(radio, widget, WIDGET_ANDROID.RADIO, true);
                         }
                         layout
                             .android('orientation', (layout.children as WidgetList<T>).linearX ? 'horizontal' : 'vertical')
@@ -159,7 +163,7 @@ export default class View<T extends Widget> extends Element<T> {
                         layout.setBounds();
                         layout.setAttributes();
                         this.setGridSpace(widget);
-                        return this.getEnclosingTag(layout.renderDepth, WIDGET_ANDROID.RADIO_GROUP, layout.id, content);
+                        return this.getEnclosingTag(layout.renderDepth, WIDGET_ANDROID.RADIO_GROUP, layout.id, xml);
                     }
                 }
                 break;
@@ -171,23 +175,22 @@ export default class View<T extends Widget> extends Element<T> {
         node.applyCustomizations();
         node.render(parent);
         node.setGravity();
+        node.setAccessibility();
         node.cascade().forEach((item: Widget) => item.hide());
         this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, node.nodeName, node.id);
     }
     public getStaticTag(nodeName: string, depth: number, options: {}, width = 'wrap_content', height = 'wrap_content') {
-        let attributes = '';
         const node = new Widget(0, SETTINGS.targetAPI);
         node.setAndroidId(nodeName);
+        let attributes = '';
         if (SETTINGS.showAttributes) {
             node.apply(options)
                 .android('id', node.stringId)
                 .android('layout_width', width)
                 .android('layout_height', height);
             const indent = padLeft(depth + 1);
-            for (const attr of node.combine()) {
-                attributes += `\n${indent + attr}`;
-            }
+            attributes = node.combine().map(value => `\n${indent + value}`).join('');
         }
         return [this.getEnclosingTag(depth, nodeName, 0).replace('{@0}', attributes), node.stringId];
     }
@@ -197,8 +200,7 @@ export default class View<T extends Widget> extends Element<T> {
             const dimensions = getBoxSpacing(node.parentOriginal.element, true);
             const options = {
                 android: {
-                    layout_columnSpan: node.renderParent.gridColumnCount,
-                    layout_columnWeight: 1
+                    layout_columnSpan: node.renderParent.gridColumnCount
                 }
             };
             if (node.gridFirst) {

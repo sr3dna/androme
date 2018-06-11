@@ -3,7 +3,13 @@ import WidgetList from './widgetlist';
 import { WIDGET_ANDROID } from '../lib/constants';
 
 export default class Layout extends Widget {
-    constructor(id: number, node: Widget, parent: Widget | null, children: Widget[], actions?: number[]) {
+    constructor(
+        id: number,
+        node: Widget,
+        parent: Widget | null,
+        children: Widget[],
+        actions?: number[])
+    {
         const options = {
             parent,
             depth: node.depth,

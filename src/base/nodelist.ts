@@ -2,9 +2,10 @@ import Node from './node';
 import { sortAsc, sortDesc } from '../lib/util';
 
 export default abstract class NodeList<T extends Node> extends Array {
-    private _parent: T;
-
-    constructor(nodes: T[], parent: T = null) {
+    constructor(
+        nodes: T[],
+        public parent: T = null)
+    {
         super();
         if (Array.isArray(nodes)) {
             this.push(...nodes);
@@ -34,12 +35,6 @@ export default abstract class NodeList<T extends Node> extends Array {
         return false;
     }
 
-    set parent(value: T) {
-        this._parent = value;
-    }
-    get parent() {
-        return this._parent;
-    }
     get visible() {
         return this.filter(node => node.visible);
     }
@@ -53,17 +48,23 @@ export default abstract class NodeList<T extends Node> extends Array {
         return this.length + 1;
     }
     get linearX() {
-        if (this.length > 1 && !this.intersect()) {
-            const minBottom = Math.min.apply(null, this.map((item: T) => item.linear.bottom));
-            return !this.some(item => item.linear.top >= minBottom);
+        if (this.length > 0 && !this.intersect()) {
+            if (this.length > 1) {
+                const minBottom = Math.min.apply(null, this.map((item: Node) => item.linear.bottom));
+                return !this.some(item => item.linear.top >= minBottom);
+            }
+            return true;
         }
-        return true;
+        return false;
     }
     get linearY() {
-        if (this.length > 1 && !this.intersect()) {
-            const minRight = Math.min.apply(null, this.map((item: T) => item.linear.right));
-            return !this.some(item => item.linear.left >= minRight);
+        if (this.length > 0 && !this.intersect()) {
+            if (this.length > 1) {
+                const minRight = Math.min.apply(null, this.map((item: Node) => item.linear.right));
+                return !this.some(item => item.linear.left >= minRight);
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 }

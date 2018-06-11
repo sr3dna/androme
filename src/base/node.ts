@@ -4,10 +4,6 @@ import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../li
 import { getRangeBounds } from '../lib/dom';
 
 export default abstract class Node implements IBoxModel {
-    public static is(object: any) {
-        return (object instanceof Node);
-    }
-
     public depth: number = -1;
     public style: any;
     public styleMap: any;
@@ -38,7 +34,11 @@ export default abstract class Node implements IBoxModel {
     private _renderParent: any;
     private _tagName: string;
 
-    constructor(public id: number, public element: any = null, options = {}) {
+    constructor(
+        public id: number,
+        public element: any = null,
+        options = {})
+    {
         let style = {};
         let styleMap = {};
         if (element != null) {
@@ -249,7 +249,7 @@ export default abstract class Node implements IBoxModel {
     }
 
     set parent(value) {
-        if (!Node.is(value) || value === this._parent) {
+        if (value === this._parent) {
             return;
         }
         if (this._parent && this._parentOriginal == null) {
@@ -264,9 +264,7 @@ export default abstract class Node implements IBoxModel {
         return this._parent;
     }
     set parentOriginal(value) {
-        if (Node.is(value)) {
-            this._parentOriginal = value;
-        }
+        this._parentOriginal = value;
     }
     get parentOriginal() {
         return this._parentOriginal || this._parent;
@@ -275,7 +273,7 @@ export default abstract class Node implements IBoxModel {
         return this.element.parentNode;
     }
     set renderParent(value: any) {
-        if (Node.is(value) && value.visible && value.renderChildren != null) {
+        if (value instanceof Node) {
             value.renderChildren.push(this);
         }
         this._renderParent = value;

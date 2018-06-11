@@ -2,7 +2,7 @@ import { IPoint } from './lib/types';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import { WIDGET_ANDROID } from './lib/constants';
-import { convertPX, formatPX, indexOf, same, search, withinFraction, withinRange } from './lib/util';
+import { convertPX, formatPX, hasValue, indexOf, same, search, withinFraction, withinRange } from './lib/util';
 import NODE_CACHE from './cache';
 import { viewHandler } from './render';
 import parseRTL from './lib/localization';
@@ -354,7 +354,7 @@ export function setConstraints() {
                         const chainDirection = current.constraint[value];
                         if (chainDirection && chainDirection.length > 0 && (flex.enabled || chainDirection.map((item: Widget) => parseInt((item.constraint[value] || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
                             chainDirection.parent = node;
-                            if (flex.enabled && chainDirection.some((item: Widget) => item.flex.direction > 0)) {
+                            if (flex.enabled && chainDirection.some((item: Widget) => item.flex.order > 0)) {
                                 chainDirection[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
                             }
                             const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
@@ -386,11 +386,11 @@ export function setConstraints() {
                                 if (chain.styleMap[dimension] == null) {
                                     const min = chain.styleMap[`min${WH}`];
                                     const max = chain.styleMap[`max${WH}`];
-                                    if (min != null) {
+                                    if (hasValue(min)) {
                                         chain.app(`layout_constraint${WH}_min`, convertPX(min));
                                         chain.styleMap[`min${WH}`] = null;
                                     }
-                                    if (max != null) {
+                                    if (hasValue(max)) {
                                         chain.app(`layout_constraint${WH}_max`, convertPX(max));
                                         chain.styleMap[`max${WH}`] = null;
                                     }

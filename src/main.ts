@@ -1,27 +1,16 @@
-import { BLOCK_CHROME, BUILD_ANDROID as build, DENSITY_ANDROID as density, INLINE_CHROME, MAPPING_CHROME, OVERFLOW_CHROME, WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
+import { BLOCK_CHROME, BUILD_ANDROID, DENSITY_ANDROID, INLINE_CHROME, MAPPING_CHROME, OVERFLOW_CHROME, WIDGET_ANDROID } from './lib/constants';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import Layout from './android/layout';
-import { convertInt, hasValue, hyphenToCamelCase, formatPX, replaceDP, sortAsc } from './lib/util';
+import { hasValue, hyphenToCamelCase, formatPX, replaceDP, sortAsc } from './lib/util';
 import { convertRGB, getByColorName } from './lib/color';
 import { hasFreeFormText, isVisible } from './lib/dom';
 import NODE_CACHE from './cache';
-import { getViewAttributes, setResourceStyle, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './resource';
+import { setResourceStyle, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './resource';
 import { setConstraints } from './constraint';
-import { insertViewBeforeAfter, writeFrameLayout, writeLinearLayout, writeGridLayout, writeDefaultLayout, writeViewTag } from './render';
-import parseRTL from './lib/localization';
-import api from './android/customizations';
-import settings from './settings';
-
-function setInlineAttributes(output: string) {
-    const namespaces = {};
-    for (const node of NODE_CACHE.visible) {
-        node.setAndroidDimensions();
-        node.namespaces.forEach((value: string) => namespaces[value] = true);
-        output = output.replace(`{@${node.id}}`, getViewAttributes(node));
-    }
-    return output.replace('{@0}', Object.keys(namespaces).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join(''));
-}
+import { insertViewBeforeAfter, setInlineAttributes, writeFrameLayout, writeLinearLayout, writeGridLayout, writeDefaultLayout, writeViewTag } from './render';
+import API_ANDROID from './android/customizations';
+import SETTINGS from './settings';
 
 function setStyleMap() {
     for (const styleSheet of Array.from(document.styleSheets) as any) {
@@ -51,42 +40,13 @@ function setStyleMap() {
                         styleMap[name] = style[name];
                     }
                 }
-                if (element.styleMap != null) {
-                    Object.assign(element.styleMap, styleMap);
+                if (element.__styleMap != null) {
+                    Object.assign(element.__styleMap, styleMap);
                 }
                 else {
                     element.__styleMap = styleMap;
                 }
             }
-        }
-    }
-}
-
-function setAccessibility() {
-    for (const node of NODE_CACHE.visible) {
-        switch (node.nodeName) {
-            case WIDGET_ANDROID.EDIT:
-                let parent: Widget = node.renderParent;
-                let current: Widget = node;
-                let label: Widget = null;
-                while (parent && parent.renderChildren != null) {
-                    const index = parent.renderChildren.findIndex((item: Widget) => item === current);
-                    if (index > 0) {
-                        label = parent.renderChildren[index - 1] as Widget;
-                        break;
-                    }
-                    current = parent;
-                    parent = parent.renderParent;
-                }
-                if (label && label.is(WIDGET_ANDROID.TEXT)) {
-                    label.android('labelFor', node.stringId);
-                }
-            case WIDGET_ANDROID.SPINNER:
-            case WIDGET_ANDROID.CHECKBOX:
-            case WIDGET_ANDROID.RADIO:
-            case WIDGET_ANDROID.BUTTON:
-                node.android('focusable', 'true');
-                break;
         }
     }
 }
@@ -119,50 +79,6 @@ function setMarginPadding() {
                     break;
             }
         }
-        if (settings.targetAPI >= build.OREO) {
-            if (node.visible) {
-                const marginLeftRtl = parseRTL('layout_marginLeft');
-                const marginRightRtl = parseRTL('layout_marginRight');
-                const paddingLeftRtl = parseRTL('paddingLeft');
-                const paddingRightRtl = parseRTL('paddingRight');
-                const marginTop = convertInt(node.android('layout_marginTop'));
-                const marginRight = convertInt(node.android(marginRightRtl));
-                const marginBottom = convertInt(node.android('layout_marginBottom'));
-                const marginLeft = convertInt(node.android(marginLeftRtl));
-                if (marginTop !== 0 && marginTop === marginBottom && marginBottom === marginLeft && marginLeft === marginRight) {
-                    node.delete('android', 'layout_margin*')
-                        .android('layout_margin', formatPX(marginTop));
-                }
-                else {
-                    if (marginTop !== 0 && marginTop === marginBottom) {
-                        node.delete('android', 'layout_marginTop', 'layout_marginBottom')
-                            .android('layout_marginVertical', formatPX(marginTop));
-                    }
-                    if (marginLeft !== 0 && marginLeft === marginRight) {
-                        node.delete('android', marginLeftRtl, marginRightRtl)
-                            .android('layout_marginHorizontal', formatPX(marginLeft));
-                    }
-                }
-                const paddingTop = convertInt(node.android('paddingTop'));
-                const paddingRight = convertInt(node.android(paddingRightRtl));
-                const paddingBottom = convertInt(node.android('paddingBottom'));
-                const paddingLeft = convertInt(node.android(paddingLeftRtl));
-                if (paddingTop !== 0 && paddingTop === paddingBottom && paddingBottom === paddingLeft && paddingLeft === paddingRight) {
-                    node.delete('android', 'padding*')
-                        .android('padding', formatPX(paddingTop));
-                }
-                else {
-                    if (paddingTop !== 0 && paddingTop === paddingBottom) {
-                        node.delete('android', 'paddingTop', 'paddingBottom')
-                            .android('paddingVertical', formatPX(paddingTop));
-                    }
-                    if (paddingLeft !== 0 && paddingLeft === paddingRight) {
-                        node.delete('android', paddingLeftRtl, paddingRightRtl)
-                            .android('paddingHorizontal', formatPX(paddingLeft));
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -171,7 +87,7 @@ function setLayoutWeight() {
         const rows = node.linearRows;
         if (rows.length > 1) {
             const columnLength = rows[0].renderChildren.length;
-            if (rows.reduce((a: number, b: Widget) => (a && a === b.renderChildren.length ? a : 0), columnLength) > 0) {
+            if (rows.every((item: Widget) => item.renderChildren.length === columnLength)) {
                 const horizontal = !node.horizontal;
                 const columnDimension = new Array(columnLength).fill(Number.MIN_VALUE);
                 for (const row of rows) {
@@ -197,7 +113,7 @@ function setLayoutWeight() {
 
 function createNode(element: HTMLElement) {
     if (isVisible(element)) {
-        const node = new Widget(NODE_CACHE.nextId, settings.targetAPI, element);
+        const node = new Widget(NODE_CACHE.nextId, SETTINGS.targetAPI, element);
         NODE_CACHE.push(node);
         return node;
     }
@@ -307,7 +223,7 @@ function setNodeCache(documentRoot: HTMLElement) {
         if (node.element.children && node.element.children.length > 1) {
             node.element.childNodes.forEach((element: HTMLElement) => {
                 if (element.nodeName === '#text' && element.textContent.trim() !== '') {
-                    const widget = new Widget(NODE_CACHE.nextId, settings.targetAPI, null, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
+                    const widget = new Widget(NODE_CACHE.nextId, SETTINGS.targetAPI, null, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
                     widget.setAndroidId(WIDGET_ANDROID.TEXT);
                     widget.setBounds(false, element);
                     widget.inheritStyle(node);
@@ -401,10 +317,10 @@ export function parseDocument(element: any) {
                         }
                         else if (nodeY.children.length > 0) {
                             const rows = nodeY.children;
-                            if (settings.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every((item: Widget) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                            if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every((item: Widget) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
                                 let columns: any[][] = [];
                                 const columnEnd = [];
-                                if (settings.useLayoutWeight) {
+                                if (SETTINGS.useLayoutWeight) {
                                     const dimensions: number[][] = [];
                                     for (let l = 0; l < rows.length; l++) {
                                         const children = rows[l].children;
@@ -553,7 +469,7 @@ export function parseDocument(element: any) {
                                 }
                                 if (columns.length > 1) {
                                     nodeY.gridColumnEnd = columnEnd;
-                                    nodeY.gridColumnCount = (settings.useLayoutWeight ? columns[0].length : columns.length);
+                                    nodeY.gridColumnCount = (SETTINGS.useLayoutWeight ? columns[0].length : columns.length);
                                     xml += writeGridLayout(nodeY, parent, nodeY.gridColumnCount);
                                     for (let l = 0, count = 0; l < columns.length; l++) {
                                         let spacer = 0;
@@ -562,7 +478,7 @@ export function parseDocument(element: any) {
                                             if (!node.spacer) {
                                                 node.parent.hide();
                                                 node.parent = nodeY;
-                                                if (settings.useLayoutWeight) {
+                                                if (SETTINGS.useLayoutWeight) {
                                                     node.gridRowStart = (m === 0);
                                                     node.gridRowEnd = (m === columns[l].length - 1);
                                                     node.gridFirst = (l === 0 && m === 0);
@@ -634,7 +550,7 @@ export function parseDocument(element: any) {
                     if (!nodeY.renderParent) {
                         if (parent.is(WIDGET_ANDROID.GRID)) {
                             let siblings: WidgetList<Widget>;
-                            if (settings.useLayoutWeight) {
+                            if (SETTINGS.useLayoutWeight) {
                                 siblings = new WidgetList(nodeY.gridSiblings);
                             }
                             else {
@@ -680,22 +596,21 @@ export function parseDocument(element: any) {
         }
     }
     setResourceStyle(NODE_CACHE);
-    if (settings.showAttributes) {
+    if (SETTINGS.showAttributes) {
         setMarginPadding();
-        if (settings.useLayoutWeight) {
+        if (SETTINGS.useLayoutWeight) {
             setLayoutWeight();
         }
-        setAccessibility();
         setConstraints();
         output = setInlineAttributes(output);
     }
     output = insertViewBeforeAfter(output);
     output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
-    if (settings.useUnitDP) {
-        output = replaceDP(output, settings.density);
+    if (SETTINGS.useUnitDP) {
+        output = replaceDP(output, SETTINGS.density);
     }
     return output;
 }
 
-export { api, build, density, settings as settings };
+export { API_ANDROID as api, BUILD_ANDROID as build, DENSITY_ANDROID as density, SETTINGS as settings };
 export { writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml };

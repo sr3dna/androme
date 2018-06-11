@@ -3,7 +3,10 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 
 export default class WidgetList<T extends Node> extends NodeList<T> {
-    constructor(nodes: T[] = null, parent: T = null) {
+    constructor(
+        nodes: T[] = null,
+        parent: T = null)
+    {
         super(nodes, parent);
     }
 

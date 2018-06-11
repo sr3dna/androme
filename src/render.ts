@@ -1,7 +1,8 @@
-import { WIDGET_ANDROID } from './lib/constants';
+import { WIDGET_ANDROID, XMLNS_ANDROID } from './lib/constants';
 import View from './android/view';
 import Widget from './android/widget';
 import NODE_CACHE from './cache';
+import { getViewAttributes } from './resource';
 import SETTINGS from './settings';
 
 const VIEW_BEFORE = {};
@@ -31,6 +32,16 @@ function addViewAfter(id: number, xml: string, index = -1) {
     else {
         VIEW_AFTER[id].push(xml);
     }
+}
+
+export function setInlineAttributes(output: string) {
+    const namespaces = {};
+    for (const node of NODE_CACHE.visible) {
+        node.setAndroidDimensions();
+        node.namespaces.forEach((value: string) => namespaces[value] = true);
+        output = output.replace(`{@${node.id}}`, getViewAttributes(node));
+    }
+    return output.replace('{@0}', Object.keys(namespaces).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join(''));
 }
 
 export function writeFrameLayout(node: Widget, parent: Widget) {

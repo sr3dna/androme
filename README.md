@@ -29,8 +29,8 @@ These settings are available in the global variable "androme" to customize your 
 
 ```javascript
 androme.settings = {
-    targetAPI: androme.BUILD_ANDROID.OREO,
-    density: androme.DENSITY_ANDROID.MDPI,
+    targetAPI: androme.build.OREO,
+    density: androme.density.MDPI,
     showAttributes: true,
     horizontalPerspective: true,
     useConstraintLayout: true,
@@ -39,7 +39,7 @@ androme.settings = {
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
-    useFontAlias: true,
+    useFontAlias: false,
     supportRTL: true,
     numberResourceValue: false,
     excludeTextColor: ['#000000'],
@@ -123,7 +123,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_1"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -289,7 +288,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_2"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -332,7 +330,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_3"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -357,7 +354,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_4"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -400,7 +396,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_5"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -425,7 +420,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_6"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -450,7 +444,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_7"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -475,7 +468,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_8"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 		</GridLayout>
@@ -513,7 +505,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_9"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -538,7 +529,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_10"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -595,7 +585,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_11"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -620,7 +609,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_12"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -645,7 +633,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_13"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -670,7 +657,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_14"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -726,7 +712,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_15"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -795,7 +780,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_16"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -850,7 +834,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_17"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 			<TextView
@@ -938,7 +921,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Space
 				android:id="@+id/space_18"
 				android:layout_columnSpan="2"
-				android:layout_columnWeight="1"
 				android:layout_height="6dp"
 				android:layout_width="match_parent" />
 		</GridLayout>
