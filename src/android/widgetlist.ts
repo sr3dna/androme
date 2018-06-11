@@ -4,8 +4,8 @@ import NodeList from '../base/nodelist';
 
 export default class WidgetList<T extends Node> extends NodeList<T> {
     constructor(
-        nodes: T[] = null,
-        parent: T = null)
+        nodes?: T[],
+        parent?: T)
     {
         super(nodes, parent);
     }

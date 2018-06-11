@@ -52,7 +52,7 @@ function setStyleMap() {
 }
 
 function setMarginPadding() {
-    for (const node of NODE_CACHE) {
+    for (const node of NODE_CACHE as Widget[]) {
         if (node.is(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
             switch (node.android('orientation')) {
                 case 'horizontal':
@@ -83,7 +83,7 @@ function setMarginPadding() {
 }
 
 function setLayoutWeight() {
-    for (const node of NODE_CACHE) {
+    for (const node of NODE_CACHE as Widget[]) {
         const rows = node.linearRows;
         if (rows.length > 1) {
             const columnLength = rows[0].renderChildren.length;
@@ -111,12 +111,27 @@ function setLayoutWeight() {
     }
 }
 
-function createNode(element: HTMLElement) {
-    if (isVisible(element)) {
-        const node = new Widget(NODE_CACHE.nextId, SETTINGS.targetAPI, element);
-        NODE_CACHE.push(node);
-        return node;
+function insertNode(element: HTMLElement, parent?: Widget) {
+    let node: Widget = null;
+    switch (element.nodeName) {
+        case '#text':
+            if (element.textContent.trim() !== '') {
+                node = new Widget(NODE_CACHE.nextId, SETTINGS.targetAPI, null, { element, parent, actions: [0, 4], tagName: 'TEXT' });
+                node.setAndroidId(WIDGET_ANDROID.TEXT);
+                node.setBounds(false, element);
+                node.inheritStyle(parent);
+                parent.children.push(node);
+            }
+            break;
+        default:
+            if (isVisible(element)) {
+                node = new Widget(NODE_CACHE.nextId, SETTINGS.targetAPI, element);
+            }
     }
+    if (node != null) {
+        NODE_CACHE.push(node);
+    }
+    return node;
 }
 
 function setNodeCache(documentRoot: HTMLElement) {
@@ -135,17 +150,17 @@ function setNodeCache(documentRoot: HTMLElement) {
     });
     const elements: any = (documentRoot != null ? documentRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
     if (documentRoot != null) {
-        const node = createNode(documentRoot);
+        const node = insertNode(documentRoot);
         node.parent = new Widget(0, 0);
     }
     for (const i in elements) {
         if (INLINE_CHROME.includes(elements[i].tagName) && (MAPPING_CHROME[elements[i].parentNode.tagName] != null || INLINE_CHROME.includes(elements[i].parentNode.tagName))) {
             continue;
         }
-        createNode(elements[i]);
+        insertNode(elements[i]);
     }
     const preAlignment = {};
-    for (const node of NODE_CACHE) {
+    for (const node of NODE_CACHE as Widget[]) {
         preAlignment[node.id] = {};
         const style = preAlignment[node.id];
         switch (node.style.textAlign) {
@@ -170,65 +185,51 @@ function setNodeCache(documentRoot: HTMLElement) {
             style.overflow = node.style.overflow;
             node.element.style.overflow = 'visible';
         }
+        node.setBounds();
     }
-    const parentNodes = {};
-    for (const parent of NODE_CACHE) {
-        if (parent.bounds == null) {
-            parent.setBounds();
-        }
-        for (const child of NODE_CACHE) {
+    const parents = {};
+    for (const parent of NODE_CACHE as Widget[]) {
+        for (const child of NODE_CACHE as Widget[]) {
             if (parent !== child) {
-                if (child.bounds == null) {
-                    child.setBounds();
-                }
-                if ((!child.fixed && child.parentElement === parent.element) || (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom)) {
-                    if (parentNodes[child.id] == null) {
-                        parentNodes[child.id] = [];
-                    }
-                    parentNodes[child.id].push(parent);
+                if (child.element.parentNode === parent.element) {
+                    child.parent = parent;
                     parent.children.push(child);
                 }
+                if (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
+                    if (parents[child.id] == null) {
+                        parents[child.id] = [];
+                    }
+                    parents[child.id].push(parent);
+                }
             }
         }
     }
-    for (const node of NODE_CACHE) {
-        const nodes = parentNodes[node.id];
+    for (const node of NODE_CACHE as Widget[]) {
+        const nodes: Widget[] = parents[node.id];
         if (nodes != null) {
-            let parent = node.parentElement.__node;
-            if (node.fixed) {
-                if (nodes.length > 1) {
-                    let minArea = Number.MAX_VALUE;
-                    for (const current of nodes) {
-                        const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
-                        if (area < minArea) {
-                            parent = current;
-                            minArea = area;
-                        }
-                        else if (area === minArea) {
-                            if (current.element === node.parentElement) {
-                                parent = current;
-                            }
-                        }
-                    }
-                    node.parent = parent;
+            nodes.push(<Widget> node.parent);
+            let minArea = Number.MAX_VALUE;
+            let closest: Widget = null;
+            for (const current of nodes) {
+                const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
+                if (area < minArea) {
+                    closest = current;
+                    minArea = area;
                 }
-                else {
-                    node.parent = nodes[0];
+                else if (area === minArea) {
+                    if (current.element === node.parent.element) {
+                        closest = current;
+                    }
                 }
             }
-            else {
-                node.parent = parent;
+            if (closest != null) {
+                node.parent = closest;
             }
         }
         if (node.element.children && node.element.children.length > 1) {
-            node.element.childNodes.forEach((element: HTMLElement) => {
+            Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                 if (element.nodeName === '#text' && element.textContent.trim() !== '') {
-                    const widget = new Widget(NODE_CACHE.nextId, SETTINGS.targetAPI, null, { element, parent: node, actions: [0, 4], tagName: 'TEXT' });
-                    widget.setAndroidId(WIDGET_ANDROID.TEXT);
-                    widget.setBounds(false, element);
-                    widget.inheritStyle(node);
-                    NODE_CACHE.push(widget);
-                    node.children.push(widget);
+                    insertNode(element, node);
                 }
             });
         }
@@ -242,7 +243,7 @@ function setNodeCache(documentRoot: HTMLElement) {
         }
     }
     sortAsc(NODE_CACHE, 'depth', 'parent.id', 'parentIndex', 'id');
-    for (const node of NODE_CACHE) {
+    for (const node of NODE_CACHE as Widget[]) {
         let i = 0;
         Array.from(node.element.childNodes).forEach((element: any) => {
             if (element.__node != null && (element.__node.parent.element === node.element)) {
@@ -253,7 +254,7 @@ function setNodeCache(documentRoot: HTMLElement) {
     }
 }
 
-export function parseDocument(element: any) {
+export function parseDocument(element?: any) {
     if (typeof element === 'string') {
         element = document.getElementById(element);
     }
@@ -262,7 +263,7 @@ export function parseDocument(element: any) {
     const mapY = [];
     setStyleMap();
     setNodeCache(element);
-    for (const node of NODE_CACHE) {
+    for (const node of NODE_CACHE as Widget[]) {
         const x = Math.floor(node.bounds.x);
         const y = node.parent.id;
         if (mapX[node.depth] == null) {

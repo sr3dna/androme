@@ -87,7 +87,7 @@ export default class View<T extends Widget> extends Element<T> {
         return this.getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, preXml, postXml);
     }
     public renderTag(node: T, parent: T, tagName: string, recursive = false) {
-        const element = node.element;
+        const element: any = node.element;
         node.setAndroidId(tagName);
         switch (element.tagName) {
             case 'IMG':
@@ -139,7 +139,7 @@ export default class View<T extends Widget> extends Element<T> {
         switch (element.type) {
             case 'radio':
                 if (!recursive) {
-                    const result = node.parentOriginal.children.filter((radio: T) => (radio.element.type === 'radio' && radio.element.name === element.name)) as T[];
+                    const result = node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name)) as T[];
                     let xml = '';
                     if (result.length > 1) {
                         const layout = new Layout(this.cache.nextId, node, parent, result);
@@ -150,7 +150,7 @@ export default class View<T extends Widget> extends Element<T> {
                         layout.render(parent);
                         for (const radio of result) {
                             layout.inheritGrid(radio);
-                            if (radio.element.checked) {
+                            if ((<HTMLInputElement> radio.element).checked) {
                                 checked = radio;
                             }
                             radio.parent = layout;

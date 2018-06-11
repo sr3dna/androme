@@ -5,8 +5,8 @@ import { getRangeBounds } from '../lib/dom';
 
 export default abstract class Node implements IBoxModel {
     public depth: number = -1;
-    public style: any;
-    public styleMap: any;
+    public style: any = {};
+    public styleMap: any = {};
     public visible: boolean = true;
     public parentIndex: number = Number.MAX_VALUE;
     public bounds: IClientRect;
@@ -36,27 +36,20 @@ export default abstract class Node implements IBoxModel {
 
     constructor(
         public id: number,
-        public element: any = null,
-        options = {})
+        public element?: HTMLElement,
+        options?: {})
     {
-        let style = {};
-        let styleMap = {};
-        if (element != null) {
-            style = getComputedStyle(element);
-            styleMap = element.__styleMap || {};
-            for (const inline of element.style) {
-                styleMap[hyphenToCamelCase(inline)] = element.style[inline];
-            }
-        }
-        else {
-            element = {};
-        }
-        this.id = id;
-        this.element = element;
-        this.style = style;
-        this.styleMap = styleMap;
-
         Object.assign(this, options);
+        if (element != null || (options != null && (<any> options).element != null)) {
+            const style = getComputedStyle(this.element);
+            const styleMap = (<any> this.element).__styleMap || {};
+            for (const inline of <any> this.element.style) {
+                styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
+            }
+            this.style = style;
+            this.styleMap = styleMap;
+            (<any> this.element).__node = this;
+        }
     }
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
@@ -285,14 +278,14 @@ export default abstract class Node implements IBoxModel {
         return Array.from(this._namespaces);
     }
     get tagName() {
-        return this.element.tagName;
+        return (this.element != null ? this.element.tagName : '');
     }
     get nodeName() {
         return this.tagName;
     }
     get flex() {
         if (this._flex == null) {
-            const parent = this.parentElement && this.parentElement.__node;
+            const parent = this.element && (<any> this.element.parentNode).__node;
             this._flex = {
                 parent,
                 enabled: (this.style.display && this.style.display.indexOf('flex') !== -1),

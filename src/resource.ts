@@ -519,10 +519,6 @@ export function setResourceStyle(cache: WidgetList<Widget>) {
     });
 }
 
-export function getResource(module: string) {
-    return RESOURCE[module];
-}
-
 export function insertResourceAsset(resource: Map<string, any>, name: string, value: any) {
     let resourceName = '';
     if (isNumber(name)) {
@@ -550,7 +546,7 @@ export function addResourceString(node: Widget, value: string) {
     let name = value;
     if (value == null) {
         if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-            name = element.value;
+            name = (<HTMLInputElement> element).value;
             value = name;
         }
         else if (element.nodeName === '#text') {
@@ -598,7 +594,7 @@ export function addResourceString(node: Widget, value: string) {
         if (element && element.nodeName === '#text') {
             const prevSibling = element.previousSibling;
             if (prevSibling != null) {
-                const prevNode = prevSibling.__node;
+                const prevNode: Widget = (<any> prevSibling).__node;
                 switch (prevNode.nodeName) {
                     case WIDGET_ANDROID.CHECKBOX:
                     case WIDGET_ANDROID.RADIO:
@@ -637,7 +633,7 @@ export function addResourceStringArray(node: Widget) {
     const stringArray = new Map();
     let numberArray = new Map();
     for (let i = 0; i < element.children.length; i++) {
-        const item = element.children[i];
+        const item = <HTMLOptionElement> element.children[i];
         const value = item.text.trim() || item.value.trim();
         if (value !== '') {
             if (numberArray && !stringArray.size && isNumber(value)) {
