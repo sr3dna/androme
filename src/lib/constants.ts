@@ -1,94 +1,55 @@
-export enum BUILD_ANDROID
+export enum NODE_STANDARD
 {
-    OREO_1 = 27,
-    OREO = 26,
-    NOUGAT_1 = 25,
-    NOUGAT = 24,
-    MARSHMALLOW = 23,
-    LOLLIPOP_1 = 22,
-    LOLLIPOP = 21,
-    KITKAT_1 = 20,
-    KITKAT = 19,
-    JELLYBEAN_2 = 18,
-    JELLYBEAN_1 = 17,
-    JELLYBEAN = 16,
-    ICE_CREAM_SANDWICH_1 = 15,
-    ICE_CREAM_SANDWICH = 14
+    FRAME = 1,
+    LINEAR,
+    CONSTRAINT,
+    GUIDELINE,
+    RELATIVE,
+    GRID,
+    SCROLL_VERTICAL,
+    SCROLL_HORIZONTAL,
+    SCROLL_NESTED,
+    RADIO_GROUP,
+    TEXT,
+    EDIT,
+    IMAGE,
+    SELECT,
+    CHECKBOX,
+    RADIO,
+    BUTTON,
+    VIEW,
+    SPACE
 }
 
-export enum DENSITY_ANDROID
-{
-    LDPI = 120,
-    MDPI = 160,
-    HDPI = 240,
-    XHDPI = 320,
-    XXHDPI = 480,
-    XXXHDPI = 640
+export enum BOX_STANDARD {
+    MARGIN_TOP = 2,
+    MARGIN_RIGHT = 4,
+    MARGIN_BOTTOM = 8,
+    MARGIN_LEFT = 16,
+    PADDING_TOP = 32,
+    PADDING_RIGHT = 64,
+    PADDING_BOTTOM = 128,
+    PADDING_LEFT = 256
 }
-
-export const enum WIDGET_ANDROID
-{
-    FRAME = 'FrameLayout',
-    LINEAR = 'LinearLayout',
-    CONSTRAINT = 'android.support.constraint.ConstraintLayout',
-    GUIDELINE = 'android.support.constraint.Guideline',
-    RELATIVE = 'RelativeLayout',
-    GRID = 'GridLayout',
-    SCROLL_VERTICAL = 'ScrollView',
-    SCROLL_HORIZONTAL = 'HorizontalScrollView',
-    SCROLL_NESTED = 'NestedScrollView',
-    RADIO_GROUP = 'RadioGroup',
-    TEXT = 'TextView',
-    EDIT = 'EditText',
-    IMAGE = 'ImageView',
-    SPINNER = 'Spinner',
-    CHECKBOX = 'CheckBox',
-    RADIO = 'RadioButton',
-    BUTTON = 'Button',
-    VIEW = 'View',
-    SPACE = 'Space'
-}
-
-export const enum OVERFLOW_CHROME {
-    NONE = 0,
-    HORIZONTAL = 2,
-    VERTICAL = 4
-}
-
-export const FIXED_ANDROID =
-[
-    WIDGET_ANDROID.EDIT,
-    WIDGET_ANDROID.SPINNER,
-    WIDGET_ANDROID.CHECKBOX,
-    WIDGET_ANDROID.RADIO,
-    WIDGET_ANDROID.BUTTON
-];
-
-export const XMLNS_ANDROID =
-{
-    'ANDROID': 'xmlns:android="http://schemas.android.com/apk/res/android"',
-    'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"',
-    'TOOLS': 'xmlns:tools="http://schemas.android.com/tools"'
-};
 
 export const MAPPING_CHROME =
 {
-    'TEXT': WIDGET_ANDROID.TEXT,
-    'LABEL': WIDGET_ANDROID.TEXT,
-    'P': WIDGET_ANDROID.TEXT,
-    'HR': WIDGET_ANDROID.VIEW,
-    'IMG': WIDGET_ANDROID.IMAGE,
-    'SELECT': WIDGET_ANDROID.SPINNER,
+    'TEXT': NODE_STANDARD.TEXT,
+    'LABEL': NODE_STANDARD.TEXT,
+    'P': NODE_STANDARD.TEXT,
+    'HR': NODE_STANDARD.VIEW,
+    'IMG': NODE_STANDARD.IMAGE,
+    'SELECT': NODE_STANDARD.SELECT,
     'INPUT' : {
-        'text': WIDGET_ANDROID.EDIT,
-        'password': WIDGET_ANDROID.EDIT,
-        'checkbox': WIDGET_ANDROID.CHECKBOX,
-        'radio': WIDGET_ANDROID.RADIO,
-        'button': WIDGET_ANDROID.BUTTON,
-        'submit': WIDGET_ANDROID.BUTTON
+        'text': NODE_STANDARD.EDIT,
+        'password': NODE_STANDARD.EDIT,
+        'checkbox': NODE_STANDARD.CHECKBOX,
+        'radio': NODE_STANDARD.RADIO,
+        'button': NODE_STANDARD.BUTTON,
+        'submit': NODE_STANDARD.BUTTON
     },
-    'BUTTON': WIDGET_ANDROID.BUTTON,
-    'TEXTAREA': WIDGET_ANDROID.EDIT
+    'BUTTON': NODE_STANDARD.BUTTON,
+    'TEXTAREA': NODE_STANDARD.EDIT
 };
 
 export const BLOCK_CHROME =
@@ -155,3 +116,9 @@ export const INLINE_CHROME =
     'DEL',
     'TEXT'
 ];
+
+export const enum OVERFLOW_CHROME {
+    NONE = 0,
+    HORIZONTAL = 2,
+    VERTICAL = 4
+}

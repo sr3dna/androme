@@ -27,7 +27,7 @@ function addViewAfter(id: number, xml: string, index = -1) {
     }
 }
 
-export function appendViewsBeforeAfter(output: string) {
+export function replaceViewsBeforeAfter(output: string) {
     for (const id in VIEW_BEFORE) {
         output = output.replace(`{<${id}}`, VIEW_BEFORE[id].join(''));
     }

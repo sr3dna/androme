@@ -1,4 +1,4 @@
-import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/constants';
+import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 
 export default {
     targetAPI: BUILD_ANDROID.OREO,

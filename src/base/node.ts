@@ -1,7 +1,7 @@
 import { IClientRect, IBoxModel, IPoint } from '../lib/types';
-import { OVERFLOW_CHROME } from '../lib/constants';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { getRangeBounds } from '../lib/dom';
+import { OVERFLOW_CHROME } from '../lib/constants';
 
 export default abstract class Node implements IBoxModel {
     public depth: number = -1;
@@ -54,8 +54,9 @@ export default abstract class Node implements IBoxModel {
         }
     }
 
+    public abstract is(...views: number[]): boolean;
     public abstract inheritStyle(node: Node): void;
-    public abstract setLayoutWeight(horizontal: boolean, percent: number): void;
+    public abstract distributeWeight(horizontal: boolean, percent: number): void;
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
@@ -97,10 +98,12 @@ export default abstract class Node implements IBoxModel {
     }
 
     public apply(options: {}) {
-        for (const namespace in options) {
-            const obj = options[namespace];
-            for (const attr in obj) {
-                this.add(namespace, attr, obj[attr]);
+        if (options != null) {
+            for (const namespace in options) {
+                const obj = options[namespace];
+                for (const attr in obj) {
+                    this.add(namespace, attr, obj[attr]);
+                }
             }
         }
         return this;
@@ -238,15 +241,6 @@ export default abstract class Node implements IBoxModel {
         if (calibrate) {
             this.setBounds(true);
         }
-    }
-
-    public is(...views: string[]) {
-        for (const name of views) {
-            if (this.nodeName === name) {
-                return true;
-            }
-        }
-        return false;
     }
 
     protected setDimensions() {

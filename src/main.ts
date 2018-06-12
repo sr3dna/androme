@@ -1,15 +1,15 @@
 import Application from './base/application';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
-import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/constants';
 import { hasValue, hyphenToCamelCase, replaceDP } from './lib/util';
 import { convertRGB, getByColorName } from './lib/color';
-import NODE_CACHE from './cache';
 import { setResourceStyle, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './resource';
 import { setConstraints } from './constraint';
-import { appendViewsBeforeAfter, viewHandler } from './render';
+import { replaceViewsBeforeAfter, viewHandler } from './render';
+import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
+import NODE_CACHE from './cache';
 
 function setStyleMap() {
     for (const styleSheet of <any> Array.from(document.styleSheets)) {
@@ -58,7 +58,7 @@ export function parseDocument(element?: any) {
     const app = new Application<Widget, WidgetList<Widget>>(NODE_CACHE, viewHandler, Widget, WidgetList);
     app.setNodeCache(element);
     let output = app.getLayoutXml();
-    output = appendViewsBeforeAfter(output);
+    output = replaceViewsBeforeAfter(output);
     setResourceStyle(NODE_CACHE);
     if (SETTINGS.showAttributes) {
         app.setMarginPadding();
@@ -66,7 +66,7 @@ export function parseDocument(element?: any) {
             app.setLayoutWeight();
         }
         setConstraints();
-        output = app.setInlineAttributes(output);
+        output = app.replaceInlineAttributes(output);
     }
     output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
     if (SETTINGS.useUnitDP) {

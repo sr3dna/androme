@@ -1,13 +1,14 @@
 import Element from '../base/element';
 import Widget from './widget';
-import WidgetList from './widgetlist';
 import Layout from './layout';
-import { OVERFLOW_CHROME, WIDGET_ANDROID } from '../lib/constants';
+import WidgetList from './widgetlist';
 import { convertPX, padLeft } from '../lib/util';
 import { getBoxSpacing } from '../lib/dom';
-import { addResourceImage } from '../resource';
 import parseRTL from '../lib/localization';
+import { addResourceImage } from '../resource';
 import SETTINGS from '../settings';
+import { OVERFLOW_CHROME, NODE_STANDARD } from '../lib/constants';
+import { BOX_ANDROID, NODE_ANDROID, XMLNS_ANDROID } from './constants';
 
 export default class View<T extends Widget, U extends WidgetList<T>> extends Element<T, U> {
     public cache: U;
@@ -19,18 +20,18 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         super();
     }
 
-    public renderLayout(node: T, parent: T, tagName: string) {
+    public renderLayout(node: T, parent: T, tagName: number, options?: {}) {
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
-        node.setAndroidId(tagName);
+        node.setAndroidId(Widget.getTagName(tagName));
         if (node.overflow !== OVERFLOW_CHROME.NONE) {
             const scrollView = [];
             if (node.overflowX) {
-                scrollView.push(WIDGET_ANDROID.SCROLL_HORIZONTAL);
+                scrollView.push(NODE_ANDROID.SCROLL_HORIZONTAL);
             }
             if (node.overflowY) {
-                scrollView.push((node.ascend().some((item: T) => item.overflow !== OVERFLOW_CHROME.NONE) ? WIDGET_ANDROID.SCROLL_NESTED : WIDGET_ANDROID.SCROLL_VERTICAL));
+                scrollView.push((node.ascend().some((item: T) => item.overflow !== OVERFLOW_CHROME.NONE) ? NODE_ANDROID.SCROLL_NESTED : NODE_ANDROID.SCROLL_VERTICAL));
             }
             let current = <T> node;
             let scrollDepth = parent.renderDepth + scrollView.length;
@@ -43,7 +44,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                     layout.android('fadeScrollbars', 'false');
                     layout.setAttributes();
                     switch (nodeName) {
-                        case WIDGET_ANDROID.SCROLL_HORIZONTAL:
+                        case NODE_ANDROID.SCROLL_HORIZONTAL:
                             layout
                                 .css('width', node.styleMap.width)
                                 .css('minWidth', node.styleMap.minWidth)
@@ -81,16 +82,17 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 });
         }
         node.setAttributes();
+        node.apply(options);
         node.applyCustomizations();
         node.render(renderParent);
         node.setGravity();
         this.setGridSpace(node);
-        return this.getEnclosingTag(node.renderDepth, tagName, node.id, `{${node.id}}`, preXml, postXml);
+        return this.getEnclosingTag(node.renderDepth, Widget.getTagName(tagName), node.id, `{${node.id}}`, preXml, postXml);
     }
 
-    public renderTag(node: T, parent: T, tagName: string, recursive = false) {
+    public renderTag(node: T, parent: T, tagName: number, recursive = false) {
         let element: any = node.element;
-        node.setAndroidId(tagName);
+        node.setAndroidId(Widget.getTagName(tagName));
         switch (element.tagName) {
             case 'IMG':
                 element = <HTMLImageElement> element;
@@ -118,10 +120,10 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 break;
         }
         switch (node.nodeName) {
-            case WIDGET_ANDROID.EDIT:
+            case NODE_ANDROID.EDIT:
                 node.android('inputType', 'text');
                 break;
-            case WIDGET_ANDROID.BUTTON:
+            case NODE_ANDROID.BUTTON:
                 if (node.viewWidth === 0) {
                     node.android('minWidth', '0px');
                 }
@@ -150,7 +152,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                         const widget = <Widget> layout as T;
                         let checked: T = null;
                         this.cache.push(widget);
-                        layout.setAndroidId(WIDGET_ANDROID.RADIO_GROUP);
+                        layout.setAndroidId(NODE_ANDROID.RADIO_GROUP);
                         layout.render(parent);
                         for (const radio of result) {
                             layout.inheritGrid(radio);
@@ -159,7 +161,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                             }
                             radio.parent = layout;
                             radio.render(layout);
-                            xml += this.renderTag(radio, widget, WIDGET_ANDROID.RADIO, true);
+                            xml += this.renderTag(radio, widget, NODE_STANDARD.RADIO, true);
                         }
                         layout
                             .android('orientation', (<U> layout.children).linearX ? 'horizontal' : 'vertical')
@@ -167,7 +169,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                         layout.setBounds();
                         layout.setAttributes();
                         this.setGridSpace(widget);
-                        return this.getEnclosingTag(layout.renderDepth, WIDGET_ANDROID.RADIO_GROUP, layout.id, xml);
+                        return this.getEnclosingTag(layout.renderDepth, NODE_ANDROID.RADIO_GROUP, layout.id, xml);
                     }
                 }
                 break;
@@ -195,9 +197,9 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         return <Widget> layout as T;
     }
 
-    public getStaticTag(nodeName: string, depth: number, options: {}, width = 'wrap_content', height = 'wrap_content') {
+    public getStaticTag(tagName: number, depth: number, options: {}, width = 'wrap_content', height = 'wrap_content') {
         const node = new Widget(0, SETTINGS.targetAPI);
-        node.setAndroidId(nodeName);
+        node.setAndroidId(Widget.getTagName(tagName));
         let attributes = '';
         if (SETTINGS.showAttributes) {
             node.apply(options)
@@ -207,13 +209,17 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
             const indent = padLeft(depth + 1);
             attributes = node.combine().map(value => `\n${indent + value}`).join('');
         }
-        return [this.getEnclosingTag(depth, nodeName, 0).replace('{@0}', attributes), node.stringId];
+        return [this.getEnclosingTag(depth, node.nodeName, 0).replace('{@0}', attributes), node.stringId];
     }
 
-    public setInlineAttributes(output: string, node: T, namespaces?: {}) {
+    public replaceInlineAttributes(output: string, node: T, options?: {}) {
         node.setAndroidDimensions();
-        node.namespaces.forEach((value: string) => namespaces[value] = true);
+        node.namespaces.forEach((value: string) => options[value] = true);
         return output.replace(`{@${node.id}}`, this.parseAttributes(node));
+    }
+
+    public getRootAttributes(options: {}) {
+        return Object.keys(options).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join('');
     }
 
     private parseAttributes(node: T) {
@@ -233,7 +239,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
     }
 
     private setGridSpace(node: T) {
-        if (node.parent.is(WIDGET_ANDROID.GRID)) {
+        if (node.parent.is(NODE_STANDARD.GRID)) {
             const dimensions = getBoxSpacing(node.parentOriginal.element, true);
             const options = {
                 android: {
@@ -243,27 +249,27 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
             if (node.gridFirst) {
                 const heightTop = dimensions.paddingTop + dimensions.marginTop;
                 if (heightTop > 0) {
-                    this.before(node.id, this.getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0]);
+                    this.before(node.id, this.getStaticTag(NODE_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0]);
                 }
             }
             if (node.gridRowStart) {
-                let marginLeft = dimensions[parseRTL('marginLeft')] + dimensions[parseRTL('paddingLeft')];
+                let marginLeft: any = dimensions.marginLeft + dimensions.paddingLeft;
                 if (marginLeft > 0) {
                     marginLeft = convertPX(marginLeft + node.marginLeft);
                     node.css('marginLeft', marginLeft)
-                        .android(parseRTL('layout_marginLeft'), marginLeft);
+                        .android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
                 }
             }
             if (node.gridRowEnd) {
                 const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
-                let marginRight = dimensions[parseRTL('marginRight')] + dimensions[parseRTL('paddingRight')];
+                let marginRight: any = dimensions.marginRight + dimensions.paddingRight;
                 if (heightBottom > 0) {
-                    this.after(node.id, this.getStaticTag(WIDGET_ANDROID.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
+                    this.after(node.id, this.getStaticTag(NODE_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
                 }
                 if (marginRight > 0) {
                     marginRight = convertPX(marginRight + node.marginRight);
                     node.css('marginRight', marginRight)
-                        .android(parseRTL('layout_marginRight'), marginRight);
+                        .android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
                 }
             }
         }

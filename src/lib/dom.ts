@@ -1,6 +1,5 @@
 import { IBoxModel, IClientRect } from './types';
-import { convertPX } from './util';
-import parseRTL from './localization';
+import { convertInt, convertPX } from './util';
 
 export function getRangeBounds(element: HTMLElement) {
     const range = document.createRange();
@@ -33,12 +32,13 @@ export function parseStyle(element: HTMLElement, attr: string, value: string) {
 
 export function getBoxSpacing(element: HTMLElement, complete = false) {
     const result: IBoxModel = {};
+    const style = getStyle(element);
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
             const attr = border + side;
-            const value = parseInt(getStyle(element)[attr]) || 0;
+            const value = convertInt(style[attr]);
             if (complete || value !== 0) {
-                result[parseRTL(attr)] = value;
+                result[attr] = value;
             }
         });
     });

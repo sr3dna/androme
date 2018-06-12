@@ -1,6 +1,6 @@
 import Widget from './widget';
 import WidgetList from './widgetlist';
-import { WIDGET_ANDROID } from '../lib/constants';
+import { NODE_STANDARD } from '../lib/constants';
 
 export default class Layout extends Widget {
     constructor(
@@ -28,7 +28,7 @@ export default class Layout extends Widget {
             parent: this.parentOriginal,
             width,
             height,
-            requireWrap: this.parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID)
+            requireWrap: this.parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID)
         };
         super.setAndroidDimensions(options);
     }

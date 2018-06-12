@@ -1,4 +1,4 @@
-import { BUILD_ANDROID } from '../lib/constants';
+import { BUILD_ANDROID } from './constants';
 
 export default
 {

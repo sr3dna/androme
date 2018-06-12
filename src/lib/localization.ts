@@ -1,4 +1,4 @@
-import { BUILD_ANDROID } from './constants';
+import { BUILD_ANDROID } from '../android/constants';
 import SETTINGS from '../settings';
 
 export default function parseRTL(value: string) {

@@ -1,12 +1,12 @@
 import { IPoint } from './lib/types';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
-import { WIDGET_ANDROID } from './lib/constants';
 import { convertPX, formatPX, hasValue, indexOf, same, search, withinFraction, withinRange } from './lib/util';
-import NODE_CACHE from './cache';
-import { viewHandler } from './render';
 import parseRTL from './lib/localization';
+import { viewHandler } from './render';
+import { BOX_STANDARD, NODE_STANDARD } from './lib/constants';
 import SETTINGS from './settings';
+import NODE_CACHE from './cache';
 
 const LAYOUT_MAP = {
     relative: {
@@ -65,7 +65,7 @@ function createGuideline(parent: Widget, node: Widget, orientation = '', opposit
             };
             const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
             const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-            const [xml, id] = viewHandler.getStaticTag(WIDGET_ANDROID.GUIDELINE, node.renderDepth, options);
+            const [xml, id] = viewHandler.getStaticTag(NODE_STANDARD.GUIDELINE, node.renderDepth, options);
             viewHandler.after(node.id, xml, -1);
             node.app(map[LRTB], id)
                 .delete('app', map[RLBT])
@@ -95,13 +95,13 @@ function adjustMargins(nodes: Widget[]) {
         if (node.constraint.marginHorizontal != null) {
             const offset = node.linear.left - findByAndroidId(node.constraint.marginHorizontal).linear.right;
             if (offset >= 1) {
-                node.modifyBox('layout_marginLeft', offset);
+                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
             }
         }
         if (node.constraint.marginVertical != null) {
             const offset = node.linear.top - findByAndroidId(node.constraint.marginVertical).linear.bottom;
             if (offset >= 1) {
-                node.modifyBox('layout_marginTop', offset);
+                node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
             }
         }
     }
@@ -122,12 +122,12 @@ export function setConstraints() {
     });
     for (const node of NODE_CACHE.visible) {
         const nodes = new WidgetList(node.renderChildren, node);
-        const constraint = node.is(WIDGET_ANDROID.CONSTRAINT);
-        const relative = node.is(WIDGET_ANDROID.RELATIVE);
+        const constraint = node.is(NODE_STANDARD.CONSTRAINT);
+        const relative = node.is(NODE_STANDARD.RELATIVE);
         const flex = node.flex;
         if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
             node.expandDimensions();
-            if (node.is(WIDGET_ANDROID.LINEAR)) {
+            if (node.is(NODE_STANDARD.LINEAR)) {
                 if (node.renderChildren.some((item: Widget) => item.flex.direction.indexOf('row') !== -1)) {
                     node.constraint.layoutWidth = true;
                     node.constraint.expand = true;
@@ -212,7 +212,7 @@ export function setConstraints() {
                             }
                             else {
                                 if (current.viewHeight === 0 && bounds1.top === bounds2.top && bounds1.bottom === bounds2.bottom) {
-                                    const baseline = (current.is(WIDGET_ANDROID.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(WIDGET_ANDROID.TEXT) && adjacent.style.verticalAlign === 'baseline');
+                                    const baseline = (current.is(NODE_STANDARD.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(NODE_STANDARD.TEXT) && adjacent.style.verticalAlign === 'baseline');
                                     current.anchor(LAYOUT[(baseline ? 'baseline' : 'top')], adjacent);
                                     current.anchor(LAYOUT['bottom'], adjacent);
                                 }
@@ -402,7 +402,7 @@ export function setConstraints() {
                                         chain.android(`layout_${dimension}`, 'wrap_content');
                                     }
                                     else if (chain.flex.grow > 0) {
-                                        chain.android(`layout_${dimension}`, (node.renderParent.is(WIDGET_ANDROID.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') !== -1 ? 'wrap_content' : '0px'));
+                                        chain.android(`layout_${dimension}`, (node.renderParent.is(NODE_STANDARD.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') !== -1 ? 'wrap_content' : '0px'));
                                     }
                                     if (chain.flex.shrink === 0) {
                                         chain.app(`layout_constrained${WH}`, 'true');

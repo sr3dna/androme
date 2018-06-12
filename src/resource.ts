@@ -1,11 +1,13 @@
-import { WIDGET_ANDROID, BUILD_ANDROID } from './lib/constants';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber, padLeft, remove, replaceDP } from './lib/util';
-import { convertRGBtoHex, findNearestColor, parseRGBA } from './lib/color';
 import { getBoxSpacing, getStyle } from './lib/dom';
+import { convertRGBtoHex, findNearestColor, parseRGBA } from './lib/color';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from './lib/xml';
+import parseRTL from './lib/localization';
 import SETTINGS from './settings';
+import { NODE_STANDARD } from './lib/constants';
+import { BUILD_ANDROID, NODE_ANDROID } from './android/constants';
 
 import STRING_TMPL from './tmpl/resources/string';
 import STRINGARRAY_TMPL from './tmpl/resources/string-array';
@@ -567,7 +569,7 @@ export function addResourceString(node: Widget, value: string) {
     }
     if (hasValue(value)) {
         if (node != null) {
-            if (node.is(WIDGET_ANDROID.TEXT)) {
+            if (node.is(NODE_STANDARD.TEXT)) {
                 const match = node.style.textDecoration && node.style.textDecoration.match(/(underline|line-through)/);
                 if (match != null) {
                     switch (match[0]) {
@@ -603,8 +605,8 @@ export function addResourceString(node: Widget, value: string) {
             if (prevSibling != null) {
                 const prevNode: Widget = (<any> prevSibling).__node;
                 switch (prevNode.nodeName) {
-                    case WIDGET_ANDROID.CHECKBOX:
-                    case WIDGET_ANDROID.RADIO:
+                    case NODE_ANDROID.CHECKBOX:
+                    case NODE_ANDROID.RADIO:
                         prevNode.android('text', (!SETTINGS.numberResourceValue && num ? name : `@string/${name}`));
                         prevNode.label = node;
                         node.hide();
@@ -698,10 +700,11 @@ export function setComputedStyle(node: Widget) {
 
 export function setBoxSpacing(node: Widget) {
     const result = getBoxSpacing(node.element);
+    const localized = {};
     for (const i in result) {
-        result[i] += 'px';
+        localized[parseRTL(i)] = `${result[i]}px`;
     }
-    return result;
+    return localized;
 }
 
 export function setBackgroundStyle(node: Widget) {

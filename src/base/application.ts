@@ -1,10 +1,10 @@
-import { BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, OVERFLOW_CHROME, WIDGET_ANDROID, XMLNS_ANDROID } from '../lib/constants';
 import Element from './element';
-import Widget from '../android/widget';
 import NodeList from './nodelist';
+import Widget from '../android/widget';
 import { hasValue, sortAsc } from '../lib/util';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
+import { BLOCK_CHROME, BOX_STANDARD, INLINE_CHROME, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 
 export default class Application<T extends Widget, U extends NodeList<T>> {
     constructor(
@@ -138,7 +138,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
 
     public setMarginPadding() {
         for (const node of this.cache) {
-            if (node.is(WIDGET_ANDROID.LINEAR, WIDGET_ANDROID.RADIO_GROUP)) {
+            if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
                 switch (node.android('orientation')) {
                     case 'horizontal':
                         let left = node.box.left;
@@ -146,7 +146,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                             if (!item.floating) {
                                 const width = Math.ceil(item.linear.left - left);
                                 if (width >= 1) {
-                                    item.modifyBox('layout_marginLeft', width);
+                                    item.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
                                 }
                             }
                             left = (item.label || item).linear.right;
@@ -157,7 +157,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                         sortAsc(node.renderChildren, 'linear.top').forEach((item: T) => {
                             const height = Math.ceil(item.linear.top - top);
                             if (height >= 1) {
-                                item.modifyBox('layout_marginTop', height);
+                                item.modifyBox(BOX_STANDARD.MARGIN_TOP, height);
                             }
                             top = item.linear.bottom;
                         });
@@ -186,7 +186,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                     for (const row of rows) {
                         for (let i = 0; i < row.renderChildren.length; i++) {
                             const column = row.renderChildren[i];
-                            column.setLayoutWeight(horizontal, percent[i]);
+                            column.distributeWeight(horizontal, percent[i]);
                         }
                     }
                 }
@@ -215,8 +215,8 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
 
     public getLayoutXml() {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
-        const mapX = [];
-        const mapY = [];
+        const mapX: Array<{}> = [];
+        const mapY: Array<{}> = [];
         for (const node of this.cache) {
             const x = Math.floor(node.bounds.x);
             const y = node.parent.id;
@@ -268,7 +268,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                         let xml = '';
                         if (tagName == null) {
                             if ((nodeY.children.length === 0 && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: T) => INLINE_CHROME.includes(item.tagName))) {
-                                tagName = WIDGET_ANDROID.TEXT;
+                                tagName = NODE_STANDARD.TEXT;
                             }
                             else if (nodeY.children.length > 0) {
                                 const rows = nodeY.children;
@@ -503,7 +503,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                             }
                         }
                         if (!nodeY.renderParent) {
-                            if (parent.is(WIDGET_ANDROID.GRID)) {
+                            if (parent.is(NODE_STANDARD.GRID)) {
                                 let siblings: U;
                                 if (SETTINGS.useLayoutWeight) {
                                     siblings = new this.NODELIST(nodeY.gridSiblings);
@@ -548,34 +548,32 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         return output;
     }
 
-    public setInlineAttributes(output: string) {
-        const namespaces = {};
+    public replaceInlineAttributes(output: string) {
+        const options = {};
         for (const node of this.cache.visible) {
-            output = this.viewHandler.setInlineAttributes(output, node, namespaces);
+            output = this.viewHandler.replaceInlineAttributes(output, node, options);
         }
-        return output.replace('{@0}', Object.keys(namespaces).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join(''));
+        return output.replace('{@0}', this.viewHandler.getRootAttributes(options));
     }
 
     private writeFrameLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, WIDGET_ANDROID.FRAME);
+        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.FRAME);
     }
 
     private writeLinearLayout(node: T, parent: T, vertical: boolean) {
-        node.android('orientation', (vertical ? 'vertical' : 'horizontal'));
-        return this.viewHandler.renderLayout(node, parent, WIDGET_ANDROID.LINEAR);
+        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
     }
 
     private writeGridLayout(node: T, parent: T, columnCount: number) {
-        node.android('columnCount', columnCount.toString());
-        return this.viewHandler.renderLayout(node, parent, WIDGET_ANDROID.GRID);
+        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.GRID, { android: { columnCount: columnCount.toString() } });
     }
 
     private writeRelativeLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, WIDGET_ANDROID.RELATIVE);
+        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.RELATIVE);
     }
 
     private writeConstraintLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, WIDGET_ANDROID.CONSTRAINT);
+        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.CONSTRAINT);
     }
 
     private writeDefaultLayout(node: T, parent: T) {
@@ -587,7 +585,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         }
     }
 
-    private writeViewTag(node: T, parent: T, tagName: string) {
+    private writeViewTag(node: T, parent: T, tagName: number) {
         return this.viewHandler.renderTag(node, parent, tagName);
     }
 }

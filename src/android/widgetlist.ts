@@ -1,6 +1,6 @@
-import { calculateBias } from '../lib/util';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import { calculateBias } from '../lib/util';
 
 export default class WidgetList<T extends Node> extends NodeList<T> {
     constructor(

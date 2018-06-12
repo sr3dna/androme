@@ -1,12 +1,17 @@
-import { BUILD_ANDROID, FIXED_ANDROID, MAPPING_CHROME, OVERFLOW_CHROME, WIDGET_ANDROID } from '../lib/constants';
-import API_ANDROID from '../android/customizations';
+import Node from '../base/node';
 import { calculateBias, convertInt, convertPX, formatPX, formatString, generateId, hasValue, isNumber } from '../lib/util';
 import { parseStyle } from '../lib/dom';
-import * as Resource from '../resource';
 import parseRTL from '../lib/localization';
-import Node from '../base/node';
+import * as Resource from '../resource';
+import { BOX_STANDARD, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
+import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './constants';
+import API_ANDROID from '../android/customizations';
 
 export default class Widget extends Node {
+    public static getTagName(tagName: number) {
+        return NODE_ANDROID[NODE_STANDARD[tagName]];
+    }
+
     public constraint: any = {};
     public labelFor: Widget;
     public children: Widget[] = [];
@@ -72,10 +77,10 @@ export default class Widget extends Node {
     }
 
     public render(parent: Widget) {
-        if (parent.is(WIDGET_ANDROID.LINEAR)) {
+        if (parent.is(NODE_STANDARD.LINEAR)) {
             switch (this.nodeName) {
-                case WIDGET_ANDROID.LINEAR:
-                case WIDGET_ANDROID.RADIO_GROUP:
+                case NODE_ANDROID.LINEAR:
+                case NODE_ANDROID.RADIO_GROUP:
                     parent.linearRows.push(this);
                     break;
             }
@@ -87,13 +92,13 @@ export default class Widget extends Node {
     public anchor(position: string, adjacent: any = {}, orientation = '') {
         const overwrite = (adjacent.stringId === 'parent');
         switch (this.renderParent.nodeName) {
-            case WIDGET_ANDROID.CONSTRAINT:
+            case NODE_ANDROID.CONSTRAINT:
                 if (arguments.length === 1) {
                     return this.app(position);
                 }
                 this.app(position, adjacent.stringId, overwrite);
                 break;
-            case WIDGET_ANDROID.RELATIVE:
+            case NODE_ANDROID.RELATIVE:
                 if (arguments.length === 1) {
                     return this.android(position);
                 }
@@ -106,11 +111,15 @@ export default class Widget extends Node {
         return this;
     }
 
-    public modifyBox(dimension: string, offset: number) {
-        dimension = parseRTL(dimension);
-        const total = formatPX(offset + convertInt(this.android(dimension)));
-        this.css(dimension, total)
-            .android(dimension, total);
+    public modifyBox(area: number, offset: number) {
+        for (const key of Object.keys(BOX_STANDARD)) {
+            if ((area & BOX_STANDARD[key]) === BOX_STANDARD[key]) {
+                const dimension = parseRTL(BOX_ANDROID[key]);
+                const total = formatPX(offset + convertInt(this.android(dimension)));
+                this.css(dimension, total)
+                    .android(dimension, total);
+            }
+        }
         this.setBounds(true);
         return this;
     }
@@ -167,6 +176,15 @@ export default class Widget extends Node {
         }
     }
 
+    public is(...views: number[]) {
+        for (const value of views) {
+            if (this.nodeName === Widget.getTagName(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public setAndroidId(nodeName: string) {
         this.androidWidgetName = nodeName || this.nodeName;
         if (this.androidId == null) {
@@ -190,11 +208,11 @@ export default class Widget extends Node {
             parent = <Widget> this.parent;
             width = this.element.offsetWidth + this.marginLeft + this.marginRight;
             height = this.element.offsetHeight + this.marginTop + this.marginBottom;
-            requireWrap = parent.is(WIDGET_ANDROID.CONSTRAINT, WIDGET_ANDROID.GRID);
+            requireWrap = parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID);
         }
         const parentWidth = (parent.element != null ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
         const parentHeight = (parent.element != null ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
-        if (this.overflow !== OVERFLOW_CHROME.NONE && !this.is(WIDGET_ANDROID.TEXT)) {
+        if (this.overflow !== OVERFLOW_CHROME.NONE && !this.is(NODE_STANDARD.TEXT)) {
             this.android('layout_width', (this.horizontal ? 'wrap_content' : 'match_parent'))
                 .android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
         }
@@ -298,8 +316,8 @@ export default class Widget extends Node {
             const nextElement = <HTMLLabelElement> element.nextElementSibling;
             if (nextElement && nextElement.htmlFor === element.id) {
                 const node = (<any> nextElement).__node;
+                node.setAndroidId(NODE_ANDROID.TEXT);
                 node.setAttributes([2, 4]);
-                node.setAndroidId(WIDGET_ANDROID.TEXT);
                 const attributes = node.combine();
                 if (attributes.length > 0) {
                     result[4] = attributes;
@@ -427,20 +445,20 @@ export default class Widget extends Node {
             }
             const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating);
             switch (this.renderParent.nodeName) {
-                case WIDGET_ANDROID.RADIO_GROUP:
-                case WIDGET_ANDROID.LINEAR:
+                case NODE_ANDROID.RADIO_GROUP:
+                case NODE_ANDROID.LINEAR:
                     if (parentTextAlign) {
                         this.renderParent.android('gravity', horizontal);
                     }
                     break;
-                case WIDGET_ANDROID.CONSTRAINT:
-                case WIDGET_ANDROID.RELATIVE:
+                case NODE_ANDROID.CONSTRAINT:
+                case NODE_ANDROID.RELATIVE:
                     const gravity = [vertical, horizontal].filter(value => value);
                     this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
                     horizontal = '';
                     vertical = '';
                     break;
-                case WIDGET_ANDROID.GRID:
+                case NODE_ANDROID.GRID:
                     if (parentTextAlign && horizontal !== '') {
                         layoutGravity.push(horizontal);
                     }
@@ -456,14 +474,14 @@ export default class Widget extends Node {
         }
     }
 
-    public setLayoutWeight(horizontal: boolean, percent: number) {
+    public distributeWeight(horizontal: boolean, percent: number) {
         this.android(`layout_${(horizontal ? 'width' : 'height')}`, '0px')
             .android('layout_weight', (percent / 100).toFixed(2));
     }
 
     public setAccessibility() {
         switch (this.nodeName) {
-            case WIDGET_ANDROID.EDIT:
+            case NODE_ANDROID.EDIT:
                 let parent: Widget = this.renderParent;
                 let current: Widget = this;
                 let label: Widget = null;
@@ -476,13 +494,13 @@ export default class Widget extends Node {
                     current = parent;
                     parent = parent.renderParent;
                 }
-                if (label && label.is(WIDGET_ANDROID.TEXT)) {
+                if (label && label.is(NODE_STANDARD.TEXT)) {
                     label.android('labelFor', this.stringId);
                 }
-            case WIDGET_ANDROID.SPINNER:
-            case WIDGET_ANDROID.CHECKBOX:
-            case WIDGET_ANDROID.RADIO:
-            case WIDGET_ANDROID.BUTTON:
+            case NODE_ANDROID.SELECT:
+            case NODE_ANDROID.CHECKBOX:
+            case NODE_ANDROID.RADIO:
+            case NODE_ANDROID.BUTTON:
                 this.android('focusable', 'true');
                 break;
         }
@@ -496,11 +514,11 @@ export default class Widget extends Node {
             return this.androidWidgetName;
         }
         else {
-            let nodeName = MAPPING_CHROME[this.tagName];
-            if (typeof nodeName === 'object') {
-                nodeName = nodeName[(<HTMLInputElement> this.element).type];
+            let value: any = MAPPING_CHROME[this.tagName];
+            if (typeof value === 'object') {
+                value = value[(<HTMLInputElement> this.element).type];
             }
-            return nodeName;
+            return Widget.getTagName(value);
         }
     }
     set label(value: Widget) {
