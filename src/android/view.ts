@@ -4,7 +4,7 @@ import Layout from './layout';
 import WidgetList from './widgetlist';
 import { convertPX, padLeft } from '../lib/util';
 import { getBoxSpacing } from '../lib/dom';
-import parseRTL from '../lib/localization';
+import parseRTL from './localization';
 import SETTINGS from '../settings';
 import { OVERFLOW_CHROME, NODE_STANDARD } from '../lib/constants';
 import { BOX_ANDROID, NODE_ANDROID, XMLNS_ANDROID } from './constants';

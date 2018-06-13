@@ -2,10 +2,10 @@ import Element from './element';
 import Resource from './resource';
 import NodeList from './nodelist';
 import Widget from '../android/widget';
+import { BLOCK_CHROME, BOX_STANDARD, INLINE_CHROME, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import { hasValue, sortAsc } from '../lib/util';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
-import { BLOCK_CHROME, BOX_STANDARD, INLINE_CHROME, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 
 export default class Application<T extends Widget, U extends NodeList<T>> {
     constructor(

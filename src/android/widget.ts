@@ -1,9 +1,9 @@
 import Node from '../base/node';
-import { calculateBias, convertInt, convertPX, formatPX, formatString, generateId, hasValue, indexOf } from '../lib/util';
-import parseRTL from '../lib/localization';
-import { BOX_STANDARD, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './constants';
-import API_ANDROID from '../android/customizations';
+import parseRTL from './localization';
+import API_ANDROID from './customizations';
+import { BOX_STANDARD, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
+import { calculateBias, convertInt, convertPX, formatPX, formatString, generateId, hasValue, indexOf } from '../lib/util';
 
 export default class Widget extends Node {
     public static getTagName(tagName: number) {
@@ -18,7 +18,6 @@ export default class Widget extends Node {
 
     public androidId: string;
     public androidWidgetName: string;
-    public androidSrc: string;
 
     private _android: any;
     private _app: any;
@@ -121,7 +120,7 @@ export default class Widget extends Node {
     }
 
     public supported(obj: string, attr: string) {
-        for (let i = this.api + 1; i < BUILD_ANDROID.OREO_1; i++) {
+        for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
             const version = API_ANDROID[i];
             if (version && version[obj] && version[obj].includes(attr)) {
                 return false;

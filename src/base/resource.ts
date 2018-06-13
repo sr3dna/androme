@@ -1,9 +1,9 @@
-import Node from '../base/node';
-import NodeList from '../base/nodelist';
-import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber } from '../lib/util';
-import { getBoxSpacing, getStyle } from '../lib/dom';
-import { convertRGBtoHex, findNearestColor, parseRGBA } from '../lib/color';
+import Node from './node';
+import NodeList from './nodelist';
 import { INLINE_CHROME } from '../lib/constants';
+import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber } from '../lib/util';
+import { convertRGBtoHex, findNearestColor, parseRGBA } from '../lib/color';
+import { getBoxSpacing, getStyle } from '../lib/dom';
 import SETTINGS from '../settings';
 
 export default class Resource<T extends Node> {

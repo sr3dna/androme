@@ -4,7 +4,7 @@ import WidgetList from './widgetlist';
 import { formatString, hasValue, replaceDP } from '../lib/util';
 import { sameAsParent } from '../lib/dom';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
-import parseRTL from '../lib/localization';
+import parseRTL from './localization';
 import SETTINGS from '../settings';
 import { NODE_STANDARD } from '../lib/constants';
 import { BUILD_ANDROID, NODE_ANDROID } from './constants';

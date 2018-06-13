@@ -40,17 +40,16 @@ export default abstract class Node implements IBoxModel {
         options?: {})
     {
         Object.assign(this, options);
-        if (element != null || (options != null && (<any> options).element != null)) {
-            if (this.element instanceof HTMLElement) {
-                const style = getComputedStyle(this.element);
-                const styleMap = (<any> this.element).__styleMap || {};
-                for (const inline of <any> this.element.style) {
-                    styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
-                }
-                this.style = style;
-                this.styleMap = styleMap;
+        if (element != null || (options && (<any> options).element != null)) {
+            const object = <any> this.element;
+            const style = object.__style || getComputedStyle(object);
+            const styleMap = object.__styleMap || {};
+            for (const inline of <any> object.style) {
+                styleMap[hyphenToCamelCase(inline)] = object.style[inline];
             }
-            (<any> this.element).__node = this;
+            this.style = style;
+            this.styleMap = styleMap;
+            object.__node = this;
         }
     }
 
@@ -316,7 +315,7 @@ export default abstract class Node implements IBoxModel {
         return this._flex;
     }
     get floating() {
-        return (this.styleMap.float === 'left' || this.styleMap.float === 'right');
+        return (this.style.float === 'left' || this.style.float === 'right');
     }
     get fixed() {
         return (this.style.display === 'fixed');

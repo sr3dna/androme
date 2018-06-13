@@ -1,15 +1,15 @@
 import Application from './base/application';
+import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import { ResourceWidget, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './android/resource-widget';
+import { setConstraints } from './android/constraint';
+import API_ANDROID from './android/customizations';
 import { hasValue, hyphenToCamelCase, replaceDP } from './lib/util';
 import { convertRGB, getByColorName } from './lib/color';
-import { setConstraints } from './android/constraint';
-import { replaceViewsBeforeAfter, viewHandler } from './render';
-import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
-import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 import NODE_CACHE from './cache';
+import { replaceViewsBeforeAfter, viewHandler } from './render';
 
 function setStyleMap() {
     for (const styleSheet of <any> Array.from(document.styleSheets)) {
@@ -43,6 +43,7 @@ function setStyleMap() {
                     Object.assign(element.__styleMap, styleMap);
                 }
                 else {
+                    element.__style = style;
                     element.__styleMap = styleMap;
                 }
             }
