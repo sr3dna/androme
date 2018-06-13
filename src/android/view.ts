@@ -5,7 +5,6 @@ import WidgetList from './widgetlist';
 import { convertPX, padLeft } from '../lib/util';
 import { getBoxSpacing } from '../lib/dom';
 import parseRTL from '../lib/localization';
-import { addResourceImage } from '../resource';
 import SETTINGS from '../settings';
 import { OVERFLOW_CHROME, NODE_STANDARD } from '../lib/constants';
 import { BOX_ANDROID, NODE_ANDROID, XMLNS_ANDROID } from './constants';
@@ -33,16 +32,17 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
             if (node.overflowY) {
                 scrollView.push((node.ascend().some((item: T) => item.overflow !== OVERFLOW_CHROME.NONE) ? NODE_ANDROID.SCROLL_NESTED : NODE_ANDROID.SCROLL_VERTICAL));
             }
-            let current = <T> node;
+            let current = node;
             let scrollDepth = parent.renderDepth + scrollView.length;
             scrollView
                 .map(nodeName => {
-                    const layout = <Widget> new Layout(this.cache.nextId, current, null, [current]) as T;
-                    this.cache.push(layout);
+                    const layout = new Layout(this.cache.nextId, current, null, [current]);
+                    const widget: T = <Widget> layout as T;
                     layout.setAndroidId(nodeName);
                     layout.setBounds();
+                    layout.inheritGrid(current);
                     layout.android('fadeScrollbars', 'false');
-                    layout.setAttributes();
+                    this.cache.push(widget);
                     switch (nodeName) {
                         case NODE_ANDROID.SCROLL_HORIZONTAL:
                             layout
@@ -60,10 +60,10 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                     preXml = indent + `<${nodeName}{@${layout.id}}>\n` + preXml;
                     postXml += indent + `</${nodeName}>\n`;
                     if (current === node) {
-                        node.parent = layout;
-                        renderParent = layout;
+                        node.parent = widget;
+                        renderParent = widget;
                     }
-                    current = layout;
+                    current = widget;
                     return layout;
                 })
                 .reverse()
@@ -78,10 +78,9 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                             item.render(current);
                             break;
                     }
-                    current = item;
+                    current = <Widget> item as T;
                 });
         }
-        node.setAttributes();
         node.apply(options);
         node.applyCustomizations();
         node.render(renderParent);
@@ -94,14 +93,6 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         let element: any = node.element;
         node.setAndroidId(Widget.getTagName(tagName));
         switch (element.tagName) {
-            case 'IMG':
-                element = <HTMLImageElement> element;
-                let image = addResourceImage(element.src);
-                if (image == null) {
-                    image = `(UNSUPPORTED: ${element.src})`;
-                }
-                node.androidSrc = image;
-                break;
             case 'TEXTAREA':
                 element = <HTMLTextAreaElement> element;
                 node.android('minLines', '2');
@@ -167,7 +158,6 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                             .android('orientation', (<U> layout.children).linearX ? 'horizontal' : 'vertical')
                             .android('checkedButton', checked.stringId);
                         layout.setBounds();
-                        layout.setAttributes();
                         this.setGridSpace(widget);
                         return this.getEnclosingTag(layout.renderDepth, NODE_ANDROID.RADIO_GROUP, layout.id, xml);
                     }
@@ -177,7 +167,6 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 node.android('inputType', 'textPassword');
                 break;
         }
-        node.setAttributes();
         node.applyCustomizations();
         node.render(parent);
         node.setGravity();
@@ -188,7 +177,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
     }
 
     public createWrapper(node: T, parent: T, children: U) {
-        const layout = new Layout(this.cache.nextId, node, parent, children, [0]);
+        const layout = new Layout(this.cache.nextId, node, parent, children);
         for (const child of children) {
             child.parent = layout;
             layout.inheritGrid(child);

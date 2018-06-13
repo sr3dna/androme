@@ -1,8 +1,6 @@
 import Node from '../base/node';
-import { calculateBias, convertInt, convertPX, formatPX, formatString, generateId, hasValue, isNumber } from '../lib/util';
-import { parseStyle } from '../lib/dom';
+import { calculateBias, convertInt, convertPX, formatPX, formatString, generateId, hasValue, indexOf } from '../lib/util';
 import parseRTL from '../lib/localization';
-import * as Resource from '../resource';
 import { BOX_STANDARD, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './constants';
 import API_ANDROID from '../android/customizations';
@@ -17,13 +15,11 @@ export default class Widget extends Node {
     public children: Widget[] = [];
     public renderChildren: Widget[] = [];
     public linearRows: Widget[] = [];
-    public styleAttributes: string[] = [];
 
     public androidId: string;
     public androidWidgetName: string;
     public androidSrc: string;
 
-    private actions: number[];
     private _android: any;
     private _app: any;
     private _label: Widget;
@@ -165,13 +161,10 @@ export default class Widget extends Node {
     }
 
     public inheritStyle(node: Widget) {
-        const inherit = Resource.ACTION_ANDROID[this.nodeName]['setComputedStyle'];
-        for (const attr in inherit) {
-            let value = node.style[attr];
-            this.style[attr] = value;
-            value = parseStyle(null, attr, value);
-            if (hasValue(value)) {
-                this.styleAttributes.push(formatString(inherit[attr], value));
+        const style = [];
+        for (const attr in node.style) {
+            if (indexOf(attr.toLowerCase(), 'font', 'color')) {
+                this.style[attr] = node.style[attr];
             }
         }
     }
@@ -190,6 +183,7 @@ export default class Widget extends Node {
         if (this.androidId == null) {
             const element: any = this.element || {};
             this.androidId = generateId('android', element.id || element.name || `${this.androidWidgetName.substring(this.androidWidgetName.lastIndexOf('.') + 1).toLowerCase()}_1`);
+            this.android('id', this.stringId);
         }
     }
 
@@ -282,6 +276,12 @@ export default class Widget extends Node {
                 this.android('layout_height', (!requireWrap && (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE) && height >= parentHeight && !FIXED_ANDROID.includes(this.nodeName) ? 'match_parent' : 'wrap_content'));
             }
         }
+        if (this.gridRowSpan > 1) {
+            this.android('layout_rowSpan', this.gridRowSpan.toString());
+        }
+        if (this.gridColumnSpan > 1) {
+            this.android('layout_columnSpan', this.gridColumnSpan.toString());
+        }
         if (this.api >= BUILD_ANDROID.OREO) {
             ['layout_margin', 'padding'].forEach(value => {
                 const leftRtl = parseRTL(`${value}Left`);
@@ -305,95 +305,6 @@ export default class Widget extends Node {
                     }
                 }
             });
-        }
-    }
-
-    public setAttributes(actions?: number[]) {
-        const widget = Resource.ACTION_ANDROID[this.nodeName];
-        const element = this.element;
-        const result = {};
-        if (element != null && element.tagName === 'INPUT' && element.id !== '') {
-            const nextElement = <HTMLLabelElement> element.nextElementSibling;
-            if (nextElement && nextElement.htmlFor === element.id) {
-                const node = (<any> nextElement).__node;
-                node.setAndroidId(NODE_ANDROID.TEXT);
-                node.setAttributes([2, 4]);
-                const attributes = node.combine();
-                if (attributes.length > 0) {
-                    result[4] = attributes;
-                }
-                this.css('marginRight', node.style.marginRight)
-                    .css('paddingRight', node.style.paddingRight)
-                    .label = node;
-                node.hide();
-            }
-        }
-        if (widget != null) {
-            if (this.actions != null) {
-                actions = this.actions;
-            }
-            let i = -1;
-            for (const action in widget) {
-                i++;
-                if (result[action] != null || (actions && actions.length > 0 && !actions.includes(i))) {
-                    continue;
-                }
-                if (hasValue(this[action])) {
-                    result[action] = formatString(widget[action], this[action]);
-                }
-                else if (typeof Resource[action] === 'function') {
-                    const data = Resource[action](this);
-                    if (data != null) {
-                        const output = [];
-                        for (const j in widget[action]) {
-                            if (result[j] != null) {
-                                continue;
-                            }
-                            let value = data[j];
-                            if (hasValue(value)) {
-                                value = parseStyle(element, j, value);
-                                if (value != null) {
-                                    switch (action) {
-                                        case 'setComputedStyle':
-                                            if (!this.supported.apply(this, widget[action][j].split('=')[0].split(':'))) {
-                                                continue;
-                                            }
-                                            break;
-                                        case 'addResourceString':
-                                            value = isNumber(value) ? value : `@string/${value}`;
-                                            break;
-                                    }
-                                    output.push(formatString(widget[action][j], value));
-                                }
-                            }
-                        }
-                        if (output.length > 0) {
-                            switch (action) {
-                                case 'setComputedStyle':
-                                    this.styleAttributes = output;
-                                    break;
-                                default:
-                                    result[i] = output;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if (this.gridRowSpan > 1) {
-            this.android('layout_rowSpan', this.gridRowSpan.toString());
-        }
-        if (this.gridColumnSpan > 1) {
-            this.android('layout_columnSpan', this.gridColumnSpan.toString());
-        }
-        for (const i in result) {
-            let value = result[i];
-            if (hasValue(value)) {
-                if (!Array.isArray(value)) {
-                    value = [value];
-                }
-                value.forEach((attr: string) => this.attr(attr, false));
-            }
         }
     }
 
@@ -480,22 +391,37 @@ export default class Widget extends Node {
     }
 
     public setAccessibility() {
+        const element = this.element;
+        const nextElement = <HTMLLabelElement> element.nextElementSibling;
+        let labeled = false;
+        if (element.tagName === 'INPUT' && nextElement && nextElement.htmlFor === element.id) {
+            const node = (<any> nextElement).__node;
+            node.setAndroidId(NODE_ANDROID.TEXT);
+            this.css('marginRight', node.style.marginRight)
+                .css('paddingRight', node.style.paddingRight)
+                .label = node;
+            node.hide()
+                .labelFor = this;
+            labeled = true;
+        }
         switch (this.nodeName) {
             case NODE_ANDROID.EDIT:
-                let parent: Widget = this.renderParent;
-                let current: Widget = this;
-                let label: Widget = null;
-                while (parent && parent.renderChildren != null) {
-                    const index = parent.renderChildren.findIndex((item: Widget) => item === current);
-                    if (index > 0) {
-                        label = parent.renderChildren[index - 1];
-                        break;
+                if (!labeled) {
+                    let parent = <Widget> this.renderParent;
+                    let current = <Widget> this;
+                    let label: Widget = null;
+                    while (parent && parent.renderChildren != null) {
+                        const index = parent.renderChildren.findIndex((item: Widget) => item === current);
+                        if (index > 0) {
+                            label = parent.renderChildren[index - 1];
+                            break;
+                        }
+                        current = parent;
+                        parent = parent.renderParent;
                     }
-                    current = parent;
-                    parent = parent.renderParent;
-                }
-                if (label && label.is(NODE_STANDARD.TEXT)) {
-                    label.android('labelFor', this.stringId);
+                    if (label && label.is(NODE_STANDARD.TEXT)) {
+                        label.android('labelFor', this.stringId);
+                    }
                 }
             case NODE_ANDROID.SELECT:
             case NODE_ANDROID.CHECKBOX:

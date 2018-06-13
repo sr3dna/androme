@@ -1,4 +1,5 @@
 import Element from './element';
+import Resource from './resource';
 import NodeList from './nodelist';
 import Widget from '../android/widget';
 import { hasValue, sortAsc } from '../lib/util';
@@ -10,6 +11,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
     constructor(
         public cache: U,
         public viewHandler: Element<T, U>,
+        public resource: Resource<T>,
         public NODE: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
         public NODELIST: { new (nodes?: U, parent?: T): U })
     {
@@ -198,7 +200,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         let node: T = null;
         if (element.nodeName === '#text') {
             if (element.textContent.trim() !== '') {
-                node = new this.NODE(this.cache.nextId, SETTINGS.targetAPI, null, { element, parent, actions: [0, 4], tagName: 'TEXT' });
+                node = new this.NODE(this.cache.nextId, SETTINGS.targetAPI, null, { element, parent, tagName: 'TEXT' });
                 node.setBounds(false, element);
                 node.inheritStyle(parent);
                 parent.children.push(node);
@@ -546,6 +548,15 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
             }
         }
         return output;
+    }
+
+    public setResources() {
+        this.resource.setBoxSpacing();
+        this.resource.setBoxStyle();
+        this.resource.setFontStyle();
+        this.resource.setValueString();
+        this.resource.setOptionArray();
+        this.resource.setImageSource();
     }
 
     public replaceInlineAttributes(output: string) {

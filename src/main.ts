@@ -1,10 +1,10 @@
 import Application from './base/application';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
+import { ResourceWidget, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './android/resource-widget';
 import { hasValue, hyphenToCamelCase, replaceDP } from './lib/util';
 import { convertRGB, getByColorName } from './lib/color';
-import { setResourceStyle, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './resource';
-import { setConstraints } from './constraint';
+import { setConstraints } from './android/constraint';
 import { replaceViewsBeforeAfter, viewHandler } from './render';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
@@ -55,11 +55,11 @@ export function parseDocument(element?: any) {
         element = document.getElementById(element);
     }
     setStyleMap();
-    const app = new Application<Widget, WidgetList<Widget>>(NODE_CACHE, viewHandler, Widget, WidgetList);
+    const app = new Application<Widget, WidgetList<Widget>>(NODE_CACHE, viewHandler, new ResourceWidget(NODE_CACHE), Widget, WidgetList);
     app.setNodeCache(element);
     let output = app.getLayoutXml();
     output = replaceViewsBeforeAfter(output);
-    setResourceStyle(NODE_CACHE);
+    app.setResources();
     if (SETTINGS.showAttributes) {
         app.setMarginPadding();
         if (SETTINGS.useLayoutWeight) {

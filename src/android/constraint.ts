@@ -1,12 +1,12 @@
-import { IPoint } from './lib/types';
-import Widget from './android/widget';
-import WidgetList from './android/widgetlist';
-import { convertPX, formatPX, hasValue, indexOf, same, search, withinFraction, withinRange } from './lib/util';
-import parseRTL from './lib/localization';
-import { viewHandler } from './render';
-import { BOX_STANDARD, NODE_STANDARD } from './lib/constants';
-import SETTINGS from './settings';
-import NODE_CACHE from './cache';
+import { IPoint } from '../lib/types';
+import Widget from './widget';
+import WidgetList from './widgetlist';
+import { convertPX, formatPX, hasValue, indexOf, same, search, withinFraction, withinRange } from '../lib/util';
+import parseRTL from '../lib/localization';
+import { viewHandler } from '../render';
+import { BOX_STANDARD, NODE_STANDARD } from '../lib/constants';
+import SETTINGS from '../settings';
+import NODE_CACHE from '../cache';
 
 const LAYOUT_MAP = {
     relative: {

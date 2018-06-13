@@ -1,7 +1,7 @@
 {
   "name": "androme",
-  "version": "1.5.0",
-  "description": "Converts and optimizes HTML pages into the various standard Android layouts in XML. Resources and drawables are also auto-generated. iOS and Xamarin Forms will be supported as well.",
+  "version": "1.5.1",
+  "description": "Converts and optimizes HTML pages into the various standard Android layouts in XML. Resources are also auto-generated. iOS and Xamarin Forms will be supported possibly including a browser based UI designer.",
   "scripts": {
     "dev": "tsc && rollup -c ./config/rollup.dev.config.js",
     "dev-watch": "tsc && rollup -c ./config/rollup.dev.config.js --watch",

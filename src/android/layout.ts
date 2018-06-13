@@ -7,14 +7,12 @@ export default class Layout extends Widget {
         id: number,
         node: Widget,
         parent: Widget | null,
-        children: Widget[],
-        actions?: number[])
+        children: Widget[])
     {
         const options = {
             parent,
             depth: node.depth,
-            parentOriginal: node.parentOriginal,
-            actions
+            parentOriginal: node.parentOriginal
         };
         super(id, node.api, null, options);
         if (children != null) {

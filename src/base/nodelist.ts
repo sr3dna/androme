@@ -40,6 +40,9 @@ export default abstract class NodeList<T extends Node> extends Array {
     get visible() {
         return this.filter(node => node.visible);
     }
+    get elements() {
+        return this.filter(node => node.element != null);
+    }
     get first() {
         return (this.length > 0 ? this[0] : null);
     }

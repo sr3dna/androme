@@ -119,7 +119,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				android:layout_height="wrap_content"
 				android:layout_width="40dp"
 				android:paddingVertical="1dp"
-				style="@style/Input_3" />
+				style="@style/Input_2" />
 			<Space
 				android:id="@+id/space_1"
 				android:layout_columnSpan="2"
@@ -379,7 +379,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_marginEnd="5dp"
 					android:layout_width="130dp"
 					android:paddingVertical="1dp"
-					style="@style/Input_3" />
+					style="@style/Input_2" />
 				<Spinner
 					android:id="@+id/prominence0"
 					android:background="@drawable/select_hour"
@@ -476,7 +476,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			android:background="@color/light_gray_1"
 			android:layout_height="1dp"
 			android:layout_margin="10dp"
-			android:layout_width="match_parent" />
+			android:layout_width="match_parent"
+			style="@style/Hr_1" />
 		<GridLayout
 			android:id="@+id/gridlayout_2"
 			android:columnCount="2"
@@ -805,7 +806,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					android:layout_marginEnd="5dp"
 					android:layout_width="130dp"
 					android:paddingVertical="1dp"
-					style="@style/Input_3" />
+					style="@style/Input_2" />
 				<Spinner
 					android:id="@+id/custommonth0"
 					android:background="@drawable/select_hour"
@@ -881,7 +882,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
 							android:text="@string/birth"
-							style="@style/Input_2" />
+							style="@style/Input_3" />
 						<RadioButton
 							android:id="@+id/c3"
 							android:focusable="true"
@@ -891,7 +892,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 							android:layout_marginTop="3dp"
 							android:layout_width="wrap_content"
 							android:text="@string/death"
-							style="@style/Input_2" />
+							style="@style/Input_3" />
 					</RadioGroup>
 					<CheckBox
 						android:id="@+id/c4"
@@ -902,7 +903,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 						android:layout_marginVertical="3dp"
 						android:layout_width="wrap_content"
 						android:text="@string/none"
-						style="@style/Input_2" />
+						style="@style/Input_3" />
 				</LinearLayout>
 				<Button
 					android:id="@+id/button_6"
@@ -1025,11 +1026,16 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		<item name="android:textColor">@color/white</item>
 		<item name="android:textSize">12sp</item>
 	</style>
+	<style name="Hr_1">
+		<item name="android:background">@color/light_gray_1</item>
+		<item name="android:fontFamily">@font/arial</item>
+		<item name="android:textSize">11sp</item>
+	</style>
 	<style name="Label_2">
 		<item name="android:fontFamily">@font/arial_italic</item>
 		<item name="android:textSize">11sp</item>
 	</style>
-	<style name="Input_3">
+	<style name="Input_2">
 		<item name="android:fontFamily">@font/arial</item>
 		<item name="android:textSize">13.33sp</item>
 	</style>
@@ -1050,11 +1056,9 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		<item name="android:fontFamily">@font/arial</item>
 		<item name="android:textColor">@color/gray</item>
 	</style>
-	<style name="Input_2">
+	<style name="Input_3">
 		<item name="android:fontFamily">sans-serif</item>
-		<item name="android:fontWeight">400</item>
 		<item name="android:textSize">11sp</item>
-		<item name="android:textStyle">normal</item>
 	</style>
 </resources>
 <!-- filename: res/values/styles.xml -->
@@ -1064,8 +1068,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <font-family xmlns:android="http://schemas.android.com/apk/res/android">
-	<font android:fontStyle="italic" android:fontWeight="400" android:font="@font/arial_italic" />
 	<font android:fontStyle="normal" android:fontWeight="400" android:font="@font/arial_normal" />
+	<font android:fontStyle="italic" android:fontWeight="400" android:font="@font/arial_italic" />
 </font-family>
 <!-- filename: res/font/arial.xml -->
 

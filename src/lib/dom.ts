@@ -14,20 +14,15 @@ export function getRangeBounds(element: HTMLElement) {
     return bounds;
 }
 
-export function getStyle(element: any) {
-    return (element.__node != null ? element.__node.style : getComputedStyle(element));
+export function getStyle(element: HTMLElement) {
+    return ((<any> element).__node != null ? <CSSStyleDeclaration> (<any> element).__node.style : getComputedStyle(element));
 }
 
-export function parseStyle(element: HTMLElement, attr: string, value: string) {
-    if (attr === 'backgroundColor') {
-        if (element && element.parentElement && value === getStyle(element.parentElement).backgroundColor) {
-            return null;
-        }
+export function sameAsParent(element: HTMLElement, attr: string) {
+    if (element.parentElement != null) {
+        return (getStyle(element)[attr] === getStyle(element.parentElement)[attr]);
     }
-    else if (/(pt|em)$/.test(value)) {
-        value = convertPX(value);
-    }
-    return value;
+    return false;
 }
 
 export function getBoxSpacing(element: HTMLElement, complete = false) {

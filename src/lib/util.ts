@@ -165,7 +165,7 @@ export function search(obj: {}, value: any) {
     return result;
 }
 
-export function indexOf<T>(value: T[], ...terms: T[]) {
+export function indexOf(value: string, ...terms: string[]) {
     if (hasValue(value)) {
         for (const term of terms) {
             const index = value.indexOf(term);
