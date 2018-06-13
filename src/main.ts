@@ -12,7 +12,7 @@ import NODE_CACHE from './cache';
 import { replaceViewsBeforeAfter, viewHandler } from './render';
 
 function setStyleMap() {
-    for (const styleSheet of <any> Array.from(document.styleSheets)) {
+    for (const styleSheet of Array.from(document.styleSheets) as any) {
         for (const rule of styleSheet.rules) {
             const elements = document.querySelectorAll(rule.selectorText);
             const attributes = new Set();

@@ -11,7 +11,7 @@ export function getDataLevel(data: {}, ...levels: string[]) {
 
 export function parseTemplateMatch(template: string) {
     const result = {};
-    let pattern: RegExp = null;
+    let pattern: RegExp | null = null;
     let match: any = false;
     let section = 0;
     let characters = template.length;
@@ -35,13 +35,18 @@ export function parseTemplateMatch(template: string) {
         if (!match) {
             pattern = /(!([0-9]+)\n?)[\w\W]*\1/g;
         }
-        match = pattern.exec(template);
+        if (pattern != null) {
+            match = pattern.exec(template);
+        }
+        else {
+            break;
+        }
     }
     while (true);
     return result;
 }
 
-export function parseTemplateData(template: {}, data: {}, index: string = null, include = {}, exclude = {}) {
+export function parseTemplateData(template: {}, data: {}, index?: string | null, include?, exclude?) {
     let output: string = (index != null ? template[index] : '');
     if (data['#include'] != null) {
         include = data['#include'];
@@ -75,7 +80,7 @@ export function parseTemplateData(template: {}, data: {}, index: string = null, 
             output = '';
         }
         const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-        let match: RegExpExecArray = null;
+        let match: RegExpExecArray | null;
         while ((match = pattern.exec(output)) != null) {
             if (include[match[1]]) {
                 const attribute = `{#${match[1]}=${match[2]}}`;

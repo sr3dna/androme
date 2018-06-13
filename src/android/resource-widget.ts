@@ -144,8 +144,8 @@ export class ResourceWidget extends Resource<Widget> {
                 borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
                 borderStyle.default = borderStyle[stored.border[0]] || borderStyle.black;
                 if (stored.border[0] !== 'none') {
-                    let template: {} = null;
-                    let data: {} = null;
+                    let template: {};
+                    let data: {};
                     let resourceName = '';
                     if (stored.backgroundColor == null && stored.backgroundImage == null && stored.borderRadius.length === 0) {
                         template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
@@ -222,7 +222,7 @@ export class ResourceWidget extends Resource<Widget> {
                     continue;
                 }
                 let system = false;
-                let labelFor: Widget = null;
+                let labelFor: Widget | null = null;
                 if (node.label != null) {
                     labelFor = node;
                     node = node.label;
@@ -260,7 +260,7 @@ export class ResourceWidget extends Resource<Widget> {
                 }
                 if (stored.backgroundColor != null) {
                     if (labelFor != null) {
-                        stored.backgroundColor = (<any> labelFor).element.__fontStyle.backgroundColor;
+                        stored.backgroundColor = (<any> labelFor.element).__fontStyle.backgroundColor;
                     }
                     if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(stored.backgroundColor[1]) || sameAsParent(element, 'backgroundColor')) {
                         delete stored.backgroundColor;

@@ -133,8 +133,8 @@ export function isNumber(value: string) {
     return /^[0-9]+\.?[0-9]*$/.test(value.toString().trim());
 }
 
-export function search(obj: {}, value: any) {
-    const result = [];
+export function search(obj: {}, value: string | object) {
+    const result: any[][] = [];
     if (typeof value === 'object') {
         for (const term in value) {
             const i = value[term];
@@ -144,15 +144,15 @@ export function search(obj: {}, value: any) {
         }
     }
     else {
-        let filter: (a: string) => boolean = null;
+        let filter = (a: string): boolean => (a === value);
         if (/^\*.+\*$/.test(value)) {
-            filter = (a: string): boolean => a.indexOf(value.replace(/\*/g, '')) !== -1;
+            filter = (a: string): boolean => (a.indexOf(value.replace(/\*/g, '')) !== -1);
         }
         else if (/^\*/.test(value)) {
-            filter = (a: string): boolean => a.endsWith(value.replace(/\*/, ''));
+            filter = (a: string): boolean => (a.endsWith(value.replace(/\*/, '')));
         }
         else if (/\*$/.test(value)) {
-            filter = (a: string): boolean => a.startsWith(value.replace(/\*/, ''));
+            filter = (a: string): boolean => (a.startsWith(value.replace(/\*/, '')));
         }
         if (filter != null) {
             for (const i in obj) {

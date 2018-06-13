@@ -3,8 +3,8 @@ import { sortAsc, sortDesc } from '../lib/util';
 
 export default abstract class NodeList<T extends Node> extends Array {
     constructor(
-        nodes: T[],
-        public parent: T = null)
+        nodes?: T[],
+        public parent?: T)
     {
         super();
         if (Array.isArray(nodes)) {

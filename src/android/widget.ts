@@ -27,7 +27,7 @@ export default class Widget extends Node {
     constructor(
         public id: number,
         public api: number,
-        element?: HTMLElement,
+        element?: HTMLElement | null,
         options?: any)
     {
         super(id, element, options);
@@ -193,9 +193,9 @@ export default class Widget extends Node {
             requireWrap = options.requireWrap;
         }
         else {
-            parent = <Widget> this.parent;
-            width = this.element.offsetWidth + this.marginLeft + this.marginRight;
-            height = this.element.offsetHeight + this.marginTop + this.marginBottom;
+            parent = this.parent as Widget;
+            width = (this.element != null ? this.element.offsetWidth + this.marginLeft + this.marginRight : 0);
+            height = (this.element != null ? this.element.offsetHeight + this.marginTop + this.marginBottom : 0);
             requireWrap = parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID);
         }
         const parentWidth = (parent.element != null ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
@@ -317,7 +317,7 @@ export default class Widget extends Node {
         if (hasValue(verticalAlign) || hasValue(textAlign)) {
             let horizontal = '';
             let vertical = '';
-            const layoutGravity = [];
+            const layoutGravity: string[] = [];
             switch (textAlign) {
                 case 'start':
                     horizontal = 'start';
@@ -385,8 +385,8 @@ export default class Widget extends Node {
     }
 
     public setAccessibility() {
-        const element = this.element;
-        const nextElement = <HTMLLabelElement> element.nextElementSibling;
+        const element: any = this.element;
+        const nextElement = element.nextElementSibling as HTMLLabelElement;
         let labeled = false;
         if (element.tagName === 'INPUT' && nextElement && nextElement.htmlFor === element.id) {
             const node = (<any> nextElement).__node;
@@ -394,16 +394,16 @@ export default class Widget extends Node {
             this.css('marginRight', node.style.marginRight);
             this.css('paddingRight', node.style.paddingRight);
             this.label = node;
-            node.hide()
-                .labelFor = this;
+            node.hide();
+            node.labelFor = this;
             labeled = true;
         }
         switch (this.nodeName) {
             case NODE_ANDROID.EDIT:
                 if (!labeled) {
-                    let parent = <Widget> this.renderParent;
-                    let current = <Widget> this;
-                    let label: Widget = null;
+                    let parent: Widget = this.renderParent;
+                    let current: Widget = this;
+                    let label: Widget | null = null;
                     while (parent && parent.renderChildren != null) {
                         const index = parent.renderChildren.findIndex((item: Widget) => item === current);
                         if (index > 0) {

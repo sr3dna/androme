@@ -1,12 +1,12 @@
 interface IColor {
     name: string;
-    hex?: string;
-    rgb?: {
+    hex: string;
+    rgb: {
         r: number;
         g: number;
         b: number;
     };
-    hsl?: {
+    hsl: {
         h: number;
         s: number;
         l: number;
@@ -224,7 +224,7 @@ export function findNearestColor(value: string) {
     const hsl = convertHextoHSL(value);
     if (hsl != null) {
         const result = HSL_SORTED.slice();
-        result.push({ name: '', hsl });
+        result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
         result.sort(sortHSL);
         const index = result.findIndex((item: IColor) => item.name === '');
         return result[Math.min(index + 1, result.length - 1)];
@@ -245,10 +245,12 @@ export function convertRGB({ rgb }: IColor) {
     return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 }
 
-export function parseRGBA(value: string) {
-    const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
-    if (match && match.length >= 4) {
-        return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[4] || '1'];
+export function parseRGBA(value: string | null) {
+    if (value != null) {
+        const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
+        if (match && match.length >= 4) {
+            return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[4] || '1'];
+        }
     }
     return null;
 }
@@ -271,5 +273,5 @@ export function convertHextoRGB(value: string) {
     if (value.length === 6) {
         return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
     }
-    return null;
+    return { r: -1, g: -1, b: -1 };
 }

@@ -8,7 +8,7 @@ export function getRangeBounds(element: HTMLElement) {
     const bounds: IClientRect = JSON.parse(JSON.stringify(domRect[domRect.length - 1]));
     if (domRect.length > 1) {
         bounds.x = Math.min.apply(null, Array.from(domRect).map((item: any) => item.x));
-        bounds.left = bounds.x;
+        bounds.left = bounds.x as number;
         bounds.width = Array.from(domRect).reduce((a: number, b: any) => a + b.width, 0);
     }
     return bounds;
@@ -41,7 +41,7 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
 }
 
 export function hasFreeFormText(element: HTMLElement) {
-    return Array.from(element.childNodes).some(item => (item.nodeName === '#text' && item.textContent.trim() !== ''));
+    return Array.from(element.childNodes).some(item => (item.nodeName === '#text' && item.textContent != null && item.textContent.trim() !== ''));
 }
 
 export function isVisible(element: HTMLElement) {

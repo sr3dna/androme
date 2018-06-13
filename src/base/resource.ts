@@ -13,7 +13,7 @@ export default class Resource<T extends Node> {
         IMAGES: new Map()
     };
 
-    public static addResourceString(value: string, name?: string) {
+    public static addResourceString(value: string, name: string) {
         if (!hasValue(name)) {
             name = value;
         }
@@ -56,7 +56,7 @@ export default class Resource<T extends Node> {
                     src = Resource.insertStoredAsset('IMAGES', src, value);
                     break;
                 default:
-                    src = null;
+                    src = '';
             }
             return src;
         }
@@ -111,7 +111,7 @@ export default class Resource<T extends Node> {
             }
             return storedName;
         }
-        return null;
+        return '';
     }
 
     constructor(public cache: NodeList<T>)
@@ -145,7 +145,7 @@ export default class Resource<T extends Node> {
             };
             let backgroundParent: string[] = [];
             if (element.parentElement != null) {
-                backgroundParent = parseRGBA(getStyle(element.parentElement).backgroundColor);
+                backgroundParent = parseRGBA(getStyle(element.parentElement).backgroundColor) || [];
             }
             const style = getStyle(element);
             for (const i in result) {
@@ -175,7 +175,7 @@ export default class Resource<T extends Node> {
                     fontSize: style.fontSize,
                     fontWeight: style.fontWeight,
                     color: (color != null ? Resource.addResourceColor(color[1]) : null),
-                    backgroundColor: (color != null ? Resource.addResourceColor(backgroundColor[1]) : null)
+                    backgroundColor: (backgroundColor != null ? Resource.addResourceColor(backgroundColor[1]) : null)
                 };
                 (<any> element).__fontStyle = result;
             }
@@ -194,7 +194,7 @@ export default class Resource<T extends Node> {
         for (const node of this.cache.filter((item: T) => item.tagName === 'SELECT')) {
             const element = <HTMLSelectElement> node.element;
             const stringArray: string[] = [];
-            let numberArray: string[] = [];
+            let numberArray: string[] | null = [];
             for (let i = 0; i < element.children.length; i++) {
                 const item = <HTMLOptionElement> element.children[i];
                 const value = item.text.trim();
@@ -208,7 +208,7 @@ export default class Resource<T extends Node> {
                             numberArray = null;
                             continue;
                         }
-                        const result = Resource.addResourceString(value);
+                        const result = Resource.addResourceString(value, '');
                         if (result != null) {
                             stringArray.push(result);
                         }
@@ -228,7 +228,7 @@ export default class Resource<T extends Node> {
                 value = (<HTMLInputElement> element).value.trim();
             }
             else if (element.nodeName === '#text') {
-                value = element.textContent.trim();
+                value = (element.textContent != null ? element.textContent.trim() : '');
             }
             else if (element.children.length === 0 || Array.from(element.children).every((item: HTMLElement) => INLINE_CHROME.includes(item.tagName))) {
                 name = element.innerText.trim();

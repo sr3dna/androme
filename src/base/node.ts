@@ -16,7 +16,9 @@ export default abstract class Node implements IBoxModel {
 
     public gridRowSpan: number;
     public gridColumnSpan: number;
+    public gridColumnEnd: number[];
     public gridColumnCount: number;
+    public gridIndex: number;
     public gridFirst: boolean;
     public gridLast: boolean;
     public gridRowEnd: boolean;
@@ -36,15 +38,15 @@ export default abstract class Node implements IBoxModel {
 
     constructor(
         public id: number,
-        public element?: HTMLElement,
+        public element?: HTMLElement | null,
         options?: {})
     {
         Object.assign(this, options);
         if (element != null || (options && (<any> options).element != null)) {
-            const object = <any> this.element;
+            const object: any = this.element;
             const style = object.__style || getComputedStyle(object);
             const styleMap = object.__styleMap || {};
-            for (const inline of <any> object.style) {
+            for (const inline of object.style as any) {
                 styleMap[hyphenToCamelCase(inline)] = object.style[inline];
             }
             this.style = style;
@@ -117,7 +119,7 @@ export default abstract class Node implements IBoxModel {
     }
 
     public ascend() {
-        const result = [];
+        const result: Node[] = [];
         let current = this.parent;
         while (current != null) {
             if (current.id !== 0) {
@@ -168,16 +170,16 @@ export default abstract class Node implements IBoxModel {
 
     public css(attr: string, value = '') {
         if (arguments.length === 2) {
-            this.styleMap[attr] = (hasValue(value) ? value : null);
+            this.styleMap[attr] = (hasValue(value) ? value : '');
         }
         else {
             return this.styleMap[attr] || this.style[attr];
         }
     }
 
-    public setBounds(calibrate: boolean = false, element: HTMLElement = null) {
+    public setBounds(calibrate: boolean = false, element?: HTMLElement) {
         if (!calibrate) {
-            this.bounds = (element != null ?  getRangeBounds(element) : JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
+            this.bounds = (element != null ?  getRangeBounds(element) : this.element && JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
         }
         this.linear = {
             top: this.bounds.top - this.marginTop,
@@ -268,7 +270,7 @@ export default abstract class Node implements IBoxModel {
         return this._parentOriginal || this._parent;
     }
     get parentElement() {
-        return this.element.parentElement;
+        return this.element && this.element.parentElement;
     }
     set renderParent(value: any) {
         if (value instanceof Node) {
@@ -318,11 +320,13 @@ export default abstract class Node implements IBoxModel {
     get overflow() {
         if (this._overflow == null) {
             let value = OVERFLOW_CHROME.NONE;
-            if (this.style.overflow === 'scroll' || (this.style.overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
-                value |= OVERFLOW_CHROME.HORIZONTAL;
-            }
-            if (this.style.overflow === 'scroll' || (this.style.overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
-                value |= OVERFLOW_CHROME.VERTICAL;
+            if (this.element != null) {
+                if (this.style.overflow === 'scroll' || (this.style.overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+                    value |= OVERFLOW_CHROME.HORIZONTAL;
+                }
+                if (this.style.overflow === 'scroll' || (this.style.overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+                    value |= OVERFLOW_CHROME.VERTICAL;
+                }
             }
             this._overflow = value;
         }

@@ -22,7 +22,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         let nodeTotal = 0;
         Array.from((documentRoot || document.body).childNodes).forEach((item: HTMLElement) => {
             if (item.nodeName === '#text') {
-                if (item.textContent.trim() !== '') {
+                if (item.textContent != null && item.textContent.trim() !== '') {
                     nodeTotal++;
                 }
             }
@@ -35,10 +35,12 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         const elements = (documentRoot != null ? documentRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         if (documentRoot != null) {
             const node = this.insertNode(documentRoot);
-            node.parent = new this.NODE(0, 0);
+            if (node != null) {
+                node.parent = new this.NODE(0, 0);
+            }
         }
         for (const element of <HTMLElement[]> Array.from(elements)) {
-            if (INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
+            if (element.parentElement != null && INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
                 continue;
             }
             this.insertNode(element);
@@ -93,7 +95,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
             if (nodes != null) {
                 nodes.push(node.parent);
                 let minArea = Number.MAX_VALUE;
-                let closest: T = null;
+                let closest: T | null = null;
                 for (const current of nodes) {
                     const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
                     if (area < minArea) {
@@ -112,7 +114,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
             }
             if (node.element.children && node.element.children.length > 1) {
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
-                    if (element.nodeName === '#text' && element.textContent.trim() !== '') {
+                    if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
                         this.insertNode(element, node);
                     }
                 });
@@ -176,7 +178,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                 const columnLength = rows[0].renderChildren.length;
                 if (rows.every((item: T) => item.renderChildren.length === columnLength)) {
                     const horizontal = !node.horizontal;
-                    const columnDimension = new Array(columnLength).fill(Number.MIN_VALUE);
+                    const columnDimension = new Array(columnLength).fill(-1);
                     for (const row of rows) {
                         for (let i = 0; i < row.renderChildren.length; i++) {
                             columnDimension[i] = Math.max(row.renderChildren[i].linear[(horizontal ? 'width' : 'height')], columnDimension[i]);
@@ -197,13 +199,15 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
     }
 
     public insertNode(element: HTMLElement, parent?: T) {
-        let node: T = null;
+        let node: T | null = null;
         if (element.nodeName === '#text') {
-            if (element.textContent.trim() !== '') {
-                node = new this.NODE(this.cache.nextId, SETTINGS.targetAPI, null, { element, parent, tagName: 'TEXT' });
+            if (element.textContent && element.textContent.trim() !== '') {
+                node = new this.NODE(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
                 node.setBounds(false, element);
-                node.inheritStyle(parent);
-                parent.children.push(node);
+                if (parent != null) {
+                    node.inheritStyle(parent);
+                    parent.children.push(node);
+                }
             }
         }
         else if (isVisible(element)) {
@@ -241,9 +245,9 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
             const coordsY = Object.keys(mapY[i]);
             const partial = new Map();
             for (let j = 0; j < coordsY.length; j++) {
-                const axisY = [];
-                const layers = [];
-                for (const node of mapY[i][coordsY[j]]) {
+                const axisY: T[] = [];
+                const layers: T[] = [];
+                for (const node of mapY[i][coordsY[j]] as T[]) {
                     switch (node.style.position) {
                         case 'absolute':
                         case 'relative':
@@ -254,7 +258,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                             axisY.push(node);
                     }
                 }
-                axisY.sort((a, b) => {
+                axisY.sort((a: T, b: T) => {
                     if (!a.parent.flex.enabled && !b.parent.flex.enabled && a.withinX(b.linear)) {
                         return (a.linear.left > b.linear.left ? 1 : -1);
                     }
@@ -262,21 +266,21 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                 });
                 axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
                 for (let k = 0; k < axisY.length; k++) {
-                    const nodeY = axisY[k];
+                    const nodeY = axisY[k] as T;
                     if (!nodeY.renderParent) {
-                        const parent = nodeY.parent;
+                        const parent = nodeY.parent as T;
                         let tagName = nodeY.nodeName;
                         let restart = false;
                         let xml = '';
                         if (tagName == null) {
-                            if ((nodeY.children.length === 0 && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: T) => INLINE_CHROME.includes(item.tagName))) {
+                            if ((nodeY.children.length === 0 && nodeY.element && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: T) => INLINE_CHROME.includes(item.tagName))) {
                                 tagName = NODE_STANDARD.TEXT;
                             }
                             else if (nodeY.children.length > 0) {
                                 const rows = nodeY.children;
                                 if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every((item: T) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
                                     let columns: any[][] = [];
-                                    const columnEnd = [];
+                                    const columnEnd: number[] = [];
                                     if (SETTINGS.useLayoutWeight) {
                                         const dimensions: number[][] = [];
                                         for (let l = 0; l < rows.length; l++) {
@@ -300,11 +304,11 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                                             })];
                                         if (base.length > 1) {
                                             let maxIndex = -1;
-                                            let assigned = [];
+                                            let assigned: number[] = [];
                                             let every = false;
                                             for (let l = 0; l < base.length; l++) {
                                                 const bounds = base[l].bounds;
-                                                const found = [];
+                                                const found: number[] = [];
                                                 if (l < base.length - 1) {
                                                     for (let m = 0; m < columns.length; m++) {
                                                         if (columns[m] === base) {
@@ -361,7 +365,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                                             const columnRight: number[] = [];
                                             for (let l = 0; l < nextCoordsX.length; l++) {
                                                 const nextAxisX = nextMapX[nextCoordsX[l]].sortAsc('bounds.top');
-                                                columnRight[l] = (l === 0 ? Number.MIN_VALUE : columnRight[l - 1]);
+                                                columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                                                 for (let m = 0; m < nextAxisX.length; m++) {
                                                     const nextX = nextAxisX[m];
                                                     if (nextX.parent.parent && nodeY.id === nextX.parent.parent.id) {
@@ -399,7 +403,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                                             columns = columns.filter(item => item);
                                             const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                                             for (let l = 0; l < columnLength; l++) {
-                                                let top: number = null;
+                                                let top: number | null = null;
                                                 for (let m = 0; m < columns.length; m++) {
                                                     const nodeX = columns[m][l];
                                                     if (nodeX != null) {
@@ -487,7 +491,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                                     }
                                 }
                                 if (!nodeY.renderParent) {
-                                    const children = new this.NODELIST(nodeY.children);
+                                    const children = new this.NODELIST(<U> nodeY.children);
                                     const [linearX, linearY] = [children.linearX, children.linearY];
                                     if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += this.writeFrameLayout(nodeY, parent);
@@ -508,11 +512,11 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                             if (parent.is(NODE_STANDARD.GRID)) {
                                 let siblings: U;
                                 if (SETTINGS.useLayoutWeight) {
-                                    siblings = new this.NODELIST(nodeY.gridSiblings);
+                                    siblings = new this.NODELIST(nodeY.gridSiblings as U);
                                 }
                                 else {
                                     const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
-                                    siblings = nodeY.parentOriginal.children.filter((item: T) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
+                                    siblings = nodeY.parentOriginal.children.filter((item: T) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd) as U;
                                 }
                                 if (siblings.length > 0) {
                                     siblings.unshift(nodeY);

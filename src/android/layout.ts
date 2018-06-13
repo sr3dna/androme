@@ -85,9 +85,9 @@ export default class Layout extends Widget {
 
     get childrenBox() {
         let minLeft = Number.MAX_VALUE;
-        let maxRight = Number.MIN_VALUE;
+        let maxRight = 0;
         let minTop = Number.MAX_VALUE;
-        let maxBottom = Number.MIN_VALUE;
+        let maxBottom = 0;
         for (const node of this.children) {
             minLeft = Math.min(node.bounds.left, minLeft);
             maxRight = Math.max(node.bounds.right, maxRight);
@@ -103,7 +103,7 @@ export default class Layout extends Widget {
         let bottom = [children[0]];
         let left = [children[0]];
         for (let i = 1; i < children.length; i++) {
-            const node = <Widget> children[i];
+            const node: Widget = children[i];
             const nodeRight = node.label || node;
             if (top[0].bounds.top === node.bounds.top) {
                 top.push(node);
