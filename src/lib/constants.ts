@@ -1,5 +1,4 @@
-export enum NODE_STANDARD
-{
+export enum NODE_STANDARD {
     FRAME = 1,
     LINEAR,
     CONSTRAINT,
@@ -32,8 +31,7 @@ export enum BOX_STANDARD {
     PADDING_LEFT = 256
 }
 
-export const MAPPING_CHROME =
-{
+export const MAPPING_CHROME = {
     'TEXT': NODE_STANDARD.TEXT,
     'LABEL': NODE_STANDARD.TEXT,
     'P': NODE_STANDARD.TEXT,
@@ -52,8 +50,7 @@ export const MAPPING_CHROME =
     'TEXTAREA': NODE_STANDARD.EDIT
 };
 
-export const BLOCK_CHROME =
-[
+export const BLOCK_CHROME = [
     'ADDRESS',
     'ARTICLE',
     'ASIDE',
@@ -89,8 +86,7 @@ export const BLOCK_CHROME =
     'VIDEO'
 ];
 
-export const INLINE_CHROME =
-[
+export const INLINE_CHROME = [
     'STRONG',
     'B',
     'EM',

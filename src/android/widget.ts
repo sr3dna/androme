@@ -4,25 +4,27 @@ import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './const
 import parseRTL from './localization';
 import API_ANDROID from './customizations';
 import { BOX_STANDARD, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { calculateBias, convertInt, convertPX, formatPX, formatString, generateId, hasValue, indexOf } from '../lib/util';
+import { calculateBias, convertInt, convertPX, formatPX, generateId, hasValue, hyphenToCamelCase, indexOf } from '../lib/util';
+
+type T = Widget;
 
 export default class Widget extends Node {
-    public static getTagName(tagName: number) {
+    public static getNodeName(tagName: number): string {
         return NODE_ANDROID[NODE_STANDARD[tagName]];
     }
 
     public constraint: any = {};
-    public labelFor: Widget;
-    public children: Widget[] = [];
-    public renderChildren: Widget[] = [];
-    public linearRows: Widget[] = [];
+    public labelFor: T;
+    public children: T[] = [];
+    public renderChildren: T[] = [];
+    public linearRows: T[] = [];
 
     public androidId: string;
     public androidWidgetName: string;
 
     private _android: IStringMap;
     private _app: IStringMap;
-    private _label: Widget;
+    private _label: T;
 
     constructor(
         public id: number,
@@ -40,7 +42,7 @@ export default class Widget extends Node {
         return super.add(obj, attr, value, overwrite);
     }
 
-    public android(attr: string, value: string = '', overwrite = true) {
+    public android(attr: string = '', value: string = '', overwrite = true) {
         switch (arguments.length) {
             case 0:
                 return this._android;
@@ -51,7 +53,7 @@ export default class Widget extends Node {
         }
     }
 
-    public app(attr: string, value: string = '', overwrite = true) {
+    public app(attr: string = '', value: string = '', overwrite = true) {
         switch (arguments.length) {
             case 0:
                 return this._app;
@@ -69,7 +71,7 @@ export default class Widget extends Node {
         }
     }
 
-    public render(parent: Widget) {
+    public render(parent: T) {
         if (parent.is(NODE_STANDARD.LINEAR)) {
             switch (this.nodeName) {
                 case NODE_ANDROID.LINEAR:
@@ -154,18 +156,19 @@ export default class Widget extends Node {
         }
     }
 
-    public inheritStyle(node: Widget) {
+    public inheritStyle(node: T) {
         const style = [];
         for (const attr in node.style) {
-            if (indexOf(attr.toLowerCase(), 'font', 'color')) {
-                this.style[attr] = node.style[attr];
+            if (attr.startsWith('font') || attr.startsWith('color')) {
+                const key = hyphenToCamelCase(attr);
+                this.style[key] = node.style[key];
             }
         }
     }
 
     public is(...views: number[]) {
         for (const value of views) {
-            if (this.nodeName === Widget.getTagName(value)) {
+            if (this.nodeName === Widget.getNodeName(value)) {
                 return true;
             }
         }
@@ -183,7 +186,7 @@ export default class Widget extends Node {
 
     public setAndroidDimensions(options?: any) {
         const styleMap = this.styleMap;
-        let parent: Widget;
+        let parent: T;
         let width: number;
         let height: number;
         let requireWrap: boolean;
@@ -193,7 +196,7 @@ export default class Widget extends Node {
             requireWrap = options.requireWrap;
         }
         else {
-            parent = this.parent as Widget;
+            parent = this.parent as T;
             width = (this.element != null ? this.element.offsetWidth + this.marginLeft + this.marginRight : 0);
             height = (this.element != null ? this.element.offsetHeight + this.marginTop + this.marginBottom : 0);
             requireWrap = parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID);
@@ -219,7 +222,7 @@ export default class Widget extends Node {
             }
             if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
                 if (this.constraint.layoutWidth) {
-                    this.android('layout_width', (this.renderChildren.some((node: Widget) => node.css('float') === 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
+                    this.android('layout_width', (this.renderChildren.some((node: T) => node.css('float') === 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
                 }
                 else {
                     this.android('layout_width', 'wrap_content', false);
@@ -401,11 +404,11 @@ export default class Widget extends Node {
         switch (this.nodeName) {
             case NODE_ANDROID.EDIT:
                 if (!labeled) {
-                    let parent: Widget = this.renderParent;
-                    let current: Widget = this;
-                    let label: Widget | null = null;
+                    let parent: T = this.renderParent;
+                    let current: T = this;
+                    let label: T | null = null;
                     while (parent && parent.renderChildren != null) {
-                        const index = parent.renderChildren.findIndex((item: Widget) => item === current);
+                        const index = parent.renderChildren.findIndex((item: T) => item === current);
                         if (index > 0) {
                             label = parent.renderChildren[index - 1];
                             break;
@@ -434,15 +437,16 @@ export default class Widget extends Node {
             return this.androidWidgetName;
         }
         else {
-            let value: any = MAPPING_CHROME[this.tagName];
+            let value: number | object = MAPPING_CHROME[this.tagName];
             if (typeof value === 'object') {
                 value = value[(<HTMLInputElement> this.element).type];
             }
-            return Widget.getTagName(value);
+            return Widget.getNodeName(value as number);
         }
     }
-    set label(value: Widget) {
+    set label(value: T) {
         this._label = value;
+        value.companion = true;
         value.labelFor = this;
     }
     get label() {

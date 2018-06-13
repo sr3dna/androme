@@ -1,14 +1,13 @@
 import { IStringMap } from '../lib/types';
 import Resource from '../base/resource';
 import Widget from './widget';
-import WidgetList from './widgetlist';
 import { formatString, hasValue, replaceDP } from '../lib/util';
 import { sameAsParent } from '../lib/dom';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
 import { NODE_STANDARD } from '../lib/constants';
-import { BUILD_ANDROID, NODE_ANDROID } from './constants';
+import { BUILD_ANDROID } from './constants';
 
 import STRING_TMPL from './tmpl/resources/string';
 import STRINGARRAY_TMPL from './tmpl/resources/string-array';
@@ -110,31 +109,31 @@ const FONTWEIGHT_ANDROID = {
     '900': 'black'
 };
 
-export class ResourceWidget extends Resource<Widget> {
-    constructor(cache: WidgetList<Widget>) {
-        super(cache);
+type T = Widget;
+
+export class ResourceWidget extends Resource<T> {
+    constructor() {
+        super();
     }
 
     public setBoxSpacing() {
         super.setBoxSpacing();
-        for (const node of this.cache.elements) {
-            const element = node.element;
-            if (element.__boxSpacing != null) {
-                const stored = Object.assign({}, element.__boxSpacing);
+        this.cache.elements.forEach((node: T) => {
+            const stored = (<any> node.element).__boxSpacing;
+            if (stored != null) {
                 const method = METHOD_ANDROID['boxSpacing'];
                 for (const i in stored) {
                     node.attr(formatString(parseRTL(method[i]), stored[i]));
                 }
             }
-        }
+        });
     }
 
     public setBoxStyle() {
         super.setBoxStyle();
-        for (const node of this.cache.elements) {
-            const element = node.element;
-            if (element.__boxStyle != null) {
-                const stored = Object.assign({}, element.__boxStyle);
+        this.cache.elements.forEach((node: T) => {
+            const stored = (<any> node.element).__boxStyle;
+            if (stored != null) {
                 const method = METHOD_ANDROID['boxStyle'];
                 const borderStyle: IStringMap = {
                     black: 'android:color="@android:color/black"',
@@ -198,7 +197,7 @@ export class ResourceWidget extends Resource<Widget> {
                     node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
                 }
             }
-        }
+        });
     }
 
     public setFontStyle() {
@@ -206,91 +205,93 @@ export class ResourceWidget extends Resource<Widget> {
         const tagName = {};
         const style = {};
         const layout = {};
-        for (const node of this.cache.elements) {
-            if (node.element.__fontStyle != null) {
+        this.cache.elements.forEach((node: T) => {
+            if ((<any> node.element).__fontStyle != null) {
                 if (tagName[node.tagName] == null) {
                     tagName[node.tagName] = [];
                 }
                 tagName[node.tagName].push(node);
             }
-        }
+        });
         for (const tag in tagName) {
             const nodes = tagName[tag];
             let sorted: any[] = [];
-            for (let node of nodes) {
+            nodes.forEach((node: T) => {
                 if (node.labelFor != null) {
-                    continue;
+                    return;
                 }
                 let system = false;
-                let labelFor: Widget | null = null;
+                let labelFor: T | null = null;
                 if (node.label != null) {
                     labelFor = node;
                     node = node.label;
                 }
                 const element = node.element;
-                const id = (labelFor || node).id;
-                const stored = Object.assign({}, element.__fontStyle);
-                const fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
-                let fontStyle = '';
-                let fontWeight = '';
-                if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
-                    system = true;
-                    stored.fontFamily = fontFamily;
-                    if (stored.fontStyle === 'normal') {
-                        delete stored.fontStyle;
+                if (element != null) {
+                    const id = (labelFor || node).id;
+                    const stored = Object.assign({}, (<any> element).__fontStyle);
+                    const fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                    let fontStyle = '';
+                    let fontWeight = '';
+                    if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                        system = true;
+                        stored.fontFamily = fontFamily;
+                        if (stored.fontStyle === 'normal') {
+                            delete stored.fontStyle;
+                        }
+                        if (stored.fontWeight === '400') {
+                            delete stored.fontWeight;
+                        }
                     }
-                    if (stored.fontWeight === '400') {
+                    else {
+                        stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                        fontStyle = stored.fontStyle;
+                        fontWeight = stored.fontWeight;
+                        delete stored.fontStyle;
                         delete stored.fontWeight;
                     }
-                }
-                else {
-                    stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
-                    fontStyle = stored.fontStyle;
-                    fontWeight = stored.fontWeight;
-                    delete stored.fontStyle;
-                    delete stored.fontWeight;
-                }
-                if (stored.color != null) {
-                    if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(stored.color[1])) {
-                        delete stored.color;
-                    }
-                    else {
-                        stored.color = `@color/${stored.color[0]}`;
-                    }
-                }
-                if (stored.backgroundColor != null) {
-                    if (labelFor != null) {
-                        stored.backgroundColor = (<any> labelFor.element).__fontStyle.backgroundColor;
-                    }
-                    if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(stored.backgroundColor[1]) || sameAsParent(element, 'backgroundColor')) {
-                        delete stored.backgroundColor;
-                    }
-                    else {
-                        stored.backgroundColor = `@color/${stored.backgroundColor[0]}`;
-                    }
-                }
-                const method = METHOD_ANDROID['fontStyle'];
-                const keys = Object.keys(method);
-                for (let i = 0; i < keys.length; i++) {
-                    if (sorted[i] == null) {
-                        sorted[i] = {};
-                    }
-                    const value = stored[keys[i]];
-                    if (hasValue(value)) {
-                        const attr = formatString(method[keys[i]], value);
-                        if (sorted[i][attr] == null) {
-                            sorted[i][attr] = [];
+                    if (stored.color != null) {
+                        if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(stored.color[1])) {
+                            delete stored.color;
                         }
-                        sorted[i][attr].push(id);
+                        else {
+                            stored.color = `@color/${stored.color[0]}`;
+                        }
+                    }
+                    if (stored.backgroundColor != null) {
+                        if (labelFor != null) {
+                            stored.backgroundColor = (<any> labelFor.element).__fontStyle.backgroundColor;
+                        }
+                        if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(stored.backgroundColor[1]) || sameAsParent(element, 'backgroundColor')) {
+                            delete stored.backgroundColor;
+                        }
+                        else {
+                            stored.backgroundColor = `@color/${stored.backgroundColor[0]}`;
+                        }
+                    }
+                    const method = METHOD_ANDROID['fontStyle'];
+                    const keys = Object.keys(method);
+                    for (let i = 0; i < keys.length; i++) {
+                        if (sorted[i] == null) {
+                            sorted[i] = {};
+                        }
+                        const value = stored[keys[i]];
+                        if (hasValue(value)) {
+                            const attr = formatString(method[keys[i]], value);
+                            if (sorted[i][attr] == null) {
+                                sorted[i][attr] = [];
+                            }
+                            sorted[i][attr].push(id);
+                        }
+                    }
+                    if (!system) {
+                        if (!STORED.FONTS.has(fontFamily)) {
+                            STORED.FONTS.set(fontFamily, {});
+                        }
+                        STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
                     }
                 }
-                if (!system) {
-                    if (!STORED.FONTS.has(fontFamily)) {
-                        STORED.FONTS.set(fontFamily, {});
-                    }
-                    STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
-                }
-            }
+            });
             style[tag] = {};
             layout[tag] = {};
             do {
@@ -417,7 +418,7 @@ export class ResourceWidget extends Resource<Widget> {
             resource[name] = tagData;
         }
         const inherit = new Set();
-        for (const node of this.cache.elements) {
+        this.cache.elements.forEach((node: T) => {
             if (resource[node.tagName] != null) {
                 const styles: string[] = [];
                 for (const item of resource[node.tagName]) {
@@ -438,7 +439,7 @@ export class ResourceWidget extends Resource<Widget> {
                     }
                 }
             }
-        }
+        });
         for (const styles of inherit) {
             let parent = '';
             styles.split('.').forEach((value: string) => {
@@ -454,48 +455,45 @@ export class ResourceWidget extends Resource<Widget> {
 
     public setImageSource() {
         super.setImageSource();
-        for (const node of this.cache.filter((item: Widget) => item.tagName === 'IMG')) {
-            const element = node.element;
-            if (element.__imageSource != null) {
-                const stored = element.__imageSource;
+        this.cache.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
+            const stored = (<any> node.element).__imageSource;
+            if (stored != null) {
                 const method = METHOD_ANDROID['imageSource'];
                 node.attr(formatString(method['src'], stored));
             }
-        }
+        });
     }
 
     public setOptionArray() {
         super.setOptionArray();
-        for (const node of this.cache.filter((item: Widget) => item.tagName === 'SELECT')) {
-            const element = node.element;
-            const stringArray = element.__optionArray.stringArray;
-            const numberArray = element.__optionArray.numberArray;
+        this.cache.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
+            const stored = (<any> node.element).__optionArray;
             const method = METHOD_ANDROID['optionArray'];
             let result: string[] = [];
-            if (stringArray != null) {
-                for (const value of stringArray) {
+            if (stored.stringArray != null) {
+                for (const value of stored.stringArray) {
                     const name = Resource.STORED.STRINGS.get(value);
                     result.push((name != null ? `@string/${name}` : value));
                 }
             }
-            if (numberArray != null) {
-                result = numberArray;
+            if (stored.numberArray != null) {
+                result = stored.numberArray;
             }
             const arrayName = `${node.androidId}_array`;
             STORED.ARRAYS.set(arrayName, result);
             node.attr(formatString(method['entries'], arrayName));
-        }
+        });
     }
 
     public setValueString() {
         super.setValueString();
-        for (const node of this.cache.elements) {
+        this.cache.elements.forEach((node: T) => {
             const element = (node.label != null ? node.label.element : node.element);
-            if (element.__valueString != null) {
-                const stored = element.__valueString;
+            const stored = (<any> element).__valueString;
+            if (stored != null) {
                 const method = METHOD_ANDROID['valueString'];
                 const name = Resource.STORED.STRINGS.get(stored);
-                if (node.is(NODE_STANDARD.TEXT)) {
+                if (node.is(NODE_STANDARD.TEXT) && element instanceof HTMLElement) {
                     const match = node.style.textDecoration.match(/(underline|line-through)/);
                     if (match != null) {
                         let value = '';
@@ -513,7 +511,7 @@ export class ResourceWidget extends Resource<Widget> {
                 }
                 node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
             }
-        }
+        });
     }
 
     private deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {

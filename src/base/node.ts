@@ -8,6 +8,7 @@ export default abstract class Node implements IBoxModel {
     public style: IStringMap = {};
     public styleMap: IStringMap = {};
     public visible: boolean = true;
+    public companion: boolean = false;
     public parentIndex: number = Number.MAX_VALUE;
     public bounds: IClientRect;
     public linear: IClientRect;
@@ -44,13 +45,14 @@ export default abstract class Node implements IBoxModel {
         Object.assign(this, options);
         if (element != null || (options && (<any> options).element != null)) {
             const object: any = this.element;
-            const style = object.__style || getComputedStyle(object);
-            const styleMap = object.__styleMap || {};
-            for (const inline of object.style as any) {
-                styleMap[hyphenToCamelCase(inline)] = object.style[inline];
+            if (this.element instanceof HTMLElement) {
+                const styleMap = object.__styleMap || {};
+                for (const inline of this.element.style as any) {
+                    styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
+                }
+                this.style = object.__style || getComputedStyle(this.element);
+                this.styleMap = styleMap;
             }
-            this.style = style;
-            this.styleMap = styleMap;
             object.__node = this;
         }
     }
@@ -58,6 +60,7 @@ export default abstract class Node implements IBoxModel {
     public abstract is(...views: number[]): boolean;
     public abstract inheritStyle(node: Node): void;
     public abstract distributeWeight(horizontal: boolean, percent: number): void;
+    public abstract get nodeName(): string;
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
@@ -289,9 +292,6 @@ export default abstract class Node implements IBoxModel {
     }
     get tagName() {
         return this._tagName || (this.element != null ? this.element.tagName : '');
-    }
-    get nodeName() {
-        return this.tagName;
     }
     get flex() {
         if (this._flex == null) {

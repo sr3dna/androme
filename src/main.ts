@@ -1,15 +1,13 @@
 import Application from './base/application';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
+import View from './android/view';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import { ResourceWidget, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './android/resource-widget';
-import { setConstraints } from './android/constraint';
 import API_ANDROID from './android/customizations';
 import { hasValue, hyphenToCamelCase, replaceDP } from './lib/util';
 import { convertRGB, getByColorName } from './lib/color';
 import SETTINGS from './settings';
-import NODE_CACHE from './cache';
-import { replaceViewsBeforeAfter, viewHandler } from './render';
 
 function setStyleMap() {
     for (const styleSheet of Array.from(document.styleSheets) as any) {
@@ -52,21 +50,22 @@ function setStyleMap() {
 }
 
 export function parseDocument(element?: any) {
+    let output = '';
     if (typeof element === 'string') {
         element = document.getElementById(element);
     }
     setStyleMap();
-    const app = new Application<Widget, WidgetList<Widget>>(NODE_CACHE, viewHandler, new ResourceWidget(NODE_CACHE), Widget, WidgetList);
+    const app = new Application<Widget, WidgetList<Widget>>(Widget, WidgetList, new View(), new ResourceWidget());
     app.setNodeCache(element);
-    let output = app.getLayoutXml();
-    output = replaceViewsBeforeAfter(output);
+    output = app.getLayoutXml();
     app.setResources();
+    output = app.replaceBeforeAfter(output);
     if (SETTINGS.showAttributes) {
         app.setMarginPadding();
         if (SETTINGS.useLayoutWeight) {
             app.setLayoutWeight();
         }
-        setConstraints();
+        app.setConstraints();
         output = app.replaceInlineAttributes(output);
     }
     output = output.replace(/{[<@>]{1}[0-9]+}/g, '');

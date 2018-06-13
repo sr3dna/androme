@@ -1,5 +1,5 @@
 import { IBoxModel, IClientRect } from './types';
-import { convertInt, convertPX } from './util';
+import { convertInt } from './util';
 
 export function getRangeBounds(element: HTMLElement) {
     const range = document.createRange();

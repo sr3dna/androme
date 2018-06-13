@@ -2,12 +2,14 @@ import Widget from './widget';
 import WidgetList from './widgetlist';
 import { NODE_STANDARD } from '../lib/constants';
 
+type T = Widget;
+
 export default class Layout extends Widget {
     constructor(
         id: number,
-        node: Widget,
-        parent: Widget | null,
-        children: Widget[])
+        node: T,
+        parent: T | null,
+        children: T[])
     {
         const options = {
             parent,
@@ -66,7 +68,7 @@ export default class Layout extends Widget {
         this.setDimensions();
     }
 
-    public inheritGrid(node: Widget) {
+    public inheritGrid(node: T) {
         for (const attr in node) {
             if (attr.startsWith('grid')) {
                 if (typeof node[attr] === 'number') {
@@ -103,7 +105,7 @@ export default class Layout extends Widget {
         let bottom = [children[0]];
         let left = [children[0]];
         for (let i = 1; i < children.length; i++) {
-            const node: Widget = children[i];
+            const node: T = children[i];
             const nodeRight = node.label || node;
             if (top[0].bounds.top === node.bounds.top) {
                 top.push(node);

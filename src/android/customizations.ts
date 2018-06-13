@@ -1,7 +1,6 @@
 import { BUILD_ANDROID } from './constants';
 
-export default
-{
+export default {
     [BUILD_ANDROID.OREO]:
     {
         android: ['fontWeight'],

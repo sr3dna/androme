@@ -1,5 +1,4 @@
-export enum BUILD_ANDROID
-{
+export enum BUILD_ANDROID {
     OREO_1 = 27,
     OREO = 26,
     NOUGAT_1 = 25,
@@ -17,8 +16,7 @@ export enum BUILD_ANDROID
     LATEST = 27
 }
 
-export enum DENSITY_ANDROID
-{
+export enum DENSITY_ANDROID {
     LDPI = 120,
     MDPI = 160,
     HDPI = 240,
@@ -27,8 +25,7 @@ export enum DENSITY_ANDROID
     XXXHDPI = 640
 }
 
-export const NODE_ANDROID =
-{
+export const NODE_ANDROID = {
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
@@ -61,8 +58,7 @@ export const BOX_ANDROID = {
     PADDING_LEFT: 'paddingLeft'
 };
 
-export const FIXED_ANDROID =
-[
+export const FIXED_ANDROID = [
     NODE_ANDROID.EDIT,
     NODE_ANDROID.SELECT,
     NODE_ANDROID.CHECKBOX,
@@ -70,8 +66,7 @@ export const FIXED_ANDROID =
     NODE_ANDROID.BUTTON
 ];
 
-export const XMLNS_ANDROID =
-{
+export const XMLNS_ANDROID = {
     'ANDROID': 'xmlns:android="http://schemas.android.com/apk/res/android"',
     'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"',
     'TOOLS': 'xmlns:tools="http://schemas.android.com/tools"'

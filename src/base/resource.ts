@@ -29,6 +29,9 @@ export default class Resource<T extends Node> {
                 if (num || /^[0-9].*/.test(value)) {
                     name = `__${name}`;
                 }
+                else if (name === '') {
+                    name = `__symbol${Math.ceil(Math.random() * 100000)}`;
+                }
                 Resource.STORED.STRINGS.set(value, name);
             }
             return value;
@@ -114,57 +117,63 @@ export default class Resource<T extends Node> {
         return '';
     }
 
-    constructor(public cache: NodeList<T>)
+    public cache: NodeList<T>;
+
+    constructor()
     {
     }
 
     public setBoxSpacing() {
-        for (const node of this.cache.elements) {
-            const element = <HTMLElement> node.element;
-            const result = getBoxSpacing(element);
-            for (const i in result) {
-                result[i] += 'px';
+        this.cache.elements.forEach((node: T) => {
+            if (node.element instanceof HTMLElement) {
+                const element: HTMLElement = node.element;
+                const result = getBoxSpacing(element);
+                for (const i in result) {
+                    result[i] += 'px';
+                }
+                (<any> element).__boxSpacing = result;
             }
-            (<any> element).__boxSpacing = result;
-        }
+        });
     }
 
     public setBoxStyle() {
-        for (const node of this.cache.elements) {
-            const element = <HTMLElement> node.element;
-            const result: any = {
-                border: this.parseBorderStyle,
-                borderTop: this.parseBorderStyle,
-                borderRight: this.parseBorderStyle,
-                borderBottom: this.parseBorderStyle,
-                borderLeft: this.parseBorderStyle,
-                borderRadius: this.parseBoxDimensions,
-                backgroundColor: parseRGBA,
-                backgroundImage: this.parseImageURL,
-                backgroundSize: this.parseBoxDimensions
-            };
-            let backgroundParent: string[] = [];
-            if (element.parentElement != null) {
-                backgroundParent = parseRGBA(getStyle(element.parentElement).backgroundColor) || [];
+        this.cache.elements.forEach((node: T) => {
+            if (node.element instanceof HTMLElement) {
+                const element: HTMLElement = node.element;
+                const result: any = {
+                    border: this.parseBorderStyle,
+                    borderTop: this.parseBorderStyle,
+                    borderRight: this.parseBorderStyle,
+                    borderBottom: this.parseBorderStyle,
+                    borderLeft: this.parseBorderStyle,
+                    borderRadius: this.parseBoxDimensions,
+                    backgroundColor: parseRGBA,
+                    backgroundImage: this.parseImageURL,
+                    backgroundSize: this.parseBoxDimensions
+                };
+                let backgroundParent: string[] = [];
+                if (element.parentElement != null) {
+                    backgroundParent = parseRGBA(getStyle(element.parentElement).backgroundColor) || [];
+                }
+                const style = getStyle(element);
+                for (const i in result) {
+                    result[i] = result[i](style[i]);
+                }
+                result.border[2] = Resource.addResourceColor(result.border[2], false);
+                if (backgroundParent[0] === result.backgroundColor[0] || result.backgroundColor[4] === 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(result.backgroundColor[0])))) {
+                    result.backgroundColor = null;
+                }
+                else {
+                    result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addResourceColor(result.backgroundColor[1]) : null);
+                }
+                (<any> element).__boxStyle = result;
             }
-            const style = getStyle(element);
-            for (const i in result) {
-                result[i] = result[i](style[i]);
-            }
-            result.border[2] = Resource.addResourceColor(result.border[2], false);
-            if (backgroundParent[0] === result.backgroundColor[0] || result.backgroundColor[4] === 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(result.backgroundColor[0])))) {
-                result.backgroundColor = null;
-            }
-            else {
-                result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addResourceColor(result.backgroundColor[1]) : null);
-            }
-            (<any> element).__boxStyle = result;
-        }
+        });
     }
 
     public setFontStyle() {
-        for (const node of this.cache.elements) {
-            if ((node.visible || node.labelFor != null) && node.renderChildren.length === 0) {
+        this.cache.elements.forEach((node: T) => {
+            if ((node.visible || node.companion) && node.renderChildren.length === 0) {
                 const element = <HTMLElement> node.element;
                 const style = getStyle(element);
                 const color = parseRGBA(style.color);
@@ -179,24 +188,24 @@ export default class Resource<T extends Node> {
                 };
                 (<any> element).__fontStyle = result;
             }
-        }
+        });
     }
 
     public setImageSource() {
-        for (const node of this.cache.filter((item: T) => item.tagName === 'IMG')) {
+        this.cache.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
             const element = <HTMLImageElement> node.element;
             const result = Resource.addResourceImage(element.src);
             (<any> element).__imageSource = result;
-        }
+        });
     }
 
     public setOptionArray() {
-        for (const node of this.cache.filter((item: T) => item.tagName === 'SELECT')) {
+        this.cache.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
             const element = <HTMLSelectElement> node.element;
             const stringArray: string[] = [];
             let numberArray: string[] | null = [];
             for (let i = 0; i < element.children.length; i++) {
-                const item = <HTMLOptionElement> element.children[i];
+                const item = element.children[i] as HTMLOptionElement;
                 const value = item.text.trim();
                 if (value !== '') {
                     if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
@@ -216,11 +225,11 @@ export default class Resource<T extends Node> {
                 }
             }
             (<any> element).__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
-        }
+        });
     }
 
     public setValueString() {
-        for (const node of this.cache.elements) {
+        this.cache.elements.forEach((node: T) => {
             const element = <HTMLElement> node.element;
             let name = '';
             let value = '';
@@ -238,7 +247,7 @@ export default class Resource<T extends Node> {
                 Resource.addResourceString(value, name);
                 (<any> element).__valueString = value;
             }
-        }
+        });
     }
 
     private parseBorderStyle(value: string) {

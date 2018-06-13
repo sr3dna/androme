@@ -1,21 +1,36 @@
 import Element from './element';
 import Resource from './resource';
+import Node from './node';
 import NodeList from './nodelist';
-import Widget from '../android/widget';
-import { BLOCK_CHROME, BOX_STANDARD, INLINE_CHROME, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
+import { BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import { hasValue, sortAsc } from '../lib/util';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
 
-export default class Application<T extends Widget, U extends NodeList<T>> {
+export default class Application<T extends Node, U extends NodeList<T>> {
+    private cache: U;
+
     constructor(
-        public cache: U,
-        public viewHandler: Element<T, U>,
-        public resource: Resource<T>,
-        public NODE: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
-        public NODELIST: { new (nodes?: U, parent?: T): U })
+        private typeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
+        private typeU: { new (nodes?: U, parent?: T): U },
+        private viewHandler: Element<T, U>,
+        private resource: Resource<T>)
     {
-        this.viewHandler.cache = cache;
+        this.cache =  new this.typeU();
+        this.viewHandler.cache = this.cache;
+        this.resource.cache = this.cache;
+    }
+
+    public setConstraints() {
+        this.viewHandler.setConstraints();
+    }
+
+    public setMarginPadding() {
+        this.viewHandler.setMarginPadding();
+    }
+
+    public replaceBeforeAfter(output: string) {
+        return this.viewHandler.replaceBeforeAfter(output);
     }
 
     public setNodeCache(documentRoot: HTMLElement) {
@@ -36,7 +51,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         if (documentRoot != null) {
             const node = this.insertNode(documentRoot);
             if (node != null) {
-                node.parent = new this.NODE(0, 0);
+                node.parent = new this.typeT(0, 0);
             }
         }
         for (const element of <HTMLElement[]> Array.from(elements)) {
@@ -46,38 +61,41 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
             this.insertNode(element);
         }
         const preAlignment = {};
-        for (const node of this.cache) {
-            preAlignment[node.id] = {};
-            const style = preAlignment[node.id];
-            switch (node.style.textAlign) {
-                case 'center':
-                case 'right':
-                case 'end':
-                    style.textAlign = node.style.textAlign;
-                    node.element.style.textAlign = '';
-                    break;
-            }
-            style.verticalAlign = node.styleMap.verticalAlign || '';
-            node.element.style.verticalAlign = 'top';
-            if (node.overflow !== OVERFLOW_CHROME.NONE) {
-                if (hasValue(node.styleMap.width)) {
-                    style.width = node.styleMap.width;
-                    node.element.style.width = '';
+        this.cache.forEach((node: T) => {
+            const element = node.element;
+            if (element != null) {
+                preAlignment[node.id] = {};
+                const style = preAlignment[node.id];
+                switch (node.style.textAlign) {
+                    case 'center':
+                    case 'right':
+                    case 'end':
+                        style.textAlign = node.style.textAlign;
+                        element.style.textAlign = '';
+                        break;
                 }
-                if (hasValue(node.styleMap.height)) {
-                    style.height = node.styleMap.height;
-                    node.element.style.height = '';
+                style.verticalAlign = node.styleMap.verticalAlign || '';
+                element.style.verticalAlign = 'top';
+                if (node.overflow !== OVERFLOW_CHROME.NONE) {
+                    if (hasValue(node.styleMap.width)) {
+                        style.width = node.styleMap.width;
+                        element.style.width = '';
+                    }
+                    if (hasValue(node.styleMap.height)) {
+                        style.height = node.styleMap.height;
+                        element.style.height = '';
+                    }
+                    style.overflow = node.style.overflow;
+                    element.style.overflow = 'visible';
                 }
-                style.overflow = node.style.overflow;
-                node.element.style.overflow = 'visible';
             }
             node.setBounds();
-        }
+        });
         const parents = {};
-        for (const parent of this.cache) {
-            for (const child of this.cache) {
+        this.cache.forEach((parent: T) => {
+            this.cache.forEach((child: T) => {
                 if (parent !== child) {
-                    if (child.element.parentElement === parent.element) {
+                    if (child.element && child.element.parentElement === parent.element) {
                         child.parent = parent;
                         parent.children.push(child);
                     }
@@ -88,15 +106,15 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                         parents[child.id].push(parent);
                     }
                 }
-            }
-        }
-        for (const node of this.cache) {
+            });
+        });
+        this.cache.forEach((node: T) => {
             const nodes: T[] = parents[node.id];
             if (nodes != null) {
-                nodes.push(node.parent);
+                nodes.push(node.parent as T);
                 let minArea = Number.MAX_VALUE;
                 let closest: T | null = null;
-                for (const current of nodes) {
+                nodes.forEach((current: T) => {
                     const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
                     if (area < minArea) {
                         closest = current;
@@ -107,102 +125,52 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                             closest = current;
                         }
                     }
-                }
+                });
                 if (closest != null) {
                     node.parent = closest;
                 }
             }
-            if (node.element.children && node.element.children.length > 1) {
+            if (node.element && node.element.children && node.element.children.length > 1) {
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                     if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
                         this.insertNode(element, node);
                     }
                 });
             }
-        }
-        for (const node of this.cache) {
-            const style = preAlignment[node.id];
-            if (style != null) {
-                for (const attr in style) {
-                    node.element.style[attr] = style[attr];
+        });
+        this.cache.forEach((node: T) => {
+            if (node.element != null) {
+                const style = preAlignment[node.id];
+                if (style != null) {
+                    for (const attr in style) {
+                        node.element.style[attr] = style[attr];
+                    }
                 }
             }
-        }
+        });
         sortAsc(this.cache, 'depth', 'parent.id', 'parentIndex', 'id');
-        for (const node of this.cache) {
-            let i = 0;
-            Array.from(node.element.childNodes).forEach((element: any) => {
-                if (element.__node != null && (element.__node.parent.element === node.element)) {
-                    element.__node.parentIndex = i++;
-                }
-            });
-            sortAsc(node.children, 'parentIndex');
-        }
-    }
-
-    public setMarginPadding() {
-        for (const node of this.cache) {
-            if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
-                switch (node.android('orientation')) {
-                    case 'horizontal':
-                        let left = node.box.left;
-                        sortAsc(node.renderChildren, 'linear.left').forEach((item: T) => {
-                            if (!item.floating) {
-                                const width = Math.ceil(item.linear.left - left);
-                                if (width >= 1) {
-                                    item.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
-                                }
-                            }
-                            left = (item.label || item).linear.right;
-                        });
-                        break;
-                    case 'vertical':
-                        let top = node.box.top;
-                        sortAsc(node.renderChildren, 'linear.top').forEach((item: T) => {
-                            const height = Math.ceil(item.linear.top - top);
-                            if (height >= 1) {
-                                item.modifyBox(BOX_STANDARD.MARGIN_TOP, height);
-                            }
-                            top = item.linear.bottom;
-                        });
-                        break;
-                }
+        this.cache.forEach((node: T) => {
+            if (node.element != null) {
+                let i = 0;
+                Array.from(node.element.childNodes).forEach((element: any) => {
+                    if (element.__node != null && (element.__node.parent.element === node.element)) {
+                        element.__node.parentIndex = i++;
+                    }
+                });
+                sortAsc(node.children, 'parentIndex');
             }
-        }
+        });
     }
 
     public setLayoutWeight() {
-        for (const node of this.cache) {
-            const rows = node.linearRows;
-            if (rows.length > 1) {
-                const columnLength = rows[0].renderChildren.length;
-                if (rows.every((item: T) => item.renderChildren.length === columnLength)) {
-                    const horizontal = !node.horizontal;
-                    const columnDimension = new Array(columnLength).fill(-1);
-                    for (const row of rows) {
-                        for (let i = 0; i < row.renderChildren.length; i++) {
-                            columnDimension[i] = Math.max(row.renderChildren[i].linear[(horizontal ? 'width' : 'height')], columnDimension[i]);
-                        }
-                    }
-                    const total = columnDimension.reduce((a, b) => a + b);
-                    const percent = columnDimension.map(value => Math.floor((value * 100) / total));
-                    percent[percent.length - 1] += 100 - percent.reduce((a, b) => a + b);
-                    for (const row of rows) {
-                        for (let i = 0; i < row.renderChildren.length; i++) {
-                            const column = row.renderChildren[i];
-                            column.distributeWeight(horizontal, percent[i]);
-                        }
-                    }
-                }
-            }
-        }
+        this.viewHandler.setLayoutWeight();
     }
 
     public insertNode(element: HTMLElement, parent?: T) {
         let node: T | null = null;
         if (element.nodeName === '#text') {
             if (element.textContent && element.textContent.trim() !== '') {
-                node = new this.NODE(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
+                node = new this.typeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
                 node.setBounds(false, element);
                 if (parent != null) {
                     node.inheritStyle(parent);
@@ -211,7 +179,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
             }
         }
         else if (isVisible(element)) {
-            node = new this.NODE(this.cache.nextId, SETTINGS.targetAPI, element);
+            node = new this.typeT(this.cache.nextId, SETTINGS.targetAPI, element);
         }
         if (node != null) {
             this.cache.push(node);
@@ -223,8 +191,8 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
         const mapX: Array<{}> = [];
         const mapY: Array<{}> = [];
-        for (const node of this.cache) {
-            const x = Math.floor(node.bounds.x);
+        this.cache.forEach((node: T) => {
+            const x = Math.floor(node.bounds.x as number);
             const y = node.parent.id;
             if (mapX[node.depth] == null) {
                 mapX[node.depth] = {};
@@ -233,14 +201,14 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                 mapY[node.depth] = {};
             }
             if (mapX[node.depth][x] == null) {
-                mapX[node.depth][x] = new this.NODELIST();
+                mapX[node.depth][x] = new this.typeU();
             }
             if (mapY[node.depth][y] == null) {
-                mapY[node.depth][y] = new this.NODELIST();
+                mapY[node.depth][y] = new this.typeU();
             }
             mapX[node.depth][x].push(node);
             mapY[node.depth][y].push(node);
-        }
+        });
         for (let i = 0; i < mapY.length; i++) {
             const coordsY = Object.keys(mapY[i]);
             const partial = new Map();
@@ -274,7 +242,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                         let xml = '';
                         if (tagName == null) {
                             if ((nodeY.children.length === 0 && nodeY.element && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: T) => INLINE_CHROME.includes(item.tagName))) {
-                                tagName = NODE_STANDARD.TEXT;
+                                tagName = this.viewHandler.getNodeName(NODE_STANDARD.TEXT);
                             }
                             else if (nodeY.children.length > 0) {
                                 const rows = nodeY.children;
@@ -491,7 +459,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                                     }
                                 }
                                 if (!nodeY.renderParent) {
-                                    const children = new this.NODELIST(<U> nodeY.children);
+                                    const children = new this.typeU(<U> nodeY.children);
                                     const [linearX, linearY] = [children.linearX, children.linearY];
                                     if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += this.writeFrameLayout(nodeY, parent);
@@ -512,7 +480,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
                             if (parent.is(NODE_STANDARD.GRID)) {
                                 let siblings: U;
                                 if (SETTINGS.useLayoutWeight) {
-                                    siblings = new this.NODELIST(nodeY.gridSiblings as U);
+                                    siblings = new this.typeU(nodeY.gridSiblings as U);
                                 }
                                 else {
                                     const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
@@ -565,9 +533,7 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
 
     public replaceInlineAttributes(output: string) {
         const options = {};
-        for (const node of this.cache.visible) {
-            output = this.viewHandler.replaceInlineAttributes(output, node, options);
-        }
+        this.cache.visible.forEach((node: T) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
         return output.replace('{@0}', this.viewHandler.getRootAttributes(options));
     }
 
@@ -591,6 +557,10 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.CONSTRAINT);
     }
 
+    private writeViewTag(node: T, parent: T, nodeName: number | string) {
+        return this.viewHandler.renderTag(node, parent, nodeName);
+    }
+
     private writeDefaultLayout(node: T, parent: T) {
         if (SETTINGS.useConstraintLayout || node.flex.enabled) {
             return this.writeConstraintLayout(node, parent);
@@ -598,9 +568,5 @@ export default class Application<T extends Widget, U extends NodeList<T>> {
         else {
             return this.writeRelativeLayout(node, parent);
         }
-    }
-
-    private writeViewTag(node: T, parent: T, tagName: number) {
-        return this.viewHandler.renderTag(node, parent, tagName);
     }
 }
