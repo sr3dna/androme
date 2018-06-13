@@ -39,9 +39,9 @@ function setAlignParent(node: Widget, orientation = '', bias = false) {
     const map = LAYOUT_MAP.constraint;
     ['horizontal', 'vertical'].forEach((value, index) => {
         if (orientation === '' || value === orientation) {
-            node.app(map[(index === 0 ? 'left' : 'top')], 'parent')
-                .app(map[(index === 0 ? 'right' : 'bottom')], 'parent')
-                .constraint[value] = true;
+            node.app(map[(index === 0 ? 'left' : 'top')], 'parent');
+            node.app(map[(index === 0 ? 'right' : 'bottom')], 'parent');
+            node.constraint[value] = true;
             if (bias) {
                 node.app(`layout_constraint${value.charAt(0).toUpperCase() + value.substring(1)}_bias`, node[`${value}Bias`]);
             }
@@ -67,9 +67,9 @@ function createGuideline(parent: Widget, node: Widget, orientation = '', opposit
             const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
             const [xml, id] = viewHandler.getStaticTag(NODE_STANDARD.GUIDELINE, node.renderDepth, options);
             viewHandler.after(node.id, xml, -1);
-            node.app(map[LRTB], id)
-                .delete('app', map[RLBT])
-                .constraint[value] = true;
+            node.app(map[LRTB], id);
+            node.delete('app', map[RLBT]);
+            node.constraint[value] = true;
         }
     });
 }
@@ -77,12 +77,12 @@ function createGuideline(parent: Widget, node: Widget, orientation = '', opposit
 function deleteConstraints(node: Widget, orientation = '') {
     const map = LAYOUT_MAP.constraint;
     if (orientation === '' || orientation === 'horizontal') {
-        node.delete('app', map['leftRight'], map['rightLeft'])
-            .constraint.horizontal = false;
+        node.delete('app', map['leftRight'], map['rightLeft']);
+        node.constraint.horizontal = false;
     }
     if (orientation === '' || orientation === 'vertical') {
-        node.delete('app', map['bottomTop'], map['topBottom'], map['baseline'])
-            .constraint.vertical = false;
+        node.delete('app', map['bottomTop'], map['topBottom'], map['baseline']);
+        node.constraint.vertical = false;
     }
 }
 
@@ -409,19 +409,16 @@ export function setConstraints() {
                                     }
                                     switch (chain.flex.alignSelf) {
                                         case 'flex-start':
-                                            chain
-                                                .app(map[TL], 'parent')
-                                                .constraint[orientationInverse] = true;
+                                            chain.app(map[TL], 'parent');
+                                            chain.constraint[orientationInverse] = true;
                                             break;
                                         case 'flex-end':
-                                            chain
-                                                .app(map[BR], 'parent')
-                                                .constraint[orientationInverse] = true;
+                                            chain.app(map[BR], 'parent');
+                                            chain.constraint[orientationInverse] = true;
                                             break;
                                         case 'baseline':
-                                            chain
-                                                .app(map['baseline'], 'parent')
-                                                .constraint.vertical = true;
+                                            chain.app(map['baseline'], 'parent');
+                                            chain.constraint.vertical = true;
                                             break;
                                         case 'center':
                                         case 'stretch':
@@ -448,12 +445,10 @@ export function setConstraints() {
                                     }
                                 }
                             }
-                            firstNode
-                                .app(LAYOUT[LT], 'parent')
-                                .constraint[orientation] = true;
-                            lastNode
-                                .app(LAYOUT[RB], 'parent')
-                                .constraint[orientation] = true;
+                            firstNode.app(LAYOUT[LT], 'parent');
+                            firstNode.constraint[orientation] = true;
+                            lastNode.app(LAYOUT[RB], 'parent');
+                            lastNode.constraint[orientation] = true;
                             const chainStyle = `layout_constraint${HV}_chainStyle`;
                             if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainDirection.map((item: Widget) => item.flex.grow)) === 0) {
                                 switch (flex.justifyContent) {
@@ -617,10 +612,9 @@ export function setConstraints() {
                                 else {
                                     degrees = (center1.x > center2.x ? 90 : 270);
                                 }
-                                opposite
-                                    .app('layout_constraintCircle', adjacent.stringId)
-                                    .app('layout_constraintCircleRadius', formatPX(radius))
-                                    .app('layout_constraintCircleAngle', degrees);
+                                opposite.app('layout_constraintCircle', adjacent.stringId);
+                                opposite.app('layout_constraintCircleRadius', formatPX(radius));
+                                opposite.app('layout_constraintCircleAngle', degrees);
                                 opposite.constraint.vertical = true;
                                 opposite.constraint.horizontal = true;
                             }
@@ -644,17 +638,15 @@ export function setConstraints() {
                             current.delete('android', LAYOUT);
                             if (current.android(parentLeft) !== 'true') {
                                 const left = formatPX(current.bounds.left - node.box.left);
-                                current
-                                    .css(parseRTL('marginLeft'), left)
-                                    .android(parentLeft, 'true')
-                                    .android(parseRTL('layout_marginLeft'), left);
+                                current.css(parseRTL('marginLeft'), left);
+                                current.android(parentLeft, 'true');
+                                current.android(parseRTL('layout_marginLeft'), left);
                             }
                             if (parentBottom !== 'true') {
                                 const top = formatPX(current.bounds.top - node.box.top);
-                                current
-                                    .css('marginTop', top)
-                                    .android('layout_alignParentTop', 'true')
-                                    .android('layout_marginTop', top);
+                                current.css('marginTop', top);
+                                current.android('layout_alignParentTop', 'true');
+                                current.android('layout_marginTop', top);
                             }
                             current.constraint.vertical = true;
                             current.constraint.horizontal = true;

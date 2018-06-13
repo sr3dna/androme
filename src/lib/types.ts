@@ -1,3 +1,7 @@
+export interface IStringMap {
+    [key: string]: string;
+}
+
 export interface IBoxModel {
     marginTop?: number;
     marginRight?: number;
@@ -14,14 +18,14 @@ export interface IBoxModel {
 }
 
 export interface IClientRect {
-    x?: number;
-    y?: number;
     top: number;
     right: number;
     bottom: number;
     left: number;
     width: number;
     height: number;
+    x?: number;
+    y?: number;
     minWidth?: string;
     minHeight?: string;
 }

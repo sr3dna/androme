@@ -1,3 +1,4 @@
+import { IStringMap } from '../lib/types';
 import Node from '../base/node';
 import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -19,8 +20,8 @@ export default class Widget extends Node {
     public androidId: string;
     public androidWidgetName: string;
 
-    private _android: any;
-    private _app: any;
+    private _android: IStringMap;
+    private _app: IStringMap;
     private _label: Widget;
 
     constructor(
@@ -47,7 +48,6 @@ export default class Widget extends Node {
                 return this._android && this._android[attr];
             default:
                 this.add('android', attr, value, overwrite);
-                return this;
         }
     }
 
@@ -59,7 +59,6 @@ export default class Widget extends Node {
                 return this._app && this._app[attr];
             default:
                 this.add('app', attr, value, overwrite);
-                return this;
         }
     }
 
@@ -68,7 +67,6 @@ export default class Widget extends Node {
         if (match != null) {
             this.add(match[1] || '_', match[2], match[3], overwrite);
         }
-        return this;
     }
 
     public render(parent: Widget) {
@@ -81,10 +79,9 @@ export default class Widget extends Node {
             }
         }
         super.render(parent);
-        return this;
     }
 
-    public anchor(position: string, adjacent: any = {}, orientation = '') {
+    public anchor(position: string, adjacent: IStringMap = {}, orientation = '') {
         const overwrite = (adjacent.stringId === 'parent');
         switch (this.renderParent.nodeName) {
             case NODE_ANDROID.CONSTRAINT:
@@ -103,7 +100,6 @@ export default class Widget extends Node {
         if (orientation !== '') {
             this.constraint[orientation] = true;
         }
-        return this;
     }
 
     public modifyBox(area: number, offset: number) {
@@ -111,12 +107,11 @@ export default class Widget extends Node {
             if ((area & BOX_STANDARD[key]) === BOX_STANDARD[key]) {
                 const dimension = parseRTL(BOX_ANDROID[key]);
                 const total = formatPX(offset + convertInt(this.android(dimension)));
-                this.css(dimension, total)
-                    .android(dimension, total);
+                this.css(dimension, total);
+                this.android(dimension, total);
             }
         }
         this.setBounds(true);
-        return this;
     }
 
     public supported(obj: string, attr: string) {
@@ -206,8 +201,8 @@ export default class Widget extends Node {
         const parentWidth = (parent.element != null ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
         const parentHeight = (parent.element != null ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
         if (this.overflow !== OVERFLOW_CHROME.NONE && !this.is(NODE_STANDARD.TEXT)) {
-            this.android('layout_width', (this.horizontal ? 'wrap_content' : 'match_parent'))
-                .android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
+            this.android('layout_width', (this.horizontal ? 'wrap_content' : 'match_parent'));
+            this.android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
         }
         else {
             if (this.android('layout_width') !== '0px') {
@@ -215,8 +210,8 @@ export default class Widget extends Node {
                     this.android('layout_width', convertPX(styleMap.width));
                 }
                 if (hasValue(styleMap.minWidth)) {
-                    this.android('layout_width', 'wrap_content', false)
-                        .android('minWidth', convertPX(styleMap.minWidth), false);
+                    this.android('layout_width', 'wrap_content', false);
+                    this.android('minWidth', convertPX(styleMap.minWidth), false);
                 }
                 if (hasValue(styleMap.maxWidth)) {
                     this.android('maxWidth', convertPX(styleMap.maxWidth), false);
@@ -261,8 +256,8 @@ export default class Widget extends Node {
                     this.android('layout_height', convertPX(styleMap.height || styleMap.lineHeight));
                 }
                 if (hasValue(styleMap.minHeight)) {
-                    this.android('layout_height', 'wrap_content', false)
-                        .android('minHeight', convertPX(styleMap.minHeight), false);
+                    this.android('layout_height', 'wrap_content', false);
+                    this.android('minHeight', convertPX(styleMap.minHeight), false);
                 }
                 if (hasValue(styleMap.maxHeight)) {
                     this.android('maxHeight', convertPX(styleMap.maxHeight), false);
@@ -290,17 +285,17 @@ export default class Widget extends Node {
                 const bottom = convertInt(this.android(`${value}Bottom`));
                 const left = convertInt(this.android(leftRtl));
                 if (top !== 0 && top === bottom && bottom === left && left === right) {
-                    this.delete('android', `${value}*`)
-                        .android(value, formatPX(top));
+                    this.delete('android', `${value}*`);
+                    this.android(value, formatPX(top));
                 }
                 else {
                     if (top !== 0 && top === bottom) {
-                        this.delete('android', `${value}Top`, `${value}Bottom`)
-                            .android(`${value}Vertical`, formatPX(top));
+                        this.delete('android', `${value}Top`, `${value}Bottom`);
+                        this.android(`${value}Vertical`, formatPX(top));
                     }
                     if (left !== 0 && left === right) {
-                        this.delete('android', leftRtl, rightRtl)
-                            .android(`${value}Horizontal`, formatPX(left));
+                        this.delete('android', leftRtl, rightRtl);
+                        this.android(`${value}Horizontal`, formatPX(left));
                     }
                 }
             });
@@ -385,8 +380,8 @@ export default class Widget extends Node {
     }
 
     public distributeWeight(horizontal: boolean, percent: number) {
-        this.android(`layout_${(horizontal ? 'width' : 'height')}`, '0px')
-            .android('layout_weight', (percent / 100).toFixed(2));
+        this.android(`layout_${(horizontal ? 'width' : 'height')}`, '0px');
+        this.android('layout_weight', (percent / 100).toFixed(2));
     }
 
     public setAccessibility() {
@@ -396,9 +391,9 @@ export default class Widget extends Node {
         if (element.tagName === 'INPUT' && nextElement && nextElement.htmlFor === element.id) {
             const node = (<any> nextElement).__node;
             node.setAndroidId(NODE_ANDROID.TEXT);
-            this.css('marginRight', node.style.marginRight)
-                .css('paddingRight', node.style.paddingRight)
-                .label = node;
+            this.css('marginRight', node.style.marginRight);
+            this.css('paddingRight', node.style.paddingRight);
+            this.label = node;
             node.hide()
                 .labelFor = this;
             labeled = true;

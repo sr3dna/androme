@@ -1,12 +1,12 @@
-import { IClientRect, IBoxModel, IPoint } from '../lib/types';
+import { IClientRect, IBoxModel, IPoint, IStringMap } from '../lib/types';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
 
 export default abstract class Node implements IBoxModel {
     public depth: number = -1;
-    public style: any = {};
-    public styleMap: any = {};
+    public style: IStringMap = {};
+    public styleMap: IStringMap = {};
     public visible: boolean = true;
     public parentIndex: number = Number.MAX_VALUE;
     public bounds: IClientRect;
@@ -31,7 +31,7 @@ export default abstract class Node implements IBoxModel {
     private _overflow: OVERFLOW_CHROME;
     private _parent: Node;
     private _parentOriginal: Node;
-    private _renderParent: any;
+    private _renderParent: Node | boolean;
     private _tagName: string;
 
     constructor(
@@ -93,7 +93,6 @@ export default abstract class Node implements IBoxModel {
                 }
             }
         }
-        return this;
     }
 
     public apply(options: {}) {
@@ -105,19 +104,16 @@ export default abstract class Node implements IBoxModel {
                 }
             }
         }
-        return this;
     }
 
     public render(parent: Node) {
         this.renderParent = parent;
         this.renderDepth = (parent.id === 0 ? 0 : parent.renderDepth + 1);
-        return this;
     }
 
     public hide() {
         this.renderParent = true;
         this.visible = false;
-        return this;
     }
 
     public ascend() {
@@ -173,7 +169,6 @@ export default abstract class Node implements IBoxModel {
     public css(attr: string, value = '') {
         if (arguments.length === 2) {
             this.styleMap[attr] = (hasValue(value) ? value : null);
-            return this;
         }
         else {
             return this.styleMap[attr] || this.style[attr];

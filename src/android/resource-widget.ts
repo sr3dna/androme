@@ -1,3 +1,4 @@
+import { IStringMap } from '../lib/types';
 import Resource from '../base/resource';
 import Widget from './widget';
 import WidgetList from './widgetlist';
@@ -135,7 +136,7 @@ export class ResourceWidget extends Resource<Widget> {
             if (element.__boxStyle != null) {
                 const stored = Object.assign({}, element.__boxStyle);
                 const method = METHOD_ANDROID['boxStyle'];
-                const borderStyle: any = {
+                const borderStyle: IStringMap = {
                     black: 'android:color="@android:color/black"',
                     solid: `android:color="@color/${stored.border[2]}"`
                 };

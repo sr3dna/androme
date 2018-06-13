@@ -45,16 +45,14 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                     this.cache.push(widget);
                     switch (nodeName) {
                         case NODE_ANDROID.SCROLL_HORIZONTAL:
-                            layout
-                                .css('width', node.styleMap.width)
-                                .css('minWidth', node.styleMap.minWidth)
-                                .css('overflowX', node.styleMap.overflowX);
+                            layout.css('width', node.styleMap.width);
+                            layout.css('minWidth', node.styleMap.minWidth);
+                            layout.css('overflowX', node.styleMap.overflowX);
                             break;
                         default:
-                            layout
-                                .css('height', node.styleMap.height)
-                                .css('minHeight', node.styleMap.minHeight)
-                                .css('overflowY', node.styleMap.overflowY);
+                            layout.css('height', node.styleMap.height);
+                            layout.css('minHeight', node.styleMap.minHeight);
+                            layout.css('overflowY', node.styleMap.overflowY);
                     }
                     const indent = padLeft(scrollDepth--);
                     preXml = indent + `<${nodeName}{@${layout.id}}>\n` + preXml;
@@ -102,9 +100,9 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 if (element.maxLength > 0) {
                     node.android('maxLength', element.maxLength.toString());
                 }
-                node.android('hint', element.placeholder)
-                    .android('scrollbars', 'vertical')
-                    .android('inputType', 'textMultiLine');
+                node.android('hint', element.placeholder);
+                node.android('scrollbars', 'vertical');
+                node.android('inputType', 'textMultiLine');
                 if (node.overflowX) {
                     node.android('scrollHorizontally', 'true');
                 }
@@ -154,9 +152,8 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                             radio.render(layout);
                             xml += this.renderTag(radio, widget, NODE_STANDARD.RADIO, true);
                         }
-                        layout
-                            .android('orientation', (<U> layout.children).linearX ? 'horizontal' : 'vertical')
-                            .android('checkedButton', checked.stringId);
+                        layout.android('orientation', (<U> layout.children).linearX ? 'horizontal' : 'vertical');
+                        layout.android('checkedButton', checked.stringId);
                         layout.setBounds();
                         this.setGridSpace(widget);
                         return this.getEnclosingTag(layout.renderDepth, NODE_ANDROID.RADIO_GROUP, layout.id, xml);
@@ -191,10 +188,10 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         node.setAndroidId(Widget.getTagName(tagName));
         let attributes = '';
         if (SETTINGS.showAttributes) {
-            node.apply(options)
-                .android('id', node.stringId)
-                .android('layout_width', width)
-                .android('layout_height', height);
+            node.apply(options);
+            node.android('id', node.stringId);
+            node.android('layout_width', width);
+            node.android('layout_height', height);
             const indent = padLeft(depth + 1);
             attributes = node.combine().map(value => `\n${indent + value}`).join('');
         }
@@ -245,8 +242,8 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 let marginLeft: any = dimensions.marginLeft + dimensions.paddingLeft;
                 if (marginLeft > 0) {
                     marginLeft = convertPX(marginLeft + node.marginLeft);
-                    node.css('marginLeft', marginLeft)
-                        .android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
+                    node.css('marginLeft', marginLeft);
+                    node.android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
                 }
             }
             if (node.gridRowEnd) {
@@ -257,8 +254,8 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 }
                 if (marginRight > 0) {
                     marginRight = convertPX(marginRight + node.marginRight);
-                    node.css('marginRight', marginRight)
-                        .android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
+                    node.css('marginRight', marginRight);
+                    node.android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
                 }
             }
         }

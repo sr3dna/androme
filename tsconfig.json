@@ -5,10 +5,10 @@
     "outDir": "./build",
     "moduleResolution": "node",
     "inlineSourceMap": true,
-    "lib": ["es6", "es2016", "dom"],
-    "noImplicitAny": true,
-    "downlevelIteration": true,
-    "suppressImplicitAnyIndexErrors": true
+    "lib": ["es2015", "es2016", "dom"],
+    "noImplicitAny": false,
+    "suppressImplicitAnyIndexErrors": false,
+    "downlevelIteration": true
   },
   "include": [
     "src/**/*"
