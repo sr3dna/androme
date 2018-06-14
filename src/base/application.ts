@@ -11,12 +11,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     private cache: U;
 
     constructor(
-        private typeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
-        private typeU: { new (nodes?: U, parent?: T): U },
+        private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
+        private TypeU: { new (nodes?: U, parent?: T): U },
         private viewHandler: Element<T, U>,
         private resource: Resource<T>)
     {
-        this.cache =  new this.typeU();
+        this.cache = new this.TypeU();
         this.viewHandler.cache = this.cache;
         this.resource.cache = this.cache;
     }
@@ -29,15 +29,28 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.viewHandler.setMarginPadding();
     }
 
+    public setLayoutWeight() {
+        this.viewHandler.setLayoutWeight();
+    }
+
     public replaceBeforeAfter(output: string) {
         return this.viewHandler.replaceBeforeAfter(output);
+    }
+
+    public setResources() {
+        this.resource.setBoxSpacing();
+        this.resource.setBoxStyle();
+        this.resource.setFontStyle();
+        this.resource.setValueString();
+        this.resource.setOptionArray();
+        this.resource.setImageSource();
     }
 
     public setNodeCache(documentRoot: HTMLElement) {
         let nodeTotal = 0;
         Array.from((documentRoot || document.body).childNodes).forEach((item: HTMLElement) => {
             if (item.nodeName === '#text') {
-                if (item.textContent != null && item.textContent.trim() !== '') {
+                if (item.textContent && item.textContent.trim() !== '') {
                     nodeTotal++;
                 }
             }
@@ -51,7 +64,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         if (documentRoot != null) {
             const node = this.insertNode(documentRoot);
             if (node != null) {
-                node.parent = new this.typeT(0, 0);
+                node.parent = new this.TypeT(0, 0);
             }
         }
         for (const element of <HTMLElement[]> Array.from(elements)) {
@@ -162,15 +175,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         });
     }
 
-    public setLayoutWeight() {
-        this.viewHandler.setLayoutWeight();
-    }
-
     public insertNode(element: HTMLElement, parent?: T) {
         let node: T | null = null;
         if (element.nodeName === '#text') {
             if (element.textContent && element.textContent.trim() !== '') {
-                node = new this.typeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
+                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
                 node.setBounds(false, element);
                 if (parent != null) {
                     node.inheritStyle(parent);
@@ -179,7 +188,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         else if (isVisible(element)) {
-            node = new this.typeT(this.cache.nextId, SETTINGS.targetAPI, element);
+            node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
         }
         if (node != null) {
             this.cache.push(node);
@@ -201,10 +210,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 mapY[node.depth] = {};
             }
             if (mapX[node.depth][x] == null) {
-                mapX[node.depth][x] = new this.typeU();
+                mapX[node.depth][x] = new this.TypeU();
             }
             if (mapY[node.depth][y] == null) {
-                mapY[node.depth][y] = new this.typeU();
+                mapY[node.depth][y] = new this.TypeU();
             }
             mapX[node.depth][x].push(node);
             mapY[node.depth][y].push(node);
@@ -459,7 +468,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                 }
                                 if (!nodeY.renderParent) {
-                                    const children = new this.typeU(<U> nodeY.children);
+                                    const children = new this.TypeU(nodeY.children as U);
                                     const [linearX, linearY] = [children.linearX, children.linearY];
                                     if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += this.writeFrameLayout(nodeY, parent);
@@ -480,7 +489,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             if (parent.is(NODE_STANDARD.GRID)) {
                                 let siblings: U;
                                 if (SETTINGS.useLayoutWeight) {
-                                    siblings = new this.typeU(nodeY.gridSiblings as U);
+                                    siblings = new this.TypeU(nodeY.gridSiblings as U);
                                 }
                                 else {
                                     const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
@@ -520,15 +529,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         return output;
-    }
-
-    public setResources() {
-        this.resource.setBoxSpacing();
-        this.resource.setBoxStyle();
-        this.resource.setFontStyle();
-        this.resource.setValueString();
-        this.resource.setOptionArray();
-        this.resource.setImageSource();
     }
 
     public replaceInlineAttributes(output: string) {

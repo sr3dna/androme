@@ -146,7 +146,7 @@ export class ResourceWidget extends Resource<T> {
                     let template: {};
                     let data: {};
                     let resourceName = '';
-                    if (stored.backgroundColor == null && stored.backgroundImage == null && stored.borderRadius.length === 0) {
+                    if (stored.backgroundColor === '' && stored.backgroundImage === '' && stored.borderRadius.length === 0) {
                         template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
                         data = {
                             '0': [{
@@ -161,11 +161,11 @@ export class ResourceWidget extends Resource<T> {
                             '0': [{
                                 '1': [{
                                     '2': [{ width: stored.border[1], borderStyle: borderStyle.default }],
-                                    '3': (stored.backgroundColor != null ? [{ color: `@color/${stored.backgroundColor[0]}` }] : false),
+                                    '3': (stored.backgroundColor !== '' ? [{ color: `@color/${stored.backgroundColor[0]}` }] : false),
                                     '4': (stored.borderRadius.length === 1 ? [{ radius: stored.borderRadius[0] }] : false),
                                     '5': (stored.borderRadius.length > 1 ? [{ topLeftRadius: '' }] : false)
                                 }],
-                                '6': (stored.backgroundImage != null ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
+                                '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
                             }]
                         };
                         const rootItem = getDataLevel(data, '0');
@@ -193,7 +193,7 @@ export class ResourceWidget extends Resource<T> {
                     }
                     node.attr(formatString(method['background'], resourceName));
                 }
-                else if (stored.backgroundColor != null) {
+                else if (stored.backgroundColor !== '') {
                     node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
                 }
             }
@@ -250,7 +250,7 @@ export class ResourceWidget extends Resource<T> {
                         delete stored.fontStyle;
                         delete stored.fontWeight;
                     }
-                    if (stored.color != null) {
+                    if (stored.color !== '') {
                         if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(stored.color[1])) {
                             delete stored.color;
                         }
@@ -258,7 +258,7 @@ export class ResourceWidget extends Resource<T> {
                             stored.color = `@color/${stored.color[0]}`;
                         }
                     }
-                    if (stored.backgroundColor != null) {
+                    if (stored.backgroundColor !== '') {
                         if (labelFor != null) {
                             stored.backgroundColor = (<any> labelFor.element).__fontStyle.backgroundColor;
                         }

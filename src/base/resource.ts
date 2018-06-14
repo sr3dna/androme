@@ -13,16 +13,16 @@ export default class Resource<T extends Node> {
         IMAGES: new Map()
     };
 
-    public static addResourceString(value: string, name: string) {
-        if (!hasValue(name)) {
-            name = value;
-        }
+    public static addResourceString(value: string, name = '') {
         if (hasValue(value)) {
+            if (name === '') {
+                name = value;
+            }
             const num = isNumber(value);
             if (SETTINGS.numberResourceValue || !num) {
                 for (const [storedValue, storedName] of Resource.STORED.STRINGS.entries()) {
                     if (storedValue === value) {
-                        return storedValue;
+                        return storedValue as string;
                     }
                 }
                 name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
@@ -36,14 +36,15 @@ export default class Resource<T extends Node> {
             }
             return value;
         }
-        return null;
+        return '';
     }
 
     public static addResourceImage(value: string) {
+        let src = '';
         if (hasValue(value)) {
             const image = value.substring(value.lastIndexOf('/') + 1);
             const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
-            let src = image.replace(/.\w+$/, '');
+            src = image.replace(/.\w+$/, '');
             switch (format) {
                 case 'bmp':
                 case 'bmpf':
@@ -61,9 +62,8 @@ export default class Resource<T extends Node> {
                 default:
                     src = '';
             }
-            return src;
         }
-        return null;
+        return src;
     }
 
     public static addResourceColor(value: string, hex = true) {
@@ -72,8 +72,8 @@ export default class Resource<T extends Node> {
             let colorName = '';
             if (!Resource.STORED.COLORS.has(value)) {
                 const color = findNearestColor(value);
-                if (color != null) {
-                    color.name = cameltoLowerCase(color.name);
+                if (color !== '') {
+                    color.name = cameltoLowerCase(color.name as string);
                     if (value === color.hex) {
                         colorName = color.name;
                     }
@@ -88,7 +88,7 @@ export default class Resource<T extends Node> {
             }
             return (hex ? [colorName, value] : colorName);
         }
-        return null;
+        return '';
     }
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
@@ -161,10 +161,10 @@ export default class Resource<T extends Node> {
                 }
                 result.border[2] = Resource.addResourceColor(result.border[2], false);
                 if (backgroundParent[0] === result.backgroundColor[0] || result.backgroundColor[4] === 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(result.backgroundColor[0])))) {
-                    result.backgroundColor = null;
+                    result.backgroundColor = '';
                 }
                 else {
-                    result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addResourceColor(result.backgroundColor[1]) : null);
+                    result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addResourceColor(result.backgroundColor[1]) : '');
                 }
                 (<any> element).__boxStyle = result;
             }
@@ -174,7 +174,13 @@ export default class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.elements.forEach((node: T) => {
             if ((node.visible || node.companion) && node.renderChildren.length === 0) {
-                const element = <HTMLElement> node.element;
+                const element = node.element as HTMLElement;
+                switch (element.tagName) {
+                    case 'IMG':
+                    case 'HR':
+                    case 'AREA':
+                        return;
+                }
                 const style = getStyle(element);
                 const color = parseRGBA(style.color);
                 const backgroundColor = parseRGBA(style.backgroundColor);
@@ -183,8 +189,8 @@ export default class Resource<T extends Node> {
                     fontStyle: style.fontStyle,
                     fontSize: style.fontSize,
                     fontWeight: style.fontWeight,
-                    color: (color != null ? Resource.addResourceColor(color[1]) : null),
-                    backgroundColor: (backgroundColor != null ? Resource.addResourceColor(backgroundColor[1]) : null)
+                    color: (color !== '' ? Resource.addResourceColor(color[1]) : ''),
+                    backgroundColor: (backgroundColor !== '' ? Resource.addResourceColor(backgroundColor[1]) : '')
                 };
                 (<any> element).__fontStyle = result;
             }
@@ -217,7 +223,7 @@ export default class Resource<T extends Node> {
                             numberArray = null;
                             continue;
                         }
-                        const result = Resource.addResourceString(value, '');
+                        const result = Resource.addResourceString(value);
                         if (result != null) {
                             stringArray.push(result);
                         }
@@ -230,14 +236,14 @@ export default class Resource<T extends Node> {
 
     public setValueString() {
         this.cache.elements.forEach((node: T) => {
-            const element = <HTMLElement> node.element;
+            const element = node.element as HTMLElement;
             let name = '';
             let value = '';
             if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
                 value = (<HTMLInputElement> element).value.trim();
             }
             else if (element.nodeName === '#text') {
-                value = (element.textContent != null ? element.textContent.trim() : '');
+                value = (element.textContent ? element.textContent.trim() : '');
             }
             else if (element.children.length === 0 || Array.from(element.children).every((item: HTMLElement) => INLINE_CHROME.includes(item.tagName))) {
                 name = element.innerText.trim();
@@ -250,14 +256,14 @@ export default class Resource<T extends Node> {
         });
     }
 
-    private parseBorderStyle(value: string) {
+    private parseBorderStyle(value: string): string[] {
         const stroke = value.match(/(none|dotted|dashed|solid)/);
         const width = value.match(/([0-9.]+(?:px|pt|em))/);
         const color = parseRGBA(value);
         return [(stroke != null ? stroke[1] : 'solid'), (width != null ? convertPX(width[1]) : '1px'), (color != null ? color[1] : '#000')];
     }
 
-    private parseBoxDimensions(value: string) {
+    private parseBoxDimensions(value: string): string[] {
         const match = value.match(/^([0-9]+(?:px|pt|em))( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?$/);
         if (match != null) {
             if (match[1] === '0px' && match[2] == null) {
@@ -281,6 +287,6 @@ export default class Resource<T extends Node> {
         if (match != null) {
             return Resource.addResourceImage(match[1]);
         }
-        return null;
+        return '';
     }
 }

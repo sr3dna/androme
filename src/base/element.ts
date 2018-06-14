@@ -2,11 +2,15 @@ import Node from './node';
 import NodeList from './nodelist';
 import { hasValue, padLeft } from '../lib/util';
 
+interface IViewAppend {
+    [id: number]: string[];
+}
+
 export default abstract class Element<T extends Node, U extends NodeList<T>> {
     public abstract cache: U;
 
-    private before: {} = {};
-    private after: {} = {};
+    private before: IViewAppend = {};
+    private after: IViewAppend = {};
 
     constructor() {
     }

@@ -1,18 +1,15 @@
-import { BUILD_ANDROID } from './constants';
+import { BUILD_ANDROID as BUILD } from './constants';
 
 export default {
-    [BUILD_ANDROID.OREO]:
-    {
+    [BUILD.OREO]: {
         android: ['fontWeight'],
         customizations: {}
     },
-    [BUILD_ANDROID.JELLYBEAN_1]:
-    {
+    [BUILD.JELLYBEAN_1]: {
         android: ['labelFor'],
         customizations: {}
     },
-    [BUILD_ANDROID.LOLLIPOP]:
-    {
+    [BUILD.LOLLIPOP]: {
         android: ['layout_columnWeight'],
         customizations: {
             'Button': {

@@ -476,8 +476,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			android:background="@color/light_gray_1"
 			android:layout_height="1dp"
 			android:layout_margin="10dp"
-			android:layout_width="match_parent"
-			style="@style/Hr_1" />
+			android:layout_width="match_parent" />
 		<GridLayout
 			android:id="@+id/gridlayout_2"
 			android:columnCount="2"
@@ -1025,11 +1024,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		<item name="android:fontFamily">@font/tahoma_bold</item>
 		<item name="android:textColor">@color/white</item>
 		<item name="android:textSize">12sp</item>
-	</style>
-	<style name="Hr_1">
-		<item name="android:background">@color/light_gray_1</item>
-		<item name="android:fontFamily">@font/arial</item>
-		<item name="android:textSize">11sp</item>
 	</style>
 	<style name="Label_2">
 		<item name="android:fontFamily">@font/arial_italic</item>

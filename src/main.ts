@@ -10,15 +10,15 @@ import { convertRGB, getByColorName } from './lib/color';
 import SETTINGS from './settings';
 
 function setStyleMap() {
-    for (const styleSheet of Array.from(document.styleSheets) as any) {
+    for (const styleSheet of <any> Array.from(document.styleSheets)) {
         for (const rule of styleSheet.rules) {
             const elements = document.querySelectorAll(rule.selectorText);
-            const attributes = new Set();
+            const attributes: Set<string> = new Set();
             for (const style of rule.styleMap) {
                 attributes.add(hyphenToCamelCase(style[0]));
             }
-            for (const element of Array.from(elements)) {
-                for (const attr of element.style) {
+            Array.from(elements).forEach((element: HTMLElement) => {
+                for (const attr of Array.from(element.style)) {
                     attributes.add(hyphenToCamelCase(attr));
                 }
                 const style = getComputedStyle(element);
@@ -37,24 +37,25 @@ function setStyleMap() {
                         styleMap[name] = style[name];
                     }
                 }
-                if (element.__styleMap != null) {
-                    Object.assign(element.__styleMap, styleMap);
+                const object = (<any> element);
+                if (object.__styleMap != null) {
+                    Object.assign(object.__styleMap, styleMap);
                 }
                 else {
-                    element.__style = style;
-                    element.__styleMap = styleMap;
+                    object.__style = style;
+                    object.__styleMap = styleMap;
                 }
-            }
+            });
         }
     }
 }
 
 export function parseDocument(element?: any) {
-    let output = '';
     if (typeof element === 'string') {
         element = document.getElementById(element);
     }
     setStyleMap();
+    let output = '';
     const app = new Application<Widget, WidgetList<Widget>>(Widget, WidgetList, new View(), new ResourceWidget());
     app.setNodeCache(element);
     output = app.getLayoutXml();

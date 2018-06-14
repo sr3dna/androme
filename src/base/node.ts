@@ -47,7 +47,7 @@ export default abstract class Node implements IBoxModel {
             const object: any = this.element;
             if (this.element instanceof HTMLElement) {
                 const styleMap = object.__styleMap || {};
-                for (const inline of this.element.style as any) {
+                for (const inline of <any> this.element.style) {
                     styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
                 }
                 this.style = object.__style || getComputedStyle(this.element);

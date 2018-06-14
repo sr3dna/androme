@@ -13,8 +13,7 @@ interface IColor {
     };
 }
 
-const X11_CSS3 =
-{
+const X11_CSS3 = {
     'Pink':                 { 'hex': '#FFC0CB' },
     'LightPink':            { 'hex': '#FFB6C1' },
     'HotPink':              { 'hex': '#FF69B4' },
@@ -229,7 +228,7 @@ export function findNearestColor(value: string) {
         const index = result.findIndex((item: IColor) => item.name === '');
         return result[Math.min(index + 1, result.length - 1)];
     }
-    return null;
+    return '';
 }
 
 export function getByColorName(value: string) {
@@ -252,7 +251,7 @@ export function parseRGBA(value: string | null) {
             return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[4] || '1'];
         }
     }
-    return null;
+    return '';
 }
 
 export function convertRGBtoHex(value: string) {

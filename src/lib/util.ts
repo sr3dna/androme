@@ -3,7 +3,7 @@ const ID = {
 };
 
 function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
-    return list.sort((a, b) => {
+    return list.sort((a: T, b: T) => {
         for (const attr of attributes) {
             const result = compare(a, b, attr);
             if (result && result[0] !== result[1]) {
@@ -81,9 +81,9 @@ export function formatPX(value: any) {
     return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
 }
 
-export function convertPX(value: any, unit = true) {
+export function convertPX(value: any) {
     if (hasValue(value)) {
-        if (typeof value === 'number') {
+        if (isNumber(value)) {
             value = `${value}px`;
         }
         const match = value.match(/(pt|em)/);
@@ -99,30 +99,25 @@ export function convertPX(value: any, unit = true) {
             }
         }
         if (!isNaN(value)) {
-            return (unit ? `${value}px` : value);
+            return `${value}px`;
         }
     }
-    return (unit ? '0px' : 0);
+    return '0px';
 }
 
-export function convertDP(value: any, dpi = 160, unit = true, font = false) {
+export function convertDP(value: any, dpi = 160, font = false) {
     if (hasValue(value)) {
-        value = convertPX(value, false);
-        value = value / (dpi / 160);
-        value = parseFloat(value.toFixed(2));
+        value = parseFloat(convertPX(value));
         if (!isNaN(value)) {
-            return value + (unit ? (font ? 'sp' : 'dp') : 0);
+            value = parseFloat((value / (dpi / 160)).toFixed(2));
+            return value + (font ? 'sp' : 'dp');
         }
     }
-    return (unit ? '0dp' : 0);
-}
-
-export function convertSP(value: any, dpi = 160, unit = true) {
-    return convertDP(value, dpi, unit, true);
+    return '0dp';
 }
 
 export function replaceDP(xml: string, dpi = 160, font = false) {
-    return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, true, font) + capture[2]);
+    return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, font) + capture[2]);
 }
 
 export function convertInt(value: any) {

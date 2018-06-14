@@ -877,7 +877,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
 
     private setGridSpace(node: T) {
         if (node.parent.is(NODE_STANDARD.GRID)) {
-            const dimensions: any = getBoxSpacing(<HTMLElement> node.parentOriginal.element, true);
+            const dimensions: any = getBoxSpacing(node.parentOriginal.element as HTMLElement, true);
             const options = {
                 android: {
                     layout_columnSpan: node.renderParent.gridColumnCount

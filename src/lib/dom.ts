@@ -15,7 +15,8 @@ export function getRangeBounds(element: HTMLElement) {
 }
 
 export function getStyle(element: HTMLElement) {
-    return ((<any> element).__node != null ? <CSSStyleDeclaration> (<any> element).__node.style : getComputedStyle(element));
+    const object = (<any> element);
+    return (object.__node != null ? object.__node.style as CSSStyleDeclaration : getComputedStyle(element));
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {
