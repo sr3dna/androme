@@ -63,7 +63,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
             rightLeft: parseRTL('layout_constraintRight_toLeftOf')
         });
         this.cache.visible.forEach((node: T) => {
-            const nodes: U = new WidgetList(node.renderChildren, node) as U;
+            const nodes: U = (<U> new WidgetList(node.renderChildren, node));
             const constraint = node.is(NODE_STANDARD.CONSTRAINT);
             const relative = node.is(NODE_STANDARD.RELATIVE);
             const flex = node.flex;
@@ -246,8 +246,8 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect())) {
                     let flexNodes: any = null;
                     if (flex.enabled) {
-                        let horizontalChain: U | null = nodes.slice() as U;
-                        let verticalChain: U | null = nodes.slice() as U;
+                        let horizontalChain: U | null = (<U> nodes.slice());
+                        let verticalChain: U | null = (<U> nodes.slice());
                         switch (flex.direction) {
                             case 'row-reverse':
                                 horizontalChain.reverse();
@@ -269,14 +269,14 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                                 horizontalChain = nodes.filter((item: T) => same(current, item, 'bounds.bottom'));
                             }
                             if (horizontalChain.length > 0) {
-                                (horizontalChain as U).sortAsc('bounds.x');
+                                (<U> horizontalChain).sortAsc('bounds.x');
                             }
                             let verticalChain = nodes.filter((item: T) => same(current, item, 'bounds.left'));
                             if (verticalChain.length === 0) {
                                 verticalChain = nodes.filter((item: T) => same(current, item, 'bounds.right'));
                             }
                             if (verticalChain.length > 0) {
-                                (verticalChain as U).sortAsc('bounds.y');
+                                (<U> verticalChain).sortAsc('bounds.y');
                             }
                             current.constraint.horizontalChain = horizontalChain;
                             current.constraint.verticalChain = verticalChain;
@@ -478,7 +478,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                         let restart = false;
                         nodes.forEach((current: T) => {
                             if (!current.anchored) {
-                                const result = (constraint ? search(current.app() as object, '*constraint*') : search(current.android() as object, LAYOUT));
+                                const result = (constraint ? search((<object> current.app()), '*constraint*') : search((<object> current.android()), LAYOUT));
                                 for (const [key, value] of result) {
                                     if (value !== 'parent') {
                                         if (anchors.find((item: T) => item.stringId === value) != null) {
@@ -739,7 +739,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         if (typeof nodeName === 'number') {
             nodeName = Widget.getNodeName(nodeName);
         }
-        node.setAndroidId(nodeName as string);
+        node.setAndroidId((<string> nodeName));
         switch (element.tagName) {
             case 'TEXTAREA':
                 node.android('minLines', '2');
@@ -877,7 +877,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
 
     private setGridSpace(node: T) {
         if (node.parent.is(NODE_STANDARD.GRID)) {
-            const dimensions: any = getBoxSpacing(node.parentOriginal.element as HTMLElement, true);
+            const dimensions: any = getBoxSpacing((<HTMLElement> node.parentOriginal.element), true);
             const options = {
                 android: {
                     layout_columnSpan: node.renderParent.gridColumnCount

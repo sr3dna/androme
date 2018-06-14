@@ -22,7 +22,7 @@ export default class Resource<T extends Node> {
             if (SETTINGS.numberResourceValue || !num) {
                 for (const [storedValue, storedName] of Resource.STORED.STRINGS.entries()) {
                     if (storedValue === value) {
-                        return storedValue as string;
+                        return (<string> storedValue);
                     }
                 }
                 name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
@@ -73,7 +73,7 @@ export default class Resource<T extends Node> {
             if (!Resource.STORED.COLORS.has(value)) {
                 const color = findNearestColor(value);
                 if (color !== '') {
-                    color.name = cameltoLowerCase(color.name as string);
+                    color.name = cameltoLowerCase((<string> color.name));
                     if (value === color.hex) {
                         colorName = color.name;
                     }
@@ -174,7 +174,7 @@ export default class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.elements.forEach((node: T) => {
             if ((node.visible || node.companion) && node.renderChildren.length === 0) {
-                const element = node.element as HTMLElement;
+                const element = (<HTMLElement> node.element);
                 switch (element.tagName) {
                     case 'IMG':
                     case 'HR':
@@ -211,7 +211,7 @@ export default class Resource<T extends Node> {
             const stringArray: string[] = [];
             let numberArray: string[] | null = [];
             for (let i = 0; i < element.children.length; i++) {
-                const item = element.children[i] as HTMLOptionElement;
+                const item = (<HTMLOptionElement> element.children[i]);
                 const value = item.text.trim();
                 if (value !== '') {
                     if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
@@ -236,7 +236,7 @@ export default class Resource<T extends Node> {
 
     public setValueString() {
         this.cache.elements.forEach((node: T) => {
-            const element = node.element as HTMLElement;
+            const element = (<HTMLElement> node.element);
             let name = '';
             let value = '';
             if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {

@@ -33,8 +33,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.viewHandler.setLayoutWeight();
     }
 
-    public replaceBeforeAfter(output: string) {
-        return this.viewHandler.replaceBeforeAfter(output);
+    public replaceAppended(output: string) {
+        return this.viewHandler.replaceAppended(output);
     }
 
     public setResources() {
@@ -67,7 +67,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 node.parent = new this.TypeT(0, 0);
             }
         }
-        for (const element of <HTMLElement[]> Array.from(elements)) {
+        for (const element of (<HTMLElement[]> Array.from(elements))) {
             if (element.parentElement != null && INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
                 continue;
             }
@@ -124,7 +124,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cache.forEach((node: T) => {
             const nodes: T[] = parents[node.id];
             if (nodes != null) {
-                nodes.push(node.parent as T);
+                nodes.push((<T> node.parent));
                 let minArea = Number.MAX_VALUE;
                 let closest: T | null = null;
                 nodes.forEach((current: T) => {
@@ -201,7 +201,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const mapX: Array<{}> = [];
         const mapY: Array<{}> = [];
         this.cache.forEach((node: T) => {
-            const x = Math.floor(node.bounds.x as number);
+            const x = Math.floor((<number> node.bounds.x));
             const y = node.parent.id;
             if (mapX[node.depth] == null) {
                 mapX[node.depth] = {};
@@ -224,7 +224,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             for (let j = 0; j < coordsY.length; j++) {
                 const axisY: T[] = [];
                 const layers: T[] = [];
-                for (const node of mapY[i][coordsY[j]] as T[]) {
+                for (const node of (<T[]> mapY[i][coordsY[j]])) {
                     switch (node.style.position) {
                         case 'absolute':
                         case 'relative':
@@ -243,9 +243,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 });
                 axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
                 for (let k = 0; k < axisY.length; k++) {
-                    const nodeY = axisY[k] as T;
+                    const nodeY = (<T> axisY[k]);
                     if (!nodeY.renderParent) {
-                        const parent = nodeY.parent as T;
+                        const parent = (<T> nodeY.parent);
                         let tagName = nodeY.nodeName;
                         let restart = false;
                         let xml = '';
@@ -468,7 +468,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                 }
                                 if (!nodeY.renderParent) {
-                                    const children = new this.TypeU(nodeY.children as U);
+                                    const children = new this.TypeU((<U> nodeY.children));
                                     const [linearX, linearY] = [children.linearX, children.linearY];
                                     if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += this.writeFrameLayout(nodeY, parent);
@@ -489,11 +489,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             if (parent.is(NODE_STANDARD.GRID)) {
                                 let siblings: U;
                                 if (SETTINGS.useLayoutWeight) {
-                                    siblings = new this.TypeU(nodeY.gridSiblings as U);
+                                    siblings = new this.TypeU((<U> nodeY.gridSiblings));
                                 }
                                 else {
                                     const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
-                                    siblings = nodeY.parentOriginal.children.filter((item: T) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd) as U;
+                                    siblings = (<U> nodeY.parentOriginal.children.filter((item: T) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd));
                                 }
                                 if (siblings.length > 0) {
                                     siblings.unshift(nodeY);

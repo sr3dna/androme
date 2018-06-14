@@ -8,7 +8,7 @@ export function getRangeBounds(element: HTMLElement) {
     const bounds: IClientRect = JSON.parse(JSON.stringify(domRect[domRect.length - 1]));
     if (domRect.length > 1) {
         bounds.x = Math.min.apply(null, Array.from(domRect).map((item: any) => item.x));
-        bounds.left = bounds.x as number;
+        bounds.left = (<number> bounds.x);
         bounds.width = Array.from(domRect).reduce((a: number, b: any) => a + b.width, 0);
     }
     return bounds;
@@ -16,7 +16,7 @@ export function getRangeBounds(element: HTMLElement) {
 
 export function getStyle(element: HTMLElement) {
     const object = (<any> element);
-    return (object.__node != null ? object.__node.style as CSSStyleDeclaration : getComputedStyle(element));
+    return (object.__node != null ? (<CSSStyleDeclaration> object.__node.style) : getComputedStyle(element));
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {

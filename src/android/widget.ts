@@ -196,7 +196,7 @@ export default class Widget extends Node {
             requireWrap = options.requireWrap;
         }
         else {
-            parent = this.parent as T;
+            parent = (<T> this.parent);
             width = (this.element != null ? this.element.offsetWidth + this.marginLeft + this.marginRight : 0);
             height = (this.element != null ? this.element.offsetHeight + this.marginTop + this.marginBottom : 0);
             requireWrap = parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID);
@@ -389,7 +389,7 @@ export default class Widget extends Node {
 
     public setAccessibility() {
         const element: any = this.element;
-        const nextElement = element.nextElementSibling as HTMLLabelElement;
+        const nextElement = (<HTMLLabelElement> element.nextElementSibling);
         let labeled = false;
         if (element.tagName === 'INPUT' && nextElement && nextElement.htmlFor === element.id) {
             const node = (<any> nextElement).__node;
@@ -441,7 +441,7 @@ export default class Widget extends Node {
             if (typeof value === 'object') {
                 value = value[(<HTMLInputElement> this.element).type];
             }
-            return Widget.getNodeName(value as number);
+            return Widget.getNodeName((<number> value));
         }
     }
     set label(value: T) {

@@ -26,7 +26,7 @@ export default abstract class Element<T extends Node, U extends NodeList<T>> {
     public abstract getRootAttributes(options: {}): string;
     public abstract replaceInlineAttributes(output: string, node: T, namespaces?: {}): string;
 
-    public replaceBeforeAfter(output: string) {
+    public replaceAppended(output: string) {
         for (const id in this.before) {
             output = output.replace(`{<${id}}`, this.before[id].join(''));
         }

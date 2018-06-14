@@ -60,7 +60,7 @@ export function parseDocument(element?: any) {
     app.setNodeCache(element);
     output = app.getLayoutXml();
     app.setResources();
-    output = app.replaceBeforeAfter(output);
+    output = app.replaceAppended(output);
     if (SETTINGS.showAttributes) {
         app.setMarginPadding();
         if (SETTINGS.useLayoutWeight) {

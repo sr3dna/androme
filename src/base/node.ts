@@ -295,16 +295,15 @@ export default abstract class Node implements IBoxModel {
     }
     get flex() {
         if (this._flex == null) {
-            const parent = this.element && (<any> this.element.parentElement).__node;
+            const parent = this.parentOriginal;
             this._flex = {
-                parent,
                 enabled: (this.style.display && this.style.display.indexOf('flex') !== -1),
                 direction: this.style.flexDirection,
                 basis: this.style.flexBasis,
                 grow: convertInt(this.style.flexGrow),
                 shrink: convertInt(this.style.flexShrink),
                 wrap: this.style.flexWrap,
-                alignSelf: (parent && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
+                alignSelf: (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
                 justifyContent: this.style.justifyContent,
                 order: convertInt(this.style.order)
             };
