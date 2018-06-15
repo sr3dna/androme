@@ -1,0 +1,75 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <style type="text/css">
+        body {
+            font-family: monospace;
+            padding: 10px;
+            margin: 0px;
+        }
+        a {
+            font-size: 11px;
+            margin-top: 4px;
+            float: right;
+        }
+        .output {
+            float: left;
+        }
+        .output pre {
+            height: 600px;
+            font-size: 10px;
+            margin: 0px;
+            padding: 10px;
+            background-color: floralwhite;
+            border: solid 1px #ccc;
+            margin-left: 15px;
+            overflow: auto;
+        }
+    </style>
+    <script src="../dist/androme.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('output').innerHTML = androme.parseDocument(document.getElementById('androme-root')).replace(/</g, '&lt;');
+            let resource = androme.writeResourceDrawableXml();
+            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+        });
+    </script>
+</head>
+<body>
+    <div id="androme-root" style="text-align: center; float: left;">
+        <img src="images/android.png" srcset="images/android-ldpi.png 0.75x,
+                                              images/android.png 1x,
+                                              images/android-hdpi.png 1.5x,
+                                              images/android-xhdpi.png 2x,
+                                              images/android-xxhdpi.png 3x,
+                                              images/android-xxxhdpi.png 4x" />
+        <br /><br />
+        <img src="images/pencil.png" srcset="images/pencil-ldpi.png 0.75x,
+                                             images/pencil.png,
+                                             images/pencil-hdpi.png 1.5x,
+                                             images/pencil-xhdpi.png 2x,
+                                             images/pencil-xxhpi.png 3x,
+                                             images/pencil-xxxhdpi.png 4x" />
+    </div>
+    <div class="output">
+        <pre id="output"></pre>
+        <a href="javascript:copy('output');" style="text-align: right;">Copy</a>
+    </div>
+    <div class="output">
+        <pre id="resource"></pre>
+        <a href="javascript:copy('resource');" style="text-align: right;">Copy</a>
+    </div>
+    <script>
+        function copy(id) {
+            const element = document.getElementById(id);
+            const range = document.createRange();  
+            range.selectNode(element);  
+            window.getSelection().addRange(range); 
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();  
+        }
+    </script>
+</body>
+</html>

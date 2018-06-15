@@ -677,8 +677,15 @@ export function writeResourceDrawableXml() {
         for (const [name, value] of STORED.DRAWABLES.entries()) {
             rootItem.push({ name: `res/drawable/${name}.xml`, value});
         }
-        for (const [name, value] of Resource.STORED.IMAGES.entries()) {
-            rootItem.push({ name: `res/drawable/${name + value.substring(value.lastIndexOf('.'))}`, value: `<!-- image: ${value} -->` });
+        for (const [name, images] of Resource.STORED.IMAGES.entries()) {
+            if (Object.keys(images).length > 1) {
+                for (const dpi in images) {
+                    rootItem.push({ name: `res/drawable-${dpi}/${name + images[dpi].substring(images[dpi].lastIndexOf('.'))}`, value: `<!-- image: ${images[dpi]} -->` });
+                }
+            }
+            else if (images['mdpi'] != null) {
+                rootItem.push({ name: `res/drawable/${name + images['mdpi'].substring(images['mdpi'].lastIndexOf('.'))}`, value: `<!-- image: ${images['mdpi']} -->` });
+            }
         }
         xml = parseTemplateData(template, data);
         if (SETTINGS.useUnitDP) {

@@ -1,3 +1,4 @@
+import { IStringMap } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import { INLINE_CHROME } from '../lib/constants';
@@ -13,7 +14,7 @@ export default class Resource<T extends Node> {
         IMAGES: new Map()
     };
 
-    public static addResourceString(value: string, name = '') {
+    public static addString(value: string, name = '') {
         if (hasValue(value)) {
             if (name === '') {
                 name = value;
@@ -39,10 +40,10 @@ export default class Resource<T extends Node> {
         return '';
     }
 
-    public static addResourceImage(value: string) {
+    public static addImage(images: IStringMap) {
         let src = '';
-        if (hasValue(value)) {
-            const image = value.substring(value.lastIndexOf('/') + 1);
+        if (images['mdpi'] != null && hasValue(images['mdpi'])) {
+            const image = images['mdpi'].substring(images['mdpi'].lastIndexOf('/') + 1);
             const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
             src = image.replace(/.\w+$/, '');
             switch (format) {
@@ -57,7 +58,7 @@ export default class Resource<T extends Node> {
                 case 'tiff':
                 case 'webp':
                 case 'xbm':
-                    src = Resource.insertStoredAsset('IMAGES', src, value);
+                    src = Resource.insertStoredAsset('IMAGES', src, images);
                     break;
                 default:
                     src = '';
@@ -66,7 +67,7 @@ export default class Resource<T extends Node> {
         return src;
     }
 
-    public static addResourceColor(value: string, hex = true) {
+    public static addColor(value: string, hex = true) {
         value = value.toUpperCase().trim();
         if (value !== '') {
             let colorName = '';
@@ -126,7 +127,7 @@ export default class Resource<T extends Node> {
     public setBoxSpacing() {
         this.cache.elements.forEach((node: T) => {
             if (node.element instanceof HTMLElement) {
-                const element: HTMLElement = node.element;
+                const element = (<HTMLElement> node.element);
                 const result = getBoxSpacing(element);
                 for (const i in result) {
                     result[i] += 'px';
@@ -139,7 +140,7 @@ export default class Resource<T extends Node> {
     public setBoxStyle() {
         this.cache.elements.forEach((node: T) => {
             if (node.element instanceof HTMLElement) {
-                const element: HTMLElement = node.element;
+                const element = (<HTMLElement> node.element);
                 const result: any = {
                     border: this.parseBorderStyle,
                     borderTop: this.parseBorderStyle,
@@ -158,12 +159,12 @@ export default class Resource<T extends Node> {
                 for (const i in result) {
                     result[i] = result[i](node.css(i));
                 }
-                result.border[2] = Resource.addResourceColor(result.border[2], false);
+                result.border[2] = Resource.addColor(result.border[2], false);
                 if (backgroundParent[0] === result.backgroundColor[0] || result.backgroundColor[4] === 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(result.backgroundColor[0])))) {
                     result.backgroundColor = '';
                 }
                 else {
-                    result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addResourceColor(result.backgroundColor[1]) : '');
+                    result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addColor(result.backgroundColor[1]) : '');
                 }
                 (<any> element).__boxStyle = result;
             }
@@ -187,8 +188,8 @@ export default class Resource<T extends Node> {
                     fontStyle: node.css('fontStyle'),
                     fontSize: node.css('fontSize'),
                     fontWeight: node.css('fontWeight'),
-                    color: (color !== '' ? Resource.addResourceColor(color[1]) : ''),
-                    backgroundColor: (backgroundColor !== '' ? Resource.addResourceColor(backgroundColor[1]) : '')
+                    color: (color !== '' ? Resource.addColor(color[1]) : ''),
+                    backgroundColor: (backgroundColor !== '' ? Resource.addColor(backgroundColor[1]) : '')
                 };
                 (<any> element).__fontStyle = result;
             }
@@ -197,15 +198,52 @@ export default class Resource<T extends Node> {
 
     public setImageSource() {
         this.cache.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
-            const element = <HTMLImageElement> node.element;
-            const result = Resource.addResourceImage(element.src);
+            const element = (<HTMLImageElement> node.element);
+            const srcset = element.srcset.trim();
+            const images: IStringMap = {};
+            if (hasValue(srcset)) {
+                const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+                srcset.split(',').forEach((value: string) => {
+                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                    if (match != null) {
+                        if (match[2] == null) {
+                            match[2] = '1x';
+                        }
+                        const image = filepath + match[1].substring(match[1].lastIndexOf('/') + 1);
+                        switch (match[2]) {
+                            case '0.75x':
+                                images['ldpi'] = image;
+                                break;
+                            case '1x':
+                                images['mdpi'] = image;
+                                break;
+                            case '1.5x':
+                                images['hdpi'] = image;
+                                break;
+                            case '2x':
+                                images['xhdpi'] = image;
+                                break;
+                            case '3x':
+                                images['xxhdpi'] = image;
+                                break;
+                            case '4x':
+                                images['xxxhdpi'] = image;
+                                break;
+                        }
+                    }
+                });
+            }
+            if (images['mdpi'] == null) {
+                images['mdpi'] = element.src;
+            }
+            const result = Resource.addImage(images);
             (<any> element).__imageSource = result;
         });
     }
 
     public setOptionArray() {
         this.cache.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
-            const element = <HTMLSelectElement> node.element;
+            const element = (<HTMLSelectElement> node.element);
             const stringArray: string[] = [];
             let numberArray: string[] | null = [];
             for (let i = 0; i < element.children.length; i++) {
@@ -221,7 +259,7 @@ export default class Resource<T extends Node> {
                             numberArray = null;
                             continue;
                         }
-                        const result = Resource.addResourceString(value);
+                        const result = Resource.addString(value);
                         if (result != null) {
                             stringArray.push(result);
                         }
@@ -248,7 +286,7 @@ export default class Resource<T extends Node> {
                 value = element.innerHTML.trim();
             }
             if (hasValue(value)) {
-                Resource.addResourceString(value, name);
+                Resource.addString(value, name);
                 (<any> element).__valueString = value;
             }
         });
@@ -283,7 +321,7 @@ export default class Resource<T extends Node> {
     private parseImageURL(value: string) {
         const match = value.match(/^url\("(.*?)"\)$/);
         if (match != null) {
-            return Resource.addResourceImage(match[1]);
+            return Resource.addImage({ 'mdpi': match[1] });
         }
         return '';
     }

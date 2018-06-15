@@ -739,8 +739,24 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         if (typeof viewName === 'number') {
             viewName = Widget.getViewName(viewName);
         }
-        node.setViewId((<string> viewName));
+        node.setViewId(viewName);
         switch (element.tagName) {
+            case 'IMG':
+                switch (element.style.objectFit) {
+                    case 'contain':
+                        node.android('scaleType', 'centerInside');
+                        break;
+                    case 'cover':
+                        node.android('scaleType', 'centerCrop');
+                        break;
+                    case 'fill':
+                        node.android('scaleType', 'fitXY');
+                        break;
+                    case 'scale-down':
+                        node.android('scaleType', 'fitCenter');
+                        break;
+                }
+                break;
             case 'TEXTAREA':
                 node.android('minLines', '2');
                 if (element.rows > 2) {
@@ -756,6 +772,43 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                     node.android('scrollHorizontally', 'true');
                 }
                 break;
+            case 'INPUT':
+                switch (element.type) {
+                    case 'radio':
+                        if (!recursive) {
+                            const result = (<U> node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name)));
+                            let xml = '';
+                            if (result.length > 1) {
+                                const layout = new Layout(this.cache.nextId, node, parent, result);
+                                const widget = (<Widget> layout) as T;
+                                let checked: string = '';
+                                this.cache.push(widget);
+                                layout.setViewId(VIEW_ANDROID.RADIO_GROUP);
+                                layout.render(parent);
+                                result.forEach((radio: T) => {
+                                    layout.inheritGrid(radio);
+                                    if ((<HTMLInputElement> radio.element).checked) {
+                                        checked = radio.stringId;
+                                    }
+                                    radio.parent = layout;
+                                    radio.render(layout);
+                                    xml += this.renderTag(radio, widget, VIEW_STANDARD.RADIO, true);
+                                });
+                                layout.android('orientation', (<U> layout.children).linearX ? 'horizontal' : 'vertical');
+                                if (checked !== '') {
+                                    layout.android('checkedButton', checked);
+                                }
+                                layout.setBounds();
+                                this.setGridSpace(widget);
+                                return this.getEnclosingTag(layout.renderDepth, VIEW_ANDROID.RADIO_GROUP, layout.id, xml);
+                            }
+                        }
+                        break;
+                    case 'password':
+                        node.android('inputType', 'textPassword');
+                        break;
+                }
+                break;
         }
         switch (node.viewName) {
             case VIEW_ANDROID.EDIT:
@@ -769,50 +822,17 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                     node.android('minHeight', '0px');
                 }
                 break;
-        }
-        if (node.overflow !== OVERFLOW_CHROME.NONE) {
-            const scrollbars: string[] = [];
-            if (node.overflowX) {
-                scrollbars.push('horizontal');
-            }
-            if (node.overflowY) {
-                scrollbars.push('vertical');
-            }
-            node.android('scrollbars', scrollbars.join('|'));
-        }
-        switch (element.type) {
-            case 'radio':
-                if (!recursive) {
-                    const result = (<U> node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name)));
-                    let xml = '';
-                    if (result.length > 1) {
-                        const layout = new Layout(this.cache.nextId, node, parent, result);
-                        const widget = (<Widget> layout) as T;
-                        let checked: string = '';
-                        this.cache.push(widget);
-                        layout.setViewId(VIEW_ANDROID.RADIO_GROUP);
-                        layout.render(parent);
-                        result.forEach((radio: T) => {
-                            layout.inheritGrid(radio);
-                            if ((<HTMLInputElement> radio.element).checked) {
-                                checked = radio.stringId;
-                            }
-                            radio.parent = layout;
-                            radio.render(layout);
-                            xml += this.renderTag(radio, widget, VIEW_STANDARD.RADIO, true);
-                        });
-                        layout.android('orientation', (<U> layout.children).linearX ? 'horizontal' : 'vertical');
-                        if (checked !== '') {
-                            layout.android('checkedButton', checked);
-                        }
-                        layout.setBounds();
-                        this.setGridSpace(widget);
-                        return this.getEnclosingTag(layout.renderDepth, VIEW_ANDROID.RADIO_GROUP, layout.id, xml);
+            case VIEW_ANDROID.TEXT:
+                if (node.overflow !== OVERFLOW_CHROME.NONE) {
+                    const scrollbars: string[] = [];
+                    if (node.overflowX) {
+                        scrollbars.push('horizontal');
                     }
+                    if (node.overflowY) {
+                        scrollbars.push('vertical');
+                    }
+                    node.android('scrollbars', scrollbars.join('|'));
                 }
-                break;
-            case 'password':
-                node.android('inputType', 'textPassword');
                 break;
         }
         node.applyCustomizations();

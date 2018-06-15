@@ -60,7 +60,7 @@ export default abstract class Node implements IBoxModel {
         }
     }
 
-    public abstract setViewId(viewNam: string): void;
+    public abstract setViewId(viewName: string): void;
     public abstract setViewLayout(options?: any): void;
     public abstract is(...views: number[]): boolean;
     public abstract distributeWeight(horizontal: boolean, percent: number): void;
