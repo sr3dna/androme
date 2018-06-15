@@ -254,14 +254,67 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 tagName = this.viewHandler.getNodeName(NODE_STANDARD.TEXT);
                             }
                             else if (nodeY.children.length > 0) {
-                                const rows = nodeY.children;
-                                if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every((item: T) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                                if (nodeY.tagName === 'TABLE') {
+                                    const tableRows: T[] = [];
+                                    const thead = (<T> nodeY.children.find((item: T) => item.tagName === 'THEAD'));
+                                    const tbody = (<T> nodeY.children.find((item: T) => item.tagName === 'TBODY'));
+                                    const tfoot = (<T> nodeY.children.find((item: T) => item.tagName === 'TFOOT'));
+                                    if (thead != null) {
+                                        thead.cascade().filter((item: T) => item.tagName === 'TH' || item.tagName === 'TD').forEach((item: T) => item.inheritStyleMap(thead));
+                                        tableRows.push(...(<T[]> thead.children));
+                                        thead.hide();
+                                    }
+                                    if (tbody != null) {
+                                        tableRows.push(...(<T[]> tbody.children));
+                                        tbody.hide();
+                                    }
+                                    if (tfoot != null) {
+                                        tfoot.cascade().filter((item: T) => item.tagName === 'TH' || item.tagName === 'TD').forEach((item: T) => item.inheritStyleMap(tfoot));
+                                        tableRows.push(...(<T[]> tfoot.children));
+                                        tfoot.hide();
+                                    }
+                                    const rowCount = tableRows.length;
+                                    let columnCount = 0;
+                                    for (let l = 0; l < tableRows.length; l++) {
+                                        const tr = tableRows[l];
+                                        tr.hide();
+                                        columnCount = Math.max(tr.children.reduce((a: number, b: any) => a + b.element.colSpan, 0), columnCount);
+                                        for (let m = 0; m < tr.children.length; m++) {
+                                            const td = tr.children[m];
+                                            if (td.element != null) {
+                                                const style = td.element.style;
+                                                const element = (<HTMLTableCellElement> td.element);
+                                                if (element.rowSpan > 1) {
+                                                    td.gridRowSpan = element.rowSpan;
+                                                }
+                                                if (element.colSpan > 1) {
+                                                    td.gridColumnSpan = element.colSpan;
+                                                }
+                                                if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
+                                                    td.styleMap.textAlign = (<string> style.textAlign);
+                                                }
+                                                if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
+                                                    td.styleMap.verticalAlign = 'middle';
+                                                }
+                                                style.margin = (nodeY.style.borderCollapse !== 'collapse' ? nodeY.style.borderSpacing : '0px');
+                                                delete td.styleMap.margin;
+                                                delete td.styleMap.marginLeft;
+                                                delete td.styleMap.marginRight;
+                                                delete td.styleMap.marginTop;
+                                                delete td.styleMap.marginBottom;
+                                                td.parent = nodeY;
+                                            }
+                                        }
+                                    }
+                                    xml += this.writeGridLayout(nodeY, parent, columnCount, rowCount);
+                                }
+                                else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item: T) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
                                     let columns: any[][] = [];
                                     const columnEnd: number[] = [];
                                     if (SETTINGS.useLayoutWeight) {
                                         const dimensions: number[][] = [];
-                                        for (let l = 0; l < rows.length; l++) {
-                                            const children = rows[l].children;
+                                        for (let l = 0; l < nodeY.children.length; l++) {
+                                            const children = nodeY.children[l].children;
                                             dimensions[l] = [];
                                             for (let m = 0; m < children.length; m++) {
                                                 dimensions[l].push(children[m].bounds.width);
@@ -545,8 +598,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
     }
 
-    private writeGridLayout(node: T, parent: T, columnCount: number) {
-        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.GRID, { android: { columnCount: columnCount.toString() } });
+    private writeGridLayout(node: T, parent: T, columnCount: number, rowCount: number = 0) {
+        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
     }
 
     private writeRelativeLayout(node: T, parent: T) {

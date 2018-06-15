@@ -435,7 +435,7 @@ export class ResourceWidget extends Resource<T> {
             if (tagData != null) {
                 for (const attr in tagData) {
                     if (tagData[attr].includes(node.id)) {
-                        node.attr(attr);
+                        node.attr(attr, false);
                     }
                 }
             }

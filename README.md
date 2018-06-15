@@ -54,7 +54,7 @@ You can preview the library with the provided /demos/*.html which should generat
 
 Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios. To use Constraint circle for placement you have to disable "useConstraintGuideline".
 
-Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices.
+Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Most people prefer not to use tables in HTML although for mobile devices it will generate a very efficient GridLayout with androme and probably will perform faster than ConstraintLayout.
 
 <img src="demos/android/form.png" alt="form" />
 
@@ -64,9 +64,11 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/flexbox_vertical.png" alt="flexbox - vertical" />
 
-<img src="demos/android/layout_weight.png" alt="GridLayout - layout weight" />
+<img src="demos/android/table.png" alt="gridlayout - table" />
 
-<img src="demos/android/position_absolute.png" alt="ConstraintLayout - position: absolute" />
+<img src="demos/android/layout_weight.png" alt="gridlayout - layout weight" />
+
+<img src="demos/android/position_absolute.png" alt="constraintlayout - position: absolute" />
 
 ## auto-generated layout
 

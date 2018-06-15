@@ -18,13 +18,13 @@ export default abstract class Node implements IBoxModel {
     public gridRowSpan: number;
     public gridColumnSpan: number;
     public gridColumnEnd: number[];
-    public gridColumnCount: number;
     public gridIndex: number;
     public gridFirst: boolean;
     public gridLast: boolean;
     public gridRowEnd: boolean;
     public gridRowStart: boolean;
     public gridSiblings: Node[];
+    public gridColumnCount: number;
 
     public abstract children: Node[];
     public abstract renderChildren: Node[];
@@ -58,7 +58,6 @@ export default abstract class Node implements IBoxModel {
     }
 
     public abstract is(...views: number[]): boolean;
-    public abstract inheritStyle(node: Node): void;
     public abstract distributeWeight(horizontal: boolean, percent: number): void;
     public abstract get nodeName(): string;
 
@@ -143,6 +142,23 @@ export default abstract class Node implements IBoxModel {
             return current;
         }
         return cascade(this);
+    }
+
+    public inheritStyle(node: Node) {
+        for (const attr in node.style) {
+            if (attr.startsWith('font') || attr.startsWith('color')) {
+                const key = hyphenToCamelCase(attr);
+                this.style[key] = node.style[key];
+            }
+        }
+    }
+
+    public inheritStyleMap(node: Node) {
+        for (const attr in node.styleMap) {
+            if (this.styleMap[attr] == null) {
+                this.styleMap[attr] = node.styleMap[attr];
+            }
+        }
     }
 
     public intersect(rect: IClientRect, dimension = 'bounds') {

@@ -156,16 +156,6 @@ export default class Widget extends Node {
         }
     }
 
-    public inheritStyle(node: T) {
-        const style = [];
-        for (const attr in node.style) {
-            if (attr.startsWith('font') || attr.startsWith('color')) {
-                const key = hyphenToCamelCase(attr);
-                this.style[key] = node.style[key];
-            }
-        }
-    }
-
     public is(...views: number[]) {
         for (const value of views) {
             if (this.nodeName === Widget.getNodeName(value)) {
@@ -308,19 +298,20 @@ export default class Widget extends Node {
     public setGravity() {
         const verticalAlign = this.styleMap.verticalAlign;
         let textAlign = '';
-        let element: any = this.element;
-        while (element && element.__styleMap != null) {
-            textAlign = element.__styleMap.textAlign || textAlign;
-            const float = (element !== this.element ? element.__styleMap.float : '');
+        let node: T = this;
+        while (node != null) {
+            textAlign = node.styleMap.textAlign || textAlign;
+            const float = (node !== this ? node.styleMap.float : '');
             if (float === 'left' || float === 'right' || hasValue(textAlign)) {
                 break;
             }
-            element = element.parentElement;
+            node = (<T> node.parentOriginal);
         }
         if (hasValue(verticalAlign) || hasValue(textAlign)) {
             let horizontal = '';
             let vertical = '';
-            const layoutGravity: string[] = [];
+            let gravity: string[] = [];
+            let layoutGravity: string[] = [];
             switch (textAlign) {
                 case 'start':
                     horizontal = 'start';
@@ -351,32 +342,48 @@ export default class Widget extends Node {
                         vertical = 'center_vertical';
                     }
             }
-            const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating);
+            const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating && this.renderParent.tagName !== 'TABLE');
             switch (this.renderParent.nodeName) {
                 case NODE_ANDROID.RADIO_GROUP:
                 case NODE_ANDROID.LINEAR:
                     if (parentTextAlign) {
                         this.renderParent.android('gravity', horizontal);
+                        horizontal = '';
+                    }
+                    else {
+                        gravity.push(vertical);
+                        vertical = '';
                     }
                     break;
                 case NODE_ANDROID.CONSTRAINT:
                 case NODE_ANDROID.RELATIVE:
-                    const gravity = [vertical, horizontal].filter(value => value);
-                    this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
+                    gravity.push(horizontal, vertical);
                     horizontal = '';
                     vertical = '';
                     break;
                 case NODE_ANDROID.GRID:
-                    if (parentTextAlign && horizontal !== '') {
-                        layoutGravity.push(horizontal);
+                    if (parentTextAlign) {
+                        layoutGravity.push(horizontal, vertical);
                     }
+                    else {
+                        gravity.push(horizontal, vertical);
+                    }
+                    if (this.renderParent.tagName === 'TABLE') {
+                        this.android('layout_gravity', 'fill');
+                    }
+                    horizontal = '';
+                    vertical = '';
                     break;
             }
-            if (vertical !== '' || layoutGravity.length > 0) {
-                layoutGravity.push(vertical);
-                this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]));
+            gravity = gravity.filter(value => value !== '');
+            layoutGravity = layoutGravity.filter(value => value !== '');
+            if (layoutGravity.length > 0) {
+                this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]), false);
             }
-            if (horizontal !== '') {
+            else if (gravity.length > 0) {
+                this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
+            }
+            else if (horizontal !== '') {
                 this.android('gravity', horizontal);
             }
         }

@@ -155,9 +155,8 @@ export default class Resource<T extends Node> {
                 if (element.parentElement != null) {
                     backgroundParent = parseRGBA(getStyle(element.parentElement).backgroundColor) || [];
                 }
-                const style = getStyle(element);
                 for (const i in result) {
-                    result[i] = result[i](style[i]);
+                    result[i] = result[i](node.css(i));
                 }
                 result.border[2] = Resource.addResourceColor(result.border[2], false);
                 if (backgroundParent[0] === result.backgroundColor[0] || result.backgroundColor[4] === 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(result.backgroundColor[0])))) {
@@ -181,14 +180,13 @@ export default class Resource<T extends Node> {
                     case 'AREA':
                         return;
                 }
-                const style = getStyle(element);
-                const color = parseRGBA(style.color);
-                const backgroundColor = parseRGBA(style.backgroundColor);
+                const color = parseRGBA(node.css('color') || '');
+                const backgroundColor = parseRGBA(node.css('backgroundColor') || '');
                 const result = {
-                    fontFamily: style.fontFamily,
-                    fontStyle: style.fontStyle,
-                    fontSize: style.fontSize,
-                    fontWeight: style.fontWeight,
+                    fontFamily: node.css('fontFamily'),
+                    fontStyle: node.css('fontStyle'),
+                    fontSize: node.css('fontSize'),
+                    fontWeight: node.css('fontWeight'),
                     color: (color !== '' ? Resource.addResourceColor(color[1]) : ''),
                     backgroundColor: (backgroundColor !== '' ? Resource.addResourceColor(backgroundColor[1]) : '')
                 };

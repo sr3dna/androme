@@ -1,4 +1,4 @@
-/* androme 1.6.0
+/* androme 1.6.1
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -194,9 +194,9 @@
         value = parseFloat(value);
         return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
     }
-    function convertPX(value, unit = true) {
+    function convertPX(value) {
         if (hasValue(value)) {
-            if (typeof value === 'number') {
+            if (isNumber(value)) {
                 value = `${value}px`;
             }
             const match = value.match(/(pt|em)/);
@@ -212,27 +212,23 @@
                 }
             }
             if (!isNaN(value)) {
-                return (unit ? `${value}px` : value);
+                return `${value}px`;
             }
         }
-        return (unit ? '0px' : 0);
+        return '0px';
     }
-    function convertDP(value, dpi = 160, unit = true, font = false) {
+    function convertDP(value, dpi = 160, font = false) {
         if (hasValue(value)) {
-            value = convertPX(value, false);
-            value = value / (dpi / 160);
-            value = parseFloat(value.toFixed(2));
+            value = parseFloat(convertPX(value));
             if (!isNaN(value)) {
-                return value + (unit ? (font ? 'sp' : 'dp') : 0);
+                value = parseFloat((value / (dpi / 160)).toFixed(2));
+                return value + (font ? 'sp' : 'dp');
             }
         }
-        return (unit ? '0dp' : 0);
-    }
-    function convertSP(value, dpi = 160, unit = true) {
-        return convertDP(value, dpi, unit, true);
+        return '0dp';
     }
     function replaceDP(xml, dpi = 160, font = false) {
-        return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, true, font) + capture[2]);
+        return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, font) + capture[2]);
     }
     function convertInt(value) {
         return parseInt(value) || 0;
@@ -365,7 +361,8 @@
         return bounds;
     }
     function getStyle(element) {
-        return (element.__node != null ? element.__node.style : getComputedStyle(element));
+        const object = element;
+        return (object.__node != null ? object.__node.style : getComputedStyle(element));
     }
     function sameAsParent(element, attr) {
         if (element.parentElement != null) {
@@ -498,12 +495,12 @@
     };
 
     class Application {
-        constructor(typeT, typeU, viewHandler, resource) {
-            this.typeT = typeT;
-            this.typeU = typeU;
+        constructor(TypeT, TypeU, viewHandler, resource) {
+            this.TypeT = TypeT;
+            this.TypeU = TypeU;
             this.viewHandler = viewHandler;
             this.resource = resource;
-            this.cache = new this.typeU();
+            this.cache = new this.TypeU();
             this.viewHandler.cache = this.cache;
             this.resource.cache = this.cache;
         }
@@ -513,14 +510,25 @@
         setMarginPadding() {
             this.viewHandler.setMarginPadding();
         }
-        replaceBeforeAfter(output) {
-            return this.viewHandler.replaceBeforeAfter(output);
+        setLayoutWeight() {
+            this.viewHandler.setLayoutWeight();
+        }
+        replaceAppended(output) {
+            return this.viewHandler.replaceAppended(output);
+        }
+        setResources() {
+            this.resource.setBoxSpacing();
+            this.resource.setBoxStyle();
+            this.resource.setFontStyle();
+            this.resource.setValueString();
+            this.resource.setOptionArray();
+            this.resource.setImageSource();
         }
         setNodeCache(documentRoot) {
             let nodeTotal = 0;
             Array.from((documentRoot || document.body).childNodes).forEach((item) => {
                 if (item.nodeName === '#text') {
-                    if (item.textContent != null && item.textContent.trim() !== '') {
+                    if (item.textContent && item.textContent.trim() !== '') {
                         nodeTotal++;
                     }
                 }
@@ -534,7 +542,7 @@
             if (documentRoot != null) {
                 const node = this.insertNode(documentRoot);
                 if (node != null) {
-                    node.parent = new this.typeT(0, 0);
+                    node.parent = new this.TypeT(0, 0);
                 }
             }
             for (const element of Array.from(elements)) {
@@ -644,14 +652,11 @@
                 }
             });
         }
-        setLayoutWeight() {
-            this.viewHandler.setLayoutWeight();
-        }
         insertNode(element, parent) {
             let node = null;
             if (element.nodeName === '#text') {
                 if (element.textContent && element.textContent.trim() !== '') {
-                    node = new this.typeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
+                    node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
                     node.setBounds(false, element);
                     if (parent != null) {
                         node.inheritStyle(parent);
@@ -660,7 +665,7 @@
                 }
             }
             else if (isVisible(element)) {
-                node = new this.typeT(this.cache.nextId, SETTINGS.targetAPI, element);
+                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
             }
             if (node != null) {
                 this.cache.push(node);
@@ -681,10 +686,10 @@
                     mapY[node.depth] = {};
                 }
                 if (mapX[node.depth][x] == null) {
-                    mapX[node.depth][x] = new this.typeU();
+                    mapX[node.depth][x] = new this.TypeU();
                 }
                 if (mapY[node.depth][y] == null) {
-                    mapY[node.depth][y] = new this.typeU();
+                    mapY[node.depth][y] = new this.TypeU();
                 }
                 mapX[node.depth][x].push(node);
                 mapY[node.depth][y].push(node);
@@ -725,14 +730,67 @@
                                     tagName = this.viewHandler.getNodeName(NODE_STANDARD.TEXT);
                                 }
                                 else if (nodeY.children.length > 0) {
-                                    const rows = nodeY.children;
-                                    if (SETTINGS.useGridLayout && !nodeY.flex.enabled && rows.length > 1 && rows.every((item) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                                    if (nodeY.tagName === 'TABLE') {
+                                        const tableRows = [];
+                                        const thead = nodeY.children.find((item) => item.tagName === 'THEAD');
+                                        const tbody = nodeY.children.find((item) => item.tagName === 'TBODY');
+                                        const tfoot = nodeY.children.find((item) => item.tagName === 'TFOOT');
+                                        if (thead != null) {
+                                            thead.cascade().filter((item) => item.tagName === 'TH' || item.tagName === 'TD').forEach((item) => item.inheritStyleMap(thead));
+                                            tableRows.push(...thead.children);
+                                            thead.hide();
+                                        }
+                                        if (tbody != null) {
+                                            tableRows.push(...tbody.children);
+                                            tbody.hide();
+                                        }
+                                        if (tfoot != null) {
+                                            tfoot.cascade().filter((item) => item.tagName === 'TH' || item.tagName === 'TD').forEach((item) => item.inheritStyleMap(tfoot));
+                                            tableRows.push(...tfoot.children);
+                                            tfoot.hide();
+                                        }
+                                        const rowCount = tableRows.length;
+                                        let columnCount = 0;
+                                        for (let l = 0; l < tableRows.length; l++) {
+                                            const tr = tableRows[l];
+                                            tr.hide();
+                                            columnCount = Math.max(tr.children.reduce((a, b) => a + b.element.colSpan, 0), columnCount);
+                                            for (let m = 0; m < tr.children.length; m++) {
+                                                const td = tr.children[m];
+                                                if (td.element != null) {
+                                                    const style = td.element.style;
+                                                    const element = td.element;
+                                                    if (element.rowSpan > 1) {
+                                                        td.gridRowSpan = element.rowSpan;
+                                                    }
+                                                    if (element.colSpan > 1) {
+                                                        td.gridColumnSpan = element.colSpan;
+                                                    }
+                                                    if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
+                                                        td.styleMap.textAlign = style.textAlign;
+                                                    }
+                                                    if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
+                                                        td.styleMap.verticalAlign = 'middle';
+                                                    }
+                                                    style.margin = (nodeY.style.borderCollapse !== 'collapse' ? nodeY.style.borderSpacing : '0px');
+                                                    delete td.styleMap.margin;
+                                                    delete td.styleMap.marginLeft;
+                                                    delete td.styleMap.marginRight;
+                                                    delete td.styleMap.marginTop;
+                                                    delete td.styleMap.marginBottom;
+                                                    td.parent = nodeY;
+                                                }
+                                            }
+                                        }
+                                        xml += this.writeGridLayout(nodeY, parent, columnCount, rowCount);
+                                    }
+                                    else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
                                         let columns = [];
                                         const columnEnd = [];
                                         if (SETTINGS.useLayoutWeight) {
                                             const dimensions = [];
-                                            for (let l = 0; l < rows.length; l++) {
-                                                const children = rows[l].children;
+                                            for (let l = 0; l < nodeY.children.length; l++) {
+                                                const children = nodeY.children[l].children;
                                                 dimensions[l] = [];
                                                 for (let m = 0; m < children.length; m++) {
                                                     dimensions[l].push(children[m].bounds.width);
@@ -938,7 +996,7 @@
                                         }
                                     }
                                     if (!nodeY.renderParent) {
-                                        const children = new this.typeU(nodeY.children);
+                                        const children = new this.TypeU(nodeY.children);
                                         const [linearX, linearY] = [children.linearX, children.linearY];
                                         if (!nodeY.flex.enabled && linearX && linearY) {
                                             xml += this.writeFrameLayout(nodeY, parent);
@@ -959,7 +1017,7 @@
                                 if (parent.is(NODE_STANDARD.GRID)) {
                                     let siblings;
                                     if (SETTINGS.useLayoutWeight) {
-                                        siblings = new this.typeU(nodeY.gridSiblings);
+                                        siblings = new this.TypeU(nodeY.gridSiblings);
                                     }
                                     else {
                                         const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
@@ -1000,14 +1058,6 @@
             }
             return output;
         }
-        setResources() {
-            this.resource.setBoxSpacing();
-            this.resource.setBoxStyle();
-            this.resource.setFontStyle();
-            this.resource.setValueString();
-            this.resource.setOptionArray();
-            this.resource.setImageSource();
-        }
         replaceInlineAttributes(output) {
             const options = {};
             this.cache.visible.forEach((node) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
@@ -1019,8 +1069,8 @@
         writeLinearLayout(node, parent, vertical) {
             return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
         }
-        writeGridLayout(node, parent, columnCount) {
-            return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.GRID, { android: { columnCount: columnCount.toString() } });
+        writeGridLayout(node, parent, columnCount, rowCount = 0) {
+            return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
         }
         writeRelativeLayout(node, parent) {
             return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.RELATIVE);
@@ -1046,7 +1096,7 @@
             this.before = {};
             this.after = {};
         }
-        replaceBeforeAfter(output) {
+        replaceAppended(output) {
             for (const id in this.before) {
                 output = output.replace(`{<${id}}`, this.before[id].join(''));
             }
@@ -1196,6 +1246,21 @@
             }
             return cascade(this);
         }
+        inheritStyle(node) {
+            for (const attr in node.style) {
+                if (attr.startsWith('font') || attr.startsWith('color')) {
+                    const key = hyphenToCamelCase(attr);
+                    this.style[key] = node.style[key];
+                }
+            }
+        }
+        inheritStyleMap(node) {
+            for (const attr in node.styleMap) {
+                if (this.styleMap[attr] == null) {
+                    this.styleMap[attr] = node.styleMap[attr];
+                }
+            }
+        }
         intersect(rect, dimension = 'bounds') {
             const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
             const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
@@ -1335,16 +1400,15 @@
         }
         get flex() {
             if (this._flex == null) {
-                const parent = this.element && this.element.parentElement.__node;
+                const parent = this.parentOriginal;
                 this._flex = {
-                    parent,
                     enabled: (this.style.display && this.style.display.indexOf('flex') !== -1),
                     direction: this.style.flexDirection,
                     basis: this.style.flexBasis,
                     grow: convertInt(this.style.flexGrow),
                     shrink: convertInt(this.style.flexShrink),
                     wrap: this.style.flexWrap,
-                    alignSelf: (parent && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
+                    alignSelf: (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
                     justifyContent: this.style.justifyContent,
                     order: convertInt(this.style.order)
                 };
@@ -1583,15 +1647,6 @@
                 }
             }
         }
-        inheritStyle(node) {
-            const style = [];
-            for (const attr in node.style) {
-                if (attr.startsWith('font') || attr.startsWith('color')) {
-                    const key = hyphenToCamelCase(attr);
-                    this.style[key] = node.style[key];
-                }
-            }
-        }
         is(...views) {
             for (const value of views) {
                 if (this.nodeName === Widget.getNodeName(value)) {
@@ -1731,19 +1786,20 @@
         setGravity() {
             const verticalAlign = this.styleMap.verticalAlign;
             let textAlign = '';
-            let element = this.element;
-            while (element && element.__styleMap != null) {
-                textAlign = element.__styleMap.textAlign || textAlign;
-                const float = (element !== this.element ? element.__styleMap.float : '');
+            let node = this;
+            while (node != null) {
+                textAlign = node.styleMap.textAlign || textAlign;
+                const float = (node !== this ? node.styleMap.float : '');
                 if (float === 'left' || float === 'right' || hasValue(textAlign)) {
                     break;
                 }
-                element = element.parentElement;
+                node = node.parentOriginal;
             }
             if (hasValue(verticalAlign) || hasValue(textAlign)) {
                 let horizontal = '';
                 let vertical = '';
-                const layoutGravity = [];
+                let gravity = [];
+                let layoutGravity = [];
                 switch (textAlign) {
                     case 'start':
                         horizontal = 'start';
@@ -1774,32 +1830,48 @@
                             vertical = 'center_vertical';
                         }
                 }
-                const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating);
+                const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating && this.renderParent.tagName !== 'TABLE');
                 switch (this.renderParent.nodeName) {
                     case NODE_ANDROID.RADIO_GROUP:
                     case NODE_ANDROID.LINEAR:
                         if (parentTextAlign) {
                             this.renderParent.android('gravity', horizontal);
+                            horizontal = '';
+                        }
+                        else {
+                            gravity.push(vertical);
+                            vertical = '';
                         }
                         break;
                     case NODE_ANDROID.CONSTRAINT:
                     case NODE_ANDROID.RELATIVE:
-                        const gravity = [vertical, horizontal].filter(value => value);
-                        this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
+                        gravity.push(horizontal, vertical);
                         horizontal = '';
                         vertical = '';
                         break;
                     case NODE_ANDROID.GRID:
-                        if (parentTextAlign && horizontal !== '') {
-                            layoutGravity.push(horizontal);
+                        if (parentTextAlign) {
+                            layoutGravity.push(horizontal, vertical);
                         }
+                        else {
+                            gravity.push(horizontal, vertical);
+                        }
+                        if (this.renderParent.tagName === 'TABLE') {
+                            this.android('layout_gravity', 'fill');
+                        }
+                        horizontal = '';
+                        vertical = '';
                         break;
                 }
-                if (vertical !== '' || layoutGravity.length > 0) {
-                    layoutGravity.push(vertical);
-                    this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]));
+                gravity = gravity.filter(value => value !== '');
+                layoutGravity = layoutGravity.filter(value => value !== '');
+                if (layoutGravity.length > 0) {
+                    this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]), false);
                 }
-                if (horizontal !== '') {
+                else if (gravity.length > 0) {
+                    this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
+                }
+                else if (horizontal !== '') {
                     this.android('gravity', horizontal);
                 }
             }
@@ -3274,7 +3346,7 @@
             const index = result.findIndex((item) => item.name === '');
             return result[Math.min(index + 1, result.length - 1)];
         }
-        return null;
+        return '';
     }
     function getByColorName(value) {
         for (const color in X11_CSS3) {
@@ -3294,7 +3366,7 @@
                 return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[4] || '1'];
             }
         }
-        return null;
+        return '';
     }
     function convertRGBtoHex(value) {
         const hex = '0123456789ABCDEF';
@@ -3319,11 +3391,11 @@
     class Resource {
         constructor() {
         }
-        static addResourceString(value, name) {
-            if (!hasValue(name)) {
-                name = value;
-            }
+        static addResourceString(value, name = '') {
             if (hasValue(value)) {
+                if (name === '') {
+                    name = value;
+                }
                 const num = isNumber(value);
                 if (SETTINGS.numberResourceValue || !num) {
                     for (const [storedValue, storedName] of Resource.STORED.STRINGS.entries()) {
@@ -3342,13 +3414,14 @@
                 }
                 return value;
             }
-            return null;
+            return '';
         }
         static addResourceImage(value) {
+            let src = '';
             if (hasValue(value)) {
                 const image = value.substring(value.lastIndexOf('/') + 1);
                 const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
-                let src = image.replace(/.\w+$/, '');
+                src = image.replace(/.\w+$/, '');
                 switch (format) {
                     case 'bmp':
                     case 'bmpf':
@@ -3366,9 +3439,8 @@
                     default:
                         src = '';
                 }
-                return src;
             }
-            return null;
+            return src;
         }
         static addResourceColor(value, hex = true) {
             value = value.toUpperCase().trim();
@@ -3376,7 +3448,7 @@
                 let colorName = '';
                 if (!Resource.STORED.COLORS.has(value)) {
                     const color = findNearestColor(value);
-                    if (color != null) {
+                    if (color !== '') {
                         color.name = cameltoLowerCase(color.name);
                         if (value === color.hex) {
                             colorName = color.name;
@@ -3392,7 +3464,7 @@
                 }
                 return (hex ? [colorName, value] : colorName);
             }
-            return null;
+            return '';
         }
         static insertStoredAsset(asset, name, value) {
             const stored = Resource.STORED[asset];
@@ -3449,16 +3521,15 @@
                     if (element.parentElement != null) {
                         backgroundParent = parseRGBA(getStyle(element.parentElement).backgroundColor) || [];
                     }
-                    const style = getStyle(element);
                     for (const i in result) {
-                        result[i] = result[i](style[i]);
+                        result[i] = result[i](node.css(i));
                     }
                     result.border[2] = Resource.addResourceColor(result.border[2], false);
                     if (backgroundParent[0] === result.backgroundColor[0] || result.backgroundColor[4] === 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(result.backgroundColor[0])))) {
-                        result.backgroundColor = null;
+                        result.backgroundColor = '';
                     }
                     else {
-                        result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addResourceColor(result.backgroundColor[1]) : null);
+                        result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addResourceColor(result.backgroundColor[1]) : '');
                     }
                     element.__boxStyle = result;
                 }
@@ -3468,16 +3539,21 @@
             this.cache.elements.forEach((node) => {
                 if ((node.visible || node.companion) && node.renderChildren.length === 0) {
                     const element = node.element;
-                    const style = getStyle(element);
-                    const color = parseRGBA(style.color);
-                    const backgroundColor = parseRGBA(style.backgroundColor);
+                    switch (element.tagName) {
+                        case 'IMG':
+                        case 'HR':
+                        case 'AREA':
+                            return;
+                    }
+                    const color = parseRGBA(node.css('color') || '');
+                    const backgroundColor = parseRGBA(node.css('backgroundColor') || '');
                     const result = {
-                        fontFamily: style.fontFamily,
-                        fontStyle: style.fontStyle,
-                        fontSize: style.fontSize,
-                        fontWeight: style.fontWeight,
-                        color: (color != null ? Resource.addResourceColor(color[1]) : null),
-                        backgroundColor: (backgroundColor != null ? Resource.addResourceColor(backgroundColor[1]) : null)
+                        fontFamily: node.css('fontFamily'),
+                        fontStyle: node.css('fontStyle'),
+                        fontSize: node.css('fontSize'),
+                        fontWeight: node.css('fontWeight'),
+                        color: (color !== '' ? Resource.addResourceColor(color[1]) : ''),
+                        backgroundColor: (backgroundColor !== '' ? Resource.addResourceColor(backgroundColor[1]) : '')
                     };
                     element.__fontStyle = result;
                 }
@@ -3508,7 +3584,7 @@
                                 numberArray = null;
                                 continue;
                             }
-                            const result = Resource.addResourceString(value, '');
+                            const result = Resource.addResourceString(value);
                             if (result != null) {
                                 stringArray.push(result);
                             }
@@ -3527,7 +3603,7 @@
                     value = element.value.trim();
                 }
                 else if (element.nodeName === '#text') {
-                    value = (element.textContent != null ? element.textContent.trim() : '');
+                    value = (element.textContent ? element.textContent.trim() : '');
                 }
                 else if (element.children.length === 0 || Array.from(element.children).every((item) => INLINE_CHROME.includes(item.tagName))) {
                     name = element.innerText.trim();
@@ -3568,7 +3644,7 @@
             if (match != null) {
                 return Resource.addResourceImage(match[1]);
             }
-            return null;
+            return '';
         }
     }
     Resource.STORED = {
@@ -3926,7 +4002,7 @@
                         let template;
                         let data;
                         let resourceName = '';
-                        if (stored.backgroundColor == null && stored.backgroundImage == null && stored.borderRadius.length === 0) {
+                        if (stored.backgroundColor === '' && stored.backgroundImage === '' && stored.borderRadius.length === 0) {
                             template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
                             data = {
                                 '0': [{
@@ -3941,11 +4017,11 @@
                                 '0': [{
                                         '1': [{
                                                 '2': [{ width: stored.border[1], borderStyle: borderStyle.default }],
-                                                '3': (stored.backgroundColor != null ? [{ color: `@color/${stored.backgroundColor[0]}` }] : false),
+                                                '3': (stored.backgroundColor !== '' ? [{ color: `@color/${stored.backgroundColor[0]}` }] : false),
                                                 '4': (stored.borderRadius.length === 1 ? [{ radius: stored.borderRadius[0] }] : false),
                                                 '5': (stored.borderRadius.length > 1 ? [{ topLeftRadius: '' }] : false)
                                             }],
-                                        '6': (stored.backgroundImage != null ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
+                                        '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
                                     }]
                             };
                             const rootItem = getDataLevel(data, '0');
@@ -3973,7 +4049,7 @@
                         }
                         node.attr(formatString(method['background'], resourceName));
                     }
-                    else if (stored.backgroundColor != null) {
+                    else if (stored.backgroundColor !== '') {
                         node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
                     }
                 }
@@ -4029,7 +4105,7 @@
                             delete stored.fontStyle;
                             delete stored.fontWeight;
                         }
-                        if (stored.color != null) {
+                        if (stored.color !== '') {
                             if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(stored.color[1])) {
                                 delete stored.color;
                             }
@@ -4037,7 +4113,7 @@
                                 stored.color = `@color/${stored.color[0]}`;
                             }
                         }
-                        if (stored.backgroundColor != null) {
+                        if (stored.backgroundColor !== '') {
                             if (labelFor != null) {
                                 stored.backgroundColor = labelFor.element.__fontStyle.backgroundColor;
                             }
@@ -4213,7 +4289,7 @@
                 if (tagData != null) {
                     for (const attr in tagData) {
                         if (tagData[attr].includes(node.id)) {
-                            node.attr(attr);
+                            node.attr(attr, false);
                         }
                     }
                 }
@@ -4464,8 +4540,8 @@
                 for (const style of rule.styleMap) {
                     attributes.add(hyphenToCamelCase(style[0]));
                 }
-                for (const element of Array.from(elements)) {
-                    for (const attr of element.style) {
+                Array.from(elements).forEach((element) => {
+                    for (const attr of Array.from(element.style)) {
                         attributes.add(hyphenToCamelCase(attr));
                     }
                     const style = getComputedStyle(element);
@@ -4484,28 +4560,29 @@
                             styleMap[name] = style[name];
                         }
                     }
-                    if (element.__styleMap != null) {
-                        Object.assign(element.__styleMap, styleMap);
+                    const object = element;
+                    if (object.__styleMap != null) {
+                        Object.assign(object.__styleMap, styleMap);
                     }
                     else {
-                        element.__style = style;
-                        element.__styleMap = styleMap;
+                        object.__style = style;
+                        object.__styleMap = styleMap;
                     }
-                }
+                });
             }
         }
     }
     function parseDocument(element) {
-        let output = '';
         if (typeof element === 'string') {
             element = document.getElementById(element);
         }
         setStyleMap();
+        let output = '';
         const app = new Application(Widget, WidgetList, new View(), new ResourceWidget());
         app.setNodeCache(element);
         output = app.getLayoutXml();
         app.setResources();
-        output = app.replaceBeforeAfter(output);
+        output = app.replaceAppended(output);
         if (SETTINGS.showAttributes) {
             app.setMarginPadding();
             if (SETTINGS.useLayoutWeight) {

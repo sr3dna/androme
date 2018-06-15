@@ -1,0 +1,112 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <style type="text/css">
+        body {
+            font-family: monospace;
+            padding: 10px;
+            margin: 0px;
+        }
+        th, td {
+            border: solid 1px #000;
+            padding: 8px;
+        }
+        a {
+            font-size: 11px;
+            margin-top: 4px;
+            float: right;
+        }
+        .output {
+            float: left;
+        }
+        .output pre {
+            height: 600px;
+            font-size: 10px;
+            margin: 0px;
+            padding: 10px;
+            background-color: floralwhite;
+            border: solid 1px #ccc;
+            margin-left: 15px;
+            overflow: auto;
+        }
+    </style>
+    <script src="../dist/androme.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('output').innerHTML = androme.parseDocument(document.getElementById('androme-root')).replace(/</g, '&lt;');
+            let resource = androme.writeResourceStringXml() + '\n\n' +
+                           androme.writeResourceStyleXml() + '\n\n' +
+                           androme.writeResourceColorXml() + '\n\n' +
+                           androme.writeResourceDrawableXml();
+            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+        });
+    </script>
+</head>
+<body>
+    <div style="float: left;">
+        <table id="androme-root">
+            <thead style="background-color: #ccc;">
+                <th colspan="4">head 1</th>
+                <th colspan="4">head 2</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td rowspan="5">1</td>
+                    <td rowspan="2" colspan="2">1111</td>
+                    <td rowspan="3">---</td>
+                    <td colspan="3">1</td>
+                    <td>----</td>
+                </tr>
+                <tr>
+                    <td>22</td>
+                    <td>2</td>
+                    <td>2</td>
+                    <td rowspan="2">---</td>
+                </tr>
+                <tr>
+                    <td>33</td>
+                    <td>3</td>
+                    <td colspan="3">333</td>
+                </tr>
+                <tr>
+                    <td>44</td>
+                    <td>44</td>
+                    <td rowspan="2">---</td>
+                    <td>4444</td>
+                    <td>4</td>
+                    <td>4</td>
+                    <td>----</td>
+                </tr>
+                <tr>
+                    <td colspan="2">555</td>
+                    <td colspan="3">55555</td>
+                    <td>---</td>
+                </tr>
+                <tfoot style="background-color: #aaa;">
+                    <th colspan="8">foot 1</th>
+                </tfoot>
+            </tbody>
+        </table>
+    </div>
+    <div class="output">
+        <pre id="output"></pre>
+        <a href="javascript:copy('output');" style="text-align: right;">Copy</a>
+    </div>
+    <div class="output">
+        <pre id="resource"></pre>
+        <a href="javascript:copy('resource');" style="text-align: right;">Copy</a>
+    </div>
+    <script>
+        function copy(id) {
+            const element = document.getElementById(id);
+            const range = document.createRange();  
+            range.selectNode(element);  
+            window.getSelection().addRange(range); 
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();  
+        }
+    </script>
+</body>
+</html>
