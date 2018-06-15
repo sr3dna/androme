@@ -2,7 +2,7 @@ import Element from './element';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, NODE_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
+import { BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import { hasValue, sortAsc } from '../lib/util';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
@@ -246,12 +246,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     const nodeY = (<T> axisY[k]);
                     if (!nodeY.renderParent) {
                         const parent = (<T> nodeY.parent);
-                        let tagName = nodeY.nodeName;
+                        let tagName = nodeY.viewName;
                         let restart = false;
                         let xml = '';
                         if (tagName == null) {
                             if ((nodeY.children.length === 0 && nodeY.element && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: T) => INLINE_CHROME.includes(item.tagName))) {
-                                tagName = this.viewHandler.getNodeName(NODE_STANDARD.TEXT);
+                                tagName = this.viewHandler.getViewName(VIEW_STANDARD.TEXT);
                             }
                             else if (nodeY.children.length > 0) {
                                 if (nodeY.tagName === 'TABLE') {
@@ -296,12 +296,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                                 if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
                                                     td.styleMap.verticalAlign = 'middle';
                                                 }
-                                                style.margin = (nodeY.style.borderCollapse !== 'collapse' ? nodeY.style.borderSpacing : '0px');
+                                                const [width, height] = (nodeY.style.borderCollapse === 'collapse' ? ['0px', '0px'] : nodeY.style.borderSpacing.split(' '));
                                                 delete td.styleMap.margin;
-                                                delete td.styleMap.marginLeft;
-                                                delete td.styleMap.marginRight;
-                                                delete td.styleMap.marginTop;
-                                                delete td.styleMap.marginBottom;
+                                                td.styleMap.marginTop = height;
+                                                td.styleMap.marginRight = width;
+                                                td.styleMap.marginBottom = height;
+                                                td.styleMap.marginLeft = width;
                                                 td.parent = nodeY;
                                             }
                                         }
@@ -539,7 +539,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             }
                         }
                         if (!nodeY.renderParent) {
-                            if (parent.is(NODE_STANDARD.GRID)) {
+                            if (parent.is(VIEW_STANDARD.GRID)) {
                                 let siblings: U;
                                 if (SETTINGS.useLayoutWeight) {
                                     siblings = new this.TypeU((<U> nodeY.gridSiblings));
@@ -591,27 +591,27 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     private writeFrameLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.FRAME);
+        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.FRAME);
     }
 
     private writeLinearLayout(node: T, parent: T, vertical: boolean) {
-        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
+        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
     }
 
     private writeGridLayout(node: T, parent: T, columnCount: number, rowCount: number = 0) {
-        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
+        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
     }
 
     private writeRelativeLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.RELATIVE);
+        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.RELATIVE);
     }
 
     private writeConstraintLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, NODE_STANDARD.CONSTRAINT);
+        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.CONSTRAINT);
     }
 
-    private writeViewTag(node: T, parent: T, nodeName: number | string) {
-        return this.viewHandler.renderTag(node, parent, nodeName);
+    private writeViewTag(node: T, parent: T, viewName: number | string) {
+        return this.viewHandler.renderTag(node, parent, viewName);
     }
 
     private writeDefaultLayout(node: T, parent: T) {

@@ -128,6 +128,10 @@ export function isNumber(value: string) {
     return /^[0-9]+\.?[0-9]*$/.test(value.toString().trim());
 }
 
+export function isPercent(value: string) {
+    return /^[0-9]+%$/.test(value);
+}
+
 export function search(obj: {}, value: string | object) {
     const result: any[][] = [];
     if (typeof value === 'object') {

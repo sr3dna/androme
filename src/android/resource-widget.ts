@@ -6,7 +6,7 @@ import { sameAsParent } from '../lib/dom';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
-import { NODE_STANDARD } from '../lib/constants';
+import { VIEW_STANDARD } from '../lib/constants';
 import { BUILD_ANDROID } from './constants';
 
 import STRING_TMPL from './tmpl/resources/string';
@@ -188,7 +188,7 @@ export class ResourceWidget extends Resource<T> {
                         }
                     }
                     if (resourceName === '') {
-                        resourceName = `${node.tagName.toLowerCase()}_${node.androidId}`;
+                        resourceName = `${node.tagName.toLowerCase()}_${node.viewId}`;
                         STORED.DRAWABLES.set(resourceName, xml);
                     }
                     node.attr(formatString(method['background'], resourceName));
@@ -479,7 +479,7 @@ export class ResourceWidget extends Resource<T> {
             if (stored.numberArray != null) {
                 result = stored.numberArray;
             }
-            const arrayName = `${node.androidId}_array`;
+            const arrayName = `${node.viewId}_array`;
             STORED.ARRAYS.set(arrayName, result);
             node.attr(formatString(method['entries'], arrayName));
         });
@@ -493,7 +493,7 @@ export class ResourceWidget extends Resource<T> {
             if (stored != null) {
                 const method = METHOD_ANDROID['valueString'];
                 const name = Resource.STORED.STRINGS.get(stored);
-                if (node.is(NODE_STANDARD.TEXT) && element instanceof HTMLElement) {
+                if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
                     const match = node.style.textDecoration.match(/(underline|line-through)/);
                     if (match != null) {
                         let value = '';

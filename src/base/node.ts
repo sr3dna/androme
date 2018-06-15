@@ -14,6 +14,7 @@ export default abstract class Node implements IBoxModel {
     public linear: IClientRect;
     public box: IClientRect;
     public renderDepth: number;
+    public viewId: string;
 
     public gridRowSpan: number;
     public gridColumnSpan: number;
@@ -28,6 +29,8 @@ export default abstract class Node implements IBoxModel {
 
     public abstract children: Node[];
     public abstract renderChildren: Node[];
+
+    protected _viewName: string;
 
     private _flex: any;
     private _namespaces = new Set<string>();
@@ -57,9 +60,10 @@ export default abstract class Node implements IBoxModel {
         }
     }
 
+    public abstract setViewId(viewNam: string): void;
+    public abstract setViewLayout(options?: any): void;
     public abstract is(...views: number[]): boolean;
     public abstract distributeWeight(horizontal: boolean, percent: number): void;
-    public abstract get nodeName(): string;
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
@@ -308,6 +312,12 @@ export default abstract class Node implements IBoxModel {
     }
     get tagName() {
         return this._tagName || (this.element != null ? this.element.tagName : '');
+    }
+    set viewName(value) {
+        this._viewName = value;
+    }
+    get viewName() {
+        return this._viewName;
     }
     get flex() {
         if (this._flex == null) {

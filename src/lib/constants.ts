@@ -1,4 +1,4 @@
-export enum NODE_STANDARD {
+export enum VIEW_STANDARD {
     FRAME = 1,
     LINEAR,
     CONSTRAINT,
@@ -32,22 +32,22 @@ export enum BOX_STANDARD {
 }
 
 export const MAPPING_CHROME = {
-    'TEXT': NODE_STANDARD.TEXT,
-    'LABEL': NODE_STANDARD.TEXT,
-    'P': NODE_STANDARD.TEXT,
-    'HR': NODE_STANDARD.VIEW,
-    'IMG': NODE_STANDARD.IMAGE,
-    'SELECT': NODE_STANDARD.SELECT,
+    'TEXT': VIEW_STANDARD.TEXT,
+    'LABEL': VIEW_STANDARD.TEXT,
+    'P': VIEW_STANDARD.TEXT,
+    'HR': VIEW_STANDARD.VIEW,
+    'IMG': VIEW_STANDARD.IMAGE,
+    'SELECT': VIEW_STANDARD.SELECT,
     'INPUT' : {
-        'text': NODE_STANDARD.EDIT,
-        'password': NODE_STANDARD.EDIT,
-        'checkbox': NODE_STANDARD.CHECKBOX,
-        'radio': NODE_STANDARD.RADIO,
-        'button': NODE_STANDARD.BUTTON,
-        'submit': NODE_STANDARD.BUTTON
+        'text': VIEW_STANDARD.EDIT,
+        'password': VIEW_STANDARD.EDIT,
+        'checkbox': VIEW_STANDARD.CHECKBOX,
+        'radio': VIEW_STANDARD.RADIO,
+        'button': VIEW_STANDARD.BUTTON,
+        'submit': VIEW_STANDARD.BUTTON
     },
-    'BUTTON': NODE_STANDARD.BUTTON,
-    'TEXTAREA': NODE_STANDARD.EDIT
+    'BUTTON': VIEW_STANDARD.BUTTON,
+    'TEXTAREA': VIEW_STANDARD.EDIT
 };
 
 export const BLOCK_CHROME = [

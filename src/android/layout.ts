@@ -1,6 +1,6 @@
 import Widget from './widget';
 import WidgetList from './widgetlist';
-import { NODE_STANDARD } from '../lib/constants';
+import { VIEW_STANDARD } from '../lib/constants';
 
 type T = Widget;
 
@@ -22,15 +22,15 @@ export default class Layout extends Widget {
         }
     }
 
-    public setAndroidDimensions() {
+    public setViewLayout() {
         const [width, height] = this.childrenBox;
         const options = {
             parent: this.parentOriginal,
             width,
             height,
-            requireWrap: this.parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID)
+            requireWrap: this.parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID)
         };
-        super.setAndroidDimensions(options);
+        super.setViewLayout(options);
     }
 
     public setBounds(calibrate = false) {

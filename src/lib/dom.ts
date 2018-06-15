@@ -29,10 +29,11 @@ export function sameAsParent(element: HTMLElement, attr: string) {
 export function getBoxSpacing(element: HTMLElement, complete = false) {
     const result: IBoxModel = {};
     const style = getStyle(element);
+    const node = (<any> element).__node;
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
             const attr = border + side;
-            const value = convertInt(style[attr]);
+            const value = convertInt((node != null ? node[attr] : style[attr]));
             if (complete || value !== 0) {
                 result[attr] = value;
             }

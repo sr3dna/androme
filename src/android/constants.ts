@@ -25,7 +25,7 @@ export enum DENSITY_ANDROID {
     XXXHDPI = 640
 }
 
-export const NODE_ANDROID = {
+export const VIEW_ANDROID = {
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
@@ -59,11 +59,11 @@ export const BOX_ANDROID = {
 };
 
 export const FIXED_ANDROID = [
-    NODE_ANDROID.EDIT,
-    NODE_ANDROID.SELECT,
-    NODE_ANDROID.CHECKBOX,
-    NODE_ANDROID.RADIO,
-    NODE_ANDROID.BUTTON
+    VIEW_ANDROID.EDIT,
+    VIEW_ANDROID.SELECT,
+    VIEW_ANDROID.CHECKBOX,
+    VIEW_ANDROID.RADIO,
+    VIEW_ANDROID.BUTTON
 ];
 
 export const XMLNS_ANDROID = {

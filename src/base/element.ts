@@ -18,11 +18,11 @@ export default abstract class Element<T extends Node, U extends NodeList<T>> {
     public abstract setConstraints(): void;
     public abstract setLayoutWeight(): void;
     public abstract setMarginPadding(): void;
-    public abstract renderLayout(node: T, parent: T, nodeName: number, options?: {}): string;
-    public abstract renderTag(node: T, parent: T, nodeName: number | string): string;
+    public abstract renderLayout(node: T, parent: T, viewName: number, options?: {}): string;
+    public abstract renderTag(node: T, parent: T, viewName: number | string): string;
     public abstract createWrapper(node: T, parent: T, children: U): T;
     public abstract getStaticTag(tagName: number, depth: number, options: {}, width: any, height: any): string[];
-    public abstract getNodeName(value: number): string;
+    public abstract getViewName(value: number): string;
     public abstract getRootAttributes(options: {}): string;
     public abstract replaceInlineAttributes(output: string, node: T, namespaces?: {}): string;
 

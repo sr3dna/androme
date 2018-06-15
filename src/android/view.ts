@@ -7,8 +7,8 @@ import { convertPX, formatPX, hasValue, indexOf, padLeft, same, search, sortAsc,
 import { getBoxSpacing } from '../lib/dom';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
-import { BOX_STANDARD, OVERFLOW_CHROME, NODE_STANDARD } from '../lib/constants';
-import { BOX_ANDROID, NODE_ANDROID, XMLNS_ANDROID } from './constants';
+import { BOX_STANDARD, OVERFLOW_CHROME, VIEW_STANDARD } from '../lib/constants';
+import { BOX_ANDROID, VIEW_ANDROID, XMLNS_ANDROID } from './constants';
 
 const LAYOUT_MAP = {
     relative: {
@@ -45,8 +45,8 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         super();
     }
 
-    public getNodeName(value: number) {
-        return Widget.getNodeName(value);
+    public getViewName(value: number) {
+        return Widget.getViewName(value);
     }
 
     public setConstraints() {
@@ -64,12 +64,12 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         });
         this.cache.visible.forEach((node: T) => {
             const nodes: U = (<U> new WidgetList(node.renderChildren, node));
-            const constraint = node.is(NODE_STANDARD.CONSTRAINT);
-            const relative = node.is(NODE_STANDARD.RELATIVE);
+            const constraint = node.is(VIEW_STANDARD.CONSTRAINT);
+            const relative = node.is(VIEW_STANDARD.RELATIVE);
             const flex = node.flex;
             if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
                 node.expandDimensions();
-                if (node.is(NODE_STANDARD.LINEAR)) {
+                if (node.is(VIEW_STANDARD.LINEAR)) {
                     if (node.renderChildren.some((item: T) => item.flex.direction.indexOf('row') !== -1)) {
                         node.constraint.layoutWidth = true;
                         node.constraint.expand = true;
@@ -154,7 +154,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                                 }
                                 else {
                                     if (current.viewHeight === 0 && bounds1.top === bounds2.top && bounds1.bottom === bounds2.bottom) {
-                                        const baseline = (current.is(NODE_STANDARD.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(NODE_STANDARD.TEXT) && adjacent.style.verticalAlign === 'baseline');
+                                        const baseline = (current.is(VIEW_STANDARD.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(VIEW_STANDARD.TEXT) && adjacent.style.verticalAlign === 'baseline');
                                         current.anchor(LAYOUT[(baseline ? 'baseline' : 'top')], adjacent);
                                         current.anchor(LAYOUT['bottom'], adjacent);
                                     }
@@ -344,7 +344,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                                             chain.android(`layout_${dimension}`, 'wrap_content');
                                         }
                                         else if (chain.flex.grow > 0) {
-                                            chain.android(`layout_${dimension}`, (node.renderParent.is(NODE_STANDARD.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') !== -1 ? 'wrap_content' : '0px'));
+                                            chain.android(`layout_${dimension}`, (node.renderParent.is(VIEW_STANDARD.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') !== -1 ? 'wrap_content' : '0px'));
                                         }
                                         if (chain.flex.shrink === 0) {
                                             chain.app(`layout_constrained${WH}`, 'true');
@@ -637,7 +637,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
 
     public setMarginPadding() {
         this.cache.forEach((node: T) => {
-            if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
+            if (node.is(VIEW_STANDARD.LINEAR, VIEW_STANDARD.RADIO_GROUP)) {
                 switch (node.android('orientation')) {
                     case 'horizontal':
                         let left = node.box.left;
@@ -666,32 +666,32 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         });
     }
 
-    public renderLayout(node: T, parent: T, nodeName: number, options?) {
+    public renderLayout(node: T, parent: T, viewName: number, options?) {
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
-        node.setAndroidId(Widget.getNodeName(nodeName));
+        node.setViewId(Widget.getViewName(viewName));
         if (node.overflow !== OVERFLOW_CHROME.NONE) {
             const scrollView: string[] = [];
             if (node.overflowX) {
-                scrollView.push(NODE_ANDROID.SCROLL_HORIZONTAL);
+                scrollView.push(VIEW_ANDROID.SCROLL_HORIZONTAL);
             }
             if (node.overflowY) {
-                scrollView.push((node.ascend().some((item: T) => item.overflow !== OVERFLOW_CHROME.NONE) ? NODE_ANDROID.SCROLL_NESTED : NODE_ANDROID.SCROLL_VERTICAL));
+                scrollView.push((node.ascend().some((item: T) => item.overflow !== OVERFLOW_CHROME.NONE) ? VIEW_ANDROID.SCROLL_NESTED : VIEW_ANDROID.SCROLL_VERTICAL));
             }
             let current = node;
             let scrollDepth = parent.renderDepth + scrollView.length;
             scrollView
-                .map(widgetName => {
+                .map(scrollName => {
                     const layout = new Layout(this.cache.nextId, current, null, [current]);
-                    const widget: T = <Widget> layout as T;
-                    layout.setAndroidId(widgetName);
+                    const widget: T = (<Widget> layout) as T;
+                    layout.setViewId(scrollName);
                     layout.setBounds();
                     layout.inheritGrid(current);
                     layout.android('fadeScrollbars', 'false');
                     this.cache.push(widget);
-                    switch (widgetName) {
-                        case NODE_ANDROID.SCROLL_HORIZONTAL:
+                    switch (scrollName) {
+                        case VIEW_ANDROID.SCROLL_HORIZONTAL:
                             layout.css('width', node.styleMap.width);
                             layout.css('minWidth', node.styleMap.minWidth);
                             layout.css('overflowX', node.styleMap.overflowX);
@@ -702,8 +702,8 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                             layout.css('overflowY', node.styleMap.overflowY);
                     }
                     const indent = padLeft(scrollDepth--);
-                    preXml = indent + `<${widgetName}{@${layout.id}}>\n` + preXml;
-                    postXml += indent + `</${widgetName}>\n`;
+                    preXml = indent + `<${scrollName}{@${layout.id}}>\n` + preXml;
+                    postXml += indent + `</${scrollName}>\n`;
                     if (current === node) {
                         node.parent = widget;
                         renderParent = widget;
@@ -731,15 +731,15 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         node.render(renderParent);
         node.setGravity();
         this.setGridSpace(node);
-        return this.getEnclosingTag(node.renderDepth, Widget.getNodeName(nodeName), node.id, `{${node.id}}`, preXml, postXml);
+        return this.getEnclosingTag(node.renderDepth, Widget.getViewName(viewName), node.id, `{${node.id}}`, preXml, postXml);
     }
 
-    public renderTag(node: T, parent: T, nodeName: number | string, recursive = false) {
+    public renderTag(node: T, parent: T, viewName: number | string, recursive = false) {
         const element: any = node.element;
-        if (typeof nodeName === 'number') {
-            nodeName = Widget.getNodeName(nodeName);
+        if (typeof viewName === 'number') {
+            viewName = Widget.getViewName(viewName);
         }
-        node.setAndroidId((<string> nodeName));
+        node.setViewId((<string> viewName));
         switch (element.tagName) {
             case 'TEXTAREA':
                 node.android('minLines', '2');
@@ -757,11 +757,11 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 }
                 break;
         }
-        switch (node.nodeName) {
-            case NODE_ANDROID.EDIT:
+        switch (node.viewName) {
+            case VIEW_ANDROID.EDIT:
                 node.android('inputType', 'text');
                 break;
-            case NODE_ANDROID.BUTTON:
+            case VIEW_ANDROID.BUTTON:
                 if (node.viewWidth === 0) {
                     node.android('minWidth', '0px');
                 }
@@ -783,14 +783,14 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         switch (element.type) {
             case 'radio':
                 if (!recursive) {
-                    const result = <U> node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name));
+                    const result = (<U> node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name)));
                     let xml = '';
                     if (result.length > 1) {
                         const layout = new Layout(this.cache.nextId, node, parent, result);
-                        const widget = <Widget> layout as T;
+                        const widget = (<Widget> layout) as T;
                         let checked: string = '';
                         this.cache.push(widget);
-                        layout.setAndroidId(NODE_ANDROID.RADIO_GROUP);
+                        layout.setViewId(VIEW_ANDROID.RADIO_GROUP);
                         layout.render(parent);
                         result.forEach((radio: T) => {
                             layout.inheritGrid(radio);
@@ -799,7 +799,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                             }
                             radio.parent = layout;
                             radio.render(layout);
-                            xml += this.renderTag(radio, widget, NODE_STANDARD.RADIO, true);
+                            xml += this.renderTag(radio, widget, VIEW_STANDARD.RADIO, true);
                         });
                         layout.android('orientation', (<U> layout.children).linearX ? 'horizontal' : 'vertical');
                         if (checked !== '') {
@@ -807,7 +807,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                         }
                         layout.setBounds();
                         this.setGridSpace(widget);
-                        return this.getEnclosingTag(layout.renderDepth, NODE_ANDROID.RADIO_GROUP, layout.id, xml);
+                        return this.getEnclosingTag(layout.renderDepth, VIEW_ANDROID.RADIO_GROUP, layout.id, xml);
                     }
                 }
                 break;
@@ -821,7 +821,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
         node.setAccessibility();
         node.cascade().forEach((item: T) => item.hide());
         this.setGridSpace(node);
-        return this.getEnclosingTag(node.renderDepth, node.nodeName, node.id);
+        return this.getEnclosingTag(node.renderDepth, node.viewName, node.id);
     }
 
     public createWrapper(node: T, parent: T, children: U) {
@@ -831,12 +831,12 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
             layout.inheritGrid(child);
         });
         layout.setBounds();
-        return <Widget> layout as T;
+        return (<Widget> layout) as T;
     }
 
     public getStaticTag(tagName: number, depth: number, options: {}, width = 'wrap_content', height = 'wrap_content') {
         const node = new Widget(0, SETTINGS.targetAPI);
-        node.setAndroidId(Widget.getNodeName(tagName));
+        node.setViewId(Widget.getViewName(tagName));
         let attributes = '';
         if (SETTINGS.showAttributes) {
             node.apply(options);
@@ -846,11 +846,11 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
             const indent = padLeft(depth + 1);
             attributes = node.combine().map(value => `\n${indent + value}`).join('');
         }
-        return [this.getEnclosingTag(depth, node.nodeName, 0).replace('{@0}', attributes), node.stringId];
+        return [this.getEnclosingTag(depth, node.viewName, 0).replace('{@0}', attributes), node.stringId];
     }
 
     public replaceInlineAttributes(output: string, node: T, options: {}) {
-        node.setAndroidDimensions();
+        node.setViewLayout();
         node.namespaces.forEach((value: string) => options[value] = true);
         return output.replace(`{@${node.id}}`, this.parseAttributes(node));
     }
@@ -876,7 +876,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
     }
 
     private setGridSpace(node: T) {
-        if (node.parent.is(NODE_STANDARD.GRID)) {
+        if (node.parent.is(VIEW_STANDARD.GRID)) {
             const dimensions: any = getBoxSpacing((<HTMLElement> node.parentOriginal.element), true);
             const options = {
                 android: {
@@ -886,7 +886,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
             if (node.gridFirst) {
                 const heightTop = dimensions.paddingTop + dimensions.marginTop;
                 if (heightTop > 0) {
-                    this.prependBefore(node.id, this.getStaticTag(NODE_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0]);
+                    this.prependBefore(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0]);
                 }
             }
             if (node.gridRowStart) {
@@ -901,7 +901,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
                 let marginRight = dimensions.marginRight + dimensions.paddingRight;
                 if (heightBottom > 0) {
-                    this.appendAfter(node.id, this.getStaticTag(NODE_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
+                    this.appendAfter(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
                 }
                 if (marginRight > 0) {
                     marginRight = convertPX(marginRight + node.marginRight);
@@ -942,7 +942,7 @@ export default class View<T extends Widget, U extends WidgetList<T>> extends Ele
                 };
                 const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
                 const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-                const [xml, id] = this.getStaticTag(NODE_STANDARD.GUIDELINE, node.renderDepth, options);
+                const [xml, id] = this.getStaticTag(VIEW_STANDARD.GUIDELINE, node.renderDepth, options);
                 this.appendAfter(node.id, xml, -1);
                 node.app(map[LRTB], id);
                 node.delete('app', map[RLBT]);
