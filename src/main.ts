@@ -10,14 +10,15 @@ import { convertRGB, getByColorName } from './lib/color';
 import SETTINGS from './settings';
 
 function setStyleMap() {
-    for (const styleSheet of <any> Array.from(document.styleSheets)) {
-        for (const rule of styleSheet.rules) {
-            const elements = document.querySelectorAll(rule.selectorText);
+    for (let i = 0; i < document.styleSheets.length; i++) {
+        const styleSheet = (<CSSStyleSheet> document.styleSheets[i]);
+        for (let j = 0; j < styleSheet.cssRules.length; j++) {
+            const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
             const attributes: Set<string> = new Set();
-            for (const style of rule.styleMap) {
-                attributes.add(hyphenToCamelCase(style[0]));
+            for (const attr of Array.from(cssRule.style)) {
+                attributes.add(hyphenToCamelCase(attr));
             }
-            Array.from(elements).forEach((element: HTMLElement) => {
+            Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element: HTMLElement) => {
                 for (const attr of Array.from(element.style)) {
                     attributes.add(hyphenToCamelCase(attr));
                 }
@@ -25,15 +26,15 @@ function setStyleMap() {
                 const styleMap = {};
                 for (const name of attributes) {
                     if (name.toLowerCase().indexOf('color') !== -1) {
-                        const color = getByColorName(rule.style[name]);
+                        const color = getByColorName(cssRule.style[name]);
                         if (color != null) {
-                            rule.style[name] = convertRGB(color);
+                            cssRule.style[name] = convertRGB(color);
                         }
                     }
                     if (hasValue(element.style[name])) {
                         styleMap[name] = element.style[name];
                     }
-                    else if (style[name] === rule.style[name]) {
+                    else if (style[name] === cssRule.style[name]) {
                         styleMap[name] = style[name];
                     }
                 }
