@@ -6,6 +6,8 @@ INSTALLATION (global js variable: androme)
 
 Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6).
 
+*** External CSS files cannot be parsed when running this program from directly your local hard drive with the file:// protocol when using Chrome. You can either load the HTML document from a local http:// server or embed the entire CSS file into the HTML document. Using a different browser might also get you past this security restriction. ***
+
 ```javascript
 <script src="/dist/androme.js"></script>
 <script>

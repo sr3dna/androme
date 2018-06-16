@@ -1,4 +1,4 @@
-/* androme 1.6.2
+/* androme 1.6.3
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -351,6 +351,258 @@
         return (lower === upper || Math.ceil(lower) === Math.floor(upper));
     }
 
+    const X11_CSS3 = {
+        'Pink': { 'hex': '#FFC0CB' },
+        'LightPink': { 'hex': '#FFB6C1' },
+        'HotPink': { 'hex': '#FF69B4' },
+        'DeepPink': { 'hex': '#FF1493' },
+        'PaleVioletRed': { 'hex': '#DB7093' },
+        'MediumVioletRed': { 'hex': '#C71585' },
+        'LightSalmon': { 'hex': '#FFA07A' },
+        'Salmon': { 'hex': '#FA8072' },
+        'DarkSalmon': { 'hex': '#E9967A' },
+        'LightCoral': { 'hex': '#F08080' },
+        'IndianRed': { 'hex': '#CD5C5C' },
+        'Crimson': { 'hex': '#DC143C' },
+        'Firebrick': { 'hex': '#B22222' },
+        'DarkRed': { 'hex': '#8B0000' },
+        'Red': { 'hex': '#FF0000' },
+        'OrangeRed': { 'hex': '#FF4500' },
+        'Tomato': { 'hex': '#FF6347' },
+        'Coral': { 'hex': '#FF7F50' },
+        'Orange': { 'hex': '#FFA500' },
+        'DarkOrange': { 'hex': '#FF8C00' },
+        'Yellow': { 'hex': '#FFFF00' },
+        'LightYellow': { 'hex': '#FFFFE0' },
+        'LemonChiffon': { 'hex': '#FFFACD' },
+        'LightGoldenrodYellow': { 'hex': '#FAFAD2' },
+        'PapayaWhip': { 'hex': '#FFEFD5' },
+        'Moccasin': { 'hex': '#FFE4B5' },
+        'PeachPuff': { 'hex': '#FFDAB9' },
+        'PaleGoldenrod': { 'hex': '#EEE8AA' },
+        'Khaki': { 'hex': '#F0E68C' },
+        'DarkKhaki': { 'hex': '#BDB76B' },
+        'Gold': { 'hex': '#FFD700' },
+        'Cornsilk': { 'hex': '#FFF8DC' },
+        'BlanchedAlmond': { 'hex': '#FFEBCD' },
+        'Bisque': { 'hex': '#FFE4C4' },
+        'NavajoWhite': { 'hex': '#FFDEAD' },
+        'Wheat': { 'hex': '#F5DEB3' },
+        'Burlywood': { 'hex': '#DEB887' },
+        'Tan': { 'hex': '#D2B48C' },
+        'RosyBrown': { 'hex': '#BC8F8F' },
+        'SandyBrown': { 'hex': '#F4A460' },
+        'Goldenrod': { 'hex': '#DAA520' },
+        'DarkGoldenrod': { 'hex': '#B8860B' },
+        'Peru': { 'hex': '#CD853F' },
+        'Chocolate': { 'hex': '#D2691E' },
+        'SaddleBrown': { 'hex': '#8B4513' },
+        'Sienna': { 'hex': '#A0522D' },
+        'Brown': { 'hex': '#A52A2A' },
+        'Maroon': { 'hex': '#800000' },
+        'DarkOliveGreen': { 'hex': '#556B2F' },
+        'Olive': { 'hex': '#808000' },
+        'OliveDrab': { 'hex': '#6B8E23' },
+        'YellowGreen': { 'hex': '#9ACD32' },
+        'LimeGreen': { 'hex': '#32CD32' },
+        'Lime': { 'hex': '#00FF00' },
+        'LawnGreen': { 'hex': '#7CFC00' },
+        'Chartreuse': { 'hex': '#7FFF00' },
+        'GreenYellow': { 'hex': '#ADFF2F' },
+        'SpringGreen': { 'hex': '#00FF7F' },
+        'MediumSpringGreen': { 'hex': '#00FA9A' },
+        'LightGreen': { 'hex': '#90EE90' },
+        'PaleGreen': { 'hex': '#98FB98' },
+        'DarkSeaGreen': { 'hex': '#8FBC8F' },
+        'MediumAquamarine': { 'hex': '#66CDAA' },
+        'MediumSeaGreen': { 'hex': '#3CB371' },
+        'SeaGreen': { 'hex': '#2E8B57' },
+        'ForestGreen': { 'hex': '#228B22' },
+        'Green': { 'hex': '#008000' },
+        'DarkGreen': { 'hex': '#006400' },
+        'Aqua': { 'hex': '#00FFFF' },
+        'Cyan': { 'hex': '#00FFFF' },
+        'LightCyan': { 'hex': '#E0FFFF' },
+        'PaleTurquoise': { 'hex': '#AFEEEE' },
+        'Aquamarine': { 'hex': '#7FFFD4' },
+        'Turquoise': { 'hex': '#40E0D0' },
+        'DarkTurquoise': { 'hex': '#00CED1' },
+        'MediumTurquoise': { 'hex': '#48D1CC' },
+        'LightSeaGreen': { 'hex': '#20B2AA' },
+        'CadetBlue': { 'hex': '#5F9EA0' },
+        'DarkCyan': { 'hex': '#008B8B' },
+        'Teal': { 'hex': '#008080' },
+        'LightSteelBlue': { 'hex': '#B0C4DE' },
+        'PowderBlue': { 'hex': '#B0E0E6' },
+        'LightBlue': { 'hex': '#ADD8E6' },
+        'SkyBlue': { 'hex': '#87CEEB' },
+        'LightSkyBlue': { 'hex': '#87CEFA' },
+        'DeepSkyBlue': { 'hex': '#00BFFF' },
+        'DodgerBlue': { 'hex': '#1E90FF' },
+        'Cornflower': { 'hex': '#6495ED' },
+        'SteelBlue': { 'hex': '#4682B4' },
+        'RoyalBlue': { 'hex': '#4169E1' },
+        'Blue': { 'hex': '#0000FF' },
+        'MediumBlue': { 'hex': '#0000CD' },
+        'DarkBlue': { 'hex': '#00008B' },
+        'Navy': { 'hex': '#000080' },
+        'MidnightBlue': { 'hex': '#191970' },
+        'Lavender': { 'hex': '#E6E6FA' },
+        'Thistle': { 'hex': '#D8BFD8' },
+        'Plum': { 'hex': '#DDA0DD' },
+        'Violet': { 'hex': '#EE82EE' },
+        'Orchid': { 'hex': '#DA70D6' },
+        'Fuchsia': { 'hex': '#FF00FF' },
+        'Magenta': { 'hex': '#FF00FF' },
+        'MediumOrchid': { 'hex': '#BA55D3' },
+        'MediumPurple': { 'hex': '#9370DB' },
+        'BlueViolet': { 'hex': '#8A2BE2' },
+        'DarkViolet': { 'hex': '#9400D3' },
+        'DarkOrchid': { 'hex': '#9932CC' },
+        'DarkMagenta': { 'hex': '#8B008B' },
+        'Purple': { 'hex': '#800080' },
+        'RebeccaPurple': { 'hex': '#663399' },
+        'Indigo': { 'hex': '#4B0082' },
+        'DarkSlateBlue': { 'hex': '#483D8B' },
+        'SlateBlue': { 'hex': '#6A5ACD' },
+        'MediumSlateBlue': { 'hex': '#7B68EE' },
+        'White': { 'hex': '#FFFFFF' },
+        'Snow': { 'hex': '#FFFAFA' },
+        'Honeydew': { 'hex': '#F0FFF0' },
+        'MintCream': { 'hex': '#F5FFFA' },
+        'Azure': { 'hex': '#F0FFFF' },
+        'AliceBlue': { 'hex': '#F0F8FF' },
+        'GhostWhite': { 'hex': '#F8F8FF' },
+        'WhiteSmoke': { 'hex': '#F5F5F5' },
+        'Seashell': { 'hex': '#FFF5EE' },
+        'Beige': { 'hex': '#F5F5DC' },
+        'OldLace': { 'hex': '#FDF5E6' },
+        'FloralWhite': { 'hex': '#FFFAF0' },
+        'Ivory': { 'hex': '#FFFFF0' },
+        'AntiqueWhite': { 'hex': '#FAEBD7' },
+        'Linen': { 'hex': '#FAF0E6' },
+        'LavenderBlush': { 'hex': '#FFF0F5' },
+        'MistyRose': { 'hex': '#FFE4E1' },
+        'Gainsboro': { 'hex': '#DCDCDC' },
+        'LightGray': { 'hex': '#D3D3D3' },
+        'Silver': { 'hex': '#C0C0C0' },
+        'DarkGray': { 'hex': '#A9A9A9' },
+        'Gray': { 'hex': '#808080' },
+        'DimGray': { 'hex': '#696969' },
+        'LightSlateGray': { 'hex': '#778899' },
+        'SlateGray': { 'hex': '#708090' },
+        'DarkSlateGray': { 'hex': '#2F4F4F' },
+        'Black': { 'hex': '#000000' }
+    };
+    const HSL_SORTED = [];
+    for (const i in X11_CSS3) {
+        const x11 = X11_CSS3[i];
+        for (const j in x11) {
+            x11.rgb = convertHextoRGB(x11[j]);
+            x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
+            HSL_SORTED.push({ name: i, rgb: x11.rgb, hex: x11.hex, hsl: x11.hsl });
+        }
+    }
+    HSL_SORTED.sort(sortHSL);
+    function convertHextoHSL(value) {
+        const rgb = convertHextoRGB(value);
+        if (rgb != null) {
+            return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
+        }
+        return null;
+    }
+    function convertRGBtoHSL(r, g, b) {
+        r = r / 255;
+        g = g / 255;
+        b = b / 255;
+        const min = Math.min(r, g, b);
+        const max = Math.max(r, g, b);
+        let h = (max + min) / 2;
+        let s = h;
+        const l = h;
+        if (max === min) {
+            h = 0;
+            s = 0;
+        }
+        else {
+            const d = max - min;
+            s = (l > 0.5 ? d / (2 - max - min) : d / (max + min));
+            switch (max) {
+                case r:
+                    h = (g - b) / d + (g < b ? 6 : 0);
+                    break;
+                case g:
+                    h = (b - r) / d + 2;
+                    break;
+                case b:
+                    h = (r - g) / d + 4;
+                    break;
+            }
+            h /= 6;
+        }
+        return { h: (h * 360), s: (s * 100), l: (l * 100) };
+    }
+    function sortHSL(a, b) {
+        let [c, d] = [a.hsl.h, b.hsl.h];
+        if (c === d) {
+            [c, d] = [a.hsl.s, b.hsl.s];
+            if (c === d) {
+                [c, d] = [a.hsl.l, b.hsl.l];
+            }
+        }
+        return (c >= d ? 1 : -1);
+    }
+    function findNearestColor(value) {
+        const hsl = convertHextoHSL(value);
+        if (hsl != null) {
+            const result = HSL_SORTED.slice();
+            result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
+            result.sort(sortHSL);
+            const index = result.findIndex((item) => item.name === '');
+            return result[Math.min(index + 1, result.length - 1)];
+        }
+        return '';
+    }
+    function getByColorName(value) {
+        for (const color in X11_CSS3) {
+            if (color.toLowerCase() === value.toLowerCase()) {
+                return X11_CSS3[color];
+            }
+        }
+        return null;
+    }
+    function convertRGB({ rgb }) {
+        return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+    }
+    function parseRGBA(value) {
+        if (value != null) {
+            const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
+            if (match && match.length >= 4) {
+                return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[4] || '1'];
+            }
+        }
+        return '';
+    }
+    function convertRGBtoHex(value) {
+        const hex = '0123456789ABCDEF';
+        let rgb = parseInt(value);
+        if (isNaN(rgb)) {
+            return '00';
+        }
+        rgb = Math.max(0, Math.min(rgb, 255));
+        return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
+    }
+    function convertHextoRGB(value) {
+        value = value.replace('#', '').trim();
+        if (value.length === 3) {
+            value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
+        }
+        if (value.length === 6) {
+            return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
+        }
+        return { r: -1, g: -1, b: -1 };
+    }
+
     function getRangeBounds(element) {
         const range = document.createRange();
         range.selectNodeContents(element);
@@ -499,14 +751,18 @@
     };
 
     class Application {
-        constructor(TypeT, TypeU, viewHandler, resource) {
+        constructor(TypeT, TypeU) {
             this.TypeT = TypeT;
             this.TypeU = TypeU;
-            this.viewHandler = viewHandler;
-            this.resource = resource;
             this.cache = new this.TypeU();
-            this.viewHandler.cache = this.cache;
-            this.resource.cache = this.cache;
+        }
+        registerView(viewHandler) {
+            viewHandler.cache = this.cache;
+            this.viewHandler = viewHandler;
+        }
+        registerResource(resource) {
+            resource.cache = this.cache;
+            this.resourceHandler = resource;
         }
         setConstraints() {
             this.viewHandler.setConstraints();
@@ -521,12 +777,64 @@
             return this.viewHandler.replaceAppended(output);
         }
         setResources() {
-            this.resource.setBoxSpacing();
-            this.resource.setBoxStyle();
-            this.resource.setFontStyle();
-            this.resource.setValueString();
-            this.resource.setOptionArray();
-            this.resource.setImageSource();
+            this.resourceHandler.setBoxSpacing();
+            this.resourceHandler.setBoxStyle();
+            this.resourceHandler.setFontStyle();
+            this.resourceHandler.setValueString();
+            this.resourceHandler.setOptionArray();
+            this.resourceHandler.setImageSource();
+        }
+        setStyleMap() {
+            let cssWarning = false;
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                const styleSheet = document.styleSheets[i];
+                try {
+                    for (let j = 0; j < styleSheet.cssRules.length; j++) {
+                        const cssRule = styleSheet.cssRules[j];
+                        const attributes = new Set();
+                        for (const attr of Array.from(cssRule.style)) {
+                            attributes.add(hyphenToCamelCase(attr));
+                        }
+                        Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element) => {
+                            for (const attr of Array.from(element.style)) {
+                                attributes.add(hyphenToCamelCase(attr));
+                            }
+                            const style = getComputedStyle(element);
+                            const styleMap = {};
+                            for (const name of attributes) {
+                                if (name.toLowerCase().indexOf('color') !== -1) {
+                                    const color = getByColorName(cssRule.style[name]);
+                                    if (color != null) {
+                                        cssRule.style[name] = convertRGB(color);
+                                    }
+                                }
+                                if (hasValue(element.style[name])) {
+                                    styleMap[name] = element.style[name];
+                                }
+                                else if (style[name] === cssRule.style[name]) {
+                                    styleMap[name] = style[name];
+                                }
+                            }
+                            const object = element;
+                            if (object.__styleMap != null) {
+                                Object.assign(object.__styleMap, styleMap);
+                            }
+                            else {
+                                object.__style = style;
+                                object.__styleMap = styleMap;
+                            }
+                        });
+                    }
+                }
+                catch (error) {
+                    if (!cssWarning) {
+                        alert('External CSS files cannot be parsed when loading HTML pages directly from your hard drive with the file:// protocol. ' +
+                            'Either use a local http:// server, embed the entire CSS file directly into the HTML document, or use a different browser.\n\n' +
+                            styleSheet.href + '\n\n' + error);
+                        cssWarning = true;
+                    }
+                }
+            }
         }
         setNodeCache(documentRoot) {
             let nodeTotal = 0;
@@ -1031,13 +1339,13 @@
                                         siblings.unshift(nodeY);
                                         siblings.sortAsc('bounds.x');
                                         const renderParent = parent;
-                                        const wrapper = this.viewHandler.createWrapper(nodeY, parent, siblings);
-                                        this.cache.push(wrapper);
+                                        const bundle = this.viewHandler.createBundle(nodeY, parent, siblings);
+                                        this.cache.push(bundle);
                                         if (siblings.linearX || siblings.linearY) {
-                                            xml += this.writeLinearLayout(wrapper, renderParent, siblings.linearY);
+                                            xml += this.writeLinearLayout(bundle, renderParent, siblings.linearY);
                                         }
                                         else {
-                                            xml += this.writeDefaultLayout(wrapper, renderParent);
+                                            xml += this.writeDefaultLayout(bundle, renderParent);
                                         }
                                         k--;
                                         restart = true;
@@ -1067,6 +1375,13 @@
             this.cache.visible.forEach((node) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
             return output.replace('{@0}', this.viewHandler.getRootAttributes(options));
         }
+        cleanAttributes(output) {
+            output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
+            if (SETTINGS.useUnitDP) {
+                output = replaceDP(output, SETTINGS.density);
+            }
+            return output;
+        }
         writeFrameLayout(node, parent) {
             return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.FRAME);
         }
@@ -1095,7 +1410,7 @@
         }
     }
 
-    class Element {
+    class View {
         constructor() {
             this.before = {};
             this.after = {};
@@ -1678,17 +1993,17 @@
             let parent;
             let width;
             let height;
-            let requireWrap;
+            let wrapContent;
             if (options != null) {
                 parent = options.parent;
                 [width, height] = [options.width, options.height];
-                requireWrap = options.requireWrap;
+                wrapContent = options.wrapContent;
             }
             else {
                 parent = this.parent;
                 width = (this.element != null ? this.element.offsetWidth + this.marginLeft + this.marginRight : 0);
                 height = (this.element != null ? this.element.offsetHeight + this.marginTop + this.marginBottom : 0);
-                requireWrap = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID);
+                wrapContent = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID);
             }
             const parentWidth = (parent.element != null ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
             const parentHeight = (parent.element != null ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
@@ -1729,7 +2044,7 @@
                     }
                 }
                 else if (this.android('layout_width') == null) {
-                    if (requireWrap) {
+                    if (wrapContent) {
                         this.android('layout_width', 'wrap_content');
                     }
                     else {
@@ -1781,7 +2096,7 @@
                     this.android('layout_height', (this.constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), this.constraint.layoutHeight);
                 }
                 else if (this.android('layout_height') == null) {
-                    this.android('layout_height', (!requireWrap && (parent.id !== 0 && parent.overflow === 0 /* NONE */) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) ? 'match_parent' : 'wrap_content'));
+                    this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === 0 /* NONE */) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) ? 'match_parent' : 'wrap_content'));
                 }
             }
             if (this.gridRowSpan > 1) {
@@ -2093,7 +2408,7 @@
         }
     }
 
-    class Layout extends Widget {
+    class Bundle extends Widget {
         constructor(id, node, parent, children) {
             const options = {
                 parent,
@@ -2111,7 +2426,7 @@
                 parent: this.parentOriginal,
                 width,
                 height,
-                requireWrap: this.parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID)
+                wrapContent: this.parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID)
             };
             super.setViewLayout(options);
         }
@@ -2241,7 +2556,7 @@
         widthHeight: ['Width', 'Height'],
         horizontalVertical: ['Horizontal', 'Vertical']
     };
-    class View extends Element {
+    class Layout extends View {
         constructor() {
             super();
         }
@@ -2878,33 +3193,33 @@
                 let scrollDepth = parent.renderDepth + scrollView.length;
                 scrollView
                     .map(scrollName => {
-                    const layout = new Layout(this.cache.nextId, current, null, [current]);
-                    const widget = layout;
-                    layout.setViewId(scrollName);
-                    layout.setBounds();
-                    layout.inheritGrid(current);
-                    layout.android('fadeScrollbars', 'false');
+                    const bundle = new Bundle(this.cache.nextId, current, null, [current]);
+                    const widget = bundle;
+                    bundle.setViewId(scrollName);
+                    bundle.setBounds();
+                    bundle.inheritGrid(current);
+                    bundle.android('fadeScrollbars', 'false');
                     this.cache.push(widget);
                     switch (scrollName) {
                         case VIEW_ANDROID.SCROLL_HORIZONTAL:
-                            layout.css('width', node.styleMap.width);
-                            layout.css('minWidth', node.styleMap.minWidth);
-                            layout.css('overflowX', node.styleMap.overflowX);
+                            bundle.css('width', node.styleMap.width);
+                            bundle.css('minWidth', node.styleMap.minWidth);
+                            bundle.css('overflowX', node.styleMap.overflowX);
                             break;
                         default:
-                            layout.css('height', node.styleMap.height);
-                            layout.css('minHeight', node.styleMap.minHeight);
-                            layout.css('overflowY', node.styleMap.overflowY);
+                            bundle.css('height', node.styleMap.height);
+                            bundle.css('minHeight', node.styleMap.minHeight);
+                            bundle.css('overflowY', node.styleMap.overflowY);
                     }
                     const indent = padLeft(scrollDepth--);
-                    preXml = indent + `<${scrollName}{@${layout.id}}>\n` + preXml;
+                    preXml = indent + `<${scrollName}{@${bundle.id}}>\n` + preXml;
                     postXml += indent + `</${scrollName}>\n`;
                     if (current === node) {
                         node.parent = widget;
                         renderParent = widget;
                     }
                     current = widget;
-                    return layout;
+                    return bundle;
                 })
                     .reverse()
                     .forEach((item, index) => {
@@ -2973,28 +3288,28 @@
                                 const result = node.parentOriginal.children.filter((radio) => (radio.element.type === 'radio' && radio.element.name === element.name));
                                 let xml = '';
                                 if (result.length > 1) {
-                                    const layout = new Layout(this.cache.nextId, node, parent, result);
-                                    const widget = layout;
+                                    const bundle = new Bundle(this.cache.nextId, node, parent, result);
+                                    const widget = bundle;
                                     let checked = '';
                                     this.cache.push(widget);
-                                    layout.setViewId(VIEW_ANDROID.RADIO_GROUP);
-                                    layout.render(parent);
+                                    bundle.setViewId(VIEW_ANDROID.RADIO_GROUP);
+                                    bundle.render(parent);
                                     result.forEach((radio) => {
-                                        layout.inheritGrid(radio);
+                                        bundle.inheritGrid(radio);
                                         if (radio.element.checked) {
                                             checked = radio.stringId;
                                         }
-                                        radio.parent = layout;
-                                        radio.render(layout);
+                                        radio.parent = bundle;
+                                        radio.render(bundle);
                                         xml += this.renderTag(radio, widget, VIEW_STANDARD.RADIO, true);
                                     });
-                                    layout.android('orientation', layout.children.linearX ? 'horizontal' : 'vertical');
+                                    bundle.android('orientation', bundle.children.linearX ? 'horizontal' : 'vertical');
                                     if (checked !== '') {
-                                        layout.android('checkedButton', checked);
+                                        bundle.android('checkedButton', checked);
                                     }
-                                    layout.setBounds();
+                                    bundle.setBounds();
                                     this.setGridSpace(widget);
-                                    return this.getEnclosingTag(layout.renderDepth, VIEW_ANDROID.RADIO_GROUP, layout.id, xml);
+                                    return this.getEnclosingTag(bundle.renderDepth, VIEW_ANDROID.RADIO_GROUP, bundle.id, xml);
                                 }
                             }
                             break;
@@ -3037,14 +3352,14 @@
             this.setGridSpace(node);
             return this.getEnclosingTag(node.renderDepth, node.viewName, node.id);
         }
-        createWrapper(node, parent, children) {
-            const layout = new Layout(this.cache.nextId, node, parent, children);
+        createBundle(node, parent, children) {
+            const bundle = new Bundle(this.cache.nextId, node, parent, children);
             children.forEach((child) => {
-                child.parent = layout;
-                layout.inheritGrid(child);
+                child.parent = bundle;
+                bundle.inheritGrid(child);
             });
-            layout.setBounds();
-            return layout;
+            bundle.setBounds();
+            return bundle;
         }
         getStaticTag(tagName, depth, options, width = 'wrap_content', height = 'wrap_content') {
             const node = new Widget(0, SETTINGS.targetAPI);
@@ -3186,258 +3501,6 @@
                 }
             }
         }
-    }
-
-    const X11_CSS3 = {
-        'Pink': { 'hex': '#FFC0CB' },
-        'LightPink': { 'hex': '#FFB6C1' },
-        'HotPink': { 'hex': '#FF69B4' },
-        'DeepPink': { 'hex': '#FF1493' },
-        'PaleVioletRed': { 'hex': '#DB7093' },
-        'MediumVioletRed': { 'hex': '#C71585' },
-        'LightSalmon': { 'hex': '#FFA07A' },
-        'Salmon': { 'hex': '#FA8072' },
-        'DarkSalmon': { 'hex': '#E9967A' },
-        'LightCoral': { 'hex': '#F08080' },
-        'IndianRed': { 'hex': '#CD5C5C' },
-        'Crimson': { 'hex': '#DC143C' },
-        'Firebrick': { 'hex': '#B22222' },
-        'DarkRed': { 'hex': '#8B0000' },
-        'Red': { 'hex': '#FF0000' },
-        'OrangeRed': { 'hex': '#FF4500' },
-        'Tomato': { 'hex': '#FF6347' },
-        'Coral': { 'hex': '#FF7F50' },
-        'Orange': { 'hex': '#FFA500' },
-        'DarkOrange': { 'hex': '#FF8C00' },
-        'Yellow': { 'hex': '#FFFF00' },
-        'LightYellow': { 'hex': '#FFFFE0' },
-        'LemonChiffon': { 'hex': '#FFFACD' },
-        'LightGoldenrodYellow': { 'hex': '#FAFAD2' },
-        'PapayaWhip': { 'hex': '#FFEFD5' },
-        'Moccasin': { 'hex': '#FFE4B5' },
-        'PeachPuff': { 'hex': '#FFDAB9' },
-        'PaleGoldenrod': { 'hex': '#EEE8AA' },
-        'Khaki': { 'hex': '#F0E68C' },
-        'DarkKhaki': { 'hex': '#BDB76B' },
-        'Gold': { 'hex': '#FFD700' },
-        'Cornsilk': { 'hex': '#FFF8DC' },
-        'BlanchedAlmond': { 'hex': '#FFEBCD' },
-        'Bisque': { 'hex': '#FFE4C4' },
-        'NavajoWhite': { 'hex': '#FFDEAD' },
-        'Wheat': { 'hex': '#F5DEB3' },
-        'Burlywood': { 'hex': '#DEB887' },
-        'Tan': { 'hex': '#D2B48C' },
-        'RosyBrown': { 'hex': '#BC8F8F' },
-        'SandyBrown': { 'hex': '#F4A460' },
-        'Goldenrod': { 'hex': '#DAA520' },
-        'DarkGoldenrod': { 'hex': '#B8860B' },
-        'Peru': { 'hex': '#CD853F' },
-        'Chocolate': { 'hex': '#D2691E' },
-        'SaddleBrown': { 'hex': '#8B4513' },
-        'Sienna': { 'hex': '#A0522D' },
-        'Brown': { 'hex': '#A52A2A' },
-        'Maroon': { 'hex': '#800000' },
-        'DarkOliveGreen': { 'hex': '#556B2F' },
-        'Olive': { 'hex': '#808000' },
-        'OliveDrab': { 'hex': '#6B8E23' },
-        'YellowGreen': { 'hex': '#9ACD32' },
-        'LimeGreen': { 'hex': '#32CD32' },
-        'Lime': { 'hex': '#00FF00' },
-        'LawnGreen': { 'hex': '#7CFC00' },
-        'Chartreuse': { 'hex': '#7FFF00' },
-        'GreenYellow': { 'hex': '#ADFF2F' },
-        'SpringGreen': { 'hex': '#00FF7F' },
-        'MediumSpringGreen': { 'hex': '#00FA9A' },
-        'LightGreen': { 'hex': '#90EE90' },
-        'PaleGreen': { 'hex': '#98FB98' },
-        'DarkSeaGreen': { 'hex': '#8FBC8F' },
-        'MediumAquamarine': { 'hex': '#66CDAA' },
-        'MediumSeaGreen': { 'hex': '#3CB371' },
-        'SeaGreen': { 'hex': '#2E8B57' },
-        'ForestGreen': { 'hex': '#228B22' },
-        'Green': { 'hex': '#008000' },
-        'DarkGreen': { 'hex': '#006400' },
-        'Aqua': { 'hex': '#00FFFF' },
-        'Cyan': { 'hex': '#00FFFF' },
-        'LightCyan': { 'hex': '#E0FFFF' },
-        'PaleTurquoise': { 'hex': '#AFEEEE' },
-        'Aquamarine': { 'hex': '#7FFFD4' },
-        'Turquoise': { 'hex': '#40E0D0' },
-        'DarkTurquoise': { 'hex': '#00CED1' },
-        'MediumTurquoise': { 'hex': '#48D1CC' },
-        'LightSeaGreen': { 'hex': '#20B2AA' },
-        'CadetBlue': { 'hex': '#5F9EA0' },
-        'DarkCyan': { 'hex': '#008B8B' },
-        'Teal': { 'hex': '#008080' },
-        'LightSteelBlue': { 'hex': '#B0C4DE' },
-        'PowderBlue': { 'hex': '#B0E0E6' },
-        'LightBlue': { 'hex': '#ADD8E6' },
-        'SkyBlue': { 'hex': '#87CEEB' },
-        'LightSkyBlue': { 'hex': '#87CEFA' },
-        'DeepSkyBlue': { 'hex': '#00BFFF' },
-        'DodgerBlue': { 'hex': '#1E90FF' },
-        'Cornflower': { 'hex': '#6495ED' },
-        'SteelBlue': { 'hex': '#4682B4' },
-        'RoyalBlue': { 'hex': '#4169E1' },
-        'Blue': { 'hex': '#0000FF' },
-        'MediumBlue': { 'hex': '#0000CD' },
-        'DarkBlue': { 'hex': '#00008B' },
-        'Navy': { 'hex': '#000080' },
-        'MidnightBlue': { 'hex': '#191970' },
-        'Lavender': { 'hex': '#E6E6FA' },
-        'Thistle': { 'hex': '#D8BFD8' },
-        'Plum': { 'hex': '#DDA0DD' },
-        'Violet': { 'hex': '#EE82EE' },
-        'Orchid': { 'hex': '#DA70D6' },
-        'Fuchsia': { 'hex': '#FF00FF' },
-        'Magenta': { 'hex': '#FF00FF' },
-        'MediumOrchid': { 'hex': '#BA55D3' },
-        'MediumPurple': { 'hex': '#9370DB' },
-        'BlueViolet': { 'hex': '#8A2BE2' },
-        'DarkViolet': { 'hex': '#9400D3' },
-        'DarkOrchid': { 'hex': '#9932CC' },
-        'DarkMagenta': { 'hex': '#8B008B' },
-        'Purple': { 'hex': '#800080' },
-        'RebeccaPurple': { 'hex': '#663399' },
-        'Indigo': { 'hex': '#4B0082' },
-        'DarkSlateBlue': { 'hex': '#483D8B' },
-        'SlateBlue': { 'hex': '#6A5ACD' },
-        'MediumSlateBlue': { 'hex': '#7B68EE' },
-        'White': { 'hex': '#FFFFFF' },
-        'Snow': { 'hex': '#FFFAFA' },
-        'Honeydew': { 'hex': '#F0FFF0' },
-        'MintCream': { 'hex': '#F5FFFA' },
-        'Azure': { 'hex': '#F0FFFF' },
-        'AliceBlue': { 'hex': '#F0F8FF' },
-        'GhostWhite': { 'hex': '#F8F8FF' },
-        'WhiteSmoke': { 'hex': '#F5F5F5' },
-        'Seashell': { 'hex': '#FFF5EE' },
-        'Beige': { 'hex': '#F5F5DC' },
-        'OldLace': { 'hex': '#FDF5E6' },
-        'FloralWhite': { 'hex': '#FFFAF0' },
-        'Ivory': { 'hex': '#FFFFF0' },
-        'AntiqueWhite': { 'hex': '#FAEBD7' },
-        'Linen': { 'hex': '#FAF0E6' },
-        'LavenderBlush': { 'hex': '#FFF0F5' },
-        'MistyRose': { 'hex': '#FFE4E1' },
-        'Gainsboro': { 'hex': '#DCDCDC' },
-        'LightGray': { 'hex': '#D3D3D3' },
-        'Silver': { 'hex': '#C0C0C0' },
-        'DarkGray': { 'hex': '#A9A9A9' },
-        'Gray': { 'hex': '#808080' },
-        'DimGray': { 'hex': '#696969' },
-        'LightSlateGray': { 'hex': '#778899' },
-        'SlateGray': { 'hex': '#708090' },
-        'DarkSlateGray': { 'hex': '#2F4F4F' },
-        'Black': { 'hex': '#000000' }
-    };
-    const HSL_SORTED = [];
-    for (const i in X11_CSS3) {
-        const x11 = X11_CSS3[i];
-        for (const j in x11) {
-            x11.rgb = convertHextoRGB(x11[j]);
-            x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
-            HSL_SORTED.push({ name: i, rgb: x11.rgb, hex: x11.hex, hsl: x11.hsl });
-        }
-    }
-    HSL_SORTED.sort(sortHSL);
-    function convertHextoHSL(value) {
-        const rgb = convertHextoRGB(value);
-        if (rgb != null) {
-            return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
-        }
-        return null;
-    }
-    function convertRGBtoHSL(r, g, b) {
-        r = r / 255;
-        g = g / 255;
-        b = b / 255;
-        const min = Math.min(r, g, b);
-        const max = Math.max(r, g, b);
-        let h = (max + min) / 2;
-        let s = h;
-        const l = h;
-        if (max === min) {
-            h = 0;
-            s = 0;
-        }
-        else {
-            const d = max - min;
-            s = (l > 0.5 ? d / (2 - max - min) : d / (max + min));
-            switch (max) {
-                case r:
-                    h = (g - b) / d + (g < b ? 6 : 0);
-                    break;
-                case g:
-                    h = (b - r) / d + 2;
-                    break;
-                case b:
-                    h = (r - g) / d + 4;
-                    break;
-            }
-            h /= 6;
-        }
-        return { h: (h * 360), s: (s * 100), l: (l * 100) };
-    }
-    function sortHSL(a, b) {
-        let [c, d] = [a.hsl.h, b.hsl.h];
-        if (c === d) {
-            [c, d] = [a.hsl.s, b.hsl.s];
-            if (c === d) {
-                [c, d] = [a.hsl.l, b.hsl.l];
-            }
-        }
-        return (c >= d ? 1 : -1);
-    }
-    function findNearestColor(value) {
-        const hsl = convertHextoHSL(value);
-        if (hsl != null) {
-            const result = HSL_SORTED.slice();
-            result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
-            result.sort(sortHSL);
-            const index = result.findIndex((item) => item.name === '');
-            return result[Math.min(index + 1, result.length - 1)];
-        }
-        return '';
-    }
-    function getByColorName(value) {
-        for (const color in X11_CSS3) {
-            if (color.toLowerCase() === value.toLowerCase()) {
-                return X11_CSS3[color];
-            }
-        }
-        return null;
-    }
-    function convertRGB({ rgb }) {
-        return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
-    }
-    function parseRGBA(value) {
-        if (value != null) {
-            const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
-            if (match && match.length >= 4) {
-                return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[4] || '1'];
-            }
-        }
-        return '';
-    }
-    function convertRGBtoHex(value) {
-        const hex = '0123456789ABCDEF';
-        let rgb = parseInt(value);
-        if (isNaN(rgb)) {
-            return '00';
-        }
-        rgb = Math.max(0, Math.min(rgb, 255));
-        return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
-    }
-    function convertHextoRGB(value) {
-        value = value.replace('#', '').trim();
-        if (value.length === 3) {
-            value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
-        }
-        if (value.length === 6) {
-            return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
-        }
-        return { r: -1, g: -1, b: -1 };
     }
 
     class Resource {
@@ -4628,54 +4691,15 @@
         return xml;
     }
 
-    function setStyleMap() {
-        for (let i = 0; i < document.styleSheets.length; i++) {
-            const styleSheet = document.styleSheets[i];
-            for (let j = 0; j < styleSheet.cssRules.length; j++) {
-                const cssRule = styleSheet.cssRules[j];
-                const attributes = new Set();
-                for (const attr of Array.from(cssRule.style)) {
-                    attributes.add(hyphenToCamelCase(attr));
-                }
-                Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element) => {
-                    for (const attr of Array.from(element.style)) {
-                        attributes.add(hyphenToCamelCase(attr));
-                    }
-                    const style = getComputedStyle(element);
-                    const styleMap = {};
-                    for (const name of attributes) {
-                        if (name.toLowerCase().indexOf('color') !== -1) {
-                            const color = getByColorName(cssRule.style[name]);
-                            if (color != null) {
-                                cssRule.style[name] = convertRGB(color);
-                            }
-                        }
-                        if (hasValue(element.style[name])) {
-                            styleMap[name] = element.style[name];
-                        }
-                        else if (style[name] === cssRule.style[name]) {
-                            styleMap[name] = style[name];
-                        }
-                    }
-                    const object = element;
-                    if (object.__styleMap != null) {
-                        Object.assign(object.__styleMap, styleMap);
-                    }
-                    else {
-                        object.__style = style;
-                        object.__styleMap = styleMap;
-                    }
-                });
-            }
-        }
-    }
     function parseDocument(element) {
         if (typeof element === 'string') {
             element = document.getElementById(element);
         }
-        setStyleMap();
         let output = '';
-        const app = new Application(Widget, WidgetList, new View(), new ResourceWidget());
+        const app = new Application(Widget, WidgetList);
+        app.registerView(new Layout());
+        app.registerResource(new ResourceWidget());
+        app.setStyleMap();
         app.setNodeCache(element);
         output = app.getLayoutXml();
         app.setResources();
@@ -4688,10 +4712,7 @@
             app.setConstraints();
             output = app.replaceInlineAttributes(output);
         }
-        output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
-        if (SETTINGS.useUnitDP) {
-            output = replaceDP(output, SETTINGS.density);
-        }
+        output = app.cleanAttributes(output);
         return output;
     }
 

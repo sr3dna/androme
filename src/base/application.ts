@@ -56,43 +56,54 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public setStyleMap() {
+        let cssWarning = false;
         for (let i = 0; i < document.styleSheets.length; i++) {
             const styleSheet = (<CSSStyleSheet> document.styleSheets[i]);
-            for (let j = 0; j < styleSheet.cssRules.length; j++) {
-                const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
-                const attributes: Set<string> = new Set();
-                for (const attr of Array.from(cssRule.style)) {
-                    attributes.add(hyphenToCamelCase(attr));
-                }
-                Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element: HTMLElement) => {
-                    for (const attr of Array.from(element.style)) {
+            try {
+                for (let j = 0; j < styleSheet.cssRules.length; j++) {
+                    const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
+                    const attributes: Set<string> = new Set();
+                    for (const attr of Array.from(cssRule.style)) {
                         attributes.add(hyphenToCamelCase(attr));
                     }
-                    const style = getComputedStyle(element);
-                    const styleMap = {};
-                    for (const name of attributes) {
-                        if (name.toLowerCase().indexOf('color') !== -1) {
-                            const color = getByColorName(cssRule.style[name]);
-                            if (color != null) {
-                                cssRule.style[name] = convertRGB(color);
+                    Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element: HTMLElement) => {
+                        for (const attr of Array.from(element.style)) {
+                            attributes.add(hyphenToCamelCase(attr));
+                        }
+                        const style = getComputedStyle(element);
+                        const styleMap = {};
+                        for (const name of attributes) {
+                            if (name.toLowerCase().indexOf('color') !== -1) {
+                                const color = getByColorName(cssRule.style[name]);
+                                if (color != null) {
+                                    cssRule.style[name] = convertRGB(color);
+                                }
+                            }
+                            if (hasValue(element.style[name])) {
+                                styleMap[name] = element.style[name];
+                            }
+                            else if (style[name] === cssRule.style[name]) {
+                                styleMap[name] = style[name];
                             }
                         }
-                        if (hasValue(element.style[name])) {
-                            styleMap[name] = element.style[name];
+                        const object = (<any> element);
+                        if (object.__styleMap != null) {
+                            Object.assign(object.__styleMap, styleMap);
                         }
-                        else if (style[name] === cssRule.style[name]) {
-                            styleMap[name] = style[name];
+                        else {
+                            object.__style = style;
+                            object.__styleMap = styleMap;
                         }
-                    }
-                    const object = (<any> element);
-                    if (object.__styleMap != null) {
-                        Object.assign(object.__styleMap, styleMap);
-                    }
-                    else {
-                        object.__style = style;
-                        object.__styleMap = styleMap;
-                    }
-                });
+                    });
+                }
+            }
+            catch (error) {
+                if (!cssWarning) {
+                    alert('External CSS files cannot be parsed when loading HTML pages directly from your hard drive with the file:// protocol. ' +
+                          'Either use a local http:// server, embed the entire CSS file directly into the HTML document, or use a different browser.\n\n' +
+                          styleSheet.href + '\n\n' + error);
+                    cssWarning = true;
+                }
             }
         }
     }
