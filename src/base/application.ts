@@ -1,24 +1,33 @@
-import Element from './element';
+import View from './view';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
 import { BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { hasValue, sortAsc } from '../lib/util';
+import { hasValue, hyphenToCamelCase, replaceDP, sortAsc } from '../lib/util';
+import { convertRGB, getByColorName } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
     private cache: U;
+    private viewHandler: View<T, U>;
+    private resourceHandler: Resource<T>;
 
     constructor(
         private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
-        private TypeU: { new (nodes?: U, parent?: T): U },
-        private viewHandler: Element<T, U>,
-        private resource: Resource<T>)
+        private TypeU: { new (nodes?: U, parent?: T): U })
     {
         this.cache = new this.TypeU();
-        this.viewHandler.cache = this.cache;
-        this.resource.cache = this.cache;
+    }
+
+    public registerView(viewHandler: View<T, U>) {
+        viewHandler.cache = this.cache;
+        this.viewHandler = viewHandler;
+    }
+
+    public registerResource(resource: Resource<T>) {
+        resource.cache = this.cache;
+        this.resourceHandler = resource;
     }
 
     public setConstraints() {
@@ -38,12 +47,54 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public setResources() {
-        this.resource.setBoxSpacing();
-        this.resource.setBoxStyle();
-        this.resource.setFontStyle();
-        this.resource.setValueString();
-        this.resource.setOptionArray();
-        this.resource.setImageSource();
+        this.resourceHandler.setBoxSpacing();
+        this.resourceHandler.setBoxStyle();
+        this.resourceHandler.setFontStyle();
+        this.resourceHandler.setValueString();
+        this.resourceHandler.setOptionArray();
+        this.resourceHandler.setImageSource();
+    }
+
+    public setStyleMap() {
+        for (let i = 0; i < document.styleSheets.length; i++) {
+            const styleSheet = (<CSSStyleSheet> document.styleSheets[i]);
+            for (let j = 0; j < styleSheet.cssRules.length; j++) {
+                const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
+                const attributes: Set<string> = new Set();
+                for (const attr of Array.from(cssRule.style)) {
+                    attributes.add(hyphenToCamelCase(attr));
+                }
+                Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element: HTMLElement) => {
+                    for (const attr of Array.from(element.style)) {
+                        attributes.add(hyphenToCamelCase(attr));
+                    }
+                    const style = getComputedStyle(element);
+                    const styleMap = {};
+                    for (const name of attributes) {
+                        if (name.toLowerCase().indexOf('color') !== -1) {
+                            const color = getByColorName(cssRule.style[name]);
+                            if (color != null) {
+                                cssRule.style[name] = convertRGB(color);
+                            }
+                        }
+                        if (hasValue(element.style[name])) {
+                            styleMap[name] = element.style[name];
+                        }
+                        else if (style[name] === cssRule.style[name]) {
+                            styleMap[name] = style[name];
+                        }
+                    }
+                    const object = (<any> element);
+                    if (object.__styleMap != null) {
+                        Object.assign(object.__styleMap, styleMap);
+                    }
+                    else {
+                        object.__style = style;
+                        object.__styleMap = styleMap;
+                    }
+                });
+            }
+        }
     }
 
     public setNodeCache(documentRoot: HTMLElement) {
@@ -552,13 +603,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     siblings.unshift(nodeY);
                                     siblings.sortAsc('bounds.x');
                                     const renderParent = parent;
-                                    const wrapper = this.viewHandler.createWrapper(nodeY, parent, siblings);
-                                    this.cache.push(wrapper);
+                                    const bundle = this.viewHandler.createBundle(nodeY, parent, siblings);
+                                    this.cache.push(bundle);
                                     if (siblings.linearX || siblings.linearY) {
-                                        xml += this.writeLinearLayout(wrapper, renderParent, siblings.linearY);
+                                        xml += this.writeLinearLayout(bundle, renderParent, siblings.linearY);
                                     }
                                     else {
-                                        xml += this.writeDefaultLayout(wrapper, renderParent);
+                                        xml += this.writeDefaultLayout(bundle, renderParent);
                                     }
                                     k--;
                                     restart = true;
@@ -588,6 +639,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const options = {};
         this.cache.visible.forEach((node: T) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
         return output.replace('{@0}', this.viewHandler.getRootAttributes(options));
+    }
+
+    public cleanAttributes(output) {
+        output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
+        if (SETTINGS.useUnitDP) {
+            output = replaceDP(output, SETTINGS.density);
+        }
+        return output;
     }
 
     private writeFrameLayout(node: T, parent: T) {

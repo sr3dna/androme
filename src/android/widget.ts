@@ -176,17 +176,17 @@ export default class Widget extends Node {
         let parent: T;
         let width: number;
         let height: number;
-        let requireWrap: boolean;
+        let wrapContent: boolean;
         if (options != null) {
             parent = options.parent;
             [width, height] = [options.width, options.height];
-            requireWrap = options.requireWrap;
+            wrapContent = options.wrapContent;
         }
         else {
             parent = (<T> this.parent);
             width = (this.element != null ? this.element.offsetWidth + this.marginLeft + this.marginRight : 0);
             height = (this.element != null ? this.element.offsetHeight + this.marginTop + this.marginBottom : 0);
-            requireWrap = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID);
+            wrapContent = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID);
         }
         const parentWidth = (parent.element != null ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
         const parentHeight = (parent.element != null ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
@@ -227,7 +227,7 @@ export default class Widget extends Node {
                 }
             }
             else if (this.android('layout_width') == null) {
-                if (requireWrap) {
+                if (wrapContent) {
                     this.android('layout_width', 'wrap_content');
                 }
                 else {
@@ -279,7 +279,7 @@ export default class Widget extends Node {
                 this.android('layout_height', (this.constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), this.constraint.layoutHeight);
             }
             else if (this.android('layout_height') == null) {
-                this.android('layout_height', (!requireWrap && (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) ? 'match_parent' : 'wrap_content'));
+                this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) ? 'match_parent' : 'wrap_content'));
             }
         }
         if (this.gridRowSpan > 1) {

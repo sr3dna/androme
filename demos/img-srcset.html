@@ -39,19 +39,19 @@
 </head>
 <body>
     <div id="androme-root" style="text-align: center; float: left;">
-        <img src="images/android.png" srcset="images/android-ldpi.png 0.75x,
-                                              images/android.png 1x,
-                                              images/android-hdpi.png 1.5x,
-                                              images/android-xhdpi.png 2x,
-                                              images/android-xxhdpi.png 3x,
-                                              images/android-xxxhdpi.png 4x" />
+        <img id="android" src="images/android.png" srcset="images/android-ldpi.png 0.75x,
+                                                           images/android.png 1x,
+                                                           images/android-hdpi.png 1.5x,
+                                                           images/android-xhdpi.png 2x,
+                                                           images/android-xxhdpi.png 3x,
+                                                           images/android-xxxhdpi.png 4x" />
         <br /><br />
-        <img src="images/pencil.png" srcset="images/pencil-ldpi.png 0.75x,
-                                             images/pencil.png,
-                                             images/pencil-hdpi.png 1.5x,
-                                             images/pencil-xhdpi.png 2x,
-                                             images/pencil-xxhpi.png 3x,
-                                             images/pencil-xxxhdpi.png 4x" />
+        <img id="pencil" src="images/pencil.png" srcset="images/pencil-ldpi.png 0.75x,
+                                                         images/pencil.png,
+                                                         images/pencil-hdpi.png 1.5x,
+                                                         images/pencil-xhdpi.png 2x,
+                                                         images/pencil-xxhpi.png 3x,
+                                                         images/pencil-xxxhdpi.png 4x" />
     </div>
     <div class="output">
         <pre id="output"></pre>
@@ -64,11 +64,11 @@
     <script>
         function copy(id) {
             const element = document.getElementById(id);
-            const range = document.createRange();  
-            range.selectNode(element);  
-            window.getSelection().addRange(range); 
+            const range = document.createRange();
+            range.selectNode(element);
+            window.getSelection().addRange(range);
             document.execCommand('copy');
-            window.getSelection().removeAllRanges();  
+            window.getSelection().removeAllRanges();
         }
     </script>
 </body>

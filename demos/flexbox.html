@@ -229,11 +229,11 @@
     <script>
         function copy(id) {
             const element = document.getElementById(id);
-            const range = document.createRange();  
-            range.selectNode(element);  
-            window.getSelection().addRange(range); 
+            const range = document.createRange();
+            range.selectNode(element);
+            window.getSelection().addRange(range);
             document.execCommand('copy');
-            window.getSelection().removeAllRanges();  
+            window.getSelection().removeAllRanges();
         }
     </script>
 </body>

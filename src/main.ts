@@ -1,63 +1,21 @@
 import Application from './base/application';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
-import View from './android/view';
+import Layout from './android/layout';
 import Widget from './android/widget';
 import WidgetList from './android/widgetlist';
 import { ResourceWidget, writeResourceArrayXml, writeResourceColorXml, writeResourceDrawableXml, writeResourceFontXml, writeResourceStringXml, writeResourceStyleXml } from './android/resource-widget';
 import API_ANDROID from './android/customizations';
-import { hasValue, hyphenToCamelCase, replaceDP } from './lib/util';
-import { convertRGB, getByColorName } from './lib/color';
 import SETTINGS from './settings';
-
-function setStyleMap() {
-    for (let i = 0; i < document.styleSheets.length; i++) {
-        const styleSheet = (<CSSStyleSheet> document.styleSheets[i]);
-        for (let j = 0; j < styleSheet.cssRules.length; j++) {
-            const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
-            const attributes: Set<string> = new Set();
-            for (const attr of Array.from(cssRule.style)) {
-                attributes.add(hyphenToCamelCase(attr));
-            }
-            Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element: HTMLElement) => {
-                for (const attr of Array.from(element.style)) {
-                    attributes.add(hyphenToCamelCase(attr));
-                }
-                const style = getComputedStyle(element);
-                const styleMap = {};
-                for (const name of attributes) {
-                    if (name.toLowerCase().indexOf('color') !== -1) {
-                        const color = getByColorName(cssRule.style[name]);
-                        if (color != null) {
-                            cssRule.style[name] = convertRGB(color);
-                        }
-                    }
-                    if (hasValue(element.style[name])) {
-                        styleMap[name] = element.style[name];
-                    }
-                    else if (style[name] === cssRule.style[name]) {
-                        styleMap[name] = style[name];
-                    }
-                }
-                const object = (<any> element);
-                if (object.__styleMap != null) {
-                    Object.assign(object.__styleMap, styleMap);
-                }
-                else {
-                    object.__style = style;
-                    object.__styleMap = styleMap;
-                }
-            });
-        }
-    }
-}
 
 export function parseDocument(element?: any) {
     if (typeof element === 'string') {
         element = document.getElementById(element);
     }
-    setStyleMap();
     let output = '';
-    const app = new Application<Widget, WidgetList<Widget>>(Widget, WidgetList, new View(), new ResourceWidget());
+    const app = new Application<Widget, WidgetList<Widget>>(Widget, WidgetList);
+    app.registerView(new Layout());
+    app.registerResource(new ResourceWidget());
+    app.setStyleMap();
     app.setNodeCache(element);
     output = app.getLayoutXml();
     app.setResources();
@@ -70,10 +28,7 @@ export function parseDocument(element?: any) {
         app.setConstraints();
         output = app.replaceInlineAttributes(output);
     }
-    output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
-    if (SETTINGS.useUnitDP) {
-        output = replaceDP(output, SETTINGS.density);
-    }
+    output = app.cleanAttributes(output);
     return output;
 }
 
