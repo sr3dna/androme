@@ -99,8 +99,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
             catch (error) {
                 if (!cssWarning) {
-                    alert('External CSS files cannot be parsed when loading HTML pages directly from your hard drive with the file:// protocol. ' +
-                          'Either use a local http:// server, embed the entire CSS file directly into the HTML document, or use a different browser.\n\n' +
+                    alert('External CSS files cannot be parsed when loading HTML pages directly from your hard drive using the file:// protocol with Chrome 64 or higher. ' +
+                          'Either use a local http:// server, embed the entire CSS file using the <style> tag, or use a different browser.\n\n' +
                           styleSheet.href + '\n\n' + error);
                     cssWarning = true;
                 }
@@ -298,7 +298,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                 }
                 axisY.sort((a: T, b: T) => {
-                    if (!a.parent.flex.enabled && !b.parent.flex.enabled && a.withinX(b.linear)) {
+                    if (a.linear.left !== b.linear.left && !a.parent.flex.enabled && !b.parent.flex.enabled && a.withinX(b.linear)) {
                         return (a.linear.left > b.linear.left ? 1 : -1);
                     }
                     return (a.parentIndex > b.parentIndex ? 1 : -1);
@@ -407,7 +407,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                                             found.push(l);
                                                         }
                                                         else {
-                                                            const result = columns[m].findIndex((item: T, index: number) => (index >= l && item.bounds.width === bounds.width && index < columns[m].length - 1));
+                                                            const result = columns[m].findIndex((item: T, index: number) => (index >= l && Math.floor(item.bounds.width) === Math.floor(bounds.width) && index < columns[m].length - 1));
                                                             if (result !== -1) {
                                                                 found.push(result);
                                                             }

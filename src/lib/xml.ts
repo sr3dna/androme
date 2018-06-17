@@ -1,6 +1,6 @@
 import { hasValue } from './util';
 
-export function getDataLevel(data: {}, ...levels: string[]) {
+export function getDataLevel(data: {}, ...levels: string[]): any {
     let current = data;
     for (const level of levels) {
         const [index, array = '0'] = level.split('-');

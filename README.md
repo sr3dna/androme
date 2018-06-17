@@ -6,7 +6,7 @@ INSTALLATION (global js variable: androme)
 
 Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6).
 
-*** External CSS files cannot be parsed when running this program from directly your local hard drive with the file:// protocol when using Chrome. You can either load the HTML document from a local http:// server or embed the entire CSS file into the HTML document. Using a different browser might also get you past this security restriction. ***
+*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. You can either load the HTML document from a web server (http://localhost) or embed the entire CSS file into a &lt;style&gt; tag inside the HTML document. Using a different browser (FireFox/Safari/Edge) can also get you past this security restriction. Chrome is the preferred browser when generating the production version of your program. ***
 
 ```javascript
 <script src="/dist/androme.js"></script>
@@ -52,7 +52,7 @@ androme.settings = {
     chainPackedVerticalOffset: 14
 };
 ```
-You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. I have only tested it with the latest Chrome.
+You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. Using the latest Chrome will always generate the most accurate layout.
 
 Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios. To use Constraint circle for placement you have to disable "useConstraintGuideline".
 
@@ -95,7 +95,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		android:id="@+id/entry"
 		android:background="@drawable/form_entry"
 		android:layout_height="wrap_content"
-		android:layout_marginBottom="11dp"
 		android:layout_width="match_parent"
 		android:orientation="vertical"
 		android:paddingHorizontal="10dp"
@@ -1066,8 +1065,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <font-family xmlns:android="http://schemas.android.com/apk/res/android">
-	<font android:fontStyle="normal" android:fontWeight="400" android:font="@font/arial_normal" />
 	<font android:fontStyle="italic" android:fontWeight="400" android:font="@font/arial_italic" />
+	<font android:fontStyle="normal" android:fontWeight="400" android:font="@font/arial_normal" />
 </font-family>
 <!-- filename: res/font/arial.xml -->
 

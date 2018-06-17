@@ -1,8 +1,8 @@
-import { IStringMap } from '../lib/types';
+import { IBorder, IStringMap } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import { INLINE_CHROME } from '../lib/constants';
-import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber } from '../lib/util';
+import { cameltoLowerCase, convertInt, convertPX, generateId, hasValue, isNumber } from '../lib/util';
 import { convertRGBtoHex, findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, getStyle } from '../lib/dom';
 import SETTINGS from '../settings';
@@ -142,29 +142,31 @@ export default class Resource<T extends Node> {
             if (node.element instanceof HTMLElement) {
                 const element = (<HTMLElement> node.element);
                 const result: any = {
-                    border: this.parseBorderStyle,
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
                     borderBottom: this.parseBorderStyle,
                     borderLeft: this.parseBorderStyle,
-                    borderRadius: this.parseBoxDimensions,
+                    borderRadius: this.parseBorderRadius,
                     backgroundColor: parseRGBA,
                     backgroundImage: this.parseImageURL,
                     backgroundSize: this.parseBoxDimensions
                 };
+                for (const i in result) {
+                    result[i] = result[i](node.css(i), node, i);
+                }
                 let backgroundParent: string[] = [];
                 if (element.parentElement != null) {
-                    backgroundParent = parseRGBA(getStyle(element.parentElement).backgroundColor) || [];
+                    backgroundParent = parseRGBA(getStyle(element.parentElement)['backgroundColor']);
                 }
-                for (const i in result) {
-                    result[i] = result[i](node.css(i));
-                }
-                result.border[2] = Resource.addColor(result.border[2], false);
-                if (backgroundParent[0] === result.backgroundColor[0] || result.backgroundColor[4] === 0 || (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(convertRGBtoHex(result.backgroundColor[0])))) {
-                    result.backgroundColor = '';
+                if (backgroundParent[0] === result.backgroundColor[0] || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
+                    result.backgroundColor = [];
                 }
                 else {
-                    result.backgroundColor = (!SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[1]) ? Resource.addColor(result.backgroundColor[1]) : '');
+                    result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], false);
+                }
+                const borderTop = JSON.stringify(result.borderTop);
+                if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
+                    result.border = result.borderTop;
                 }
                 (<any> element).__boxStyle = result;
             }
@@ -188,8 +190,8 @@ export default class Resource<T extends Node> {
                     fontStyle: node.css('fontStyle'),
                     fontSize: node.css('fontSize'),
                     fontWeight: node.css('fontWeight'),
-                    color: (color !== '' ? Resource.addColor(color[1]) : ''),
-                    backgroundColor: (backgroundColor !== '' ? Resource.addColor(backgroundColor[1]) : '')
+                    color: (color.length > 0 ? Resource.addColor(color[0]) : ''),
+                    backgroundColor: (backgroundColor.length > 0 ? Resource.addColor(backgroundColor[0]) : '')
                 };
                 (<any> element).__fontStyle = result;
             }
@@ -292,20 +294,57 @@ export default class Resource<T extends Node> {
         });
     }
 
-    private parseBorderStyle(value: string): string[] {
-        const stroke = value.match(/(none|dotted|dashed|solid)/);
-        const width = value.match(/([0-9.]+(?:px|pt|em))/);
-        const color = parseRGBA(value);
-        return [(stroke != null ? stroke[1] : 'solid'), (width != null ? convertPX(width[1]) : '1px'), (color != null ? color[1] : '#000')];
+    protected borderVisible(border: IBorder) {
+        return (border != null && !(border.style === 'none' || border.width === '0px'));
     }
 
-    private parseBoxDimensions(value: string): string[] {
-        const match = value.match(/^([0-9]+(?:px|pt|em))( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?( [0-9]+(?:px|pt|em))?$/);
+    protected getBorderStyle(border: IBorder) {
+        const result = { solid: `android:color="@color/${border.color}"` };
+        Object.assign(result, {
+            inset: result.solid,
+            outset: result.solid,
+            dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
+            dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
+        });
+        return result[border.style] || 'android:color="@android:color/black"';
+    }
+
+    private parseBorderStyle(value: string, node: T, attribute: string): IBorder {
+        const style = node.css(`${attribute}Style`) || 'none';
+        let width = node.css(`${attribute}Width`) || '1px';
+        const color = parseRGBA(node.css(`${attribute}Color`));
+        if (color.length > 0) {
+            color[0] = (<string> Resource.addColor(color[0], false));
+        }
+        if (style === 'inset' && width === '0px') {
+            width = '1px';
+        }
+        return { style, width, color: (color.length > 0 ? color[0] : '#000000') };
+    }
+
+    private parseBorderRadius(value: string, node: T, attribute: string) {
+        const radiusTop = node.css('borderTopLeftRadius');
+        const radiusRight = node.css('borderTopRightRadius');
+        const radiusBottom = node.css('borderBottomLeftRadius');
+        const radiusLeft = node.css('borderBottomRightRadius');
+        if (radiusTop === radiusRight && radiusRight === radiusBottom && radiusBottom === radiusLeft) {
+            return (radiusTop === '' || radiusTop === '0px' ? [] : [radiusTop]);
+        }
+        else {
+            return [radiusTop, radiusRight, radiusBottom, radiusLeft];
+        }
+    }
+
+    private parseBoxDimensions(value: string, node?: T, attribute?: string) {
+        const match = value.match(/^([0-9]+(?:px|pt|em)|auto)(?: ([0-9]+(?:px|pt|em)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
         if (match != null) {
-            if (match[1] === '0px' && match[2] == null) {
+            if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
                 return [];
             }
-            if (match[2] == null || (match[1] === match[2] && match[2] === match[3] && match[3] === match[4])) {
+            if (match[1] === 'auto' || match[2] === 'auto') {
+                return [(match[1] === 'auto' ? '' : convertPX(match[1])), (match[2] === 'auto' ? '' : convertPX(match[2]))];
+            }
+            else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
                 return [convertPX(match[1])];
             }
             else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {

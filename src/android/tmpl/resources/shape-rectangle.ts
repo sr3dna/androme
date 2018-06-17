@@ -7,7 +7,7 @@ const template = [
 '!1',
 '!2',
     '!3',
-    '	<solid android:color="{&color}" />',
+    '	<solid android:color="@color/{&color}" />',
     '!3',
     '!4',
     '	<corners android:radius="{&radius}" />',

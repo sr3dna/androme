@@ -5,13 +5,26 @@ export function getRangeBounds(element: HTMLElement) {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = range.getClientRects();
-    const bounds: IClientRect = JSON.parse(JSON.stringify(domRect[domRect.length - 1]));
+    const bounds = assignBounds(domRect[domRect.length - 1]);
     if (domRect.length > 1) {
         bounds.x = Math.min.apply(null, Array.from(domRect).map((item: any) => item.x));
         bounds.left = (<number> bounds.x);
         bounds.width = Array.from(domRect).reduce((a: number, b: any) => a + b.width, 0);
     }
     return bounds;
+}
+
+export function assignBounds(bounds: IClientRect): IClientRect {
+    return {
+        x: bounds.x,
+        y: bounds.y,
+        top: bounds.top,
+        right: bounds.right,
+        bottom: bounds.bottom,
+        left: bounds.left,
+        width: bounds.width,
+        height: bounds.height
+    };
 }
 
 export function getStyle(element: HTMLElement) {
@@ -47,6 +60,11 @@ export function hasFreeFormText(element: HTMLElement) {
 }
 
 export function isVisible(element: HTMLElement) {
+    switch (element.tagName) {
+        case 'BR':
+        case 'OPTION':
+            return false;
+    }
     if (typeof element.getBoundingClientRect === 'function') {
         const bounds = element.getBoundingClientRect();
         if (bounds.width !== 0 && bounds.height !== 0) {

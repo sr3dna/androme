@@ -135,49 +135,87 @@ export class ResourceWidget extends Resource<T> {
             const stored = (<any> node.element).__boxStyle;
             if (stored != null) {
                 const method = METHOD_ANDROID['boxStyle'];
-                const borderStyle: IStringMap = {
-                    black: 'android:color="@android:color/black"',
-                    solid: `android:color="@color/${stored.border[2]}"`
-                };
-                borderStyle.dotted = `${borderStyle.solid} android:dashWidth="3px" android:dashGap="1px"`;
-                borderStyle.dashed = `${borderStyle.solid} android:dashWidth="1px" android:dashGap="1px"`;
-                borderStyle.default = borderStyle[stored.border[0]] || borderStyle.black;
-                if (stored.border[0] !== 'none') {
+                if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
                     let template: {};
                     let data: {};
                     let resourceName = '';
-                    if (stored.backgroundColor === '' && stored.backgroundImage === '' && stored.borderRadius.length === 0) {
+                    if (stored.border != null && stored.backgroundImage === '') {
                         template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
                         data = {
                             '0': [{
-                                '1': [{ width: stored.border[1], borderStyle: borderStyle.default }],
-                                '2': false
+                                '1': this.getShapeAttribute(stored, 'stroke'),
+                                '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
+                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                    '4': this.getShapeAttribute(stored, 'radius'),
+                                    '5': this.getShapeAttribute(stored, 'radiusInit')
+                                }] : false)
                             }]
                         };
+                        if (stored.borderRadius.length > 1) {
+                            const shapeItem = getDataLevel(data, '0', '2');
+                            const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                            shapeItem['5'].push(borderRadius);
+                        }
+                    }
+                    else if (stored.border != null) {
+                        template = parseTemplateMatch(LAYERLIST_TMPL);
+                        data = {
+                            '0': [{
+                                '1': [{
+                                    '2': this.getShapeAttribute(stored, 'stroke'),
+                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                    '4': this.getShapeAttribute(stored, 'radius'),
+                                    '5': this.getShapeAttribute(stored, 'radiusInit')
+                                }],
+                                '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
+                            }]
+                        };
+                        if (stored.borderRadius.length > 1) {
+                            const shapeItem = getDataLevel(data, '0', '1');
+                            const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                            shapeItem['5'].push(borderRadius);
+                        }
                     }
                     else {
                         template = parseTemplateMatch(LAYERLIST_TMPL);
                         data = {
                             '0': [{
-                                '1': [{
-                                    '2': [{ width: stored.border[1], borderStyle: borderStyle.default }],
-                                    '3': (stored.backgroundColor !== '' ? [{ color: `@color/${stored.backgroundColor[0]}` }] : false),
-                                    '4': (stored.borderRadius.length === 1 ? [{ radius: stored.borderRadius[0] }] : false),
-                                    '5': (stored.borderRadius.length > 1 ? [{ topLeftRadius: '' }] : false)
-                                }],
+                                '1': [],
                                 '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
                             }]
                         };
                         const rootItem = getDataLevel(data, '0');
-                        [stored.borderTopWidth, stored.borderRightWidth, stored.borderBottomWidth, stored.borderLeftWidth].forEach((item, index) => {
-                            rootItem[['top', 'right', 'bottom', 'left'][index]] = item && item[2];
-                        });
+                        const borderRadius = {};
                         if (stored.borderRadius.length > 1) {
-                            if (stored.borderRadius.length === 2) {
-                                stored.borderRadius.push(...stored.borderRadius.slice());
+                            Object.assign(borderRadius, {
+                                topLeftRadius: stored.borderRadius[0],
+                                topRightRadius: stored.borderRadius[1],
+                                bottomRightRadius: stored.borderRadius[2],
+                                bottomLeftRadius: stored.borderRadius[3]
+                            });
+                        }
+                        [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item, index) => {
+                            if (this.borderVisible(item)) {
+                                const hideWidth = `-${item.width}`;
+                                const layerList: {} = {
+                                    'top': hideWidth,
+                                    'right': hideWidth,
+                                    'bottom': hideWidth,
+                                    'left': hideWidth,
+                                    '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
+                                    '3': false,
+                                    '4': this.getShapeAttribute(stored, 'radius'),
+                                    '5': this.getShapeAttribute(stored, 'radiusInit')
+                                };
+                                layerList[['top', 'right', 'bottom', 'left'][index]] = item.width;
+                                if (stored.borderRadius.length > 1) {
+                                    layerList['5'].push(borderRadius);
+                                }
+                                rootItem['1'].push(layerList);
                             }
-                            const borderRadiusItem = getDataLevel(data, '0', '1', '5');
-                            stored.borderRadius.forEach((value: string, index: number) => borderRadiusItem[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                        });
+                        if (rootItem['1'].length === 0) {
+                            rootItem['1'] = false;
                         }
                     }
                     const xml = parseTemplateData(template, data);
@@ -193,7 +231,7 @@ export class ResourceWidget extends Resource<T> {
                     }
                     node.attr(formatString(method['background'], resourceName));
                 }
-                else if (stored.backgroundColor !== '') {
+                else if (stored.backgroundColor.length > 0) {
                     node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
                 }
             }
@@ -538,6 +576,23 @@ export class ResourceWidget extends Resource<T> {
                 }
             }
         });
+    }
+
+    private getShapeAttribute(stored: any, name: string) {
+        switch (name) {
+            case 'stroke':
+                return (stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);
+            case 'backgroundColor':
+                return (stored.backgroundColor.length > 0 ? [{ color: stored.backgroundColor[0] }] : false);
+            case 'radius':
+                return (stored.borderRadius.length === 1 && stored.borderRadius[0] !== '0px' ? [{ radius: stored.borderRadius[0] }] : false);
+            case 'radiusInit':
+                return (stored.borderRadius.length > 1 ? [] : false);
+            case 'radiusAll':
+                const result = {};
+                stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                return result;
+        }
     }
 }
 

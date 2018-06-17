@@ -1,6 +1,6 @@
 import { IClientRect, IBoxModel, IPoint, IStringMap } from '../lib/types';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
-import { getRangeBounds } from '../lib/dom';
+import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
 
 export default abstract class Node implements IBoxModel {
@@ -50,7 +50,7 @@ export default abstract class Node implements IBoxModel {
             const object: any = this.element;
             if (this.element instanceof HTMLElement) {
                 const styleMap = object.__styleMap || {};
-                for (const inline of <any> this.element.style) {
+                for (const inline of Array.from(this.element.style)) {
                     styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
                 }
                 this.style = object.__style || getComputedStyle(this.element);
@@ -195,32 +195,35 @@ export default abstract class Node implements IBoxModel {
         if (arguments.length === 2) {
             this.styleMap[attr] = (hasValue(value) ? value : '');
         }
-        else {
-            return this.styleMap[attr] || this.style[attr];
-        }
+        return this.styleMap[attr] || this.style[attr] || '';
     }
 
     public setBounds(calibrate: boolean = false, element?: HTMLElement) {
         if (!calibrate) {
-            this.bounds = (element != null ?  getRangeBounds(element) : this.element && JSON.parse(JSON.stringify(this.element.getBoundingClientRect())));
+            const bounds = (element != null ? getRangeBounds(element) : (this.element != null ? assignBounds(this.element.getBoundingClientRect()) : null));
+            if (bounds != null) {
+                this.bounds = bounds;
+            }
         }
-        this.linear = {
-            top: this.bounds.top - this.marginTop,
-            right: this.bounds.right + this.marginRight,
-            bottom: this.bounds.bottom + this.marginBottom,
-            left: this.bounds.left - this.marginLeft,
-            width: 0,
-            height: 0
-        };
-        this.box = {
-            top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
-            right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
-            bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
-            left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth),
-            width: 0,
-            height: 0
-        };
-        this.setDimensions();
+        if (this.bounds != null) {
+            this.linear = {
+                top: this.bounds.top - this.marginTop,
+                right: this.bounds.right + this.marginRight,
+                bottom: this.bounds.bottom + this.marginBottom,
+                left: this.bounds.left - this.marginLeft,
+                width: 0,
+                height: 0
+            };
+            this.box = {
+                top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
+                right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
+                bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
+                left: this.bounds.left + (this.paddingLeft + this.borderLeftWidth),
+                width: 0,
+                height: 0
+            };
+            this.setDimensions();
+        }
     }
 
     public expandDimensions() {

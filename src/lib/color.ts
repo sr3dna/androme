@@ -248,10 +248,10 @@ export function parseRGBA(value: string | null) {
     if (value != null) {
         const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
         if (match && match.length >= 4) {
-            return [match[0], `#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[4] || '1'];
+            return [`#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[0], match[4] || '1'];
         }
     }
-    return '';
+    return [];
 }
 
 export function convertRGBtoHex(value: string) {
