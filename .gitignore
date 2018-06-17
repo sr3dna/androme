@@ -1,4 +1,5 @@
-/build/
-/node_modules/
+.vscode/
+build/
+node_modules/
 *.code-workspace
 package-lock.json
