@@ -1,7 +1,8 @@
 .vscode/
-/build/
-/demos-dev/
-/node_modules/
+build/
+demos-dev/
+node_modules/
+temp/
 .babelrc
 *.code-workspace
 package-lock.json

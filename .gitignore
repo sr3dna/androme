@@ -1,4 +1,5 @@
 build/
 node_modules/
+temp/
 *.code-workspace
 package-lock.json

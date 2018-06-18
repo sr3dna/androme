@@ -1,9 +1,10 @@
 import { IBorder, IStringMap } from '../lib/types';
+import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
 import { INLINE_CHROME } from '../lib/constants';
-import { cameltoLowerCase, convertInt, convertPX, generateId, hasValue, isNumber } from '../lib/util';
-import { convertRGBtoHex, findNearestColor, parseRGBA } from '../lib/color';
+import { cameltoLowerCase, convertPX, generateId, getFilename, hasValue, isNumber } from '../lib/util';
+import { findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, getStyle } from '../lib/dom';
 import SETTINGS from '../settings';
 
@@ -43,7 +44,7 @@ export default class Resource<T extends Node> {
     public static addImage(images: IStringMap) {
         let src = '';
         if (images['mdpi'] != null && hasValue(images['mdpi'])) {
-            const image = images['mdpi'].substring(images['mdpi'].lastIndexOf('/') + 1);
+            const image = getFilename(images['mdpi']);
             const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
             src = image.replace(/.\w+$/, '');
             switch (format) {
@@ -120,7 +121,8 @@ export default class Resource<T extends Node> {
 
     public cache: NodeList<T>;
 
-    constructor()
+    constructor(
+        public file: File)
     {
     }
 
@@ -211,7 +213,7 @@ export default class Resource<T extends Node> {
                         if (match[2] == null) {
                             match[2] = '1x';
                         }
-                        const image = filepath + match[1].substring(match[1].lastIndexOf('/') + 1);
+                        const image = filepath + getFilename(match[1]);
                         switch (match[2]) {
                             case '0.75x':
                                 images['ldpi'] = image;

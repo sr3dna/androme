@@ -19,5 +19,8 @@ export default {
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 14
+    chainPackedVerticalOffset: 14,
+    outputDirectory: 'app/src/main',
+    outputArchiveFileType: 'zip',
+    outputActivityMainFileName: 'activity_main.xml'
 };

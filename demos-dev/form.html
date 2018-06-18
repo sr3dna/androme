@@ -30,6 +30,10 @@
             margin-left: 15px;
             overflow: auto;
         }
+        .output button {
+            font-size: 10px;
+            margin: 4px 0px 0px 4px;
+        }
         ul {
             margin: 0px;
             padding: 5px;
@@ -120,6 +124,7 @@
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script>
+        var androme = null;
         SystemJS.config({
             packages: {
                 '/build': { defaultExtension: 'js' }
@@ -131,6 +136,7 @@
             transpiler: 'plugin-babel'
         });
         SystemJS.import('/build/main.js').then(function(result) {
+            androme = result;
             document.getElementById('output').innerHTML = result.parseDocument('androme-root').replace(/</g, '&lt;');
             const resource = result.writeResourceStringXml() + '\n\n' +
                              result.writeResourceArrayXml() + '\n\n' +
@@ -607,11 +613,14 @@
     </div>
     <div class="output">
         <pre id="output"></pre>
-        <a href="javascript:copy('output');" style="text-align: right;">Copy</a>
+        <button onclick="androme.writeResourceAllXml(true, true);" style="float: right;">Save All</button>
+        <button onclick="androme.writeLayoutMainXml(true);" style="float: right;">Save</button>
+        <button onclick="copy('output');" style="float: right;">Copy</button>
     </div>
     <div class="output">
         <pre id="resource"></pre>
-        <a href="javascript:copy('resource');" style="text-align: right;">Copy</a>
+        <button onclick="androme.writeResourceAllXml(true);" style="float: right;">Save</button>
+        <button onclick="copy('resource');" style="float: right;">Copy</button>
     </div>
     <script>
         function copy(id) {
@@ -620,7 +629,9 @@
             range.selectNode(element);
             window.getSelection().addRange(range);
             document.execCommand('copy');
-            window.getSelection().removeAllRanges();
+            setTimeout(function() {
+                window.getSelection().removeAllRanges()
+            }, 100);
         }
     </script>
 </body>

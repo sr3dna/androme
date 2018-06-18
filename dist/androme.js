@@ -1,4 +1,4 @@
-/* androme 1.6.5
+/* androme 1.7.0
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -238,6 +238,12 @@
     }
     function isPercent(value) {
         return /^[0-9]+%$/.test(value);
+    }
+    function trim(value, character) {
+        return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
+    }
+    function getFilename(value) {
+        return value.substring(value.lastIndexOf('/') + 1);
     }
     function search(obj, value) {
         const result = [];
@@ -750,6 +756,51 @@
         'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"',
         'TOOLS': 'xmlns:tools="http://schemas.android.com/tools"'
     };
+    const FONT_ANDROID = {
+        'sans-serif': exports.build.ICE_CREAM_SANDWICH,
+        'sans-serif-thin': exports.build.JELLYBEAN,
+        'sans-serif-light': exports.build.JELLYBEAN,
+        'sans-serif-condensed': exports.build.JELLYBEAN,
+        'sans-serif-condensed-light': exports.build.JELLYBEAN,
+        'sans-serif-medium': exports.build.LOLLIPOP,
+        'sans-serif-black': exports.build.LOLLIPOP,
+        'sans-serif-smallcaps': exports.build.LOLLIPOP,
+        'serif-monospace': exports.build.LOLLIPOP,
+        'serif': exports.build.LOLLIPOP,
+        'casual': exports.build.LOLLIPOP,
+        'cursive': exports.build.LOLLIPOP,
+        'monospace': exports.build.LOLLIPOP,
+        'sans-serif-condensed-medium': exports.build.OREO
+    };
+    const FONTALIAS_ANDROID = {
+        'arial': 'sans-serif',
+        'helvetica': 'sans-serif',
+        'tahoma': 'sans-serif',
+        'verdana': 'sans-serif',
+        'times': 'serif',
+        'times new roman': 'serif',
+        'palatino': 'serif',
+        'georgia': 'serif',
+        'baskerville': 'serif',
+        'goudy': 'serif',
+        'fantasy': 'serif',
+        'itc stone serif': 'serif',
+        'sans-serif-monospace': 'monospace',
+        'monaco': 'monospace',
+        'courier': 'serif-monospace',
+        'courier new': 'serif-monospace'
+    };
+    const FONTWEIGHT_ANDROID = {
+        '100': 'thin',
+        '200': 'extra_light',
+        '300': 'light',
+        '400': 'normal',
+        '500': 'medium',
+        '600': 'semi_bold',
+        '700': 'bold',
+        '800': 'extra_bold',
+        '900': 'black'
+    };
 
     var SETTINGS = {
         targetAPI: exports.build.OREO,
@@ -770,7 +821,10 @@
         whitespaceHorizontalOffset: 4,
         whitespaceVerticalOffset: 14,
         chainPackedHorizontalOffset: 4,
-        chainPackedVerticalOffset: 14
+        chainPackedVerticalOffset: 14,
+        outputDirectory: 'app/src/main',
+        outputArchiveFileType: 'zip',
+        outputActivityMainFileName: 'activity_main.xml'
     };
 
     class Application {
@@ -797,7 +851,9 @@
             this.viewHandler.setLayoutWeight();
         }
         replaceAppended(output) {
-            return this.viewHandler.replaceAppended(output);
+            output = this.viewHandler.replaceAppended(output);
+            this._generated = output;
+            return output;
         }
         setResources() {
             this.resourceHandler.setBoxSpacing();
@@ -1391,19 +1447,26 @@
                     output = output.replace(`{${id}}`, views.join(''));
                 }
             }
+            this._generated = output;
             return output;
         }
         replaceInlineAttributes(output) {
             const options = {};
             this.cache.visible.forEach((node) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
-            return output.replace('{@0}', this.viewHandler.getRootAttributes(options));
+            output = output.replace('{@0}', this.viewHandler.getRootAttributes(options));
+            this._generated = output;
+            return output;
         }
         cleanAttributes(output) {
             output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
             if (SETTINGS.useUnitDP) {
                 output = replaceDP(output, SETTINGS.density);
             }
+            this._generated = output;
             return output;
+        }
+        toString() {
+            return this._generated;
         }
         writeFrameLayout(node, parent) {
             return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.FRAME);
@@ -3553,7 +3616,8 @@
     }
 
     class Resource {
-        constructor() {
+        constructor(file) {
+            this.file = file;
         }
         static addString(value, name = '') {
             if (hasValue(value)) {
@@ -3583,7 +3647,7 @@
         static addImage(images) {
             let src = '';
             if (images['mdpi'] != null && hasValue(images['mdpi'])) {
-                const image = images['mdpi'].substring(images['mdpi'].lastIndexOf('/') + 1);
+                const image = getFilename(images['mdpi']);
                 const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
                 src = image.replace(/.\w+$/, '');
                 switch (format) {
@@ -3738,7 +3802,7 @@
                             if (match[2] == null) {
                                 match[2] = '1x';
                             }
-                            const image = filepath + match[1].substring(match[1].lastIndexOf('/') + 1);
+                            const image = filepath + getFilename(match[1]);
                             switch (match[2]) {
                                 case '0.75x':
                                     images['ldpi'] = image;
@@ -3989,87 +4053,6 @@
     const template = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
-        '<resources>',
-        '!1',
-        '	<string name="{name}">{value}</string>',
-        '!1',
-        '</resources>',
-        '<!-- filename: res/values/strings.xml -->',
-        '!0'
-    ];
-    var STRING_TMPL = template.join('\n');
-
-    const template$1 = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<resources>',
-        '!1',
-        '	<string-array name="{name}">',
-        '!2',
-        '		<item>{value}</item>',
-        '!2',
-        '	</string-array>',
-        '!1',
-        '</resources>',
-        '<!-- filename: res/values/string_arrays.xml -->',
-        '!0'
-    ];
-    var STRINGARRAY_TMPL = template$1.join('\n');
-
-    const template$2 = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<resources>',
-        '!1',
-        '	<style name="{name1}" parent="{@parent}">',
-        '!2',
-        '		<item name="{name2}">{value}</item>',
-        '!2',
-        '	</style>',
-        '!1',
-        '</resources>',
-        '<!-- filename: res/values/styles.xml -->',
-        '!0'
-    ];
-    var STYLE_TMPL = template$2.join('\n');
-
-    const template$3 = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
-        '!1',
-        '	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" app:fontStyle="{#app=style}" app:fontWeight="{#app=weight}" app:font="{#app=font}" />',
-        '!1',
-        '</font-family>',
-        '<!-- filename: res/font/{name}.xml -->',
-        '!0'
-    ];
-    var FONT_TMPL = template$3.join('\n');
-
-    const template$4 = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<resources>',
-        '!1',
-        '	<color name="{value}">{name}</color>',
-        '!1',
-        '</resources>',
-        '<!-- filename: res/values/colors.xml -->',
-        '!0'
-    ];
-    var COLOR_TMPL = template$4.join('\n');
-
-    const template$5 = [
-        '!0',
-        '{value}',
-        '<!-- filename: {name} -->',
-        '!0'
-    ];
-    var DRAWABLE_TMPL = template$5.join('\n');
-
-    const template$6 = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
         '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">',
         '!1',
         '	<stroke android:width="{&width}" {borderStyle} />',
@@ -4088,9 +4071,9 @@
         '</shape>',
         '!0'
     ];
-    var SHAPERECTANGLE_TMPL = template$6.join('\n');
+    var SHAPERECTANGLE_TMPL = template.join('\n');
 
-    const template$7 = [
+    const template$1 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">',
@@ -4118,14 +4101,18 @@
         '</layer-list>',
         '!0'
     ];
-    var LAYERLIST_TMPL = template$7.join('\n');
+    var LAYERLIST_TMPL = template$1.join('\n');
 
     const STORED = {
         ARRAYS: new Map(),
         FONTS: new Map(),
         DRAWABLES: new Map(),
-        STYLES: new Map()
+        STYLES: new Map(),
+        STRINGS: new Map(),
+        COLORS: new Map(),
+        IMAGES: new Map()
     };
+    Object.assign(STORED, Resource.STORED);
     const METHOD_ANDROID = {
         'boxSpacing': {
             'margin': 'android:layout_margin="{0}"',
@@ -4161,54 +4148,10 @@
             'src': 'android:src="@drawable/{0}"'
         }
     };
-    const FONT_ANDROID = {
-        'sans-serif': exports.build.ICE_CREAM_SANDWICH,
-        'sans-serif-thin': exports.build.JELLYBEAN,
-        'sans-serif-light': exports.build.JELLYBEAN,
-        'sans-serif-condensed': exports.build.JELLYBEAN,
-        'sans-serif-condensed-light': exports.build.JELLYBEAN,
-        'sans-serif-medium': exports.build.LOLLIPOP,
-        'sans-serif-black': exports.build.LOLLIPOP,
-        'sans-serif-smallcaps': exports.build.LOLLIPOP,
-        'serif-monospace': exports.build.LOLLIPOP,
-        'serif': exports.build.LOLLIPOP,
-        'casual': exports.build.LOLLIPOP,
-        'cursive': exports.build.LOLLIPOP,
-        'monospace': exports.build.LOLLIPOP,
-        'sans-serif-condensed-medium': exports.build.OREO
-    };
-    const FONTALIAS_ANDROID = {
-        'arial': 'sans-serif',
-        'helvetica': 'sans-serif',
-        'tahoma': 'sans-serif',
-        'verdana': 'sans-serif',
-        'times': 'serif',
-        'times new roman': 'serif',
-        'palatino': 'serif',
-        'georgia': 'serif',
-        'baskerville': 'serif',
-        'goudy': 'serif',
-        'fantasy': 'serif',
-        'itc stone serif': 'serif',
-        'sans-serif-monospace': 'monospace',
-        'monaco': 'monospace',
-        'courier': 'serif-monospace',
-        'courier new': 'serif-monospace'
-    };
-    const FONTWEIGHT_ANDROID = {
-        '100': 'thin',
-        '200': 'extra_light',
-        '300': 'light',
-        '400': 'normal',
-        '500': 'medium',
-        '600': 'semi_bold',
-        '700': 'bold',
-        '800': 'extra_bold',
-        '900': 'black'
-    };
     class ResourceWidget extends Resource {
-        constructor() {
-            super();
+        constructor(file) {
+            super(file);
+            this.file.stored = STORED;
         }
         setBoxSpacing() {
             super.setBoxSpacing();
@@ -4599,7 +4542,7 @@
                 let result = [];
                 if (stored.stringArray != null) {
                     for (const value of stored.stringArray) {
-                        const name = Resource.STORED.STRINGS.get(value);
+                        const name = STORED.STRINGS.get(value);
                         result.push((name != null ? `@string/${name}` : value));
                     }
                 }
@@ -4618,7 +4561,7 @@
                 const stored = element.__valueString;
                 if (stored != null) {
                     const method = METHOD_ANDROID['valueString'];
-                    const name = Resource.STORED.STRINGS.get(stored);
+                    const name = STORED.STRINGS.get(stored);
                     if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
                         const match = node.style.textDecoration.match(/(underline|line-through)/);
                         if (match != null) {
@@ -4631,8 +4574,8 @@
                                     value = `<strike>${stored}</strike>`;
                                     break;
                             }
-                            Resource.STORED.STRINGS.delete(stored);
-                            Resource.STORED.STRINGS.set(value, name);
+                            STORED.STRINGS.delete(stored);
+                            STORED.STRINGS.set(value, name);
                         }
                     }
                     node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
@@ -4681,163 +4624,369 @@
             }
         }
     }
-    function writeResourceStringXml() {
-        Resource.STORED.STRINGS = new Map([...Resource.STORED.STRINGS.entries()].sort());
-        let xml = '';
-        if (Resource.STORED.STRINGS.size > 0) {
-            const template = parseTemplateMatch(STRING_TMPL);
-            const data = {
-                '0': [{
-                        '1': []
-                    }]
-            };
-            const rootItem = getDataLevel(data, '0');
-            for (const [name, value] of Resource.STORED.STRINGS.entries()) {
-                rootItem['1'].push({ name: value, value: name });
+
+    class File {
+        constructor(directory, appname, filetype) {
+            this.directory = directory;
+            this.appname = appname;
+            this.filetype = 'zip';
+            if (filetype != null) {
+                this.filetype = filetype;
             }
-            xml = parseTemplateData(template, data);
         }
-        return xml;
+        saveToDisk(files) {
+            if (files != null && files.length > 0) {
+                fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appname.trim())}&filetype=${this.filetype.toLocaleLowerCase()}`, {
+                    method: 'POST',
+                    body: JSON.stringify(files),
+                    headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
+                })
+                    .then((res) => {
+                    return res.json();
+                })
+                    .then(json => {
+                    if (json && hasValue(json.zipname)) {
+                        fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
+                            .then(res => res.blob())
+                            .then(blob => {
+                            this.downloadToDisk(blob, getFilename(json.zipname));
+                        });
+                    }
+                })
+                    .catch(err => alert(`ERROR: ${err}`));
+            }
+        }
+        downloadToDisk(data, filename, mime = '') {
+            const blob = new Blob([data], { type: mime || 'application/octet-stream' });
+            if (typeof window.navigator.msSaveBlob !== 'undefined') {
+                window.navigator.msSaveBlob(blob, filename);
+                return;
+            }
+            const url = window.URL.createObjectURL(blob);
+            const element = document.createElement('a');
+            element.style.display = 'none';
+            element.href = url;
+            element.setAttribute('download', filename);
+            if (typeof element.download === 'undefined') {
+                element.setAttribute('target', '_blank');
+            }
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+        }
     }
-    function writeResourceArrayXml() {
-        STORED.ARRAYS = new Map([...STORED.ARRAYS.entries()].sort());
-        let xml = '';
-        if (STORED.ARRAYS.size > 0) {
-            const template = parseTemplateMatch(STRINGARRAY_TMPL);
+
+    const template$2 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<string name="{name}">{value}</string>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/strings.xml -->',
+        '!0'
+    ];
+    var STRING_TMPL = template$2.join('\n');
+
+    const template$3 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<string-array name="{name}">',
+        '!2',
+        '		<item>{value}</item>',
+        '!2',
+        '	</string-array>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/string_arrays.xml -->',
+        '!0'
+    ];
+    var STRINGARRAY_TMPL = template$3.join('\n');
+
+    const template$4 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<style name="{name1}" parent="{@parent}">',
+        '!2',
+        '		<item name="{name2}">{value}</item>',
+        '!2',
+        '	</style>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/styles.xml -->',
+        '!0'
+    ];
+    var STYLE_TMPL = template$4.join('\n');
+
+    const template$5 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
+        '!1',
+        '	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" app:fontStyle="{#app=style}" app:fontWeight="{#app=weight}" app:font="{#app=font}" />',
+        '!1',
+        '</font-family>',
+        '<!-- filename: res/font/{name}.xml -->',
+        '!0'
+    ];
+    var FONT_TMPL = template$5.join('\n');
+
+    const template$6 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<color name="{value}">{name}</color>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/colors.xml -->',
+        '!0'
+    ];
+    var COLOR_TMPL = template$6.join('\n');
+
+    const template$7 = [
+        '!0',
+        '{value}',
+        '<!-- filename: {name} -->',
+        '!0'
+    ];
+    var DRAWABLE_TMPL = template$7.join('\n');
+
+    class FileRes extends File {
+        constructor(appname, filetype) {
+            super(SETTINGS.outputDirectory, appname, filetype);
+        }
+        layoutMainToDisk(content) {
+            this.saveToDisk([this.getLayoutMainFile(content)]);
+        }
+        resourceAllToXml(saveToDisk = false, layoutMain = '') {
             const data = {
-                '0': [{
-                        '1': []
-                    }]
+                string: this.resourceStringToXml(),
+                stringArray: this.resourceStringArrayToXml(),
+                font: this.resourceFontToXml(),
+                color: this.resourceColorToXml(),
+                style: this.resourceStyleToXml(),
+                drawable: this.resourceDrawableToXml()
             };
-            const rootItem = getDataLevel(data, '0');
-            for (const [name, values] of STORED.ARRAYS.entries()) {
-                const arrayItem = {
-                    name,
-                    '2': []
-                };
-                const item = arrayItem['2'];
-                for (const text of values) {
-                    item.push({ value: text });
+            if (saveToDisk) {
+                const files = [];
+                if (layoutMain !== '') {
+                    files.push(this.getLayoutMainFile(layoutMain));
                 }
-                rootItem['1'].push(arrayItem);
+                for (const resource in data) {
+                    files.push(...this.parseFileDetails(data[resource]));
+                }
+                this.saveToDisk(files);
             }
-            xml = parseTemplateData(template, data);
+            if (layoutMain !== '') {
+                data.main = layoutMain;
+            }
+            return data;
         }
-        return xml;
-    }
-    function writeResourceStyleXml() {
-        let xml = '';
-        if (STORED.STYLES.size > 0) {
-            const template = parseTemplateMatch(STYLE_TMPL);
-            const data = {
-                '0': [{
-                        '1': []
-                    }]
-            };
-            const rootItem = getDataLevel(data, '0');
-            for (const [name1, style] of STORED.STYLES.entries()) {
-                const styleItem = {
-                    name1,
-                    parent: style.parent || '',
-                    '2': []
-                };
-                style.attributes.split(';').sort().forEach((attr) => {
-                    const [name2, value] = attr.split('=');
-                    styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
-                });
-                rootItem['1'].push(styleItem);
-            }
-            xml = parseTemplateData(template, data);
-            if (SETTINGS.useUnitDP) {
-                xml = replaceDP(xml, SETTINGS.density, true);
-            }
-        }
-        return xml;
-    }
-    function writeResourceFontXml() {
-        STORED.FONTS = new Map([...STORED.FONTS.entries()].sort());
-        let xml = '';
-        if (STORED.FONTS.size > 0) {
-            const template = parseTemplateMatch(FONT_TMPL);
-            for (const [name, font] of STORED.FONTS.entries()) {
+        resourceStringToXml(saveToDisk = false) {
+            this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort());
+            let xml = '';
+            if (this.stored.STRINGS.size > 0) {
+                const template = parseTemplateMatch(STRING_TMPL);
                 const data = {
-                    '#include': {},
-                    '#exclude': {},
                     '0': [{
-                            name,
                             '1': []
                         }]
                 };
-                data[(SETTINGS.targetAPI < exports.build.OREO ? '#include' : '#exclude')]['app'] = true;
                 const rootItem = getDataLevel(data, '0');
-                for (const attr in font) {
-                    const [style, weight] = attr.split('-');
-                    rootItem['1'].push({
-                        style,
-                        weight,
-                        font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
-                    });
+                for (const [name, value] of this.stored.STRINGS.entries()) {
+                    rootItem['1'].push({ name: value, value: name });
                 }
-                xml += '\n\n' + parseTemplateData(template, data);
+                xml = parseTemplateData(template, data);
+                if (saveToDisk) {
+                    this.saveToDisk(this.parseFileDetails(xml));
+                }
             }
+            return xml;
         }
-        return xml.trim();
-    }
-    function writeResourceColorXml() {
-        let xml = '';
-        if (Resource.STORED.COLORS.size > 0) {
-            Resource.STORED.COLORS = new Map([...Resource.STORED.COLORS.entries()].sort());
-            const template = parseTemplateMatch(COLOR_TMPL);
-            const data = {
-                '0': [{
-                        '1': []
-                    }]
-            };
-            const rootItem = getDataLevel(data, '0');
-            for (const [name, value] of Resource.STORED.COLORS.entries()) {
-                rootItem['1'].push({ name, value });
+        resourceStringArrayToXml(saveToDisk = false) {
+            this.stored.ARRAYS = new Map([...this.stored.ARRAYS.entries()].sort());
+            let xml = '';
+            if (this.stored.ARRAYS.size > 0) {
+                const template = parseTemplateMatch(STRINGARRAY_TMPL);
+                const data = {
+                    '0': [{
+                            '1': []
+                        }]
+                };
+                const rootItem = getDataLevel(data, '0');
+                for (const [name, values] of this.stored.ARRAYS.entries()) {
+                    const arrayItem = {
+                        name,
+                        '2': []
+                    };
+                    const item = arrayItem['2'];
+                    for (const text of values) {
+                        item.push({ value: text });
+                    }
+                    rootItem['1'].push(arrayItem);
+                }
+                xml = parseTemplateData(template, data);
+                if (saveToDisk) {
+                    this.saveToDisk(this.parseFileDetails(xml));
+                }
             }
-            xml = parseTemplateData(template, data);
+            return xml;
         }
-        return xml;
-    }
-    function writeResourceDrawableXml() {
-        let xml = '';
-        if (STORED.DRAWABLES.size > 0 || Resource.STORED.IMAGES.size > 0) {
-            const template = parseTemplateMatch(DRAWABLE_TMPL);
-            const data = {
-                '0': []
-            };
-            const rootItem = data['0'];
-            for (const [name, value] of STORED.DRAWABLES.entries()) {
-                rootItem.push({ name: `res/drawable/${name}.xml`, value });
+        resourceFontToXml(saveToDisk = false) {
+            this.stored.FONTS = new Map([...this.stored.FONTS.entries()].sort());
+            let xml = '';
+            if (this.stored.FONTS.size > 0) {
+                const template = parseTemplateMatch(FONT_TMPL);
+                for (const [name, font] of this.stored.FONTS.entries()) {
+                    const data = {
+                        '#include': {},
+                        '#exclude': {},
+                        '0': [{
+                                name,
+                                '1': []
+                            }]
+                    };
+                    data[(SETTINGS.targetAPI < exports.build.OREO ? '#include' : '#exclude')]['app'] = true;
+                    const rootItem = getDataLevel(data, '0');
+                    for (const attr in font) {
+                        const [style, weight] = attr.split('-');
+                        rootItem['1'].push({
+                            style,
+                            weight,
+                            font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
+                        });
+                    }
+                    xml += '\n\n' + parseTemplateData(template, data);
+                }
+                if (saveToDisk) {
+                    this.saveToDisk(this.parseFileDetails(xml));
+                }
             }
-            for (const [name, images] of Resource.STORED.IMAGES.entries()) {
-                if (Object.keys(images).length > 1) {
-                    for (const dpi in images) {
-                        rootItem.push({ name: `res/drawable-${dpi}/${name + images[dpi].substring(images[dpi].lastIndexOf('.'))}`, value: `<!-- image: ${images[dpi]} -->` });
+            return xml.trim();
+        }
+        resourceColorToXml(saveToDisk = false) {
+            let xml = '';
+            if (this.stored.COLORS.size > 0) {
+                this.stored.COLORS = new Map([...this.stored.COLORS.entries()].sort());
+                const template = parseTemplateMatch(COLOR_TMPL);
+                const data = {
+                    '0': [{
+                            '1': []
+                        }]
+                };
+                const rootItem = getDataLevel(data, '0');
+                for (const [name, value] of this.stored.COLORS.entries()) {
+                    rootItem['1'].push({ name, value });
+                }
+                xml = parseTemplateData(template, data);
+                if (saveToDisk) {
+                    this.saveToDisk(this.parseFileDetails(xml));
+                }
+            }
+            return xml;
+        }
+        resourceStyleToXml(saveToDisk = false) {
+            let xml = '';
+            if (this.stored.STYLES.size > 0) {
+                const template = parseTemplateMatch(STYLE_TMPL);
+                const data = {
+                    '0': [{
+                            '1': []
+                        }]
+                };
+                const rootItem = getDataLevel(data, '0');
+                for (const [name1, style] of this.stored.STYLES.entries()) {
+                    const styleItem = {
+                        name1,
+                        parent: style.parent || '',
+                        '2': []
+                    };
+                    style.attributes.split(';').sort().forEach((attr) => {
+                        const [name2, value] = attr.split('=');
+                        styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
+                    });
+                    rootItem['1'].push(styleItem);
+                }
+                xml = parseTemplateData(template, data);
+                if (SETTINGS.useUnitDP) {
+                    xml = replaceDP(xml, SETTINGS.density, true);
+                }
+                if (saveToDisk) {
+                    this.saveToDisk(this.parseFileDetails(xml));
+                }
+            }
+            return xml;
+        }
+        resourceDrawableToXml(saveToDisk = false) {
+            let xml = '';
+            if (this.stored.DRAWABLES.size > 0 || this.stored.IMAGES.size > 0) {
+                const template = parseTemplateMatch(DRAWABLE_TMPL);
+                const data = {
+                    '0': []
+                };
+                const rootItem = data['0'];
+                for (const [name, value] of this.stored.DRAWABLES.entries()) {
+                    rootItem.push({ name: `res/drawable/${name}.xml`, value });
+                }
+                for (const [name, images] of this.stored.IMAGES.entries()) {
+                    if (Object.keys(images).length > 1) {
+                        for (const dpi in images) {
+                            rootItem.push({ name: `res/drawable-${dpi}/${name + images[dpi].substring(images[dpi].lastIndexOf('.'))}`, value: `<!-- image: ${images[dpi]} -->` });
+                        }
+                    }
+                    else if (images['mdpi'] != null) {
+                        rootItem.push({ name: `res/drawable/${name + images['mdpi'].substring(images['mdpi'].lastIndexOf('.'))}`, value: `<!-- image: ${images['mdpi']} -->` });
                     }
                 }
-                else if (images['mdpi'] != null) {
-                    rootItem.push({ name: `res/drawable/${name + images['mdpi'].substring(images['mdpi'].lastIndexOf('.'))}`, value: `<!-- image: ${images['mdpi']} -->` });
+                xml = parseTemplateData(template, data);
+                if (SETTINGS.useUnitDP) {
+                    xml = replaceDP(xml, SETTINGS.density);
+                }
+                if (saveToDisk) {
+                    this.saveToDisk(this.parseFileDetails(xml));
                 }
             }
-            xml = parseTemplateData(template, data);
-            if (SETTINGS.useUnitDP) {
-                xml = replaceDP(xml, SETTINGS.density);
-            }
+            return xml;
         }
-        return xml;
+        parseFileDetails(xml) {
+            const result = [];
+            const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?.xml) -->)/;
+            let match = null;
+            while ((match = pattern.exec(xml)) != null) {
+                result.push({
+                    content: match[0].replace(match[1], '').trim(),
+                    pathname: match[2],
+                    filename: match[3]
+                });
+                xml = xml.replace(match[0], '');
+            }
+            return result;
+        }
+        getLayoutMainFile(content) {
+            return {
+                content,
+                pathname: 'res/layout',
+                filename: SETTINGS.outputActivityMainFileName
+            };
+        }
     }
 
+    let app;
     function parseDocument(element) {
         if (typeof element === 'string') {
             element = document.getElementById(element);
         }
         let output = '';
-        const app = new Application(Widget, WidgetList);
+        app = new Application(Widget, WidgetList);
         app.registerView(new Layout());
-        app.registerResource(new ResourceWidget());
+        app.registerResource(new ResourceWidget(new FileRes(element.id, SETTINGS.outputArchiveFileType)));
         app.setStyleMap();
         app.setNodeCache(element);
         output = app.getLayoutXml();
@@ -4854,16 +5003,66 @@
         output = app.cleanAttributes(output);
         return output;
     }
+    function writeLayoutMainXml(saveToDisk = false) {
+        if (app != null) {
+            return app.resourceHandler.file.layoutMainToDisk(app.toString());
+        }
+        return '';
+    }
+    function writeResourceAllXml(saveToDisk = false, layoutMain = false) {
+        if (app != null) {
+            return app.resourceHandler.file.resourceAllToXml(saveToDisk, (layoutMain ? app.toString() : ''));
+        }
+        return '';
+    }
+    function writeResourceStringXml(saveToDisk = false) {
+        if (app != null) {
+            return app.resourceHandler.file.resourceStringToXml(saveToDisk);
+        }
+        return '';
+    }
+    function writeResourceArrayXml(saveToDisk = false) {
+        if (app != null) {
+            return app.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
+        }
+        return '';
+    }
+    function writeResourceFontXml(saveToDisk = false) {
+        if (app != null) {
+            return app.resourceHandler.file.resourceFontToXml(saveToDisk);
+        }
+        return '';
+    }
+    function writeResourceColorXml(saveToDisk = false) {
+        if (app != null) {
+            return app.resourceHandler.file.resourceColorToXml(saveToDisk);
+        }
+        return '';
+    }
+    function writeResourceStyleXml(saveToDisk = false) {
+        if (app != null) {
+            return app.resourceHandler.file.resourceStyleToXml(saveToDisk);
+        }
+        return '';
+    }
+    function writeResourceDrawableXml(saveToDisk = false) {
+        if (app != null) {
+            return app.resourceHandler.file.resourceDrawableToXml(saveToDisk);
+        }
+        return '';
+    }
 
     exports.parseDocument = parseDocument;
+    exports.writeLayoutMainXml = writeLayoutMainXml;
+    exports.writeResourceAllXml = writeResourceAllXml;
+    exports.writeResourceStringXml = writeResourceStringXml;
+    exports.writeResourceArrayXml = writeResourceArrayXml;
+    exports.writeResourceFontXml = writeResourceFontXml;
+    exports.writeResourceColorXml = writeResourceColorXml;
+    exports.writeResourceStyleXml = writeResourceStyleXml;
+    exports.writeResourceDrawableXml = writeResourceDrawableXml;
     exports.api = API_ANDROID;
     exports.settings = SETTINGS;
-    exports.writeResourceArrayXml = writeResourceArrayXml;
-    exports.writeResourceColorXml = writeResourceColorXml;
-    exports.writeResourceDrawableXml = writeResourceDrawableXml;
-    exports.writeResourceFontXml = writeResourceFontXml;
-    exports.writeResourceStringXml = writeResourceStringXml;
-    exports.writeResourceStyleXml = writeResourceStyleXml;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

@@ -6,14 +6,25 @@ This program can convert moderately complex HTML pages into the standard XML lay
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). Chrome is the preferred browser when generating the production version of your program. ***
 
-Express server using Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development.
-
+Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be extracted into your project folder.
+  
 -- Install Node.js: http://www.nodejs.com/
--- Install androme: npm i androme
--- Change directory: cd androme
--- Install dependencies: npm update
+  
+-- Install androme: (choose one)  
+1. git clone https://github.org/anpham6/androme  
+2. npm i androme  
+  
+-- Change directory: (choose one)  
+1. cd androme  
+2. cd node_modules/androme  
+  
+-- Install dependencies: npm install
+  
 -- Load web server: node app.js
+  
 -- Open Chrome: http://localhost:3000/demos/form.html
+  
+If you install via NPM then it is recommended you put androme into its own separate folder rather than inside "node_modules".
 
 Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6).
 
@@ -23,16 +34,22 @@ Library files are in the /dist folder. There is a babel minified for production 
     androme.settings.targetAPI = 19; // androme.build.KITKAT
     androme.settings.density = 160; // androme.density.MDPI
 
-    // use either console.log() or element.innerHTML to display
+	// without express: use either console.log() or element.innerHTML to display
 
     document.addEventListener('DOMContentLoaded', () => {
-        androme.parseDocument(/* document.getElementById('root-node') */); // default: document.body
-        androme.writeResourceStringXml();
-        androme.writeResourceArrayXml();
-        androme.writeResourceStyleXml();
-        androme.writeResourceFontXml();
-        androme.writeResourceColorXml();
-        androme.writeResourceDrawableXml();
+		// required
+		androme.parseDocument(/* document.getElementById('root-node') */); /* default: document.body */
+
+		// optional
+        androme.writeLayoutMainXml(true); /* true: save to disk, false: string xml */
+        androme.writeResourceStringXml(true);
+        androme.writeResourceArrayXml(true);
+        androme.writeResourceStyleXml(true);
+        androme.writeResourceFontXml(true);
+        androme.writeResourceColorXml(true);
+		androme.writeResourceDrawableXml(true);
+
+		androme.writeResourceAllXml(true, true); /* true: save to disk, true: include activity_main.xml */
     });
 </script>
 ```
@@ -58,7 +75,10 @@ androme.settings = {
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 14
+    chainPackedVerticalOffset: 14,
+	outputDirectory: 'app/src/main',
+    outputArchiveFileType: 'zip', // zip | tar
+    outputActivityMainFileName: 'activity_main.xml'
 };
 ```
 You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. Using the latest Chrome will always generate the most accurate layout.
@@ -81,7 +101,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/position_absolute.png" alt="constraintlayout - position: absolute" />
 
-## auto-generated layout
+### auto-generated layout
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -939,7 +959,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 	</LinearLayout>
 </LinearLayout>
 ```
-## string resources
+### string resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1026,7 +1046,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 </resources>
 <!-- filename: res/values/string_arrays.xml -->
 ```
-## styles and themes
+### styles and themes
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1069,7 +1089,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 </resources>
 <!-- filename: res/values/styles.xml -->
 ```
-## bundled fonts
+### bundled fonts
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1085,7 +1105,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 </font-family>
 <!-- filename: res/font/tahoma.xml -->
 ```
-## color resources
+### color resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1100,7 +1120,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 </resources>
 <!-- filename: res/values/colors.xml -->
 ```
-## drawable resources
+### drawable resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>

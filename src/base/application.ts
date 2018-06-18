@@ -9,9 +9,11 @@ import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
+    public viewHandler: View<T, U>;
+    public resourceHandler: Resource<T>;
+
     private cache: U;
-    private viewHandler: View<T, U>;
-    private resourceHandler: Resource<T>;
+    private _generated: string;
 
     constructor(
         private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
@@ -43,7 +45,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public replaceAppended(output: string) {
-        return this.viewHandler.replaceAppended(output);
+        output = this.viewHandler.replaceAppended(output);
+        this._generated = output;
+        return output;
     }
 
     public setResources() {
@@ -643,13 +647,16 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 output = output.replace(`{${id}}`, views.join(''));
             }
         }
+        this._generated = output;
         return output;
     }
 
     public replaceInlineAttributes(output: string) {
         const options = {};
         this.cache.visible.forEach((node: T) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
-        return output.replace('{@0}', this.viewHandler.getRootAttributes(options));
+        output = output.replace('{@0}', this.viewHandler.getRootAttributes(options));
+        this._generated = output;
+        return output;
     }
 
     public cleanAttributes(output) {
@@ -657,7 +664,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         if (SETTINGS.useUnitDP) {
             output = replaceDP(output, SETTINGS.density);
         }
+        this._generated = output;
         return output;
+    }
+
+    public toString() {
+        return this._generated;
     }
 
     private writeFrameLayout(node: T, parent: T) {

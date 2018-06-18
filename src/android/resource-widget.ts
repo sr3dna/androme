@@ -1,29 +1,29 @@
-import { IStringMap } from '../lib/types';
+import { IResourceMap } from '../lib/types';
 import Resource from '../base/resource';
+import File from '../base/file';
 import Widget from './widget';
-import { formatString, hasValue, replaceDP } from '../lib/util';
-import { sameAsParent } from '../lib/dom';
+import { formatString, hasValue } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
+import { sameAsParent } from '../lib/dom';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
 import { VIEW_STANDARD } from '../lib/constants';
-import { BUILD_ANDROID } from './constants';
+import { FONT_ANDROID, FONTALIAS_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 
-import STRING_TMPL from './tmpl/resources/string';
-import STRINGARRAY_TMPL from './tmpl/resources/string-array';
-import STYLE_TMPL from './tmpl/resources/style';
-import FONT_TMPL from './tmpl/resources/font';
-import COLOR_TMPL from './tmpl/resources/color';
-import DRAWABLE_TMPL from './tmpl/resources/drawable';
 import SHAPERECTANGLE_TMPL from './tmpl/resources/shape-rectangle';
 import LAYERLIST_TMPL from './tmpl/resources/layer-list';
 
-const STORED = {
+const STORED: IResourceMap = {
     ARRAYS: new Map(),
     FONTS: new Map(),
     DRAWABLES: new Map(),
-    STYLES: new Map()
+    STYLES: new Map(),
+    STRINGS: new Map(),
+    COLORS: new Map(),
+    IMAGES: new Map()
 };
+
+Object.assign(STORED, Resource.STORED);
 
 const METHOD_ANDROID = {
     'boxSpacing': {
@@ -61,59 +61,12 @@ const METHOD_ANDROID = {
     }
 };
 
-const FONT_ANDROID = {
-    'sans-serif': BUILD_ANDROID.ICE_CREAM_SANDWICH,
-    'sans-serif-thin': BUILD_ANDROID.JELLYBEAN,
-    'sans-serif-light': BUILD_ANDROID.JELLYBEAN,
-    'sans-serif-condensed': BUILD_ANDROID.JELLYBEAN,
-    'sans-serif-condensed-light': BUILD_ANDROID.JELLYBEAN,
-    'sans-serif-medium': BUILD_ANDROID.LOLLIPOP,
-    'sans-serif-black': BUILD_ANDROID.LOLLIPOP,
-    'sans-serif-smallcaps': BUILD_ANDROID.LOLLIPOP,
-    'serif-monospace' : BUILD_ANDROID.LOLLIPOP,
-    'serif': BUILD_ANDROID.LOLLIPOP,
-    'casual' : BUILD_ANDROID.LOLLIPOP,
-    'cursive': BUILD_ANDROID.LOLLIPOP,
-    'monospace': BUILD_ANDROID.LOLLIPOP,
-    'sans-serif-condensed-medium': BUILD_ANDROID.OREO
-};
-
-const FONTALIAS_ANDROID = {
-    'arial': 'sans-serif',
-    'helvetica': 'sans-serif',
-    'tahoma': 'sans-serif',
-    'verdana': 'sans-serif',
-    'times': 'serif',
-    'times new roman': 'serif',
-    'palatino': 'serif',
-    'georgia': 'serif',
-    'baskerville': 'serif',
-    'goudy': 'serif',
-    'fantasy': 'serif',
-    'itc stone serif': 'serif',
-    'sans-serif-monospace': 'monospace',
-    'monaco': 'monospace',
-    'courier': 'serif-monospace',
-    'courier new': 'serif-monospace'
-};
-
-const FONTWEIGHT_ANDROID = {
-    '100': 'thin',
-    '200': 'extra_light',
-    '300': 'light',
-    '400': 'normal',
-    '500': 'medium',
-    '600': 'semi_bold',
-    '700': 'bold',
-    '800': 'extra_bold',
-    '900': 'black'
-};
-
 type T = Widget;
 
-export class ResourceWidget extends Resource<T> {
-    constructor() {
-        super();
+export default class ResourceWidget extends Resource<T> {
+    constructor(file: File) {
+        super(file);
+        this.file.stored = STORED;
     }
 
     public setBoxSpacing() {
@@ -268,7 +221,7 @@ export class ResourceWidget extends Resource<T> {
                 if (element != null) {
                     const id = (labelFor || node).id;
                     const stored = Object.assign({}, (<any> element).__fontStyle);
-                    const fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                    const fontFamily: string = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
                     let fontStyle = '';
                     let fontWeight = '';
                     if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
@@ -510,7 +463,7 @@ export class ResourceWidget extends Resource<T> {
             let result: string[] = [];
             if (stored.stringArray != null) {
                 for (const value of stored.stringArray) {
-                    const name = Resource.STORED.STRINGS.get(value);
+                    const name = STORED.STRINGS.get(value);
                     result.push((name != null ? `@string/${name}` : value));
                 }
             }
@@ -530,7 +483,7 @@ export class ResourceWidget extends Resource<T> {
             const stored = (<any> element).__valueString;
             if (stored != null) {
                 const method = METHOD_ANDROID['valueString'];
-                const name = Resource.STORED.STRINGS.get(stored);
+                const name = STORED.STRINGS.get(stored);
                 if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
                     const match = node.style.textDecoration.match(/(underline|line-through)/);
                     if (match != null) {
@@ -543,8 +496,8 @@ export class ResourceWidget extends Resource<T> {
                                 value = `<strike>${stored}</strike>`;
                                 break;
                         }
-                        Resource.STORED.STRINGS.delete(stored);
-                        Resource.STORED.STRINGS.set(value, name);
+                        STORED.STRINGS.delete(stored);
+                        STORED.STRINGS.set(value, (<any> name));
                     }
                 }
                 node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
@@ -594,158 +547,4 @@ export class ResourceWidget extends Resource<T> {
                 return result;
         }
     }
-}
-
-export function writeResourceStringXml() {
-    Resource.STORED.STRINGS = new Map([...Resource.STORED.STRINGS.entries()].sort());
-    let xml = '';
-    if (Resource.STORED.STRINGS.size > 0) {
-        const template = parseTemplateMatch(STRING_TMPL);
-        const data: {} = {
-            '0': [{
-                '1': []
-            }]
-        };
-        const rootItem = getDataLevel(data, '0');
-        for (const [name, value] of Resource.STORED.STRINGS.entries()) {
-            rootItem['1'].push({ name: value, value: name });
-        }
-        xml = parseTemplateData(template, data);
-    }
-    return xml;
-}
-
-export function writeResourceArrayXml() {
-    STORED.ARRAYS = new Map([...STORED.ARRAYS.entries()].sort());
-    let xml = '';
-    if (STORED.ARRAYS.size > 0) {
-        const template = parseTemplateMatch(STRINGARRAY_TMPL);
-        const data: {} = {
-            '0': [{
-                '1': []
-            }]
-        };
-        const rootItem = getDataLevel(data, '0');
-        for (const [name, values] of STORED.ARRAYS.entries()) {
-            const arrayItem: {} = {
-                name,
-                '2': []
-            };
-            const item = arrayItem['2'];
-            for (const text of values) {
-                item.push({ value: text });
-            }
-            rootItem['1'].push(arrayItem);
-        }
-        xml = parseTemplateData(template, data);
-    }
-    return xml;
-}
-
-export function writeResourceStyleXml() {
-    let xml = '';
-    if (STORED.STYLES.size > 0) {
-        const template = parseTemplateMatch(STYLE_TMPL);
-        const data: {} = {
-            '0': [{
-                '1': []
-            }]
-        };
-        const rootItem = getDataLevel(data, '0');
-        for (const [name1, style] of STORED.STYLES.entries()) {
-            const styleItem: {} = {
-                name1,
-                parent: style.parent || '',
-                '2': []
-            };
-            style.attributes.split(';').sort().forEach((attr: string) => {
-                const [name2, value] = attr.split('=');
-                styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
-            });
-            rootItem['1'].push(styleItem);
-        }
-        xml = parseTemplateData(template, data);
-        if (SETTINGS.useUnitDP) {
-            xml = replaceDP(xml, SETTINGS.density, true);
-        }
-    }
-    return xml;
-}
-
-export function writeResourceFontXml() {
-    STORED.FONTS = new Map([...STORED.FONTS.entries()].sort());
-    let xml = '';
-    if (STORED.FONTS.size > 0) {
-        const template = parseTemplateMatch(FONT_TMPL);
-        for (const [name, font] of STORED.FONTS.entries()) {
-            const data: {} = {
-                '#include': {},
-                '#exclude': {},
-                '0': [{
-                    name,
-                    '1': []
-                }]
-            };
-            data[(SETTINGS.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
-            const rootItem = getDataLevel(data, '0');
-            for (const attr in font) {
-                const [style, weight] = attr.split('-');
-                rootItem['1'].push({
-                    style,
-                    weight,
-                    font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
-                });
-            }
-            xml += '\n\n' + parseTemplateData(template, data);
-        }
-    }
-    return xml.trim();
-}
-
-export function writeResourceColorXml() {
-    let xml = '';
-    if (Resource.STORED.COLORS.size > 0) {
-        Resource.STORED.COLORS = new Map([...Resource.STORED.COLORS.entries()].sort());
-        const template = parseTemplateMatch(COLOR_TMPL);
-        const data: {} = {
-            '0': [{
-                '1': []
-            }]
-        };
-        const rootItem = getDataLevel(data, '0');
-        for (const [name, value] of Resource.STORED.COLORS.entries()) {
-            rootItem['1'].push({ name, value });
-        }
-        xml = parseTemplateData(template, data);
-    }
-    return xml;
-}
-
-export function writeResourceDrawableXml() {
-    let xml = '';
-    if (STORED.DRAWABLES.size > 0 || Resource.STORED.IMAGES.size > 0) {
-        const template = parseTemplateMatch(DRAWABLE_TMPL);
-        const data: {} = {
-            '0': []
-        };
-        const rootItem = data['0'];
-        for (const [name, value] of STORED.DRAWABLES.entries()) {
-            rootItem.push({ name: `res/drawable/${name}.xml`, value});
-        }
-        for (const [name, images] of Resource.STORED.IMAGES.entries()) {
-            if (Object.keys(images).length > 1) {
-                for (const dpi in images) {
-                    rootItem.push({ name: `res/drawable-${dpi}/${name + images[dpi].substring(images[dpi].lastIndexOf('.'))}`, value: `<!-- image: ${images[dpi]} -->` });
-                }
-            }
-            else if (images['mdpi'] != null) {
-                rootItem.push({ name: `res/drawable/${name + images['mdpi'].substring(images['mdpi'].lastIndexOf('.'))}`, value: `<!-- image: ${images['mdpi']} -->` });
-            }
-        }
-        xml = parseTemplateData(template, data);
-        if (SETTINGS.useUnitDP) {
-            xml = replaceDP(xml, SETTINGS.density);
-        }
-    }
-    return xml;
 }

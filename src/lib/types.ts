@@ -40,3 +40,19 @@ export interface IBorder {
     width: string;
     color: string;
 }
+
+export interface IPlainFile {
+    pathname: string;
+    filename: string;
+    content: string;
+}
+
+export interface IResourceMap {
+    STRINGS: Map<string, string>;
+    ARRAYS: Map<string, string[]>;
+    FONTS: Map<string, any>;
+    COLORS: Map<string, string>;
+    STYLES: Map<string, any>;
+    DRAWABLES: Map<string, string>;
+    IMAGES: Map<string, any>;
+}

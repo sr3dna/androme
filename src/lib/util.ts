@@ -132,6 +132,14 @@ export function isPercent(value: string) {
     return /^[0-9]+%$/.test(value);
 }
 
+export function trim(value: string, character: string) {
+    return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
+}
+
+export function getFilename(value: string) {
+    return value.substring(value.lastIndexOf('/') + 1);
+}
+
 export function search(obj: {}, value: string | object) {
     const result: any[][] = [];
     if (typeof value === 'object') {

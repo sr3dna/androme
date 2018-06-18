@@ -71,3 +71,51 @@ export const XMLNS_ANDROID = {
     'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"',
     'TOOLS': 'xmlns:tools="http://schemas.android.com/tools"'
 };
+
+export const FONT_ANDROID = {
+    'sans-serif': BUILD_ANDROID.ICE_CREAM_SANDWICH,
+    'sans-serif-thin': BUILD_ANDROID.JELLYBEAN,
+    'sans-serif-light': BUILD_ANDROID.JELLYBEAN,
+    'sans-serif-condensed': BUILD_ANDROID.JELLYBEAN,
+    'sans-serif-condensed-light': BUILD_ANDROID.JELLYBEAN,
+    'sans-serif-medium': BUILD_ANDROID.LOLLIPOP,
+    'sans-serif-black': BUILD_ANDROID.LOLLIPOP,
+    'sans-serif-smallcaps': BUILD_ANDROID.LOLLIPOP,
+    'serif-monospace' : BUILD_ANDROID.LOLLIPOP,
+    'serif': BUILD_ANDROID.LOLLIPOP,
+    'casual' : BUILD_ANDROID.LOLLIPOP,
+    'cursive': BUILD_ANDROID.LOLLIPOP,
+    'monospace': BUILD_ANDROID.LOLLIPOP,
+    'sans-serif-condensed-medium': BUILD_ANDROID.OREO
+};
+
+export const FONTALIAS_ANDROID = {
+    'arial': 'sans-serif',
+    'helvetica': 'sans-serif',
+    'tahoma': 'sans-serif',
+    'verdana': 'sans-serif',
+    'times': 'serif',
+    'times new roman': 'serif',
+    'palatino': 'serif',
+    'georgia': 'serif',
+    'baskerville': 'serif',
+    'goudy': 'serif',
+    'fantasy': 'serif',
+    'itc stone serif': 'serif',
+    'sans-serif-monospace': 'monospace',
+    'monaco': 'monospace',
+    'courier': 'serif-monospace',
+    'courier new': 'serif-monospace'
+};
+
+export const FONTWEIGHT_ANDROID = {
+    '100': 'thin',
+    '200': 'extra_light',
+    '300': 'light',
+    '400': 'normal',
+    '500': 'medium',
+    '600': 'semi_bold',
+    '700': 'bold',
+    '800': 'extra_bold',
+    '900': 'black'
+};
