@@ -15,7 +15,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     constructor(
         private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
-        private TypeU: { new (nodes?: U, parent?: T): U })
+        private TypeU: { new (nodes?: T[], parent?: T): U })
     {
         this.cache = new this.TypeU();
     }
@@ -75,7 +75,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         for (const name of attributes) {
                             if (name.toLowerCase().indexOf('color') !== -1) {
                                 const color = getByColorName(cssRule.style[name]);
-                                if (color != null) {
+                                if (color !== '') {
                                     cssRule.style[name] = convertRGB(color);
                                 }
                             }
@@ -136,7 +136,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             this.insertNode(element);
         }
         const preAlignment = {};
-        this.cache.forEach((node: T) => {
+        this.cache.list.forEach((node: T) => {
             const element = node.element;
             if (element != null) {
                 preAlignment[node.id] = {};
@@ -167,8 +167,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             node.setBounds();
         });
         const parents = {};
-        this.cache.forEach((parent: T) => {
-            this.cache.forEach((child: T) => {
+        this.cache.list.forEach((parent: T) => {
+            this.cache.list.forEach((child: T) => {
                 if (parent !== child) {
                     if (child.element && child.element.parentElement === parent.element) {
                         child.parent = parent;
@@ -183,7 +183,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             });
         });
-        this.cache.forEach((node: T) => {
+        this.cache.list.forEach((node: T) => {
             const nodes: T[] = parents[node.id];
             if (nodes != null) {
                 nodes.push((<T> node.parent));
@@ -213,7 +213,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 });
             }
         });
-        this.cache.forEach((node: T) => {
+        this.cache.list.forEach((node: T) => {
             if (node.element != null) {
                 const style = preAlignment[node.id];
                 if (style != null) {
@@ -223,8 +223,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         });
-        sortAsc(this.cache, 'depth', 'parent.id', 'parentIndex', 'id');
-        this.cache.forEach((node: T) => {
+        this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
+        this.cache.list.forEach((node: T) => {
             if (node.element != null) {
                 let i = 0;
                 Array.from(node.element.childNodes).forEach((element: any) => {
@@ -253,7 +253,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
         }
         if (node != null) {
-            this.cache.push(node);
+            this.cache.list.push(node);
         }
         return node;
     }
@@ -262,7 +262,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
         const mapX: Array<{}> = [];
         const mapY: Array<{}> = [];
-        this.cache.forEach((node: T) => {
+        this.cache.list.forEach((node: T) => {
             const x = Math.floor((<number> node.bounds.x));
             const y = node.parent.id;
             if (mapX[node.depth] == null) {
@@ -277,8 +277,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (mapY[node.depth][y] == null) {
                 mapY[node.depth][y] = new this.TypeU();
             }
-            mapX[node.depth][x].push(node);
-            mapY[node.depth][y].push(node);
+            mapX[node.depth][x].list.push(node);
+            mapY[node.depth][y].list.push(node);
         });
         for (let i = 0; i < mapY.length; i++) {
             const coordsY = Object.keys(mapY[i]);
@@ -286,7 +286,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             for (let j = 0; j < coordsY.length; j++) {
                 const axisY: T[] = [];
                 const layers: T[] = [];
-                for (const node of (<T[]> mapY[i][coordsY[j]])) {
+                for (const node of (<T[]> mapY[i][coordsY[j]].list)) {
                     switch (node.style.position) {
                         case 'absolute':
                         case 'relative':
@@ -311,7 +311,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         let tagName = nodeY.viewName;
                         let restart = false;
                         let xml = '';
-                        if (tagName == null) {
+                        if (tagName === '') {
                             if ((nodeY.children.length === 0 && nodeY.element && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: T) => INLINE_CHROME.includes(item.tagName))) {
                                 tagName = this.viewHandler.getViewName(VIEW_STANDARD.TEXT);
                             }
@@ -583,7 +583,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                 }
                                 if (!nodeY.renderParent) {
-                                    const children = new this.TypeU((<U> nodeY.children));
+                                    const children = new this.TypeU(<T[]> nodeY.children);
                                     const [linearX, linearY] = [children.linearX, children.linearY];
                                     if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += this.writeFrameLayout(nodeY, parent);
@@ -604,18 +604,18 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             if (parent.is(VIEW_STANDARD.GRID)) {
                                 let siblings: U;
                                 if (SETTINGS.useLayoutWeight) {
-                                    siblings = new this.TypeU((<U> nodeY.gridSiblings));
+                                    siblings = new this.TypeU(<T[]> nodeY.gridSiblings);
                                 }
                                 else {
                                     const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
-                                    siblings = (<U> nodeY.parentOriginal.children.filter((item: T) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd));
+                                    siblings = new this.TypeU(<T[]> nodeY.parentOriginal.children.filter((item: T) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd));
                                 }
-                                if (siblings.length > 0) {
-                                    siblings.unshift(nodeY);
+                                if (siblings != null && siblings.length > 0) {
+                                    siblings.list.unshift(nodeY);
                                     siblings.sortAsc('bounds.x');
                                     const renderParent = parent;
-                                    const bundle = this.viewHandler.createBundle(nodeY, parent, siblings);
-                                    this.cache.push(bundle);
+                                    const bundle = this.viewHandler.createBundle(nodeY, parent, siblings.list);
+                                    this.cache.list.push(bundle);
                                     if (siblings.linearX || siblings.linearY) {
                                         xml += this.writeLinearLayout(bundle, renderParent, siblings.linearY);
                                     }

@@ -40,18 +40,24 @@
             background-color: #1B5385;
         }
     </style>
-    <script src="../dist/androme.js"></script>
+    <script src="/node_modules/systemjs/dist/system.js"></script>
     <script>
-        androme.settings.useConstraintGuideline = false;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            for (const span of document.getElementsByTagName('span')) {
-                span.style.top = `${400 * Math.random()}px`;
-                span.style.left = `${400 * Math.random()}px`;
-            }
-            document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
-            const resource = androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml();
+        SystemJS.config({
+            packages: {
+                '/build': { defaultExtension: 'js' }
+            },
+            map: {
+                'plugin-babel': '/node_modules/systemjs-plugin-babel/plugin-babel.js',
+                'systemjs-babel-build': '/node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+            },
+            transpiler: 'plugin-babel'
+        });
+        System.import('/build/main.js').then(function(result) {
+            result.settings.useConstraintGuideline = false;
+            
+            document.getElementById('output').innerHTML = result.parseDocument('androme-root').replace(/</g, '&lt;');
+            const resource = result.writeResourceStyleXml() + '\n\n' +
+                             result.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
@@ -74,6 +80,10 @@
         <a href="javascript:copy('resource');" style="text-align: right;">Copy</a>
     </div>
     <script>
+        for (const span of document.getElementsByTagName('span')) {
+            span.style.top = `${400 * Math.random()}px`;
+            span.style.left = `${400 * Math.random()}px`;
+        }
         function copy(id) {
             const element = document.getElementById(id);
             const range = document.createRange();

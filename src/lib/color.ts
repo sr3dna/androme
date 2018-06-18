@@ -222,16 +222,15 @@ function sortHSL(a: IColor, b: IColor) {
 export function findNearestColor(value: string) {
     const result = HSL_SORTED.slice();
     let index = result.findIndex((item: IColor) => item.hex === value);
-    if (index != -1) {
+    if (index !== -1) {
         return result[index];
     }
     else {
         const hsl = convertHextoHSL(value);
         if (hsl != null) {
-            const result = HSL_SORTED.slice();
             result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
             result.sort(sortHSL);
-            const index = result.findIndex((item: IColor) => item.name === '');
+            index = result.findIndex((item: IColor) => item.name === '');
             return result[Math.min(index + 1, result.length - 1)];
         }
         return '';
@@ -244,7 +243,7 @@ export function getByColorName(value: string) {
             return X11_CSS3[color];
         }
     }
-    return null;
+    return '';
 }
 
 export function convertRGB({ rgb }: IColor) {

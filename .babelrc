@@ -5,8 +5,5 @@
       { "modules": false }
     ]
   ],
-  "plugins": [
-    "external-helpers",
-    ["babel-plugin-transform-builtin-extend", { "globals": ["Array"] }]
-  ]
+  "plugins": ["external-helpers"]
 }

@@ -1,9 +1,10 @@
 .vscode/
 /build/
-/config/
+/demos-dev/
 /node_modules/
 .babelrc
 *.code-workspace
 package-lock.json
+rollup.config.js
 tsconfig.json
 tslint.json

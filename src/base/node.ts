@@ -16,8 +16,8 @@ export default abstract class Node implements IBoxModel {
     public renderDepth: number;
     public viewId: string;
 
-    public gridRowSpan: number;
-    public gridColumnSpan: number;
+    public gridRowSpan: number = 0;
+    public gridColumnSpan: number = 0;
     public gridColumnEnd: number[];
     public gridIndex: number;
     public gridFirst: boolean;

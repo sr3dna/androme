@@ -7,7 +7,7 @@ interface IViewAppend {
 }
 
 export default abstract class View<T extends Node, U extends NodeList<T>> {
-    public abstract cache: U;
+    public cache: U;
 
     private before: IViewAppend = {};
     private after: IViewAppend = {};
@@ -20,7 +20,7 @@ export default abstract class View<T extends Node, U extends NodeList<T>> {
     public abstract setMarginPadding(): void;
     public abstract renderLayout(node: T, parent: T, viewName: number, options?: {}): string;
     public abstract renderTag(node: T, parent: T, viewName: number | string): string;
-    public abstract createBundle(node: T, parent: T, children: U): T;
+    public abstract createBundle(node: T, parent: T, children: T[]): T;
     public abstract getStaticTag(tagName: number, depth: number, options: {}, width: any, height: any): string[];
     public abstract getViewName(value: number): string;
     public abstract getRootAttributes(options: {}): string;

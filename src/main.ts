@@ -12,7 +12,7 @@ export function parseDocument(element?: any) {
         element = document.getElementById(element);
     }
     let output = '';
-    const app = new Application<Widget, WidgetList<Widget>>(Widget, WidgetList);
+    const app = new Application(Widget, WidgetList);
     app.registerView(new Layout());
     app.registerResource(new ResourceWidget());
     app.setStyleMap();

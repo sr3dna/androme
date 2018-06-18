@@ -493,7 +493,7 @@ export class ResourceWidget extends Resource<T> {
 
     public setImageSource() {
         super.setImageSource();
-        this.cache.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
+        this.cache.list.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
             const stored = (<any> node.element).__imageSource;
             if (stored != null) {
                 const method = METHOD_ANDROID['imageSource'];
@@ -504,7 +504,7 @@ export class ResourceWidget extends Resource<T> {
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
+        this.cache.list.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
             const stored = (<any> node.element).__optionArray;
             const method = METHOD_ANDROID['optionArray'];
             let result: string[] = [];

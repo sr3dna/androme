@@ -1,5 +1,4 @@
 import Widget from './widget';
-import WidgetList from './widgetlist';
 import { VIEW_STANDARD } from '../lib/constants';
 
 type T = Widget;
@@ -18,7 +17,7 @@ export default class Bundle extends Widget {
         };
         super(id, node.api, null, options);
         if (children != null) {
-            this.children = new WidgetList(children);
+            this.children = children;
         }
     }
 

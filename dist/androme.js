@@ -1,4 +1,4 @@
-/* androme 1.6.4
+/* androme 1.6.5
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -553,15 +553,21 @@
         return (c >= d ? 1 : -1);
     }
     function findNearestColor(value) {
-        const hsl = convertHextoHSL(value);
-        if (hsl != null) {
-            const result = HSL_SORTED.slice();
-            result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
-            result.sort(sortHSL);
-            const index = result.findIndex((item) => item.name === '');
-            return result[Math.min(index + 1, result.length - 1)];
+        const result = HSL_SORTED.slice();
+        let index = result.findIndex((item) => item.hex === value);
+        if (index !== -1) {
+            return result[index];
         }
-        return '';
+        else {
+            const hsl = convertHextoHSL(value);
+            if (hsl != null) {
+                result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
+                result.sort(sortHSL);
+                index = result.findIndex((item) => item.name === '');
+                return result[Math.min(index + 1, result.length - 1)];
+            }
+            return '';
+        }
     }
     function getByColorName(value) {
         for (const color in X11_CSS3) {
@@ -569,7 +575,7 @@
                 return X11_CSS3[color];
             }
         }
-        return null;
+        return '';
     }
     function convertRGB({ rgb }) {
         return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
@@ -821,7 +827,7 @@
                             for (const name of attributes) {
                                 if (name.toLowerCase().indexOf('color') !== -1) {
                                     const color = getByColorName(cssRule.style[name]);
-                                    if (color != null) {
+                                    if (color !== '') {
                                         cssRule.style[name] = convertRGB(color);
                                     }
                                 }
@@ -881,7 +887,7 @@
                 this.insertNode(element);
             }
             const preAlignment = {};
-            this.cache.forEach((node) => {
+            this.cache.list.forEach((node) => {
                 const element = node.element;
                 if (element != null) {
                     preAlignment[node.id] = {};
@@ -912,8 +918,8 @@
                 node.setBounds();
             });
             const parents = {};
-            this.cache.forEach((parent) => {
-                this.cache.forEach((child) => {
+            this.cache.list.forEach((parent) => {
+                this.cache.list.forEach((child) => {
                     if (parent !== child) {
                         if (child.element && child.element.parentElement === parent.element) {
                             child.parent = parent;
@@ -928,7 +934,7 @@
                     }
                 });
             });
-            this.cache.forEach((node) => {
+            this.cache.list.forEach((node) => {
                 const nodes = parents[node.id];
                 if (nodes != null) {
                     nodes.push(node.parent);
@@ -958,7 +964,7 @@
                     });
                 }
             });
-            this.cache.forEach((node) => {
+            this.cache.list.forEach((node) => {
                 if (node.element != null) {
                     const style = preAlignment[node.id];
                     if (style != null) {
@@ -968,8 +974,8 @@
                     }
                 }
             });
-            sortAsc(this.cache, 'depth', 'parent.id', 'parentIndex', 'id');
-            this.cache.forEach((node) => {
+            this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
+            this.cache.list.forEach((node) => {
                 if (node.element != null) {
                     let i = 0;
                     Array.from(node.element.childNodes).forEach((element) => {
@@ -997,7 +1003,7 @@
                 node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
             }
             if (node != null) {
-                this.cache.push(node);
+                this.cache.list.push(node);
             }
             return node;
         }
@@ -1005,7 +1011,7 @@
             let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
             const mapX = [];
             const mapY = [];
-            this.cache.forEach((node) => {
+            this.cache.list.forEach((node) => {
                 const x = Math.floor(node.bounds.x);
                 const y = node.parent.id;
                 if (mapX[node.depth] == null) {
@@ -1020,8 +1026,8 @@
                 if (mapY[node.depth][y] == null) {
                     mapY[node.depth][y] = new this.TypeU();
                 }
-                mapX[node.depth][x].push(node);
-                mapY[node.depth][y].push(node);
+                mapX[node.depth][x].list.push(node);
+                mapY[node.depth][y].list.push(node);
             });
             for (let i = 0; i < mapY.length; i++) {
                 const coordsY = Object.keys(mapY[i]);
@@ -1029,7 +1035,7 @@
                 for (let j = 0; j < coordsY.length; j++) {
                     const axisY = [];
                     const layers = [];
-                    for (const node of mapY[i][coordsY[j]]) {
+                    for (const node of mapY[i][coordsY[j]].list) {
                         switch (node.style.position) {
                             case 'absolute':
                             case 'relative':
@@ -1054,7 +1060,7 @@
                             let tagName = nodeY.viewName;
                             let restart = false;
                             let xml = '';
-                            if (tagName == null) {
+                            if (tagName === '') {
                                 if ((nodeY.children.length === 0 && nodeY.element && hasFreeFormText(nodeY.element)) || nodeY.children.every((item) => INLINE_CHROME.includes(item.tagName))) {
                                     tagName = this.viewHandler.getViewName(VIEW_STANDARD.TEXT);
                                 }
@@ -1350,14 +1356,14 @@
                                     }
                                     else {
                                         const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
-                                        siblings = nodeY.parentOriginal.children.filter((item) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd);
+                                        siblings = new this.TypeU(nodeY.parentOriginal.children.filter((item) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd));
                                     }
-                                    if (siblings.length > 0) {
-                                        siblings.unshift(nodeY);
+                                    if (siblings != null && siblings.length > 0) {
+                                        siblings.list.unshift(nodeY);
                                         siblings.sortAsc('bounds.x');
                                         const renderParent = parent;
-                                        const bundle = this.viewHandler.createBundle(nodeY, parent, siblings);
-                                        this.cache.push(bundle);
+                                        const bundle = this.viewHandler.createBundle(nodeY, parent, siblings.list);
+                                        this.cache.list.push(bundle);
                                         if (siblings.linearX || siblings.linearY) {
                                             xml += this.writeLinearLayout(bundle, renderParent, siblings.linearY);
                                         }
@@ -1481,6 +1487,81 @@
         }
     }
 
+    class NodeList {
+        constructor(nodes, parent) {
+            this.parent = parent;
+            this._list = [];
+            if (Array.isArray(nodes)) {
+                this._list = nodes;
+            }
+            this.parent = parent;
+        }
+        static intersect(list, dimension = 'linear') {
+            list.forEach((node) => {
+                if (list.some(item => (item !== node && node.intersect(item[dimension])))) {
+                    return true;
+                }
+            });
+            return false;
+        }
+        static linearX(list) {
+            if (list.length > 0 && !NodeList.intersect(list)) {
+                if (list.length > 1) {
+                    const minBottom = Math.min.apply(null, list.map((item) => item.linear.bottom));
+                    return !list.some((item) => item.linear.top >= minBottom);
+                }
+                return true;
+            }
+            return false;
+        }
+        static linearY(list) {
+            if (list.length > 0 && !NodeList.intersect(list)) {
+                if (list.length > 1) {
+                    const minRight = Math.min.apply(null, list.map((item) => item.linear.right));
+                    return !list.some((item) => item.linear.left >= minRight);
+                }
+                return true;
+            }
+            return false;
+        }
+        sortAsc(...attr) {
+            return sortAsc(this._list, ...attr);
+        }
+        sortDesc(...attr) {
+            return sortDesc(this._list, ...attr);
+        }
+        intersect(dimension = 'linear') {
+            return NodeList.intersect(this._list, dimension);
+        }
+        get length() {
+            return this._list.length;
+        }
+        get list() {
+            return this._list;
+        }
+        get visible() {
+            return this._list.filter(node => node.visible);
+        }
+        get elements() {
+            return this._list.filter(node => node.element != null);
+        }
+        get first() {
+            return this._list[0];
+        }
+        get last() {
+            return this._list[this._list.length - 1];
+        }
+        get nextId() {
+            return this._list.length + 1;
+        }
+        get linearX() {
+            return NodeList.linearX(this._list);
+        }
+        get linearY() {
+            return NodeList.linearY(this._list);
+        }
+    }
+
     class Node {
         constructor(id, element, options) {
             this.id = id;
@@ -1491,6 +1572,8 @@
             this.visible = true;
             this.companion = false;
             this.parentIndex = Number.MAX_VALUE;
+            this.gridRowSpan = 0;
+            this.gridColumnSpan = 0;
             this._namespaces = new Set();
             Object.assign(this, options);
             if (element != null || (options && options.element != null)) {
@@ -2300,7 +2383,7 @@
                 if (typeof value === 'object') {
                     value = value[this.element.type];
                 }
-                return Widget.getViewName(value);
+                return (value != null ? Widget.getViewName(value) : '');
             }
         }
         set label(value) {
@@ -2337,97 +2420,6 @@
         }
     }
 
-    class NodeList extends Array {
-        constructor(nodes, parent) {
-            super();
-            this.parent = parent;
-            if (Array.isArray(nodes)) {
-                this.push(...nodes);
-            }
-            this.parent = parent;
-        }
-        push(...value) {
-            for (const node of value) {
-                super.push(node);
-            }
-            return this.length;
-        }
-        sortAsc(...attr) {
-            return sortAsc(this, ...attr);
-        }
-        sortDesc(...attr) {
-            return sortDesc(this, ...attr);
-        }
-        intersect(dimension = 'linear') {
-            this.forEach((node) => {
-                if (this.some(item => (item !== node && node.intersect(item[dimension])))) {
-                    return true;
-                }
-            });
-            return false;
-        }
-        get visible() {
-            return this.filter(node => node.visible);
-        }
-        get elements() {
-            return this.filter(node => node.element != null);
-        }
-        get first() {
-            return (this.length > 0 ? this[0] : null);
-        }
-        get last() {
-            return (this.length > 0 ? this[this.length - 1] : null);
-        }
-        get nextId() {
-            return this.length + 1;
-        }
-        get linearX() {
-            if (this.length > 0 && !this.intersect()) {
-                if (this.length > 1) {
-                    const minBottom = Math.min.apply(null, this.map((item) => item.linear.bottom));
-                    return !this.some(item => item.linear.top >= minBottom);
-                }
-                return true;
-            }
-            return false;
-        }
-        get linearY() {
-            if (this.length > 0 && !this.intersect()) {
-                if (this.length > 1) {
-                    const minRight = Math.min.apply(null, this.map((item) => item.linear.right));
-                    return !this.some(item => item.linear.left >= minRight);
-                }
-                return true;
-            }
-            return false;
-        }
-    }
-
-    class WidgetList extends NodeList {
-        constructor(nodes, parent) {
-            super(nodes, parent);
-        }
-        get anchors() {
-            return this.filter(node => node.anchored);
-        }
-        get horizontalBias() {
-            if (this.parent != null) {
-                const left = this.first.linear.left - this.parent.box.left;
-                const right = this.parent.box.right - this.last.linear.right;
-                return calculateBias(left, right);
-            }
-            return 0.5;
-        }
-        get verticalBias() {
-            if (this.parent != null) {
-                const top = this.first.linear.top - this.parent.box.top;
-                const bottom = this.parent.box.bottom - this.last.linear.bottom;
-                return calculateBias(top, bottom);
-            }
-            return 0.5;
-        }
-    }
-
     class Bundle extends Widget {
         constructor(id, node, parent, children) {
             const options = {
@@ -2437,7 +2429,7 @@
             };
             super(id, node.api, null, options);
             if (children != null) {
-                this.children = new WidgetList(children);
+                this.children = children;
             }
         }
         setViewLayout() {
@@ -2551,6 +2543,37 @@
         }
     }
 
+    class WidgetList extends NodeList {
+        constructor(nodes, parent) {
+            super(nodes, parent);
+        }
+        slice(...args) {
+            return new WidgetList(this.list.slice.apply(this.list, arguments));
+        }
+        filter(...args) {
+            return new WidgetList(this.list.filter.apply(this.list, arguments));
+        }
+        get anchors() {
+            return this.list.filter((node) => node.anchored);
+        }
+        get horizontalBias() {
+            if (this.parent != null && this.list.length > 0) {
+                const left = this.first.linear.left - this.parent.box.left;
+                const right = this.parent.box.right - this.last.linear.right;
+                return calculateBias(left, right);
+            }
+            return 0.5;
+        }
+        get verticalBias() {
+            if (this.parent != null && this.list.length > 0) {
+                const top = this.first.linear.top - this.parent.box.top;
+                const bottom = this.parent.box.bottom - this.last.linear.bottom;
+                return calculateBias(top, bottom);
+            }
+            return 0.5;
+        }
+    }
+
     const LAYOUT_MAP = {
         relative: {
             top: 'layout_alignTop',
@@ -2601,7 +2624,7 @@
                 const constraint = node.is(VIEW_STANDARD.CONSTRAINT);
                 const relative = node.is(VIEW_STANDARD.RELATIVE);
                 const flex = node.flex;
-                if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
+                if (nodes.list.length > 0 && (constraint || relative || flex.enabled)) {
                     node.expandDimensions();
                     if (node.is(VIEW_STANDARD.LINEAR)) {
                         if (node.renderChildren.some((item) => item.flex.direction.indexOf('row') !== -1)) {
@@ -2616,7 +2639,7 @@
                     }
                     const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                     if (!flex.enabled) {
-                        nodes.forEach((current) => {
+                        nodes.list.forEach((current) => {
                             if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
                                 if (constraint) {
                                     this.setAlignParent(current);
@@ -2630,9 +2653,9 @@
                                 node.constraint.layoutHeight = true;
                             }
                         });
-                        nodes.unshift(node);
-                        nodes.forEach((current) => {
-                            nodes.forEach((adjacent) => {
+                        nodes.list.unshift(node);
+                        nodes.list.forEach((current) => {
+                            nodes.list.forEach((adjacent) => {
                                 if (current === adjacent) {
                                     return;
                                 }
@@ -2743,8 +2766,8 @@
                                 }
                             });
                         });
-                        nodes.shift();
-                        nodes.forEach((current) => {
+                        nodes.list.shift();
+                        nodes.list.forEach((current) => {
                             const leftRight = current.anchor(LAYOUT['leftRight']);
                             if (leftRight != null) {
                                 current.constraint.horizontal = true;
@@ -2784,12 +2807,12 @@
                             let verticalChain = nodes.slice();
                             switch (flex.direction) {
                                 case 'row-reverse':
-                                    horizontalChain.reverse();
+                                    horizontalChain.list.reverse();
                                 case 'row':
                                     verticalChain = null;
                                     break;
                                 case 'column-reverse':
-                                    verticalChain.reverse();
+                                    verticalChain.list.reverse();
                                 case 'column':
                                     horizontalChain = null;
                                     break;
@@ -2797,19 +2820,19 @@
                             flexNodes = [{ constraint: { horizontalChain, verticalChain } }];
                         }
                         else {
-                            nodes.forEach((current) => {
+                            nodes.list.forEach((current) => {
                                 let horizontalChain = nodes.filter((item) => same(current, item, 'bounds.top'));
-                                if (horizontalChain.length === 0) {
+                                if (horizontalChain.list.length === 0) {
                                     horizontalChain = nodes.filter((item) => same(current, item, 'bounds.bottom'));
                                 }
-                                if (horizontalChain.length > 0) {
+                                if (horizontalChain.list.length > 0) {
                                     horizontalChain.sortAsc('bounds.x');
                                 }
                                 let verticalChain = nodes.filter((item) => same(current, item, 'bounds.left'));
-                                if (verticalChain.length === 0) {
+                                if (verticalChain.list.length === 0) {
                                     verticalChain = nodes.filter((item) => same(current, item, 'bounds.right'));
                                 }
-                                if (verticalChain.length > 0) {
+                                if (verticalChain.list.length > 0) {
                                     verticalChain.sortAsc('bounds.y');
                                 }
                                 current.constraint.horizontalChain = horizontalChain;
@@ -2825,12 +2848,12 @@
                                 index = (index === 0 ? 1 : 0);
                             }
                             const inverse = (index === 0 ? 1 : 0);
-                            const chainNodes = flexNodes || nodes.slice().sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
+                            const chainNodes = flexNodes || nodes.slice().list.sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                             chainNodes.forEach((current) => {
                                 const chainDirection = current.constraint[value];
-                                if (chainDirection && chainDirection.length > 0 && (flex.enabled || chainDirection.map((item) => parseInt((item.constraint[value] || [{ id: 0 }]).map((result) => result.id).join(''))).reduce((a, b) => (a === b ? a : 0)) > 0)) {
+                                if (chainDirection && chainDirection.length > 0 && (flex.enabled || chainDirection.list.map((item) => parseInt((item.constraint[value].list || [{ id: 0 }]).map((result) => result.id).join(''))).reduce((a, b) => (a === b ? a : 0)) > 0)) {
                                     chainDirection.parent = node;
-                                    if (flex.enabled && chainDirection.some((item) => item.flex.order > 0)) {
+                                    if (flex.enabled && chainDirection.list.some((item) => item.flex.order > 0)) {
                                         chainDirection[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
                                     }
                                     const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
@@ -2843,10 +2866,10 @@
                                     const firstNode = chainDirection.first;
                                     const lastNode = chainDirection.last;
                                     let maxOffset = -1;
-                                    for (let i = 0; i < chainDirection.length; i++) {
-                                        const chain = chainDirection[i];
-                                        const next = chainDirection[i + 1];
-                                        const previous = chainDirection[i - 1];
+                                    for (let i = 0; i < chainDirection.list.length; i++) {
+                                        const chain = chainDirection.list[i];
+                                        const next = chainDirection.list[i + 1];
+                                        const previous = chainDirection.list[i - 1];
                                         if (flex.enabled) {
                                             if (chain.linear[TL] === node.box[TL] && chain.linear[BR] === node.box[BR]) {
                                                 this.setAlignParent(chain, orientationInverse);
@@ -2926,14 +2949,14 @@
                                     lastNode.app(LAYOUT[RB], 'parent');
                                     lastNode.constraint[orientation] = true;
                                     const chainStyle = `layout_constraint${HV}_chainStyle`;
-                                    if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainDirection.map((item) => item.flex.grow)) === 0) {
+                                    if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainDirection.list.map((item) => item.flex.grow)) === 0) {
                                         switch (flex.justifyContent) {
                                             case 'space-between':
                                                 firstNode.app(chainStyle, 'spread_inside');
                                                 break;
                                             case 'space-evenly':
                                                 firstNode.app(chainStyle, 'spread');
-                                                chainDirection.forEach((item) => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
+                                                chainDirection.list.forEach((item) => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
                                                 break;
                                             case 'space-around':
                                                 const leftTop = (index === 0 ? 'left' : 'top');
@@ -2975,7 +2998,7 @@
                                         }
                                         else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
                                             firstNode.app(chainStyle, 'packed');
-                                            this.adjustMargins(chainDirection);
+                                            this.adjustMargins(chainDirection.list);
                                         }
                                         else {
                                             firstNode.app(chainStyle, 'spread');
@@ -2984,7 +3007,7 @@
                                             firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${orientation}Bias`]);
                                         }
                                         if (!flex.enabled) {
-                                            chainDirection.forEach((chain) => {
+                                            chainDirection.list.forEach((chain) => {
                                                 chain.constraint.horizontalChain = [];
                                                 chain.constraint.verticalChain = [];
                                             });
@@ -3010,7 +3033,7 @@
                         }
                         do {
                             let restart = false;
-                            nodes.forEach((current) => {
+                            nodes.list.forEach((current) => {
                                 if (!current.anchored) {
                                     const result = (constraint ? search(current.app(), '*constraint*') : search(current.android(), LAYOUT));
                                     for (const [key, value] of result) {
@@ -3036,7 +3059,7 @@
                             }
                         } while (true);
                         if (constraint) {
-                            nodes.forEach((opposite) => {
+                            nodes.list.forEach((opposite) => {
                                 if (!opposite.anchored) {
                                     this.deleteConstraints(node);
                                     if (SETTINGS.useConstraintGuideline) {
@@ -3094,7 +3117,7 @@
                                     }
                                 }
                             });
-                            nodes.forEach((current) => {
+                            nodes.list.forEach((current) => {
                                 if (current.app(LAYOUT['right']) === 'parent' && current.app(LAYOUT['leftRight']) == null) {
                                     node.constraint.layoutWidth = true;
                                 }
@@ -3104,7 +3127,7 @@
                             });
                         }
                         else {
-                            nodes.forEach((current) => {
+                            nodes.list.forEach((current) => {
                                 const parentRight = current.android(parseRTL('layout_alignParentRight'));
                                 const parentBottom = current.android('layout_alignParentBottom');
                                 if (!anchors.includes(current)) {
@@ -3141,7 +3164,7 @@
             });
         }
         setLayoutWeight() {
-            this.cache.forEach((node) => {
+            this.cache.list.forEach((node) => {
                 const rows = node.linearRows;
                 if (rows.length > 1) {
                     const columnLength = rows[0].renderChildren.length;
@@ -3167,7 +3190,7 @@
             });
         }
         setMarginPadding() {
-            this.cache.forEach((node) => {
+            this.cache.list.forEach((node) => {
                 if (node.is(VIEW_STANDARD.LINEAR, VIEW_STANDARD.RADIO_GROUP)) {
                     switch (node.android('orientation')) {
                         case 'horizontal':
@@ -3219,7 +3242,7 @@
                     bundle.setBounds();
                     bundle.inheritGrid(current);
                     bundle.android('fadeScrollbars', 'false');
-                    this.cache.push(widget);
+                    this.cache.list.push(widget);
                     switch (scrollName) {
                         case VIEW_ANDROID.SCROLL_HORIZONTAL:
                             bundle.css('width', node.styleMap.width);
@@ -3311,7 +3334,7 @@
                                     const bundle = new Bundle(this.cache.nextId, node, parent, result);
                                     const widget = bundle;
                                     let checked = '';
-                                    this.cache.push(widget);
+                                    this.cache.list.push(widget);
                                     bundle.setViewId(VIEW_ANDROID.RADIO_GROUP);
                                     bundle.render(parent);
                                     result.forEach((radio) => {
@@ -3323,7 +3346,7 @@
                                         radio.render(bundle);
                                         xml += this.renderTag(radio, widget, VIEW_STANDARD.RADIO, true);
                                     });
-                                    bundle.android('orientation', bundle.children.linearX ? 'horizontal' : 'vertical');
+                                    bundle.android('orientation', NodeList.linearX(bundle.children) ? 'horizontal' : 'vertical');
                                     if (checked !== '') {
                                         bundle.android('checkedButton', checked);
                                     }
@@ -3503,20 +3526,26 @@
             }
         }
         findByAndroidId(id) {
-            return this.cache.find(node => node.android('id') === id);
+            return this.cache.list.find(node => node.android('id') === id);
         }
         adjustMargins(nodes) {
             for (const node of nodes) {
                 if (node.constraint.marginHorizontal != null) {
-                    const offset = node.linear.left - this.findByAndroidId(node.constraint.marginHorizontal).linear.right;
-                    if (offset >= 1) {
-                        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
+                    const item = this.findByAndroidId(node.constraint.marginHorizontal);
+                    if (item != null) {
+                        const offset = node.linear.left - item.linear.right;
+                        if (offset >= 1) {
+                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
+                        }
                     }
                 }
                 if (node.constraint.marginVertical != null) {
-                    const offset = node.linear.top - this.findByAndroidId(node.constraint.marginVertical).linear.bottom;
-                    if (offset >= 1) {
-                        node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
+                    const item = this.findByAndroidId(node.constraint.marginVertical);
+                    if (item != null) {
+                        const offset = node.linear.top - item.linear.bottom;
+                        if (offset >= 1) {
+                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
+                        }
                     }
                 }
             }
@@ -3697,7 +3726,7 @@
             });
         }
         setImageSource() {
-            this.cache.filter((item) => item.tagName === 'IMG').forEach((node) => {
+            this.cache.list.filter((item) => item.tagName === 'IMG').forEach((node) => {
                 const element = node.element;
                 const srcset = element.srcset.trim();
                 const images = {};
@@ -3741,7 +3770,7 @@
             });
         }
         setOptionArray() {
-            this.cache.filter((item) => item.tagName === 'SELECT').forEach((node) => {
+            this.cache.list.filter((item) => item.tagName === 'SELECT').forEach((node) => {
                 const element = node.element;
                 const stringArray = [];
                 let numberArray = [];
@@ -4554,7 +4583,7 @@
         }
         setImageSource() {
             super.setImageSource();
-            this.cache.filter((item) => item.tagName === 'IMG').forEach((node) => {
+            this.cache.list.filter((item) => item.tagName === 'IMG').forEach((node) => {
                 const stored = node.element.__imageSource;
                 if (stored != null) {
                     const method = METHOD_ANDROID['imageSource'];
@@ -4564,7 +4593,7 @@
         }
         setOptionArray() {
             super.setOptionArray();
-            this.cache.filter((item) => item.tagName === 'SELECT').forEach((node) => {
+            this.cache.list.filter((item) => item.tagName === 'SELECT').forEach((node) => {
                 const stored = node.element.__optionArray;
                 const method = METHOD_ANDROID['optionArray'];
                 let result = [];

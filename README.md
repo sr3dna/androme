@@ -2,11 +2,20 @@
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
-INSTALLATION (global js variable: androme)
+## INSTALLATION (global js variable: androme)
+
+*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). Chrome is the preferred browser when generating the production version of your program. ***
+
+Express server using Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development.
+
+-- Install Node.js: http://www.nodejs.com/
+-- Install androme: npm i androme
+-- Change directory: cd androme
+-- Install dependencies: npm update
+-- Load web server: node app.js
+-- Open Chrome: http://localhost:3000/demos/form.html
 
 Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6).
-
-*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. You can either load the HTML document from a web server (http://localhost) or embed the entire CSS file into a &lt;style&gt; tag inside the HTML document. Using a different browser (FireFox/Safari/Edge) can also get you past this security restriction. Chrome is the preferred browser when generating the production version of your program. ***
 
 ```javascript
 <script src="/dist/androme.js"></script>
@@ -1113,14 +1122,10 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <!-- filename: res/drawable/select_hour.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-	<item>
-		<shape android:shape="rectangle">
-			<stroke android:width="2dp" android:color="@color/white_smoke_1" />
-			<solid android:color="@color/white_smoke_1" />
-		</shape>
-	</item>
-</layer-list>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	<stroke android:width="2dp" android:color="@color/white_smoke_1" />
+	<solid android:color="@color/white_smoke_1" />
+</shape>
 <!-- filename: res/drawable/input_button_1.xml -->
 ```
 ## user written html

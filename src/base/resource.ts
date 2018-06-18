@@ -199,7 +199,7 @@ export default class Resource<T extends Node> {
     }
 
     public setImageSource() {
-        this.cache.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
+        this.cache.list.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
             const element = (<HTMLImageElement> node.element);
             const srcset = element.srcset.trim();
             const images: IStringMap = {};
@@ -244,7 +244,7 @@ export default class Resource<T extends Node> {
     }
 
     public setOptionArray() {
-        this.cache.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
+        this.cache.list.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
             const element = (<HTMLSelectElement> node.element);
             const stringArray: string[] = [];
             let numberArray: string[] | null = [];

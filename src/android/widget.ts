@@ -467,7 +467,7 @@ export default class Widget extends Node {
             if (typeof value === 'object') {
                 value = value[(<HTMLInputElement> this.element).type];
             }
-            return Widget.getViewName((<number> value));
+            return (value != null ? Widget.getViewName((<number> value)) : '');
         }
     }
     set label(value: T) {
