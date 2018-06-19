@@ -26,6 +26,8 @@ export default abstract class Node implements IBoxModel {
     public gridRowStart: boolean;
     public gridSiblings: Node[];
     public gridColumnCount: number;
+    public gridMarginLeft: number[] = [];
+    public gridMarginRight: number[] = [];
 
     public abstract children: Node[];
     public abstract renderChildren: Node[];

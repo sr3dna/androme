@@ -5,7 +5,7 @@ const fs = require('fs');
 const mkdirp = require('mkdirp');
 const uuid = require('uuid/v1');
 const archiver = require('archiver');
-const chokidar = require('chokidar');
+const request = require('request');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,9 +28,11 @@ app.post('/api/savetodisk', (req, res) => {
     const directory = (req.query.directory != null && req.query.directory !== '');
     const dirname = `${__dirname.replace(/\\/g, '/')}/temp/${uuid()}`;
     const diroutput = dirname + (directory ? `/${req.query.directory}` : '');
+    const processingTime = Date.now() + ((!isNaN(parseInt(req.query.processingtime)) ? parseInt(req.query.processingtime) : 30) * 1000);
     try {
         mkdirp.sync(diroutput);
         try {
+            let delayed = 0;
             const filetype = (req.query.filetype == 'tar' ? 'tar' : 'zip');
             const zip = archiver(filetype, {
                 zlib: { level: 9 }
@@ -46,19 +48,55 @@ app.post('/api/savetodisk', (req, res) => {
                 });
             });
             zip.pipe(output);
+            function finalize() {
+                if (delayed == 0 || Date.now() >= processingTime) {
+                    delayed = -1;
+                    zip.finalize();
+                }
+            }
             for (const file of req.body) {
                 const pathname = `${diroutput}/${file.pathname}`;
                 const filename = `${pathname}/${file.filename}`;
                 try {
                     mkdirp.sync(pathname);
-                    fs.writeFileSync(filename, file.content);
-                    zip.file(filename, { name: `${(directory ? `${req.query.directory}/` : '')}${file.pathname}/${file.filename}` });
+                    const entrydata = { name: `${(directory ? `${req.query.directory}/` : '')}${file.pathname}/${file.filename}` };
+                    if (file.content != null) {
+                        fs.writeFileSync(filename, file.content);
+                        zip.file(filename, entrydata);
+                    }
+                    else if (file.uri != null) {
+                        delayed++;
+                        const stream = fs.createWriteStream(filename);
+                        stream.on('finish', () => {
+                            if (delayed != -1) {
+                                zip.file(filename, entrydata);
+                                delayed--;
+                                finalize();
+                            }
+                        });
+                        request(file.uri)
+                            .on('response', response => {
+                                if (response.statusCode != 200) {
+                                    if (delayed != -1) {
+                                        delayed--;
+                                        finalize();
+                                    }
+                                }
+                            })
+                            .on('error', err => {
+                                if (delayed != -1) {
+                                    delayed--;
+                                    finalize();
+                                }
+                            })
+                            .pipe(stream);
+                    }
                 }
                 catch (err) {
                     throw { filename, system: err };
                 }
             }
-            zip.finalize();
+            finalize();
         }
         catch (err) {
             res.json({

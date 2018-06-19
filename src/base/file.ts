@@ -1,17 +1,18 @@
 import { IPlainFile, IResourceMap } from '../lib/types';
-import { getFilename, hasValue, trim } from '../lib/util';
+import { getFileName, hasValue, trim } from '../lib/util';
 
 export default abstract class File {
     public stored: IResourceMap;
-    private filetype = 'zip';
+    private fileType = 'zip';
 
     constructor(
         private directory: string,
-        private appname: string,
-        filetype?: string)
+        protected appName: string,
+        private processingTime: number,
+        fileType: string)
     {
-        if (filetype != null) {
-            this.filetype = filetype;
+        if (hasValue(fileType)) {
+            this.fileType = fileType;
         }
     }
 
@@ -25,25 +26,25 @@ export default abstract class File {
     public abstract resourceAllToXml(saveToDisk?: boolean, layoutMain?: string): {};
 
     protected saveToDisk(files: IPlainFile[]) {
+        if (!location.protocol.startsWith('http')) {
+            alert('SERVER (required): See README for instructions');
+            return;
+        }
         if (files != null && files.length > 0) {
-            fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appname.trim())}&filetype=${this.filetype.toLocaleLowerCase()}`, {
-                method: 'POST',
-                body: JSON.stringify(files),
-                headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
-            })
-            .then((res: Response) => {
-                return res.json();
-            })
-            .then(json => {
-                if (json && hasValue(json.zipname)) {
-                    fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
-                    .then(res => res.blob())
-                    .then(blob => {
-                        this.downloadToDisk(blob, getFilename(json.zipname));
-                    });
-                }
-            })
-            .catch(err => alert(`ERROR: ${err}`));
+            fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.fileType.toLocaleLowerCase()}&processingtime=${this.processingTime.toString().trim()}`, {
+                    method: 'POST',
+                    body: JSON.stringify(files),
+                    headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
+                })
+                .then((res: Response) => res.json())
+                .then(json => {
+                    if (json && hasValue(json.zipname)) {
+                        fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
+                            .then((res: Response) => res.blob())
+                            .then(blob => this.downloadToDisk(blob, getFileName(json.zipname)));
+                    }
+                })
+                .catch(err => alert(`ERROR: ${err}`));
         }
     }
 

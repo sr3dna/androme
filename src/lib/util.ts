@@ -2,23 +2,6 @@ const ID = {
     android: ['parent']
 };
 
-function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
-    return list.sort((a: T, b: T) => {
-        for (const attr of attributes) {
-            const result = compare(a, b, attr);
-            if (result && result[0] !== result[1]) {
-                if (asc === 0) {
-                    return (result[0] >= result[1] ? 1 : -1);
-                }
-                else {
-                    return (result[0] <= result[1] ? 1 : -1);
-                }
-            }
-        }
-        return 0;
-    });
-}
-
 export function generateId(section: string, name: string) {
     let prefix = name;
     let i = 1;
@@ -124,6 +107,10 @@ export function convertInt(value: any) {
     return parseInt(value) || 0;
 }
 
+export function averageInt(values: number[]) {
+    return Math.floor(values.reduce((a, b) => a + b) / values.length);
+}
+
 export function isNumber(value: string) {
     return /^[0-9]+\.?[0-9]*$/.test(value.toString().trim());
 }
@@ -136,8 +123,12 @@ export function trim(value: string, character: string) {
     return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
 }
 
-export function getFilename(value: string) {
+export function getFileName(value: string) {
     return value.substring(value.lastIndexOf('/') + 1);
+}
+
+export function getFileExt(value: string) {
+    return value.substring(value.lastIndexOf('.') + 1);
 }
 
 export function search(obj: {}, value: string | object) {
@@ -182,22 +173,6 @@ export function indexOf(value: string, ...terms: string[]) {
         }
     }
     return -1;
-}
-
-export function remove<T>(list: T[], value: any) {
-    const index = list.indexOf(value);
-    if (index !== -1) {
-        list.splice(index, 1);
-    }
-    return list;
-}
-
-export function sortAsc<T>(list: T[], ...attributes: string[]) {
-    return sort<T>(list, 0, ...attributes);
-}
-
-export function sortDesc<T>(list: T[], ...attributes: string[]) {
-    return sort<T>(list, 1, ...attributes);
 }
 
 export function same(obj1: {}, obj2: {}, ...attributes: string[]) {
@@ -261,4 +236,41 @@ export function withinRange(a: number, b: number, n = 1) {
 
 export function withinFraction(lower: number, upper: number) {
     return (lower === upper || Math.ceil(lower) === Math.floor(upper));
+}
+
+export function remove<T>(list: T[], value: any) {
+    const index = list.indexOf(value);
+    if (index !== -1) {
+        list.splice(index, 1);
+    }
+    return list;
+}
+
+function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
+    return list.sort((a: T, b: T) => {
+        for (const attr of attributes) {
+            const result = compare(a, b, attr);
+            if (result && result[0] !== result[1]) {
+                if (asc === 0) {
+                    return (result[0] >= result[1] ? 1 : -1);
+                }
+                else {
+                    return (result[0] <= result[1] ? 1 : -1);
+                }
+            }
+        }
+        return 0;
+    });
+}
+
+export function caseInsensitve(a: any, b: any) {
+    return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
+}
+
+export function sortAsc<T>(list: T[], ...attributes: string[]) {
+    return sort<T>(list, 0, ...attributes);
+}
+
+export function sortDesc<T>(list: T[], ...attributes: string[]) {
+    return sort<T>(list, 1, ...attributes);
 }

@@ -1,9 +1,9 @@
 import { IPlainFile, IStringMap } from '../lib/types';
 import File from '../base/file';
-import { replaceDP, trim } from '../lib/util';
+import { caseInsensitve, hasValue, getFileExt, replaceDP } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import SETTINGS from '../settings';
-import { BUILD_ANDROID, FONT_ANDROID, FONTWEIGHT_ANDROID } from './constants';
+import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 
 import STRING_TMPL from './tmpl/resources/string';
 import STRINGARRAY_TMPL from './tmpl/resources/string-array';
@@ -13,9 +13,9 @@ import COLOR_TMPL from './tmpl/resources/color';
 import DRAWABLE_TMPL from './tmpl/resources/drawable';
 
 export default class FileRes extends File {
-    constructor(appname: string, filetype?: string)
+    constructor(appName: string)
     {
-        super(SETTINGS.outputDirectory, appname, filetype);
+        super(SETTINGS.outputDirectory, appName, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
     }
 
     public layoutMainToDisk(content: string) {
@@ -37,6 +37,9 @@ export default class FileRes extends File {
                 files.push(this.getLayoutMainFile(layoutMain));
             }
             for (const resource in data) {
+                if (resource === 'drawable') {
+                    files.push(...this.parseImageDetails(data[resource]));
+                }
                 files.push(...this.parseFileDetails(data[resource]));
             }
             this.saveToDisk(files);
@@ -48,7 +51,10 @@ export default class FileRes extends File {
     }
 
     public resourceStringToXml(saveToDisk = false) {
-        this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort());
+        if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
+            this.stored.STRINGS.set(this.appName, 'app_name');
+        }
+        this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
         let xml = '';
         if (this.stored.STRINGS.size > 0) {
             const template = parseTemplateMatch(STRING_TMPL);
@@ -201,11 +207,11 @@ export default class FileRes extends File {
             for (const [name, images] of this.stored.IMAGES.entries()) {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
-                        rootItem.push({ name: `res/drawable-${dpi}/${name + images[dpi].substring(images[dpi].lastIndexOf('.'))}`, value: `<!-- image: ${images[dpi]} -->` });
+                        rootItem.push({ name: `res/drawable-${dpi}/${name}.${getFileExt(images[dpi])}`, value: `<!-- image: ${images[dpi]} -->` });
                     }
                 }
                 else if (images['mdpi'] != null) {
-                    rootItem.push({ name: `res/drawable/${name + images['mdpi'].substring(images['mdpi'].lastIndexOf('.'))}`, value: `<!-- image: ${images['mdpi']} -->` });
+                    rootItem.push({ name: `res/drawable/${name}.${getFileExt(images['mdpi'])}`, value: `<!-- image: ${images['mdpi']} -->` });
                 }
             }
             xml = parseTemplateData(template, data);
@@ -213,15 +219,30 @@ export default class FileRes extends File {
                 xml = replaceDP(xml, SETTINGS.density);
             }
             if (saveToDisk) {
-                this.saveToDisk(this.parseFileDetails(xml));
+                this.saveToDisk([...this.parseImageDetails(xml), ...this.parseFileDetails(xml)]);
             }
         }
         return xml;
     }
 
-    private parseFileDetails(xml: string): IPlainFile[] {
+    private parseImageDetails(xml: string) {
         const result: IPlainFile[] = [];
-        const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?.xml) -->)/;
+        const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
+        let match: RegExpExecArray | null = null;
+        while ((match = pattern.exec(xml)) != null) {
+            result.push({
+                uri: match[1],
+                pathname: match[2],
+                filename: match[3]
+            });
+            xml = xml.replace(match[0], '');
+        }
+        return result;
+    }
+
+    private parseFileDetails(xml: string) {
+        const result: IPlainFile[] = [];
+        const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
         let match: RegExpExecArray | null = null;
         while ((match = pattern.exec(xml)) != null) {
             result.push({

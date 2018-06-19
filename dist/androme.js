@@ -1,4 +1,4 @@
-/* androme 1.7.0
+/* androme 1.7.1
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -123,22 +123,6 @@
     const ID = {
         android: ['parent']
     };
-    function sort(list, asc = 0, ...attributes) {
-        return list.sort((a, b) => {
-            for (const attr of attributes) {
-                const result = compare(a, b, attr);
-                if (result && result[0] !== result[1]) {
-                    if (asc === 0) {
-                        return (result[0] >= result[1] ? 1 : -1);
-                    }
-                    else {
-                        return (result[0] <= result[1] ? 1 : -1);
-                    }
-                }
-            }
-            return 0;
-        });
-    }
     function generateId(section, name) {
         let prefix = name;
         let i = 1;
@@ -233,6 +217,9 @@
     function convertInt(value) {
         return parseInt(value) || 0;
     }
+    function averageInt(values) {
+        return Math.floor(values.reduce((a, b) => a + b) / values.length);
+    }
     function isNumber(value) {
         return /^[0-9]+\.?[0-9]*$/.test(value.toString().trim());
     }
@@ -242,8 +229,11 @@
     function trim(value, character) {
         return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
     }
-    function getFilename(value) {
+    function getFileName(value) {
         return value.substring(value.lastIndexOf('/') + 1);
+    }
+    function getFileExt(value) {
+        return value.substring(value.lastIndexOf('.') + 1);
     }
     function search(obj, value) {
         const result = [];
@@ -286,19 +276,6 @@
             }
         }
         return -1;
-    }
-    function remove(list, value) {
-        const index = list.indexOf(value);
-        if (index !== -1) {
-            list.splice(index, 1);
-        }
-        return list;
-    }
-    function sortAsc(list, ...attributes) {
-        return sort(list, 0, ...attributes);
-    }
-    function sortDesc(list, ...attributes) {
-        return sort(list, 1, ...attributes);
     }
     function same(obj1, obj2, ...attributes) {
         for (const attr of attributes) {
@@ -355,6 +332,38 @@
     }
     function withinFraction(lower, upper) {
         return (lower === upper || Math.ceil(lower) === Math.floor(upper));
+    }
+    function remove(list, value) {
+        const index = list.indexOf(value);
+        if (index !== -1) {
+            list.splice(index, 1);
+        }
+        return list;
+    }
+    function sort(list, asc = 0, ...attributes) {
+        return list.sort((a, b) => {
+            for (const attr of attributes) {
+                const result = compare(a, b, attr);
+                if (result && result[0] !== result[1]) {
+                    if (asc === 0) {
+                        return (result[0] >= result[1] ? 1 : -1);
+                    }
+                    else {
+                        return (result[0] <= result[1] ? 1 : -1);
+                    }
+                }
+            }
+            return 0;
+        });
+    }
+    function caseInsensitve(a, b) {
+        return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
+    }
+    function sortAsc(list, ...attributes) {
+        return sort(list, 0, ...attributes);
+    }
+    function sortDesc(list, ...attributes) {
+        return sort(list, 1, ...attributes);
     }
 
     const X11_CSS3 = {
@@ -824,6 +833,7 @@
         chainPackedVerticalOffset: 14,
         outputDirectory: 'app/src/main',
         outputArchiveFileType: 'zip',
+        outputMaxProcessingTime: 30,
         outputActivityMainFileName: 'activity_main.xml'
     };
 
@@ -1637,6 +1647,8 @@
             this.parentIndex = Number.MAX_VALUE;
             this.gridRowSpan = 0;
             this.gridColumnSpan = 0;
+            this.gridMarginLeft = [];
+            this.gridMarginRight = [];
             this._namespaces = new Set();
             Object.assign(this, options);
             if (element != null || (options && options.element != null)) {
@@ -2150,7 +2162,7 @@
             super.viewName = viewName || this.viewName;
             if (this.viewId == null) {
                 const element = (this.element || {});
-                this.viewId = generateId('android', element.id || element.name || `${this.viewName.substring(this.viewName.lastIndexOf('.') + 1).toLowerCase()}_1`);
+                this.viewId = generateId('android', element.id || element.name || `${getFileExt(this.viewName).toLowerCase()}_1`);
                 this.android('id', this.stringId);
             }
         }
@@ -2270,6 +2282,16 @@
             }
             if (this.gridColumnSpan > 1) {
                 this.android('layout_columnSpan', this.gridColumnSpan.toString());
+            }
+            if (this.gridMarginLeft.length > 0) {
+                const marginLeft = convertPX(averageInt(this.gridMarginLeft) + this.marginLeft);
+                this.css('marginLeft', marginLeft);
+                this.android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
+            }
+            if (this.gridMarginRight.length > 0) {
+                const marginRight = convertPX(averageInt(this.gridMarginRight) + this.marginRight);
+                this.css('marginRight', marginRight);
+                this.android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
             }
             if (this.api >= exports.build.OREO) {
                 ['layout_margin', 'padding'].forEach(value => {
@@ -3519,23 +3541,19 @@
                     }
                 }
                 if (node.gridRowStart) {
-                    let marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
+                    const marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
                     if (marginLeft > 0) {
-                        marginLeft = convertPX(marginLeft + node.marginLeft);
-                        node.css('marginLeft', marginLeft);
-                        node.android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
+                        node.parent.gridMarginLeft.push(marginLeft);
                     }
                 }
                 if (node.gridRowEnd) {
                     const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
-                    let marginRight = dimensions.marginRight + dimensions.paddingRight;
                     if (heightBottom > 0) {
                         this.appendAfter(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
                     }
+                    const marginRight = dimensions.marginRight + dimensions.paddingRight;
                     if (marginRight > 0) {
-                        marginRight = convertPX(marginRight + node.marginRight);
-                        node.css('marginRight', marginRight);
-                        node.android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
+                        node.parent.gridMarginRight.push(marginRight);
                     }
                 }
             }
@@ -3647,8 +3665,8 @@
         static addImage(images) {
             let src = '';
             if (images['mdpi'] != null && hasValue(images['mdpi'])) {
-                const image = getFilename(images['mdpi']);
-                const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
+                const image = getFileName(images['mdpi']);
+                const format = getFileExt(image).toLowerCase();
                 src = image.replace(/.\w+$/, '');
                 switch (format) {
                     case 'bmp':
@@ -3802,7 +3820,7 @@
                             if (match[2] == null) {
                                 match[2] = '1x';
                             }
-                            const image = filepath + getFilename(match[1]);
+                            const image = filepath + getFileName(match[1]);
                             switch (match[2]) {
                                 case '0.75x':
                                     images['ldpi'] = image;
@@ -3852,7 +3870,7 @@
                                 continue;
                             }
                             const result = Resource.addString(value);
-                            if (result != null) {
+                            if (result !== '') {
                                 stringArray.push(result);
                             }
                         }
@@ -3898,7 +3916,7 @@
         parseBorderStyle(value, node, attribute) {
             const style = node.css(`${attribute}Style`) || 'none';
             let width = node.css(`${attribute}Width`) || '1px';
-            const color = parseRGBA(node.css(`${attribute}Color`));
+            const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`)) : []);
             if (color.length > 0) {
                 color[0] = Resource.addColor(color[0], false);
             }
@@ -4626,31 +4644,32 @@
     }
 
     class File {
-        constructor(directory, appname, filetype) {
+        constructor(directory, appName, processingTime, fileType) {
             this.directory = directory;
-            this.appname = appname;
-            this.filetype = 'zip';
-            if (filetype != null) {
-                this.filetype = filetype;
+            this.appName = appName;
+            this.processingTime = processingTime;
+            this.fileType = 'zip';
+            if (hasValue(fileType)) {
+                this.fileType = fileType;
             }
         }
         saveToDisk(files) {
+            if (!location.protocol.startsWith('http')) {
+                alert('SERVER (required): See README for instructions');
+                return;
+            }
             if (files != null && files.length > 0) {
-                fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appname.trim())}&filetype=${this.filetype.toLocaleLowerCase()}`, {
+                fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.fileType.toLocaleLowerCase()}&processingtime=${this.processingTime.toString().trim()}`, {
                     method: 'POST',
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
                 })
-                    .then((res) => {
-                    return res.json();
-                })
+                    .then((res) => res.json())
                     .then(json => {
                     if (json && hasValue(json.zipname)) {
                         fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
-                            .then(res => res.blob())
-                            .then(blob => {
-                            this.downloadToDisk(blob, getFilename(json.zipname));
-                        });
+                            .then((res) => res.blob())
+                            .then(blob => this.downloadToDisk(blob, getFileName(json.zipname)));
                     }
                 })
                     .catch(err => alert(`ERROR: ${err}`));
@@ -4759,8 +4778,8 @@
     var DRAWABLE_TMPL = template$7.join('\n');
 
     class FileRes extends File {
-        constructor(appname, filetype) {
-            super(SETTINGS.outputDirectory, appname, filetype);
+        constructor(appName) {
+            super(SETTINGS.outputDirectory, appName, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
         }
         layoutMainToDisk(content) {
             this.saveToDisk([this.getLayoutMainFile(content)]);
@@ -4780,6 +4799,9 @@
                     files.push(this.getLayoutMainFile(layoutMain));
                 }
                 for (const resource in data) {
+                    if (resource === 'drawable') {
+                        files.push(...this.parseImageDetails(data[resource]));
+                    }
                     files.push(...this.parseFileDetails(data[resource]));
                 }
                 this.saveToDisk(files);
@@ -4790,7 +4812,10 @@
             return data;
         }
         resourceStringToXml(saveToDisk = false) {
-            this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort());
+            if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
+                this.stored.STRINGS.set(this.appName, 'app_name');
+            }
+            this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
             let xml = '';
             if (this.stored.STRINGS.size > 0) {
                 const template = parseTemplateMatch(STRING_TMPL);
@@ -4938,11 +4963,11 @@
                 for (const [name, images] of this.stored.IMAGES.entries()) {
                     if (Object.keys(images).length > 1) {
                         for (const dpi in images) {
-                            rootItem.push({ name: `res/drawable-${dpi}/${name + images[dpi].substring(images[dpi].lastIndexOf('.'))}`, value: `<!-- image: ${images[dpi]} -->` });
+                            rootItem.push({ name: `res/drawable-${dpi}/${name}.${getFileExt(images[dpi])}`, value: `<!-- image: ${images[dpi]} -->` });
                         }
                     }
                     else if (images['mdpi'] != null) {
-                        rootItem.push({ name: `res/drawable/${name + images['mdpi'].substring(images['mdpi'].lastIndexOf('.'))}`, value: `<!-- image: ${images['mdpi']} -->` });
+                        rootItem.push({ name: `res/drawable/${name}.${getFileExt(images['mdpi'])}`, value: `<!-- image: ${images['mdpi']} -->` });
                     }
                 }
                 xml = parseTemplateData(template, data);
@@ -4950,14 +4975,28 @@
                     xml = replaceDP(xml, SETTINGS.density);
                 }
                 if (saveToDisk) {
-                    this.saveToDisk(this.parseFileDetails(xml));
+                    this.saveToDisk([...this.parseImageDetails(xml), ...this.parseFileDetails(xml)]);
                 }
             }
             return xml;
         }
+        parseImageDetails(xml) {
+            const result = [];
+            const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
+            let match = null;
+            while ((match = pattern.exec(xml)) != null) {
+                result.push({
+                    uri: match[1],
+                    pathname: match[2],
+                    filename: match[3]
+                });
+                xml = xml.replace(match[0], '');
+            }
+            return result;
+        }
         parseFileDetails(xml) {
             const result = [];
-            const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?.xml) -->)/;
+            const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
             let match = null;
             while ((match = pattern.exec(xml)) != null) {
                 result.push({
@@ -4986,7 +5025,7 @@
         let output = '';
         app = new Application(Widget, WidgetList);
         app.registerView(new Layout());
-        app.registerResource(new ResourceWidget(new FileRes(element.id, SETTINGS.outputArchiveFileType)));
+        app.registerResource(new ResourceWidget(new FileRes(element.id)));
         app.setStyleMap();
         app.setNodeCache(element);
         output = app.getLayoutXml();
@@ -5005,7 +5044,10 @@
     }
     function writeLayoutMainXml(saveToDisk = false) {
         if (app != null) {
-            return app.resourceHandler.file.layoutMainToDisk(app.toString());
+            if (saveToDisk) {
+                app.resourceHandler.file.layoutMainToDisk(app.toString());
+            }
+            return app.toString();
         }
         return '';
     }

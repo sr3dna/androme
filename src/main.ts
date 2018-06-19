@@ -20,7 +20,7 @@ export function parseDocument(element?: any) {
     let output = '';
     app = new Application(Widget, WidgetList);
     app.registerView(new Layout());
-    app.registerResource(new ResourceWidget(new FileRes(element.id, SETTINGS.outputArchiveFileType)));
+    app.registerResource(new ResourceWidget(new FileRes(element.id)));
     app.setStyleMap();
     app.setNodeCache(element);
     output = app.getLayoutXml();
@@ -40,7 +40,10 @@ export function parseDocument(element?: any) {
 
 export function writeLayoutMainXml(saveToDisk = false) {
     if (app != null) {
-        return app.resourceHandler.file.layoutMainToDisk(app.toString());
+        if (saveToDisk) {
+            app.resourceHandler.file.layoutMainToDisk(app.toString());
+        }
+        return app.toString();
     }
     return '';
 }

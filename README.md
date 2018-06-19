@@ -6,9 +6,9 @@ This program can convert moderately complex HTML pages into the standard XML lay
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). Chrome is the preferred browser when generating the production version of your program. ***
 
-Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be extracted into your project folder.
+Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
   
--- Install Node.js: http://www.nodejs.com/
+-- Install Node.js: http://www.nodejs.com
   
 -- Install androme: (choose one)  
 1. git clone https://github.org/anpham6/androme  
@@ -24,7 +24,7 @@ Express server through Node.js is available with a provided default configuratio
   
 -- Open Chrome: http://localhost:3000/demos/form.html
   
-If you install via NPM then it is recommended you put androme into its own separate folder rather than inside "node_modules".
+If you install via NPM then it is recommended you put androme into its own separate folder rather than hosting it inside "node_modules".
 
 Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6).
 
@@ -76,8 +76,9 @@ androme.settings = {
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14,
-	outputDirectory: 'app/src/main',
+    outputDirectory: 'app/src/main',
     outputArchiveFileType: 'zip', // zip | tar
+    outputMaxProcessingTime: 30,
     outputActivityMainFileName: 'activity_main.xml'
 };
 ```

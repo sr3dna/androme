@@ -137,13 +137,14 @@
         });
         SystemJS.import('/build/main.js').then(function(result) {
             androme = result;
-            document.getElementById('output').innerHTML = result.parseDocument('androme-root').replace(/</g, '&lt;');
-            const resource = result.writeResourceStringXml() + '\n\n' +
-                             result.writeResourceArrayXml() + '\n\n' +
-                             result.writeResourceStyleXml() + '\n\n' +
-                             result.writeResourceFontXml() + '\n\n' +
-                             result.writeResourceColorXml() + '\n\n' +
-                             result.writeResourceDrawableXml();
+            
+            document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
+            const resource = androme.writeResourceStringXml() + '\n\n' +
+                             androme.writeResourceArrayXml() + '\n\n' +
+                             androme.writeResourceStyleXml() + '\n\n' +
+                             androme.writeResourceFontXml() + '\n\n' +
+                             androme.writeResourceColorXml() + '\n\n' +
+                             androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>

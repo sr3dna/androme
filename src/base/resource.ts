@@ -3,7 +3,7 @@ import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
 import { INLINE_CHROME } from '../lib/constants';
-import { cameltoLowerCase, convertPX, generateId, getFilename, hasValue, isNumber } from '../lib/util';
+import { cameltoLowerCase, convertPX, generateId, getFileExt, getFileName, hasValue, isNumber } from '../lib/util';
 import { findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, getStyle } from '../lib/dom';
 import SETTINGS from '../settings';
@@ -44,8 +44,8 @@ export default class Resource<T extends Node> {
     public static addImage(images: IStringMap) {
         let src = '';
         if (images['mdpi'] != null && hasValue(images['mdpi'])) {
-            const image = getFilename(images['mdpi']);
-            const format = image.substring(image.lastIndexOf('.') + 1).toLowerCase();
+            const image = getFileName(images['mdpi']);
+            const format = getFileExt(image).toLowerCase();
             src = image.replace(/.\w+$/, '');
             switch (format) {
                 case 'bmp':
@@ -213,7 +213,7 @@ export default class Resource<T extends Node> {
                         if (match[2] == null) {
                             match[2] = '1x';
                         }
-                        const image = filepath + getFilename(match[1]);
+                        const image = filepath + getFileName(match[1]);
                         switch (match[2]) {
                             case '0.75x':
                                 images['ldpi'] = image;
@@ -264,7 +264,7 @@ export default class Resource<T extends Node> {
                             continue;
                         }
                         const result = Resource.addString(value);
-                        if (result != null) {
+                        if (result !== '') {
                             stringArray.push(result);
                         }
                     }
@@ -314,7 +314,7 @@ export default class Resource<T extends Node> {
     private parseBorderStyle(value: string, node: T, attribute: string): IBorder {
         const style = node.css(`${attribute}Style`) || 'none';
         let width = node.css(`${attribute}Width`) || '1px';
-        const color = parseRGBA(node.css(`${attribute}Color`));
+        const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`)) : []);
         if (color.length > 0) {
             color[0] = (<string> Resource.addColor(color[0], false));
         }

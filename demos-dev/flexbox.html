@@ -133,6 +133,7 @@
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script>
+        var androme = null;
         SystemJS.config({
             packages: {
                 '/build': { defaultExtension: 'js' }
@@ -144,11 +145,12 @@
             transpiler: 'plugin-babel'
         });
         System.import('/build/main.js').then(function(result) {
-            document.getElementById('output').innerHTML = result.parseDocument('androme-root').replace(/</g, '&lt;');
-            const resource = result.writeResourceStringXml() + '\n\n' +
-                             result.writeResourceStyleXml() + '\n\n' +
-                             result.writeResourceColorXml() + '\n\n' +
-                             result.writeResourceDrawableXml();
+            androme = result;
+            document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
+            const resource = androme.writeResourceStringXml() + '\n\n' +
+                             androme.writeResourceStyleXml() + '\n\n' +
+                             androme.writeResourceColorXml() + '\n\n' +
+                             androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>

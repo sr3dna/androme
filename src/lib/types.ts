@@ -44,7 +44,8 @@ export interface IBorder {
 export interface IPlainFile {
     pathname: string;
     filename: string;
-    content: string;
+    content?: string;
+    uri?: string;
 }
 
 export interface IResourceMap {

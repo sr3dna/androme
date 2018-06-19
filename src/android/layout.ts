@@ -9,7 +9,7 @@ import { getBoxSpacing } from '../lib/dom';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
 import { BOX_STANDARD, OVERFLOW_CHROME, VIEW_STANDARD } from '../lib/constants';
-import { BOX_ANDROID, VIEW_ANDROID, XMLNS_ANDROID } from './constants';
+import { VIEW_ANDROID, XMLNS_ANDROID } from './constants';
 
 const LAYOUT_MAP = {
     relative: {
@@ -909,23 +909,19 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                 }
             }
             if (node.gridRowStart) {
-                let marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
+                const marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
                 if (marginLeft > 0) {
-                    marginLeft = convertPX(marginLeft + node.marginLeft);
-                    node.css('marginLeft', marginLeft);
-                    node.android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
+                    node.parent.gridMarginLeft.push(marginLeft);
                 }
             }
             if (node.gridRowEnd) {
                 const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
-                let marginRight = dimensions.marginRight + dimensions.paddingRight;
                 if (heightBottom > 0) {
                     this.appendAfter(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
                 }
+                const marginRight = dimensions.marginRight + dimensions.paddingRight;
                 if (marginRight > 0) {
-                    marginRight = convertPX(marginRight + node.marginRight);
-                    node.css('marginRight', marginRight);
-                    node.android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
+                    node.parent.gridMarginRight.push(marginRight);
                 }
             }
         }

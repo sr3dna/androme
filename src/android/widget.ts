@@ -4,7 +4,7 @@ import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_ANDROID } from './const
 import parseRTL from './localization';
 import API_ANDROID from './customizations';
 import { BOX_STANDARD, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { calculateBias, convertInt, convertPX, formatPX, generateId, hasValue, isPercent } from '../lib/util';
+import { averageInt, calculateBias, convertInt, convertPX, formatPX, generateId, getFileExt, hasValue, isPercent } from '../lib/util';
 
 type T = Widget;
 
@@ -166,7 +166,7 @@ export default class Widget extends Node {
         super.viewName = viewName || this.viewName;
         if (this.viewId == null) {
             const element = (<HTMLInputElement> (this.element || {}));
-            this.viewId = generateId('android', element.id || element.name || `${this.viewName.substring(this.viewName.lastIndexOf('.') + 1).toLowerCase()}_1`);
+            this.viewId = generateId('android', element.id || element.name || `${getFileExt(this.viewName).toLowerCase()}_1`);
             this.android('id', this.stringId);
         }
     }
@@ -287,6 +287,16 @@ export default class Widget extends Node {
         }
         if (this.gridColumnSpan > 1) {
             this.android('layout_columnSpan', this.gridColumnSpan.toString());
+        }
+        if (this.gridMarginLeft.length > 0) {
+            const marginLeft = convertPX(averageInt(this.gridMarginLeft) + this.marginLeft);
+            this.css('marginLeft', marginLeft);
+            this.android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
+        }
+        if (this.gridMarginRight.length > 0) {
+            const marginRight = convertPX(averageInt(this.gridMarginRight) + this.marginRight);
+            this.css('marginRight', marginRight);
+            this.android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
         }
         if (this.api >= BUILD_ANDROID.OREO) {
             ['layout_margin', 'padding'].forEach(value => {

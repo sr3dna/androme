@@ -32,21 +32,11 @@
             font-size: 10px;
             margin: 4px 0px 0px 4px;
         }
-        span {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            line-height: 100px;
-            color: #fff;
-            font-size: 30px;
-            font-weight: bold;
-            text-align: center;
-            background-color: #1B5385;
-        }
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script>
         var androme = null;
+        var images = 0;
         SystemJS.config({
             packages: {
                 '/build': { defaultExtension: 'js' }
@@ -57,24 +47,37 @@
             },
             transpiler: 'plugin-babel'
         });
-        System.import('/build/main.js').then(function(result) {
+        SystemJS.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.settings.useConstraintGuideline = false;
-            document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
-            const resource = androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml();
-            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
+        function loaded() {
+            if (++images >= 2) {
+                if (androme == null) {
+                    setTimeout(function() { loaded(); }, 100);
+                    return;
+                }
+                document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
+                const resource = androme.writeResourceDrawableXml();
+                document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+            }
+        }
     </script>
 </head>
 <body>
-    <div id="androme-root" style="min-width: 500px; float: left;">
-        &nbsp;
-        <span>1</span>
-        <span>2</span>
-        <span>3</span>
-        <span>4</span>
-        <span>5</span>
+    <div id="androme-root" style="text-align: center; float: left;">
+        <img id="android" src="../demos/images/android.png" srcset="../demos/images/android-ldpi.png 0.75x,
+                                                                    ../demos/images/android.png 1x,
+                                                                    ../demos/images/android-hdpi.png 1.5x,
+                                                                    ../demos/images/android-xhdpi.png 2x,
+                                                                    ../demos/images/android-xxhdpi.png 3x,
+                                                                    ../demos/images/android-xxxhdpi.png 4x" onload="loaded();" />
+        <br /><br />
+        <img id="pencil" src="../demos/images/pencil.png" srcset="../demos/images/pencil-ldpi.png 0.75x,
+                                                                  ../demos/images/pencil.png,
+                                                                  ../demos/images/pencil-hdpi.png 1.5x,
+                                                                  ../demos/images/pencil-xhdpi.png 2x,
+                                                                  ../demos/images/pencil-xxhdpi.png 3x,
+                                                                  ../demos/images/pencil-xxxhdpi.png 4x" onload="loaded();" />
     </div>
     <div class="output">
         <pre id="output"></pre>
@@ -88,10 +91,6 @@
         <button onclick="copy('resource');" style="float: right;">Copy</button>
     </div>
     <script>
-        for (const span of document.getElementsByTagName('span')) {
-            span.style.top = `${400 * Math.random()}px`;
-            span.style.left = `${400 * Math.random()}px`;
-        }
         function copy(id) {
             const element = document.getElementById(id);
             const range = document.createRange();

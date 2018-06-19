@@ -22,5 +22,6 @@ export default {
     chainPackedVerticalOffset: 14,
     outputDirectory: 'app/src/main',
     outputArchiveFileType: 'zip',
+    outputMaxProcessingTime: 30,
     outputActivityMainFileName: 'activity_main.xml'
 };
