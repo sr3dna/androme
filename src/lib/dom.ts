@@ -71,9 +71,10 @@ export function isVisible(element: HTMLElement) {
             return true;
         }
         else if (element.children.length > 0) {
-            return Array.from(element.children).some(item => {
-                const style = getComputedStyle(item);
-                return !(style.position === '' || style.position === 'static');
+            return Array.from(element.children).some((item: HTMLElement) => {
+                const style: any = getComputedStyle(item);
+                (<any> item).__style = style;
+                return (!(style.position === '' || style.position === 'static') || style.float !== 'none');
             });
         }
     }

@@ -7,23 +7,25 @@ This program can convert moderately complex HTML pages into the standard XML lay
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). Chrome is the preferred browser when generating the production version of your program. ***
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
-  
--- Install Node.js: http://www.nodejs.com
-  
--- Install androme: (choose one)  
-1. git clone https://github.com/anpham6/androme  
-2. npm i androme  
-  
--- Change directory: (choose one)  
-1. cd androme  
-2. cd node_modules/androme  
-  
--- Install dependencies: npm install
-  
--- Load web server: node app.js
-  
--- Open Chrome: http://localhost:3000/demos/form.html
-  
+
+* Install Node.js: http://www.nodejs.com
+
+* Install androme: (choose one)
+  1. git clone https://github.com/anpham6/androme
+  2. npm i androme
+
+* Change directory: (choose one)
+  1. cd androme
+  2. cd node_modules/androme
+
+* Install dependencies: (choose one)
+  1. npm install && npm run prod
+  2. npm install
+
+* Load web server: node app.js
+
+* Open Chrome: http://localhost:3000/demos/form.html
+
 If you install via NPM then it is recommended you put androme into its own separate folder rather than hosting it inside "node_modules".
 
 Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6).
@@ -34,13 +36,13 @@ Library files are in the /dist folder. There is a babel minified for production 
     androme.settings.targetAPI = 19; // androme.build.KITKAT
     androme.settings.density = 160; // androme.density.MDPI
 
-    // without express: use either console.log() or element.innerHTML to display
+    // without Express: use either console.log() or element.innerHTML to display
 
     document.addEventListener('DOMContentLoaded', () => {
         // required
         androme.parseDocument(/* document.getElementById('root-node') */); /* default: document.body */
 		
-	    // optional
+        // optional
         androme.writeLayoutMainXml(true); /* true: save to disk, false: string xml */
         androme.writeResourceStringXml(true);
         androme.writeResourceArrayXml(true);
@@ -90,7 +92,7 @@ Most layout issues are probably due to layout_width and layout_height not being 
 
 <img src="demos/android/form.png" alt="form" />
 
-Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and to use single row flexbox layouts instead of floating "right".
+Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and to use single row flexbox layouts instead of floating "right". There is support for basic floating and there are plans to support most of the common floating techniques.
 
 <img src="demos/android/flexbox.png" alt="flexbox" />
 
@@ -99,6 +101,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <img src="demos/android/table.png" alt="gridlayout - table" />
 
 <img src="demos/android/layout_weight.png" alt="gridlayout - layout weight" />
+
+<img src="demos/android/float.png" alt="float - left | right" />
 
 <img src="demos/android/position_absolute.png" alt="constraintlayout - position: absolute" />
 

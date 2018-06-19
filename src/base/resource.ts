@@ -22,9 +22,9 @@ export default class Resource<T extends Node> {
             }
             const num = isNumber(value);
             if (SETTINGS.numberResourceValue || !num) {
-                for (const [storedValue, storedName] of Resource.STORED.STRINGS.entries()) {
-                    if (storedValue === value) {
-                        return (<string> storedValue);
+                for (const key of Resource.STORED.STRINGS.keys()) {
+                    if (key === value) {
+                        return (<string> key);
                     }
                 }
                 name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');

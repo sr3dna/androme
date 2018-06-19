@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <link rel="stylesheet" type="text/css" href="common/dev.css">
+    <style>
+        body > div:first-child > div {
+            margin-top: 4px;
+            padding: 4px;
+            background-color: silver;
+            overflow: hidden;
+        }
+        body > div:first-child > div > div {
+            width: 40px;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            margin: 4px;
+            padding: 10px 0px;
+            background-color: #1B5385;
+            box-sizing: border-box;
+        }
+    </style>
+    <script src="/node_modules/systemjs/dist/system.js"></script>
+    <script src="common/dev.js"></script>
+    <script>
+        System.import('/build/main.js').then(function(result) {
+            androme = result;
+            document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
+            const resource = androme.writeResourceStringXml() + '\n\n' +
+                             androme.writeResourceStyleXml() + '\n\n' +
+                             androme.writeResourceColorXml();
+            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+        });
+    </script>
+</head>
+<body>
+    <div id="androme-root" style="width: 550px;">
+        <div>
+            <div style="float: left;">1</div>
+            <div style="float: left;">2</div>
+            <div style="float: left;">3</div>
+        </div>
+        <div>
+            <div style="float: right;">1</div>
+            <div style="float: right;">2</div>
+            <div style="float: right;">3</div>
+        </div>
+        <div>
+            <div style="float: left;">1</div>
+            <div style="float: left">2</div>
+            <div style="float: left">3</div>
+            <div style="float: right;">4</div>
+            <div style="float: right;">5</div>
+            <div style="float: right;">6</div>
+        </div>
+        <div>
+            <div style="float: left;">1</div>
+            <div style="float: left;">2</div>
+            <div style="float: right;">3</div>
+        </div>
+        <div>
+            <div style="float: left;">1</div>
+            <div style="float: right;">2</div>
+            <div style="float: right;">3</div>
+        </div>
+        <div>
+            <div style="float: left;">1</div>
+            <div style="margin: 0 auto;">2</div>
+            <div style="float: right;">3</div>
+        </div>
+    </div>
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.writeLayoutMainXml(true);">Save</button>
+                <button onclick="androme.writeResourceAllXml(true, true);">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

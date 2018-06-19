@@ -25,7 +25,6 @@ export function parseDocument(element?: any) {
     app.setNodeCache(element);
     output = app.getLayoutXml();
     app.setResources();
-    output = app.replaceAppended(output);
     if (SETTINGS.showAttributes) {
         app.setMarginPadding();
         if (SETTINGS.useLayoutWeight) {
@@ -34,6 +33,7 @@ export function parseDocument(element?: any) {
         app.setConstraints();
         output = app.replaceInlineAttributes(output);
     }
+    output = app.replaceAppended(output);
     output = app.cleanAttributes(output);
     return output;
 }

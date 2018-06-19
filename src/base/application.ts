@@ -74,7 +74,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         for (const attr of Array.from(element.style)) {
                             attributes.add(hyphenToCamelCase(attr));
                         }
-                        const style = getComputedStyle(element);
+                        const style = (<any> element).__style || getComputedStyle(element);
                         const styleMap = {};
                         for (const name of attributes) {
                             if (name.toLowerCase().indexOf('color') !== -1) {
@@ -103,8 +103,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
             catch (error) {
                 if (!cssWarning) {
-                    alert('External CSS files cannot be parsed when loading this program directly from your hard drive (file://) with Chrome 64 or higher. Either ' +
-                          'use a local web server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
+                    alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
+                          'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
                           `${styleSheet.href}\n\n${error}`);
                     cssWarning = true;
                 }
@@ -374,7 +374,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                     xml += this.writeGridLayout(nodeY, parent, columnCount, rowCount);
                                 }
-                                else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item: T) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                                else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item: T) => !item.flex.enabled && BLOCK_CHROME.includes(item.tagName) && (item.children.length > 0 && item.children.every((child: T) => child.css('float') !== 'right')))) {
                                     let columns: any[][] = [];
                                     const columnEnd: number[] = [];
                                     if (SETTINGS.useLayoutWeight) {
@@ -592,7 +592,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += this.writeFrameLayout(nodeY, parent);
                                     }
-                                    else if ((!nodeY.flex.enabled || nodeY.children.every((item: T) => item.flex.enabled)) && (linearX || linearY)) {
+                                    else if ((linearX || linearY) && (!nodeY.flex.enabled || nodeY.children.every((item: T) => item.flex.enabled)) && (!nodeY.children.some((item: T) => item.css('float') === 'right') || nodeY.children.every((item: T) => item.css('float') === 'right'))) {
                                         xml += this.writeLinearLayout(nodeY, parent, linearY);
                                     }
                                     else {

@@ -33,80 +33,69 @@
             font-size: 10px;
             margin-top: 6px;
         }
-        ul {
-            margin: 0px;
-            padding: 0px;
-        }
-        li {
-            list-style: none;
-            margin: 4px;
+        body > div:first-child > div {
+            margin-top: 4px;
             padding: 4px;
+            background-color: silver;
+            overflow: hidden;
         }
-        span {
-            border: solid 1px #000;
-            padding: 2px;
+        body > div:first-child > div > div {
+            width: 40px;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
             margin: 4px;
+            padding: 10px 0px;
+            background-color: #1B5385;
+            box-sizing: border-box;
         }
     </style>
     <script src="../dist/androme.js"></script>
     <script>
-        androme.settings.useLayoutWeight = true;
-
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
             const resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml() + '\n\n' +
-                             androme.writeResourceDrawableXml();
+                             androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
-    <div style="width: 550px;">
-        <ul id="androme-root">
-            <li>
-                <span>1</span>
-                <span>1111</span>
-                <span>---</span>
-                <span>1</span>
-                <span>----</span>
-            </li>
-            <li>
-                <span>2</span>
-                <span>2222</span>
-                <span>---</span>
-                <span>22</span>
-                <span>2</span>
-                <span>---</span>
-            </li>
-            <li>
-                <span>3</span>
-                <span>33</span>
-                <span>3</span>
-                <span>---</span>
-                <span>333</span>
-                <span>---</span>
-            </li>
-            <li>
-                <span>4</span>
-                <span>44</span>
-                <span>44</span>
-                <span>44</span>
-                <span>---</span>
-                <span>4444</span>
-                <span>4</span>
-                <span>4</span>
-                <span>----</span>
-            </li>
-            <li>
-                <span>5</span>
-                <span>555</span>
-                <span>---</span>
-                <span>55555</span>
-                <span>---</span>
-            </li>
-        </ul>
+    <div id="androme-root" style="width: 550px;">
+        <div>
+            <div style="float: left;">1</div>
+            <div style="float: left;">2</div>
+            <div style="float: left;">3</div>
+        </div>
+        <div>
+            <div style="float: right;">1</div>
+            <div style="float: right;">2</div>
+            <div style="float: right;">3</div>
+        </div>
+        <div>
+            <div style="float: left;">1</div>
+            <div style="float: left">2</div>
+            <div style="float: left">3</div>
+            <div style="float: right;">4</div>
+            <div style="float: right;">5</div>
+            <div style="float: right;">6</div>
+        </div>
+        <div>
+            <div style="float: left;">1</div>
+            <div style="float: left;">2</div>
+            <div style="float: right;">3</div>
+        </div>
+        <div>
+            <div style="float: left;">1</div>
+            <div style="float: right;">2</div>
+            <div style="float: right;">3</div>
+        </div>
+        <div>
+            <div style="float: left;">1</div>
+            <div style="margin: 0 auto;">2</div>
+            <div style="float: right;">3</div>
+        </div>
     </div>
     <div>
         <div class="output">
@@ -125,17 +114,5 @@
             </div>
         </div>
     </div>
-    <script>
-        function copy(id) {
-            const element = document.getElementById(id);
-            const range = document.createRange();
-            range.selectNode(element);
-            window.getSelection().addRange(range);
-            document.execCommand('copy');
-            setTimeout(function() {
-                window.getSelection().removeAllRanges()
-            }, 100);
-        }
-    </script>
 </body>
 </html>

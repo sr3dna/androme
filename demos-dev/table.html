@@ -4,52 +4,16 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Language" content="en">
     <title>https://github.com/anpham6/androme</title>
-    <style type="text/css">
-        body {
-            font-family: monospace, consolas;
-            padding: 10px;
-            margin: 0px;
-        }
-        a {
-            font-size: 11px;
-            margin-top: 4px;
-            float: right;
-        }
-        .output {
-            float: left;
-        }
-        .output pre {
-            height: 600px;
-            font-size: 10px;
-            margin: 0px;
-            padding: 10px;
-            background-color: floralwhite;
-            border: solid 1px #ccc;
-            margin-left: 15px;
-            overflow: auto;
-        }
-        .output button {
-            font-size: 10px;
-            margin: 4px 0px 0px 4px;
-        }
+    <link rel="stylesheet" type="text/css" href="common/dev.css">
+    <style>
         th, td {
             border: solid 1px #000;
             padding: 8px;
         }
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
+    <script src="common/dev.js"></script>
     <script>
-        var androme = null;
-        SystemJS.config({
-            packages: {
-                '/build': { defaultExtension: 'js' }
-            },
-            map: {
-                'plugin-babel': '/node_modules/systemjs-plugin-babel/plugin-babel.js',
-                'systemjs-babel-build': '/node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
-            },
-            transpiler: 'plugin-babel'
-        });
         System.import('/build/main.js').then(function(result) {
             androme = result;
             document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
@@ -62,7 +26,7 @@
     </script>
 </head>
 <body>
-    <div style="float: left;">
+    <div>
         <table id="androme-root">
             <thead style="background-color: #ccc;">
                 <tr>
@@ -159,28 +123,22 @@
             </tfoot>
         </table>
     </div>
-    <div class="output">
-        <pre id="output"></pre>
-        <button onclick="androme.writeResourceAllXml(true, true);" style="float: right;">Save All</button>
-        <button onclick="androme.writeLayoutMainXml(true);" style="float: right;">Save</button>
-        <button onclick="copy('output');" style="float: right;">Copy</button>
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.writeLayoutMainXml(true);">Save</button>
+                <button onclick="androme.writeResourceAllXml(true, true);">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
     </div>
-    <div class="output">
-        <pre id="resource"></pre>
-        <button onclick="androme.writeResourceAllXml(true);" style="float: right;">Save</button>
-        <button onclick="copy('resource');" style="float: right;">Copy</button>
-    </div>
-    <script>
-        function copy(id) {
-            const element = document.getElementById(id);
-            const range = document.createRange();
-            range.selectNode(element);
-            window.getSelection().addRange(range);
-            document.execCommand('copy');
-            setTimeout(function() {
-                window.getSelection().removeAllRanges()
-            }, 100);
-        }
-    </script>
 </body>
 </html>

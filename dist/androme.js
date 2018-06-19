@@ -1,4 +1,4 @@
-/* androme 1.7.1
+/* androme 1.7.2
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -597,6 +597,10 @@
     }
     function parseRGBA(value) {
         if (value != null) {
+            const color = getByColorName(value);
+            if (color !== '') {
+                return [color.hex, convertRGB(color), '1'];
+            }
             const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
             if (match && match.length >= 4) {
                 return [`#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[0], match[4] || '1'];
@@ -688,9 +692,10 @@
                 return true;
             }
             else if (element.children.length > 0) {
-                return Array.from(element.children).some(item => {
+                return Array.from(element.children).some((item) => {
                     const style = getComputedStyle(item);
-                    return !(style.position === '' || style.position === 'static');
+                    item.__style = style;
+                    return (!(style.position === '' || style.position === 'static') || style.float !== 'none');
                 });
             }
         }
@@ -888,7 +893,7 @@
                             for (const attr of Array.from(element.style)) {
                                 attributes.add(hyphenToCamelCase(attr));
                             }
-                            const style = getComputedStyle(element);
+                            const style = element.__style || getComputedStyle(element);
                             const styleMap = {};
                             for (const name of attributes) {
                                 if (name.toLowerCase().indexOf('color') !== -1) {
@@ -917,9 +922,9 @@
                 }
                 catch (error) {
                     if (!cssWarning) {
-                        alert('External CSS files cannot be parsed when loading HTML pages directly from your hard drive using the file:// protocol with Chrome 64 or higher. ' +
-                            'Either use a local http:// server, embed the entire CSS file using the <style> tag, or use a different browser.\n\n' +
-                            styleSheet.href + '\n\n' + error);
+                        alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
+                            'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
+                            `${styleSheet.href}\n\n${error}`);
                         cssWarning = true;
                     }
                 }
@@ -1185,7 +1190,7 @@
                                         }
                                         xml += this.writeGridLayout(nodeY, parent, columnCount, rowCount);
                                     }
-                                    else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item) => !item.flex.enabled && (BLOCK_CHROME.includes(item.tagName) && item.children.length > 0))) {
+                                    else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item) => !item.flex.enabled && BLOCK_CHROME.includes(item.tagName) && (item.children.length > 0 && item.children.every((child) => child.css('float') !== 'right')))) {
                                         let columns = [];
                                         const columnEnd = [];
                                         if (SETTINGS.useLayoutWeight) {
@@ -1402,7 +1407,7 @@
                                         if (!nodeY.flex.enabled && linearX && linearY) {
                                             xml += this.writeFrameLayout(nodeY, parent);
                                         }
-                                        else if ((!nodeY.flex.enabled || nodeY.children.every((item) => item.flex.enabled)) && (linearX || linearY)) {
+                                        else if ((linearX || linearY) && (!nodeY.flex.enabled || nodeY.children.every((item) => item.flex.enabled)) && (!nodeY.children.some((item) => item.css('float') === 'right') || nodeY.children.every((item) => item.css('float') === 'right'))) {
                                             xml += this.writeLinearLayout(nodeY, parent, linearY);
                                         }
                                         else {
@@ -1647,8 +1652,7 @@
             this.parentIndex = Number.MAX_VALUE;
             this.gridRowSpan = 0;
             this.gridColumnSpan = 0;
-            this.gridMarginLeft = [];
-            this.gridMarginRight = [];
+            this.gridPadding = { top: 0, right: [], bottom: 0, left: [] };
             this._namespaces = new Set();
             Object.assign(this, options);
             if (element != null || (options && options.element != null)) {
@@ -1757,9 +1761,9 @@
         }
         intersect(rect, dimension = 'bounds') {
             const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
+            const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
             const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
             const left = (rect.left >= this[dimension].left && rect.left < this[dimension].right);
-            const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
             return (top && (left || right)) || (bottom && (left || right));
         }
         withinX(rect, dimension = 'linear') {
@@ -1954,14 +1958,14 @@
         get marginTop() {
             return convertInt(this.css('marginTop'));
         }
+        get marginRight() {
+            return convertInt(this.css('marginRight'));
+        }
         get marginBottom() {
             return convertInt(this.css('marginBottom'));
         }
         get marginLeft() {
             return convertInt(this.css('marginLeft'));
-        }
-        get marginRight() {
-            return convertInt(this.css('marginRight'));
         }
         get borderTopWidth() {
             return convertInt(this.css('borderTopWidth'));
@@ -1978,14 +1982,14 @@
         get paddingTop() {
             return convertInt(this.css('paddingTop'));
         }
+        get paddingRight() {
+            return convertInt(this.css('paddingRight'));
+        }
         get paddingBottom() {
             return convertInt(this.css('paddingBottom'));
         }
         get paddingLeft() {
             return convertInt(this.css('paddingLeft'));
-        }
-        get paddingRight() {
-            return convertInt(this.css('paddingRight'));
         }
         get center() {
             return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2) };
@@ -2226,7 +2230,7 @@
                         this.android('layout_width', 'wrap_content');
                     }
                     else {
-                        if (FIXED_ANDROID.includes(this.viewName)) {
+                        if (FIXED_ANDROID.includes(this.viewName) || this.floating) {
                             this.android('layout_width', 'wrap_content');
                         }
                         else {
@@ -2274,8 +2278,11 @@
                     this.android('layout_height', (this.constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), this.constraint.layoutHeight);
                 }
                 else if (this.android('layout_height') == null) {
-                    this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === 0 /* NONE */) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) ? 'match_parent' : 'wrap_content'));
+                    this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === 0 /* NONE */) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) && !this.renderParent.is(VIEW_STANDARD.RELATIVE) ? 'match_parent' : 'wrap_content'));
                 }
+            }
+            if (this.is(VIEW_STANDARD.LINEAR) && this.renderChildren.length > 0 && this.renderChildren.every((item) => item.css('float') === 'right')) {
+                this.android('gravity', parseRTL('right'));
             }
             if (this.gridRowSpan > 1) {
                 this.android('layout_rowSpan', this.gridRowSpan.toString());
@@ -2283,15 +2290,19 @@
             if (this.gridColumnSpan > 1) {
                 this.android('layout_columnSpan', this.gridColumnSpan.toString());
             }
-            if (this.gridMarginLeft.length > 0) {
-                const marginLeft = convertPX(averageInt(this.gridMarginLeft) + this.marginLeft);
-                this.css('marginLeft', marginLeft);
-                this.android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
-            }
-            if (this.gridMarginRight.length > 0) {
-                const marginRight = convertPX(averageInt(this.gridMarginRight) + this.marginRight);
-                this.css('marginRight', marginRight);
-                this.android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
+            if (this.gridPadding) {
+                if (this.gridPadding.top > 0) {
+                    this.modifyBox(BOX_STANDARD.PADDING_TOP, this.gridPadding.top);
+                }
+                if (this.gridPadding.right.length > 0) {
+                    this.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(this.gridPadding.right));
+                }
+                if (this.gridPadding.bottom > 0) {
+                    this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.gridPadding.bottom);
+                }
+                if (this.gridPadding.left.length > 0) {
+                    this.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(this.gridPadding.left));
+                }
             }
             if (this.api >= exports.build.OREO) {
                 ['layout_margin', 'padding'].forEach(value => {
@@ -2403,7 +2414,7 @@
                 if (layoutGravity.length > 0) {
                     this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]), false);
                 }
-                else if (gravity.length > 0) {
+                if (gravity.length > 0) {
                     this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
                 }
                 else if (horizontal !== '') {
@@ -2723,6 +2734,7 @@
                         return;
                     }
                     const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
+                    const linearX = nodes.linearX;
                     if (!flex.enabled) {
                         nodes.list.forEach((current) => {
                             if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
@@ -2745,62 +2757,74 @@
                                     return;
                                 }
                                 else if (constraint) {
-                                    let bounds1 = current.bounds;
-                                    let bounds2 = adjacent.bounds;
+                                    let linear1 = current.linear;
+                                    let linear2 = adjacent.linear;
                                     let parent = false;
                                     if (current === node || adjacent === node) {
                                         if (current === node) {
                                             current = adjacent;
                                         }
                                         adjacent = { stringId: 'parent' };
-                                        bounds1 = current.linear;
-                                        bounds2 = node.box;
+                                        linear1 = current.linear;
+                                        linear2 = node.box;
                                         parent = true;
                                     }
-                                    if (parent) {
-                                        if (bounds1.left === bounds2.left) {
-                                            current.anchor(LAYOUT['left'], adjacent, 'horizontal');
-                                        }
-                                        if (withinRange(bounds1.right, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                            current.anchor(LAYOUT['right'], adjacent, 'horizontal');
-                                        }
+                                    if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
+                                        this.setAlignParent(current, 'horizontal');
                                     }
                                     else {
-                                        if (current.viewWidth === 0 && bounds1.left === bounds2.left && bounds1.right === bounds2.right) {
-                                            current.anchor(LAYOUT['left'], adjacent);
-                                            current.anchor(LAYOUT['right'], adjacent);
-                                        }
-                                        else if (!SETTINGS.horizontalPerspective) {
-                                            if (bounds1.left === bounds2.left) {
-                                                current.anchor(LAYOUT['left'], adjacent);
+                                        if (parent) {
+                                            if (linear1.left === linear2.left) {
+                                                current.anchor(LAYOUT['left'], adjacent, 'horizontal');
                                             }
-                                            else if (bounds1.right === bounds2.right) {
+                                            if (withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                                current.anchor(LAYOUT['right'], adjacent, 'horizontal');
+                                            }
+                                        }
+                                        else {
+                                            if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
+                                                current.anchor(LAYOUT['left'], adjacent);
                                                 current.anchor(LAYOUT['right'], adjacent);
                                             }
-                                        }
-                                        const withinY = (bounds1.top === bounds2.top || bounds1.bottom === bounds2.bottom);
-                                        if (withinY && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                            current.anchor(LAYOUT['leftRight'], adjacent);
-                                        }
-                                        if (withinY && withinRange(bounds1.right, bounds2.left, SETTINGS.whitespaceHorizontalOffset)) {
-                                            current.anchor(LAYOUT['rightLeft'], adjacent);
+                                            else if (!SETTINGS.horizontalPerspective) {
+                                                if (linear1.left === linear2.left) {
+                                                    current.anchor(LAYOUT['left'], adjacent);
+                                                }
+                                                else if (linear1.right === linear2.right) {
+                                                    current.anchor(LAYOUT['right'], adjacent);
+                                                }
+                                            }
+                                            const withinY = (linear1.top === linear2.top || linear1.bottom === linear2.bottom);
+                                            if (withinY && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                                if (current.css('float') !== 'right') {
+                                                    current.anchor(LAYOUT['leftRight'], adjacent);
+                                                }
+                                                else {
+                                                    current.constraint.marginHorizontal = adjacent.stringId;
+                                                }
+                                            }
+                                            if (withinY && withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
+                                                if (current.css('float') !== 'left') {
+                                                    current.anchor(LAYOUT['rightLeft'], adjacent);
+                                                }
+                                            }
                                         }
                                     }
                                     if (parent) {
-                                        if (bounds1.top === bounds2.top) {
+                                        if (linear1.top === linear2.top) {
                                             current.anchor(LAYOUT['top'], adjacent, 'vertical');
                                         }
-                                        if (bounds1.bottom === bounds2.bottom) {
+                                        if (linear1.bottom === linear2.bottom) {
                                             current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
                                         }
                                     }
                                     else {
-                                        if (current.viewHeight === 0 && bounds1.top === bounds2.top && bounds1.bottom === bounds2.bottom) {
+                                        if (current.viewHeight === 0 && linear1.top === linear2.top && linear1.bottom === linear2.bottom) {
                                             const baseline = (current.is(VIEW_STANDARD.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(VIEW_STANDARD.TEXT) && adjacent.style.verticalAlign === 'baseline');
                                             current.anchor(LAYOUT[(baseline ? 'baseline' : 'top')], adjacent);
                                             current.anchor(LAYOUT['bottom'], adjacent);
                                         }
-                                        if (withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                             current.anchor(LAYOUT['topBottom'], adjacent);
                                         }
                                     }
@@ -2825,23 +2849,31 @@
                                         }
                                     }
                                     else {
-                                        const bounds1 = current.bounds;
-                                        const bounds2 = adjacent.bounds;
-                                        if ((bounds1.top === bounds2.top || bounds1.bottom === bounds2.bottom) && withinRange(bounds1.left, bounds2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                            current.anchor(LAYOUT['leftRight'], adjacent, (adjacent.constraint.horizontal ? 'horizontal' : ''));
-                                            if (adjacent.constraint.horizontal) {
-                                                current.delete('android', parseRTL('layout_alignParentRight'));
+                                        const linear1 = current.linear;
+                                        const linear2 = adjacent.linear;
+                                        if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
+                                            current.android('layout_centerHorizontal', 'true');
+                                            current.constraint.horizontal = true;
+                                        }
+                                        else {
+                                            if ((linear1.top === linear2.top || linear1.bottom === linear2.bottom) && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                                current.anchor(LAYOUT['leftRight'], adjacent, (adjacent.constraint.horizontal ? 'horizontal' : ''));
+                                                if (adjacent.constraint.horizontal) {
+                                                    current.delete('android', parseRTL('layout_alignParentRight'));
+                                                }
                                             }
                                         }
-                                        if (adjacent.constraint.vertical && withinRange(bounds1.top, bounds2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        if (adjacent.constraint.vertical && withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                             current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
                                             if (adjacent.constraint.vertical) {
                                                 current.delete('android', 'layout_alignParentBottom');
                                             }
                                         }
                                         if (adjacent.constraint.horizontal) {
-                                            if (bounds1.bottom === bounds2.bottom) {
-                                                current.anchor(LAYOUT['bottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                            if (linear1.bottom === linear2.bottom) {
+                                                if (!linearX) {
+                                                    current.anchor(LAYOUT['bottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                                }
                                                 if (adjacent.constraint.vertical) {
                                                     current.delete('android', 'layout_alignParentBottom');
                                                 }
@@ -2885,7 +2917,7 @@
                             }
                         });
                     }
-                    if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect())) {
+                    if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect()) && !nodes.list.some((item) => item.floating)) {
                         let flexNodes = null;
                         if (flex.enabled) {
                             let horizontalChain = nodes.slice();
@@ -3253,7 +3285,7 @@
                 const rows = node.linearRows;
                 if (rows.length > 1) {
                     const columnLength = rows[0].renderChildren.length;
-                    if (rows.every((item) => item.renderChildren.length === columnLength)) {
+                    if (rows.every((item) => !item.renderChildren.some((child) => child.floating) && item.renderChildren.length === columnLength)) {
                         const horizontal = !node.horizontal;
                         const columnDimension = new Array(columnLength).fill(-1);
                         for (const row of rows) {
@@ -3537,23 +3569,28 @@
                 if (node.gridFirst) {
                     const heightTop = dimensions.paddingTop + dimensions.marginTop;
                     if (heightTop > 0) {
-                        this.prependBefore(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0]);
+                        node.parent.gridPadding.top = heightTop;
                     }
                 }
                 if (node.gridRowStart) {
                     const marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
                     if (marginLeft > 0) {
-                        node.parent.gridMarginLeft.push(marginLeft);
+                        node.parent.gridPadding.left.push(marginLeft);
                     }
                 }
                 if (node.gridRowEnd) {
                     const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
                     if (heightBottom > 0) {
-                        this.appendAfter(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
+                        if (node.gridLast) {
+                            node.parent.gridPadding.bottom = heightBottom;
+                        }
+                        else {
+                            this.appendAfter(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
+                        }
                     }
                     const marginRight = dimensions.marginRight + dimensions.paddingRight;
                     if (marginRight > 0) {
-                        node.parent.gridMarginRight.push(marginRight);
+                        node.parent.gridPadding.right.push(marginRight);
                     }
                 }
             }
@@ -3644,9 +3681,9 @@
                 }
                 const num = isNumber(value);
                 if (SETTINGS.numberResourceValue || !num) {
-                    for (const [storedValue, storedName] of Resource.STORED.STRINGS.entries()) {
-                        if (storedValue === value) {
-                            return storedValue;
+                    for (const key of Resource.STORED.STRINGS.keys()) {
+                        if (key === value) {
+                            return key;
                         }
                     }
                     name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
@@ -4644,13 +4681,13 @@
     }
 
     class File {
-        constructor(directory, appName, processingTime, fileType) {
+        constructor(directory, appName, processingTime, compression) {
             this.directory = directory;
             this.appName = appName;
             this.processingTime = processingTime;
-            this.fileType = 'zip';
-            if (hasValue(fileType)) {
-                this.fileType = fileType;
+            this.compression = 'zip';
+            if (hasValue(compression)) {
+                this.compression = compression;
             }
         }
         saveToDisk(files) {
@@ -4659,17 +4696,22 @@
                 return;
             }
             if (files != null && files.length > 0) {
-                fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.fileType.toLocaleLowerCase()}&processingtime=${this.processingTime.toString().trim()}`, {
+                fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.compression.toLocaleLowerCase()}&processingtime=${this.processingTime.toString().trim()}`, {
                     method: 'POST',
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
                 })
                     .then((res) => res.json())
                     .then(json => {
-                    if (json && hasValue(json.zipname)) {
-                        fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
-                            .then((res) => res.blob())
-                            .then(blob => this.downloadToDisk(blob, getFileName(json.zipname)));
+                    if (json) {
+                        if (json.zipname != null) {
+                            fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
+                                .then((res) => res.blob())
+                                .then(blob => this.downloadToDisk(blob, getFileName(json.zipname)));
+                        }
+                        else if (json.system != null) {
+                            alert(`${json.application}\n\n${json.system}`);
+                        }
                     }
                 })
                     .catch(err => alert(`ERROR: ${err}`));
@@ -5030,7 +5072,6 @@
         app.setNodeCache(element);
         output = app.getLayoutXml();
         app.setResources();
-        output = app.replaceAppended(output);
         if (SETTINGS.showAttributes) {
             app.setMarginPadding();
             if (SETTINGS.useLayoutWeight) {
@@ -5039,6 +5080,7 @@
             app.setConstraints();
             output = app.replaceInlineAttributes(output);
         }
+        output = app.replaceAppended(output);
         output = app.cleanAttributes(output);
         return output;
     }

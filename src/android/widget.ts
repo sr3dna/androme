@@ -231,7 +231,7 @@ export default class Widget extends Node {
                     this.android('layout_width', 'wrap_content');
                 }
                 else {
-                    if (FIXED_ANDROID.includes(this.viewName)) {
+                    if (FIXED_ANDROID.includes(this.viewName) || this.floating) {
                         this.android('layout_width', 'wrap_content');
                     }
                     else {
@@ -279,8 +279,11 @@ export default class Widget extends Node {
                 this.android('layout_height', (this.constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), this.constraint.layoutHeight);
             }
             else if (this.android('layout_height') == null) {
-                this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) ? 'match_parent' : 'wrap_content'));
+                this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) && !this.renderParent.is(VIEW_STANDARD.RELATIVE) ? 'match_parent' : 'wrap_content'));
             }
+        }
+        if (this.is(VIEW_STANDARD.LINEAR) && this.renderChildren.length > 0 && this.renderChildren.every((item: T) => item.css('float') === 'right')) {
+            this.android('gravity', parseRTL('right'));
         }
         if (this.gridRowSpan > 1) {
             this.android('layout_rowSpan', this.gridRowSpan.toString());
@@ -413,7 +416,7 @@ export default class Widget extends Node {
             if (layoutGravity.length > 0) {
                 this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]), false);
             }
-            else if (gravity.length > 0) {
+            if (gravity.length > 0) {
                 this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
             }
             else if (horizontal !== '') {

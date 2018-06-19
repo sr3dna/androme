@@ -4,16 +4,15 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Language" content="en">
     <title>https://github.com/anpham6/androme</title>
-    <style type="text/css">
+    <style>
         body {
             font-family: monospace, consolas;
             padding: 10px;
             margin: 0px;
         }
-        a {
-            font-size: 11px;
-            margin-top: 4px;
-            float: right;
+        body > div {
+            vertical-align: top;
+            display: inline-block;
         }
         .output {
             float: left;
@@ -21,16 +20,18 @@
         .output pre {
             height: 600px;
             font-size: 10px;
-            margin: 0px;
+            margin: 0px 0px 0px 15px;
             padding: 10px;
             background-color: floralwhite;
             border: solid 1px #ccc;
-            margin-left: 15px;
             overflow: auto;
+        }
+        .output div {
+            text-align: right;
         }
         .output button {
             font-size: 10px;
-            margin: 4px 0px 0px 4px;
+            margin-top: 6px;
         }
     </style>
     <script src="../dist/androme.js"></script>
@@ -46,7 +47,7 @@
     </script>
 </head>
 <body>
-    <div id="androme-root" style="text-align: center; float: left;">
+    <div id="androme-root" style="text-align: center;">
         <img id="android" src="images/android.png" srcset="images/android-ldpi.png 0.75x,
                                                            images/android.png 1x,
                                                            images/android-hdpi.png 1.5x,
@@ -61,16 +62,22 @@
                                                          images/pencil-xxhdpi.png 3x,
                                                          images/pencil-xxxhdpi.png 4x" onload="loaded();" />
     </div>
-    <div class="output">
-        <pre id="output"></pre>
-        <button onclick="androme.writeResourceAllXml(true, true);" style="float: right;">Save All</button>
-        <button onclick="androme.writeLayoutMainXml(true);" style="float: right;">Save</button>
-        <button onclick="copy('output');" style="float: right;">Copy</button>
-    </div>
-    <div class="output">
-        <pre id="resource"></pre>
-        <button onclick="androme.writeResourceAllXml(true);" style="float: right;">Save</button>
-        <button onclick="copy('resource');" style="float: right;">Copy</button>
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.writeLayoutMainXml(true);">Save</button>
+                <button onclick="androme.writeResourceAllXml(true, true);">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
     </div>
     <script>
         function copy(id) {
