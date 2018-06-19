@@ -121,8 +121,7 @@ export default class Resource<T extends Node> {
 
     public cache: NodeList<T>;
 
-    constructor(
-        public file: File)
+    constructor(public file: File)
     {
     }
 

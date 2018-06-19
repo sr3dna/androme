@@ -103,9 +103,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
             catch (error) {
                 if (!cssWarning) {
-                    alert('External CSS files cannot be parsed when loading HTML pages directly from your hard drive using the file:// protocol with Chrome 64 or higher. ' +
-                          'Either use a local http:// server, embed the entire CSS file using the <style> tag, or use a different browser.\n\n' +
-                          styleSheet.href + '\n\n' + error);
+                    alert('External CSS files cannot be parsed when loading this program directly from your hard drive (file://) with Chrome 64 or higher. Either ' +
+                          'use a local web server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
+                          `${styleSheet.href}\n\n${error}`);
                     cssWarning = true;
                 }
             }

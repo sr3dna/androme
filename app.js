@@ -28,30 +28,30 @@ app.post('/api/savetodisk', (req, res) => {
     const directory = (req.query.directory != null && req.query.directory !== '');
     const dirname = `${__dirname.replace(/\\/g, '/')}/temp/${uuid()}`;
     const diroutput = dirname + (directory ? `/${req.query.directory}` : '');
-    const processingTime = Date.now() + ((!isNaN(parseInt(req.query.processingtime)) ? parseInt(req.query.processingtime) : 30) * 1000);
+    const processingTime = ((!isNaN(parseInt(req.query.processingtime)) ? parseInt(req.query.processingtime) : 30) * 1000);
+    const finalizeTime = Date.now() + processingTime;
     try {
         mkdirp.sync(diroutput);
         try {
             let delayed = 0;
-            const filetype = (req.query.filetype == 'tar' ? 'tar' : 'zip');
-            const zip = archiver(filetype, {
-                zlib: { level: 9 }
-            });
-            const zipname = `${dirname}/${req.query.appname || 'androme'}.${filetype}`;
+            const compression = (req.query.compression == 'tar' ? 'tar' : 'zip');
+            const archive = archiver(compression, { zlib: { level: 9 } });
+            const zipname = `${dirname}/${req.query.appname || 'androme'}.${compression}`;
             const output = fs.createWriteStream(zipname);
             output.on('close', () => {
-                console.log(`WRITE: ${zipname} (${zip.pointer()} bytes)`);
+                delayed = -1;
+                console.log(`WRITE: ${zipname} (${archive.pointer()} bytes)`);
                 res.json({
                     directory: dirname,
                     zipname,
-                    bytes: zip.pointer()
+                    bytes: archive.pointer()
                 });
             });
-            zip.pipe(output);
+            archive.pipe(output);
             function finalize() {
-                if (delayed == 0 || Date.now() >= processingTime) {
+                if (delayed != -1 && (delayed == 0 || Date.now() >= finalizeTime)) {
                     delayed = -1;
-                    zip.finalize();
+                    archive.finalize();
                 }
             }
             for (const file of req.body) {
@@ -61,15 +61,23 @@ app.post('/api/savetodisk', (req, res) => {
                     mkdirp.sync(pathname);
                     const entrydata = { name: `${(directory ? `${req.query.directory}/` : '')}${file.pathname}/${file.filename}` };
                     if (file.content != null) {
-                        fs.writeFileSync(filename, file.content);
-                        zip.file(filename, entrydata);
+                        delayed++;
+                        fs.writeFile(filename, file.content, (err) => {
+                            if (delayed != -1) {
+                                if (!err) {
+                                    archive.file(filename, entrydata);
+                                }
+                                delayed--;
+                                finalize();
+                            }
+                        });
                     }
                     else if (file.uri != null) {
                         delayed++;
                         const stream = fs.createWriteStream(filename);
                         stream.on('finish', () => {
                             if (delayed != -1) {
-                                zip.file(filename, entrydata);
+                                archive.file(filename, entrydata);
                                 delayed--;
                                 finalize();
                             }
@@ -96,7 +104,7 @@ app.post('/api/savetodisk', (req, res) => {
                     throw { filename, system: err };
                 }
             }
-            finalize();
+            setTimeout(finalize, processingTime);
         }
         catch (err) {
             res.json({

@@ -3,16 +3,16 @@ import { getFileName, hasValue, trim } from '../lib/util';
 
 export default abstract class File {
     public stored: IResourceMap;
-    private fileType = 'zip';
+    private compression = 'zip';
 
     constructor(
         private directory: string,
         protected appName: string,
         private processingTime: number,
-        fileType: string)
+        compression: string)
     {
-        if (hasValue(fileType)) {
-            this.fileType = fileType;
+        if (hasValue(compression)) {
+            this.compression = compression;
         }
     }
 
@@ -31,17 +31,22 @@ export default abstract class File {
             return;
         }
         if (files != null && files.length > 0) {
-            fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.fileType.toLocaleLowerCase()}&processingtime=${this.processingTime.toString().trim()}`, {
+            fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.compression.toLocaleLowerCase()}&processingtime=${this.processingTime.toString().trim()}`, {
                     method: 'POST',
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
                 })
                 .then((res: Response) => res.json())
                 .then(json => {
-                    if (json && hasValue(json.zipname)) {
-                        fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
-                            .then((res: Response) => res.blob())
-                            .then(blob => this.downloadToDisk(blob, getFileName(json.zipname)));
+                    if (json) {
+                        if (json.zipname != null) {
+                            fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
+                                .then((res: Response) => res.blob())
+                                .then(blob => this.downloadToDisk(blob, getFileName(json.zipname)));
+                        }
+                        else if (json.system != null) {
+                            alert(`${json.application}\n\n${json.system}`);
+                        }
                     }
                 })
                 .catch(err => alert(`ERROR: ${err}`));

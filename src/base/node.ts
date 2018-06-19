@@ -26,12 +26,8 @@ export default abstract class Node implements IBoxModel {
     public gridRowStart: boolean;
     public gridSiblings: Node[];
     public gridColumnCount: number;
-    public gridPadding: any = {
-        top: 0,
-        right: [],
-        bottom: 0,
-        left: []
-    };
+    public gridPadding: any = { top: 0, right: [], bottom: 0, left: [] };
+
     public abstract children: Node[];
     public abstract renderChildren: Node[];
 
@@ -173,9 +169,9 @@ export default abstract class Node implements IBoxModel {
 
     public intersect(rect: IClientRect, dimension = 'bounds') {
         const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
+        const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
         const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
         const left = (rect.left >= this[dimension].left && rect.left < this[dimension].right);
-        const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
         return (top && (left || right)) || (bottom && (left || right));
     }
 
@@ -381,14 +377,14 @@ export default abstract class Node implements IBoxModel {
     get marginTop() {
         return convertInt(this.css('marginTop'));
     }
+    get marginRight() {
+        return convertInt(this.css('marginRight'));
+    }
     get marginBottom() {
         return convertInt(this.css('marginBottom'));
     }
     get marginLeft() {
         return convertInt(this.css('marginLeft'));
-    }
-    get marginRight() {
-        return convertInt(this.css('marginRight'));
     }
     get borderTopWidth() {
         return convertInt(this.css('borderTopWidth'));
@@ -405,14 +401,14 @@ export default abstract class Node implements IBoxModel {
     get paddingTop() {
         return convertInt(this.css('paddingTop'));
     }
+    get paddingRight() {
+        return convertInt(this.css('paddingRight'));
+    }
     get paddingBottom() {
         return convertInt(this.css('paddingBottom'));
     }
     get paddingLeft() {
         return convertInt(this.css('paddingLeft'));
-    }
-    get paddingRight() {
-        return convertInt(this.css('paddingRight'));
     }
     get center(): IPoint {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};

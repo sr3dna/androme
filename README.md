@@ -34,22 +34,22 @@ Library files are in the /dist folder. There is a babel minified for production 
     androme.settings.targetAPI = 19; // androme.build.KITKAT
     androme.settings.density = 160; // androme.density.MDPI
 
-	// without express: use either console.log() or element.innerHTML to display
+    // without express: use either console.log() or element.innerHTML to display
 
     document.addEventListener('DOMContentLoaded', () => {
-		// required
-		androme.parseDocument(/* document.getElementById('root-node') */); /* default: document.body */
-
-		// optional
+        // required
+        androme.parseDocument(/* document.getElementById('root-node') */); /* default: document.body */
+		
+	    // optional
         androme.writeLayoutMainXml(true); /* true: save to disk, false: string xml */
         androme.writeResourceStringXml(true);
         androme.writeResourceArrayXml(true);
         androme.writeResourceStyleXml(true);
         androme.writeResourceFontXml(true);
         androme.writeResourceColorXml(true);
-		androme.writeResourceDrawableXml(true);
+        androme.writeResourceDrawableXml(true);
 
-		androme.writeResourceAllXml(true, true); /* true: save to disk, true: include activity_main.xml */
+        androme.writeResourceAllXml(true, true); /* true: save to disk, true: include activity_main.xml */
     });
 </script>
 ```
