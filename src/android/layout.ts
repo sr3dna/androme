@@ -905,23 +905,28 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
             if (node.gridFirst) {
                 const heightTop = dimensions.paddingTop + dimensions.marginTop;
                 if (heightTop > 0) {
-                    this.prependBefore(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightTop))[0]);
+                    node.parent.gridPadding.top = heightTop;
                 }
             }
             if (node.gridRowStart) {
                 const marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
                 if (marginLeft > 0) {
-                    node.parent.gridMarginLeft.push(marginLeft);
+                    node.parent.gridPadding.left.push(marginLeft);
                 }
             }
             if (node.gridRowEnd) {
                 const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
                 if (heightBottom > 0) {
-                    this.appendAfter(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
+                    if (node.gridLast) {
+                        node.parent.gridPadding.bottom = heightBottom;
+                    }
+                    else {
+                        this.appendAfter(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
+                    }
                 }
                 const marginRight = dimensions.marginRight + dimensions.paddingRight;
                 if (marginRight > 0) {
-                    node.parent.gridMarginRight.push(marginRight);
+                    node.parent.gridPadding.right.push(marginRight);
                 }
             }
         }

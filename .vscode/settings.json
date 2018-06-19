@@ -1,7 +1,10 @@
 {
     "search.exclude": {
+        "**/build": true,
+        "**/demos": true,
+        "**/demos-dev": true,
+        "**/dist": true,
         "**/node_modules": true,
-        "**/*.js": true,
-        "**/demos": true
+        "**/temp": true
     }
 }

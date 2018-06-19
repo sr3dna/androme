@@ -26,9 +26,12 @@ export default abstract class Node implements IBoxModel {
     public gridRowStart: boolean;
     public gridSiblings: Node[];
     public gridColumnCount: number;
-    public gridMarginLeft: number[] = [];
-    public gridMarginRight: number[] = [];
-
+    public gridPadding: any = {
+        top: 0,
+        right: [],
+        bottom: 0,
+        left: []
+    };
     public abstract children: Node[];
     public abstract renderChildren: Node[];
 
@@ -62,9 +65,10 @@ export default abstract class Node implements IBoxModel {
         }
     }
 
+    public abstract is(...views: number[]): boolean;
     public abstract setViewId(viewName: string): void;
     public abstract setViewLayout(options?: any): void;
-    public abstract is(...views: number[]): boolean;
+    public abstract modifyBox(area: number, offset: number): void;
     public abstract distributeWeight(horizontal: boolean, percent: number): void;
 
     public add(obj: string, attr: string, value = '', overwrite = true) {

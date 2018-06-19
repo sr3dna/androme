@@ -288,15 +288,19 @@ export default class Widget extends Node {
         if (this.gridColumnSpan > 1) {
             this.android('layout_columnSpan', this.gridColumnSpan.toString());
         }
-        if (this.gridMarginLeft.length > 0) {
-            const marginLeft = convertPX(averageInt(this.gridMarginLeft) + this.marginLeft);
-            this.css('marginLeft', marginLeft);
-            this.android(parseRTL(BOX_ANDROID.MARGIN_LEFT), marginLeft);
-        }
-        if (this.gridMarginRight.length > 0) {
-            const marginRight = convertPX(averageInt(this.gridMarginRight) + this.marginRight);
-            this.css('marginRight', marginRight);
-            this.android(parseRTL(BOX_ANDROID.MARGIN_RIGHT), marginRight);
+        if (this.gridPadding) {
+            if (this.gridPadding.top > 0) {
+                this.modifyBox(BOX_STANDARD.PADDING_TOP, this.gridPadding.top);
+            }
+            if (this.gridPadding.right.length > 0) {
+                this.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(this.gridPadding.right));
+            }
+            if (this.gridPadding.bottom > 0) {
+                this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.gridPadding.bottom);
+            }
+            if (this.gridPadding.left.length > 0) {
+                this.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(this.gridPadding.left));
+            }
         }
         if (this.api >= BUILD_ANDROID.OREO) {
             ['layout_margin', 'padding'].forEach(value => {
