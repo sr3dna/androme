@@ -11,18 +11,19 @@ Express server through Node.js is available with a provided default configuratio
 * Install Node.js: http://www.nodejs.com
 
 * Install androme: (choose one)
-  1. git clone https://github.com/anpham6/androme
-  2. npm i androme
+1. git clone https://github.com/anpham6/androme
+2. npm i androme
 
 * Change directory: (choose one)
-  1. cd androme
-  2. cd node_modules/androme
+1. cd androme
+2. cd node_modules/androme
 
 * Install dependencies: (choose one)
-  1. npm install && npm run prod
-  2. npm install
+1. npm install && npm run prod
+2. npm install
 
-* Load web server: node app.js
+* Load web server:
+1. node app.js
 
 * Open Chrome: http://localhost:3000/demos/form.html
 

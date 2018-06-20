@@ -44,8 +44,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.viewHandler.setLayoutWeight();
     }
 
-    public replaceAppended(output: string) {
+    public finalizeViews(output: string) {
         output = this.viewHandler.replaceAppended(output);
+        output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
+        if (SETTINGS.useUnitDP) {
+            output = replaceDP(output, SETTINGS.density);
+        }
         this._generated = output;
         return output;
     }
@@ -655,15 +659,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const options = {};
         this.cache.visible.forEach((node: T) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
         output = output.replace('{@0}', this.viewHandler.getRootAttributes(options));
-        this._generated = output;
-        return output;
-    }
-
-    public cleanAttributes(output) {
-        output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
-        if (SETTINGS.useUnitDP) {
-            output = replaceDP(output, SETTINGS.density);
-        }
         this._generated = output;
         return output;
     }

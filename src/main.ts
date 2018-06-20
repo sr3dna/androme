@@ -33,8 +33,7 @@ export function parseDocument(element?: any) {
         app.setConstraints();
         output = app.replaceInlineAttributes(output);
     }
-    output = app.replaceAppended(output);
-    output = app.cleanAttributes(output);
+    output = app.finalizeViews(output);
     return output;
 }
 

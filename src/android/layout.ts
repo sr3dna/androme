@@ -165,13 +165,15 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                     }
                                 }
                                 else {
-                                    if (current.viewHeight === 0 && linear1.top === linear2.top && linear1.bottom === linear2.bottom) {
-                                        const baseline = (current.is(VIEW_STANDARD.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(VIEW_STANDARD.TEXT) && adjacent.style.verticalAlign === 'baseline');
-                                        current.anchor(LAYOUT[(baseline ? 'baseline' : 'top')], adjacent);
-                                        current.anchor(LAYOUT['bottom'], adjacent);
-                                    }
                                     if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                        current.anchor(LAYOUT['topBottom'], adjacent);
+                                        current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                    }
+                                    else if (current.viewHeight === 0 && linear1.top === linear2.top && linear1.bottom === linear2.bottom) {
+                                        if (!current.floating || !current.constraint.vertical) {
+                                            const baseline = (current.is(VIEW_STANDARD.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(VIEW_STANDARD.TEXT) && adjacent.style.verticalAlign === 'baseline');
+                                            current.anchor(LAYOUT[(baseline ? 'baseline' : 'top')], adjacent);
+                                            current.anchor(LAYOUT['bottom'], adjacent);
+                                        }
                                     }
                                 }
                             }
@@ -217,11 +219,11 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                     }
                                     if (adjacent.constraint.horizontal) {
                                         if (linear1.bottom === linear2.bottom) {
-                                            if (!linearX) {
+                                            if (!linearX && (!current.floating || !current.constraint.vertical)) {
                                                 current.anchor(LAYOUT['bottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
-                                            }
-                                            if (adjacent.constraint.vertical) {
-                                                current.delete('android', 'layout_alignParentBottom');
+                                                if (adjacent.constraint.vertical) {
+                                                    current.delete('android', 'layout_alignParentBottom');
+                                                }
                                             }
                                         }
                                     }
