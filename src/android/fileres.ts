@@ -1,4 +1,4 @@
-import { IPlainFile, IStringMap } from '../lib/types';
+import { PlainFile, StringMap } from '../lib/types';
 import File from '../base/file';
 import { caseInsensitve, hasValue, getFileExt, replaceDP } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
@@ -13,17 +13,44 @@ import COLOR_TMPL from './tmpl/resources/color';
 import DRAWABLE_TMPL from './tmpl/resources/drawable';
 
 export default class FileRes extends File {
-    constructor(appName: string)
+    constructor()
     {
-        super(SETTINGS.outputDirectory, appName, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
+        super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
     }
 
-    public layoutMainToDisk(content: string) {
-        this.saveToDisk([this.getLayoutMainFile(content)]);
+    public saveAllToDisk(data: StringMap) {
+        const files: PlainFile[] = [];
+        for (let i = 0; i < data.view.length; i++) {
+            files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.id[i]}.xml`), data.view[i]));
+        }
+        const drawableXml = this.resourceDrawableToXml();
+        files.push(...this.parseFileDetails(this.resourceStringToXml()));
+        files.push(...this.parseFileDetails(this.resourceStringArrayToXml()));
+        files.push(...this.parseFileDetails(this.resourceFontToXml()));
+        files.push(...this.parseFileDetails(this.resourceColorToXml()));
+        files.push(...this.parseFileDetails(this.resourceStyleToXml()));
+        files.push(...this.parseImageDetails(drawableXml), ...this.parseFileDetails(drawableXml));
+        this.saveToDisk(files);
     }
 
-    public resourceAllToXml(saveToDisk = false, layoutMain = ''): {} {
-        const data: IStringMap = {
+    public layoutAllToXml(data: StringMap, saveToDisk = false) {
+        const result: StringMap = {};
+        const files: PlainFile[] = [];
+        for (let i = 0; i < data.view.length; i++) {
+            const view = data.view[i];
+            result[data.id[i]] = view;
+            if (saveToDisk) {
+                files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.id[i]}.xml`), view));
+            }
+        }
+        if (saveToDisk) {
+            this.saveToDisk(files);
+        }
+        return result;
+    }
+
+    public resourceAllToXml(saveToDisk = false): {} {
+        const result: StringMap = {
             string: this.resourceStringToXml(),
             stringArray: this.resourceStringArrayToXml(),
             font: this.resourceFontToXml(),
@@ -32,22 +59,16 @@ export default class FileRes extends File {
             drawable: this.resourceDrawableToXml()
         };
         if (saveToDisk) {
-            const files: IPlainFile[] = [];
-            if (layoutMain !== '') {
-                files.push(this.getLayoutMainFile(layoutMain));
-            }
-            for (const resource in data) {
+            const files: PlainFile[] = [];
+            for (const resource in result) {
                 if (resource === 'drawable') {
-                    files.push(...this.parseImageDetails(data[resource]));
+                    files.push(...this.parseImageDetails(result[resource]));
                 }
-                files.push(...this.parseFileDetails(data[resource]));
+                files.push(...this.parseFileDetails(result[resource]));
             }
             this.saveToDisk(files);
         }
-        if (layoutMain !== '') {
-            data.main = layoutMain;
-        }
-        return data;
+        return result;
     }
 
     public resourceStringToXml(saveToDisk = false) {
@@ -226,7 +247,7 @@ export default class FileRes extends File {
     }
 
     private parseImageDetails(xml: string) {
-        const result: IPlainFile[] = [];
+        const result: PlainFile[] = [];
         const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
         let match: RegExpExecArray | null = null;
         while ((match = pattern.exec(xml)) != null) {
@@ -241,7 +262,7 @@ export default class FileRes extends File {
     }
 
     private parseFileDetails(xml: string) {
-        const result: IPlainFile[] = [];
+        const result: PlainFile[] = [];
         const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
         let match: RegExpExecArray | null = null;
         while ((match = pattern.exec(xml)) != null) {
@@ -255,11 +276,11 @@ export default class FileRes extends File {
         return result;
     }
 
-    private getLayoutMainFile(content: string): IPlainFile {
+    private getLayoutFile(fileName: string, content: string): PlainFile {
         return {
             content,
             pathname: 'res/layout',
-            filename: SETTINGS.outputActivityMainFileName
+            filename: fileName
         };
     }
 }

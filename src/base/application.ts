@@ -1,3 +1,4 @@
+import { ObjectIndex } from '../lib/types';
 import View from './view';
 import Resource from './resource';
 import Node from './node';
@@ -13,7 +14,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public resourceHandler: Resource<T>;
 
     private cache: U;
-    private _generated: string;
+    private _ids: string[] = [];
+    private _views: string[] = [];
 
     constructor(
         private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
@@ -32,6 +34,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.resourceHandler = resource;
     }
 
+    public resetView() {
+        this.viewHandler.reset();
+    }
+
     public setConstraints() {
         this.viewHandler.setConstraints();
     }
@@ -44,20 +50,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.viewHandler.setLayoutWeight();
     }
 
-    public finalizeViews(output: string) {
-        output = this.viewHandler.replaceAppended(output);
-        output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
-        if (SETTINGS.useUnitDP) {
-            output = replaceDP(output, SETTINGS.density);
-        }
-        this._generated = output;
-        return output;
-    }
-
     public setResources() {
         this.resourceHandler.setBoxSpacing();
         this.resourceHandler.setBoxStyle();
-        this.resourceHandler.setFontStyle();
+        this.resourceHandler.setFontStyle((this.length > 1 ? this.currentId : ''));
         this.resourceHandler.setValueString();
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
@@ -74,11 +70,19 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     for (const attr of Array.from(cssRule.style)) {
                         attributes.add(hyphenToCamelCase(attr));
                     }
-                    Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element: HTMLElement) => {
+                    const elements = document.querySelectorAll(cssRule.selectorText);
+                    if (this.appName !== '') {
+                        Array.from(elements).forEach((element: HTMLElement) => {
+                            const object = (<any> element);
+                            delete object.__style;
+                            delete object.__styleMap;
+                        });
+                    }
+                    Array.from(elements).forEach((element: HTMLElement) => {
                         for (const attr of Array.from(element.style)) {
                             attributes.add(hyphenToCamelCase(attr));
                         }
-                        const style = (<any> element).__style || getComputedStyle(element);
+                        const style = getComputedStyle(element);
                         const styleMap = {};
                         for (const name of attributes) {
                             if (name.toLowerCase().indexOf('color') !== -1) {
@@ -116,23 +120,26 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public setNodeCache(documentRoot: HTMLElement) {
+    public setNodeCache(layoutRoot: HTMLElement) {
         let nodeTotal = 0;
-        Array.from((documentRoot || document.body).childNodes).forEach((item: HTMLElement) => {
-            if (item.nodeName === '#text') {
-                if (item.textContent && item.textContent.trim() !== '') {
-                    nodeTotal++;
+        if (layoutRoot === document.body) {
+            Array.from(document.body.childNodes).forEach((item: HTMLElement) => {
+                if (item.nodeName === '#text') {
+                    if (item.textContent && item.textContent.trim() !== '') {
+                        nodeTotal++;
+                    }
                 }
-            }
-            else {
-                if (isVisible(item)) {
-                    nodeTotal++;
+                else {
+                    if (isVisible(item)) {
+                        nodeTotal++;
+                    }
                 }
-            }
-        });
-        const elements = (documentRoot != null ? documentRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
-        if (documentRoot != null) {
-            const node = this.insertNode(documentRoot);
+            });
+        }
+        const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+        this.cache.clear();
+        if (layoutRoot != null) {
+            const node = this.insertNode(layoutRoot);
             if (node != null) {
                 node.parent = new this.TypeT(0, 0);
             }
@@ -149,7 +156,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (element != null) {
                 preAlignment[node.id] = {};
                 const style = preAlignment[node.id];
-                switch (node.style.textAlign) {
+                switch (node.styleMap.textAlign) {
                     case 'center':
                     case 'right':
                     case 'end':
@@ -243,6 +250,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 sortAsc(node.children, 'parentIndex');
             }
         });
+        this.currentId = (<string> layoutRoot.dataset.currentId);
     }
 
     public insertNode(element: HTMLElement, parent?: T) {
@@ -266,10 +274,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return node;
     }
 
-    public getLayoutXml() {
+    public setLayoutXml() {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
-        const mapX: Array<{}> = [];
-        const mapY: Array<{}> = [];
+        const mapX: ObjectIndex = [];
+        const mapY: ObjectIndex = [];
         this.cache.list.forEach((node: T) => {
             const x = Math.floor((<number> node.bounds.x));
             const y = node.parent.id;
@@ -651,20 +659,67 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 output = output.replace(`{${id}}`, views.join(''));
             }
         }
-        this._generated = output;
-        return output;
+        this.create = output;
     }
 
-    public replaceInlineAttributes(output: string) {
+    public replaceInlineAttributes() {
         const options = {};
+        let output = this.current;
         this.cache.visible.forEach((node: T) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
         output = output.replace('{@0}', this.viewHandler.getRootAttributes(options));
-        this._generated = output;
-        return output;
+        this.current = output;
+    }
+
+    public finalizeViews() {
+        let output = this.viewHandler.replaceAppended(this.current);
+        output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
+        if (SETTINGS.useUnitDP) {
+            output = replaceDP(output, SETTINGS.density);
+        }
+        this.current = output;
     }
 
     public toString() {
-        return this._generated;
+        return this._views[0] || '';
+    }
+
+    public set appName(value) {
+        if (this.resourceHandler != null) {
+            this.resourceHandler.file.appName = value;
+        }
+    }
+    public get appName() {
+        return (this.resourceHandler != null ? this.resourceHandler.file.appName : '');
+    }
+
+    private set current(value) {
+        this._views[this._views.length - 1] = value;
+    }
+    private get current() {
+        return this._views[this._views.length - 1];
+    }
+
+    protected set currentId(value: string) {
+        if (this._ids.length === this._views.length) {
+            this._ids.push(value);
+        }
+    }
+    protected get currentId() {
+        return this._ids[this._ids.length - 1] || '';
+    }
+
+    private set create(value) {
+        if (this._views.length < this._ids.length) {
+            this._views.push(value);
+        }
+    }
+
+    public get viewData() {
+        return { id: this._ids, view: this._views };
+    }
+
+    public get length() {
+        return this._views.length;
     }
 
     private writeFrameLayout(node: T, parent: T) {

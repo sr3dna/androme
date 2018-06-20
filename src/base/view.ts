@@ -2,15 +2,15 @@ import Node from './node';
 import NodeList from './nodelist';
 import { hasValue, padLeft } from '../lib/util';
 
-interface IViewAppend {
+interface ViewAppend {
     [id: number]: string[];
 }
 
 export default abstract class View<T extends Node, U extends NodeList<T>> {
     public cache: U;
 
-    private before: IViewAppend = {};
-    private after: IViewAppend = {};
+    private before: ViewAppend = {};
+    private after: ViewAppend = {};
 
     constructor() {
     }
@@ -25,6 +25,11 @@ export default abstract class View<T extends Node, U extends NodeList<T>> {
     public abstract getViewName(value: number): string;
     public abstract getRootAttributes(options: {}): string;
     public abstract replaceInlineAttributes(output: string, node: T, namespaces?: {}): string;
+
+    public reset() {
+        this.before = {};
+        this.after = {};
+    }
 
     public replaceAppended(output: string) {
         for (const id in this.before) {

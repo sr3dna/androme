@@ -1,8 +1,4 @@
-export interface IStringMap {
-    [key: string]: string;
-}
-
-export interface IBoxModel {
+export interface BoxModel {
     marginTop?: number;
     marginRight?: number;
     marginBottom?: number;
@@ -17,7 +13,7 @@ export interface IBoxModel {
     borderLeftWidth?: number;
 }
 
-export interface IClientRect {
+export interface ClientRect {
     top: number;
     right: number;
     bottom: number;
@@ -30,25 +26,34 @@ export interface IClientRect {
     minHeight?: string;
 }
 
-export interface IPoint {
+export interface Point {
     x: number;
     y: number;
 }
 
-export interface IBorder {
+export interface BorderAttribute {
     style: string;
     width: string;
     color: string;
 }
 
-export interface IPlainFile {
+export interface PlainFile {
     pathname: string;
     filename: string;
     content?: string;
     uri?: string;
 }
 
-export interface IResourceMap {
+export interface StringMap {
+    [key: string]: string;
+}
+
+export interface ObjectIndex {
+    [key: number]: {};
+    length: number;
+}
+
+export interface ResourceMap {
     STRINGS: Map<string, string>;
     ARRAYS: Map<string, string[]>;
     FONTS: Map<string, any>;

@@ -1,4 +1,4 @@
-interface IColor {
+interface Color {
     name: string;
     hex: string;
     rgb: {
@@ -157,9 +157,9 @@ const X11_CSS3 = {
     'Black':                { 'hex': '#000000' }
 };
 
-const HSL_SORTED: IColor[] = [];
+const HSL_SORTED: Color[] = [];
 for (const i in X11_CSS3) {
-    const x11: IColor = X11_CSS3[i];
+    const x11: Color = X11_CSS3[i];
     for (const j in x11) {
         x11.rgb = convertHextoRGB(x11[j]);
         x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
@@ -208,7 +208,7 @@ function convertRGBtoHSL(r: number, g: number, b: number) {
     return { h: (h * 360), s: (s * 100), l: (l * 100) };
 }
 
-function sortHSL(a: IColor, b: IColor) {
+function sortHSL(a: Color, b: Color) {
     let [c, d] = [a.hsl.h, b.hsl.h];
     if (c === d) {
         [c, d] = [a.hsl.s, b.hsl.s];
@@ -221,7 +221,7 @@ function sortHSL(a: IColor, b: IColor) {
 
 export function findNearestColor(value: string) {
     const result = HSL_SORTED.slice();
-    let index = result.findIndex((item: IColor) => item.hex === value);
+    let index = result.findIndex((item: Color) => item.hex === value);
     if (index !== -1) {
         return result[index];
     }
@@ -230,7 +230,7 @@ export function findNearestColor(value: string) {
         if (hsl != null) {
             result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
             result.sort(sortHSL);
-            index = result.findIndex((item: IColor) => item.name === '');
+            index = result.findIndex((item: Color) => item.name === '');
             return result[Math.min(index + 1, result.length - 1)];
         }
         return '';
@@ -246,7 +246,7 @@ export function getByColorName(value: string) {
     return '';
 }
 
-export function convertRGB({ rgb }: IColor) {
+export function convertRGB({ rgb }: Color) {
     return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 }
 

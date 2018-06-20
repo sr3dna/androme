@@ -1,4 +1,4 @@
-import { IClientRect, IPoint } from '../lib/types';
+import { ClientRect, Point } from '../lib/types';
 import View from '../base/view';
 import NodeList from '../base/nodelist';
 import Widget from './widget';
@@ -103,8 +103,8 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                 return;
                             }
                             else if (constraint) {
-                                let linear1: IClientRect = current.linear;
-                                let linear2: IClientRect = adjacent.linear;
+                                let linear1: ClientRect = current.linear;
+                                let linear2: ClientRect = adjacent.linear;
                                 let parent = false;
                                 if (current === node || adjacent === node) {
                                     if (current === node) {
@@ -160,7 +160,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                     if (linear1.top === linear2.top) {
                                         current.anchor(LAYOUT['top'], adjacent, 'vertical');
                                     }
-                                    if (withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                    if (withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset)) {
                                         current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
                                     }
                                 }
@@ -192,13 +192,13 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                     if (current.linear.top === node.box.top) {
                                         current.anchor('layout_alignParentTop', adjacent, 'vertical');
                                     }
-                                    if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                    if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset)) {
                                         current.anchor('layout_alignParentBottom', adjacent, 'vertical');
                                     }
                                 }
                                 else {
-                                    const linear1: IClientRect = current.linear;
-                                    const linear2: IClientRect = adjacent.linear;
+                                    const linear1: ClientRect = current.linear;
+                                    const linear2: ClientRect = adjacent.linear;
                                     if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
                                         current.android('layout_centerHorizontal', 'true');
                                         current.constraint.horizontal = true;
@@ -533,8 +533,8 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                 }
                                 else {
                                     const adjacent: T = nodes.anchors[0];
-                                    const center1: IPoint = opposite.center;
-                                    const center2: IPoint = adjacent.center;
+                                    const center1: Point = opposite.center;
+                                    const center2: Point = adjacent.center;
                                     const x = Math.abs(center1.x - center2.x);
                                     const y = Math.abs(center1.y - center2.y);
                                     let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
@@ -829,21 +829,13 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                     case 'password':
                         node.android('inputType', 'textPassword');
                         break;
+                    case 'text':
+                        node.android('inputType', 'text');
+                        break;
                 }
                 break;
         }
         switch (node.viewName) {
-            case VIEW_ANDROID.EDIT:
-                node.android('inputType', 'text');
-                break;
-            case VIEW_ANDROID.BUTTON:
-                if (node.viewWidth === 0) {
-                    node.android('minWidth', '0px');
-                }
-                if (node.viewHeight === 0) {
-                    node.android('minHeight', '0px');
-                }
-                break;
             case VIEW_ANDROID.TEXT:
                 if (node.overflow !== OVERFLOW_CHROME.NONE) {
                     const scrollbars: string[] = [];

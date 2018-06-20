@@ -21,6 +21,7 @@ export default class WidgetList<T extends Widget> extends NodeList<T> {
     get anchors() {
         return this.list.filter((node: T) => node.anchored);
     }
+
     get horizontalBias() {
         if (this.parent != null && this.list.length > 0) {
             const left = this.first.linear.left - this.parent.box.left;

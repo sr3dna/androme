@@ -1,13 +1,13 @@
-import { IPlainFile, IResourceMap } from '../lib/types';
+import { PlainFile, ResourceMap, StringMap } from '../lib/types';
 import { getFileName, hasValue, trim } from '../lib/util';
 
 export default abstract class File {
-    public stored: IResourceMap;
+    public appName: string = '';
+    public stored: ResourceMap;
     private compression = 'zip';
 
     constructor(
         private directory: string,
-        protected appName: string,
         private processingTime: number,
         compression: string)
     {
@@ -16,16 +16,17 @@ export default abstract class File {
         }
     }
 
-    public abstract layoutMainToDisk(content: string): void;
+    public abstract saveAllToDisk(data: StringMap): void;
+    public abstract layoutAllToXml(data: StringMap, saveToDisk?: boolean): {};
+    public abstract resourceAllToXml(saveToDisk?: boolean): {};
     public abstract resourceStringToXml(saveToDisk?: boolean): string;
     public abstract resourceStringArrayToXml(saveToDisk?: boolean): string;
     public abstract resourceFontToXml(saveToDisk?: boolean): string;
     public abstract resourceColorToXml(saveToDisk?: boolean): string;
     public abstract resourceStyleToXml(saveToDisk?: boolean): string;
     public abstract resourceDrawableToXml(saveToDisk?: boolean): string;
-    public abstract resourceAllToXml(saveToDisk?: boolean, layoutMain?: string): {};
 
-    protected saveToDisk(files: IPlainFile[]) {
+    protected saveToDisk(files: PlainFile[]) {
         if (!location.protocol.startsWith('http')) {
             alert('SERVER (required): See README for instructions');
             return;

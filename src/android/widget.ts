@@ -1,4 +1,4 @@
-import { IStringMap } from '../lib/types';
+import { StringMap } from '../lib/types';
 import Node from '../base/node';
 import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -19,8 +19,8 @@ export default class Widget extends Node {
     public renderChildren: T[] = [];
     public linearRows: T[] = [];
 
-    private _android: IStringMap;
-    private _app: IStringMap;
+    private _android: StringMap;
+    private _app: StringMap;
     private _label: T;
 
     constructor(
@@ -80,7 +80,7 @@ export default class Widget extends Node {
         super.render(parent);
     }
 
-    public anchor(position: string, adjacent: IStringMap = {}, orientation = '') {
+    public anchor(position: string, adjacent: StringMap = {}, orientation = '') {
         const overwrite = (adjacent.stringId === 'parent');
         switch (this.renderParent.viewName) {
             case VIEW_ANDROID.CONSTRAINT:
@@ -140,17 +140,18 @@ export default class Widget extends Node {
     }
 
     public applyCustomizations() {
-        const api = API_ANDROID[this.api];
-        if (api != null) {
-            const customizations = api.customizations[this.viewName];
-            if (customizations != null) {
-                for (const obj in customizations) {
-                    for (const attr in customizations[obj]) {
-                        this.add(obj, attr, customizations[obj][attr], false);
+        [API_ANDROID[this.api], API_ANDROID[0]].forEach(item => {
+            if (item != null) {
+                const customizations = item.customizations[this.viewName];
+                if (customizations != null) {
+                    for (const obj in customizations) {
+                        for (const attr in customizations[obj]) {
+                            this.add(obj, attr, customizations[obj][attr], false);
+                        }
                     }
                 }
             }
-        }
+        });
     }
 
     public is(...views: number[]) {
@@ -472,9 +473,19 @@ export default class Widget extends Node {
         }
     }
 
+    set label(value: T) {
+        this._label = value;
+        value.companion = true;
+        value.labelFor = this;
+    }
+    get label() {
+        return this._label;
+    }
+
     get stringId() {
         return (hasValue(this.viewId) ? `@+id/${this.viewId}` : '');
     }
+
     get viewName() {
         if (this._viewName != null) {
             return super.viewName;
@@ -487,20 +498,15 @@ export default class Widget extends Node {
             return (value != null ? Widget.getViewName((<number> value)) : '');
         }
     }
-    set label(value: T) {
-        this._label = value;
-        value.companion = true;
-        value.labelFor = this;
-    }
-    get label() {
-        return this._label;
-    }
+
     get anchored() {
         return (this.constraint.horizontal && this.constraint.vertical);
     }
+
     get horizontal() {
         return (this._android && this._android.orientation === 'horizontal');
     }
+
     get horizontalBias() {
         const parent = this.renderParent;
         if (parent && parent.visible) {

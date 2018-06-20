@@ -1,18 +1,18 @@
-import { IClientRect, IBoxModel, IPoint, IStringMap } from '../lib/types';
+import { ClientRect, BoxModel, Point, StringMap } from '../lib/types';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
 
-export default abstract class Node implements IBoxModel {
+export default abstract class Node implements BoxModel {
     public depth: number = -1;
-    public style: IStringMap = {};
-    public styleMap: IStringMap = {};
+    public style: StringMap = {};
+    public styleMap: StringMap = {};
     public visible: boolean = true;
     public companion: boolean = false;
     public parentIndex: number = Number.MAX_VALUE;
-    public bounds: IClientRect;
-    public linear: IClientRect;
-    public box: IClientRect;
+    public bounds: ClientRect;
+    public linear: ClientRect;
+    public box: ClientRect;
     public renderDepth: number;
     public viewId: string;
 
@@ -64,6 +64,7 @@ export default abstract class Node implements IBoxModel {
     public abstract is(...views: number[]): boolean;
     public abstract setViewId(viewName: string): void;
     public abstract setViewLayout(options?: any): void;
+    public abstract applyCustomizations(): void;
     public abstract modifyBox(area: number, offset: number): void;
     public abstract distributeWeight(horizontal: boolean, percent: number): void;
 
@@ -167,7 +168,7 @@ export default abstract class Node implements IBoxModel {
         }
     }
 
-    public intersect(rect: IClientRect, dimension = 'bounds') {
+    public intersect(rect: ClientRect, dimension = 'bounds') {
         const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
         const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
         const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
@@ -175,7 +176,7 @@ export default abstract class Node implements IBoxModel {
         return (top && (left || right)) || (bottom && (left || right));
     }
 
-    public withinX(rect: IClientRect, dimension = 'linear') {
+    public withinX(rect: ClientRect, dimension = 'linear') {
         return (
             (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
             (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
@@ -184,7 +185,7 @@ export default abstract class Node implements IBoxModel {
         );
     }
 
-    public withinY(rect: IClientRect, dimension = 'linear') {
+    public withinY(rect: ClientRect, dimension = 'linear') {
         return (
             (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
             (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
@@ -291,15 +292,28 @@ export default abstract class Node implements IBoxModel {
     get parent() {
         return this._parent;
     }
+
     set parentOriginal(value) {
         this._parentOriginal = value;
     }
     get parentOriginal() {
         return this._parentOriginal || this._parent;
     }
-    get parentElement() {
-        return this.element && this.element.parentElement;
+
+    set tagName(value) {
+        this._tagName = value;
     }
+    get tagName() {
+        return this._tagName || (this.element != null ? this.element.tagName : '');
+    }
+
+    set viewName(value) {
+        this._viewName = value;
+    }
+    get viewName() {
+        return this._viewName;
+    }
+
     set renderParent(value: any) {
         if (value instanceof Node) {
             value.renderChildren.push(this);
@@ -309,21 +323,15 @@ export default abstract class Node implements IBoxModel {
     get renderParent() {
         return this._renderParent;
     }
+
+    get parentElement() {
+        return this.element && this.element.parentElement;
+    }
+
     get namespaces() {
         return Array.from(this._namespaces);
     }
-    set tagName(value) {
-        this._tagName = value;
-    }
-    get tagName() {
-        return this._tagName || (this.element != null ? this.element.tagName : '');
-    }
-    set viewName(value) {
-        this._viewName = value;
-    }
-    get viewName() {
-        return this._viewName;
-    }
+
     get flex() {
         if (this._flex == null) {
             const parent = this.parentOriginal;
@@ -341,12 +349,15 @@ export default abstract class Node implements IBoxModel {
         }
         return this._flex;
     }
+
     get floating() {
         return (this.style.float === 'left' || this.style.float === 'right');
     }
+
     get fixed() {
         return (this.style.display === 'fixed');
     }
+
     get overflow() {
         if (this._overflow == null) {
             let value = OVERFLOW_CHROME.NONE;
@@ -368,12 +379,14 @@ export default abstract class Node implements IBoxModel {
     get overflowY() {
         return ((this._overflow & OVERFLOW_CHROME.VERTICAL) === OVERFLOW_CHROME.VERTICAL);
     }
+
     get viewWidth() {
         return convertInt(this.styleMap.width || this.styleMap.minWidth);
     }
     get viewHeight() {
         return convertInt(this.styleMap.height || this.styleMap.lineHeight || this.styleMap.minHeight);
     }
+
     get marginTop() {
         return convertInt(this.css('marginTop'));
     }
@@ -386,6 +399,7 @@ export default abstract class Node implements IBoxModel {
     get marginLeft() {
         return convertInt(this.css('marginLeft'));
     }
+
     get borderTopWidth() {
         return convertInt(this.css('borderTopWidth'));
     }
@@ -398,6 +412,7 @@ export default abstract class Node implements IBoxModel {
     get borderLeftWidth() {
         return convertInt(this.css('borderLeftWidth'));
     }
+
     get paddingTop() {
         return convertInt(this.css('paddingTop'));
     }
@@ -410,7 +425,8 @@ export default abstract class Node implements IBoxModel {
     get paddingLeft() {
         return convertInt(this.css('paddingLeft'));
     }
-    get center(): IPoint {
+
+    get center(): Point {
         return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
     }
 }

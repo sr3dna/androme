@@ -2,6 +2,8 @@
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
+Multiple views per page are supported similiar to iOS Storyboards with their styles merged to simplify maintenance. Conceptually creating snapshots in XML of what is displayed in the browser.
+
 ## INSTALLATION (global js variable: androme)
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). Chrome is the preferred browser when generating the production version of your program. ***
@@ -11,25 +13,25 @@ Express server through Node.js is available with a provided default configuratio
 * Install Node.js: http://www.nodejs.com
 
 * Install androme: (choose one)
-1. git clone https://github.com/anpham6/androme
-2. npm i androme
+  1. git clone https://github.com/anpham6/androme
+  2. npm i androme
 
 * Change directory: (choose one)
-1. cd androme
-2. cd node_modules/androme
+  1. cd androme
+  2. cd node_modules/androme
 
 * Install dependencies: (choose one)
-1. npm install && npm run prod
-2. npm install
+  1. npm install && npm run prod
+  2. npm install
 
 * Load web server:
-1. node app.js
+  1. node app.js
 
 * Open Chrome: http://localhost:3000/demos/form.html
 
 If you install via NPM then it is recommended you put androme into its own separate folder rather than hosting it inside "node_modules".
 
-Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6).
+Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session and will continiously build the application progressively into a single entity with combined shared resources.
 
 ```javascript
 <script src="/dist/androme.js"></script>
@@ -40,19 +42,13 @@ Library files are in the /dist folder. There is a babel minified for production 
     // without Express: use either console.log() or element.innerHTML to display
 
     document.addEventListener('DOMContentLoaded', () => {
-        // required
-        androme.parseDocument(/* document.getElementById('root-node') */); /* default: document.body */
-		
-        // optional
-        androme.writeLayoutMainXml(true); /* true: save to disk, false: string xml */
-        androme.writeResourceStringXml(true);
-        androme.writeResourceArrayXml(true);
-        androme.writeResourceStyleXml(true);
-        androme.writeResourceFontXml(true);
-        androme.writeResourceColorXml(true);
-        androme.writeResourceDrawableXml(true);
+        // required: zero or more
+        androme.parseDocument(/* document.getElementById('mainview') */, /* 'subview' */, /* etc... */);
+        androme.saveAllToDisk(); /* Express required */
 
-        androme.writeResourceAllXml(true, true); /* true: save to disk, true: include activity_main.xml */
+        // optional
+        androme.writeLayoutAllXml(true); /* true: save to disk, false: string xml */
+        androme.writeResourceAllXml(true);
     });
 </script>
 ```

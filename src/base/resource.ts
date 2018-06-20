@@ -1,4 +1,4 @@
-import { IBorder, IStringMap } from '../lib/types';
+import { BorderAttribute, StringMap } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
@@ -41,7 +41,7 @@ export default class Resource<T extends Node> {
         return '';
     }
 
-    public static addImage(images: IStringMap) {
+    public static addImage(images: StringMap) {
         let src = '';
         if (images['mdpi'] != null && hasValue(images['mdpi'])) {
             const image = getFileName(images['mdpi']);
@@ -174,7 +174,7 @@ export default class Resource<T extends Node> {
         });
     }
 
-    public setFontStyle() {
+    public setFontStyle(id: string) {
         this.cache.elements.forEach((node: T) => {
             if ((node.visible || node.companion) && node.renderChildren.length === 0) {
                 const element = (<HTMLElement> node.element);
@@ -203,7 +203,7 @@ export default class Resource<T extends Node> {
         this.cache.list.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
             const element = (<HTMLImageElement> node.element);
             const srcset = element.srcset.trim();
-            const images: IStringMap = {};
+            const images: StringMap = {};
             if (hasValue(srcset)) {
                 const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
                 srcset.split(',').forEach((value: string) => {
@@ -295,11 +295,11 @@ export default class Resource<T extends Node> {
         });
     }
 
-    protected borderVisible(border: IBorder) {
+    protected borderVisible(border: BorderAttribute) {
         return (border != null && !(border.style === 'none' || border.width === '0px'));
     }
 
-    protected getBorderStyle(border: IBorder) {
+    protected getBorderStyle(border: BorderAttribute) {
         const result = { solid: `android:color="@color/${border.color}"` };
         Object.assign(result, {
             inset: result.solid,
@@ -310,7 +310,7 @@ export default class Resource<T extends Node> {
         return result[border.style] || 'android:color="@android:color/black"';
     }
 
-    private parseBorderStyle(value: string, node: T, attribute: string): IBorder {
+    private parseBorderStyle(value: string, node: T, attribute: string): BorderAttribute {
         const style = node.css(`${attribute}Style`) || 'none';
         let width = node.css(`${attribute}Width`) || '1px';
         const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`)) : []);

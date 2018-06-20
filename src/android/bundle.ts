@@ -97,6 +97,7 @@ export default class Bundle extends Widget {
         }
         return [maxRight - minLeft, maxBottom - minTop];
     }
+
     get outerRegion() {
         const children = this.children;
         let top = [children[0]];

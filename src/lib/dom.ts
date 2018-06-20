@@ -1,4 +1,4 @@
-import { IBoxModel, IClientRect } from './types';
+import { BoxModel, ClientRect } from './types';
 import { convertInt } from './util';
 
 export function getRangeBounds(element: HTMLElement) {
@@ -14,7 +14,7 @@ export function getRangeBounds(element: HTMLElement) {
     return bounds;
 }
 
-export function assignBounds(bounds: IClientRect): IClientRect {
+export function assignBounds(bounds: ClientRect): ClientRect {
     return {
         x: bounds.x,
         y: bounds.y,
@@ -40,7 +40,7 @@ export function sameAsParent(element: HTMLElement, attr: string) {
 }
 
 export function getBoxSpacing(element: HTMLElement, complete = false) {
-    const result: IBoxModel = {};
+    const result: BoxModel = {};
     const style = getStyle(element);
     const node = (<any> element).__node;
     ['padding', 'margin'].forEach(border => {
@@ -73,8 +73,7 @@ export function isVisible(element: HTMLElement) {
         else if (element.children.length > 0) {
             return Array.from(element.children).some((item: HTMLElement) => {
                 const style: any = getComputedStyle(item);
-                (<any> item).__style = style;
-                return (!(style.position === '' || style.position === 'static') || style.float !== 'none');
+                return (!(style.position === '' || style.position === 'static') || style.float === 'left' || style.float === 'right');
             });
         }
     }

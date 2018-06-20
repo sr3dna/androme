@@ -1,4 +1,4 @@
-import { IResourceMap } from '../lib/types';
+import { ResourceMap } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import Widget from './widget';
@@ -13,7 +13,7 @@ import { FONT_ANDROID, FONTALIAS_ANDROID, FONTWEIGHT_ANDROID } from './constants
 import SHAPERECTANGLE_TMPL from './tmpl/resources/shape-rectangle';
 import LAYERLIST_TMPL from './tmpl/resources/layer-list';
 
-const STORED: IResourceMap = {
+const STORED: ResourceMap = {
     ARRAYS: new Map(),
     FONTS: new Map(),
     DRAWABLES: new Map(),
@@ -191,8 +191,8 @@ export default class ResourceWidget extends Resource<T> {
         });
     }
 
-    public setFontStyle() {
-        super.setFontStyle();
+    public setFontStyle(id: string) {
+        super.setFontStyle(id);
         const tagName = {};
         const style = {};
         const layout = {};
@@ -219,7 +219,7 @@ export default class ResourceWidget extends Resource<T> {
                 }
                 const element = node.element;
                 if (element != null) {
-                    const id = (labelFor || node).id;
+                    const nodeId = (labelFor || node).id;
                     const stored = Object.assign({}, (<any> element).__fontStyle);
                     const fontFamily: string = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
                     let fontStyle = '';
@@ -272,7 +272,7 @@ export default class ResourceWidget extends Resource<T> {
                             if (sorted[i][attr] == null) {
                                 sorted[i][attr] = [];
                             }
-                            sorted[i][attr].push(id);
+                            sorted[i][attr].push(nodeId);
                         }
                     }
                     if (!system) {
@@ -328,12 +328,12 @@ export default class ResourceWidget extends Resource<T> {
                                     if (i !== j) {
                                         for (const attr in sorted[j]) {
                                             const compare = sorted[j][attr];
-                                            for (const id of ids) {
-                                                if (compare.includes(id)) {
+                                            for (const nodeId of ids) {
+                                                if (compare.includes(nodeId)) {
                                                     if (found[attr] == null) {
                                                         found[attr] = [];
                                                     }
-                                                    found[attr].push(id);
+                                                    found[attr].push(nodeId);
                                                 }
                                             }
                                         }
@@ -409,12 +409,13 @@ export default class ResourceWidget extends Resource<T> {
             resource[name] = tagData;
         }
         const inherit = new Set();
+        const prefix = (id !== '' ? `${id}-` : '');
         this.cache.elements.forEach((node: T) => {
             if (resource[node.tagName] != null) {
                 const styles: string[] = [];
                 for (const item of resource[node.tagName]) {
                     if (item.ids.includes(node.id)) {
-                        styles.push(item.name);
+                        styles.push(prefix + item.name);
                     }
                 }
                 if (styles.length > 0) {
@@ -434,7 +435,7 @@ export default class ResourceWidget extends Resource<T> {
         for (const styles of inherit) {
             let parent = '';
             styles.split('.').forEach((value: string) => {
-                const match = value.match(/^(\w+)_([0-9]+)$/);
+                const match = new RegExp(`^${prefix}(\\w+)_([0-9]+)$`).exec(value);
                 if (match != null) {
                     const tagData = resource[match[1].toUpperCase()][parseInt(match[2]) - 1];
                     STORED.STYLES.set(value, { parent, attributes: tagData.attributes });

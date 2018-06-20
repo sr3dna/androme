@@ -45,6 +45,10 @@ export default abstract class NodeList<T extends Node> {
         this.parent = parent;
     }
 
+    public clear() {
+        this._list = [];
+    }
+
     public sortAsc(...attr: string[]) {
         return sortAsc<T>(this._list, ...attr);
     }
@@ -60,24 +64,30 @@ export default abstract class NodeList<T extends Node> {
     get length() {
         return this._list.length;
     }
+
     get list() {
         return this._list;
     }
+
     get visible() {
         return this._list.filter(node => node.visible);
     }
+
     get elements() {
         return this._list.filter(node => node.element != null);
     }
+
     get first() {
         return this._list[0];
     }
     get last() {
         return this._list[this._list.length - 1];
     }
+
     get nextId() {
         return this._list.length + 1;
     }
+
     get linearX() {
         return NodeList.linearX(this._list);
     }
