@@ -160,7 +160,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                     if (linear1.top === linear2.top) {
                                         current.anchor(LAYOUT['top'], adjacent, 'vertical');
                                     }
-                                    if (linear1.bottom === linear2.bottom) {
+                                    if (withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                         current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
                                     }
                                 }
@@ -192,7 +192,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                     if (current.linear.top === node.box.top) {
                                         current.anchor('layout_alignParentTop', adjacent, 'vertical');
                                     }
-                                    if (current.linear.bottom === node.box.bottom) {
+                                    if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                         current.anchor('layout_alignParentBottom', adjacent, 'vertical');
                                     }
                                 }
