@@ -39,8 +39,7 @@ const CHAIN_MAP = {
 };
 
 export default class Layout<T extends Widget, U extends WidgetList<T>> extends View<T, U> {
-    constructor()
-    {
+    constructor() {
         super();
     }
 

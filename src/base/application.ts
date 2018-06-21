@@ -17,7 +17,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     private cache: U;
     private _ids: string[] = [];
     private _views: string[] = [];
-    private _ready: boolean = false;
+    private _closed: boolean = false;
 
     constructor(
         private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
@@ -47,10 +47,21 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
             this._views[i] = output;
         }
-        this._ready = true;
+        this._closed = true;
     }
 
     public reset() {
+        this.cacheInternal.list.forEach((node: T) => {
+            const element: any = node.element;
+            if (element != null) {
+                delete element.__boxSpacing;
+                delete element.__boxStyle;
+                delete element.__fontStyle;
+                delete element.__imageSource;
+                delete element.__optionArray;
+                delete element.__valueString;
+            }
+        });
         this.cache.reset();
         this.cacheInternal.reset();
         this.resetView();
@@ -58,7 +69,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.appName = '';
         this._ids = [];
         this._views = [];
-        this._ready = false;
+        this._closed = false;
     }
 
     public resetView() {
@@ -742,8 +753,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    get ready() {
-        return this._ready;
+    get closed() {
+        return this._closed;
     }
 
     public get viewData() {

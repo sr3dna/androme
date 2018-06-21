@@ -30,7 +30,7 @@ export function parseDocument(...elements) {
         main = (<Application<T, U>> MAIN);
         main.resetView();
     }
-    if (main.ready) {
+    if (main.closed) {
         return false;
     }
     main.setStyleMap();
@@ -57,7 +57,7 @@ export function parseDocument(...elements) {
             }
         }
         element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
-        element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}-${element.dataset.views}` : element.id);
+        element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/-/g, '_');
         CACHED.add(element);
         main.setNodeCache(element);
         main.setLayoutXml();
@@ -74,8 +74,8 @@ export function parseDocument(...elements) {
     }
 }
 
-export function toString() {
-    return MAIN.toString();
+export function ready() {
+    return (MAIN == null || !MAIN.closed);
 }
 
 export function close() {
@@ -96,65 +96,99 @@ export function reset() {
 }
 
 export function saveAllToDisk() {
-    if (MAIN && MAIN.ready) {
+    if (MAIN && MAIN.length > 0) {
+        if (!MAIN.closed) {
+            MAIN.finalize();
+        }
         MAIN.resourceHandler.file.saveAllToDisk(MAIN.viewData);
     }
 }
 
 export function writeLayoutAllXml(saveToDisk = false) {
-    if (MAIN && MAIN.ready) {
-        return MAIN.resourceHandler.file.layoutAllToXml(MAIN.viewData, saveToDisk);
+    if (MAIN != null) {
+        autoClose();
+        if (MAIN.closed) {
+            return MAIN.resourceHandler.file.layoutAllToXml(MAIN.viewData, saveToDisk);
+        }
     }
     return '';
 }
 
 export function writeResourceAllXml(saveToDisk = false) {
-    if (MAIN && MAIN.ready) {
-        return MAIN.resourceHandler.file.resourceAllToXml(saveToDisk);
+    if (MAIN != null) {
+        autoClose();
+        if (MAIN.closed) {
+            return MAIN.resourceHandler.file.resourceAllToXml(saveToDisk);
+        }
     }
     return '';
 }
 
 export function writeResourceStringXml(saveToDisk = false) {
-    if (MAIN && MAIN.ready) {
-        return MAIN.resourceHandler.file.resourceStringToXml(saveToDisk);
+    if (MAIN != null) {
+        autoClose();
+        if (MAIN.closed) {
+            return MAIN.resourceHandler.file.resourceStringToXml(saveToDisk);
+        }
     }
     return '';
 }
 
 export function writeResourceArrayXml(saveToDisk = false) {
-    if (MAIN && MAIN.ready) {
-        return MAIN.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
+    if (MAIN != null) {
+        autoClose();
+        if (MAIN.closed) {
+            return MAIN.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
+        }
     }
     return '';
 }
 
 export function writeResourceFontXml(saveToDisk = false) {
-    if (MAIN && MAIN.ready) {
-        return MAIN.resourceHandler.file.resourceFontToXml(saveToDisk);
+    if (MAIN != null) {
+        autoClose();
+        if (MAIN.closed) {
+            return MAIN.resourceHandler.file.resourceFontToXml(saveToDisk);
+        }
     }
     return '';
 }
 
 export function writeResourceColorXml(saveToDisk = false) {
-    if (MAIN && MAIN.ready) {
+    if (MAIN && MAIN.closed) {
         return MAIN.resourceHandler.file.resourceColorToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStyleXml(saveToDisk = false) {
-    if (MAIN && MAIN.ready) {
-        return MAIN.resourceHandler.file.resourceStyleToXml(saveToDisk);
+    if (MAIN != null) {
+        autoClose();
+        if (MAIN.closed) {
+            return MAIN.resourceHandler.file.resourceStyleToXml(saveToDisk);
+        }
     }
     return '';
 }
 
 export function writeResourceDrawableXml(saveToDisk = false) {
-    if (MAIN && MAIN.ready) {
-        return MAIN.resourceHandler.file.resourceDrawableToXml(saveToDisk);
+    if (MAIN != null) {
+        autoClose();
+        if (MAIN.closed) {
+            return MAIN.resourceHandler.file.resourceDrawableToXml(saveToDisk);
+        }
     }
     return '';
+}
+
+export function toString() {
+    return (MAIN != null ? MAIN.toString() : '');
+}
+
+function autoClose() {
+    if (SETTINGS.autoCloseOnWrite && MAIN && !MAIN.closed) {
+        MAIN.finalize();
+    }
 }
 
 export { API_ANDROID as api, BUILD_ANDROID as build, DENSITY_ANDROID as density, SETTINGS as settings };

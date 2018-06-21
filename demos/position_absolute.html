@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Language" content="en">
     <title>https://github.com/anpham6/androme</title>
     <style>
-        body {
+       body {
             font-family: monospace, consolas;
             padding: 10px;
             margin: 0px;
@@ -15,6 +15,7 @@
             display: inline-block;
         }
         .output {
+            min-width: 400px;
             float: left;
         }
         .output pre {
@@ -48,24 +49,42 @@
     <script src="../dist/androme.js"></script>
     <script>
         androme.settings.useConstraintGuideline = false;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            for (const span of document.getElementsByTagName('span')) {
-                span.style.top = `${400 * Math.random()}px`;
-                span.style.left = `${400 * Math.random()}px`;
+        androme.settings.alwaysReevaluateResources = true;
+        function addView() {
+            if (androme.ready()) {
+                for (const span of document.getElementsByTagName('span')) {
+                    span.style.top = `${400 * Math.random()}px`;
+                    span.style.left = `${400 * Math.random()}px`;
+                }
+                androme.parseDocument('androme-root');
             }
-            androme.parseDocument('androme-root');
+        }
+        function closeDocument() {
             androme.close();
-
-            document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-            const resource = androme.writeResourceStyleXml() + '\n\n' +
+            const views = androme.writeLayoutAllXml();
+            let output = '';
+            for (const i in views) {
+                output += views[i] + '\n';
+            }
+            document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
+            const resource = androme.writeResourceStringXml() + '\n\n' +
+                             androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+        }
+        function resetDocument() {
+            androme.reset();
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('resource').innerHTML = '';
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            addView();
+            closeDocument();
         });
     </script>
 </head>
 <body>
-    <div id="androme-root" style="min-width: 500px; float: left;">
+    <div id="androme-root" style="width: 500px;">
         &nbsp;
         <span>1</span>
         <span>2</span>
@@ -77,9 +96,12 @@
         <div class="output">
             <pre id="output"></pre>
             <div>
+                <button onclick="addView();">Add View (1)</button>
+                <button onclick="closeDocument();">Close (2)</button>
+                <button onclick="closeDocument(); androme.saveAllToDisk();">Save All (3)</button>
+                <button onclick="resetDocument();">Reset (4)</button>
+                &nbsp;&nbsp;
                 <button onclick="copy('output');">Copy</button>
-                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
-                <button onclick="androme.saveAllToDisk();">Save All</button>
             </div>
         </div>
         <div class="output">

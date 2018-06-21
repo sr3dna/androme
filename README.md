@@ -81,12 +81,14 @@ androme.settings = {
     useFontAlias: false,
     supportRTL: true,
     numberResourceValue: false,
+    alwaysReevaluateResources: false,
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 14,
+	chainPackedVerticalOffset: 14,
+    autoCloseOnWrite: true,
     outputDirectory: 'app/src/main',
     outputArchiveFileType: 'zip', // zip | tar
     outputMaxProcessingTime: 30,
@@ -123,6 +125,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:id="@+id/androme-root"
+	android:gravity="top"
 	android:layout_height="wrap_content"
 	android:layout_width="550dp"
 	android:orientation="vertical">

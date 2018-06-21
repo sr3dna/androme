@@ -85,6 +85,7 @@ export default class ResourceWidget extends Resource<T> {
     }
 
     public reset() {
+        super.reset();
         STORED.ARRAYS = new Map();
         STORED.FONTS = new Map();
         STORED.DRAWABLES = new Map();
@@ -92,6 +93,9 @@ export default class ResourceWidget extends Resource<T> {
         STORED.STRINGS = new Map();
         STORED.COLORS = new Map();
         STORED.IMAGES = new Map();
+        Object.assign(STORED, Resource.STORED);
+        this.tagStyle = {};
+        this.tagCount = {};
     }
 
     public setBoxSpacing() {
@@ -366,7 +370,7 @@ export default class ResourceWidget extends Resource<T> {
             const stored = (<any> element).__valueString;
             if (stored != null) {
                 const method = METHOD_ANDROID['valueString'];
-                const name = STORED.STRINGS.get(stored);
+                let name = STORED.STRINGS.get(stored);
                 if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
                     const match = node.style.textDecoration.match(/(underline|line-through)/);
                     if (match != null) {
@@ -379,8 +383,14 @@ export default class ResourceWidget extends Resource<T> {
                                 value = `<strike>${stored}</strike>`;
                                 break;
                         }
+                        if (name == null) {
+                            name = `${value.replace(/[^\w+]/g, '')}`;
+                        }
+                        if (/^[0-9]/.test(name)) {
+                            name = `__${name}`;
+                        }
                         STORED.STRINGS.delete(stored);
-                        STORED.STRINGS.set(value, (<any> name));
+                        STORED.STRINGS.set(value, name);
                     }
                 }
                 node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
@@ -415,7 +425,7 @@ export default class ResourceWidget extends Resource<T> {
                     for (let i = 0; i < sorted.length; i++) {
                         const filtered = {};
                         for (const attr1 in sorted[i]) {
-                            if (Object.keys(sorted[i]).length === 0) {
+                            if (sorted[i] == null) {
                                 continue;
                             }
                             const ids = sorted[i][attr1];
@@ -425,12 +435,12 @@ export default class ResourceWidget extends Resource<T> {
                             }
                             else if (ids.length === count) {
                                 styleKey[attr1] = ids;
-                                sorted[i] = {};
+                                sorted[i] = null;
                                 revalidate = true;
                             }
                             else if (ids.length === 1) {
                                 layoutKey[attr1] = ids;
-                                sorted[i] = {};
+                                sorted[i][attr1] = null;
                                 revalidate = true;
                             }
                             if (!revalidate) {
@@ -490,7 +500,9 @@ export default class ResourceWidget extends Resource<T> {
                         style[tag][shared.join(';')] = styleKey[shared[0]];
                     }
                     for (const attr in layoutKey) {
-                        layout[tag][attr] = layoutKey[attr];
+                        if (!attr.startsWith('android:background=')) {
+                            layout[tag][attr] = layoutKey[attr];
+                        }
                     }
                     for (let i = 0; i < sorted.length; i++) {
                         if (sorted[i] && Object.keys(sorted[i]).length === 0) {
@@ -503,8 +515,8 @@ export default class ResourceWidget extends Resource<T> {
             while (sorted.length > 0);
         }
         const resource = {};
-        for (const name in style) {
-            const tag = style[name];
+        for (const tagName in style) {
+            const tag = style[tagName];
             const tagData: any[] = [];
             for (const attributes in tag) {
                 tagData.push({ attributes, ids: tag[attributes]});
@@ -516,8 +528,8 @@ export default class ResourceWidget extends Resource<T> {
                 }
                 return (c >= d ? -1 : 1);
             });
-            tagData.forEach((item: any, index: number) => item.name = `${name.charAt(0) + name.substring(1).toLowerCase()}_${(index + 1)}`);
-            resource[name] = tagData;
+            tagData.forEach((item: any, index: number) => item.name = `${tagName.charAt(0) + tagName.substring(1).toLowerCase()}_${(index + 1)}`);
+            resource[tagName] = tagData;
         }
         const inherit = new Set();
         const map = {};
@@ -537,7 +549,7 @@ export default class ResourceWidget extends Resource<T> {
                         if (map[id] == null) {
                             map[id] = { styles: [], attributes: [] };
                         }
-                        map[id].attributes(attr);
+                        map[id].attributes.push(attr);
                     }
                 }
             }

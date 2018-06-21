@@ -13,8 +13,7 @@ import COLOR_TMPL from './tmpl/resources/color';
 import DRAWABLE_TMPL from './tmpl/resources/drawable';
 
 export default class FileRes extends File {
-    constructor()
-    {
+    constructor() {
         super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
     }
 

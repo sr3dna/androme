@@ -28,7 +28,7 @@ export default abstract class Resource<T extends Node> {
                     }
                 }
                 name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
-                if (num || /^[0-9].*/.test(value)) {
+                if (num || /^[0-9]/.test(value)) {
                     name = `__${name}`;
                 }
                 else if (name === '') {
@@ -44,9 +44,9 @@ export default abstract class Resource<T extends Node> {
     public static addImage(images: StringMap) {
         let src = '';
         if (images['mdpi'] != null && hasValue(images['mdpi'])) {
-            const image = getFileName(images['mdpi']);
-            const format = getFileExt(image).toLowerCase();
-            src = image.replace(/.\w+$/, '');
+            src = getFileName(images['mdpi']);
+            const format = getFileExt(src).toLowerCase();
+            src = src.replace(/.\w+$/, '').replace(/-/g, '_');
             switch (format) {
                 case 'bmp':
                 case 'bmpf':
@@ -122,22 +122,28 @@ export default abstract class Resource<T extends Node> {
     public views: string[];
     public cache: NodeList<T>;
 
-    constructor(public file: File)
-    {
+    constructor(public file: File) {
     }
 
-    public abstract reset(): void;
     public abstract finalize(viewData: {}): void;
+
+    public reset() {
+        Resource.STORED.STRINGS = new Map();
+        Resource.STORED.COLORS = new Map();
+        Resource.STORED.IMAGES = new Map();
+    }
 
     public setBoxSpacing() {
         this.cache.elements.forEach((node: T) => {
             if (node.element instanceof HTMLElement) {
                 const element = (<HTMLElement> node.element);
-                const result = getBoxSpacing(element);
-                for (const i in result) {
-                    result[i] += 'px';
+                if (!hasValue((<any> element).__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
+                    const result = getBoxSpacing(element);
+                    for (const i in result) {
+                        result[i] += 'px';
+                    }
+                    (<any> element).__boxSpacing = result;
                 }
-                (<any> element).__boxSpacing = result;
             }
         });
     }
@@ -146,34 +152,36 @@ export default abstract class Resource<T extends Node> {
         this.cache.elements.forEach((node: T) => {
             if (node.element instanceof HTMLElement) {
                 const element = (<HTMLElement> node.element);
-                const result: any = {
-                    borderTop: this.parseBorderStyle,
-                    borderRight: this.parseBorderStyle,
-                    borderBottom: this.parseBorderStyle,
-                    borderLeft: this.parseBorderStyle,
-                    borderRadius: this.parseBorderRadius,
-                    backgroundColor: parseRGBA,
-                    backgroundImage: this.parseImageURL,
-                    backgroundSize: this.parseBoxDimensions
-                };
-                for (const i in result) {
-                    result[i] = result[i](node.css(i), node, i);
+                if (!hasValue((<any> element).__boxStyle) || SETTINGS.alwaysReevaluateResources) {
+                    const result: any = {
+                        borderTop: this.parseBorderStyle,
+                        borderRight: this.parseBorderStyle,
+                        borderBottom: this.parseBorderStyle,
+                        borderLeft: this.parseBorderStyle,
+                        borderRadius: this.parseBorderRadius,
+                        backgroundColor: parseRGBA,
+                        backgroundImage: this.parseImageURL,
+                        backgroundSize: this.parseBoxDimensions
+                    };
+                    for (const i in result) {
+                        result[i] = result[i](node.css(i), node, i);
+                    }
+                    let backgroundParent: string[] = [];
+                    if (element.parentElement != null) {
+                        backgroundParent = parseRGBA(getStyle(element.parentElement)['backgroundColor']);
+                    }
+                    if (backgroundParent[0] === result.backgroundColor[0] || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
+                        result.backgroundColor = [];
+                    }
+                    else {
+                        result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], false);
+                    }
+                    const borderTop = JSON.stringify(result.borderTop);
+                    if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
+                        result.border = result.borderTop;
+                    }
+                    (<any> element).__boxStyle = result;
                 }
-                let backgroundParent: string[] = [];
-                if (element.parentElement != null) {
-                    backgroundParent = parseRGBA(getStyle(element.parentElement)['backgroundColor']);
-                }
-                if (backgroundParent[0] === result.backgroundColor[0] || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
-                    result.backgroundColor = [];
-                }
-                else {
-                    result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], false);
-                }
-                const borderTop = JSON.stringify(result.borderTop);
-                if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
-                    result.border = result.borderTop;
-                }
-                (<any> element).__boxStyle = result;
             }
         });
     }
@@ -182,23 +190,25 @@ export default abstract class Resource<T extends Node> {
         this.cache.elements.forEach((node: T) => {
             if ((node.visible || node.companion) && node.renderChildren.length === 0) {
                 const element = (<HTMLElement> node.element);
-                switch (element.tagName) {
-                    case 'IMG':
-                    case 'HR':
-                    case 'AREA':
-                        return;
+                if (!hasValue((<any> element).__fontStyle) || SETTINGS.alwaysReevaluateResources) {
+                    switch (element.tagName) {
+                        case 'IMG':
+                        case 'HR':
+                        case 'AREA':
+                            return;
+                    }
+                    const color = parseRGBA(node.css('color') || '');
+                    const backgroundColor = parseRGBA(node.css('backgroundColor') || '');
+                    const result = {
+                        fontFamily: node.css('fontFamily'),
+                        fontStyle: node.css('fontStyle'),
+                        fontSize: node.css('fontSize'),
+                        fontWeight: node.css('fontWeight'),
+                        color: (color.length > 0 ? Resource.addColor(color[0]) : ''),
+                        backgroundColor: (backgroundColor.length > 0 ? Resource.addColor(backgroundColor[0]) : '')
+                    };
+                    (<any> element).__fontStyle = result;
                 }
-                const color = parseRGBA(node.css('color') || '');
-                const backgroundColor = parseRGBA(node.css('backgroundColor') || '');
-                const result = {
-                    fontFamily: node.css('fontFamily'),
-                    fontStyle: node.css('fontStyle'),
-                    fontSize: node.css('fontSize'),
-                    fontWeight: node.css('fontWeight'),
-                    color: (color.length > 0 ? Resource.addColor(color[0]) : ''),
-                    backgroundColor: (backgroundColor.length > 0 ? Resource.addColor(backgroundColor[0]) : '')
-                };
-                (<any> element).__fontStyle = result;
             }
         });
     }
@@ -206,95 +216,101 @@ export default abstract class Resource<T extends Node> {
     public setImageSource() {
         this.cache.list.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
             const element = (<HTMLImageElement> node.element);
-            const srcset = element.srcset.trim();
-            const images: StringMap = {};
-            if (hasValue(srcset)) {
-                const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-                srcset.split(',').forEach((value: string) => {
-                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                    if (match != null) {
-                        if (match[2] == null) {
-                            match[2] = '1x';
+            if (!hasValue((<any> element).__imageSource) || SETTINGS.alwaysReevaluateResources) {
+                const srcset = element.srcset.trim();
+                const images: StringMap = {};
+                if (hasValue(srcset)) {
+                    const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+                    srcset.split(',').forEach((value: string) => {
+                        const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                        if (match != null) {
+                            if (match[2] == null) {
+                                match[2] = '1x';
+                            }
+                            const image = filepath + getFileName(match[1]);
+                            switch (match[2]) {
+                                case '0.75x':
+                                    images['ldpi'] = image;
+                                    break;
+                                case '1x':
+                                    images['mdpi'] = image;
+                                    break;
+                                case '1.5x':
+                                    images['hdpi'] = image;
+                                    break;
+                                case '2x':
+                                    images['xhdpi'] = image;
+                                    break;
+                                case '3x':
+                                    images['xxhdpi'] = image;
+                                    break;
+                                case '4x':
+                                    images['xxxhdpi'] = image;
+                                    break;
+                            }
                         }
-                        const image = filepath + getFileName(match[1]);
-                        switch (match[2]) {
-                            case '0.75x':
-                                images['ldpi'] = image;
-                                break;
-                            case '1x':
-                                images['mdpi'] = image;
-                                break;
-                            case '1.5x':
-                                images['hdpi'] = image;
-                                break;
-                            case '2x':
-                                images['xhdpi'] = image;
-                                break;
-                            case '3x':
-                                images['xxhdpi'] = image;
-                                break;
-                            case '4x':
-                                images['xxxhdpi'] = image;
-                                break;
-                        }
-                    }
-                });
+                    });
+                }
+                if (images['mdpi'] == null) {
+                    images['mdpi'] = element.src;
+                }
+                const result = Resource.addImage(images);
+                (<any> element).__imageSource = result;
             }
-            if (images['mdpi'] == null) {
-                images['mdpi'] = element.src;
-            }
-            const result = Resource.addImage(images);
-            (<any> element).__imageSource = result;
         });
     }
 
     public setOptionArray() {
         this.cache.list.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
             const element = (<HTMLSelectElement> node.element);
-            const stringArray: string[] = [];
-            let numberArray: string[] | null = [];
-            for (let i = 0; i < element.children.length; i++) {
-                const item = (<HTMLOptionElement> element.children[i]);
-                const value = item.text.trim();
-                if (value !== '') {
-                    if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
-                        numberArray.push(value);
-                    }
-                    else {
-                        if (numberArray != null && numberArray.length > 0) {
-                            i = -1;
-                            numberArray = null;
-                            continue;
+            if (!hasValue((<any> element).__optionArray) || SETTINGS.alwaysReevaluateResources) {
+                const stringArray: string[] = [];
+                let numberArray: string[] | null = [];
+                for (let i = 0; i < element.children.length; i++) {
+                    const item = (<HTMLOptionElement> element.children[i]);
+                    const value = item.text.trim();
+                    if (value !== '') {
+                        if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                            numberArray.push(value);
                         }
-                        const result = Resource.addString(value);
-                        if (result !== '') {
-                            stringArray.push(result);
+                        else {
+                            if (numberArray != null && numberArray.length > 0) {
+                                i = -1;
+                                numberArray = null;
+                                continue;
+                            }
+                            const result = Resource.addString(value);
+                            if (result !== '') {
+                                stringArray.push(result);
+                            }
                         }
                     }
                 }
+                (<any> element).__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
             }
-            (<any> element).__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
         });
     }
 
     public setValueString() {
         this.cache.elements.forEach((node: T) => {
             const element = (<HTMLElement> node.element);
-            let name = '';
-            let value = '';
-            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                value = (<HTMLInputElement> element).value.trim();
-            }
-            else if (element.nodeName === '#text') {
-                value = (element.textContent ? element.textContent.trim() : '');
-            }
-            else if (element.children.length === 0 || Array.from(element.children).every((item: HTMLElement) => INLINE_CHROME.includes(item.tagName))) {
-                name = element.innerText.trim();
-                value = element.innerHTML.trim();
-            }
-            if (hasValue(value)) {
-                Resource.addString(value, name);
-                (<any> element).__valueString = value;
+            if (!hasValue((<any> element).__valueString) || SETTINGS.alwaysReevaluateResources) {
+                let name = '';
+                let value = '';
+                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                    value = (<HTMLInputElement> element).value.trim();
+                }
+                else if (element.nodeName === '#text') {
+                    value = (element.textContent ? element.textContent.trim() : '');
+                }
+                else if (element.children.length === 0 || Array.from(element.children).every((item: HTMLElement) => INLINE_CHROME.includes(item.tagName))) {
+                    name = element.innerText.trim();
+                    value = element.innerHTML.trim();
+                }
+                if (hasValue(value)) {
+                    Resource.addString(value, name);
+                    (<any> element).__valueString = value;
+                }
             }
         });
     }

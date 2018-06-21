@@ -381,23 +381,6 @@ export default class Widget extends Node {
             }
             const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating && this.renderParent.tagName !== 'TABLE');
             switch (this.renderParent.viewName) {
-                case VIEW_ANDROID.RADIO_GROUP:
-                case VIEW_ANDROID.LINEAR:
-                    if (parentTextAlign) {
-                        this.renderParent.android('gravity', horizontal);
-                        horizontal = '';
-                    }
-                    else {
-                        gravity.push(vertical);
-                        vertical = '';
-                    }
-                    break;
-                case VIEW_ANDROID.CONSTRAINT:
-                case VIEW_ANDROID.RELATIVE:
-                    gravity.push(horizontal, vertical);
-                    horizontal = '';
-                    vertical = '';
-                    break;
                 case VIEW_ANDROID.GRID:
                     if (parentTextAlign) {
                         layoutGravity.push(horizontal, vertical);
@@ -408,9 +391,16 @@ export default class Widget extends Node {
                     if (this.renderParent.tagName === 'TABLE') {
                         this.android('layout_gravity', 'fill');
                     }
-                    horizontal = '';
-                    vertical = '';
                     break;
+                case VIEW_ANDROID.LINEAR:
+                case VIEW_ANDROID.RADIO_GROUP:
+                    if (parentTextAlign) {
+                        this.renderParent.android('gravity', horizontal);
+                        gravity.push(vertical);
+                        break;
+                    }
+                default:
+                    gravity.push(horizontal, vertical);
             }
             gravity = gravity.filter(value => value !== '');
             layoutGravity = layoutGravity.filter(value => value !== '');
@@ -419,9 +409,6 @@ export default class Widget extends Node {
             }
             if (gravity.length > 0) {
                 this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
-            }
-            else if (horizontal !== '') {
-                this.android('gravity', horizontal);
             }
         }
     }
