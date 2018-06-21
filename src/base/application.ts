@@ -55,7 +55,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cacheInternal.reset();
         this.resetView();
         this.resetResource();
-        this.name = '';
+        this.appName = '';
         this._ids = [];
         this._views = [];
         this._ready = false;
@@ -102,7 +102,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         attributes.add(hyphenToCamelCase(attr));
                     }
                     const elements = document.querySelectorAll(cssRule.selectorText);
-                    if (this.name !== '') {
+                    if (this.appName !== '') {
                         Array.from(elements).forEach((element: HTMLElement) => {
                             const object = (<any> element);
                             delete object.__style;
@@ -708,15 +708,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public toString() {
-        return this._views[0] || '';
+        return (this._views.length > 0 ? this._views[0] : '');
     }
 
-    public set name(value) {
+    public set appName(value) {
         if (this.resourceHandler != null) {
             this.resourceHandler.file.appName = value;
         }
     }
-    public get name() {
+    public get appName() {
         return (this.resourceHandler != null ? this.resourceHandler.file.appName : '');
     }
 

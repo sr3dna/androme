@@ -2,6 +2,7 @@ import { ObjectIndex, ObjectMap, ResourceMap } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import Widget from './widget';
+import WidgetList from './widgetlist';
 import { formatString, hasValue, padLeft } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
@@ -36,7 +37,7 @@ const METHOD_ANDROID = {
         'paddingTop': 'android:paddingTop="{0}"',
         'paddingRight': 'android:paddingRight="{0}"',
         'paddingBottom': 'android:paddingBottom="{0}"',
-        'paddingLeft': 'android:paddingLeft="{0}"',
+        'paddingLeft': 'android:paddingLeft="{0}"'
     },
     'boxStyle': {
         'background': 'android:background="@drawable/{0}"',
@@ -62,6 +63,13 @@ const METHOD_ANDROID = {
 };
 
 type T = Widget;
+type U = WidgetList<T>;
+
+interface ViewData {
+    cache: U;
+    ids: string[];
+    views: string[];
+}
 
 export default class ResourceWidget extends Resource<T> {
     private tagStyle: ObjectMap = {};
@@ -72,7 +80,7 @@ export default class ResourceWidget extends Resource<T> {
         this.file.stored = STORED;
     }
 
-    public finalize(viewData: {}) {
+    public finalize(viewData: ViewData) {
         this.processFontStyle(viewData);
     }
 
@@ -380,7 +388,7 @@ export default class ResourceWidget extends Resource<T> {
         });
     }
 
-    private processFontStyle(viewData: any) {
+    private processFontStyle(viewData: ViewData) {
         const style = {};
         const layout = {};
         for (const tag in this.tagStyle) {
@@ -535,7 +543,7 @@ export default class ResourceWidget extends Resource<T> {
             }
         }
         for (const id in map) {
-            const node: T = viewData.cache.find(parseInt(id));
+            const node: T | null = viewData.cache.find(parseInt(id));
             if (node != null) {
                 let append = '';
                 const styles = map[id].styles;

@@ -8,32 +8,33 @@ import FileRes from './android/fileres';
 import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 
-let APP;
+let MAIN;
+const CACHED: Set<HTMLElement> = new Set();
 
 export function parseDocument(...elements) {
     type T = Widget;
     type U = WidgetList<T>;
-    let app: Application<T, U>;
-    if (APP == null) {
+    let main: Application<T, U>;
+    if (MAIN == null) {
         const Node = Widget;
         const NodeList = WidgetList;
         const View = new Layout();
         const File = new FileRes();
         const Resource = new ResourceWidget(File);
-        app = new Application(Node, NodeList);
-        app.registerView(View);
-        app.registerResource(Resource);
-        APP = app;
+        main = new Application<T, U>(Node, NodeList);
+        main.registerView(View);
+        main.registerResource(Resource);
+        MAIN = main;
     }
     else {
-        app = (<Application<T, U>> APP);
-        app.resetView();
+        main = (<Application<T, U>> MAIN);
+        main.resetView();
     }
-    if (app.ready) {
+    if (main.ready) {
         return false;
     }
-    app.setStyleMap();
-    if (app.name === '' && elements.length === 0) {
+    main.setStyleMap();
+    if (main.appName === '' && elements.length === 0) {
         elements.push(document.body);
     }
     for (let i = 0; i < elements.length; i++) {
@@ -44,110 +45,114 @@ export function parseDocument(...elements) {
         if (!(element instanceof HTMLElement)) {
             continue;
         }
-        if (app.name === '') {
+        if (main.appName === '') {
             if (element.id === '') {
                 element.id = 'androme';
             }
-            app.name = element.id;
+            main.appName = element.id;
         }
         else {
             if (element.id === '') {
-                element.id = `view${app.length}`;
+                element.id = `view${main.length}`;
             }
         }
         element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
         element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}-${element.dataset.views}` : element.id);
-        app.setNodeCache(element);
-        app.setLayoutXml();
-        app.setResources();
+        CACHED.add(element);
+        main.setNodeCache(element);
+        main.setLayoutXml();
+        main.setResources();
         if (SETTINGS.showAttributes) {
-            app.setMarginPadding();
+            main.setMarginPadding();
             if (SETTINGS.useLayoutWeight) {
-                app.setLayoutWeight();
+                main.setLayoutWeight();
             }
-            app.setConstraints();
-            app.replaceInlineAttributes();
+            main.setConstraints();
+            main.replaceInlineAttributes();
         }
-        app.replaceAppended();
+        main.replaceAppended();
     }
 }
 
 export function toString() {
-    if (APP && APP.ready) {
-        return APP.toString();
-    }
+    return MAIN.toString();
 }
 
 export function close() {
-    if (APP != null) {
-        APP.finalize();
+    if (MAIN != null && MAIN.length > 0) {
+        MAIN.finalize();
     }
 }
 
 export function reset() {
-    if (APP != null) {
-        APP.reset();
+    if (MAIN != null) {
+        CACHED.forEach((element: HTMLElement) => {
+            delete element.dataset.views;
+            delete element.dataset.currentId;
+        });
+        CACHED.clear();
+        MAIN.reset();
     }
 }
 
 export function saveAllToDisk() {
-    if (APP && APP.ready) {
-        APP.resourceHandler.file.saveAllToDisk(APP.viewData);
+    if (MAIN && MAIN.ready) {
+        MAIN.resourceHandler.file.saveAllToDisk(MAIN.viewData);
     }
 }
 
 export function writeLayoutAllXml(saveToDisk = false) {
-    if (APP && APP.ready) {
-        return APP.resourceHandler.file.layoutAllToXml(APP.viewData, saveToDisk);
+    if (MAIN && MAIN.ready) {
+        return MAIN.resourceHandler.file.layoutAllToXml(MAIN.viewData, saveToDisk);
     }
     return '';
 }
 
 export function writeResourceAllXml(saveToDisk = false) {
-    if (APP && APP.ready) {
-        return APP.resourceHandler.file.resourceAllToXml(saveToDisk);
+    if (MAIN && MAIN.ready) {
+        return MAIN.resourceHandler.file.resourceAllToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStringXml(saveToDisk = false) {
-    if (APP && APP.ready) {
-        return APP.resourceHandler.file.resourceStringToXml(saveToDisk);
+    if (MAIN && MAIN.ready) {
+        return MAIN.resourceHandler.file.resourceStringToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceArrayXml(saveToDisk = false) {
-    if (APP && APP.ready) {
-        return APP.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
+    if (MAIN && MAIN.ready) {
+        return MAIN.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceFontXml(saveToDisk = false) {
-    if (APP && APP.ready) {
-        return APP.resourceHandler.file.resourceFontToXml(saveToDisk);
+    if (MAIN && MAIN.ready) {
+        return MAIN.resourceHandler.file.resourceFontToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceColorXml(saveToDisk = false) {
-    if (APP && APP.ready) {
-        return APP.resourceHandler.file.resourceColorToXml(saveToDisk);
+    if (MAIN && MAIN.ready) {
+        return MAIN.resourceHandler.file.resourceColorToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStyleXml(saveToDisk = false) {
-    if (APP && APP.ready) {
-        return APP.resourceHandler.file.resourceStyleToXml(saveToDisk);
+    if (MAIN && MAIN.ready) {
+        return MAIN.resourceHandler.file.resourceStyleToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceDrawableXml(saveToDisk = false) {
-    if (APP && APP.ready) {
-        return APP.resourceHandler.file.resourceDrawableToXml(saveToDisk);
+    if (MAIN && MAIN.ready) {
+        return MAIN.resourceHandler.file.resourceDrawableToXml(saveToDisk);
     }
     return '';
 }

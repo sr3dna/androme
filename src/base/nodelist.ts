@@ -47,7 +47,7 @@ export default abstract class NodeList<T extends Node> {
     }
 
     public find(id: number) {
-        return this._list.find((node: T) => node.id === id);
+        return this._list.find((node: T) => node.id === id) || null;
     }
 
     public reset() {

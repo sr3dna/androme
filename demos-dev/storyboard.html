@@ -21,17 +21,27 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        System.import('/build/main.js').then(function(result) {
-            androme = result;
-            androme.settings.useConstraintGuideline = false;
+        function createView() {
+            for (const span of document.getElementsByTagName('span')) {
+                span.style.top = `${400 * Math.random()}px`;
+                span.style.left = `${400 * Math.random()}px`;
+            }
             androme.parseDocument('androme-root');
+        }
+        function closeDocument() {
             androme.close();
-
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
             const resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+        }
+        System.import('/build/main.js').then(function(result) {
+            androme = result;
+            androme.settings.useConstraintGuideline = false;
+            createView();
+            closeDocument();
+            androme.reset();
         });
     </script>
 </head>
@@ -48,9 +58,12 @@
         <div class="output">
             <pre id="output"></pre>
             <div>
+                <button onclick="createView();">Add View (1)</button>
+                <button onclick="closeDocument();">Close (2)</button>
+                <button onclick="androme.saveAllToDisk();">Save All (3)</button>
+                <button onclick="androme.reset();">Reset (4)</button>
+                &nbsp;&nbsp;
                 <button onclick="copy('output');">Copy</button>
-                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
-                <button onclick="androme.saveAllToDisk();">Save All</button>
             </div>
         </div>
         <div class="output">
@@ -61,11 +74,5 @@
             </div>
         </div>
     </div>
-    <script>
-        for (const span of document.getElementsByTagName('span')) {
-            span.style.top = `${400 * Math.random()}px`;
-            span.style.left = `${400 * Math.random()}px`;
-        }
-    </script>
 </body>
 </html>

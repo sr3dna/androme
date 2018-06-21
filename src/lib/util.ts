@@ -2,6 +2,23 @@ const ID = {
     android: ['parent']
 };
 
+function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
+    return list.sort((a: T, b: T) => {
+        for (const attr of attributes) {
+            const result = compare(a, b, attr);
+            if (result && result[0] !== result[1]) {
+                if (asc === 0) {
+                    return (result[0] >= result[1] ? 1 : -1);
+                }
+                else {
+                    return (result[0] <= result[1] ? 1 : -1);
+                }
+            }
+        }
+        return 0;
+    });
+}
+
 export function generateId(section: string, name: string) {
     let prefix = name;
     let i = 1;
@@ -244,23 +261,6 @@ export function remove<T>(list: T[], value: any) {
         list.splice(index, 1);
     }
     return list;
-}
-
-function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
-    return list.sort((a: T, b: T) => {
-        for (const attr of attributes) {
-            const result = compare(a, b, attr);
-            if (result && result[0] !== result[1]) {
-                if (asc === 0) {
-                    return (result[0] >= result[1] ? 1 : -1);
-                }
-                else {
-                    return (result[0] <= result[1] ? 1 : -1);
-                }
-            }
-        }
-        return 0;
-    });
 }
 
 export function caseInsensitve(a: any, b: any) {
