@@ -348,15 +348,25 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                                         chain.app(LAYOUT[CHAIN_MAP['leftRightTopBottom'][index]], previous.stringId);
                                     }
                                     if (chain.styleMap[dimension] == null) {
-                                        const min = chain.styleMap[`min${WH}`];
-                                        const max = chain.styleMap[`max${WH}`];
-                                        if (hasValue(min)) {
-                                            chain.app(`layout_constraint${WH}_min`, convertPX(min));
-                                            delete chain.styleMap[`min${WH}`];
+                                        const minW = chain.styleMap[`min${WH}`];
+                                        const minH = chain.styleMap[`min${HW}`];
+                                        const maxW = chain.styleMap[`max${WH}`];
+                                        const maxH = chain.styleMap[`max${HW}`];
+                                        if (hasValue(minW)) {
+                                            chain.app(`layout_constraint${WH}_min`, convertPX(minW));
+                                            chain.constraint[`min${WH}`] = true;
                                         }
-                                        if (hasValue(max)) {
-                                            chain.app(`layout_constraint${WH}_max`, convertPX(max));
-                                            delete chain.styleMap[`max${WH}`];
+                                        if (hasValue(maxW)) {
+                                            chain.app(`layout_constraint${WH}_max`, convertPX(maxW));
+                                            chain.constraint[`max${WH}`] = true;
+                                        }
+                                        if (hasValue(minH)) {
+                                            chain.app(`layout_constraint${HW}_min`, convertPX(minH));
+                                            chain.constraint[`min${HW}`] = true;
+                                        }
+                                        if (hasValue(maxH)) {
+                                            chain.app(`layout_constraint${HW}_max`, convertPX(maxH));
+                                            chain.constraint[`max${HW}`] = true;
                                         }
                                     }
                                     if (flex.enabled) {

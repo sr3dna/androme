@@ -75,7 +75,7 @@ export default abstract class View<T extends Node, U extends NodeList<T>> {
                       indent + `</${tagName}>\n`;
         }
         else {
-            output += indent + `<${tagName}{@${id}} />\n`;
+            output += indent + `<${tagName}{@${id}}{&${id}} />\n`;
         }
         output += `{>${id}}` +
                   postXml;

@@ -13,15 +13,18 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public viewHandler: View<T, U>;
     public resourceHandler: Resource<T>;
 
+    private cacheInternal: U;
     private cache: U;
     private _ids: string[] = [];
     private _views: string[] = [];
+    private _ready: boolean = false;
 
     constructor(
         private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
         private TypeU: { new (nodes?: T[], parent?: T): U })
     {
         this.cache = new this.TypeU();
+        this.cacheInternal = new this.TypeU();
     }
 
     public registerView(viewHandler: View<T, U>) {
@@ -34,8 +37,36 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.resourceHandler = resource;
     }
 
+    public finalize() {
+        this.resourceHandler.finalize(this.viewData);
+        const views = this.resourceHandler.views;
+        for (let i = 0; i < views.length; i++) {
+            let output = views[i].replace(/{[<@&>]{1}[0-9]+}/g, '');
+            if (SETTINGS.useUnitDP) {
+                output = replaceDP(output, SETTINGS.density);
+            }
+            this._views[i] = output;
+        }
+        this._ready = true;
+    }
+
+    public reset() {
+        this.cache.reset();
+        this.cacheInternal.reset();
+        this.resetView();
+        this.resetResource();
+        this.name = '';
+        this._ids = [];
+        this._views = [];
+        this._ready = false;
+    }
+
     public resetView() {
         this.viewHandler.reset();
+    }
+
+    public resetResource() {
+        this.resourceHandler.reset();
     }
 
     public setConstraints() {
@@ -53,7 +84,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public setResources() {
         this.resourceHandler.setBoxSpacing();
         this.resourceHandler.setBoxStyle();
-        this.resourceHandler.setFontStyle((this.length > 1 ? this.currentId : ''));
+        this.resourceHandler.setFontStyle();
         this.resourceHandler.setValueString();
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
@@ -71,7 +102,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         attributes.add(hyphenToCamelCase(attr));
                     }
                     const elements = document.querySelectorAll(cssRule.selectorText);
-                    if (this.appName !== '') {
+                    if (this.name !== '') {
                         Array.from(elements).forEach((element: HTMLElement) => {
                             const object = (<any> element);
                             delete object.__style;
@@ -251,6 +282,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         });
         this.currentId = (<string> layoutRoot.dataset.currentId);
+        this.cacheInternal.list.push(...this.cache.list);
     }
 
     public insertNode(element: HTMLElement, parent?: T) {
@@ -670,12 +702,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.current = output;
     }
 
-    public finalizeViews() {
-        let output = this.viewHandler.replaceAppended(this.current);
-        output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
-        if (SETTINGS.useUnitDP) {
-            output = replaceDP(output, SETTINGS.density);
-        }
+    public replaceAppended() {
+        const output = this.viewHandler.replaceAppended(this.current);
         this.current = output;
     }
 
@@ -683,12 +711,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return this._views[0] || '';
     }
 
-    public set appName(value) {
+    public set name(value) {
         if (this.resourceHandler != null) {
             this.resourceHandler.file.appName = value;
         }
     }
-    public get appName() {
+    public get name() {
         return (this.resourceHandler != null ? this.resourceHandler.file.appName : '');
     }
 
@@ -714,8 +742,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
+    get ready() {
+        return this._ready;
+    }
+
     public get viewData() {
-        return { id: this._ids, view: this._views };
+        return { cache: this.cacheInternal, ids: this._ids, views: this._views };
     }
 
     public get length() {

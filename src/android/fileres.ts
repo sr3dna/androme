@@ -20,8 +20,8 @@ export default class FileRes extends File {
 
     public saveAllToDisk(data: StringMap) {
         const files: PlainFile[] = [];
-        for (let i = 0; i < data.view.length; i++) {
-            files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.id[i]}.xml`), data.view[i]));
+        for (let i = 0; i < data.views.length; i++) {
+            files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
         }
         const drawableXml = this.resourceDrawableToXml();
         files.push(...this.parseFileDetails(this.resourceStringToXml()));
@@ -36,11 +36,11 @@ export default class FileRes extends File {
     public layoutAllToXml(data: StringMap, saveToDisk = false) {
         const result: StringMap = {};
         const files: PlainFile[] = [];
-        for (let i = 0; i < data.view.length; i++) {
-            const view = data.view[i];
-            result[data.id[i]] = view;
+        for (let i = 0; i < data.views.length; i++) {
+            const view = data.views[i];
+            result[data.ids[i]] = view;
             if (saveToDisk) {
-                files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.id[i]}.xml`), view));
+                files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), view));
             }
         }
         if (saveToDisk) {

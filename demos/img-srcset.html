@@ -39,7 +39,10 @@
         var images = 0;
         function loaded() {
             if (++images == 2) {
-                document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
+                androme.parseDocument('androme-root');
+                androme.close();
+
+                document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
                 const resource = androme.writeResourceDrawableXml();
                 document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
             }

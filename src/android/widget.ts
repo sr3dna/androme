@@ -211,11 +211,11 @@ export default class Widget extends Node {
                         this.android('layout_width', convertPX(styleMap.width));
                     }
                 }
-                if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth)) {
+                if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth) && !this.constraint.minWidth) {
                     this.android('layout_width', 'wrap_content', false);
                     this.android('minWidth', convertPX(styleMap.minWidth), false);
                 }
-                if (hasValue(styleMap.maxWidth) && !isPercent(styleMap.maxWidth)) {
+                if (hasValue(styleMap.maxWidth) && !isPercent(styleMap.maxWidth) && !this.constraint.maxWidth) {
                     this.android('maxWidth', convertPX(styleMap.maxWidth), false);
                 }
             }
@@ -268,11 +268,11 @@ export default class Widget extends Node {
                         this.android('layout_height', convertPX(styleMap.height || styleMap.lineHeight));
                     }
                 }
-                if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight)) {
+                if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight) && !this.constraint.minHeight) {
                     this.android('layout_height', 'wrap_content', false);
                     this.android('minHeight', convertPX(styleMap.minHeight), false);
                 }
-                if (hasValue(styleMap.maxHeight) && !isPercent(styleMap.maxHeight)) {
+                if (hasValue(styleMap.maxHeight) && !isPercent(styleMap.maxHeight) && !this.constraint.maxHeight) {
                     this.android('maxHeight', convertPX(styleMap.maxHeight), false);
                 }
             }

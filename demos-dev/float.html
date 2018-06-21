@@ -28,7 +28,10 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
+            androme.parseDocument('androme-root');
+            androme.close();
+
+            document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
             const resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();

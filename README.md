@@ -2,7 +2,7 @@
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
-Multiple views per page are supported similiar to iOS Storyboards with their styles merged to simplify maintenance. Conceptually creating snapshots in XML of what is displayed in the browser.
+Multiple views per page are supported similiar to iOS Storyboards with their resources and styles merged to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser.
 
 ## INSTALLATION (global js variable: androme)
 
@@ -31,7 +31,7 @@ Express server through Node.js is available with a provided default configuratio
 
 If you install via NPM then it is recommended you put androme into its own separate folder rather than hosting it inside "node_modules".
 
-Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session and will continiously build the application progressively into a single entity with combined shared resources.
+Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously build progressively into a single entity with combined shared resources.
 
 ```javascript
 <script src="/dist/androme.js"></script>
@@ -39,16 +39,28 @@ Library files are in the /dist folder. There is a babel minified for production 
     androme.settings.targetAPI = 19; // androme.build.KITKAT
     androme.settings.density = 160; // androme.density.MDPI
 
-    // without Express: use either console.log() or element.innerHTML to display
+    // without Express: use either console.log() or element.innerHTML to display using "write" commands
 
     document.addEventListener('DOMContentLoaded', () => {
         // required: zero or more
         androme.parseDocument(/* document.getElementById('mainview') */, /* 'subview' */, /* etc... */);
+        androme.close();
         androme.saveAllToDisk(); /* Express required */
 
         // optional
         androme.writeLayoutAllXml(true); /* true: save to disk, false: string xml */
         androme.writeResourceAllXml(true);
+
+        // individual
+        androme.writeResourceDrawableXml(true);
+        androme.writeResourceStyleXml(true);
+        androme.writeResourceColorXml(true);
+        androme.writeResourceFontXml(true);
+        androme.writeResourceArrayXml(true);
+		androme.writeResourceStringXml(true);
+
+        // start new "parseDocument" session
+		androme.reset();
     });
 </script>
 ```

@@ -53,6 +53,10 @@ export interface ObjectIndex {
     length: number;
 }
 
+export interface ObjectMap {
+    [key: string]: {};
+}
+
 export interface ResourceMap {
     STRINGS: Map<string, string>;
     ARRAYS: Map<string, string[]>;

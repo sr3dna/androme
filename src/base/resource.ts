@@ -8,7 +8,7 @@ import { findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, getStyle } from '../lib/dom';
 import SETTINGS from '../settings';
 
-export default class Resource<T extends Node> {
+export default abstract class Resource<T extends Node> {
     public static STORED = {
         STRINGS: new Map(),
         COLORS: new Map(),
@@ -119,11 +119,15 @@ export default class Resource<T extends Node> {
         return '';
     }
 
+    public views: string[];
     public cache: NodeList<T>;
 
     constructor(public file: File)
     {
     }
+
+    public abstract reset(): void;
+    public abstract finalize(viewData: {}): void;
 
     public setBoxSpacing() {
         this.cache.elements.forEach((node: T) => {
@@ -174,7 +178,7 @@ export default class Resource<T extends Node> {
         });
     }
 
-    public setFontStyle(id: string) {
+    public setFontStyle() {
         this.cache.elements.forEach((node: T) => {
             if ((node.visible || node.companion) && node.renderChildren.length === 0) {
                 const element = (<HTMLElement> node.element);

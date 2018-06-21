@@ -1,8 +1,8 @@
-import { ResourceMap } from '../lib/types';
+import { ObjectIndex, ObjectMap, ResourceMap } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import Widget from './widget';
-import { formatString, hasValue } from '../lib/util';
+import { formatString, hasValue, padLeft } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import parseRTL from './localization';
@@ -64,9 +64,26 @@ const METHOD_ANDROID = {
 type T = Widget;
 
 export default class ResourceWidget extends Resource<T> {
+    private tagStyle: ObjectMap = {};
+    private tagCount: {} = {};
+
     constructor(file: File) {
         super(file);
         this.file.stored = STORED;
+    }
+
+    public finalize(viewData: {}) {
+        this.processFontStyle(viewData);
+    }
+
+    public reset() {
+        STORED.ARRAYS = new Map();
+        STORED.FONTS = new Map();
+        STORED.DRAWABLES = new Map();
+        STORED.STYLES = new Map();
+        STORED.STRINGS = new Map();
+        STORED.COLORS = new Map();
+        STORED.IMAGES = new Map();
     }
 
     public setBoxSpacing() {
@@ -89,8 +106,8 @@ export default class ResourceWidget extends Resource<T> {
             if (stored != null) {
                 const method = METHOD_ANDROID['boxStyle'];
                 if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
-                    let template: {};
-                    let data: {};
+                    let template: ObjectMap;
+                    let data: ObjectMap;
                     let resourceName = '';
                     if (stored.border != null && stored.backgroundImage === '') {
                         template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
@@ -191,11 +208,9 @@ export default class ResourceWidget extends Resource<T> {
         });
     }
 
-    public setFontStyle(id: string) {
-        super.setFontStyle(id);
+    public setFontStyle() {
+        super.setFontStyle();
         const tagName = {};
-        const style = {};
-        const layout = {};
         this.cache.elements.forEach((node: T) => {
             if ((<any> node.element).__fontStyle != null) {
                 if (tagName[node.tagName] == null) {
@@ -206,7 +221,7 @@ export default class ResourceWidget extends Resource<T> {
         });
         for (const tag in tagName) {
             const nodes = tagName[tag];
-            let sorted: any[] = [];
+            const sorted: ObjectIndex = [];
             nodes.forEach((node: T) => {
                 if (node.labelFor != null) {
                     return;
@@ -283,8 +298,96 @@ export default class ResourceWidget extends Resource<T> {
                     }
                 }
             });
+            if (this.tagStyle[tag] != null) {
+                const tagStyle = (<ObjectIndex> this.tagStyle[tag]);
+                for (let i = 0; i < tagStyle.length; i++) {
+                    for (const attr in tagStyle[i]) {
+                        if (sorted[i][attr] != null) {
+                            sorted[i][attr].push(...tagStyle[i][attr]);
+                        }
+                        else {
+                            sorted[i][attr] = tagStyle[i][attr];
+                        }
+                    }
+                }
+                this.tagCount[tag] += nodes.length;
+            }
+            else {
+                this.tagCount[tag] = nodes.length;
+            }
+            this.tagStyle[tag] = sorted;
+        }
+    }
+
+    public setImageSource() {
+        super.setImageSource();
+        this.cache.list.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
+            const stored = (<any> node.element).__imageSource;
+            if (stored != null) {
+                const method = METHOD_ANDROID['imageSource'];
+                node.attr(formatString(method['src'], stored));
+            }
+        });
+    }
+
+    public setOptionArray() {
+        super.setOptionArray();
+        this.cache.list.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
+            const stored = (<any> node.element).__optionArray;
+            const method = METHOD_ANDROID['optionArray'];
+            let result: string[] = [];
+            if (stored.stringArray != null) {
+                for (const value of stored.stringArray) {
+                    const name = STORED.STRINGS.get(value);
+                    result.push((name != null ? `@string/${name}` : value));
+                }
+            }
+            if (stored.numberArray != null) {
+                result = stored.numberArray;
+            }
+            const arrayName = `${node.viewId}_array`;
+            STORED.ARRAYS.set(arrayName, result);
+            node.attr(formatString(method['entries'], arrayName));
+        });
+    }
+
+    public setValueString() {
+        super.setValueString();
+        this.cache.elements.forEach((node: T) => {
+            const element = (node.label != null ? node.label.element : node.element);
+            const stored = (<any> element).__valueString;
+            if (stored != null) {
+                const method = METHOD_ANDROID['valueString'];
+                const name = STORED.STRINGS.get(stored);
+                if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
+                    const match = node.style.textDecoration.match(/(underline|line-through)/);
+                    if (match != null) {
+                        let value = '';
+                        switch (match[0]) {
+                            case 'underline':
+                                value = `<u>${stored}</u>`;
+                                break;
+                            case 'line-through':
+                                value = `<strike>${stored}</strike>`;
+                                break;
+                        }
+                        STORED.STRINGS.delete(stored);
+                        STORED.STRINGS.set(value, (<any> name));
+                    }
+                }
+                node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
+            }
+        });
+    }
+
+    private processFontStyle(viewData: any) {
+        const style = {};
+        const layout = {};
+        for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
+            let sorted = (<any[]> this.tagStyle[tag]).slice();
+            const count = this.tagCount[tag];
             do {
                 if (sorted.length === 1) {
                     for (const attr in sorted[0]) {
@@ -304,7 +407,7 @@ export default class ResourceWidget extends Resource<T> {
                     for (let i = 0; i < sorted.length; i++) {
                         const filtered = {};
                         for (const attr1 in sorted[i]) {
-                            if (sorted[i] == null) {
+                            if (Object.keys(sorted[i]).length === 0) {
                                 continue;
                             }
                             const ids = sorted[i][attr1];
@@ -312,14 +415,14 @@ export default class ResourceWidget extends Resource<T> {
                             if (ids == null || ids.length === 0) {
                                 continue;
                             }
-                            else if (ids.length === nodes.length) {
+                            else if (ids.length === count) {
                                 styleKey[attr1] = ids;
-                                sorted[i] = null;
+                                sorted[i] = {};
                                 revalidate = true;
                             }
                             else if (ids.length === 1) {
                                 layoutKey[attr1] = ids;
-                                sorted[i] = null;
+                                sorted[i] = {};
                                 revalidate = true;
                             }
                             if (!revalidate) {
@@ -409,33 +512,56 @@ export default class ResourceWidget extends Resource<T> {
             resource[name] = tagData;
         }
         const inherit = new Set();
-        const prefix = (id !== '' ? `${id}-` : '');
-        this.cache.elements.forEach((node: T) => {
-            if (resource[node.tagName] != null) {
-                const styles: string[] = [];
-                for (const item of resource[node.tagName]) {
-                    if (item.ids.includes(node.id)) {
-                        styles.push(prefix + item.name);
+        const map = {};
+        for (const tagName in resource) {
+            for (const item of resource[tagName]) {
+                for (const id of item.ids) {
+                    if (map[id] == null) {
+                        map[id] = { styles: [], attributes: [] };
                     }
-                }
-                if (styles.length > 0) {
-                    inherit.add(styles.join('.'));
-                    node.attr(`style="@style/${styles.pop()}"`);
+                    map[id].styles.push(item.name);
                 }
             }
-            const tagData: {} = layout[node.tagName];
+            const tagData = layout[tagName];
             if (tagData != null) {
                 for (const attr in tagData) {
-                    if (tagData[attr].includes(node.id)) {
-                        node.attr(attr, false);
+                    for (const id of tagData[attr]) {
+                        if (map[id] == null) {
+                            map[id] = { styles: [], attributes: [] };
+                        }
+                        map[id].attributes(attr);
                     }
                 }
             }
-        });
+        }
+        for (const id in map) {
+            const node: T = viewData.cache.find(parseInt(id));
+            if (node != null) {
+                let append = '';
+                const styles = map[id].styles;
+                const attributes = map[id].attributes;
+                const indent = padLeft(node.renderDepth + 1);
+                if (styles.length > 0) {
+                    inherit.add(styles.join('.'));
+                    append += `\n${indent}style="@style/${styles.pop()}"`;
+                }
+                if (attributes.length > 0) {
+                    attributes.sort().forEach((value: string) => append += `\n${indent}${value}`);
+                }
+                for (let i = 0; i < viewData.views.length; i++) {
+                    const output: string = viewData.views[i];
+                    const pattern = `{&${id}}`;
+                    if (new RegExp(pattern).test(output)) {
+                        viewData.views[i] = output.replace(pattern, append);
+                        break;
+                    }
+                }
+            }
+        }
         for (const styles of inherit) {
             let parent = '';
             styles.split('.').forEach((value: string) => {
-                const match = new RegExp(`^${prefix}(\\w+)_([0-9]+)$`).exec(value);
+                const match = value.match(/^(\w+)_([0-9]+)$/);
                 if (match != null) {
                     const tagData = resource[match[1].toUpperCase()][parseInt(match[2]) - 1];
                     STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
@@ -443,67 +569,7 @@ export default class ResourceWidget extends Resource<T> {
                 }
             });
         }
-    }
-
-    public setImageSource() {
-        super.setImageSource();
-        this.cache.list.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
-            const stored = (<any> node.element).__imageSource;
-            if (stored != null) {
-                const method = METHOD_ANDROID['imageSource'];
-                node.attr(formatString(method['src'], stored));
-            }
-        });
-    }
-
-    public setOptionArray() {
-        super.setOptionArray();
-        this.cache.list.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
-            const stored = (<any> node.element).__optionArray;
-            const method = METHOD_ANDROID['optionArray'];
-            let result: string[] = [];
-            if (stored.stringArray != null) {
-                for (const value of stored.stringArray) {
-                    const name = STORED.STRINGS.get(value);
-                    result.push((name != null ? `@string/${name}` : value));
-                }
-            }
-            if (stored.numberArray != null) {
-                result = stored.numberArray;
-            }
-            const arrayName = `${node.viewId}_array`;
-            STORED.ARRAYS.set(arrayName, result);
-            node.attr(formatString(method['entries'], arrayName));
-        });
-    }
-
-    public setValueString() {
-        super.setValueString();
-        this.cache.elements.forEach((node: T) => {
-            const element = (node.label != null ? node.label.element : node.element);
-            const stored = (<any> element).__valueString;
-            if (stored != null) {
-                const method = METHOD_ANDROID['valueString'];
-                const name = STORED.STRINGS.get(stored);
-                if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
-                    const match = node.style.textDecoration.match(/(underline|line-through)/);
-                    if (match != null) {
-                        let value = '';
-                        switch (match[0]) {
-                            case 'underline':
-                                value = `<u>${stored}</u>`;
-                                break;
-                            case 'line-through':
-                                value = `<strike>${stored}</strike>`;
-                                break;
-                        }
-                        STORED.STRINGS.delete(stored);
-                        STORED.STRINGS.set(value, (<any> name));
-                    }
-                }
-                node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
-            }
-        });
+        this.views = viewData.views;
     }
 
     private deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {

@@ -54,7 +54,10 @@
                 span.style.top = `${400 * Math.random()}px`;
                 span.style.left = `${400 * Math.random()}px`;
             }
-            document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
+            androme.parseDocument('androme-root');
+            androme.close();
+
+            document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
             const resource = androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');

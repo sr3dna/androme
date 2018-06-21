@@ -53,7 +53,10 @@
     <script src="../dist/androme.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('output').innerHTML = androme.parseDocument('androme-root').replace(/</g, '&lt;');
+            androme.parseDocument('androme-root');
+            androme.close();
+
+            document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
             const resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
@@ -138,5 +141,17 @@
             </div>
         </div>
     </div>
+    <script>
+        function copy(id) {
+            const element = document.getElementById(id);
+            const range = document.createRange();
+            range.selectNode(element);
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            setTimeout(function() {
+                window.getSelection().removeAllRanges()
+            }, 100);
+        }
+    </script>
 </body>
 </html>

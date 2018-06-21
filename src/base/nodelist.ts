@@ -33,6 +33,7 @@ export default abstract class NodeList<T extends Node> {
         return false;
     }
 
+    private static currentId: number = 0;
     private _list: T[] = [];
 
     constructor(
@@ -43,6 +44,15 @@ export default abstract class NodeList<T extends Node> {
             this._list = nodes;
         }
         this.parent = parent;
+    }
+
+    public find(id: number) {
+        return this._list.find((node: T) => node.id === id);
+    }
+
+    public reset() {
+        NodeList.currentId = 0;
+        this.clear();
     }
 
     public clear() {
@@ -85,7 +95,7 @@ export default abstract class NodeList<T extends Node> {
     }
 
     get nextId() {
-        return this._list.length + 1;
+        return ++NodeList.currentId;
     }
 
     get linearX() {

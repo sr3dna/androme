@@ -29,8 +29,11 @@ export function parseDocument(...elements) {
         app = (<Application<T, U>> APP);
         app.resetView();
     }
+    if (app.ready) {
+        return false;
+    }
     app.setStyleMap();
-    if (app.appName === '' && elements.length === 0) {
+    if (app.name === '' && elements.length === 0) {
         elements.push(document.body);
     }
     for (let i = 0; i < elements.length; i++) {
@@ -41,11 +44,11 @@ export function parseDocument(...elements) {
         if (!(element instanceof HTMLElement)) {
             continue;
         }
-        if (app.appName === '') {
+        if (app.name === '') {
             if (element.id === '') {
                 element.id = 'androme';
             }
-            app.appName = element.id;
+            app.name = element.id;
         }
         else {
             if (element.id === '') {
@@ -65,66 +68,85 @@ export function parseDocument(...elements) {
             app.setConstraints();
             app.replaceInlineAttributes();
         }
-        app.finalizeViews();
+        app.replaceAppended();
     }
-    return app.toString();
+}
+
+export function toString() {
+    if (APP && APP.ready) {
+        return APP.toString();
+    }
+}
+
+export function close() {
+    if (APP != null) {
+        APP.finalize();
+    }
+}
+
+export function reset() {
+    if (APP != null) {
+        APP.reset();
+    }
 }
 
 export function saveAllToDisk() {
-    APP.resourceHandler.file.saveAllToDisk(APP.viewData);
+    if (APP && APP.ready) {
+        APP.resourceHandler.file.saveAllToDisk(APP.viewData);
+    }
 }
 
 export function writeLayoutAllXml(saveToDisk = false) {
-    if (APP != null) {
+    if (APP && APP.ready) {
         return APP.resourceHandler.file.layoutAllToXml(APP.viewData, saveToDisk);
     }
     return '';
 }
 
 export function writeResourceAllXml(saveToDisk = false) {
-    if (APP != null) {
+    if (APP && APP.ready) {
         return APP.resourceHandler.file.resourceAllToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStringXml(saveToDisk = false) {
-    if (APP != null) {
+    if (APP && APP.ready) {
         return APP.resourceHandler.file.resourceStringToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceArrayXml(saveToDisk = false) {
-    if (APP != null) {
+    if (APP && APP.ready) {
         return APP.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceFontXml(saveToDisk = false) {
-    if (APP != null) {
+    if (APP && APP.ready) {
         return APP.resourceHandler.file.resourceFontToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceColorXml(saveToDisk = false) {
-    if (APP != null) {
+    if (APP && APP.ready) {
         return APP.resourceHandler.file.resourceColorToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStyleXml(saveToDisk = false) {
-    if (APP != null) {
+    if (APP && APP.ready) {
         return APP.resourceHandler.file.resourceStyleToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceDrawableXml(saveToDisk = false) {
-    if (APP != null) {
+    if (APP && APP.ready) {
         return APP.resourceHandler.file.resourceDrawableToXml(saveToDisk);
     }
     return '';

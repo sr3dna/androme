@@ -1,4 +1,4 @@
-/* androme 1.7.3
+/* androme 1.7.4
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -694,8 +694,7 @@
             else if (element.children.length > 0) {
                 return Array.from(element.children).some((item) => {
                     const style = getComputedStyle(item);
-                    item.__style = style;
-                    return (!(style.position === '' || style.position === 'static') || style.float !== 'none');
+                    return (!(style.position === '' || style.position === 'static') || style.float === 'left' || style.float === 'right');
                 });
             }
         }
@@ -846,7 +845,11 @@
         constructor(TypeT, TypeU) {
             this.TypeT = TypeT;
             this.TypeU = TypeU;
+            this._ids = [];
+            this._views = [];
+            this._ready = false;
             this.cache = new this.TypeU();
+            this.cacheInternal = new this.TypeU();
         }
         registerView(viewHandler) {
             viewHandler.cache = this.cache;
@@ -856,6 +859,34 @@
             resource.cache = this.cache;
             this.resourceHandler = resource;
         }
+        finalize() {
+            this.resourceHandler.finalize(this.viewData);
+            const views = this.resourceHandler.views;
+            for (let i = 0; i < views.length; i++) {
+                let output = views[i].replace(/{[<@&>]{1}[0-9]+}/g, '');
+                if (SETTINGS.useUnitDP) {
+                    output = replaceDP(output, SETTINGS.density);
+                }
+                this._views[i] = output;
+            }
+            this._ready = true;
+        }
+        reset() {
+            this.cache.reset();
+            this.cacheInternal.reset();
+            this.resetView();
+            this.resetResource();
+            this.name = '';
+            this._ids = [];
+            this._views = [];
+            this._ready = false;
+        }
+        resetView() {
+            this.viewHandler.reset();
+        }
+        resetResource() {
+            this.resourceHandler.reset();
+        }
         setConstraints() {
             this.viewHandler.setConstraints();
         }
@@ -864,15 +895,6 @@
         }
         setLayoutWeight() {
             this.viewHandler.setLayoutWeight();
-        }
-        finalizeViews(output) {
-            output = this.viewHandler.replaceAppended(output);
-            output = output.replace(/{[<@>]{1}[0-9]+}/g, '');
-            if (SETTINGS.useUnitDP) {
-                output = replaceDP(output, SETTINGS.density);
-            }
-            this._generated = output;
-            return output;
         }
         setResources() {
             this.resourceHandler.setBoxSpacing();
@@ -893,11 +915,19 @@
                         for (const attr of Array.from(cssRule.style)) {
                             attributes.add(hyphenToCamelCase(attr));
                         }
-                        Array.from(document.querySelectorAll(cssRule.selectorText)).forEach((element) => {
+                        const elements = document.querySelectorAll(cssRule.selectorText);
+                        if (this.name !== '') {
+                            Array.from(elements).forEach((element) => {
+                                const object = element;
+                                delete object.__style;
+                                delete object.__styleMap;
+                            });
+                        }
+                        Array.from(elements).forEach((element) => {
                             for (const attr of Array.from(element.style)) {
                                 attributes.add(hyphenToCamelCase(attr));
                             }
-                            const style = element.__style || getComputedStyle(element);
+                            const style = getComputedStyle(element);
                             const styleMap = {};
                             for (const name of attributes) {
                                 if (name.toLowerCase().indexOf('color') !== -1) {
@@ -934,23 +964,26 @@
                 }
             }
         }
-        setNodeCache(documentRoot) {
+        setNodeCache(layoutRoot) {
             let nodeTotal = 0;
-            Array.from((documentRoot || document.body).childNodes).forEach((item) => {
-                if (item.nodeName === '#text') {
-                    if (item.textContent && item.textContent.trim() !== '') {
-                        nodeTotal++;
+            if (layoutRoot === document.body) {
+                Array.from(document.body.childNodes).forEach((item) => {
+                    if (item.nodeName === '#text') {
+                        if (item.textContent && item.textContent.trim() !== '') {
+                            nodeTotal++;
+                        }
                     }
-                }
-                else {
-                    if (isVisible(item)) {
-                        nodeTotal++;
+                    else {
+                        if (isVisible(item)) {
+                            nodeTotal++;
+                        }
                     }
-                }
-            });
-            const elements = (documentRoot != null ? documentRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
-            if (documentRoot != null) {
-                const node = this.insertNode(documentRoot);
+                });
+            }
+            const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+            this.cache.clear();
+            if (layoutRoot != null) {
+                const node = this.insertNode(layoutRoot);
                 if (node != null) {
                     node.parent = new this.TypeT(0, 0);
                 }
@@ -967,7 +1000,7 @@
                 if (element != null) {
                     preAlignment[node.id] = {};
                     const style = preAlignment[node.id];
-                    switch (node.style.textAlign) {
+                    switch (node.styleMap.textAlign) {
                         case 'center':
                         case 'right':
                         case 'end':
@@ -1061,6 +1094,8 @@
                     sortAsc(node.children, 'parentIndex');
                 }
             });
+            this.currentId = layoutRoot.dataset.currentId;
+            this.cacheInternal.list.push(...this.cache.list);
         }
         insertNode(element, parent) {
             let node = null;
@@ -1082,7 +1117,7 @@
             }
             return node;
         }
-        getLayoutXml() {
+        setLayoutXml() {
             let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
             const mapX = [];
             const mapY = [];
@@ -1466,18 +1501,57 @@
                     output = output.replace(`{${id}}`, views.join(''));
                 }
             }
-            this._generated = output;
-            return output;
+            this.create = output;
         }
-        replaceInlineAttributes(output) {
+        replaceInlineAttributes() {
             const options = {};
+            let output = this.current;
             this.cache.visible.forEach((node) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
             output = output.replace('{@0}', this.viewHandler.getRootAttributes(options));
-            this._generated = output;
-            return output;
+            this.current = output;
+        }
+        replaceAppended() {
+            const output = this.viewHandler.replaceAppended(this.current);
+            this.current = output;
         }
         toString() {
-            return this._generated;
+            return this._views[0] || '';
+        }
+        set name(value) {
+            if (this.resourceHandler != null) {
+                this.resourceHandler.file.appName = value;
+            }
+        }
+        get name() {
+            return (this.resourceHandler != null ? this.resourceHandler.file.appName : '');
+        }
+        set current(value) {
+            this._views[this._views.length - 1] = value;
+        }
+        get current() {
+            return this._views[this._views.length - 1];
+        }
+        set currentId(value) {
+            if (this._ids.length === this._views.length) {
+                this._ids.push(value);
+            }
+        }
+        get currentId() {
+            return this._ids[this._ids.length - 1] || '';
+        }
+        set create(value) {
+            if (this._views.length < this._ids.length) {
+                this._views.push(value);
+            }
+        }
+        get ready() {
+            return this._ready;
+        }
+        get viewData() {
+            return { cache: this.cacheInternal, ids: this._ids, views: this._views };
+        }
+        get length() {
+            return this._views.length;
         }
         writeFrameLayout(node, parent) {
             return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.FRAME);
@@ -1509,6 +1583,10 @@
 
     class View {
         constructor() {
+            this.before = {};
+            this.after = {};
+        }
+        reset() {
             this.before = {};
             this.after = {};
         }
@@ -1553,7 +1631,7 @@
                     indent + `</${tagName}>\n`;
             }
             else {
-                output += indent + `<${tagName}{@${id}} />\n`;
+                output += indent + `<${tagName}{@${id}}{&${id}} />\n`;
             }
             output += `{>${id}}` +
                 postXml;
@@ -1598,6 +1676,16 @@
             }
             return false;
         }
+        find(id) {
+            return this._list.find((node) => node.id === id);
+        }
+        reset() {
+            NodeList.currentId = 0;
+            this.clear();
+        }
+        clear() {
+            this._list = [];
+        }
         sortAsc(...attr) {
             return sortAsc(this._list, ...attr);
         }
@@ -1626,7 +1714,7 @@
             return this._list[this._list.length - 1];
         }
         get nextId() {
-            return this._list.length + 1;
+            return ++NodeList.currentId;
         }
         get linearX() {
             return NodeList.linearX(this._list);
@@ -1635,6 +1723,7 @@
             return NodeList.linearY(this._list);
         }
     }
+    NodeList.currentId = 0;
 
     class Node {
         constructor(id, element, options) {
@@ -1874,21 +1963,6 @@
         get parentOriginal() {
             return this._parentOriginal || this._parent;
         }
-        get parentElement() {
-            return this.element && this.element.parentElement;
-        }
-        set renderParent(value) {
-            if (value instanceof Node) {
-                value.renderChildren.push(this);
-            }
-            this._renderParent = value;
-        }
-        get renderParent() {
-            return this._renderParent;
-        }
-        get namespaces() {
-            return Array.from(this._namespaces);
-        }
         set tagName(value) {
             this._tagName = value;
         }
@@ -1900,6 +1974,21 @@
         }
         get viewName() {
             return this._viewName;
+        }
+        set renderParent(value) {
+            if (value instanceof Node) {
+                value.renderChildren.push(this);
+            }
+            this._renderParent = value;
+        }
+        get renderParent() {
+            return this._renderParent;
+        }
+        get parentElement() {
+            return this.element && this.element.parentElement;
+        }
+        get namespaces() {
+            return Array.from(this._namespaces);
         }
         get flex() {
             if (this._flex == null) {
@@ -2006,6 +2095,16 @@
     }
 
     var API_ANDROID = {
+        [0]: {
+            customizations: {
+                'Button': {
+                    android: {
+                        minWidth: '0dp',
+                        minHeight: '0dp'
+                    }
+                }
+            }
+        },
         [exports.build.OREO]: {
             android: ['fontWeight'],
             customizations: {}
@@ -2138,17 +2237,18 @@
             return result.sort();
         }
         applyCustomizations() {
-            const api = API_ANDROID[this.api];
-            if (api != null) {
-                const customizations = api.customizations[this.viewName];
-                if (customizations != null) {
-                    for (const obj in customizations) {
-                        for (const attr in customizations[obj]) {
-                            this.add(obj, attr, customizations[obj][attr], false);
+            [API_ANDROID[this.api], API_ANDROID[0]].forEach(item => {
+                if (item != null) {
+                    const customizations = item.customizations[this.viewName];
+                    if (customizations != null) {
+                        for (const obj in customizations) {
+                            for (const attr in customizations[obj]) {
+                                this.add(obj, attr, customizations[obj][attr], false);
+                            }
                         }
                     }
                 }
-            }
+            });
         }
         is(...views) {
             for (const value of views) {
@@ -2205,11 +2305,11 @@
                             this.android('layout_width', convertPX(styleMap.width));
                         }
                     }
-                    if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth)) {
+                    if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth) && !this.constraint.minWidth) {
                         this.android('layout_width', 'wrap_content', false);
                         this.android('minWidth', convertPX(styleMap.minWidth), false);
                     }
-                    if (hasValue(styleMap.maxWidth) && !isPercent(styleMap.maxWidth)) {
+                    if (hasValue(styleMap.maxWidth) && !isPercent(styleMap.maxWidth) && !this.constraint.maxWidth) {
                         this.android('maxWidth', convertPX(styleMap.maxWidth), false);
                     }
                 }
@@ -2262,11 +2362,11 @@
                             this.android('layout_height', convertPX(styleMap.height || styleMap.lineHeight));
                         }
                     }
-                    if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight)) {
+                    if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight) && !this.constraint.minHeight) {
                         this.android('layout_height', 'wrap_content', false);
                         this.android('minHeight', convertPX(styleMap.minHeight), false);
                     }
-                    if (hasValue(styleMap.maxHeight) && !isPercent(styleMap.maxHeight)) {
+                    if (hasValue(styleMap.maxHeight) && !isPercent(styleMap.maxHeight) && !this.constraint.maxHeight) {
                         this.android('maxHeight', convertPX(styleMap.maxHeight), false);
                     }
                 }
@@ -2463,6 +2563,14 @@
                     break;
             }
         }
+        set label(value) {
+            this._label = value;
+            value.companion = true;
+            value.labelFor = this;
+        }
+        get label() {
+            return this._label;
+        }
         get stringId() {
             return (hasValue(this.viewId) ? `@+id/${this.viewId}` : '');
         }
@@ -2477,14 +2585,6 @@
                 }
                 return (value != null ? Widget.getViewName(value) : '');
             }
-        }
-        set label(value) {
-            this._label = value;
-            value.companion = true;
-            value.labelFor = this;
-        }
-        get label() {
-            return this._label;
         }
         get anchored() {
             return (this.constraint.horizontal && this.constraint.vertical);
@@ -2810,7 +2910,7 @@
                                         if (linear1.top === linear2.top) {
                                             current.anchor(LAYOUT['top'], adjacent, 'vertical');
                                         }
-                                        if (linear1.bottom === linear2.bottom) {
+                                        if (withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset)) {
                                             current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
                                         }
                                     }
@@ -2842,7 +2942,7 @@
                                         if (current.linear.top === node.box.top) {
                                             current.anchor('layout_alignParentTop', adjacent, 'vertical');
                                         }
-                                        if (current.linear.bottom === node.box.bottom) {
+                                        if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset)) {
                                             current.anchor('layout_alignParentBottom', adjacent, 'vertical');
                                         }
                                     }
@@ -2998,15 +3098,25 @@
                                             chain.app(LAYOUT[CHAIN_MAP['leftRightTopBottom'][index]], previous.stringId);
                                         }
                                         if (chain.styleMap[dimension] == null) {
-                                            const min = chain.styleMap[`min${WH}`];
-                                            const max = chain.styleMap[`max${WH}`];
-                                            if (hasValue(min)) {
-                                                chain.app(`layout_constraint${WH}_min`, convertPX(min));
-                                                delete chain.styleMap[`min${WH}`];
+                                            const minW = chain.styleMap[`min${WH}`];
+                                            const minH = chain.styleMap[`min${HW}`];
+                                            const maxW = chain.styleMap[`max${WH}`];
+                                            const maxH = chain.styleMap[`max${HW}`];
+                                            if (hasValue(minW)) {
+                                                chain.app(`layout_constraint${WH}_min`, convertPX(minW));
+                                                chain.constraint[`min${WH}`] = true;
                                             }
-                                            if (hasValue(max)) {
-                                                chain.app(`layout_constraint${WH}_max`, convertPX(max));
-                                                delete chain.styleMap[`max${WH}`];
+                                            if (hasValue(maxW)) {
+                                                chain.app(`layout_constraint${WH}_max`, convertPX(maxW));
+                                                chain.constraint[`max${WH}`] = true;
+                                            }
+                                            if (hasValue(minH)) {
+                                                chain.app(`layout_constraint${HW}_min`, convertPX(minH));
+                                                chain.constraint[`min${HW}`] = true;
+                                            }
+                                            if (hasValue(maxH)) {
+                                                chain.app(`layout_constraint${HW}_max`, convertPX(maxH));
+                                                chain.constraint[`max${HW}`] = true;
                                             }
                                         }
                                         if (flex.enabled) {
@@ -3474,21 +3584,13 @@
                         case 'password':
                             node.android('inputType', 'textPassword');
                             break;
+                        case 'text':
+                            node.android('inputType', 'text');
+                            break;
                     }
                     break;
             }
             switch (node.viewName) {
-                case VIEW_ANDROID.EDIT:
-                    node.android('inputType', 'text');
-                    break;
-                case VIEW_ANDROID.BUTTON:
-                    if (node.viewWidth === 0) {
-                        node.android('minWidth', '0px');
-                    }
-                    if (node.viewHeight === 0) {
-                        node.android('minHeight', '0px');
-                    }
-                    break;
                 case VIEW_ANDROID.TEXT:
                     if (node.overflow !== 0 /* NONE */) {
                         const scrollbars = [];
@@ -4204,7 +4306,21 @@
     class ResourceWidget extends Resource {
         constructor(file) {
             super(file);
+            this.tagStyle = {};
+            this.tagCount = {};
             this.file.stored = STORED;
+        }
+        finalize(viewData) {
+            this.processFontStyle(viewData);
+        }
+        reset() {
+            STORED.ARRAYS = new Map();
+            STORED.FONTS = new Map();
+            STORED.DRAWABLES = new Map();
+            STORED.STYLES = new Map();
+            STORED.STRINGS = new Map();
+            STORED.COLORS = new Map();
+            STORED.IMAGES = new Map();
         }
         setBoxSpacing() {
             super.setBoxSpacing();
@@ -4329,8 +4445,6 @@
         setFontStyle() {
             super.setFontStyle();
             const tagName = {};
-            const style = {};
-            const layout = {};
             this.cache.elements.forEach((node) => {
                 if (node.element.__fontStyle != null) {
                     if (tagName[node.tagName] == null) {
@@ -4341,7 +4455,7 @@
             });
             for (const tag in tagName) {
                 const nodes = tagName[tag];
-                let sorted = [];
+                const sorted = [];
                 nodes.forEach((node) => {
                     if (node.labelFor != null) {
                         return;
@@ -4354,7 +4468,7 @@
                     }
                     const element = node.element;
                     if (element != null) {
-                        const id = (labelFor || node).id;
+                        const nodeId = (labelFor || node).id;
                         const stored = Object.assign({}, element.__fontStyle);
                         const fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
                         let fontStyle = '';
@@ -4407,7 +4521,7 @@
                                 if (sorted[i][attr] == null) {
                                     sorted[i][attr] = [];
                                 }
-                                sorted[i][attr].push(id);
+                                sorted[i][attr].push(nodeId);
                             }
                         }
                         if (!system) {
@@ -4418,8 +4532,92 @@
                         }
                     }
                 });
+                if (this.tagStyle[tag] != null) {
+                    const tagStyle = this.tagStyle[tag];
+                    for (let i = 0; i < tagStyle.length; i++) {
+                        for (const attr in tagStyle[i]) {
+                            if (sorted[i][attr] != null) {
+                                sorted[i][attr].push(...tagStyle[i][attr]);
+                            }
+                            else {
+                                sorted[i][attr] = tagStyle[i][attr];
+                            }
+                        }
+                    }
+                    this.tagCount[tag] += nodes.length;
+                }
+                else {
+                    this.tagCount[tag] = nodes.length;
+                }
+                this.tagStyle[tag] = sorted;
+            }
+        }
+        setImageSource() {
+            super.setImageSource();
+            this.cache.list.filter((item) => item.tagName === 'IMG').forEach((node) => {
+                const stored = node.element.__imageSource;
+                if (stored != null) {
+                    const method = METHOD_ANDROID['imageSource'];
+                    node.attr(formatString(method['src'], stored));
+                }
+            });
+        }
+        setOptionArray() {
+            super.setOptionArray();
+            this.cache.list.filter((item) => item.tagName === 'SELECT').forEach((node) => {
+                const stored = node.element.__optionArray;
+                const method = METHOD_ANDROID['optionArray'];
+                let result = [];
+                if (stored.stringArray != null) {
+                    for (const value of stored.stringArray) {
+                        const name = STORED.STRINGS.get(value);
+                        result.push((name != null ? `@string/${name}` : value));
+                    }
+                }
+                if (stored.numberArray != null) {
+                    result = stored.numberArray;
+                }
+                const arrayName = `${node.viewId}_array`;
+                STORED.ARRAYS.set(arrayName, result);
+                node.attr(formatString(method['entries'], arrayName));
+            });
+        }
+        setValueString() {
+            super.setValueString();
+            this.cache.elements.forEach((node) => {
+                const element = (node.label != null ? node.label.element : node.element);
+                const stored = element.__valueString;
+                if (stored != null) {
+                    const method = METHOD_ANDROID['valueString'];
+                    const name = STORED.STRINGS.get(stored);
+                    if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
+                        const match = node.style.textDecoration.match(/(underline|line-through)/);
+                        if (match != null) {
+                            let value = '';
+                            switch (match[0]) {
+                                case 'underline':
+                                    value = `<u>${stored}</u>`;
+                                    break;
+                                case 'line-through':
+                                    value = `<strike>${stored}</strike>`;
+                                    break;
+                            }
+                            STORED.STRINGS.delete(stored);
+                            STORED.STRINGS.set(value, name);
+                        }
+                    }
+                    node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
+                }
+            });
+        }
+        processFontStyle(viewData) {
+            const style = {};
+            const layout = {};
+            for (const tag in this.tagStyle) {
                 style[tag] = {};
                 layout[tag] = {};
+                let sorted = this.tagStyle[tag].slice();
+                const count = this.tagCount[tag];
                 do {
                     if (sorted.length === 1) {
                         for (const attr in sorted[0]) {
@@ -4439,7 +4637,7 @@
                         for (let i = 0; i < sorted.length; i++) {
                             const filtered = {};
                             for (const attr1 in sorted[i]) {
-                                if (sorted[i] == null) {
+                                if (Object.keys(sorted[i]).length === 0) {
                                     continue;
                                 }
                                 const ids = sorted[i][attr1];
@@ -4447,14 +4645,14 @@
                                 if (ids == null || ids.length === 0) {
                                     continue;
                                 }
-                                else if (ids.length === nodes.length) {
+                                else if (ids.length === count) {
                                     styleKey[attr1] = ids;
-                                    sorted[i] = null;
+                                    sorted[i] = {};
                                     revalidate = true;
                                 }
                                 else if (ids.length === 1) {
                                     layoutKey[attr1] = ids;
-                                    sorted[i] = null;
+                                    sorted[i] = {};
                                     revalidate = true;
                                 }
                                 if (!revalidate) {
@@ -4463,12 +4661,12 @@
                                         if (i !== j) {
                                             for (const attr in sorted[j]) {
                                                 const compare$$1 = sorted[j][attr];
-                                                for (const id of ids) {
-                                                    if (compare$$1.includes(id)) {
+                                                for (const nodeId of ids) {
+                                                    if (compare$$1.includes(nodeId)) {
                                                         if (found[attr] == null) {
                                                             found[attr] = [];
                                                         }
-                                                        found[attr].push(id);
+                                                        found[attr].push(nodeId);
                                                     }
                                                 }
                                             }
@@ -4543,28 +4741,52 @@
                 resource[name] = tagData;
             }
             const inherit = new Set();
-            this.cache.elements.forEach((node) => {
-                if (resource[node.tagName] != null) {
-                    const styles = [];
-                    for (const item of resource[node.tagName]) {
-                        if (item.ids.includes(node.id)) {
-                            styles.push(item.name);
+            const map = {};
+            for (const tagName in resource) {
+                for (const item of resource[tagName]) {
+                    for (const id of item.ids) {
+                        if (map[id] == null) {
+                            map[id] = { styles: [], attributes: [] };
                         }
-                    }
-                    if (styles.length > 0) {
-                        inherit.add(styles.join('.'));
-                        node.attr(`style="@style/${styles.pop()}"`);
+                        map[id].styles.push(item.name);
                     }
                 }
-                const tagData = layout[node.tagName];
+                const tagData = layout[tagName];
                 if (tagData != null) {
                     for (const attr in tagData) {
-                        if (tagData[attr].includes(node.id)) {
-                            node.attr(attr, false);
+                        for (const id of tagData[attr]) {
+                            if (map[id] == null) {
+                                map[id] = { styles: [], attributes: [] };
+                            }
+                            map[id].attributes(attr);
                         }
                     }
                 }
-            });
+            }
+            for (const id in map) {
+                const node = viewData.cache.find(parseInt(id));
+                if (node != null) {
+                    let append = '';
+                    const styles = map[id].styles;
+                    const attributes = map[id].attributes;
+                    const indent = padLeft(node.renderDepth + 1);
+                    if (styles.length > 0) {
+                        inherit.add(styles.join('.'));
+                        append += `\n${indent}style="@style/${styles.pop()}"`;
+                    }
+                    if (attributes.length > 0) {
+                        attributes.sort().forEach((value) => append += `\n${indent}${value}`);
+                    }
+                    for (let i = 0; i < viewData.views.length; i++) {
+                        const output = viewData.views[i];
+                        const pattern = `{&${id}}`;
+                        if (new RegExp(pattern).test(output)) {
+                            viewData.views[i] = output.replace(pattern, append);
+                            break;
+                        }
+                    }
+                }
+            }
             for (const styles of inherit) {
                 let parent = '';
                 styles.split('.').forEach((value) => {
@@ -4576,64 +4798,7 @@
                     }
                 });
             }
-        }
-        setImageSource() {
-            super.setImageSource();
-            this.cache.list.filter((item) => item.tagName === 'IMG').forEach((node) => {
-                const stored = node.element.__imageSource;
-                if (stored != null) {
-                    const method = METHOD_ANDROID['imageSource'];
-                    node.attr(formatString(method['src'], stored));
-                }
-            });
-        }
-        setOptionArray() {
-            super.setOptionArray();
-            this.cache.list.filter((item) => item.tagName === 'SELECT').forEach((node) => {
-                const stored = node.element.__optionArray;
-                const method = METHOD_ANDROID['optionArray'];
-                let result = [];
-                if (stored.stringArray != null) {
-                    for (const value of stored.stringArray) {
-                        const name = STORED.STRINGS.get(value);
-                        result.push((name != null ? `@string/${name}` : value));
-                    }
-                }
-                if (stored.numberArray != null) {
-                    result = stored.numberArray;
-                }
-                const arrayName = `${node.viewId}_array`;
-                STORED.ARRAYS.set(arrayName, result);
-                node.attr(formatString(method['entries'], arrayName));
-            });
-        }
-        setValueString() {
-            super.setValueString();
-            this.cache.elements.forEach((node) => {
-                const element = (node.label != null ? node.label.element : node.element);
-                const stored = element.__valueString;
-                if (stored != null) {
-                    const method = METHOD_ANDROID['valueString'];
-                    const name = STORED.STRINGS.get(stored);
-                    if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
-                        const match = node.style.textDecoration.match(/(underline|line-through)/);
-                        if (match != null) {
-                            let value = '';
-                            switch (match[0]) {
-                                case 'underline':
-                                    value = `<u>${stored}</u>`;
-                                    break;
-                                case 'line-through':
-                                    value = `<strike>${stored}</strike>`;
-                                    break;
-                            }
-                            STORED.STRINGS.delete(stored);
-                            STORED.STRINGS.set(value, name);
-                        }
-                    }
-                    node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
-                }
-            });
+            this.views = viewData.views;
         }
         deleteStyleAttribute(sorted, attributes, ids) {
             attributes.split(';').forEach(value => {
@@ -4679,10 +4844,10 @@
     }
 
     class File {
-        constructor(directory, appName, processingTime, compression) {
+        constructor(directory, processingTime, compression) {
             this.directory = directory;
-            this.appName = appName;
             this.processingTime = processingTime;
+            this.appName = '';
             this.compression = 'zip';
             if (hasValue(compression)) {
                 this.compression = compression;
@@ -4818,14 +4983,40 @@
     var DRAWABLE_TMPL = template$7.join('\n');
 
     class FileRes extends File {
-        constructor(appName) {
-            super(SETTINGS.outputDirectory, appName, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
+        constructor() {
+            super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
         }
-        layoutMainToDisk(content) {
-            this.saveToDisk([this.getLayoutMainFile(content)]);
+        saveAllToDisk(data) {
+            const files = [];
+            for (let i = 0; i < data.views.length; i++) {
+                files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
+            }
+            const drawableXml = this.resourceDrawableToXml();
+            files.push(...this.parseFileDetails(this.resourceStringToXml()));
+            files.push(...this.parseFileDetails(this.resourceStringArrayToXml()));
+            files.push(...this.parseFileDetails(this.resourceFontToXml()));
+            files.push(...this.parseFileDetails(this.resourceColorToXml()));
+            files.push(...this.parseFileDetails(this.resourceStyleToXml()));
+            files.push(...this.parseImageDetails(drawableXml), ...this.parseFileDetails(drawableXml));
+            this.saveToDisk(files);
         }
-        resourceAllToXml(saveToDisk = false, layoutMain = '') {
-            const data = {
+        layoutAllToXml(data, saveToDisk = false) {
+            const result = {};
+            const files = [];
+            for (let i = 0; i < data.views.length; i++) {
+                const view = data.views[i];
+                result[data.ids[i]] = view;
+                if (saveToDisk) {
+                    files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), view));
+                }
+            }
+            if (saveToDisk) {
+                this.saveToDisk(files);
+            }
+            return result;
+        }
+        resourceAllToXml(saveToDisk = false) {
+            const result = {
                 string: this.resourceStringToXml(),
                 stringArray: this.resourceStringArrayToXml(),
                 font: this.resourceFontToXml(),
@@ -4835,21 +5026,15 @@
             };
             if (saveToDisk) {
                 const files = [];
-                if (layoutMain !== '') {
-                    files.push(this.getLayoutMainFile(layoutMain));
-                }
-                for (const resource in data) {
+                for (const resource in result) {
                     if (resource === 'drawable') {
-                        files.push(...this.parseImageDetails(data[resource]));
+                        files.push(...this.parseImageDetails(result[resource]));
                     }
-                    files.push(...this.parseFileDetails(data[resource]));
+                    files.push(...this.parseFileDetails(result[resource]));
                 }
                 this.saveToDisk(files);
             }
-            if (layoutMain !== '') {
-                data.main = layoutMain;
-            }
-            return data;
+            return result;
         }
         resourceStringToXml(saveToDisk = false) {
             if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
@@ -5048,93 +5233,150 @@
             }
             return result;
         }
-        getLayoutMainFile(content) {
+        getLayoutFile(fileName, content) {
             return {
                 content,
                 pathname: 'res/layout',
-                filename: SETTINGS.outputActivityMainFileName
+                filename: fileName
             };
         }
     }
 
-    let app;
-    function parseDocument(element) {
-        if (typeof element === 'string') {
-            element = document.getElementById(element);
+    let APP;
+    function parseDocument(...elements) {
+        let app;
+        if (APP == null) {
+            const Node = Widget;
+            const NodeList = WidgetList;
+            const View = new Layout();
+            const File = new FileRes();
+            const Resource = new ResourceWidget(File);
+            app = new Application(Node, NodeList);
+            app.registerView(View);
+            app.registerResource(Resource);
+            APP = app;
         }
-        let output = '';
-        app = new Application(Widget, WidgetList);
-        app.registerView(new Layout());
-        app.registerResource(new ResourceWidget(new FileRes(element.id)));
+        else {
+            app = APP;
+            app.resetView();
+        }
+        if (app.ready) {
+            return false;
+        }
         app.setStyleMap();
-        app.setNodeCache(element);
-        output = app.getLayoutXml();
-        app.setResources();
-        if (SETTINGS.showAttributes) {
-            app.setMarginPadding();
-            if (SETTINGS.useLayoutWeight) {
-                app.setLayoutWeight();
-            }
-            app.setConstraints();
-            output = app.replaceInlineAttributes(output);
+        if (app.name === '' && elements.length === 0) {
+            elements.push(document.body);
         }
-        output = app.finalizeViews(output);
-        return output;
-    }
-    function writeLayoutMainXml(saveToDisk = false) {
-        if (app != null) {
-            if (saveToDisk) {
-                app.resourceHandler.file.layoutMainToDisk(app.toString());
+        for (let i = 0; i < elements.length; i++) {
+            let element = elements[i];
+            if (typeof element === 'string') {
+                element = document.getElementById(element);
             }
-            return app.toString();
+            if (!(element instanceof HTMLElement)) {
+                continue;
+            }
+            if (app.name === '') {
+                if (element.id === '') {
+                    element.id = 'androme';
+                }
+                app.name = element.id;
+            }
+            else {
+                if (element.id === '') {
+                    element.id = `view${app.length}`;
+                }
+            }
+            element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
+            element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}-${element.dataset.views}` : element.id);
+            app.setNodeCache(element);
+            app.setLayoutXml();
+            app.setResources();
+            if (SETTINGS.showAttributes) {
+                app.setMarginPadding();
+                if (SETTINGS.useLayoutWeight) {
+                    app.setLayoutWeight();
+                }
+                app.setConstraints();
+                app.replaceInlineAttributes();
+            }
+            app.replaceAppended();
+        }
+    }
+    function toString() {
+        if (APP && APP.ready) {
+            return APP.toString();
+        }
+    }
+    function close() {
+        if (APP != null) {
+            APP.finalize();
+        }
+    }
+    function reset() {
+        if (APP != null) {
+            APP.reset();
+        }
+    }
+    function saveAllToDisk() {
+        if (APP && APP.ready) {
+            APP.resourceHandler.file.saveAllToDisk(APP.viewData);
+        }
+    }
+    function writeLayoutAllXml(saveToDisk = false) {
+        if (APP && APP.ready) {
+            return APP.resourceHandler.file.layoutAllToXml(APP.viewData, saveToDisk);
         }
         return '';
     }
-    function writeResourceAllXml(saveToDisk = false, layoutMain = false) {
-        if (app != null) {
-            return app.resourceHandler.file.resourceAllToXml(saveToDisk, (layoutMain ? app.toString() : ''));
+    function writeResourceAllXml(saveToDisk = false) {
+        if (APP && APP.ready) {
+            return APP.resourceHandler.file.resourceAllToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceStringXml(saveToDisk = false) {
-        if (app != null) {
-            return app.resourceHandler.file.resourceStringToXml(saveToDisk);
+        if (APP && APP.ready) {
+            return APP.resourceHandler.file.resourceStringToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceArrayXml(saveToDisk = false) {
-        if (app != null) {
-            return app.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
+        if (APP && APP.ready) {
+            return APP.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceFontXml(saveToDisk = false) {
-        if (app != null) {
-            return app.resourceHandler.file.resourceFontToXml(saveToDisk);
+        if (APP && APP.ready) {
+            return APP.resourceHandler.file.resourceFontToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceColorXml(saveToDisk = false) {
-        if (app != null) {
-            return app.resourceHandler.file.resourceColorToXml(saveToDisk);
+        if (APP && APP.ready) {
+            return APP.resourceHandler.file.resourceColorToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceStyleXml(saveToDisk = false) {
-        if (app != null) {
-            return app.resourceHandler.file.resourceStyleToXml(saveToDisk);
+        if (APP && APP.ready) {
+            return APP.resourceHandler.file.resourceStyleToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceDrawableXml(saveToDisk = false) {
-        if (app != null) {
-            return app.resourceHandler.file.resourceDrawableToXml(saveToDisk);
+        if (APP && APP.ready) {
+            return APP.resourceHandler.file.resourceDrawableToXml(saveToDisk);
         }
         return '';
     }
 
     exports.parseDocument = parseDocument;
-    exports.writeLayoutMainXml = writeLayoutMainXml;
+    exports.toString = toString;
+    exports.close = close;
+    exports.reset = reset;
+    exports.saveAllToDisk = saveAllToDisk;
+    exports.writeLayoutAllXml = writeLayoutAllXml;
     exports.writeResourceAllXml = writeResourceAllXml;
     exports.writeResourceStringXml = writeResourceStringXml;
     exports.writeResourceArrayXml = writeResourceArrayXml;
