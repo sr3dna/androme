@@ -15,7 +15,8 @@
             display: inline-block;
         }
         .output {
-            min-width: 400px;
+            width: 425px;
+            overflow: auto;
             float: left;
         }
         .output pre {
@@ -37,7 +38,7 @@
     </style>
     <script src="../dist/androme.js"></script>
     <script>
-        var images = 0;
+        let images = 0;
         function loaded() {
             if (++images == 2) {
                 androme.parseDocument('androme-root');

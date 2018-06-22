@@ -10,7 +10,8 @@ body > div {
 }
 
 .output {
-    min-width: 400px;
+    width: 425px;
+    overflow: auto;
     float: left;
 }
 

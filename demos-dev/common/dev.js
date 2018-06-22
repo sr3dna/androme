@@ -1,4 +1,4 @@
-var androme = null;
+let androme = null;
 
 SystemJS.config({
     packages: {

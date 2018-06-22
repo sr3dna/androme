@@ -8,7 +8,7 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        var images = 0;
+        let images = 0;
         SystemJS.import('/build/main.js').then(function(result) {
             androme = result;
         });
