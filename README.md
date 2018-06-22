@@ -22,7 +22,7 @@ Express server through Node.js is available with a provided default configuratio
 
 * Install dependencies: (choose one)
   1. npm install && npm run prod
-  2. npm install
+  2. npm install --production
 
 * Load web server:
   1. node app.js
@@ -78,7 +78,7 @@ androme.settings = {
     useGridLayout: true,
     useLayoutWeight: true,
     useUnitDP: true,
-    useFontAlias: false,
+    useFontAlias: true,
     supportRTL: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
@@ -87,7 +87,7 @@ androme.settings = {
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,
-	chainPackedVerticalOffset: 14,
+    chainPackedVerticalOffset: 14,
     autoCloseOnWrite: true,
     outputDirectory: 'app/src/main',
     outputArchiveFileType: 'zip', // zip | tar
@@ -114,6 +114,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <img src="demos/android/layout_weight.png" alt="gridlayout - layout weight" />
 
 <img src="demos/android/float.png" alt="float - left | right" />
+
+<img src="demos/android/nested_lists.png" alt="nested lists" />
 
 <img src="demos/android/position_absolute.png" alt="constraintlayout - position: absolute" />
 
@@ -917,7 +919,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 					<RadioGroup
 						android:id="@+id/radiogroup_1"
 						android:checkedButton="@+id/c2"
-						android:layout_height="match_parent"
+						android:layout_height="wrap_content"
 						android:layout_width="wrap_content"
 						android:orientation="horizontal">
 						<RadioButton
@@ -1064,7 +1066,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<style name="H2_1">
-		<item name="android:background">@color/slate_gray</item>
 		<item name="android:fontFamily">@font/tahoma_bold</item>
 		<item name="android:textColor">@color/white</item>
 		<item name="android:textSize">12sp</item>
@@ -1086,7 +1087,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		<item name="android:textSize">11sp</item>
 	</style>
 	<style name="Input_1">
-		<item name="android:background">@color/white_smoke_1</item>
 		<item name="android:fontFamily">@font/arial</item>
 		<item name="android:textSize">10sp</item>
 	</style>

@@ -5,7 +5,7 @@ import NodeList from './nodelist';
 import { INLINE_CHROME } from '../lib/constants';
 import { cameltoLowerCase, convertPX, generateId, getFileExt, getFileName, hasValue, isNumber } from '../lib/util';
 import { findNearestColor, parseRGBA } from '../lib/color';
-import { getBoxSpacing, getStyle } from '../lib/dom';
+import { getBoxSpacing, sameAsParent } from '../lib/dom';
 import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
@@ -166,11 +166,7 @@ export default abstract class Resource<T extends Node> {
                     for (const i in result) {
                         result[i] = result[i](node.css(i), node, i);
                     }
-                    let backgroundParent: string[] = [];
-                    if (element.parentElement != null) {
-                        backgroundParent = parseRGBA(getStyle(element.parentElement)['backgroundColor']);
-                    }
-                    if (backgroundParent[0] === result.backgroundColor[0] || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
+                    if (sameAsParent(element, 'backgroundColor') || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
                         result.backgroundColor = [];
                     }
                     else {
@@ -197,15 +193,16 @@ export default abstract class Resource<T extends Node> {
                         case 'AREA':
                             return;
                     }
-                    const color = parseRGBA(node.css('color') || '');
-                    const backgroundColor = parseRGBA(node.css('backgroundColor') || '');
+                    let color = parseRGBA(node.css('color') || '');
+                    if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0])) {
+                        color = [];
+                    }
                     const result = {
                         fontFamily: node.css('fontFamily'),
                         fontStyle: node.css('fontStyle'),
                         fontSize: node.css('fontSize'),
                         fontWeight: node.css('fontWeight'),
-                        color: (color.length > 0 ? Resource.addColor(color[0]) : ''),
-                        backgroundColor: (backgroundColor.length > 0 ? Resource.addColor(backgroundColor[0]) : '')
+                        color: (color.length > 0 ? Resource.addColor(color[0]) : '')
                     };
                     (<any> element).__fontStyle = result;
                 }

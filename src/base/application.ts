@@ -4,7 +4,7 @@ import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
 import { BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { hasValue, hyphenToCamelCase, replaceDP, sortAsc } from '../lib/util';
+import { convertAlpha, convertRoman, hasValue, hyphenToCamelCase, replaceDP, sortAsc } from '../lib/util';
 import { convertRGB, getByColorName } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
@@ -262,7 +262,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     node.parent = closest;
                 }
             }
-            if (node.element && node.element.children && node.element.children.length > 1) {
+            if (node.element && node.element.children.length > 0 && !node.children.every((current: T) => INLINE_CHROME.includes(current.tagName))) {
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                     if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
                         this.insertNode(element, node);
@@ -375,6 +375,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 tagName = this.viewHandler.getViewName(VIEW_STANDARD.TEXT);
                             }
                             else if (nodeY.children.length > 0) {
+                                const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                 if (nodeY.tagName === 'TABLE') {
                                     const tableRows: T[] = [];
                                     const thead = (<T> nodeY.children.find((item: T) => item.tagName === 'THEAD'));
@@ -641,9 +642,53 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         }
                                     }
                                 }
+                                else if ((nodeY.tagName === 'UL' || nodeY.tagName === 'OL') && nodeY.css('listStyleType') !== 'none' && (linearX || linearY) && nodeY.children.every((item: T) => item.tagName === 'LI') && nodeY.children.some((item: T) => item.css('display') === 'list-item')) {
+                                    if (linearY) {
+                                        xml += this.writeGridLayout(nodeY, parent, 2);
+                                    }
+                                    else {
+                                        xml += this.writeLinearLayout(nodeY, parent, linearY);
+                                    }
+                                    for (let l = 0, m = 0; l < nodeY.children.length; l++) {
+                                        const node = nodeY.children[l];
+                                        const listStyle = nodeY.css('listStyleType');
+                                        let ordinal = '0';
+                                        if (node.css('display') === 'list-item') {
+                                            switch (listStyle) {
+                                                case 'disc':
+                                                    ordinal = '●';
+                                                    break;
+                                                case 'square':
+                                                    ordinal = '■';
+                                                    break;
+                                                case 'lower-alpha':
+                                                case 'lower-latin':
+                                                    ordinal = `${convertAlpha(m).toLowerCase()}.`;
+                                                    break;
+                                                case 'upper-alpha':
+                                                case 'upper-latin':
+                                                    ordinal = `${convertAlpha(m)}.`;
+                                                    break;
+                                                case 'lower-roman':
+                                                    ordinal = `${convertRoman(m + 1).toLowerCase()}.`;
+                                                    break;
+                                                case 'upper-roman':
+                                                    ordinal = `${convertRoman(m + 1)}.`;
+                                                    break;
+                                                default:
+                                                    if (nodeY.tagName === 'OL') {
+                                                        ordinal = `${(listStyle === 'decimal-leading-zero' && m < 9 ? '0' : '') && (m + 1).toString()}.`;
+                                                    }
+                                                    else {
+                                                        ordinal = '○';
+                                                    }
+                                            }
+                                            m++;
+                                        }
+                                        node.listStyle = ordinal;
+                                    }
+                                }
                                 if (!nodeY.renderParent) {
-                                    const children = new this.TypeU(<T[]> nodeY.children);
-                                    const [linearX, linearY] = [children.linearX, children.linearY];
                                     if (!nodeY.flex.enabled && linearX && linearY) {
                                         xml += this.writeFrameLayout(nodeY, parent);
                                     }

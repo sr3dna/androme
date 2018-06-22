@@ -72,6 +72,40 @@ export function hyphenToCamelCase(value: string) {
     return value;
 }
 
+export function convertAlpha(value: number) {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    while (value >= alphabet.length) {
+        const base = Math.floor(value / alphabet.length);
+        if (base > 1 && base <= alphabet.length) {
+            result += alphabet.charAt(base - 1);
+            value -= base * alphabet.length;
+        }
+        else if (base > alphabet.length) {
+            result += convertAlpha(base * alphabet.length);
+            value -= base * alphabet.length;
+        }
+        const index = value % alphabet.length;
+        result += alphabet.charAt(index);
+        value -= index + alphabet.length;
+    }
+    result = alphabet.charAt(value) + result;
+    return result;
+}
+
+export function convertRoman(value: number) {
+    let result = '';
+    const digits = value.toString().split('');
+    const numerals = ['', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
+                      '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
+                      '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+    let i = 3;
+    while (i--) {
+        result = (numerals[parseInt(<string> digits.pop()) + (i * 10)] || '') + result;
+    }
+    return 'M'.repeat(parseInt(digits.join(''))) + result;
+}
+
 export function padLeft(n: number, value = '\t') {
     return value.repeat(n);
 }
@@ -253,14 +287,6 @@ export function withinRange(a: number, b: number, n = 1) {
 
 export function withinFraction(lower: number, upper: number) {
     return (lower === upper || Math.ceil(lower) === Math.floor(upper));
-}
-
-export function remove<T>(list: T[], value: any) {
-    const index = list.indexOf(value);
-    if (index !== -1) {
-        list.splice(index, 1);
-    }
-    return list;
 }
 
 export function caseInsensitve(a: any, b: any) {

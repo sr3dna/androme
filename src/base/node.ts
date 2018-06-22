@@ -15,6 +15,7 @@ export default abstract class Node implements BoxModel {
     public box: ClientRect;
     public renderDepth: number;
     public viewId: string;
+    public listStyle: string;
 
     public gridRowSpan: number = 0;
     public gridColumnSpan: number = 0;

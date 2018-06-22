@@ -178,6 +178,8 @@ export default class Widget extends Node {
         let width: number;
         let height: number;
         let wrapContent: boolean;
+        const renderParent = this.renderParent;
+        const constraint = this.constraint;
         if (options != null) {
             parent = options.parent;
             [width, height] = [options.width, options.height];
@@ -199,7 +201,7 @@ export default class Widget extends Node {
             if (this.android('layout_width') !== '0px') {
                 if (hasValue(styleMap.width)) {
                     if (isPercent(styleMap.width)) {
-                        if (this.renderParent.tagName === 'TABLE') {
+                        if (renderParent.tagName === 'TABLE') {
                             this.android('layout_columnWeight', (convertInt(styleMap.width) / 100).toFixed(2));
                             this.android('layout_width', '0px');
                         }
@@ -211,16 +213,16 @@ export default class Widget extends Node {
                         this.android('layout_width', convertPX(styleMap.width));
                     }
                 }
-                if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth) && !this.constraint.minWidth) {
+                if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
                     this.android('layout_width', 'wrap_content', false);
                     this.android('minWidth', convertPX(styleMap.minWidth), false);
                 }
-                if (hasValue(styleMap.maxWidth) && !isPercent(styleMap.maxWidth) && !this.constraint.maxWidth) {
+                if (hasValue(styleMap.maxWidth) && !isPercent(styleMap.maxWidth) && !constraint.maxWidth) {
                     this.android('maxWidth', convertPX(styleMap.maxWidth), false);
                 }
             }
-            if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
-                if (this.constraint.layoutWidth) {
+            if ((!this.flex.enabled || constraint.expand) && constraint.layoutWidth != null) {
+                if (constraint.layoutWidth) {
                     this.android('layout_width', (this.renderChildren.some((node: T) => node.css('float') === 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
                 }
                 else {
@@ -228,7 +230,7 @@ export default class Widget extends Node {
                 }
             }
             else if (this.android('layout_width') == null) {
-                if (wrapContent) {
+                if (wrapContent || renderParent.android('layout_width') === 'wrap_content') {
                     this.android('layout_width', 'wrap_content');
                 }
                 else {
@@ -256,7 +258,7 @@ export default class Widget extends Node {
             if (this.android('layout_height') !== '0px') {
                 if (hasValue(styleMap.height) || hasValue(styleMap.lineHeight)) {
                     if (isPercent(styleMap.height) || isPercent(styleMap.lineHeight)) {
-                        if (this.renderParent.tagName === 'TABLE') {
+                        if (renderParent.tagName === 'TABLE') {
                             this.android('layout_rowWeight', (convertInt(styleMap.height || styleMap.lineHeight) / 100).toFixed(2));
                             this.android('layout_height', '0px');
                         }
@@ -268,19 +270,19 @@ export default class Widget extends Node {
                         this.android('layout_height', convertPX(styleMap.height || styleMap.lineHeight));
                     }
                 }
-                if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight) && !this.constraint.minHeight) {
+                if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight) && !constraint.minHeight) {
                     this.android('layout_height', 'wrap_content', false);
                     this.android('minHeight', convertPX(styleMap.minHeight), false);
                 }
-                if (hasValue(styleMap.maxHeight) && !isPercent(styleMap.maxHeight) && !this.constraint.maxHeight) {
+                if (hasValue(styleMap.maxHeight) && !isPercent(styleMap.maxHeight) && !constraint.maxHeight) {
                     this.android('maxHeight', convertPX(styleMap.maxHeight), false);
                 }
             }
-            if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutHeight != null) {
-                this.android('layout_height', (this.constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), this.constraint.layoutHeight);
+            if ((!this.flex.enabled || constraint.expand) && constraint.layoutHeight != null) {
+                this.android('layout_height', (constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), constraint.layoutHeight);
             }
             else if (this.android('layout_height') == null) {
-                this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) && !this.renderParent.is(VIEW_STANDARD.RELATIVE) ? 'match_parent' : 'wrap_content'));
+                this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) && !renderParent.is(VIEW_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content' ? 'match_parent' : 'wrap_content'));
             }
         }
         if (this.is(VIEW_STANDARD.LINEAR) && this.renderChildren.length > 0 && this.renderChildren.every((item: T) => item.css('float') === 'right')) {
@@ -348,7 +350,6 @@ export default class Widget extends Node {
             let horizontal = '';
             let vertical = '';
             let gravity: string[] = [];
-            let layoutGravity: string[] = [];
             switch (textAlign) {
                 case 'start':
                     horizontal = 'start';
@@ -379,34 +380,26 @@ export default class Widget extends Node {
                         vertical = 'center_vertical';
                     }
             }
-            const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating && this.renderParent.tagName !== 'TABLE');
             switch (this.renderParent.viewName) {
                 case VIEW_ANDROID.GRID:
-                    if (parentTextAlign) {
-                        layoutGravity.push(horizontal, vertical);
-                    }
-                    else {
-                        gravity.push(horizontal, vertical);
-                    }
-                    if (this.renderParent.tagName === 'TABLE') {
+                    const fillX = (horizontal === 'center_horizontal' || horizontal === 'center');
+                    const fillY = (vertical === 'center_vertical' || vertical === 'middle');
+                    if ((fillX && fillY) || this.renderParent.tagName === 'TABLE') {
                         this.android('layout_gravity', 'fill');
                     }
-                    break;
-                case VIEW_ANDROID.LINEAR:
-                case VIEW_ANDROID.RADIO_GROUP:
-                    if (parentTextAlign) {
-                        this.renderParent.android('gravity', horizontal);
-                        gravity.push(vertical);
-                        break;
+                    else {
+                        if (fillX) {
+                            this.android('layout_gravity', 'fill_horizontal');
+                        }
+                        else if (fillY) {
+                            this.android('layout_gravity', 'fill_vertical');
+                        }
                     }
+                    break;
                 default:
                     gravity.push(horizontal, vertical);
             }
             gravity = gravity.filter(value => value !== '');
-            layoutGravity = layoutGravity.filter(value => value !== '');
-            if (layoutGravity.length > 0) {
-                this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]), false);
-            }
             if (gravity.length > 0) {
                 this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
             }

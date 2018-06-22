@@ -117,6 +117,10 @@ export default class ResourceWidget extends Resource<T> {
             const stored = (<any> node.element).__boxStyle;
             if (stored != null) {
                 const method = METHOD_ANDROID['boxStyle'];
+                const label = (<any> node.label);
+                if (label && !sameAsParent(label.element, 'backgroundColor')) {
+                    stored.backgroundColor = label.element.__boxStyle.backgroundColor;
+                }
                 if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
                     let template: ObjectMap;
                     let data: ObjectMap;
@@ -269,23 +273,7 @@ export default class ResourceWidget extends Resource<T> {
                         delete stored.fontWeight;
                     }
                     if (stored.color !== '') {
-                        if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(stored.color[1])) {
-                            delete stored.color;
-                        }
-                        else {
-                            stored.color = `@color/${stored.color[0]}`;
-                        }
-                    }
-                    if (stored.backgroundColor !== '') {
-                        if (labelFor != null) {
-                            stored.backgroundColor = (<any> labelFor.element).__fontStyle.backgroundColor;
-                        }
-                        if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(stored.backgroundColor[1]) || sameAsParent(element, 'backgroundColor')) {
-                            delete stored.backgroundColor;
-                        }
-                        else {
-                            stored.backgroundColor = `@color/${stored.backgroundColor[0]}`;
-                        }
+                        stored.color = `@color/${stored.color[0]}`;
                     }
                     const method = METHOD_ANDROID['fontStyle'];
                     const keys = Object.keys(method);
@@ -500,9 +488,7 @@ export default class ResourceWidget extends Resource<T> {
                         style[tag][shared.join(';')] = styleKey[shared[0]];
                     }
                     for (const attr in layoutKey) {
-                        if (!attr.startsWith('android:background=')) {
-                            layout[tag][attr] = layoutKey[attr];
-                        }
+                        layout[tag][attr] = layoutKey[attr];
                     }
                     for (let i = 0; i < sorted.length; i++) {
                         if (sorted[i] && Object.keys(sorted[i]).length === 0) {

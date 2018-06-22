@@ -21,7 +21,7 @@ export default abstract class View<T extends Node, U extends NodeList<T>> {
     public abstract renderLayout(node: T, parent: T, viewName: number, options?: {}): string;
     public abstract renderTag(node: T, parent: T, viewName: number | string): string;
     public abstract createBundle(node: T, parent: T, children: T[]): T;
-    public abstract getStaticTag(tagName: number, depth: number, options: {}, width: any, height: any): string[];
+    public abstract getStaticTag(tagName: number, depth: number, options?: {}, width?: string, height?: string): string[];
     public abstract getViewName(value: number): string;
     public abstract getRootAttributes(options: {}): string;
     public abstract replaceInlineAttributes(output: string, node: T, namespaces?: {}): string;

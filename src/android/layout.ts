@@ -757,6 +757,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                     current = <Widget> item as T;
                 });
         }
+        this.setListItem(node);
         node.apply(options);
         node.applyCustomizations();
         node.render(renderParent);
@@ -858,6 +859,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                 }
                 break;
         }
+        this.setListItem(node);
         node.applyCustomizations();
         node.render(parent);
         node.setGravity();
@@ -877,7 +879,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
         return (<Widget> bundle) as T;
     }
 
-    public getStaticTag(tagName: number, depth: number, options: {}, width = 'wrap_content', height = 'wrap_content') {
+    public getStaticTag(tagName: number, depth: number, options = {}, width = 'wrap_content', height = 'wrap_content') {
         const node = new Widget(0, SETTINGS.targetAPI);
         node.setViewId(Widget.getViewName(tagName));
         let attributes = '';
@@ -1031,6 +1033,13 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                     }
                 }
             }
+        }
+    }
+
+    private setListItem(node: T) {
+        if (hasValue(node.listStyle)) {
+            this.prependBefore(node.id, this.getStaticTag((node.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (node.listStyle !== '0' ? node.listStyle : '') } })[0]);
+            node.android('layout_columnWeight', '1');
         }
     }
 }

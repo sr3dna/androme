@@ -33,7 +33,7 @@ export function getStyle(element: HTMLElement) {
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {
-    if (element.parentElement != null) {
+    if (element && element.parentElement != null) {
         return (getStyle(element)[attr] === getStyle(element.parentElement)[attr]);
     }
     return false;

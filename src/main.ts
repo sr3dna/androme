@@ -9,7 +9,7 @@ import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 
 let MAIN;
-const CACHED: Set<HTMLElement> = new Set();
+const PARSED: Set<HTMLElement> = new Set();
 
 export function parseDocument(...elements) {
     type T = Widget;
@@ -27,7 +27,7 @@ export function parseDocument(...elements) {
         MAIN = main;
     }
     else {
-        main = (<Application<T, U>> MAIN);
+        main = MAIN;
         main.resetView();
     }
     if (main.closed) {
@@ -58,7 +58,6 @@ export function parseDocument(...elements) {
         }
         element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
         element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/-/g, '_');
-        CACHED.add(element);
         main.setNodeCache(element);
         main.setLayoutXml();
         main.setResources();
@@ -71,6 +70,7 @@ export function parseDocument(...elements) {
             main.replaceInlineAttributes();
         }
         main.replaceAppended();
+        PARSED.add(element);
     }
 }
 
@@ -86,11 +86,11 @@ export function close() {
 
 export function reset() {
     if (MAIN != null) {
-        CACHED.forEach((element: HTMLElement) => {
+        PARSED.forEach((element: HTMLElement) => {
             delete element.dataset.views;
             delete element.dataset.currentId;
         });
-        CACHED.clear();
+        PARSED.clear();
         MAIN.reset();
     }
 }

@@ -1,4 +1,4 @@
-/* androme 1.7.5
+/* androme 1.7.6
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -6,119 +6,6 @@
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
     (factory((global.androme = {})));
 }(this, (function (exports) { 'use strict';
-
-    var VIEW_STANDARD;
-    (function (VIEW_STANDARD) {
-        VIEW_STANDARD[VIEW_STANDARD["FRAME"] = 1] = "FRAME";
-        VIEW_STANDARD[VIEW_STANDARD["LINEAR"] = 2] = "LINEAR";
-        VIEW_STANDARD[VIEW_STANDARD["CONSTRAINT"] = 3] = "CONSTRAINT";
-        VIEW_STANDARD[VIEW_STANDARD["GUIDELINE"] = 4] = "GUIDELINE";
-        VIEW_STANDARD[VIEW_STANDARD["RELATIVE"] = 5] = "RELATIVE";
-        VIEW_STANDARD[VIEW_STANDARD["GRID"] = 6] = "GRID";
-        VIEW_STANDARD[VIEW_STANDARD["SCROLL_VERTICAL"] = 7] = "SCROLL_VERTICAL";
-        VIEW_STANDARD[VIEW_STANDARD["SCROLL_HORIZONTAL"] = 8] = "SCROLL_HORIZONTAL";
-        VIEW_STANDARD[VIEW_STANDARD["SCROLL_NESTED"] = 9] = "SCROLL_NESTED";
-        VIEW_STANDARD[VIEW_STANDARD["RADIO_GROUP"] = 10] = "RADIO_GROUP";
-        VIEW_STANDARD[VIEW_STANDARD["TEXT"] = 11] = "TEXT";
-        VIEW_STANDARD[VIEW_STANDARD["EDIT"] = 12] = "EDIT";
-        VIEW_STANDARD[VIEW_STANDARD["IMAGE"] = 13] = "IMAGE";
-        VIEW_STANDARD[VIEW_STANDARD["SELECT"] = 14] = "SELECT";
-        VIEW_STANDARD[VIEW_STANDARD["CHECKBOX"] = 15] = "CHECKBOX";
-        VIEW_STANDARD[VIEW_STANDARD["RADIO"] = 16] = "RADIO";
-        VIEW_STANDARD[VIEW_STANDARD["BUTTON"] = 17] = "BUTTON";
-        VIEW_STANDARD[VIEW_STANDARD["VIEW"] = 18] = "VIEW";
-        VIEW_STANDARD[VIEW_STANDARD["SPACE"] = 19] = "SPACE";
-    })(VIEW_STANDARD || (VIEW_STANDARD = {}));
-    var BOX_STANDARD;
-    (function (BOX_STANDARD) {
-        BOX_STANDARD[BOX_STANDARD["MARGIN_TOP"] = 2] = "MARGIN_TOP";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_RIGHT"] = 4] = "MARGIN_RIGHT";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_BOTTOM"] = 8] = "MARGIN_BOTTOM";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_LEFT"] = 16] = "MARGIN_LEFT";
-        BOX_STANDARD[BOX_STANDARD["PADDING_TOP"] = 32] = "PADDING_TOP";
-        BOX_STANDARD[BOX_STANDARD["PADDING_RIGHT"] = 64] = "PADDING_RIGHT";
-        BOX_STANDARD[BOX_STANDARD["PADDING_BOTTOM"] = 128] = "PADDING_BOTTOM";
-        BOX_STANDARD[BOX_STANDARD["PADDING_LEFT"] = 256] = "PADDING_LEFT";
-    })(BOX_STANDARD || (BOX_STANDARD = {}));
-    const MAPPING_CHROME = {
-        'TEXT': VIEW_STANDARD.TEXT,
-        'LABEL': VIEW_STANDARD.TEXT,
-        'P': VIEW_STANDARD.TEXT,
-        'HR': VIEW_STANDARD.VIEW,
-        'IMG': VIEW_STANDARD.IMAGE,
-        'SELECT': VIEW_STANDARD.SELECT,
-        'INPUT': {
-            'text': VIEW_STANDARD.EDIT,
-            'password': VIEW_STANDARD.EDIT,
-            'checkbox': VIEW_STANDARD.CHECKBOX,
-            'radio': VIEW_STANDARD.RADIO,
-            'button': VIEW_STANDARD.BUTTON,
-            'submit': VIEW_STANDARD.BUTTON
-        },
-        'BUTTON': VIEW_STANDARD.BUTTON,
-        'TEXTAREA': VIEW_STANDARD.EDIT
-    };
-    const BLOCK_CHROME = [
-        'ADDRESS',
-        'ARTICLE',
-        'ASIDE',
-        'BLOCKQUOTE',
-        'CANVAS',
-        'DD',
-        'DIV',
-        'DL',
-        'DT',
-        'FIELDSET',
-        'FIGCAPTION',
-        'FIGURE',
-        'FOOTER',
-        'FORM',
-        'H1',
-        'H2',
-        'H3',
-        'H4',
-        'H5',
-        'H6',
-        'HEADER',
-        'LI',
-        'MAIN',
-        'NAV',
-        'OL',
-        'OUTPUT',
-        'P',
-        'PRE',
-        'SECTION',
-        'TABLE',
-        'TFOOT',
-        'UL',
-        'VIDEO'
-    ];
-    const INLINE_CHROME = [
-        'STRONG',
-        'B',
-        'EM',
-        'CITE',
-        'DFN',
-        'I',
-        'BIG',
-        'SMALL',
-        'FONT',
-        'BLOCKQUOTE',
-        'TT',
-        'A',
-        'U',
-        'SUP',
-        'SUB',
-        'STRIKE',
-        'H1',
-        'H2',
-        'H3',
-        'H4',
-        'H5',
-        'H6',
-        'DEL',
-        'TEXT'
-    ];
 
     const ID = {
         android: ['parent']
@@ -186,6 +73,38 @@
             }
         }
         return value;
+    }
+    function convertAlpha(value) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let result = '';
+        while (value >= alphabet.length) {
+            const base = Math.floor(value / alphabet.length);
+            if (base > 1 && base <= alphabet.length) {
+                result += alphabet.charAt(base - 1);
+                value -= base * alphabet.length;
+            }
+            else if (base > alphabet.length) {
+                result += convertAlpha(base * alphabet.length);
+                value -= base * alphabet.length;
+            }
+            const index = value % alphabet.length;
+            result += alphabet.charAt(index);
+            value -= index + alphabet.length;
+        }
+        result = alphabet.charAt(value) + result;
+        return result;
+    }
+    function convertRoman(value) {
+        let result = '';
+        const digits = value.toString().split('');
+        const numerals = ['', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
+            '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
+            '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+        let i = 3;
+        while (i--) {
+            result = (numerals[parseInt(digits.pop()) + (i * 10)] || '') + result;
+        }
+        return 'M'.repeat(parseInt(digits.join(''))) + result;
     }
     function padLeft(n, value = '\t') {
         return value.repeat(n);
@@ -349,13 +268,6 @@
     function withinFraction(lower, upper) {
         return (lower === upper || Math.ceil(lower) === Math.floor(upper));
     }
-    function remove(list, value) {
-        const index = list.indexOf(value);
-        if (index !== -1) {
-            list.splice(index, 1);
-        }
-        return list;
-    }
     function caseInsensitve(a, b) {
         return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
     }
@@ -365,6 +277,205 @@
     function sortDesc(list, ...attributes) {
         return sort(list, 1, ...attributes);
     }
+
+    class NodeList {
+        constructor(nodes, parent) {
+            this.parent = parent;
+            this._list = [];
+            if (Array.isArray(nodes)) {
+                this._list = nodes;
+            }
+            this.parent = parent;
+        }
+        static intersect(list, dimension = 'linear') {
+            list.forEach((node) => {
+                if (list.some(item => (item !== node && node.intersect(item[dimension])))) {
+                    return true;
+                }
+            });
+            return false;
+        }
+        static linearX(list) {
+            if (list.length > 0 && !NodeList.intersect(list)) {
+                if (list.length > 1) {
+                    const minBottom = Math.min.apply(null, list.map((item) => item.linear.bottom));
+                    return !list.some((item) => item.linear.top >= minBottom);
+                }
+                return true;
+            }
+            return false;
+        }
+        static linearY(list) {
+            if (list.length > 0 && !NodeList.intersect(list)) {
+                if (list.length > 1) {
+                    const minRight = Math.min.apply(null, list.map((item) => item.linear.right));
+                    return !list.some((item) => item.linear.left >= minRight);
+                }
+                return true;
+            }
+            return false;
+        }
+        find(id) {
+            return this._list.find((node) => node.id === id) || null;
+        }
+        reset() {
+            NodeList.currentId = 0;
+            this.clear();
+        }
+        clear() {
+            this._list = [];
+        }
+        sortAsc(...attr) {
+            return sortAsc(this._list, ...attr);
+        }
+        sortDesc(...attr) {
+            return sortDesc(this._list, ...attr);
+        }
+        intersect(dimension = 'linear') {
+            return NodeList.intersect(this._list, dimension);
+        }
+        get length() {
+            return this._list.length;
+        }
+        get list() {
+            return this._list;
+        }
+        get visible() {
+            return this._list.filter(node => node.visible);
+        }
+        get elements() {
+            return this._list.filter(node => node.element != null);
+        }
+        get first() {
+            return this._list[0];
+        }
+        get last() {
+            return this._list[this._list.length - 1];
+        }
+        get nextId() {
+            return ++NodeList.currentId;
+        }
+        get linearX() {
+            return NodeList.linearX(this._list);
+        }
+        get linearY() {
+            return NodeList.linearY(this._list);
+        }
+    }
+    NodeList.currentId = 0;
+
+    var VIEW_STANDARD;
+    (function (VIEW_STANDARD) {
+        VIEW_STANDARD[VIEW_STANDARD["FRAME"] = 1] = "FRAME";
+        VIEW_STANDARD[VIEW_STANDARD["LINEAR"] = 2] = "LINEAR";
+        VIEW_STANDARD[VIEW_STANDARD["CONSTRAINT"] = 3] = "CONSTRAINT";
+        VIEW_STANDARD[VIEW_STANDARD["GUIDELINE"] = 4] = "GUIDELINE";
+        VIEW_STANDARD[VIEW_STANDARD["RELATIVE"] = 5] = "RELATIVE";
+        VIEW_STANDARD[VIEW_STANDARD["GRID"] = 6] = "GRID";
+        VIEW_STANDARD[VIEW_STANDARD["SCROLL_VERTICAL"] = 7] = "SCROLL_VERTICAL";
+        VIEW_STANDARD[VIEW_STANDARD["SCROLL_HORIZONTAL"] = 8] = "SCROLL_HORIZONTAL";
+        VIEW_STANDARD[VIEW_STANDARD["SCROLL_NESTED"] = 9] = "SCROLL_NESTED";
+        VIEW_STANDARD[VIEW_STANDARD["RADIO_GROUP"] = 10] = "RADIO_GROUP";
+        VIEW_STANDARD[VIEW_STANDARD["TEXT"] = 11] = "TEXT";
+        VIEW_STANDARD[VIEW_STANDARD["EDIT"] = 12] = "EDIT";
+        VIEW_STANDARD[VIEW_STANDARD["IMAGE"] = 13] = "IMAGE";
+        VIEW_STANDARD[VIEW_STANDARD["SELECT"] = 14] = "SELECT";
+        VIEW_STANDARD[VIEW_STANDARD["CHECKBOX"] = 15] = "CHECKBOX";
+        VIEW_STANDARD[VIEW_STANDARD["RADIO"] = 16] = "RADIO";
+        VIEW_STANDARD[VIEW_STANDARD["BUTTON"] = 17] = "BUTTON";
+        VIEW_STANDARD[VIEW_STANDARD["VIEW"] = 18] = "VIEW";
+        VIEW_STANDARD[VIEW_STANDARD["SPACE"] = 19] = "SPACE";
+    })(VIEW_STANDARD || (VIEW_STANDARD = {}));
+    var BOX_STANDARD;
+    (function (BOX_STANDARD) {
+        BOX_STANDARD[BOX_STANDARD["MARGIN_TOP"] = 2] = "MARGIN_TOP";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_RIGHT"] = 4] = "MARGIN_RIGHT";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_BOTTOM"] = 8] = "MARGIN_BOTTOM";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_LEFT"] = 16] = "MARGIN_LEFT";
+        BOX_STANDARD[BOX_STANDARD["PADDING_TOP"] = 32] = "PADDING_TOP";
+        BOX_STANDARD[BOX_STANDARD["PADDING_RIGHT"] = 64] = "PADDING_RIGHT";
+        BOX_STANDARD[BOX_STANDARD["PADDING_BOTTOM"] = 128] = "PADDING_BOTTOM";
+        BOX_STANDARD[BOX_STANDARD["PADDING_LEFT"] = 256] = "PADDING_LEFT";
+    })(BOX_STANDARD || (BOX_STANDARD = {}));
+    const MAPPING_CHROME = {
+        'TEXT': VIEW_STANDARD.TEXT,
+        'LABEL': VIEW_STANDARD.TEXT,
+        'P': VIEW_STANDARD.TEXT,
+        'HR': VIEW_STANDARD.VIEW,
+        'IMG': VIEW_STANDARD.IMAGE,
+        'SELECT': VIEW_STANDARD.SELECT,
+        'INPUT': {
+            'text': VIEW_STANDARD.EDIT,
+            'password': VIEW_STANDARD.EDIT,
+            'checkbox': VIEW_STANDARD.CHECKBOX,
+            'radio': VIEW_STANDARD.RADIO,
+            'button': VIEW_STANDARD.BUTTON,
+            'submit': VIEW_STANDARD.BUTTON
+        },
+        'BUTTON': VIEW_STANDARD.BUTTON,
+        'TEXTAREA': VIEW_STANDARD.EDIT
+    };
+    const BLOCK_CHROME = [
+        'ADDRESS',
+        'ARTICLE',
+        'ASIDE',
+        'BLOCKQUOTE',
+        'CANVAS',
+        'DD',
+        'DIV',
+        'DL',
+        'DT',
+        'FIELDSET',
+        'FIGCAPTION',
+        'FIGURE',
+        'FOOTER',
+        'FORM',
+        'H1',
+        'H2',
+        'H3',
+        'H4',
+        'H5',
+        'H6',
+        'HEADER',
+        'LI',
+        'MAIN',
+        'NAV',
+        'OL',
+        'OUTPUT',
+        'P',
+        'PRE',
+        'SECTION',
+        'TABLE',
+        'TFOOT',
+        'UL',
+        'VIDEO'
+    ];
+    const INLINE_CHROME = [
+        'STRONG',
+        'B',
+        'EM',
+        'CITE',
+        'DFN',
+        'I',
+        'BIG',
+        'SMALL',
+        'FONT',
+        'BLOCKQUOTE',
+        'TT',
+        'A',
+        'U',
+        'SUP',
+        'SUB',
+        'STRIKE',
+        'H1',
+        'H2',
+        'H3',
+        'H4',
+        'H5',
+        'H6',
+        'DEL',
+        'TEXT'
+    ];
 
     const X11_CSS3 = {
         'Pink': { 'hex': '#FFC0CB' },
@@ -657,7 +768,7 @@
         return (object.__node != null ? object.__node.style : getComputedStyle(element));
     }
     function sameAsParent(element, attr) {
-        if (element.parentElement != null) {
+        if (element && element.parentElement != null) {
             return (getStyle(element)[attr] === getStyle(element.parentElement)[attr]);
         }
         return false;
@@ -826,7 +937,7 @@
         useGridLayout: true,
         useLayoutWeight: true,
         useUnitDP: true,
-        useFontAlias: false,
+        useFontAlias: true,
         supportRTL: true,
         numberResourceValue: false,
         alwaysReevaluateResources: false,
@@ -1077,7 +1188,7 @@
                         node.parent = closest;
                     }
                 }
-                if (node.element && node.element.children && node.element.children.length > 1) {
+                if (node.element && node.element.children.length > 0 && !node.children.every((current) => INLINE_CHROME.includes(current.tagName))) {
                     Array.from(node.element.childNodes).forEach((element) => {
                         if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
                             this.insertNode(element, node);
@@ -1188,6 +1299,7 @@
                                     tagName = this.viewHandler.getViewName(VIEW_STANDARD.TEXT);
                                 }
                                 else if (nodeY.children.length > 0) {
+                                    const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                     if (nodeY.tagName === 'TABLE') {
                                         const tableRows = [];
                                         const thead = nodeY.children.find((item) => item.tagName === 'THEAD');
@@ -1453,9 +1565,53 @@
                                             }
                                         }
                                     }
+                                    else if ((nodeY.tagName === 'UL' || nodeY.tagName === 'OL') && nodeY.css('listStyleType') !== 'none' && (linearX || linearY) && nodeY.children.every((item) => item.tagName === 'LI') && nodeY.children.some((item) => item.css('display') === 'list-item')) {
+                                        if (linearY) {
+                                            xml += this.writeGridLayout(nodeY, parent, 2);
+                                        }
+                                        else {
+                                            xml += this.writeLinearLayout(nodeY, parent, linearY);
+                                        }
+                                        for (let l = 0, m = 0; l < nodeY.children.length; l++) {
+                                            const node = nodeY.children[l];
+                                            const listStyle = nodeY.css('listStyleType');
+                                            let ordinal = '0';
+                                            if (node.css('display') === 'list-item') {
+                                                switch (listStyle) {
+                                                    case 'disc':
+                                                        ordinal = '●';
+                                                        break;
+                                                    case 'square':
+                                                        ordinal = '■';
+                                                        break;
+                                                    case 'lower-alpha':
+                                                    case 'lower-latin':
+                                                        ordinal = `${convertAlpha(m).toLowerCase()}.`;
+                                                        break;
+                                                    case 'upper-alpha':
+                                                    case 'upper-latin':
+                                                        ordinal = `${convertAlpha(m)}.`;
+                                                        break;
+                                                    case 'lower-roman':
+                                                        ordinal = `${convertRoman(m + 1).toLowerCase()}.`;
+                                                        break;
+                                                    case 'upper-roman':
+                                                        ordinal = `${convertRoman(m + 1)}.`;
+                                                        break;
+                                                    default:
+                                                        if (nodeY.tagName === 'OL') {
+                                                            ordinal = `${(listStyle === 'decimal-leading-zero' && m < 9 ? '0' : '') && (m + 1).toString()}.`;
+                                                        }
+                                                        else {
+                                                            ordinal = '○';
+                                                        }
+                                                }
+                                                m++;
+                                            }
+                                            node.listStyle = ordinal;
+                                        }
+                                    }
                                     if (!nodeY.renderParent) {
-                                        const children = new this.TypeU(nodeY.children);
-                                        const [linearX, linearY] = [children.linearX, children.linearY];
                                         if (!nodeY.flex.enabled && linearX && linearY) {
                                             xml += this.writeFrameLayout(nodeY, parent);
                                         }
@@ -1651,92 +1807,6 @@
             return output;
         }
     }
-
-    class NodeList {
-        constructor(nodes, parent) {
-            this.parent = parent;
-            this._list = [];
-            if (Array.isArray(nodes)) {
-                this._list = nodes;
-            }
-            this.parent = parent;
-        }
-        static intersect(list, dimension = 'linear') {
-            list.forEach((node) => {
-                if (list.some(item => (item !== node && node.intersect(item[dimension])))) {
-                    return true;
-                }
-            });
-            return false;
-        }
-        static linearX(list) {
-            if (list.length > 0 && !NodeList.intersect(list)) {
-                if (list.length > 1) {
-                    const minBottom = Math.min.apply(null, list.map((item) => item.linear.bottom));
-                    return !list.some((item) => item.linear.top >= minBottom);
-                }
-                return true;
-            }
-            return false;
-        }
-        static linearY(list) {
-            if (list.length > 0 && !NodeList.intersect(list)) {
-                if (list.length > 1) {
-                    const minRight = Math.min.apply(null, list.map((item) => item.linear.right));
-                    return !list.some((item) => item.linear.left >= minRight);
-                }
-                return true;
-            }
-            return false;
-        }
-        find(id) {
-            return this._list.find((node) => node.id === id) || null;
-        }
-        reset() {
-            NodeList.currentId = 0;
-            this.clear();
-        }
-        clear() {
-            this._list = [];
-        }
-        sortAsc(...attr) {
-            return sortAsc(this._list, ...attr);
-        }
-        sortDesc(...attr) {
-            return sortDesc(this._list, ...attr);
-        }
-        intersect(dimension = 'linear') {
-            return NodeList.intersect(this._list, dimension);
-        }
-        get length() {
-            return this._list.length;
-        }
-        get list() {
-            return this._list;
-        }
-        get visible() {
-            return this._list.filter(node => node.visible);
-        }
-        get elements() {
-            return this._list.filter(node => node.element != null);
-        }
-        get first() {
-            return this._list[0];
-        }
-        get last() {
-            return this._list[this._list.length - 1];
-        }
-        get nextId() {
-            return ++NodeList.currentId;
-        }
-        get linearX() {
-            return NodeList.linearX(this._list);
-        }
-        get linearY() {
-            return NodeList.linearY(this._list);
-        }
-    }
-    NodeList.currentId = 0;
 
     class Node {
         constructor(id, element, options) {
@@ -2285,6 +2355,8 @@
             let width;
             let height;
             let wrapContent;
+            const renderParent = this.renderParent;
+            const constraint = this.constraint;
             if (options != null) {
                 parent = options.parent;
                 [width, height] = [options.width, options.height];
@@ -2306,7 +2378,7 @@
                 if (this.android('layout_width') !== '0px') {
                     if (hasValue(styleMap.width)) {
                         if (isPercent(styleMap.width)) {
-                            if (this.renderParent.tagName === 'TABLE') {
+                            if (renderParent.tagName === 'TABLE') {
                                 this.android('layout_columnWeight', (convertInt(styleMap.width) / 100).toFixed(2));
                                 this.android('layout_width', '0px');
                             }
@@ -2318,16 +2390,16 @@
                             this.android('layout_width', convertPX(styleMap.width));
                         }
                     }
-                    if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth) && !this.constraint.minWidth) {
+                    if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
                         this.android('layout_width', 'wrap_content', false);
                         this.android('minWidth', convertPX(styleMap.minWidth), false);
                     }
-                    if (hasValue(styleMap.maxWidth) && !isPercent(styleMap.maxWidth) && !this.constraint.maxWidth) {
+                    if (hasValue(styleMap.maxWidth) && !isPercent(styleMap.maxWidth) && !constraint.maxWidth) {
                         this.android('maxWidth', convertPX(styleMap.maxWidth), false);
                     }
                 }
-                if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutWidth != null) {
-                    if (this.constraint.layoutWidth) {
+                if ((!this.flex.enabled || constraint.expand) && constraint.layoutWidth != null) {
+                    if (constraint.layoutWidth) {
                         this.android('layout_width', (this.renderChildren.some((node) => node.css('float') === 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
                     }
                     else {
@@ -2335,7 +2407,7 @@
                     }
                 }
                 else if (this.android('layout_width') == null) {
-                    if (wrapContent) {
+                    if (wrapContent || renderParent.android('layout_width') === 'wrap_content') {
                         this.android('layout_width', 'wrap_content');
                     }
                     else {
@@ -2363,7 +2435,7 @@
                 if (this.android('layout_height') !== '0px') {
                     if (hasValue(styleMap.height) || hasValue(styleMap.lineHeight)) {
                         if (isPercent(styleMap.height) || isPercent(styleMap.lineHeight)) {
-                            if (this.renderParent.tagName === 'TABLE') {
+                            if (renderParent.tagName === 'TABLE') {
                                 this.android('layout_rowWeight', (convertInt(styleMap.height || styleMap.lineHeight) / 100).toFixed(2));
                                 this.android('layout_height', '0px');
                             }
@@ -2375,19 +2447,19 @@
                             this.android('layout_height', convertPX(styleMap.height || styleMap.lineHeight));
                         }
                     }
-                    if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight) && !this.constraint.minHeight) {
+                    if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight) && !constraint.minHeight) {
                         this.android('layout_height', 'wrap_content', false);
                         this.android('minHeight', convertPX(styleMap.minHeight), false);
                     }
-                    if (hasValue(styleMap.maxHeight) && !isPercent(styleMap.maxHeight) && !this.constraint.maxHeight) {
+                    if (hasValue(styleMap.maxHeight) && !isPercent(styleMap.maxHeight) && !constraint.maxHeight) {
                         this.android('maxHeight', convertPX(styleMap.maxHeight), false);
                     }
                 }
-                if ((!this.flex.enabled || this.constraint.expand) && this.constraint.layoutHeight != null) {
-                    this.android('layout_height', (this.constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), this.constraint.layoutHeight);
+                if ((!this.flex.enabled || constraint.expand) && constraint.layoutHeight != null) {
+                    this.android('layout_height', (constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), constraint.layoutHeight);
                 }
                 else if (this.android('layout_height') == null) {
-                    this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === 0 /* NONE */) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) && !this.renderParent.is(VIEW_STANDARD.RELATIVE) ? 'match_parent' : 'wrap_content'));
+                    this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === 0 /* NONE */) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) && !renderParent.is(VIEW_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content' ? 'match_parent' : 'wrap_content'));
                 }
             }
             if (this.is(VIEW_STANDARD.LINEAR) && this.renderChildren.length > 0 && this.renderChildren.every((item) => item.css('float') === 'right')) {
@@ -2454,7 +2526,6 @@
                 let horizontal = '';
                 let vertical = '';
                 let gravity = [];
-                let layoutGravity = [];
                 switch (textAlign) {
                     case 'start':
                         horizontal = 'start';
@@ -2485,34 +2556,26 @@
                             vertical = 'center_vertical';
                         }
                 }
-                const parentTextAlign = (this.styleMap.textAlign !== textAlign && !this.renderParent.floating && !this.floating && this.renderParent.tagName !== 'TABLE');
                 switch (this.renderParent.viewName) {
                     case VIEW_ANDROID.GRID:
-                        if (parentTextAlign) {
-                            layoutGravity.push(horizontal, vertical);
-                        }
-                        else {
-                            gravity.push(horizontal, vertical);
-                        }
-                        if (this.renderParent.tagName === 'TABLE') {
+                        const fillX = (horizontal === 'center_horizontal' || horizontal === 'center');
+                        const fillY = (vertical === 'center_vertical' || vertical === 'middle');
+                        if ((fillX && fillY) || this.renderParent.tagName === 'TABLE') {
                             this.android('layout_gravity', 'fill');
                         }
-                        break;
-                    case VIEW_ANDROID.LINEAR:
-                    case VIEW_ANDROID.RADIO_GROUP:
-                        if (parentTextAlign) {
-                            this.renderParent.android('gravity', horizontal);
-                            gravity.push(vertical);
-                            break;
+                        else {
+                            if (fillX) {
+                                this.android('layout_gravity', 'fill_horizontal');
+                            }
+                            else if (fillY) {
+                                this.android('layout_gravity', 'fill_vertical');
+                            }
                         }
+                        break;
                     default:
                         gravity.push(horizontal, vertical);
                 }
                 gravity = gravity.filter(value => value !== '');
-                layoutGravity = layoutGravity.filter(value => value !== '');
-                if (layoutGravity.length > 0) {
-                    this.android('layout_gravity', (layoutGravity.length === 2 ? 'center' : layoutGravity[0]), false);
-                }
                 if (gravity.length > 0) {
                     this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
                 }
@@ -3504,6 +3567,7 @@
                     current = item;
                 });
             }
+            this.setListItem(node);
             node.apply(options);
             node.applyCustomizations();
             node.render(renderParent);
@@ -3604,6 +3668,7 @@
                     }
                     break;
             }
+            this.setListItem(node);
             node.applyCustomizations();
             node.render(parent);
             node.setGravity();
@@ -3621,7 +3686,7 @@
             bundle.setBounds();
             return bundle;
         }
-        getStaticTag(tagName, depth, options, width = 'wrap_content', height = 'wrap_content') {
+        getStaticTag(tagName, depth, options = {}, width = 'wrap_content', height = 'wrap_content') {
             const node = new Widget(0, SETTINGS.targetAPI);
             node.setViewId(Widget.getViewName(tagName));
             let attributes = '';
@@ -3768,6 +3833,12 @@
                 }
             }
         }
+        setListItem(node) {
+            if (hasValue(node.listStyle)) {
+                this.prependBefore(node.id, this.getStaticTag((node.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (node.listStyle !== '0' ? node.listStyle : '') } })[0]);
+                node.android('layout_columnWeight', '1');
+            }
+        }
     }
 
     class Resource {
@@ -3910,11 +3981,7 @@
                         for (const i in result) {
                             result[i] = result[i](node.css(i), node, i);
                         }
-                        let backgroundParent = [];
-                        if (element.parentElement != null) {
-                            backgroundParent = parseRGBA(getStyle(element.parentElement)['backgroundColor']);
-                        }
-                        if (backgroundParent[0] === result.backgroundColor[0] || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
+                        if (sameAsParent(element, 'backgroundColor') || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
                             result.backgroundColor = [];
                         }
                         else {
@@ -3940,15 +4007,16 @@
                             case 'AREA':
                                 return;
                         }
-                        const color = parseRGBA(node.css('color') || '');
-                        const backgroundColor = parseRGBA(node.css('backgroundColor') || '');
+                        let color = parseRGBA(node.css('color') || '');
+                        if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0])) {
+                            color = [];
+                        }
                         const result = {
                             fontFamily: node.css('fontFamily'),
                             fontStyle: node.css('fontStyle'),
                             fontSize: node.css('fontSize'),
                             fontWeight: node.css('fontWeight'),
-                            color: (color.length > 0 ? Resource.addColor(color[0]) : ''),
-                            backgroundColor: (backgroundColor.length > 0 ? Resource.addColor(backgroundColor[0]) : '')
+                            color: (color.length > 0 ? Resource.addColor(color[0]) : '')
                         };
                         element.__fontStyle = result;
                     }
@@ -4361,6 +4429,10 @@
                 const stored = node.element.__boxStyle;
                 if (stored != null) {
                     const method = METHOD_ANDROID['boxStyle'];
+                    const label = node.label;
+                    if (label && !sameAsParent(label.element, 'backgroundColor')) {
+                        stored.backgroundColor = label.element.__boxStyle.backgroundColor;
+                    }
                     if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
                         let template;
                         let data;
@@ -4512,23 +4584,7 @@
                             delete stored.fontWeight;
                         }
                         if (stored.color !== '') {
-                            if (SETTINGS.excludeTextColor && SETTINGS.excludeTextColor.includes(stored.color[1])) {
-                                delete stored.color;
-                            }
-                            else {
-                                stored.color = `@color/${stored.color[0]}`;
-                            }
-                        }
-                        if (stored.backgroundColor !== '') {
-                            if (labelFor != null) {
-                                stored.backgroundColor = labelFor.element.__fontStyle.backgroundColor;
-                            }
-                            if (SETTINGS.excludeBackgroundColor && SETTINGS.excludeBackgroundColor.includes(stored.backgroundColor[1]) || sameAsParent(element, 'backgroundColor')) {
-                                delete stored.backgroundColor;
-                            }
-                            else {
-                                stored.backgroundColor = `@color/${stored.backgroundColor[0]}`;
-                            }
+                            stored.color = `@color/${stored.color[0]}`;
                         }
                         const method = METHOD_ANDROID['fontStyle'];
                         const keys = Object.keys(method);
@@ -4739,9 +4795,7 @@
                             style[tag][shared.join(';')] = styleKey[shared[0]];
                         }
                         for (const attr in layoutKey) {
-                            if (!attr.startsWith('android:background=')) {
-                                layout[tag][attr] = layoutKey[attr];
-                            }
+                            layout[tag][attr] = layoutKey[attr];
                         }
                         for (let i = 0; i < sorted.length; i++) {
                             if (sorted[i] && Object.keys(sorted[i]).length === 0) {
@@ -5272,7 +5326,7 @@
     }
 
     let MAIN;
-    const CACHED = new Set();
+    const PARSED = new Set();
     function parseDocument(...elements) {
         let main;
         if (MAIN == null) {
@@ -5318,7 +5372,6 @@
             }
             element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
             element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/-/g, '_');
-            CACHED.add(element);
             main.setNodeCache(element);
             main.setLayoutXml();
             main.setResources();
@@ -5331,6 +5384,7 @@
                 main.replaceInlineAttributes();
             }
             main.replaceAppended();
+            PARSED.add(element);
         }
     }
     function ready() {
@@ -5343,11 +5397,11 @@
     }
     function reset() {
         if (MAIN != null) {
-            CACHED.forEach((element) => {
+            PARSED.forEach((element) => {
                 delete element.dataset.views;
                 delete element.dataset.currentId;
             });
-            CACHED.clear();
+            PARSED.clear();
             MAIN.reset();
         }
     }
