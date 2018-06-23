@@ -183,6 +183,7 @@ export default class FileRes extends File {
     public resourceStyleToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.STYLES.size > 0) {
+            this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort());
             const template = parseTemplateMatch(STYLE_TMPL);
             const data: {} = {
                 '0': [{

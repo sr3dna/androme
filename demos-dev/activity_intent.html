@@ -26,8 +26,8 @@
                 if ((count % 2) == 1) {
                     div.style.fontStyle = 'italic';
                 }
-                div.id = 'view-' + ++count;
-                div.innerHTML = count + ': androme.parseDocument("view-' + count + '");';
+                div.id = 'activity-' + ++count;
+                div.innerHTML = count + ': androme.parseDocument("activity-' + count + '");';
                 document.getElementById('main').appendChild(div);
                 androme.parseDocument(div.id);
             }
@@ -42,7 +42,6 @@
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
             const resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceFontXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         }

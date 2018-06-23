@@ -166,7 +166,7 @@ export default abstract class Resource<T extends Node> {
                     for (const i in result) {
                         result[i] = result[i](node.css(i), node, i);
                     }
-                    if (sameAsParent(element, 'backgroundColor') || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
+                    if (SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')) || result.backgroundColor[2] === '0') {
                         result.backgroundColor = [];
                     }
                     else {
@@ -184,27 +184,31 @@ export default abstract class Resource<T extends Node> {
 
     public setFontStyle() {
         this.cache.elements.forEach((node: T) => {
-            if ((node.visible || node.companion) && node.renderChildren.length === 0) {
+            if (node.visible || node.companion) {
                 const element = (<HTMLElement> node.element);
                 if (!hasValue((<any> element).__fontStyle) || SETTINGS.alwaysReevaluateResources) {
-                    switch (element.tagName) {
-                        case 'IMG':
-                        case 'HR':
-                        case 'AREA':
-                            return;
+                    if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
+                        return;
                     }
-                    let color = parseRGBA(node.css('color') || '');
-                    if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0])) {
-                        color = [];
+                    else {
+                        let color = parseRGBA(node.css('color') || '');
+                        if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0])) {
+                            color = [];
+                        }
+                        let backgroundColor = parseRGBA(node.css('backgroundColor') || '');
+                        if (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                            backgroundColor = [];
+                        }
+                        const result = {
+                            fontFamily: node.css('fontFamily'),
+                            fontStyle: node.css('fontStyle'),
+                            fontSize: node.css('fontSize'),
+                            fontWeight: node.css('fontWeight'),
+                            color: (color.length > 0 ? `@color/${Resource.addColor(color[0])[0]}` : ''),
+                            backgroundColor: (backgroundColor.length > 0 ? `@color/${Resource.addColor(backgroundColor[0])[0]}` : '')
+                        };
+                        (<any> element).__fontStyle = result;
                     }
-                    const result = {
-                        fontFamily: node.css('fontFamily'),
-                        fontStyle: node.css('fontStyle'),
-                        fontSize: node.css('fontSize'),
-                        fontWeight: node.css('fontWeight'),
-                        color: (color.length > 0 ? Resource.addColor(color[0]) : '')
-                    };
-                    (<any> element).__fontStyle = result;
                 }
             }
         });

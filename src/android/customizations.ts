@@ -1,18 +1,8 @@
 import { BUILD_ANDROID as BUILD } from './constants';
 
 export default {
-    [0]: {
-        customizations: {
-            'Button': {
-                android: {
-                    minWidth: '0dp',
-                    minHeight: '0dp'
-                }
-            }
-        }
-    },
     [BUILD.OREO]: {
-        android: ['fontWeight'],
+        android: ['fontWeight', 'layout_marginHorizontal', 'layout_marginVertical', 'paddingHorizontal', 'paddingVertical'],
         customizations: {}
     },
     [BUILD.JELLYBEAN_1]: {
@@ -25,6 +15,16 @@ export default {
             'Button': {
                 android: {
                     textAllCaps: 'false'
+                }
+            }
+        }
+    },
+    [BUILD.ALL]: {
+        customizations: {
+            'Button': {
+                android: {
+                    minWidth: '0dp',
+                    minHeight: '0dp'
                 }
             }
         }

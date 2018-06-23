@@ -1,4 +1,5 @@
 export enum BUILD_ANDROID {
+    P = 28,
     OREO_1 = 27,
     OREO = 26,
     NOUGAT_1 = 25,
@@ -13,7 +14,8 @@ export enum BUILD_ANDROID {
     JELLYBEAN = 16,
     ICE_CREAM_SANDWICH_1 = 15,
     ICE_CREAM_SANDWICH = 14,
-    LATEST = 27
+    ALL = 0,
+    LATEST = 28
 }
 
 export enum DENSITY_ANDROID {

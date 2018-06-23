@@ -114,7 +114,8 @@ export default class ResourceWidget extends Resource<T> {
     public setBoxStyle() {
         super.setBoxStyle();
         this.cache.elements.forEach((node: T) => {
-            const stored = (<any> node.element).__boxStyle;
+            const element = node.element;
+            const stored = (<any> element).__boxStyle;
             if (stored != null) {
                 const method = METHOD_ANDROID['boxStyle'];
                 const label = (<any> node.label);
@@ -217,7 +218,7 @@ export default class ResourceWidget extends Resource<T> {
                     }
                     node.attr(formatString(method['background'], resourceName));
                 }
-                else if (stored.backgroundColor.length > 0) {
+                else if ((<any> element).__fontStyle == null && stored.backgroundColor.length > 0) {
                     node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
                 }
             }
@@ -236,8 +237,8 @@ export default class ResourceWidget extends Resource<T> {
             }
         });
         for (const tag in tagName) {
-            const nodes = tagName[tag];
-            const sorted: ObjectIndex = [];
+            const nodes: T[] = tagName[tag];
+            const sorted: any[] = [];
             nodes.forEach((node: T) => {
                 if (node.labelFor != null) {
                     return;
@@ -252,28 +253,33 @@ export default class ResourceWidget extends Resource<T> {
                 if (element != null) {
                     const nodeId = (labelFor || node).id;
                     const stored = Object.assign({}, (<any> element).__fontStyle);
-                    const fontFamily: string = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
-                    let fontStyle = '';
-                    let fontWeight = '';
-                    if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
-                        system = true;
-                        stored.fontFamily = fontFamily;
-                        if (stored.fontStyle === 'normal') {
-                            delete stored.fontStyle;
+                    if (stored.fontFamily != null) {
+                        const fontFamily: string = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                        let fontStyle = '';
+                        let fontWeight = '';
+                        if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                            system = true;
+                            stored.fontFamily = fontFamily;
+                            if (stored.fontStyle === 'normal') {
+                                delete stored.fontStyle;
+                            }
+                            if (stored.fontWeight === '400') {
+                                delete stored.fontWeight;
+                            }
                         }
-                        if (stored.fontWeight === '400') {
+                        else {
+                            stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                            fontStyle = stored.fontStyle;
+                            fontWeight = stored.fontWeight;
+                            delete stored.fontStyle;
                             delete stored.fontWeight;
                         }
-                    }
-                    else {
-                        stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
-                        fontStyle = stored.fontStyle;
-                        fontWeight = stored.fontWeight;
-                        delete stored.fontStyle;
-                        delete stored.fontWeight;
-                    }
-                    if (stored.color !== '') {
-                        stored.color = `@color/${stored.color[0]}`;
+                        if (!system) {
+                            if (!STORED.FONTS.has(fontFamily)) {
+                                STORED.FONTS.set(fontFamily, {});
+                            }
+                            STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
+                        }
                     }
                     const method = METHOD_ANDROID['fontStyle'];
                     const keys = Object.keys(method);
@@ -290,12 +296,6 @@ export default class ResourceWidget extends Resource<T> {
                             sorted[i][attr].push(nodeId);
                         }
                     }
-                    if (!system) {
-                        if (!STORED.FONTS.has(fontFamily)) {
-                            STORED.FONTS.set(fontFamily, {});
-                        }
-                        STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
-                    }
                 }
             });
             if (this.tagStyle[tag] != null) {
@@ -310,10 +310,10 @@ export default class ResourceWidget extends Resource<T> {
                         }
                     }
                 }
-                this.tagCount[tag] += nodes.length;
+                this.tagCount[tag] += nodes.filter((item: T) => item.visible).length;
             }
             else {
-                this.tagCount[tag] = nodes.length;
+                this.tagCount[tag] = nodes.filter((item: T) => item.visible).length;
             }
             this.tagStyle[tag] = sorted;
         }
@@ -392,7 +392,26 @@ export default class ResourceWidget extends Resource<T> {
         for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
-            let sorted = (<any[]> this.tagStyle[tag]).slice();
+            let sorted = (<any[]> this.tagStyle[tag]).filter(item => Object.keys(item).length > 0).sort((a, b) => {
+                let maxA = 0;
+                let maxB = 0;
+                let countA = 0;
+                let countB = 0;
+                for (const attr in a) {
+                    maxA = Math.max(a[attr].length, maxA);
+                    countA += a[attr].length;
+                }
+                for (const attr in b) {
+                    maxB = Math.max(b[attr].length, maxB);
+                    countB += b[attr].length;
+                }
+                if (maxA !== maxB) {
+                    return (maxA > maxB ? -1 : 1);
+                }
+                else {
+                    return (countA >= countB ? -1 : 1);
+                }
+            });
             const count = this.tagCount[tag];
             do {
                 if (sorted.length === 1) {
@@ -412,6 +431,8 @@ export default class ResourceWidget extends Resource<T> {
                     const layoutKey = {};
                     for (let i = 0; i < sorted.length; i++) {
                         const filtered = {};
+                        const combined = {};
+                        const deleteKeys = new Set();
                         for (const attr1 in sorted[i]) {
                             if (sorted[i] == null) {
                                 continue;
@@ -428,11 +449,12 @@ export default class ResourceWidget extends Resource<T> {
                             }
                             else if (ids.length === 1) {
                                 layoutKey[attr1] = ids;
-                                sorted[i][attr1] = null;
+                                sorted[i] = null;
                                 revalidate = true;
                             }
                             if (!revalidate) {
                                 const found = {};
+                                let merged = false;
                                 for (let j = 0; j < sorted.length; j++) {
                                     if (i !== j) {
                                         for (const attr in sorted[j]) {
@@ -451,12 +473,14 @@ export default class ResourceWidget extends Resource<T> {
                                 for (const attr2 in found) {
                                     if (found[attr2].length > 1) {
                                         filtered[[attr1, attr2].sort().join(';')] = found[attr2];
+                                        merged = true;
                                     }
+                                }
+                                if (!merged) {
+                                    filtered[attr1] = ids;
                                 }
                             }
                         }
-                        const combined = {};
-                        const deleteKeys = new Set();
                         for (const attr1 in filtered) {
                             for (const attr2 in filtered) {
                                 if (attr1 !== attr2 && filtered[attr1].join('') === filtered[attr2].join('')) {
@@ -485,7 +509,12 @@ export default class ResourceWidget extends Resource<T> {
                     }
                     const shared = Object.keys(styleKey);
                     if (shared.length > 0) {
-                        style[tag][shared.join(';')] = styleKey[shared[0]];
+                        if (shared.length > 1 || styleKey[shared[0]].length > 1) {
+                            style[tag][shared.join(';')] = styleKey[shared[0]];
+                        }
+                        else {
+                            Object.assign(layoutKey, styleKey);
+                        }
                     }
                     for (const attr in layoutKey) {
                         layout[tag][attr] = layoutKey[attr];
@@ -507,14 +536,14 @@ export default class ResourceWidget extends Resource<T> {
             for (const attributes in tag) {
                 tagData.push({ attributes, ids: tag[attributes]});
             }
-            tagData.sort((a: any, b: any) => {
+            tagData.sort((a, b) => {
                 let [c, d] = [a.ids.length, b.ids.length];
                 if (c === d) {
                     [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
                 }
                 return (c >= d ? -1 : 1);
             });
-            tagData.forEach((item: any, index: number) => item.name = `${tagName.charAt(0) + tagName.substring(1).toLowerCase()}_${(index + 1)}`);
+            tagData.forEach((item, index) => item.name = `${tagName.charAt(0) + tagName.substring(1).toLowerCase()}_${(index + 1)}`);
             resource[tagName] = tagData;
         }
         const inherit = new Set();
@@ -532,6 +561,12 @@ export default class ResourceWidget extends Resource<T> {
             if (tagData != null) {
                 for (const attr in tagData) {
                     for (const id of tagData[attr]) {
+                        if (attr.startsWith('android:background=')) {
+                            const node: T | null = viewData.cache.find(parseInt(id));
+                            if (node && node.android('backround') != null) {
+                                continue;
+                            }
+                        }
                         if (map[id] == null) {
                             map[id] = { styles: [], attributes: [] };
                         }
@@ -543,10 +578,10 @@ export default class ResourceWidget extends Resource<T> {
         for (const id in map) {
             const node: T | null = viewData.cache.find(parseInt(id));
             if (node != null) {
-                let append = '';
                 const styles = map[id].styles;
                 const attributes = map[id].attributes;
                 const indent = padLeft(node.renderDepth + 1);
+                let append = '';
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
                     append += `\n${indent}style="@style/${styles.pop()}"`;

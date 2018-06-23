@@ -1,6 +1,5 @@
-const ID = {
-    android: ['parent']
-};
+let ID;
+resetId();
 
 function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
     return list.sort((a: T, b: T) => {
@@ -17,6 +16,12 @@ function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
         }
         return 0;
     });
+}
+
+export function resetId() {
+    ID = {
+        android: ['parent']
+    };
 }
 
 export function generateId(section: string, name: string) {

@@ -70,7 +70,7 @@ export default abstract class View<T extends Node, U extends NodeList<T>> {
         let output = preXml +
                      `{<${id}}`;
         if (hasValue(xml)) {
-            output += indent + `<${tagName}{@${id}}>\n` +
+            output += indent + `<${tagName}{@${id}}{&${id}}>\n` +
                                xml +
                       indent + `</${tagName}>\n`;
         }

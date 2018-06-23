@@ -4,7 +4,7 @@ import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
 import { BLOCK_CHROME, INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { convertAlpha, convertRoman, hasValue, hyphenToCamelCase, replaceDP, sortAsc } from '../lib/util';
+import { convertAlpha, convertRoman, hasValue, hyphenToCamelCase, replaceDP, resetId, sortAsc } from '../lib/util';
 import { convertRGB, getByColorName } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
@@ -51,6 +51,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public reset() {
+        resetId();
         this.cacheInternal.list.forEach((node: T) => {
             const element: any = node.element;
             if (element != null) {
@@ -93,9 +94,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public setResources() {
+        this.resourceHandler.setFontStyle();
         this.resourceHandler.setBoxSpacing();
         this.resourceHandler.setBoxStyle();
-        this.resourceHandler.setFontStyle();
         this.resourceHandler.setValueString();
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
@@ -300,7 +301,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         let node: T | null = null;
         if (element.nodeName === '#text') {
             if (element.textContent && element.textContent.trim() !== '') {
-                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
+                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'PLAINTEXT' });
                 node.setBounds(false, element);
                 if (parent != null) {
                     node.inheritStyle(parent);
@@ -378,9 +379,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                 if (nodeY.tagName === 'TABLE') {
                                     const tableRows: T[] = [];
-                                    const thead = (<T> nodeY.children.find((item: T) => item.tagName === 'THEAD'));
-                                    const tbody = (<T> nodeY.children.find((item: T) => item.tagName === 'TBODY'));
-                                    const tfoot = (<T> nodeY.children.find((item: T) => item.tagName === 'TFOOT'));
+                                    const thead = nodeY.children.find((item: T) => item.tagName === 'THEAD');
+                                    const tbody = nodeY.children.find((item: T) => item.tagName === 'TBODY');
+                                    const tfoot = nodeY.children.find((item: T) => item.tagName === 'TFOOT');
                                     if (thead != null) {
                                         thead.cascade().filter((item: T) => item.tagName === 'TH' || item.tagName === 'TD').forEach((item: T) => item.inheritStyleMap(thead));
                                         tableRows.push(...(<T[]> thead.children));

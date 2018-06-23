@@ -346,10 +346,12 @@ export default class Widget extends Node {
             }
             node = (<T> node.parentOriginal);
         }
+        if (textAlign === '' && this.tagName === 'TH') {
+            textAlign = 'center';
+        }
         if (hasValue(verticalAlign) || hasValue(textAlign)) {
             let horizontal = '';
             let vertical = '';
-            let gravity: string[] = [];
             switch (textAlign) {
                 case 'start':
                     horizontal = 'start';
@@ -396,10 +398,8 @@ export default class Widget extends Node {
                         }
                     }
                     break;
-                default:
-                    gravity.push(horizontal, vertical);
             }
-            gravity = gravity.filter(value => value !== '');
+            const gravity = [horizontal, vertical].filter(value => value !== '');
             if (gravity.length > 0) {
                 this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
             }
@@ -471,11 +471,8 @@ export default class Widget extends Node {
             return super.viewName;
         }
         else {
-            let value: number | object = MAPPING_CHROME[this.tagName];
-            if (typeof value === 'object') {
-                value = value[(<HTMLInputElement> this.element).type];
-            }
-            return (value != null ? Widget.getViewName((<number> value)) : '');
+            const value: number = MAPPING_CHROME[this.tagName];
+            return (value != null ? Widget.getViewName(value) : '');
         }
     }
 

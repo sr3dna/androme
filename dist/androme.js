@@ -1,4 +1,4 @@
-/* androme 1.7.6
+/* androme 1.7.7
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -7,9 +7,8 @@
     (factory((global.androme = {})));
 }(this, (function (exports) { 'use strict';
 
-    const ID = {
-        android: ['parent']
-    };
+    let ID;
+    resetId();
     function sort(list, asc = 0, ...attributes) {
         return list.sort((a, b) => {
             for (const attr of attributes) {
@@ -25,6 +24,11 @@
             }
             return 0;
         });
+    }
+    function resetId() {
+        ID = {
+            android: ['parent']
+        };
     }
     function generateId(section, name) {
         let prefix = name;
@@ -398,21 +402,18 @@
         BOX_STANDARD[BOX_STANDARD["PADDING_LEFT"] = 256] = "PADDING_LEFT";
     })(BOX_STANDARD || (BOX_STANDARD = {}));
     const MAPPING_CHROME = {
-        'TEXT': VIEW_STANDARD.TEXT,
+        'PLAINTEXT': VIEW_STANDARD.TEXT,
         'LABEL': VIEW_STANDARD.TEXT,
         'P': VIEW_STANDARD.TEXT,
         'HR': VIEW_STANDARD.VIEW,
         'IMG': VIEW_STANDARD.IMAGE,
         'SELECT': VIEW_STANDARD.SELECT,
-        'INPUT': {
-            'text': VIEW_STANDARD.EDIT,
-            'password': VIEW_STANDARD.EDIT,
-            'checkbox': VIEW_STANDARD.CHECKBOX,
-            'radio': VIEW_STANDARD.RADIO,
-            'button': VIEW_STANDARD.BUTTON,
-            'submit': VIEW_STANDARD.BUTTON
-        },
+        'TEXT': VIEW_STANDARD.EDIT,
+        'PASSWORD': VIEW_STANDARD.EDIT,
+        'CHECKBOX': VIEW_STANDARD.CHECKBOX,
+        'RADIO': VIEW_STANDARD.RADIO,
         'BUTTON': VIEW_STANDARD.BUTTON,
+        'SUBMIT': VIEW_STANDARD.BUTTON,
         'TEXTAREA': VIEW_STANDARD.EDIT
     };
     const BLOCK_CHROME = [
@@ -474,7 +475,7 @@
         'H5',
         'H6',
         'DEL',
-        'TEXT'
+        'PLAINTEXT'
     ];
 
     const X11_CSS3 = {
@@ -813,6 +814,7 @@
     }
 
     (function (BUILD_ANDROID) {
+        BUILD_ANDROID[BUILD_ANDROID["P"] = 28] = "P";
         BUILD_ANDROID[BUILD_ANDROID["OREO_1"] = 27] = "OREO_1";
         BUILD_ANDROID[BUILD_ANDROID["OREO"] = 26] = "OREO";
         BUILD_ANDROID[BUILD_ANDROID["NOUGAT_1"] = 25] = "NOUGAT_1";
@@ -827,7 +829,8 @@
         BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN"] = 16] = "JELLYBEAN";
         BUILD_ANDROID[BUILD_ANDROID["ICE_CREAM_SANDWICH_1"] = 15] = "ICE_CREAM_SANDWICH_1";
         BUILD_ANDROID[BUILD_ANDROID["ICE_CREAM_SANDWICH"] = 14] = "ICE_CREAM_SANDWICH";
-        BUILD_ANDROID[BUILD_ANDROID["LATEST"] = 27] = "LATEST";
+        BUILD_ANDROID[BUILD_ANDROID["ALL"] = 0] = "ALL";
+        BUILD_ANDROID[BUILD_ANDROID["LATEST"] = 28] = "LATEST";
     })(exports.build || (exports.build = {}));
     (function (DENSITY_ANDROID) {
         DENSITY_ANDROID[DENSITY_ANDROID["LDPI"] = 120] = "LDPI";
@@ -985,6 +988,7 @@
             this._closed = true;
         }
         reset() {
+            resetId();
             this.cacheInternal.list.forEach((node) => {
                 const element = node.element;
                 if (element != null) {
@@ -1021,9 +1025,9 @@
             this.viewHandler.setLayoutWeight();
         }
         setResources() {
+            this.resourceHandler.setFontStyle();
             this.resourceHandler.setBoxSpacing();
             this.resourceHandler.setBoxStyle();
-            this.resourceHandler.setFontStyle();
             this.resourceHandler.setValueString();
             this.resourceHandler.setOptionArray();
             this.resourceHandler.setImageSource();
@@ -1225,7 +1229,7 @@
             let node = null;
             if (element.nodeName === '#text') {
                 if (element.textContent && element.textContent.trim() !== '') {
-                    node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'TEXT' });
+                    node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'PLAINTEXT' });
                     node.setBounds(false, element);
                     if (parent != null) {
                         node.inheritStyle(parent);
@@ -1795,7 +1799,7 @@
             let output = preXml +
                 `{<${id}}`;
             if (hasValue(xml)) {
-                output += indent + `<${tagName}{@${id}}>\n` +
+                output += indent + `<${tagName}{@${id}}{&${id}}>\n` +
                     xml +
                     indent + `</${tagName}>\n`;
             }
@@ -2050,7 +2054,7 @@
             this._tagName = value;
         }
         get tagName() {
-            return this._tagName || (this.element != null ? this.element.tagName : '');
+            return this._tagName || (this.element != null ? (this.element.tagName === 'INPUT' ? this.element.type.toUpperCase() : this.element.tagName) : '');
         }
         set viewName(value) {
             this._viewName = value;
@@ -2178,18 +2182,8 @@
     }
 
     var API_ANDROID = {
-        [0]: {
-            customizations: {
-                'Button': {
-                    android: {
-                        minWidth: '0dp',
-                        minHeight: '0dp'
-                    }
-                }
-            }
-        },
         [exports.build.OREO]: {
-            android: ['fontWeight'],
+            android: ['fontWeight', 'layout_marginHorizontal', 'layout_marginVertical', 'paddingHorizontal', 'paddingVertical'],
             customizations: {}
         },
         [exports.build.JELLYBEAN_1]: {
@@ -2202,6 +2196,16 @@
                 'Button': {
                     android: {
                         textAllCaps: 'false'
+                    }
+                }
+            }
+        },
+        [exports.build.ALL]: {
+            customizations: {
+                'Button': {
+                    android: {
+                        minWidth: '0dp',
+                        minHeight: '0dp'
                     }
                 }
             }
@@ -2522,10 +2526,12 @@
                 }
                 node = node.parentOriginal;
             }
+            if (textAlign === '' && this.tagName === 'TH') {
+                textAlign = 'center';
+            }
             if (hasValue(verticalAlign) || hasValue(textAlign)) {
                 let horizontal = '';
                 let vertical = '';
-                let gravity = [];
                 switch (textAlign) {
                     case 'start':
                         horizontal = 'start';
@@ -2572,10 +2578,8 @@
                             }
                         }
                         break;
-                    default:
-                        gravity.push(horizontal, vertical);
                 }
-                gravity = gravity.filter(value => value !== '');
+                const gravity = [horizontal, vertical].filter(value => value !== '');
                 if (gravity.length > 0) {
                     this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
                 }
@@ -2642,10 +2646,7 @@
                 return super.viewName;
             }
             else {
-                let value = MAPPING_CHROME[this.tagName];
-                if (typeof value === 'object') {
-                    value = value[this.element.type];
-                }
+                const value = MAPPING_CHROME[this.tagName];
                 return (value != null ? Widget.getViewName(value) : '');
             }
         }
@@ -2894,190 +2895,190 @@
                     }
                     const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                     const linearX = nodes.linearX;
-                    if (!flex.enabled) {
-                        nodes.list.forEach((current) => {
-                            if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
-                                if (constraint) {
-                                    this.setAlignParent(current);
+                    nodes.list.forEach((current) => {
+                        if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
+                            if (constraint) {
+                                this.setAlignParent(current);
+                            }
+                            else {
+                                current.android('layout_centerInParent', 'true');
+                                current.constraint.horizontal = true;
+                                current.constraint.vertical = true;
+                            }
+                            node.constraint.layoutWidth = true;
+                            node.constraint.layoutHeight = true;
+                        }
+                    });
+                    nodes.list.unshift(node);
+                    nodes.list.forEach((current) => {
+                        nodes.list.forEach((adjacent) => {
+                            if (current === adjacent) {
+                                return;
+                            }
+                            else if (constraint) {
+                                let linear1 = current.linear;
+                                let linear2 = adjacent.linear;
+                                let parent = false;
+                                if (current === node || adjacent === node) {
+                                    if (current === node) {
+                                        current = adjacent;
+                                    }
+                                    adjacent = { stringId: 'parent' };
+                                    linear1 = current.linear;
+                                    linear2 = node.box;
+                                    parent = true;
+                                }
+                                if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
+                                    this.setAlignParent(current, 'horizontal');
                                 }
                                 else {
-                                    current.android('layout_centerInParent', 'true');
-                                    current.constraint.horizontal = true;
-                                    current.constraint.vertical = true;
-                                }
-                                node.constraint.layoutWidth = true;
-                                node.constraint.layoutHeight = true;
-                            }
-                        });
-                        nodes.list.unshift(node);
-                        nodes.list.forEach((current) => {
-                            nodes.list.forEach((adjacent) => {
-                                if (current === adjacent) {
-                                    return;
-                                }
-                                else if (constraint) {
-                                    let linear1 = current.linear;
-                                    let linear2 = adjacent.linear;
-                                    let parent = false;
-                                    if (current === node || adjacent === node) {
-                                        if (current === node) {
-                                            current = adjacent;
+                                    if (parent) {
+                                        if (linear1.left === linear2.left) {
+                                            current.anchor(LAYOUT['left'], adjacent, 'horizontal');
                                         }
-                                        adjacent = { stringId: 'parent' };
-                                        linear1 = current.linear;
-                                        linear2 = node.box;
-                                        parent = true;
-                                    }
-                                    if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
-                                        this.setAlignParent(current, 'horizontal');
+                                        if (withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                            current.anchor(LAYOUT['right'], adjacent, 'horizontal');
+                                        }
                                     }
                                     else {
-                                        if (parent) {
-                                            if (linear1.left === linear2.left) {
-                                                current.anchor(LAYOUT['left'], adjacent, 'horizontal');
-                                            }
-                                            if (withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                                current.anchor(LAYOUT['right'], adjacent, 'horizontal');
-                                            }
+                                        if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
+                                            current.anchor(LAYOUT['left'], adjacent);
+                                            current.anchor(LAYOUT['right'], adjacent);
                                         }
-                                        else {
-                                            if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
+                                        else if (!SETTINGS.horizontalPerspective) {
+                                            if (linear1.left === linear2.left) {
                                                 current.anchor(LAYOUT['left'], adjacent);
+                                            }
+                                            else if (linear1.right === linear2.right) {
                                                 current.anchor(LAYOUT['right'], adjacent);
                                             }
-                                            else if (!SETTINGS.horizontalPerspective) {
-                                                if (linear1.left === linear2.left) {
-                                                    current.anchor(LAYOUT['left'], adjacent);
-                                                }
-                                                else if (linear1.right === linear2.right) {
-                                                    current.anchor(LAYOUT['right'], adjacent);
-                                                }
+                                        }
+                                        const withinY = (linear1.top === linear2.top || linear1.bottom === linear2.bottom);
+                                        if (withinY && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (current.css('float') !== 'right') {
+                                                current.anchor(LAYOUT['leftRight'], adjacent);
                                             }
-                                            const withinY = (linear1.top === linear2.top || linear1.bottom === linear2.bottom);
-                                            if (withinY && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                                if (current.css('float') !== 'right') {
-                                                    current.anchor(LAYOUT['leftRight'], adjacent);
-                                                }
-                                                else {
-                                                    current.constraint.marginHorizontal = adjacent.stringId;
-                                                }
+                                            else {
+                                                current.constraint.marginHorizontal = adjacent.stringId;
                                             }
-                                            if (withinY && withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
-                                                if (current.css('float') !== 'left') {
-                                                    current.anchor(LAYOUT['rightLeft'], adjacent);
-                                                }
+                                        }
+                                        if (withinY && withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (current.css('float') !== 'left') {
+                                                current.anchor(LAYOUT['rightLeft'], adjacent);
                                             }
                                         }
                                     }
-                                    if (parent) {
-                                        if (linear1.top === linear2.top) {
-                                            current.anchor(LAYOUT['top'], adjacent, 'vertical');
-                                        }
-                                        if (withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset)) {
-                                            current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
-                                        }
+                                }
+                                if (parent) {
+                                    if (linear1.top === linear2.top) {
+                                        current.anchor(LAYOUT['top'], adjacent, 'vertical');
                                     }
-                                    else {
-                                        if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                            current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
-                                        }
-                                        else if (current.viewHeight === 0 && linear1.top === linear2.top && linear1.bottom === linear2.bottom) {
-                                            if (!current.floating || !current.constraint.vertical) {
-                                                const baseline = (current.is(VIEW_STANDARD.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(VIEW_STANDARD.TEXT) && adjacent.style.verticalAlign === 'baseline');
+                                    if (withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset)) {
+                                        current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
+                                    }
+                                }
+                                else {
+                                    if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                    }
+                                    else if (current.viewHeight === 0 && linear1.top === linear2.top && linear1.bottom === linear2.bottom) {
+                                        if (!current.floating || !current.constraint.vertical) {
+                                            const baseline = (current.is(VIEW_STANDARD.TEXT) && current.style.verticalAlign === 'baseline' && adjacent.is(VIEW_STANDARD.TEXT) && adjacent.style.verticalAlign === 'baseline');
+                                            if (current.app(LAYOUT['top']) !== 'parent') {
                                                 current.anchor(LAYOUT[(baseline ? 'baseline' : 'top')], adjacent);
-                                                current.anchor(LAYOUT['bottom'], adjacent);
                                             }
+                                            current.anchor(LAYOUT['bottom'], adjacent);
                                         }
                                     }
                                 }
-                                else if (relative) {
-                                    if (current === node) {
-                                        return;
+                            }
+                            else if (relative) {
+                                if (current === node) {
+                                    return;
+                                }
+                                else if (adjacent === node) {
+                                    adjacent = { stringId: 'true' };
+                                    if (current.linear.left === node.box.left) {
+                                        current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
                                     }
-                                    else if (adjacent === node) {
-                                        adjacent = { stringId: 'true' };
-                                        if (current.linear.left === node.box.left) {
-                                            current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
-                                        }
-                                        if (current.linear.right === node.box.right) {
-                                            current.anchor(parseRTL('layout_alignParentRight'), adjacent, 'horizontal');
-                                        }
-                                        if (current.linear.top === node.box.top) {
-                                            current.anchor('layout_alignParentTop', adjacent, 'vertical');
-                                        }
-                                        if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset)) {
-                                            current.anchor('layout_alignParentBottom', adjacent, 'vertical');
-                                        }
+                                    if (current.linear.right === node.box.right) {
+                                        current.anchor(parseRTL('layout_alignParentRight'), adjacent, 'horizontal');
+                                    }
+                                    if (current.linear.top === node.box.top) {
+                                        current.anchor('layout_alignParentTop', adjacent, 'vertical');
+                                    }
+                                    if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset)) {
+                                        current.anchor('layout_alignParentBottom', adjacent, 'vertical');
+                                    }
+                                }
+                                else {
+                                    const linear1 = current.linear;
+                                    const linear2 = adjacent.linear;
+                                    if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
+                                        current.android('layout_centerHorizontal', 'true');
+                                        current.constraint.horizontal = true;
                                     }
                                     else {
-                                        const linear1 = current.linear;
-                                        const linear2 = adjacent.linear;
-                                        if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
-                                            current.android('layout_centerHorizontal', 'true');
-                                            current.constraint.horizontal = true;
-                                        }
-                                        else {
-                                            if ((linear1.top === linear2.top || linear1.bottom === linear2.bottom) && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                                current.anchor(LAYOUT['leftRight'], adjacent, (adjacent.constraint.horizontal ? 'horizontal' : ''));
-                                                if (adjacent.constraint.horizontal) {
-                                                    current.delete('android', parseRTL('layout_alignParentRight'));
-                                                }
+                                        if ((linear1.top === linear2.top || linear1.bottom === linear2.bottom) && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                            current.anchor(LAYOUT['leftRight'], adjacent, (adjacent.constraint.horizontal ? 'horizontal' : ''));
+                                            if (adjacent.constraint.horizontal) {
+                                                current.delete('android', parseRTL('layout_alignParentRight'));
                                             }
                                         }
-                                        if (adjacent.constraint.vertical && withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                            current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
-                                            if (adjacent.constraint.vertical) {
-                                                current.delete('android', 'layout_alignParentBottom');
-                                            }
+                                    }
+                                    if (adjacent.constraint.vertical && withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                        if (adjacent.constraint.vertical) {
+                                            current.delete('android', 'layout_alignParentBottom');
                                         }
-                                        if (adjacent.constraint.horizontal) {
-                                            if (linear1.bottom === linear2.bottom) {
-                                                if (!linearX && (!current.floating || !current.constraint.vertical)) {
-                                                    current.anchor(LAYOUT['bottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
-                                                    if (adjacent.constraint.vertical) {
-                                                        current.delete('android', 'layout_alignParentBottom');
-                                                    }
+                                    }
+                                    if (adjacent.constraint.horizontal) {
+                                        if (linear1.bottom === linear2.bottom) {
+                                            if (!linearX && (!current.floating || !current.constraint.vertical)) {
+                                                current.anchor(LAYOUT['bottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                                if (adjacent.constraint.vertical) {
+                                                    current.delete('android', 'layout_alignParentBottom');
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            });
-                        });
-                        nodes.list.shift();
-                        nodes.list.forEach((current) => {
-                            const leftRight = current.anchor(LAYOUT['leftRight']);
-                            if (leftRight != null) {
-                                current.constraint.horizontal = true;
-                                current.constraint.marginHorizontal = leftRight;
-                            }
-                            const topBottom = current.anchor(LAYOUT['topBottom']);
-                            if (topBottom != null) {
-                                current.constraint.vertical = true;
-                                current.constraint.marginVertical = topBottom;
-                            }
-                            if (constraint) {
-                                const position = [];
-                                if (current.constraint.horizontal) {
-                                    if (current.anchor(LAYOUT['left']) !== 'parent') {
-                                        position.push(LAYOUT['left']);
-                                    }
-                                    if (current.anchor(LAYOUT['right']) !== 'parent') {
-                                        position.push(LAYOUT['right']);
-                                    }
-                                }
-                                if (current.constraint.vertical) {
-                                    if (current.anchor(LAYOUT['top']) !== 'parent') {
-                                        position.push(LAYOUT['top']);
-                                    }
-                                    if (current.anchor(LAYOUT['bottom']) !== 'parent') {
-                                        position.push(LAYOUT['bottom']);
-                                    }
-                                }
-                                current.delete((relative ? 'android' : 'app'), ...position);
                             }
                         });
-                    }
+                    });
+                    nodes.list.shift();
+                    nodes.list.forEach((current) => {
+                        const leftRight = current.anchor(LAYOUT['leftRight']);
+                        if (leftRight != null) {
+                            current.constraint.horizontal = true;
+                            current.constraint.marginHorizontal = leftRight;
+                        }
+                        const topBottom = current.anchor(LAYOUT['topBottom']);
+                        if (topBottom != null) {
+                            current.constraint.vertical = true;
+                            current.constraint.marginVertical = topBottom;
+                        }
+                        if (constraint) {
+                            const position = [];
+                            if (current.constraint.horizontal) {
+                                if (current.anchor(LAYOUT['left']) !== 'parent') {
+                                    position.push(LAYOUT['left']);
+                                }
+                                if (current.anchor(LAYOUT['right']) !== 'parent') {
+                                    position.push(LAYOUT['right']);
+                                }
+                            }
+                            if (current.constraint.vertical) {
+                                if (current.anchor(LAYOUT['top']) !== 'parent') {
+                                    position.push(LAYOUT['top']);
+                                }
+                                if (current.anchor(LAYOUT['bottom']) !== 'parent') {
+                                    position.push(LAYOUT['bottom']);
+                                }
+                            }
+                            current.delete((relative ? 'android' : 'app'), ...position);
+                        }
+                    });
                     if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect()) && !nodes.list.some((item) => item.floating)) {
                         let flexNodes = null;
                         if (flex.enabled) {
@@ -3981,7 +3982,7 @@
                         for (const i in result) {
                             result[i] = result[i](node.css(i), node, i);
                         }
-                        if (sameAsParent(element, 'backgroundColor') || SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0') {
+                        if (SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')) || result.backgroundColor[2] === '0') {
                             result.backgroundColor = [];
                         }
                         else {
@@ -3998,27 +3999,31 @@
         }
         setFontStyle() {
             this.cache.elements.forEach((node) => {
-                if ((node.visible || node.companion) && node.renderChildren.length === 0) {
+                if (node.visible || node.companion) {
                     const element = node.element;
                     if (!hasValue(element.__fontStyle) || SETTINGS.alwaysReevaluateResources) {
-                        switch (element.tagName) {
-                            case 'IMG':
-                            case 'HR':
-                            case 'AREA':
-                                return;
+                        if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
+                            return;
                         }
-                        let color = parseRGBA(node.css('color') || '');
-                        if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0])) {
-                            color = [];
+                        else {
+                            let color = parseRGBA(node.css('color') || '');
+                            if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0])) {
+                                color = [];
+                            }
+                            let backgroundColor = parseRGBA(node.css('backgroundColor') || '');
+                            if (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                                backgroundColor = [];
+                            }
+                            const result = {
+                                fontFamily: node.css('fontFamily'),
+                                fontStyle: node.css('fontStyle'),
+                                fontSize: node.css('fontSize'),
+                                fontWeight: node.css('fontWeight'),
+                                color: (color.length > 0 ? `@color/${Resource.addColor(color[0])[0]}` : ''),
+                                backgroundColor: (backgroundColor.length > 0 ? `@color/${Resource.addColor(backgroundColor[0])[0]}` : '')
+                            };
+                            element.__fontStyle = result;
                         }
-                        const result = {
-                            fontFamily: node.css('fontFamily'),
-                            fontStyle: node.css('fontStyle'),
-                            fontSize: node.css('fontSize'),
-                            fontWeight: node.css('fontWeight'),
-                            color: (color.length > 0 ? Resource.addColor(color[0]) : '')
-                        };
-                        element.__fontStyle = result;
                     }
                 }
             });
@@ -4426,7 +4431,8 @@
         setBoxStyle() {
             super.setBoxStyle();
             this.cache.elements.forEach((node) => {
-                const stored = node.element.__boxStyle;
+                const element = node.element;
+                const stored = element.__boxStyle;
                 if (stored != null) {
                     const method = METHOD_ANDROID['boxStyle'];
                     const label = node.label;
@@ -4529,7 +4535,7 @@
                         }
                         node.attr(formatString(method['background'], resourceName));
                     }
-                    else if (stored.backgroundColor.length > 0) {
+                    else if (element.__fontStyle == null && stored.backgroundColor.length > 0) {
                         node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
                     }
                 }
@@ -4563,28 +4569,33 @@
                     if (element != null) {
                         const nodeId = (labelFor || node).id;
                         const stored = Object.assign({}, element.__fontStyle);
-                        const fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
-                        let fontStyle = '';
-                        let fontWeight = '';
-                        if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
-                            system = true;
-                            stored.fontFamily = fontFamily;
-                            if (stored.fontStyle === 'normal') {
-                                delete stored.fontStyle;
+                        if (stored.fontFamily != null) {
+                            const fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                            let fontStyle = '';
+                            let fontWeight = '';
+                            if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                                system = true;
+                                stored.fontFamily = fontFamily;
+                                if (stored.fontStyle === 'normal') {
+                                    delete stored.fontStyle;
+                                }
+                                if (stored.fontWeight === '400') {
+                                    delete stored.fontWeight;
+                                }
                             }
-                            if (stored.fontWeight === '400') {
+                            else {
+                                stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                                fontStyle = stored.fontStyle;
+                                fontWeight = stored.fontWeight;
+                                delete stored.fontStyle;
                                 delete stored.fontWeight;
                             }
-                        }
-                        else {
-                            stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
-                            fontStyle = stored.fontStyle;
-                            fontWeight = stored.fontWeight;
-                            delete stored.fontStyle;
-                            delete stored.fontWeight;
-                        }
-                        if (stored.color !== '') {
-                            stored.color = `@color/${stored.color[0]}`;
+                            if (!system) {
+                                if (!STORED.FONTS.has(fontFamily)) {
+                                    STORED.FONTS.set(fontFamily, {});
+                                }
+                                STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
+                            }
                         }
                         const method = METHOD_ANDROID['fontStyle'];
                         const keys = Object.keys(method);
@@ -4601,12 +4612,6 @@
                                 sorted[i][attr].push(nodeId);
                             }
                         }
-                        if (!system) {
-                            if (!STORED.FONTS.has(fontFamily)) {
-                                STORED.FONTS.set(fontFamily, {});
-                            }
-                            STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
-                        }
                     }
                 });
                 if (this.tagStyle[tag] != null) {
@@ -4621,10 +4626,10 @@
                             }
                         }
                     }
-                    this.tagCount[tag] += nodes.length;
+                    this.tagCount[tag] += nodes.filter((item) => item.visible).length;
                 }
                 else {
-                    this.tagCount[tag] = nodes.length;
+                    this.tagCount[tag] = nodes.filter((item) => item.visible).length;
                 }
                 this.tagStyle[tag] = sorted;
             }
@@ -4699,7 +4704,26 @@
             for (const tag in this.tagStyle) {
                 style[tag] = {};
                 layout[tag] = {};
-                let sorted = this.tagStyle[tag].slice();
+                let sorted = this.tagStyle[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
+                    let maxA = 0;
+                    let maxB = 0;
+                    let countA = 0;
+                    let countB = 0;
+                    for (const attr in a) {
+                        maxA = Math.max(a[attr].length, maxA);
+                        countA += a[attr].length;
+                    }
+                    for (const attr in b) {
+                        maxB = Math.max(b[attr].length, maxB);
+                        countB += b[attr].length;
+                    }
+                    if (maxA !== maxB) {
+                        return (maxA > maxB ? -1 : 1);
+                    }
+                    else {
+                        return (countA >= countB ? -1 : 1);
+                    }
+                });
                 const count = this.tagCount[tag];
                 do {
                     if (sorted.length === 1) {
@@ -4719,6 +4743,8 @@
                         const layoutKey = {};
                         for (let i = 0; i < sorted.length; i++) {
                             const filtered = {};
+                            const combined = {};
+                            const deleteKeys = new Set();
                             for (const attr1 in sorted[i]) {
                                 if (sorted[i] == null) {
                                     continue;
@@ -4735,11 +4761,12 @@
                                 }
                                 else if (ids.length === 1) {
                                     layoutKey[attr1] = ids;
-                                    sorted[i][attr1] = null;
+                                    sorted[i] = null;
                                     revalidate = true;
                                 }
                                 if (!revalidate) {
                                     const found = {};
+                                    let merged = false;
                                     for (let j = 0; j < sorted.length; j++) {
                                         if (i !== j) {
                                             for (const attr in sorted[j]) {
@@ -4758,12 +4785,14 @@
                                     for (const attr2 in found) {
                                         if (found[attr2].length > 1) {
                                             filtered[[attr1, attr2].sort().join(';')] = found[attr2];
+                                            merged = true;
                                         }
+                                    }
+                                    if (!merged) {
+                                        filtered[attr1] = ids;
                                     }
                                 }
                             }
-                            const combined = {};
-                            const deleteKeys = new Set();
                             for (const attr1 in filtered) {
                                 for (const attr2 in filtered) {
                                     if (attr1 !== attr2 && filtered[attr1].join('') === filtered[attr2].join('')) {
@@ -4792,7 +4821,12 @@
                         }
                         const shared = Object.keys(styleKey);
                         if (shared.length > 0) {
-                            style[tag][shared.join(';')] = styleKey[shared[0]];
+                            if (shared.length > 1 || styleKey[shared[0]].length > 1) {
+                                style[tag][shared.join(';')] = styleKey[shared[0]];
+                            }
+                            else {
+                                Object.assign(layoutKey, styleKey);
+                            }
                         }
                         for (const attr in layoutKey) {
                             layout[tag][attr] = layoutKey[attr];
@@ -4838,6 +4872,12 @@
                 if (tagData != null) {
                     for (const attr in tagData) {
                         for (const id of tagData[attr]) {
+                            if (attr.startsWith('android:background=')) {
+                                const node = viewData.cache.find(parseInt(id));
+                                if (node && node.android('backround') != null) {
+                                    continue;
+                                }
+                            }
                             if (map[id] == null) {
                                 map[id] = { styles: [], attributes: [] };
                             }
@@ -4849,10 +4889,10 @@
             for (const id in map) {
                 const node = viewData.cache.find(parseInt(id));
                 if (node != null) {
-                    let append = '';
                     const styles = map[id].styles;
                     const attributes = map[id].attributes;
                     const indent = padLeft(node.renderDepth + 1);
+                    let append = '';
                     if (styles.length > 0) {
                         inherit.add(styles.join('.'));
                         append += `\n${indent}style="@style/${styles.pop()}"`;
@@ -5228,6 +5268,7 @@
         resourceStyleToXml(saveToDisk = false) {
             let xml = '';
             if (this.stored.STYLES.size > 0) {
+                this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort());
                 const template = parseTemplateMatch(STYLE_TMPL);
                 const data = {
                     '0': [{

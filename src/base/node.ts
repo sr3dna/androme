@@ -305,7 +305,7 @@ export default abstract class Node implements BoxModel {
         this._tagName = value;
     }
     get tagName() {
-        return this._tagName || (this.element != null ? this.element.tagName : '');
+        return this._tagName || (this.element != null ? (this.element.tagName === 'INPUT' ? (<HTMLInputElement> this.element).type.toUpperCase() : this.element.tagName) : '');
     }
 
     set viewName(value) {
