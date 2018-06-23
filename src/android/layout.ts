@@ -285,19 +285,19 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                     }
                     else {
                         nodes.list.forEach((current: T) => {
-                            let horizontalChain = nodes.filter((item: T) => same(current, item, 'bounds.top'));
+                            let horizontalChain = nodes.filter((item: T) => same(current, item, 'linear.top'));
                             if (horizontalChain.list.length === 0) {
-                                horizontalChain = nodes.filter((item: T) => same(current, item, 'bounds.bottom'));
+                                horizontalChain = nodes.filter((item: T) => same(current, item, 'linear.bottom'));
                             }
                             if (horizontalChain.list.length > 0) {
-                                horizontalChain.sortAsc('bounds.x');
+                                horizontalChain.sortAsc('linear.x');
                             }
-                            let verticalChain = nodes.filter((item: T) => same(current, item, 'bounds.left'));
+                            let verticalChain = nodes.filter((item: T) => same(current, item, 'linear.left'));
                             if (verticalChain.list.length === 0) {
-                                verticalChain = nodes.filter((item: T) => same(current, item, 'bounds.right'));
+                                verticalChain = nodes.filter((item: T) => same(current, item, 'linear.right'));
                             }
                             if (verticalChain.list.length > 0) {
-                                verticalChain.sortAsc('bounds.y');
+                                verticalChain.sortAsc('linear.y');
                             }
                             current.constraint.horizontalChain = horizontalChain;
                             current.constraint.verticalChain = verticalChain;
@@ -315,7 +315,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                         const chainNodes = flexNodes || nodes.slice().list.sort((a: T, b: T) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                         chainNodes.forEach((current: T) => {
                             const chainDirection: U = current.constraint[value];
-                            if (chainDirection && chainDirection.length > 0 && (flex.enabled || chainDirection.list.map((item: T) => parseInt((item.constraint[value].list || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
+                            if (chainDirection && chainDirection.length > 1 && (flex.enabled || chainDirection.list.map((item: T) => parseInt((item.constraint[value].list || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
                                 chainDirection.parent = node;
                                 if (flex.enabled && chainDirection.list.some((item: T) => item.flex.order > 0)) {
                                     chainDirection[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
@@ -841,6 +841,17 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                         break;
                     case 'text':
                         node.android('inputType', 'text');
+                        break;
+                    case 'range':
+                        if (hasValue(element.min)) {
+                            node.android('min', element.min);
+                        }
+                        if (hasValue(element.max)) {
+                            node.android('max', element.max);
+                        }
+                        if (hasValue(element.value)) {
+                            node.android('progess', element.value);
+                        }
                         break;
                 }
                 break;

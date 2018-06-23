@@ -27,7 +27,7 @@ export default abstract class Resource<T extends Node> {
                         return (<string> key);
                     }
                 }
-                name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 5).join('_').replace(/_+$/g, '');
+                name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
                 if (num || /^[0-9]/.test(value)) {
                     name = `__${name}`;
                 }
@@ -294,12 +294,14 @@ export default abstract class Resource<T extends Node> {
 
     public setValueString() {
         this.cache.elements.forEach((node: T) => {
-            const element = (<HTMLElement> node.element);
+            const element = (<HTMLInputElement> node.element);
             if (!hasValue((<any> element).__valueString) || SETTINGS.alwaysReevaluateResources) {
                 let name = '';
                 let value = '';
                 if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                    value = (<HTMLInputElement> element).value.trim();
+                    if (element.type !== 'range') {
+                        value = element.value.trim();
+                    }
                 }
                 else if (element.nodeName === '#text') {
                     value = (element.textContent ? element.textContent.trim() : '');

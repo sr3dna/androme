@@ -42,6 +42,7 @@ export const VIEW_ANDROID = {
     EDIT: 'EditText',
     IMAGE: 'ImageView',
     SELECT: 'Spinner',
+    RANGE: 'SeekBar',
     CHECKBOX: 'CheckBox',
     RADIO: 'RadioButton',
     BUTTON: 'Button',
