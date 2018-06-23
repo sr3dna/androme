@@ -1,5 +1,5 @@
 import { ObjectIndex } from '../lib/types';
-import View from './view';
+import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
@@ -10,7 +10,7 @@ import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
-    public viewHandler: View<T, U>;
+    public controllerHandler: Controller<T, U>;
     public resourceHandler: Resource<T>;
 
     private cacheInternal: U;
@@ -27,9 +27,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cacheInternal = new this.TypeU();
     }
 
-    public registerView(viewHandler: View<T, U>) {
-        viewHandler.cache = this.cache;
-        this.viewHandler = viewHandler;
+    public registerController(controllerHandler: Controller<T, U>) {
+        controllerHandler.cache = this.cache;
+        this.controllerHandler = controllerHandler;
     }
 
     public registerResource(resource: Resource<T>) {
@@ -65,7 +65,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         });
         this.cache.reset();
         this.cacheInternal.reset();
-        this.resetView();
+        this.resetController();
         this.resetResource();
         this.appName = '';
         this._ids = [];
@@ -73,8 +73,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this._closed = false;
     }
 
-    public resetView() {
-        this.viewHandler.reset();
+    public resetController() {
+        this.controllerHandler.reset();
     }
 
     public resetResource() {
@@ -82,15 +82,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public setConstraints() {
-        this.viewHandler.setConstraints();
+        this.controllerHandler.setConstraints();
     }
 
     public setMarginPadding() {
-        this.viewHandler.setMarginPadding();
+        this.controllerHandler.setMarginPadding();
     }
 
     public setLayoutWeight() {
-        this.viewHandler.setLayoutWeight();
+        this.controllerHandler.setLayoutWeight();
     }
 
     public setResources() {
@@ -373,7 +373,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         let xml = '';
                         if (tagName === '') {
                             if ((nodeY.children.length === 0 && nodeY.element && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: T) => INLINE_CHROME.includes(item.tagName))) {
-                                tagName = this.viewHandler.getViewName(VIEW_STANDARD.TEXT);
+                                tagName = this.controllerHandler.getViewName(VIEW_STANDARD.TEXT);
                             }
                             else if (nodeY.children.length > 0) {
                                 const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
@@ -719,20 +719,20 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     siblings.list.unshift(nodeY);
                                     siblings.sortAsc('bounds.x');
                                     const renderParent = parent;
-                                    const bundle = this.viewHandler.createBundle(nodeY, parent, siblings.list);
-                                    this.cache.list.push(bundle);
+                                    const viewGroup = this.controllerHandler.createGroup(nodeY, parent, siblings.list);
+                                    this.cache.list.push(viewGroup);
                                     if (siblings.linearX || siblings.linearY) {
-                                        xml += this.writeLinearLayout(bundle, renderParent, siblings.linearY);
+                                        xml += this.writeLinearLayout(viewGroup, renderParent, siblings.linearY);
                                     }
                                     else {
-                                        xml += this.writeDefaultLayout(bundle, renderParent);
+                                        xml += this.writeDefaultLayout(viewGroup, renderParent);
                                     }
                                     k--;
                                     restart = true;
                                 }
                             }
                             if (!nodeY.renderParent && !restart) {
-                                xml += this.writeViewTag(nodeY, parent, tagName);
+                                xml += this.writeView(nodeY, parent, tagName);
                             }
                         }
                         if (xml !== '') {
@@ -754,13 +754,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public replaceInlineAttributes() {
         const options = {};
         let output = this.current;
-        this.cache.visible.forEach((node: T) => output = this.viewHandler.replaceInlineAttributes(output, node, options));
-        output = output.replace('{@0}', this.viewHandler.getRootAttributes(options));
+        this.cache.visible.forEach((node: T) => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
+        output = output.replace('{@0}', this.controllerHandler.getRootAttributes(options));
         this.current = output;
     }
 
     public replaceAppended() {
-        const output = this.viewHandler.replaceAppended(this.current);
+        const output = this.controllerHandler.replaceAppended(this.current);
         this.current = output;
     }
 
@@ -812,27 +812,27 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     private writeFrameLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.FRAME);
+        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.FRAME);
     }
 
     private writeLinearLayout(node: T, parent: T, vertical: boolean) {
-        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
+        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
     }
 
     private writeGridLayout(node: T, parent: T, columnCount: number, rowCount: number = 0) {
-        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
+        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
     }
 
     private writeRelativeLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.RELATIVE);
+        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.RELATIVE);
     }
 
     private writeConstraintLayout(node: T, parent: T) {
-        return this.viewHandler.renderLayout(node, parent, VIEW_STANDARD.CONSTRAINT);
+        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.CONSTRAINT);
     }
 
-    private writeViewTag(node: T, parent: T, viewName: number | string) {
-        return this.viewHandler.renderTag(node, parent, viewName);
+    private writeView(node: T, parent: T, viewName: number | string) {
+        return this.controllerHandler.renderView(node, parent, viewName);
     }
 
     private writeDefaultLayout(node: T, parent: T) {

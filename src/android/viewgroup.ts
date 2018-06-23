@@ -1,9 +1,9 @@
-import Widget from './widget';
+import View from './view';
 import { VIEW_STANDARD } from '../lib/constants';
 
-type T = Widget;
+type T = View;
 
-export default class Bundle extends Widget {
+export default class ViewGroup extends View {
     constructor(
         id: number,
         node: T,

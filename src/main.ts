@@ -1,9 +1,9 @@
 import Application from './base/application';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import Layout from './android/layout';
-import Widget from './android/widget';
-import WidgetList from './android/widgetlist';
-import ResourceWidget from './android/resource-widget';
+import View from './android/view';
+import ViewList from './android/viewlist';
+import ResourceView from './android/resource-view';
 import FileRes from './android/fileres';
 import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
@@ -12,26 +12,26 @@ let MAIN;
 const PARSED: Set<HTMLElement> = new Set();
 
 export function parseDocument(...elements) {
-    type T = Widget;
-    type U = WidgetList<T>;
+    type T = View;
+    type U = ViewList<T>;
     let main: Application<T, U>;
     if (MAIN == null) {
-        const Node = Widget;
-        const NodeList = WidgetList;
-        const View = new Layout();
+        const Node = View;
+        const NodeList = ViewList;
+        const Controller = new Layout();
         const File = new FileRes();
-        const Resource = new ResourceWidget(File);
+        const Resource = new ResourceView(File);
         main = new Application<T, U>(Node, NodeList);
-        main.registerView(View);
+        main.registerController(Controller);
         main.registerResource(Resource);
         MAIN = main;
     }
     else {
         main = MAIN;
-        main.resetView();
+        main.resetController();
     }
     if (main.closed) {
-        return false;
+        return;
     }
     main.setStyleMap();
     if (main.appName === '' && elements.length === 0) {

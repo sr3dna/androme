@@ -6,9 +6,9 @@ import API_ANDROID from './customizations';
 import { BOX_STANDARD, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import { averageInt, calculateBias, convertInt, convertPX, formatPX, generateId, getFileExt, hasValue, isPercent } from '../lib/util';
 
-type T = Widget;
+type T = View;
 
-export default class Widget extends Node {
+export default class View extends Node {
     public static getViewName(tagName: number): string {
         return VIEW_ANDROID[VIEW_STANDARD[tagName]];
     }
@@ -156,7 +156,7 @@ export default class Widget extends Node {
 
     public is(...views: number[]) {
         for (const value of views) {
-            if (this.viewName === Widget.getViewName(value)) {
+            if (this.viewName === View.getViewName(value)) {
                 return true;
             }
         }
@@ -472,7 +472,7 @@ export default class Widget extends Node {
         }
         else {
             const value: number = MAPPING_CHROME[this.tagName];
-            return (value != null ? Widget.getViewName(value) : '');
+            return (value != null ? View.getViewName(value) : '');
         }
     }
 

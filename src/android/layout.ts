@@ -1,9 +1,9 @@
 import { ClientRect, Point } from '../lib/types';
-import View from '../base/view';
+import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
-import Widget from './widget';
-import Bundle from './bundle';
-import WidgetList from './widgetlist';
+import View from './view';
+import ViewGroup from './viewgroup';
+import ViewList from './viewlist';
 import { convertPX, formatPX, hasValue, indexOf, padLeft, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { getBoxSpacing } from '../lib/dom';
 import parseRTL from './localization';
@@ -38,13 +38,9 @@ const CHAIN_MAP = {
     horizontalVertical: ['Horizontal', 'Vertical']
 };
 
-export default class Layout<T extends Widget, U extends WidgetList<T>> extends View<T, U> {
+export default class Layout<T extends View, U extends ViewList<T>> extends Controller<T, U> {
     constructor() {
         super();
-    }
-
-    public getViewName(value: number) {
-        return Widget.getViewName(value);
     }
 
     public setConstraints() {
@@ -61,7 +57,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
             rightLeft: parseRTL('layout_constraintRight_toLeftOf')
         });
         this.cache.visible.forEach((node: T) => {
-            const nodes: U = (<U> new WidgetList(node.renderChildren, node));
+            const nodes: U = (<U> new ViewList(node.renderChildren, node));
             const constraint = node.is(VIEW_STANDARD.CONSTRAINT);
             const relative = node.is(VIEW_STANDARD.RELATIVE);
             const flex = node.flex;
@@ -697,11 +693,11 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
         });
     }
 
-    public renderLayout(node: T, parent: T, viewName: number, options?) {
+    public renderGroup(node: T, parent: T, viewName: number, options?) {
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
-        node.setViewId(Widget.getViewName(viewName));
+        node.setViewId(View.getViewName(viewName));
         if (node.overflow !== OVERFLOW_CHROME.NONE) {
             const scrollView: string[] = [];
             if (node.overflowX) {
@@ -714,33 +710,33 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
             let scrollDepth = parent.renderDepth + scrollView.length;
             scrollView
                 .map(scrollName => {
-                    const bundle = new Bundle(this.cache.nextId, current, null, [current]);
-                    const widget: T = (<Widget> bundle) as T;
-                    bundle.setViewId(scrollName);
-                    bundle.setBounds();
-                    bundle.inheritGrid(current);
-                    bundle.android('fadeScrollbars', 'false');
-                    this.cache.list.push(widget);
+                    const viewGroup = new ViewGroup(this.cache.nextId, current, null, [current]);
+                    const view: T = (<View> viewGroup) as T;
+                    viewGroup.setViewId(scrollName);
+                    viewGroup.setBounds();
+                    viewGroup.inheritGrid(current);
+                    viewGroup.android('fadeScrollbars', 'false');
+                    this.cache.list.push(view);
                     switch (scrollName) {
                         case VIEW_ANDROID.SCROLL_HORIZONTAL:
-                            bundle.css('width', node.styleMap.width);
-                            bundle.css('minWidth', node.styleMap.minWidth);
-                            bundle.css('overflowX', node.styleMap.overflowX);
+                            viewGroup.css('width', node.styleMap.width);
+                            viewGroup.css('minWidth', node.styleMap.minWidth);
+                            viewGroup.css('overflowX', node.styleMap.overflowX);
                             break;
                         default:
-                            bundle.css('height', node.styleMap.height);
-                            bundle.css('minHeight', node.styleMap.minHeight);
-                            bundle.css('overflowY', node.styleMap.overflowY);
+                            viewGroup.css('height', node.styleMap.height);
+                            viewGroup.css('minHeight', node.styleMap.minHeight);
+                            viewGroup.css('overflowY', node.styleMap.overflowY);
                     }
                     const indent = padLeft(scrollDepth--);
-                    preXml = indent + `<${scrollName}{@${bundle.id}}>\n` + preXml;
+                    preXml = indent + `<${scrollName}{@${viewGroup.id}}>\n` + preXml;
                     postXml += indent + `</${scrollName}>\n`;
                     if (current === node) {
-                        node.parent = widget;
-                        renderParent = widget;
+                        node.parent = view;
+                        renderParent = view;
                     }
-                    current = widget;
-                    return bundle;
+                    current = view;
+                    return viewGroup;
                 })
                 .reverse()
                 .forEach((item, index) => {
@@ -754,7 +750,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                             item.render(current);
                             break;
                     }
-                    current = <Widget> item as T;
+                    current = <View> item as T;
                 });
         }
         this.setListItem(node);
@@ -763,13 +759,13 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
         node.render(renderParent);
         node.setGravity();
         this.setGridSpace(node);
-        return this.getEnclosingTag(node.renderDepth, Widget.getViewName(viewName), node.id, `{${node.id}}`, preXml, postXml);
+        return this.getEnclosingTag(node.renderDepth, View.getViewName(viewName), node.id, `{${node.id}}`, preXml, postXml);
     }
 
-    public renderTag(node: T, parent: T, viewName: number | string, recursive = false) {
+    public renderView(node: T, parent: T, viewName: number | string, recursive = false) {
         const element: any = node.element;
         if (typeof viewName === 'number') {
-            viewName = Widget.getViewName(viewName);
+            viewName = View.getViewName(viewName);
         }
         node.setViewId(viewName);
         switch (element.tagName) {
@@ -811,28 +807,28 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                             const result = (<T[]> node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name)));
                             let xml = '';
                             if (result.length > 1) {
-                                const bundle = new Bundle(this.cache.nextId, node, parent, result);
-                                const widget = (<Widget> bundle) as T;
+                                const viewGroup = new ViewGroup(this.cache.nextId, node, parent, result);
+                                const view = (<View> viewGroup) as T;
                                 let checked: string = '';
-                                this.cache.list.push(widget);
-                                bundle.setViewId(VIEW_ANDROID.RADIO_GROUP);
-                                bundle.render(parent);
+                                this.cache.list.push(view);
+                                viewGroup.setViewId(VIEW_ANDROID.RADIO_GROUP);
+                                viewGroup.render(parent);
                                 result.forEach((radio: T) => {
-                                    bundle.inheritGrid(radio);
+                                    viewGroup.inheritGrid(radio);
                                     if ((<HTMLInputElement> radio.element).checked) {
                                         checked = radio.stringId;
                                     }
-                                    radio.parent = bundle;
-                                    radio.render(bundle);
-                                    xml += this.renderTag(radio, widget, VIEW_STANDARD.RADIO, true);
+                                    radio.parent = viewGroup;
+                                    radio.render(viewGroup);
+                                    xml += this.renderView(radio, view, VIEW_STANDARD.RADIO, true);
                                 });
-                                bundle.android('orientation', NodeList.linearX(bundle.children) ? 'horizontal' : 'vertical');
+                                viewGroup.android('orientation', NodeList.linearX(viewGroup.children) ? 'horizontal' : 'vertical');
                                 if (checked !== '') {
-                                    bundle.android('checkedButton', checked);
+                                    viewGroup.android('checkedButton', checked);
                                 }
-                                bundle.setBounds();
-                                this.setGridSpace(widget);
-                                return this.getEnclosingTag(bundle.renderDepth, VIEW_ANDROID.RADIO_GROUP, bundle.id, xml);
+                                viewGroup.setBounds();
+                                this.setGridSpace(view);
+                                return this.getEnclosingTag(viewGroup.renderDepth, VIEW_ANDROID.RADIO_GROUP, viewGroup.id, xml);
                             }
                         }
                         break;
@@ -880,19 +876,19 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
         return this.getEnclosingTag(node.renderDepth, node.viewName, node.id);
     }
 
-    public createBundle(node: T, parent: T, children: T[]) {
-        const bundle = new Bundle(this.cache.nextId, node, parent, children);
+    public createGroup(node: T, parent: T, children: T[]) {
+        const viewGroup = new ViewGroup(this.cache.nextId, node, parent, children);
         children.forEach((child: T) => {
-            child.parent = bundle;
-            bundle.inheritGrid(child);
+            child.parent = viewGroup;
+            viewGroup.inheritGrid(child);
         });
-        bundle.setBounds();
-        return (<Widget> bundle) as T;
+        viewGroup.setBounds();
+        return (<View> viewGroup) as T;
     }
 
-    public getStaticTag(tagName: number, depth: number, options = {}, width = 'wrap_content', height = 'wrap_content') {
-        const node = new Widget(0, SETTINGS.targetAPI);
-        node.setViewId(Widget.getViewName(tagName));
+    public getViewStatic(tagName: number, depth: number, options = {}, width = 'wrap_content', height = 'wrap_content') {
+        const node = new View(0, SETTINGS.targetAPI);
+        node.setViewId(View.getViewName(tagName));
         let attributes = '';
         if (SETTINGS.showAttributes) {
             node.apply(options);
@@ -913,6 +909,10 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
 
     public getRootAttributes(options: {}) {
         return Object.keys(options).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join('');
+    }
+
+    public getViewName(value: number) {
+        return View.getViewName(value);
     }
 
     private parseAttributes(node: T) {
@@ -958,7 +958,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                         node.parent.gridPadding.bottom = heightBottom;
                     }
                     else {
-                        this.appendAfter(node.id, this.getStaticTag(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
+                        this.appendAfter(node.id, this.getViewStatic(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
                     }
                 }
                 const marginRight = dimensions.marginRight + dimensions.paddingRight;
@@ -999,7 +999,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
                 };
                 const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
                 const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-                const [xml, id] = this.getStaticTag(VIEW_STANDARD.GUIDELINE, node.renderDepth, options);
+                const [xml, id] = this.getViewStatic(VIEW_STANDARD.GUIDELINE, node.renderDepth, options);
                 this.appendAfter(node.id, xml, -1);
                 node.app(map[LRTB], id);
                 node.delete('app', map[RLBT]);
@@ -1049,7 +1049,7 @@ export default class Layout<T extends Widget, U extends WidgetList<T>> extends V
 
     private setListItem(node: T) {
         if (hasValue(node.listStyle)) {
-            this.prependBefore(node.id, this.getStaticTag((node.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (node.listStyle !== '0' ? node.listStyle : '') } })[0]);
+            this.prependBefore(node.id, this.getViewStatic((node.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (node.listStyle !== '0' ? node.listStyle : '') } })[0]);
             node.android('layout_columnWeight', '1');
         }
     }

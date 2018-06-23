@@ -1,8 +1,8 @@
-import Widget from './widget';
+import View from './view';
 import NodeList from '../base/nodelist';
 import { calculateBias } from '../lib/util';
 
-export default class WidgetList<T extends Widget> extends NodeList<T> {
+export default class ViewList<T extends View> extends NodeList<T> {
     constructor(
         nodes?: T[],
         parent?: T)
@@ -11,11 +11,11 @@ export default class WidgetList<T extends Widget> extends NodeList<T> {
     }
 
     public slice(...args) {
-        return new WidgetList(this.list.slice.apply(this.list, arguments));
+        return new ViewList(this.list.slice.apply(this.list, arguments));
     }
 
     public filter(...args) {
-        return new WidgetList(this.list.filter.apply(this.list, arguments));
+        return new ViewList(this.list.filter.apply(this.list, arguments));
     }
 
     get anchors() {

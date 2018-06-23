@@ -6,7 +6,7 @@ interface ViewAppend {
     [id: number]: string[];
 }
 
-export default abstract class View<T extends Node, U extends NodeList<T>> {
+export default abstract class Controller<T extends Node, U extends NodeList<T>> {
     public cache: U;
 
     private before: ViewAppend = {};
@@ -18,10 +18,10 @@ export default abstract class View<T extends Node, U extends NodeList<T>> {
     public abstract setConstraints(): void;
     public abstract setLayoutWeight(): void;
     public abstract setMarginPadding(): void;
-    public abstract renderLayout(node: T, parent: T, viewName: number, options?: {}): string;
-    public abstract renderTag(node: T, parent: T, viewName: number | string): string;
-    public abstract createBundle(node: T, parent: T, children: T[]): T;
-    public abstract getStaticTag(tagName: number, depth: number, options?: {}, width?: string, height?: string): string[];
+    public abstract renderGroup(node: T, parent: T, viewName: number, options?: {}): string;
+    public abstract renderView(node: T, parent: T, viewName: number | string): string;
+    public abstract createGroup(node: T, parent: T, children: T[]): T;
+    public abstract getViewStatic(tagName: number, depth: number, options?: {}, width?: string, height?: string): string[];
     public abstract getViewName(value: number): string;
     public abstract getRootAttributes(options: {}): string;
     public abstract replaceInlineAttributes(output: string, node: T, namespaces?: {}): string;

@@ -1,8 +1,8 @@
 import { ObjectIndex, ObjectMap, ResourceMap } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
-import Widget from './widget';
-import WidgetList from './widgetlist';
+import View from './view';
+import ViewList from './viewlist';
 import { formatString, hasValue, padLeft } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
@@ -62,8 +62,8 @@ const METHOD_ANDROID = {
     }
 };
 
-type T = Widget;
-type U = WidgetList<T>;
+type T = View;
+type U = ViewList<T>;
 
 interface ViewData {
     cache: U;
@@ -71,7 +71,7 @@ interface ViewData {
     views: string[];
 }
 
-export default class ResourceWidget extends Resource<T> {
+export default class ResourceView extends Resource<T> {
     private tagStyle: ObjectMap = {};
     private tagCount: {} = {};
 
