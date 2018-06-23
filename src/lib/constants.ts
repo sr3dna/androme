@@ -34,8 +34,6 @@ export enum BOX_STANDARD {
 
 export const MAPPING_CHROME = {
     'PLAINTEXT': VIEW_STANDARD.TEXT,
-    'LABEL': VIEW_STANDARD.TEXT,
-    'P': VIEW_STANDARD.TEXT,
     'HR': VIEW_STANDARD.VIEW,
     'IMG': VIEW_STANDARD.IMAGE,
     'SELECT': VIEW_STANDARD.SELECT,
@@ -114,6 +112,7 @@ export const INLINE_CHROME = [
     'H5',
     'H6',
     'DEL',
+    'LABEL',
     'PLAINTEXT'
 ];
 

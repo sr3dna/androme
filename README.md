@@ -238,7 +238,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/month1"
 					android:background="@drawable/select_hour"
-					android:entries="@array/month1_array"
+					android:entries="@array/month0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginTop="12dp"
@@ -255,7 +255,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/day1"
 					android:background="@drawable/select_hour"
-					android:entries="@array/day1_array"
+					android:entries="@array/day0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -271,7 +271,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/year1"
 					android:background="@drawable/select_hour"
-					android:entries="@array/year1_array"
+					android:entries="@array/year0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -287,7 +287,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/month2"
 					android:background="@drawable/select_hour"
-					android:entries="@array/month2_array"
+					android:entries="@array/month0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginTop="12dp"
@@ -305,7 +305,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/day2"
 					android:background="@drawable/select_hour"
-					android:entries="@array/day2_array"
+					android:entries="@array/day0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -322,7 +322,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/year2"
 					android:background="@drawable/select_hour"
-					android:entries="@array/year2_array"
+					android:entries="@array/year0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -435,7 +435,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/prominence0"
 					android:background="@drawable/select_hour"
-					android:entries="@array/prominence0_array"
+					android:entries="@array/typeofentry_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -485,7 +485,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Spinner
 				android:id="@+id/subset"
 				android:background="@drawable/select_hour"
-				android:entries="@array/subset_array"
+				android:entries="@array/typeofentry_array"
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -543,7 +543,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Spinner
 				android:id="@+id/series_1"
 				android:background="@drawable/select_hour"
-				android:entries="@array/series_1_array"
+				android:entries="@array/series_array"
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="200dp"
@@ -567,7 +567,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Spinner
 				android:id="@+id/subset_1"
 				android:background="@drawable/select_hour"
-				android:entries="@array/subset_1_array"
+				android:entries="@array/typeofentry_array"
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -596,7 +596,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/entry_1"
 					android:background="@drawable/select_hour"
-					android:entries="@array/entry_1_array"
+					android:entries="@array/typeofentry_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="200dp"
@@ -671,7 +671,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 			<Spinner
 				android:id="@+id/style1"
 				android:background="@drawable/select_hour"
-				android:entries="@array/style1_array"
+				android:entries="@array/typeofentry_array"
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -735,7 +735,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/version_update"
 					android:background="@drawable/select_hour"
-					android:entries="@array/version_update_array"
+					android:entries="@array/version_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -858,7 +858,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/custommonth0"
 					android:background="@drawable/select_hour"
-					android:entries="@array/custommonth0_array"
+					android:entries="@array/month0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -870,7 +870,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/customday0"
 					android:background="@drawable/select_hour"
-					android:entries="@array/customday0_array"
+					android:entries="@array/day0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -901,7 +901,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 				<Spinner
 					android:id="@+id/person"
 					android:background="@drawable/select_hour"
-					android:entries="@array/person_array"
+					android:entries="@array/typeofentry_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="100dp"
@@ -986,8 +986,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 	<string name="calendar">Calendar:</string>
 	<string name="clone">Clone</string>
 	<string name="conclusion">Conclusion:</string>
-	<string name="custom_add">Custom (<a href="#">Add</a>):</string>
-	<string name="date_add">Date (<a href="#">Add</a>):</string>
+	<string name="custom_add">Custom (<a href="#" style="">Add</a>):</string>
+	<string name="date_add">Date (<a href="#" style="">Add</a>):</string>
 	<string name="death">Death</string>
 	<string name="entries">Entries:</string>
 	<string name="entry">Entry</string>
@@ -1001,7 +1001,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 	<string name="style">Style:</string>
 	<string name="subset">Subset:</string>
 	<string name="time">Time:</string>
-	<string name="topic_add">Topic (<a href="#">Add</a>):</string>
+	<string name="topic_add">Topic (<a href="#" style="">Add</a>):</string>
 	<string name="type">Type:</string>
 	<string name="update">Update</string>
 	<string name="variant">Variant</string>
@@ -1014,13 +1014,101 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string-array name="branch_array">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+		<item>5</item>
+		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+		<item>10</item>
+	</string-array>
+	<string-array name="branch_update_array">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+		<item>3</item>
+		<item>4</item>
+		<item>5</item>
+		<item>6</item>
+		<item>7</item>
+		<item>8</item>
+		<item>9</item>
+		<item>10</item>
+		<item>11</item>
+		<item>12</item>
+		<item>13</item>
+	</string-array>
 	<string-array name="calendar_array">
 		<item>@string/birth</item>
 		<item>@string/death</item>
 	</string-array>
+	<string-array name="day0_array">
+		<item>01</item>
+		<item>02</item>
+		<item>03</item>
+		<item>04</item>
+		<item>05</item>
+		<item>06</item>
+		<item>07</item>
+		<item>08</item>
+		<item>09</item>
+		<item>10</item>
+		<item>11</item>
+		<item>12</item>
+		<item>13</item>
+		<item>14</item>
+		<item>15</item>
+		<item>16</item>
+		<item>17</item>
+		<item>18</item>
+		<item>19</item>
+		<item>20</item>
+		<item>21</item>
+		<item>22</item>
+		<item>23</item>
+		<item>24</item>
+		<item>25</item>
+		<item>26</item>
+		<item>27</item>
+		<item>28</item>
+		<item>29</item>
+		<item>30</item>
+		<item>31</item>
+	</string-array>
 	<string-array name="entryactive_array">
 		<item>@string/yes</item>
 		<item>@string/no</item>
+	</string-array>
+	<string-array name="hour_array">
+		<item>00</item>
+		<item>01</item>
+		<item>02</item>
+		<item>03</item>
+		<item>04</item>
+		<item>05</item>
+		<item>06</item>
+		<item>07</item>
+		<item>08</item>
+		<item>09</item>
+		<item>10</item>
+		<item>11</item>
+		<item>12</item>
+		<item>13</item>
+		<item>14</item>
+		<item>15</item>
+		<item>16</item>
+		<item>17</item>
+		<item>18</item>
+		<item>19</item>
+		<item>20</item>
+		<item>21</item>
+		<item>22</item>
+		<item>23</item>
 	</string-array>
 	<string-array name="minute_array">
 		<item>00</item>
@@ -1032,9 +1120,32 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 		<item>@string/variant</item>
 		<item>@string/predefined</item>
 	</string-array>
-	<string-array name="series_1_array">
+	<string-array name="month0_array">
+		<item>01</item>
+		<item>02</item>
+		<item>03</item>
+		<item>04</item>
+		<item>05</item>
+		<item>06</item>
+		<item>07</item>
+		<item>08</item>
+		<item>09</item>
+		<item>10</item>
+		<item>11</item>
+		<item>12</item>
+	</string-array>
+	<string-array name="series_array">
 		<item>@string/__00_inactive</item>
 		<item>@string/__01_active</item>
+	</string-array>
+	<string-array name="typeofentry_array">
+		<item>0</item>
+		<item>1</item>
+	</string-array>
+	<string-array name="version_array">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
 	</string-array>
 	<string-array name="year0_array">
 		<item>2001</item>
@@ -1063,29 +1174,47 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="1dp" android:color="@color/light_gray_1" />
-</shape>
-<!-- filename: res/drawable/form_entry.xml -->
-
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="2dp" android:color="@color/black" />
-</shape>
-<!-- filename: res/drawable/text_order.xml -->
-
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="1dp" android:color="@color/dark_gray" />
-</shape>
-<!-- filename: res/drawable/select_hour.xml -->
-
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="2dp" android:color="@color/white_smoke_1" />
-	<solid android:color="@color/white_smoke_1" />
-</shape>
-<!-- filename: res/drawable/button_button_1.xml -->
+<resources>
+	<style name="Button_1">
+		<item name="android:background">@color/white_smoke_1</item>
+		<item name="android:fontFamily">arial</item>
+		<item name="android:textSize">10sp</item>
+	</style>
+	<style name="Button_2" parent="Button_1">
+		<item name="android:textColor">@color/gray</item>
+	</style>
+	<style name="Checkbox_1">
+		<item name="android:fontFamily">sans-serif</item>
+		<item name="android:textSize">11sp</item>
+	</style>
+	<style name="H2_1">
+		<item name="android:background">@color/slate_gray</item>
+		<item name="android:fontFamily">tahoma</item>
+		<item name="android:fontWeight">700</item>
+		<item name="android:textColor">@color/white</item>
+		<item name="android:textSize">12sp</item>
+	</style>
+	<style name="Label_1">
+		<item name="android:fontFamily">arial</item>
+		<item name="android:textSize">11sp</item>
+	</style>
+	<style name="Label_2" parent="Label_1">
+		<item name="android:textStyle">italic</item>
+	</style>
+	<style name="Radio_1">
+		<item name="android:fontFamily">sans-serif</item>
+		<item name="android:textSize">11sp</item>
+	</style>
+	<style name="Select_1">
+		<item name="android:fontFamily">arial</item>
+		<item name="android:textSize">11sp</item>
+	</style>
+	<style name="Text_1">
+		<item name="android:fontFamily">arial</item>
+		<item name="android:textSize">13.33sp</item>
+	</style>
+</resources>
+<!-- filename: res/values/styles.xml -->
 ```
 ### bundled fonts
 

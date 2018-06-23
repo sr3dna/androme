@@ -345,8 +345,18 @@ export default class ResourceView extends Resource<T> {
             if (stored.numberArray != null) {
                 result = stored.numberArray;
             }
-            const arrayName = `${node.viewId}_array`;
-            STORED.ARRAYS.set(arrayName, result);
+            let arrayName = '';
+            const arrayValue = result.join('-');
+            for (const [storedName, storedResult] of STORED.ARRAYS.entries()) {
+                if (arrayValue == storedResult.join('-')) {
+                    arrayName = storedName;
+                    break;
+                }
+            }
+            if (arrayName === '') {
+                arrayName = `${node.viewId}_array`;
+                STORED.ARRAYS.set(arrayName, result);
+            }
             node.attr(formatString(method['entries'], arrayName));
         });
     }

@@ -188,7 +188,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         for (const element of (<HTMLElement[]> Array.from(elements))) {
-            if (element.parentElement != null && INLINE_CHROME.includes(element.tagName) && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
+            if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
                 continue;
             }
             this.insertNode(element);
@@ -365,7 +365,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 });
                 axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
                 for (let k = 0; k < axisY.length; k++) {
-                    const nodeY = (<T> axisY[k]);
+                    const nodeY = axisY[k];
                     if (!nodeY.renderParent) {
                         const parent = (<T> nodeY.parent);
                         let tagName = nodeY.viewName;
