@@ -1,4 +1,4 @@
-import { ObjectIndex, ObjectMap, ResourceMap } from '../lib/types';
+import { BorderAttribute, ObjectIndex, ObjectMap, ResourceMap } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -63,12 +63,19 @@ const METHOD_ANDROID = {
 };
 
 type T = View;
+type TNUll = T | null;
 type U = ViewList<T>;
 
 interface ViewData {
     cache: U;
     ids: string[];
     views: string[];
+}
+
+interface TagStyle {
+    name?: string;
+    attributes: string;
+    ids: number[];
 }
 
 export default class ResourceView extends Resource<T> {
@@ -100,7 +107,7 @@ export default class ResourceView extends Resource<T> {
 
     public setBoxSpacing() {
         super.setBoxSpacing();
-        this.cache.elements.forEach((node: T) => {
+        this.cache.elements.forEach(node => {
             const stored = (<any> node.element).__boxSpacing;
             if (stored != null) {
                 const method = METHOD_ANDROID['boxSpacing'];
@@ -113,7 +120,7 @@ export default class ResourceView extends Resource<T> {
 
     public setBoxStyle() {
         super.setBoxStyle();
-        this.cache.elements.forEach((node: T) => {
+        this.cache.elements.forEach(node => {
             const element = node.element;
             const stored = (<any> element).__boxStyle;
             if (stored != null) {
@@ -181,7 +188,7 @@ export default class ResourceView extends Resource<T> {
                                 bottomLeftRadius: stored.borderRadius[3]
                             });
                         }
-                        [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item, index) => {
+                        [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute, index) => {
                             if (this.borderVisible(item)) {
                                 const hideWidth = `-${item.width}`;
                                 const layerList: {} = {
@@ -228,7 +235,7 @@ export default class ResourceView extends Resource<T> {
     public setFontStyle() {
         super.setFontStyle();
         const tagName = {};
-        this.cache.elements.forEach((node: T) => {
+        this.cache.elements.forEach(node => {
             if ((<any> node.element).__fontStyle != null) {
                 if (tagName[node.tagName] == null) {
                     tagName[node.tagName] = [];
@@ -239,12 +246,12 @@ export default class ResourceView extends Resource<T> {
         for (const tag in tagName) {
             const nodes: T[] = tagName[tag];
             const sorted: any[] = [];
-            nodes.forEach((node: T) => {
+            nodes.forEach(node => {
                 if (node.labelFor != null) {
                     return;
                 }
                 let system = false;
-                let labelFor: T | null = null;
+                let labelFor: TNUll = null;
                 if (node.label != null) {
                     labelFor = node;
                     node = node.label;
@@ -310,10 +317,10 @@ export default class ResourceView extends Resource<T> {
                         }
                     }
                 }
-                this.tagCount[tag] += nodes.filter((item: T) => item.visible).length;
+                this.tagCount[tag] += nodes.filter(item => item.visible).length;
             }
             else {
-                this.tagCount[tag] = nodes.filter((item: T) => item.visible).length;
+                this.tagCount[tag] = nodes.filter(item => item.visible).length;
             }
             this.tagStyle[tag] = sorted;
         }
@@ -321,7 +328,7 @@ export default class ResourceView extends Resource<T> {
 
     public setImageSource() {
         super.setImageSource();
-        this.cache.list.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
+        this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
             const stored = (<any> node.element).__imageSource;
             if (stored != null) {
                 const method = METHOD_ANDROID['imageSource'];
@@ -332,7 +339,7 @@ export default class ResourceView extends Resource<T> {
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.list.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
+        this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
             const stored = (<any> node.element).__optionArray;
             const method = METHOD_ANDROID['optionArray'];
             let result: string[] = [];
@@ -363,7 +370,7 @@ export default class ResourceView extends Resource<T> {
 
     public setValueString() {
         super.setValueString();
-        this.cache.elements.forEach((node: T) => {
+        this.cache.elements.forEach(node => {
             const element = (node.label != null ? node.label.element : node.element);
             const stored = (<any> element).__valueString;
             if (stored != null) {
@@ -402,7 +409,7 @@ export default class ResourceView extends Resource<T> {
         for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
-            let sorted = (<any[]> this.tagStyle[tag]).filter(item => Object.keys(item).length > 0).sort((a, b) => {
+            let sorted = (<any[]> this.tagStyle[tag]).filter((item: {}) => Object.keys(item).length > 0).sort((a, b) => {
                 let maxA = 0;
                 let maxB = 0;
                 let countA = 0;
@@ -542,7 +549,7 @@ export default class ResourceView extends Resource<T> {
         const resource = {};
         for (const tagName in style) {
             const tag = style[tagName];
-            const tagData: any[] = [];
+            const tagData: TagStyle[] = [];
             for (const attributes in tag) {
                 tagData.push({ attributes, ids: tag[attributes]});
             }
@@ -559,7 +566,7 @@ export default class ResourceView extends Resource<T> {
         const inherit = new Set();
         const map = {};
         for (const tagName in resource) {
-            for (const item of resource[tagName]) {
+            for (const item of (<TagStyle[]> resource[tagName])) {
                 for (const id of item.ids) {
                     if (map[id] == null) {
                         map[id] = { styles: [], attributes: [] };
@@ -570,9 +577,9 @@ export default class ResourceView extends Resource<T> {
             const tagData = layout[tagName];
             if (tagData != null) {
                 for (const attr in tagData) {
-                    for (const id of tagData[attr]) {
+                    for (const id of (<number[]> tagData[attr])) {
                         if (attr.startsWith('android:background=')) {
-                            const node: T | null = viewData.cache.find(parseInt(id));
+                            const node: TNUll = viewData.cache.find(id);
                             if (node && node.android('backround') != null) {
                                 continue;
                             }
@@ -586,7 +593,7 @@ export default class ResourceView extends Resource<T> {
             }
         }
         for (const id in map) {
-            const node: T | null = viewData.cache.find(parseInt(id));
+            const node: TNUll = viewData.cache.find(parseInt(id));
             if (node != null) {
                 const styles = map[id].styles;
                 const attributes = map[id].attributes;
@@ -624,7 +631,7 @@ export default class ResourceView extends Resource<T> {
     }
 
     private deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {
-        attributes.split(';').forEach(value => {
+        attributes.split(';').forEach((value: string) => {
             for (let i = 0; i < sorted.length; i++) {
                 if (sorted[i] != null) {
                     let index = -1;
@@ -661,7 +668,7 @@ export default class ResourceView extends Resource<T> {
                 return (stored.borderRadius.length > 1 ? [] : false);
             case 'radiusAll':
                 const result = {};
-                stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                stored.borderRadius.forEach((value: string, index: number) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
                 return result;
         }
     }

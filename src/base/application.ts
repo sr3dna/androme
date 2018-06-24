@@ -52,7 +52,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public reset() {
         resetId();
-        this.cacheInternal.list.forEach((node: T) => {
+        this.cacheInternal.list.forEach(node => {
             const element: any = node.element;
             if (element != null) {
                 delete element.__boxSpacing;
@@ -194,7 +194,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             this.insertNode(element);
         }
         const preAlignment = {};
-        this.cache.list.forEach((node: T) => {
+        this.cache.list.forEach(node => {
             const element = node.element;
             if (element != null) {
                 preAlignment[node.id] = {};
@@ -225,8 +225,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             node.setBounds();
         });
         const parents = {};
-        this.cache.list.forEach((parent: T) => {
-            this.cache.list.forEach((child: T) => {
+        this.cache.list.forEach(parent => {
+            this.cache.list.forEach(child => {
                 if (parent !== child) {
                     if (child.element && child.element.parentElement === parent.element) {
                         child.parent = parent;
@@ -241,13 +241,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             });
         });
-        this.cache.list.forEach((node: T) => {
+        this.cache.list.forEach(node => {
             const nodes: T[] = parents[node.id];
             if (nodes != null) {
                 nodes.push((<T> node.parent));
                 let minArea = Number.MAX_VALUE;
                 let closest: T | null = null;
-                nodes.forEach((current: T) => {
+                nodes.forEach(current => {
                     const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
                     if (area < minArea) {
                         closest = current;
@@ -271,7 +271,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 });
             }
         });
-        this.cache.list.forEach((node: T) => {
+        this.cache.list.forEach(node => {
             if (node.element != null) {
                 const style = preAlignment[node.id];
                 if (style != null) {
@@ -282,7 +282,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         });
         this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
-        this.cache.list.forEach((node: T) => {
+        this.cache.list.forEach(node => {
             if (node.element != null) {
                 let i = 0;
                 Array.from(node.element.childNodes).forEach((element: any) => {
@@ -322,7 +322,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
         const mapX: ObjectIndex = [];
         const mapY: ObjectIndex = [];
-        this.cache.list.forEach((node: T) => {
+        this.cache.list.forEach(node => {
             const x = Math.floor((<number> node.bounds.x));
             const y = node.parent.id;
             if (mapX[node.depth] == null) {
@@ -372,15 +372,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         let restart = false;
                         let xml = '';
                         if (tagName === '') {
-                            if (nodeY.children.length > 0 && nodeY.children.some((item: T) => !INLINE_CHROME.includes(item.tagName))) {
+                            if (nodeY.children.length > 0 && nodeY.children.some(node => !INLINE_CHROME.includes(node.tagName))) {
                                 const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                 if (nodeY.tagName === 'TABLE') {
                                     const tableRows: T[] = [];
-                                    const thead = nodeY.children.find((item: T) => item.tagName === 'THEAD');
-                                    const tbody = nodeY.children.find((item: T) => item.tagName === 'TBODY');
-                                    const tfoot = nodeY.children.find((item: T) => item.tagName === 'TFOOT');
+                                    const thead = nodeY.children.find(node => node.tagName === 'THEAD');
+                                    const tbody = nodeY.children.find(node => node.tagName === 'TBODY');
+                                    const tfoot = nodeY.children.find(node => node.tagName === 'TFOOT');
                                     if (thead != null) {
-                                        thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(thead));
+                                        thead.cascade().filter(node => node.tagName === 'TH' || node.tagName === 'TD').forEach(node => node.inheritStyleMap(thead));
                                         tableRows.push(...(<T[]> thead.children));
                                         thead.hide();
                                     }
@@ -389,7 +389,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         tbody.hide();
                                     }
                                     if (tfoot != null) {
-                                        tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(tfoot));
+                                        tfoot.cascade().filter(node => node.tagName === 'TH' || node.tagName === 'TD').forEach(node => node.inheritStyleMap(tfoot));
                                         tableRows.push(...(<T[]> tfoot.children));
                                         tfoot.hide();
                                     }
@@ -398,7 +398,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     for (let l = 0; l < tableRows.length; l++) {
                                         const tr = tableRows[l];
                                         tr.hide();
-                                        columnCount = Math.max(tr.children.map(item => (<HTMLTableDataCellElement> item.element)).reduce((a: number, b) => a + b.colSpan, 0), columnCount);
+                                        columnCount = Math.max(tr.children.map(node => (<HTMLTableDataCellElement> node.element)).reduce((a, b) => a + b.colSpan, 0), columnCount);
                                         for (let m = 0; m < tr.children.length; m++) {
                                             const td = tr.children[m];
                                             if (td.element != null) {
@@ -428,7 +428,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                     xml += this.writeGridLayout(nodeY, parent, columnCount, rowCount);
                                 }
-                                else if ((nodeY.tagName === 'UL' || nodeY.tagName === 'OL') && nodeY.children.every((item: T) => item.tagName === 'LI') && nodeY.children.some((item: T) => item.css('display') === 'list-item' && item.css('listStyleType') !== 'none') && (linearX || linearY)) {
+                                else if ((nodeY.tagName === 'UL' || nodeY.tagName === 'OL') && nodeY.children.every(node => node.tagName === 'LI') && nodeY.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (linearX || linearY)) {
                                     if (linearY) {
                                         xml += this.writeGridLayout(nodeY, parent, 2);
                                     }
@@ -474,7 +474,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         node.listStyle = ordinal;
                                     }
                                 }
-                                else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item: T) => !item.flex.enabled && nodeY.children[0].tagName === item.tagName && BLOCK_CHROME.includes(item.tagName) && item.children.length > 1 && item.children.every((child: T) => child.css('float') !== 'right'))) {
+                                else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every(node => !node.flex.enabled && nodeY.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right'))) {
                                     let columns: any[][] = [];
                                     const columnEnd: number[] = [];
                                     if (SETTINGS.useLayoutWeight) {
@@ -489,9 +489,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         }
                                         const base = columns[
                                             dimensions.findIndex((item: number[]) => {
-                                                return (item === dimensions.reduce((a: number[], b: number[]) => {
+                                                return (item === dimensions.reduce((a, b) => {
                                                     if (a.length === b.length) {
-                                                        return (a.reduce((c: number, d: number) => c + d, 0) < b.reduce((c: number, d: number) => c + d, 0) ? a : b);
+                                                        return (a.reduce((c, d) => c + d, 0) < b.reduce((c, d) => c + d, 0) ? a : b);
                                                     }
                                                     else {
                                                         return (a.length < b.length ? a : b);
@@ -511,7 +511,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                                             found.push(l);
                                                         }
                                                         else {
-                                                            const result = columns[m].findIndex((item: T, index: number) => (index >= l && Math.floor(item.bounds.width) === Math.floor(bounds.width) && index < columns[m].length - 1));
+                                                            const result = columns[m].findIndex((item: T, index) => (index >= l && Math.floor(item.bounds.width) === Math.floor(bounds.width) && index < columns[m].length - 1));
                                                             if (result !== -1) {
                                                                 found.push(result);
                                                             }
@@ -687,10 +687,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                 }
                                 if (!nodeY.renderParent) {
-                                    if (!nodeY.flex.enabled && linearX && linearY && nodeY.children.length === 1) {
+                                    if (nodeY.children.length === 1 && linearX && linearY) {
                                         xml += this.writeFrameLayout(nodeY, parent);
                                     }
-                                    else if ((linearX || linearY) && (!nodeY.flex.enabled || nodeY.children.every((item: T) => item.flex.enabled)) && (!nodeY.children.some((item: T) => item.css('float') === 'right') || nodeY.children.every((item: T) => item.css('float') === 'right'))) {
+                                    else if ((linearX || linearY) && (!nodeY.flex.enabled || nodeY.children.every(node => node.flex.enabled)) && (!nodeY.children.some(node => node.css('float') === 'right') || nodeY.children.every(node => node.css('float') === 'right'))) {
                                         xml += this.writeLinearLayout(nodeY, parent, linearY);
                                     }
                                     else {
@@ -713,7 +713,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 }
                                 else {
                                     const columnEnd = parent.gridColumnEnd[nodeY.gridIndex + nodeY.gridColumnSpan];
-                                    siblings = new this.TypeU(<T[]> nodeY.parentOriginal.children.filter((item: T) => !item.renderParent && item.bounds.left >= nodeY.bounds.right && item.bounds.right <= columnEnd));
+                                    siblings = new this.TypeU(<T[]> nodeY.parentOriginal.children.filter(node => !node.renderParent && node.bounds.left >= nodeY.bounds.right && node.bounds.right <= columnEnd));
                                 }
                                 if (siblings != null && siblings.length > 0) {
                                     siblings.list.unshift(nodeY);
@@ -754,7 +754,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public replaceInlineAttributes() {
         const options = {};
         let output = this.current;
-        this.cache.visible.forEach((node: T) => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
+        this.cache.visible.forEach(node => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
         output = output.replace('{@0}', this.controllerHandler.getRootAttributes(options));
         this.current = output;
     }

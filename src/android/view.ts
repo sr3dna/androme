@@ -223,7 +223,7 @@ export default class View extends Node {
             }
             if ((!this.flex.enabled || constraint.expand) && constraint.layoutWidth != null) {
                 if (constraint.layoutWidth) {
-                    this.android('layout_width', (this.renderChildren.some((node: T) => node.css('float') === 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
+                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
                 }
                 else {
                     this.android('layout_width', 'wrap_content', false);
@@ -282,10 +282,21 @@ export default class View extends Node {
                 this.android('layout_height', (constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), constraint.layoutHeight);
             }
             else if (this.android('layout_height') == null) {
-                this.android('layout_height', (!wrapContent && (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE) && height >= parentHeight && !FIXED_ANDROID.includes(this.viewName) && !renderParent.is(VIEW_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content' ? 'match_parent' : 'wrap_content'));
+                let layoutHeight = 'wrap_content';
+                if (height >= parentHeight) {
+                    if (!wrapContent) {
+                        if (parent.id !== 0 && parent.overflow === OVERFLOW_CHROME.NONE && !FIXED_ANDROID.includes(this.viewName) && !renderParent.is(VIEW_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content') {
+                            layoutHeight = 'match_parent';
+                        }
+                        else if (this.parentOriginal.flex.enabled) {
+                            layoutHeight = '0px';
+                        }
+                    }
+                }
+                this.android('layout_height', layoutHeight);
             }
         }
-        if (this.is(VIEW_STANDARD.LINEAR) && this.renderChildren.length > 0 && this.renderChildren.every((item: T) => item.css('float') === 'right')) {
+        if (this.is(VIEW_STANDARD.LINEAR) && this.renderChildren.length > 0 && this.renderChildren.every(node => node.css('float') === 'right')) {
             this.android('gravity', parseRTL('right'));
         }
         if (this.gridRowSpan > 1) {
@@ -432,7 +443,7 @@ export default class View extends Node {
                     let current: T = this;
                     let label: T | null = null;
                     while (parent && parent.renderChildren != null) {
-                        const index = parent.renderChildren.findIndex((item: T) => item === current);
+                        const index = parent.renderChildren.findIndex(node => node === current);
                         if (index > 0) {
                             label = parent.renderChildren[index - 1];
                             break;

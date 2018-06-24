@@ -1,3 +1,4 @@
+import { RegExpNull } from '../lib/types';
 import { hasValue } from './util';
 
 export function getDataLevel(data: {}, ...levels: string[]): any {
@@ -80,7 +81,7 @@ export function parseTemplateData(template: {}, data: {}, index?: string | null,
             output = '';
         }
         const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-        let match: RegExpExecArray | null;
+        let match: RegExpNull;
         while ((match = pattern.exec(output)) != null) {
             if (include[match[1]]) {
                 const attribute = `{#${match[1]}=${match[2]}}`;

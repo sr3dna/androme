@@ -13,6 +13,13 @@ export interface BoxModel {
     borderLeftWidth?: number;
 }
 
+export interface BoxRect {
+    top: any;
+    right: any;
+    bottom: any;
+    left: any;
+}
+
 export interface ClientRect {
     top: number;
     right: number;
@@ -66,3 +73,5 @@ export interface ResourceMap {
     DRAWABLES: Map<string, string>;
     IMAGES: Map<string, any>;
 }
+
+export type RegExpNull = RegExpExecArray | null;

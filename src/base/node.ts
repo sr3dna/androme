@@ -1,7 +1,9 @@
-import { ClientRect, BoxModel, Point, StringMap } from '../lib/types';
+import { BoxModel, BoxRect, ClientRect, Point, StringMap } from '../lib/types';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
+
+type T = Node;
 
 export default abstract class Node implements BoxModel {
     public depth: number = -1;
@@ -25,21 +27,21 @@ export default abstract class Node implements BoxModel {
     public gridLast: boolean;
     public gridRowEnd: boolean;
     public gridRowStart: boolean;
-    public gridSiblings: Node[];
+    public gridSiblings: T[];
     public gridColumnCount: number;
-    public gridPadding: any = { top: 0, right: [], bottom: 0, left: [] };
+    public gridPadding: BoxRect = { top: 0, right: [], bottom: 0, left: [] };
 
-    public abstract children: Node[];
-    public abstract renderChildren: Node[];
+    public abstract children: T[];
+    public abstract renderChildren: T[];
 
     protected _viewName: string;
 
     private _flex: any;
     private _namespaces = new Set<string>();
     private _overflow: OVERFLOW_CHROME;
-    private _parent: Node;
-    private _parentOriginal: Node;
-    private _renderParent: Node | boolean;
+    private _parent: T;
+    private _parentOriginal: T;
+    private _renderParent: T | boolean;
     private _tagName: string;
 
     constructor(
@@ -118,7 +120,7 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public render(parent: Node) {
+    public render(parent: T) {
         this.renderParent = parent;
         this.renderDepth = (parent.id === 0 ? 0 : parent.renderDepth + 1);
     }
@@ -129,7 +131,7 @@ export default abstract class Node implements BoxModel {
     }
 
     public ascend() {
-        const result: Node[] = [];
+        const result: T[] = [];
         let current = this.parent;
         while (current != null) {
             if (current.id !== 0) {
@@ -144,15 +146,15 @@ export default abstract class Node implements BoxModel {
     }
 
     public cascade() {
-        function cascade(node: Node) {
+        function cascade(node: T) {
             const current = [...node.children];
-            node.children.forEach((item: Node) => current.push(...cascade(item)));
+            node.children.forEach(item => current.push(...cascade(item)));
             return current;
         }
         return cascade(this);
     }
 
-    public inheritStyle(node: Node) {
+    public inheritStyle(node: T) {
         for (const attr in node.style) {
             if (attr.startsWith('font') || attr.startsWith('color')) {
                 const key = hyphenToCamelCase(attr);
@@ -161,7 +163,7 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public inheritStyleMap(node: Node) {
+    public inheritStyleMap(node: T) {
         for (const attr in node.styleMap) {
             if (this.styleMap[attr] == null) {
                 this.styleMap[attr] = node.styleMap[attr];
@@ -231,7 +233,7 @@ export default abstract class Node implements BoxModel {
     }
 
     public expandDimensions() {
-        let [width, height] = [Math.max.apply(null, this.children.map((item: Node) => item.linear.right)), Math.max.apply(null, this.children.map((item: Node) => item.linear.bottom))];
+        let [width, height] = [Math.max.apply(null, this.children.map(node => node.linear.right)), Math.max.apply(null, this.children.map(node => node.linear.bottom))];
         switch (this.style.position) {
             case 'static':
             case 'relative':

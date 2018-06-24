@@ -19,7 +19,7 @@ export default class ViewList<T extends View> extends NodeList<T> {
     }
 
     get anchors() {
-        return this.list.filter((node: T) => node.anchored);
+        return this.list.filter(node => node.anchored);
     }
 
     get horizontalBias() {

@@ -3,7 +3,7 @@ import { sortAsc, sortDesc } from '../lib/util';
 
 export default abstract class NodeList<T extends Node> {
     public static intersect<T extends Node>(list: T[], dimension = 'linear') {
-        list.forEach((node: T) => {
+        list.forEach(node => {
             if (list.some(item => (item !== node && node.intersect(item[dimension])))) {
                 return true;
             }
@@ -14,8 +14,8 @@ export default abstract class NodeList<T extends Node> {
     public static linearX<T extends Node>(list: T[]) {
         if (list.length > 0 && !NodeList.intersect(list)) {
             if (list.length > 1) {
-                const minBottom = Math.min.apply(null, list.map((item: T) => item.linear.bottom));
-                return !list.some((item: T) => item.linear.top >= minBottom);
+                const minBottom = Math.min.apply(null, list.map(node => node.linear.bottom));
+                return !list.some(node => node.linear.top >= minBottom);
             }
             return true;
         }
@@ -25,8 +25,8 @@ export default abstract class NodeList<T extends Node> {
     public static linearY<T extends Node>(list: T[]) {
         if (list.length > 0 && !NodeList.intersect(list)) {
             if (list.length > 1) {
-                const minRight = Math.min.apply(null, list.map((item: T) => item.linear.right));
-                return !list.some((item: T) => item.linear.left >= minRight);
+                const minRight = Math.min.apply(null, list.map(node => node.linear.right));
+                return !list.some(node => node.linear.left >= minRight);
             }
             return true;
         }
@@ -47,7 +47,7 @@ export default abstract class NodeList<T extends Node> {
     }
 
     public find(id: number) {
-        return this._list.find((node: T) => node.id === id) || null;
+        return this._list.find(node => node.id === id) || null;
     }
 
     public reset() {

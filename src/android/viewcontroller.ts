@@ -38,7 +38,7 @@ const CHAIN_MAP = {
     horizontalVertical: ['Horizontal', 'Vertical']
 };
 
-export default class Layout<T extends View, U extends ViewList<T>> extends Controller<T, U> {
+export default class ViewController<T extends View, U extends ViewList<T>> extends Controller<T, U> {
     constructor() {
         super();
     }
@@ -56,7 +56,7 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
             leftRight: parseRTL('layout_constraintLeft_toRightOf'),
             rightLeft: parseRTL('layout_constraintRight_toLeftOf')
         });
-        this.cache.visible.forEach((node: T) => {
+        this.cache.visible.forEach(node => {
             const nodes: U = (<U> new ViewList(node.renderChildren, node));
             const constraint = node.is(VIEW_STANDARD.CONSTRAINT);
             const relative = node.is(VIEW_STANDARD.RELATIVE);
@@ -64,11 +64,11 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
             if (nodes.list.length > 0 && (constraint || relative || flex.enabled)) {
                 node.expandDimensions();
                 if (node.is(VIEW_STANDARD.LINEAR)) {
-                    if (node.renderChildren.some((item: T) => item.flex.direction.indexOf('row') !== -1)) {
+                    if (node.renderChildren.some(item => item.flex.direction.indexOf('row') !== -1)) {
                         node.constraint.layoutWidth = true;
                         node.constraint.expand = true;
                     }
-                    if (node.renderChildren.some((item: T) => item.flex.direction.indexOf('column') !== -1)) {
+                    if (node.renderChildren.some(item => item.flex.direction.indexOf('column') !== -1)) {
                         node.constraint.layoutHeight = true;
                         node.constraint.expand = true;
                     }
@@ -160,7 +160,9 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
                             }
                             else {
                                 if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                    current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                    if (current.withinY(linear2)) {
+                                        current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                    }
                                 }
                                 else if (current.viewHeight === 0 && linear1.top === linear2.top && linear1.bottom === linear2.bottom) {
                                     if (!current.floating || !current.constraint.vertical) {
@@ -260,7 +262,7 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
                         current.delete((relative ? 'android' : 'app'), ...position);
                     }
                 });
-                if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect()) && !nodes.list.some((item: T) => item.floating)) {
+                if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect()) && !nodes.list.some(item => item.floating)) {
                     let flexNodes: any = null;
                     if (flex.enabled) {
                         let horizontalChain: U | null = (<U> nodes.slice());
@@ -281,16 +283,16 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
                     }
                     else {
                         nodes.list.forEach((current: T) => {
-                            let horizontalChain = nodes.filter((item: T) => same(current, item, 'linear.top'));
+                            let horizontalChain = nodes.filter(item => same(current, item, 'linear.top'));
                             if (horizontalChain.list.length === 0) {
-                                horizontalChain = nodes.filter((item: T) => same(current, item, 'linear.bottom'));
+                                horizontalChain = nodes.filter(item => same(current, item, 'linear.bottom'));
                             }
                             if (horizontalChain.list.length > 0) {
                                 horizontalChain.sortAsc('linear.x');
                             }
-                            let verticalChain = nodes.filter((item: T) => same(current, item, 'linear.left'));
+                            let verticalChain = nodes.filter(item => same(current, item, 'linear.left'));
                             if (verticalChain.list.length === 0) {
-                                verticalChain = nodes.filter((item: T) => same(current, item, 'linear.right'));
+                                verticalChain = nodes.filter(item => same(current, item, 'linear.right'));
                             }
                             if (verticalChain.list.length > 0) {
                                 verticalChain.sortAsc('linear.y');
@@ -308,12 +310,12 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
                             index = (index === 0 ? 1 : 0);
                         }
                         const inverse = (index === 0 ? 1 : 0);
-                        const chainNodes = flexNodes || nodes.slice().list.sort((a: T, b: T) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
+                        const chainNodes = flexNodes || nodes.slice().list.sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                         chainNodes.forEach((current: T) => {
                             const chainDirection: U = current.constraint[value];
-                            if (chainDirection && chainDirection.length > 1 && (flex.enabled || chainDirection.list.map((item: T) => parseInt((item.constraint[value].list || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
+                            if (chainDirection && chainDirection.length > 1 && (flex.enabled || chainDirection.list.map(item => parseInt((item.constraint[value].list || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
                                 chainDirection.parent = node;
-                                if (flex.enabled && chainDirection.list.some((item: T) => item.flex.order > 0)) {
+                                if (flex.enabled && chainDirection.list.some(item => item.flex.order > 0)) {
                                     chainDirection[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
                                 }
                                 const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
@@ -419,14 +421,14 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
                                 lastNode.app(LAYOUT[RB], 'parent');
                                 lastNode.constraint[orientation] = true;
                                 const chainStyle = `layout_constraint${HV}_chainStyle`;
-                                if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainDirection.list.map((item: T) => item.flex.grow)) === 0) {
+                                if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainDirection.list.map(item => item.flex.grow)) === 0) {
                                     switch (flex.justifyContent) {
                                         case 'space-between':
                                             firstNode.app(chainStyle, 'spread_inside');
                                             break;
                                         case 'space-evenly':
                                             firstNode.app(chainStyle, 'spread');
-                                            chainDirection.list.forEach((item: T) => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
+                                            chainDirection.list.forEach(item => item.app(`layout_constraint${HV}_weight`, item.flex.grow || 1));
                                             break;
                                         case 'space-around':
                                             const leftTop = (index === 0 ? 'left' : 'top');
@@ -508,7 +510,7 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
                                 const result = (constraint ? search((<object> current.app()), '*constraint*') : search((<object> current.android()), LAYOUT));
                                 for (const [key, value] of result) {
                                     if (value !== 'parent') {
-                                        if (anchors.find((item: T) => item.stringId === value) != null) {
+                                        if (anchors.find(item => item.stringId === value) != null) {
                                             if (!current.constraint.horizontal && indexOf(key, parseRTL('Left'), parseRTL('Right')) !== -1) {
                                                 current.constraint.horizontal = true;
                                             }
@@ -636,11 +638,11 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
     }
 
     public setLayoutWeight() {
-        this.cache.list.forEach((node: T) => {
+        this.cache.list.forEach(node => {
             const rows = node.linearRows;
             if (rows.length > 1) {
                 const columnLength = rows[0].renderChildren.length;
-                if (rows.every((item: T) => !item.renderChildren.some((child: T) => child.floating) && item.renderChildren.length === columnLength)) {
+                if (rows.every(item => !item.renderChildren.some((child: T) => child.floating) && item.renderChildren.length === columnLength)) {
                     const horizontal = !node.horizontal;
                     const columnDimension = new Array(columnLength).fill(-1);
                     for (const row of rows) {
@@ -663,12 +665,12 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
     }
 
     public setMarginPadding() {
-        this.cache.list.forEach((node: T) => {
+        this.cache.list.forEach(node => {
             if (node.is(VIEW_STANDARD.LINEAR, VIEW_STANDARD.RADIO_GROUP)) {
                 switch (node.android('orientation')) {
                     case 'horizontal':
                         let left = node.box.left;
-                        sortAsc(node.renderChildren, 'linear.left').forEach((item: T) => {
+                        sortAsc(node.renderChildren, 'linear.left').forEach(item => {
                             if (!item.floating) {
                                 const width = Math.ceil(item.linear.left - left);
                                 if (width >= 1) {
@@ -680,7 +682,7 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
                         break;
                     case 'vertical':
                         let top = node.box.top;
-                        sortAsc(node.renderChildren, 'linear.top').forEach((item: T) => {
+                        sortAsc(node.renderChildren, 'linear.top').forEach(item => {
                             const height = Math.ceil(item.linear.top - top);
                             if (height >= 1) {
                                 item.modifyBox(BOX_STANDARD.MARGIN_TOP, height);
@@ -704,7 +706,7 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
                 scrollView.push(VIEW_ANDROID.SCROLL_HORIZONTAL);
             }
             if (node.overflowY) {
-                scrollView.push((node.ascend().some((item: T) => item.overflow !== OVERFLOW_CHROME.NONE) ? VIEW_ANDROID.SCROLL_NESTED : VIEW_ANDROID.SCROLL_VERTICAL));
+                scrollView.push((node.ascend().some(item => item.overflow !== OVERFLOW_CHROME.NONE) ? VIEW_ANDROID.SCROLL_NESTED : VIEW_ANDROID.SCROLL_VERTICAL));
             }
             let current = node;
             let scrollDepth = parent.renderDepth + scrollView.length;
@@ -871,7 +873,7 @@ export default class Layout<T extends View, U extends ViewList<T>> extends Contr
         node.render(parent);
         node.setGravity();
         node.setAccessibility();
-        node.cascade().forEach((item: T) => item.hide());
+        node.cascade().forEach(item => item.hide());
         this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, node.viewName, node.id);
     }

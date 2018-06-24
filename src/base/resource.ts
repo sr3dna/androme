@@ -134,7 +134,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxSpacing() {
-        this.cache.elements.forEach((node: T) => {
+        this.cache.elements.forEach(node => {
             if (node.element instanceof HTMLElement) {
                 const element = (<HTMLElement> node.element);
                 if (!hasValue((<any> element).__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
@@ -149,7 +149,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxStyle() {
-        this.cache.elements.forEach((node: T) => {
+        this.cache.elements.forEach(node => {
             if (node.element instanceof HTMLElement) {
                 const element = (<HTMLElement> node.element);
                 if (!hasValue((<any> element).__boxStyle) || SETTINGS.alwaysReevaluateResources) {
@@ -183,7 +183,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setFontStyle() {
-        this.cache.elements.forEach((node: T) => {
+        this.cache.elements.forEach(node => {
             if (node.visible || node.companion) {
                 const element = (<HTMLElement> node.element);
                 if (!hasValue((<any> element).__fontStyle) || SETTINGS.alwaysReevaluateResources) {
@@ -215,7 +215,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setImageSource() {
-        this.cache.list.filter((item: T) => item.tagName === 'IMG').forEach((node: T) => {
+        this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
             const element = (<HTMLImageElement> node.element);
             if (!hasValue((<any> element).__imageSource) || SETTINGS.alwaysReevaluateResources) {
                 const srcset = element.srcset.trim();
@@ -262,7 +262,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setOptionArray() {
-        this.cache.list.filter((item: T) => item.tagName === 'SELECT').forEach((node: T) => {
+        this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
             const element = (<HTMLSelectElement> node.element);
             if (!hasValue((<any> element).__optionArray) || SETTINGS.alwaysReevaluateResources) {
                 const stringArray: string[] = [];
@@ -293,7 +293,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setValueString() {
-        this.cache.elements.forEach((node: T) => {
+        this.cache.elements.forEach(node => {
             const element = (<HTMLInputElement> node.element);
             if (!hasValue((<any> element).__valueString) || SETTINGS.alwaysReevaluateResources) {
                 let name = '';

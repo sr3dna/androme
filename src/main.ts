@@ -1,6 +1,6 @@
 import Application from './base/application';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
-import Layout from './android/layout';
+import ViewController from './android/viewcontroller';
 import View from './android/view';
 import ViewList from './android/viewlist';
 import ResourceView from './android/resource-view';
@@ -18,7 +18,7 @@ export function parseDocument(...elements) {
     if (MAIN == null) {
         const Node = View;
         const NodeList = ViewList;
-        const Controller = new Layout();
+        const Controller = new ViewController();
         const File = new FileRes();
         const Resource = new ResourceView(File);
         main = new Application<T, U>(Node, NodeList);

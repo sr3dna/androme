@@ -1,4 +1,4 @@
-import { PlainFile, StringMap } from '../lib/types';
+import { PlainFile, RegExpNull, StringMap } from '../lib/types';
 import File from '../base/file';
 import { caseInsensitve, hasValue, getFileExt, replaceDP } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
@@ -112,8 +112,8 @@ export default class FileRes extends File {
                     '2': []
                 };
                 const item = arrayItem['2'];
-                for (const text of values) {
-                    item.push({ value: text });
+                for (const value of values) {
+                    item.push({ value });
                 }
                 rootItem['1'].push(arrayItem);
             }
@@ -249,7 +249,7 @@ export default class FileRes extends File {
     private parseImageDetails(xml: string) {
         const result: PlainFile[] = [];
         const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
-        let match: RegExpExecArray | null = null;
+        let match: RegExpNull = null;
         while ((match = pattern.exec(xml)) != null) {
             result.push({
                 uri: match[1],
@@ -264,7 +264,7 @@ export default class FileRes extends File {
     private parseFileDetails(xml: string) {
         const result: PlainFile[] = [];
         const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
-        let match: RegExpExecArray | null = null;
+        let match: RegExpNull = null;
         while ((match = pattern.exec(xml)) != null) {
             result.push({
                 content: match[0].replace(match[1], '').trim(),

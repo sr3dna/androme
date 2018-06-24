@@ -54,7 +54,7 @@ export default abstract class File {
         }
     }
 
-    private downloadToDisk(data, filename, mime = '') {
+    private downloadToDisk(data: Blob, filename: string, mime = '') {
         const blob = new Blob([data], { type: mime || 'application/octet-stream' });
         if (typeof window.navigator.msSaveBlob !== 'undefined') {
             window.navigator.msSaveBlob(blob, filename);
