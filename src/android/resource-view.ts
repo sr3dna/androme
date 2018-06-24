@@ -348,7 +348,7 @@ export default class ResourceView extends Resource<T> {
             let arrayName = '';
             const arrayValue = result.join('-');
             for (const [storedName, storedResult] of STORED.ARRAYS.entries()) {
-                if (arrayValue == storedResult.join('-')) {
+                if (arrayValue === storedResult.join('-')) {
                     arrayName = storedName;
                     break;
                 }

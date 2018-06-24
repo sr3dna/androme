@@ -2,6 +2,7 @@
 build/
 demos-dev/
 node_modules/
+src/
 temp/
 .babelrc
 *.code-workspace

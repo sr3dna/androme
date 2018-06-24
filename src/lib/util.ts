@@ -27,7 +27,7 @@ export function resetId() {
 export function generateId(section: string, name: string) {
     let prefix = name;
     let i = 1;
-    const match = name.match(/^([a-zA-Z0-9_]+)_([0-9]+)$/);
+    const match = name.match(/^(\w+)_([0-9]+)$/);
     if (match != null) {
         prefix = match[1];
         i = parseInt(match[2]);

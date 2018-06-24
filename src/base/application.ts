@@ -372,10 +372,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         let restart = false;
                         let xml = '';
                         if (tagName === '') {
-                            if ((nodeY.children.length === 0 && nodeY.element && hasFreeFormText(nodeY.element)) || nodeY.children.every((item: T) => INLINE_CHROME.includes(item.tagName))) {
-                                tagName = this.controllerHandler.getViewName(VIEW_STANDARD.TEXT);
-                            }
-                            else if (nodeY.children.length > 0) {
+                            if (nodeY.children.length > 0 && nodeY.children.some((item: T) => !INLINE_CHROME.includes(item.tagName))) {
                                 const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                 if (nodeY.tagName === 'TABLE') {
                                     const tableRows: T[] = [];
@@ -383,7 +380,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     const tbody = nodeY.children.find((item: T) => item.tagName === 'TBODY');
                                     const tfoot = nodeY.children.find((item: T) => item.tagName === 'TFOOT');
                                     if (thead != null) {
-                                        thead.cascade().filter((item: T) => item.tagName === 'TH' || item.tagName === 'TD').forEach((item: T) => item.inheritStyleMap(thead));
+                                        thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(thead));
                                         tableRows.push(...(<T[]> thead.children));
                                         thead.hide();
                                     }
@@ -392,7 +389,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         tbody.hide();
                                     }
                                     if (tfoot != null) {
-                                        tfoot.cascade().filter((item: T) => item.tagName === 'TH' || item.tagName === 'TD').forEach((item: T) => item.inheritStyleMap(tfoot));
+                                        tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(tfoot));
                                         tableRows.push(...(<T[]> tfoot.children));
                                         tfoot.hide();
                                     }
@@ -401,7 +398,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     for (let l = 0; l < tableRows.length; l++) {
                                         const tr = tableRows[l];
                                         tr.hide();
-                                        columnCount = Math.max(tr.children.reduce((a: number, b: any) => a + b.element.colSpan, 0), columnCount);
+                                        columnCount = Math.max(tr.children.map(item => (<HTMLTableDataCellElement> item.element)).reduce((a: number, b) => a + b.colSpan, 0), columnCount);
                                         for (let m = 0; m < tr.children.length; m++) {
                                             const td = tr.children[m];
                                             if (td.element != null) {
@@ -431,7 +428,53 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                     xml += this.writeGridLayout(nodeY, parent, columnCount, rowCount);
                                 }
-                                else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item: T) => !item.flex.enabled && BLOCK_CHROME.includes(item.tagName) && (item.children.length > 0 && item.children.every((child: T) => child.css('float') !== 'right')))) {
+                                else if ((nodeY.tagName === 'UL' || nodeY.tagName === 'OL') && nodeY.children.every((item: T) => item.tagName === 'LI') && nodeY.children.some((item: T) => item.css('display') === 'list-item' && item.css('listStyleType') !== 'none') && (linearX || linearY)) {
+                                    if (linearY) {
+                                        xml += this.writeGridLayout(nodeY, parent, 2);
+                                    }
+                                    else {
+                                        xml += this.writeLinearLayout(nodeY, parent, linearY);
+                                    }
+                                    for (let l = 0, m = 0; l < nodeY.children.length; l++) {
+                                        const node = nodeY.children[l];
+                                        let ordinal = '0';
+                                        if (node.css('display') === 'list-item') {
+                                            const listStyle = node.css('listStyleType');
+                                            switch (listStyle) {
+                                                case 'disc':
+                                                    ordinal = '●';
+                                                    break;
+                                                case 'square':
+                                                    ordinal = '■';
+                                                    break;
+                                                case 'lower-alpha':
+                                                case 'lower-latin':
+                                                    ordinal = `${convertAlpha(m).toLowerCase()}.`;
+                                                    break;
+                                                case 'upper-alpha':
+                                                case 'upper-latin':
+                                                    ordinal = `${convertAlpha(m)}.`;
+                                                    break;
+                                                case 'lower-roman':
+                                                    ordinal = `${convertRoman(m + 1).toLowerCase()}.`;
+                                                    break;
+                                                case 'upper-roman':
+                                                    ordinal = `${convertRoman(m + 1)}.`;
+                                                    break;
+                                                default:
+                                                    if (nodeY.tagName === 'OL') {
+                                                        ordinal = `${(listStyle === 'decimal-leading-zero' && m < 9 ? '0' : '') && (m + 1).toString()}.`;
+                                                    }
+                                                    else {
+                                                        ordinal = '○';
+                                                    }
+                                            }
+                                            m++;
+                                        }
+                                        node.listStyle = ordinal;
+                                    }
+                                }
+                                else if (SETTINGS.useGridLayout && !nodeY.flex.enabled && nodeY.children.length > 1 && nodeY.children.every((item: T) => !item.flex.enabled && nodeY.children[0].tagName === item.tagName && BLOCK_CHROME.includes(item.tagName) && item.children.length > 1 && item.children.every((child: T) => child.css('float') !== 'right'))) {
                                     let columns: any[][] = [];
                                     const columnEnd: number[] = [];
                                     if (SETTINGS.useLayoutWeight) {
@@ -643,54 +686,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         }
                                     }
                                 }
-                                else if ((nodeY.tagName === 'UL' || nodeY.tagName === 'OL') && nodeY.css('listStyleType') !== 'none' && (linearX || linearY) && nodeY.children.every((item: T) => item.tagName === 'LI') && nodeY.children.some((item: T) => item.css('display') === 'list-item')) {
-                                    if (linearY) {
-                                        xml += this.writeGridLayout(nodeY, parent, 2);
-                                    }
-                                    else {
-                                        xml += this.writeLinearLayout(nodeY, parent, linearY);
-                                    }
-                                    for (let l = 0, m = 0; l < nodeY.children.length; l++) {
-                                        const node = nodeY.children[l];
-                                        const listStyle = nodeY.css('listStyleType');
-                                        let ordinal = '0';
-                                        if (node.css('display') === 'list-item') {
-                                            switch (listStyle) {
-                                                case 'disc':
-                                                    ordinal = '●';
-                                                    break;
-                                                case 'square':
-                                                    ordinal = '■';
-                                                    break;
-                                                case 'lower-alpha':
-                                                case 'lower-latin':
-                                                    ordinal = `${convertAlpha(m).toLowerCase()}.`;
-                                                    break;
-                                                case 'upper-alpha':
-                                                case 'upper-latin':
-                                                    ordinal = `${convertAlpha(m)}.`;
-                                                    break;
-                                                case 'lower-roman':
-                                                    ordinal = `${convertRoman(m + 1).toLowerCase()}.`;
-                                                    break;
-                                                case 'upper-roman':
-                                                    ordinal = `${convertRoman(m + 1)}.`;
-                                                    break;
-                                                default:
-                                                    if (nodeY.tagName === 'OL') {
-                                                        ordinal = `${(listStyle === 'decimal-leading-zero' && m < 9 ? '0' : '') && (m + 1).toString()}.`;
-                                                    }
-                                                    else {
-                                                        ordinal = '○';
-                                                    }
-                                            }
-                                            m++;
-                                        }
-                                        node.listStyle = ordinal;
-                                    }
-                                }
                                 if (!nodeY.renderParent) {
-                                    if (!nodeY.flex.enabled && linearX && linearY) {
+                                    if (!nodeY.flex.enabled && linearX && linearY && nodeY.children.length === 1) {
                                         xml += this.writeFrameLayout(nodeY, parent);
                                     }
                                     else if ((linearX || linearY) && (!nodeY.flex.enabled || nodeY.children.every((item: T) => item.flex.enabled)) && (!nodeY.children.some((item: T) => item.css('float') === 'right') || nodeY.children.every((item: T) => item.css('float') === 'right'))) {
@@ -702,7 +699,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 }
                             }
                             else {
-                                continue;
+                                if (nodeY.element && !hasFreeFormText(nodeY.element)) {
+                                    continue;
+                                }
+                                tagName = this.controllerHandler.getViewName(VIEW_STANDARD.TEXT);
                             }
                         }
                         if (!nodeY.renderParent) {
