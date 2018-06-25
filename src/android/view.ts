@@ -17,7 +17,6 @@ export default class View extends Node {
     public labelFor: T;
     public children: T[] = [];
     public renderChildren: T[] = [];
-    public linearRows: T[] = [];
 
     private _android: StringMap;
     private _app: StringMap;
@@ -68,20 +67,10 @@ export default class View extends Node {
         }
     }
 
-    public render(parent: T) {
-        if (parent.is(VIEW_STANDARD.LINEAR)) {
-            switch (this.viewName) {
-                case VIEW_ANDROID.LINEAR:
-                case VIEW_ANDROID.RADIO_GROUP:
-                    parent.linearRows.push(this);
-                    break;
-            }
+    public anchor(position: string, adjacent: StringMap = {}, orientation = '', overwrite?: boolean) {
+        if (overwrite == null) {
+            overwrite = (adjacent.stringId === 'parent');
         }
-        super.render(parent);
-    }
-
-    public anchor(position: string, adjacent: StringMap = {}, orientation = '') {
-        const overwrite = (adjacent.stringId === 'parent');
         switch (this.renderParent.viewName) {
             case VIEW_ANDROID.CONSTRAINT:
                 if (arguments.length === 1) {
@@ -415,11 +404,6 @@ export default class View extends Node {
                 this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
             }
         }
-    }
-
-    public distributeWeight(horizontal: boolean, percent: number) {
-        this.android(`layout_${(horizontal ? 'width' : 'height')}`, '0px');
-        this.android('layout_weight', (percent / 100).toFixed(2));
     }
 
     public setAccessibility() {

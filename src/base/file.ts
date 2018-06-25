@@ -4,6 +4,7 @@ import { getFileName, hasValue, trim } from '../lib/util';
 export default abstract class File {
     public appName: string = '';
     public stored: ResourceMap;
+
     private compression = 'zip';
 
     constructor(

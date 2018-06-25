@@ -4,6 +4,8 @@ This program can convert moderately complex HTML pages into the standard XML lay
 
 Multiple views per page are supported similiar to iOS Storyboards with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser.
 
+Layout rendering can also be customized using extensions since the program was built to be nearly completely modular. Some of the common layouts have built-in extensions which you can load or unload based on your preference.
+
 ## INSTALLATION (global js variable: androme)
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). Chrome is the preferred browser when generating the production version of your program. ***
@@ -50,6 +52,7 @@ Library files are in the /dist folder. There is a babel minified for production 
         // optional
         androme.writeLayoutAllXml(true); /* true: save to disk, false: string xml */
         androme.writeResourceAllXml(true);
+        androme.configureExtension('grid', { useLayoutWeight: false });
 
         // individual
         androme.writeResourceDrawableXml(true);
@@ -75,13 +78,12 @@ androme.settings = {
     useConstraintLayout: true,
     useConstraintChain: true,
     useConstraintGuideline: true,
-    useGridLayout: true,
-    useLayoutWeight: true,
     useUnitDP: true,
     useFontAlias: true,
     supportRTL: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
+    builtInExtensions: ['lists', 'table', 'grid'],
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     whitespaceHorizontalOffset: 4,

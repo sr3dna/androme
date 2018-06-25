@@ -134,18 +134,17 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             current.anchor(LAYOUT['right'], adjacent);
                                         }
                                     }
-                                    const withinY = (linear1.top === linear2.top || linear1.bottom === linear2.bottom);
-                                    if (withinY && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                    if (withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
                                         if (current.css('float') !== 'right') {
-                                            current.anchor(LAYOUT['leftRight'], adjacent);
+                                            current.anchor(LAYOUT['leftRight'], adjacent, '', current.withinX(linear2));
                                         }
                                         else {
                                             current.constraint.marginHorizontal = adjacent.stringId;
                                         }
                                     }
-                                    if (withinY && withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
+                                    if (withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
                                         if (current.css('float') !== 'left') {
-                                            current.anchor(LAYOUT['rightLeft'], adjacent);
+                                            current.anchor(LAYOUT['rightLeft'], adjacent, '', current.withinX(linear2));
                                         }
                                     }
                                 }
@@ -160,7 +159,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                             else {
                                 if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                    if (current.withinY(linear2)) {
+                                    if (current.withinY(linear2) || !current.constraint.vertical) {
                                         current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
                                     }
                                 }
@@ -637,33 +636,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
     }
 
-    public setLayoutWeight() {
-        this.cache.list.forEach(node => {
-            const rows = node.linearRows;
-            if (rows.length > 1) {
-                const columnLength = rows[0].renderChildren.length;
-                if (rows.every(item => !item.renderChildren.some((child: T) => child.floating) && item.renderChildren.length === columnLength)) {
-                    const horizontal = !node.horizontal;
-                    const columnDimension = new Array(columnLength).fill(-1);
-                    for (const row of rows) {
-                        for (let i = 0; i < row.renderChildren.length; i++) {
-                            columnDimension[i] = Math.max(row.renderChildren[i].linear[(horizontal ? 'width' : 'height')], columnDimension[i]);
-                        }
-                    }
-                    const total = columnDimension.reduce((a, b) => a + b);
-                    const percent = columnDimension.map(value => Math.floor((value * 100) / total));
-                    percent[percent.length - 1] += 100 - percent.reduce((a, b) => a + b);
-                    for (const row of rows) {
-                        for (let i = 0; i < row.renderChildren.length; i++) {
-                            const column = row.renderChildren[i];
-                            column.distributeWeight(horizontal, percent[i]);
-                        }
-                    }
-                }
-            }
-        });
-    }
-
     public setMarginPadding() {
         this.cache.list.forEach(node => {
             if (node.is(VIEW_STANDARD.LINEAR, VIEW_STANDARD.RADIO_GROUP)) {
@@ -755,7 +727,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     current = <View> item as T;
                 });
         }
-        this.setListItem(node);
         node.apply(options);
         node.applyCustomizations();
         node.render(renderParent);
@@ -868,7 +839,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 break;
         }
-        this.setListItem(node);
         node.applyCustomizations();
         node.render(parent);
         node.setGravity();
@@ -1046,13 +1016,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                 }
             }
-        }
-    }
-
-    private setListItem(node: T) {
-        if (hasValue(node.listStyle)) {
-            this.prependBefore(node.id, this.getViewStatic((node.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (node.listStyle !== '0' ? node.listStyle : '') } })[0]);
-            node.android('layout_columnWeight', '1');
         }
     }
 }

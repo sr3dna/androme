@@ -16,7 +16,6 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     }
 
     public abstract setConstraints(): void;
-    public abstract setLayoutWeight(): void;
     public abstract setMarginPadding(): void;
     public abstract renderGroup(node: T, parent: T, viewName: number, options?: {}): string;
     public abstract renderView(node: T, parent: T, viewName: number | string): string;

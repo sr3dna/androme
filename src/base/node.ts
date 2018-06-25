@@ -17,7 +17,7 @@ export default abstract class Node implements BoxModel {
     public box: ClientRect;
     public renderDepth: number;
     public viewId: string;
-    public listStyle: string;
+    public renderExtension: any;
 
     public gridRowSpan: number = 0;
     public gridColumnSpan: number = 0;
@@ -43,6 +43,7 @@ export default abstract class Node implements BoxModel {
     private _parentOriginal: T;
     private _renderParent: T | boolean;
     private _tagName: string;
+    private _options: {} = {};
 
     constructor(
         public id: number,
@@ -69,7 +70,6 @@ export default abstract class Node implements BoxModel {
     public abstract setViewLayout(options?: any): void;
     public abstract applyCustomizations(): void;
     public abstract modifyBox(area: number, offset: number): void;
-    public abstract distributeWeight(horizontal: boolean, percent: number): void;
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
@@ -84,6 +84,11 @@ export default abstract class Node implements BoxModel {
             this[name][attr] = value;
         }
         return this[name] && this[name][attr];
+    }
+
+    public get(obj: string, attr: string): string {
+        const name = `_${obj || '_'}`;
+        return (this[name] && this[name][attr] != null ? this[name][attr] : '');
     }
 
     public delete(obj: string, ...attributes: any[]) {
@@ -128,6 +133,16 @@ export default abstract class Node implements BoxModel {
     public hide() {
         this.renderParent = true;
         this.visible = false;
+    }
+
+    public options(attr: string, value?: any, overwrite = true) {
+        if (hasValue(value)) {
+            if (!overwrite && this._options[attr] != null) {
+                return null;
+            }
+            this._options[attr] = value;
+        }
+        return this._options[attr];
     }
 
     public ascend() {
