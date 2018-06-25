@@ -4,7 +4,7 @@ This program can convert moderately complex HTML pages into the standard XML lay
 
 Multiple views per page are supported similiar to iOS Storyboards with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser.
 
-Layout rendering can also be customized using extensions since the program was built to be nearly completely modular. Some of the common layouts have built-in extensions which you can load or unload based on your preference.
+Layout rendering can also be customized using extensions as the program was built to be nearly completely modular. Some of the common layouts already have built-in extensions which you can load or unload based on your preference.
 
 ## INSTALLATION (global js variable: androme)
 
@@ -119,11 +119,11 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 ### extensions
 
-<img src="demos/android/grid.png" alt="extension grid: balance columns" />
+<img src="demos/android/grid.png" alt="extension: grid - balance columns" />
 
-<img src="demos/android/list.png" alt="extension list" />
+<img src="demos/android/list.png" alt="extension: list" />
 
-<img src="demos/android/table.png" alt="extension table" />
+<img src="demos/android/table.png" alt="extension: table" />
 
 ### auto-generated layout
 

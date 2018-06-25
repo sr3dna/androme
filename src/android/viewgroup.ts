@@ -105,7 +105,7 @@ export default class ViewGroup extends View {
         let bottom = [children[0]];
         let left = [children[0]];
         for (let i = 1; i < children.length; i++) {
-            const node: T = children[i];
+            const node = children[i];
             const nodeRight = node.label || node;
             if (top[0].bounds.top === node.bounds.top) {
                 top.push(node);

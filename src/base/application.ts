@@ -359,7 +359,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             axisY.push(node);
                     }
                 }
-                axisY.sort((a: T, b: T) => {
+                axisY.sort((a, b) => {
                     if (a.linear.left !== b.linear.left && !a.parent.flex.enabled && !b.parent.flex.enabled && a.withinX(b.linear)) {
                         return (a.linear.left > b.linear.left ? 1 : -1);
                     }

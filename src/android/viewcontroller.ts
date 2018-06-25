@@ -57,7 +57,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             rightLeft: parseRTL('layout_constraintRight_toLeftOf')
         });
         this.cache.visible.forEach(node => {
-            const nodes: U = (<U> new ViewList(node.renderChildren, node));
+            const nodes = (<U> new ViewList(node.renderChildren, node));
             const constraint = node.is(VIEW_STANDARD.CONSTRAINT);
             const relative = node.is(VIEW_STANDARD.RELATIVE);
             const flex = node.flex;
@@ -76,7 +76,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                 const linearX = nodes.linearX;
-                nodes.list.forEach((current: T) => {
+                nodes.list.forEach(current => {
                     if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
                         if (constraint) {
                             this.setAlignParent(current);
@@ -91,7 +91,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                 });
                 nodes.list.unshift(node);
-                nodes.list.forEach((current: T) => {
+                nodes.list.forEach(current => {
                     nodes.list.forEach((adjacent: any) => {
                         if (current === adjacent) {
                             return;
@@ -160,7 +160,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             else {
                                 if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                     if (current.withinY(linear2) || !current.constraint.vertical) {
-                                        current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                        current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''), (linear1.left === linear2.left || linear2.right === linear2.right));
                                     }
                                 }
                                 else if (current.viewHeight === 0 && linear1.top === linear2.top && linear1.bottom === linear2.bottom) {
@@ -229,7 +229,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     });
                 });
                 nodes.list.shift();
-                nodes.list.forEach((current: T) => {
+                nodes.list.forEach(current => {
                     const leftRight = current.anchor(LAYOUT['leftRight']);
                     if (leftRight != null) {
                         current.constraint.horizontal = true;
@@ -281,7 +281,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         flexNodes = [{ constraint: { horizontalChain, verticalChain } }];
                     }
                     else {
-                        nodes.list.forEach((current: T) => {
+                        nodes.list.forEach(current => {
                             let horizontalChain = nodes.filter(item => same(current, item, 'linear.top'));
                             if (horizontalChain.list.length === 0) {
                                 horizontalChain = nodes.filter(item => same(current, item, 'linear.bottom'));
@@ -310,9 +310,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         }
                         const inverse = (index === 0 ? 1 : 0);
                         const chainNodes = flexNodes || nodes.slice().list.sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
-                        chainNodes.forEach((current: T) => {
+                        chainNodes.forEach(current => {
                             const chainDirection: U = current.constraint[value];
-                            if (chainDirection && chainDirection.length > 1 && (flex.enabled || chainDirection.list.map(item => parseInt((item.constraint[value].list || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a: number, b: number) => (a === b ? a : 0)) > 0)) {
+                            if (chainDirection && chainDirection.length > 1 && (flex.enabled || chainDirection.list.map(item => parseInt((item.constraint[value].list || [{ id: 0 }]).map((result: any) => result.id).join(''))).reduce((a, b) => (a === b ? a : 0)) > 0)) {
                                 chainDirection.parent = node;
                                 if (flex.enabled && chainDirection.list.some(item => item.flex.order > 0)) {
                                     chainDirection[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
@@ -324,13 +324,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 const orientation = HV.toLowerCase();
                                 const orientationInverse = VH.toLowerCase();
                                 const dimension = WH.toLowerCase();
-                                const firstNode: T = chainDirection.first;
-                                const lastNode: T = chainDirection.last;
+                                const firstNode = chainDirection.first;
+                                const lastNode = chainDirection.last;
                                 let maxOffset = -1;
                                 for (let i = 0; i < chainDirection.list.length; i++) {
-                                    const chain: T = chainDirection.list[i];
-                                    const next: T = chainDirection.list[i + 1];
-                                    const previous: T = chainDirection.list[i - 1];
+                                    const chain = chainDirection.list[i];
+                                    const next = chainDirection.list[i + 1];
+                                    const previous = chainDirection.list[i - 1];
                                     if (flex.enabled) {
                                         if (chain.linear[TL] === node.box[TL] && chain.linear[BR] === node.box[BR]) {
                                             this.setAlignParent(chain, orientationInverse);
@@ -478,9 +478,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${orientation}Bias`]);
                                     }
                                     if (!flex.enabled) {
-                                        chainDirection.list.forEach((chain: T) => {
-                                            chain.constraint.horizontalChain = [];
-                                            chain.constraint.verticalChain = [];
+                                        chainDirection.list.forEach(item => {
+                                            item.constraint.horizontalChain = [];
+                                            item.constraint.verticalChain = [];
                                         });
                                     }
                                 }
@@ -504,7 +504,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                     do {
                         let restart = false;
-                        nodes.list.forEach((current: T) => {
+                        nodes.list.forEach(current => {
                             if (!current.anchored) {
                                 const result = (constraint ? search((<object> current.app()), '*constraint*') : search((<object> current.android()), LAYOUT));
                                 for (const [key, value] of result) {
@@ -531,14 +531,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                     while (true);
                     if (constraint) {
-                        nodes.list.forEach((opposite: T) => {
+                        nodes.list.forEach(opposite => {
                             if (!opposite.anchored) {
                                 this.deleteConstraints(node);
                                 if (SETTINGS.useConstraintGuideline) {
                                     this.createGuideline(node, opposite);
                                 }
                                 else {
-                                    const adjacent: T = nodes.anchors[0];
+                                    const adjacent = nodes.anchors[0];
                                     const center1: Point = opposite.center;
                                     const center2: Point = adjacent.center;
                                     const x = Math.abs(center1.x - center2.x);
@@ -589,7 +589,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                             }
                         });
-                        nodes.list.forEach((current: T) => {
+                        nodes.list.forEach(current => {
                             if (current.app(LAYOUT['right']) === 'parent' && current.app(LAYOUT['leftRight']) == null) {
                                 node.constraint.layoutWidth = true;
                             }
@@ -599,7 +599,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         });
                     }
                     else {
-                        nodes.list.forEach((current: T) => {
+                        nodes.list.forEach(current => {
                             const parentRight = current.android(parseRTL('layout_alignParentRight'));
                             const parentBottom = current.android('layout_alignParentBottom');
                             if (!anchors.includes(current)) {
@@ -685,7 +685,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             scrollView
                 .map(scrollName => {
                     const viewGroup = new ViewGroup(this.cache.nextId, current, null, [current]);
-                    const view: T = (<View> viewGroup) as T;
+                    const view = (<View> viewGroup) as T;
                     viewGroup.setViewId(scrollName);
                     viewGroup.setBounds();
                     viewGroup.inheritGrid(current);
@@ -777,7 +777,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
-                            const result = (<T[]> node.parentOriginal.children.filter((radio: T) => ((<HTMLInputElement> radio.element).type === 'radio' && (<HTMLInputElement> radio.element).name === element.name)));
+                            const result = (<T[]> node.parentOriginal.children.filter(item => ((<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name)));
                             let xml = '';
                             if (result.length > 1) {
                                 const viewGroup = new ViewGroup(this.cache.nextId, node, parent, result);
@@ -786,14 +786,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 this.cache.list.push(view);
                                 viewGroup.setViewId(VIEW_ANDROID.RADIO_GROUP);
                                 viewGroup.render(parent);
-                                result.forEach((radio: T) => {
-                                    viewGroup.inheritGrid(radio);
-                                    if ((<HTMLInputElement> radio.element).checked) {
-                                        checked = radio.stringId;
+                                result.forEach(item => {
+                                    viewGroup.inheritGrid(item);
+                                    if ((<HTMLInputElement> item.element).checked) {
+                                        checked = item.stringId;
                                     }
-                                    radio.parent = viewGroup;
-                                    radio.render(viewGroup);
-                                    xml += this.renderView(radio, view, VIEW_STANDARD.RADIO, true);
+                                    item.parent = viewGroup;
+                                    item.render(viewGroup);
+                                    xml += this.renderView(item, view, VIEW_STANDARD.RADIO, true);
                                 });
                                 viewGroup.android('orientation', NodeList.linearX(viewGroup.children) ? 'horizontal' : 'vertical');
                                 if (checked !== '') {
@@ -850,9 +850,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     public createGroup(node: T, parent: T, children: T[]) {
         const viewGroup = new ViewGroup(this.cache.nextId, node, parent, children);
-        children.forEach((child: T) => {
-            child.parent = viewGroup;
-            viewGroup.inheritGrid(child);
+        children.forEach(item => {
+            item.parent = viewGroup;
+            viewGroup.inheritGrid(item);
         });
         viewGroup.setBounds();
         return (<View> viewGroup) as T;

@@ -10,7 +10,7 @@ export default class Table extends Extension<T, U> {
         super(tagNames, extension, options);
     }
 
-    public render(): string {
+    public render() {
         const tableRows: T[] = [];
         const thead = this.node.children.find(node => node.tagName === 'THEAD');
         const tbody = this.node.children.find(node => node.tagName === 'TBODY');
@@ -31,12 +31,12 @@ export default class Table extends Extension<T, U> {
         }
         const rowCount = tableRows.length;
         let columnCount = 0;
-        for (let l = 0; l < tableRows.length; l++) {
-            const tr = tableRows[l];
+        for (let i = 0; i < tableRows.length; i++) {
+            const tr = tableRows[i];
             tr.hide();
             columnCount = Math.max(tr.children.map(node => (<HTMLTableDataCellElement> node.element)).reduce((a, b) => a + b.colSpan, 0), columnCount);
-            for (let m = 0; m < tr.children.length; m++) {
-                const td = tr.children[m];
+            for (let j = 0; j < tr.children.length; j++) {
+                const td = tr.children[j];
                 if (td.element != null) {
                     const style = td.element.style;
                     const element = (<HTMLTableCellElement> td.element);

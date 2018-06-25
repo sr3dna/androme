@@ -11,14 +11,14 @@ export default abstract class List extends Extension<T, U> {
         super(tagNames, extension, options);
     }
 
-    public condition(): boolean {
+    public condition() {
         return (
             super.condition() &&
             (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (this.linearX || this.linearY))
         );
     }
 
-    public render(): string {
+    public render() {
         let xml = '';
         if (this.linearY) {
             xml = this.application.writeGridLayout(this.node, this.parent, 2);

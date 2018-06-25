@@ -13,14 +13,14 @@ export default class Grid extends Extension<T, U> {
         super(tagNames, extension, options);
     }
 
-    public condition(): boolean {
+    public condition() {
         return (
             super.condition() &&
             (!this.node.flex.enabled && this.node.children.length > 1 && this.node.children.every(node => !node.flex.enabled && this.node.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right')))
         );
     }
 
-    public render(mapX: ObjectIndex, mapY: ObjectIndex): string {
+    public render(mapX: ObjectIndex, mapY: ObjectIndex) {
         let xml = '';
         let columns: any[][] = [];
         const columnEnd: number[] = [];

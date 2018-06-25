@@ -22,13 +22,13 @@ export default class FileRes extends File {
         for (let i = 0; i < data.views.length; i++) {
             files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
         }
-        const drawableXml = this.resourceDrawableToXml();
+        const xml = this.resourceDrawableToXml();
         files.push(...this.parseFileDetails(this.resourceStringToXml()));
         files.push(...this.parseFileDetails(this.resourceStringArrayToXml()));
         files.push(...this.parseFileDetails(this.resourceFontToXml()));
         files.push(...this.parseFileDetails(this.resourceColorToXml()));
         files.push(...this.parseFileDetails(this.resourceStyleToXml()));
-        files.push(...this.parseImageDetails(drawableXml), ...this.parseFileDetails(drawableXml));
+        files.push(...this.parseImageDetails(xml), ...this.parseFileDetails(xml));
         this.saveToDisk(files);
     }
 
