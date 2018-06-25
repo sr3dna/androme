@@ -83,7 +83,7 @@ androme.settings = {
     supportRTL: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
-    builtInExtensions: ['list', 'table', 'grid'],
+    builtInExtensions: ['hidden', 'list', 'table', 'grid'],
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     whitespaceHorizontalOffset: 4,
@@ -124,6 +124,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <img src="demos/android/list.png" alt="extension: list" />
 
 <img src="demos/android/table.png" alt="extension: table" />
+
+Extension "hidden": some elements with "display: none" are meant to be in a separate activity layout XML such as navigation menus. See /demo/hidden.html for usage instructions.
 
 ### auto-generated layout
 

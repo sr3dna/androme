@@ -10,17 +10,26 @@ import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 
 import Grid from './extension/grid';
+import Hidden from './extension/hidden';
 import List from './android/extension/list';
 import Table from './extension/table';
 
 let MAIN;
-const PARSED: Set<HTMLElement> = new Set();
+const CACHE: Set<HTMLElement> = new Set();
 
 const EXTENSIONS = {
     'grid': new Grid([], 'androme.grid', { balanceColumns: true }),
+    'hidden': new Hidden([], 'androme.hidden'),
     'list': new List(['UL', 'OL'], 'androme.list'),
     'table': new Table(['TABLE'], 'androme.table')
 };
+
+function __app(object) {
+    type T = View;
+    type U = ViewList<T>;
+    const app: Application<T, U> = object;
+    return app;
+}
 
 export function parseDocument(...elements) {
     type T = View;
@@ -51,17 +60,19 @@ export function parseDocument(...elements) {
         return;
     }
     main.setStyleMap();
+    main.elements.clear();
     if (main.appName === '' && elements.length === 0) {
         elements.push(document.body);
     }
-    for (let i = 0; i < elements.length; i++) {
-        let element = elements[i];
+    elements.forEach(element => {
         if (typeof element === 'string') {
             element = document.getElementById(element);
         }
-        if (!(element instanceof HTMLElement)) {
-            continue;
+        if (element instanceof HTMLElement) {
+            main.elements.add(element);
         }
+    });
+    main.elements.forEach(element => {
         if (main.appName === '') {
             if (element.id === '') {
                 element.id = 'androme';
@@ -84,21 +95,23 @@ export function parseDocument(...elements) {
             main.replaceInlineAttributes();
         }
         main.replaceAppended();
-        PARSED.add(element);
-    }
+        CACHE.add(element);
+    });
 }
 
 export function registerExtension(extension: any) {
-    if (MAIN != null) {
+    const main = __app(MAIN);
+    if (main != null) {
         if (extension instanceof Extension) {
-            MAIN.registerExtension(extension);
+            main.registerExtension(extension);
         }
     }
 }
 
 export function configureExtension(name: string, options: {}) {
-    if (MAIN != null && options != null) {
-        MAIN.extensions.some(item => {
+    const main = __app(MAIN);
+    if (main != null && options != null) {
+        main.extensions.some(item => {
             if (item.extension === name) {
                 item.options = options;
                 return true;
@@ -109,50 +122,56 @@ export function configureExtension(name: string, options: {}) {
 }
 
 export function ready() {
-    return (MAIN == null || !MAIN.closed);
+    const main = __app(MAIN);
+    return (main == null || !main.closed);
 }
 
 export function close() {
-    if (MAIN != null && MAIN.length > 0) {
-        MAIN.finalize();
+    const main = __app(MAIN);
+    if (main != null && main.length > 0) {
+        main.finalize();
     }
 }
 
 export function reset() {
-    if (MAIN != null) {
-        PARSED.forEach((element: HTMLElement) => {
+    const main = __app(MAIN);
+    if (main != null) {
+        CACHE.forEach((element: HTMLElement) => {
             delete element.dataset.views;
             delete element.dataset.currentId;
         });
-        PARSED.clear();
-        MAIN.reset();
+        CACHE.clear();
+        main.reset();
     }
 }
 
 export function saveAllToDisk() {
-    if (MAIN && MAIN.length > 0) {
-        if (!MAIN.closed) {
-            MAIN.finalize();
+    const main = __app(MAIN);
+    if (main && main.length > 0) {
+        if (!main.closed) {
+            main.finalize();
         }
-        MAIN.resourceHandler.file.saveAllToDisk(MAIN.viewData);
+        main.resourceHandler.file.saveAllToDisk(main.viewData);
     }
 }
 
 export function writeLayoutAllXml(saveToDisk = false) {
-    if (MAIN != null) {
+    const main = __app(MAIN);
+    if (main != null) {
         autoClose();
-        if (MAIN.closed) {
-            return MAIN.resourceHandler.file.layoutAllToXml(MAIN.viewData, saveToDisk);
+        if (main.closed) {
+            return main.resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
         }
     }
     return '';
 }
 
 export function writeResourceAllXml(saveToDisk = false) {
-    if (MAIN != null) {
+    const main = __app(MAIN);
+    if (main != null) {
         autoClose();
-        if (MAIN.closed) {
-            return MAIN.resourceHandler.file.resourceAllToXml(saveToDisk);
+        if (main.closed) {
+            return main.resourceHandler.file.resourceAllToXml(saveToDisk);
         }
     }
     return '';
@@ -169,59 +188,66 @@ export function writeResourceStringXml(saveToDisk = false) {
 }
 
 export function writeResourceArrayXml(saveToDisk = false) {
-    if (MAIN != null) {
+    const main = __app(MAIN);
+    if (main != null) {
         autoClose();
-        if (MAIN.closed) {
-            return MAIN.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
+        if (main.closed) {
+            return main.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
         }
     }
     return '';
 }
 
 export function writeResourceFontXml(saveToDisk = false) {
-    if (MAIN != null) {
+    const main = __app(MAIN);
+    if (main != null) {
         autoClose();
-        if (MAIN.closed) {
-            return MAIN.resourceHandler.file.resourceFontToXml(saveToDisk);
+        if (main.closed) {
+            return main.resourceHandler.file.resourceFontToXml(saveToDisk);
         }
     }
     return '';
 }
 
 export function writeResourceColorXml(saveToDisk = false) {
-    if (MAIN && MAIN.closed) {
+    const main = __app(MAIN);
+    if (main && main.closed) {
         return MAIN.resourceHandler.file.resourceColorToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStyleXml(saveToDisk = false) {
-    if (MAIN != null) {
+    const main = __app(MAIN);
+    if (main != null) {
         autoClose();
-        if (MAIN.closed) {
-            return MAIN.resourceHandler.file.resourceStyleToXml(saveToDisk);
+        if (main.closed) {
+            return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
         }
     }
     return '';
 }
 
 export function writeResourceDrawableXml(saveToDisk = false) {
-    if (MAIN != null) {
+    const main = __app(MAIN);
+    if (main != null) {
         autoClose();
-        if (MAIN.closed) {
-            return MAIN.resourceHandler.file.resourceDrawableToXml(saveToDisk);
+        if (main.closed) {
+            return main.resourceHandler.file.resourceDrawableToXml(saveToDisk);
         }
     }
     return '';
 }
 
 export function toString() {
-    return (MAIN != null ? MAIN.toString() : '');
+    const main = __app(MAIN);
+    return (main != null ? main.toString() : '');
 }
 
 function autoClose() {
-    if (SETTINGS.autoCloseOnWrite && MAIN && !MAIN.closed) {
-        MAIN.finalize();
+    const main = __app(MAIN);
+    if (SETTINGS.autoCloseOnWrite && main && !main.closed) {
+        main.finalize();
     }
 }
 

@@ -1,18 +1,18 @@
-import { ObjectIndex } from '../lib/types';
+import { IExtension, ObjectIndex } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import Application from './application';
 
-export default abstract class Extension<T extends Node, U extends NodeList<T>> {
+export default abstract class Extension<T extends Node, U extends NodeList<T>> implements IExtension {
     public application: Application<T, U>;
     public node: T;
     public parent: T;
+    public element: HTMLElement | undefined;
     public enabled: boolean = true;
-
-    protected tagNames: string[];
+    public tagNames: string[] = [];
 
     constructor(
-        tagNames: string[],
+        tagNames: string[] = [],
         public extension?: string,
         public options?: any)
     {
@@ -25,8 +25,28 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> {
         return (this.tagNames.length === 0 || this.tagNames.includes(tagName));
     }
 
+    public included(name?: string, element?: HTMLElement) {
+        if (element == null) {
+            element = this.element;
+        }
+        const extension = (this.extension || name || '').trim();
+        return (element && element.dataset.extension && extension ? element.dataset.extension.split(',').map(value => value.trim()).includes(extension) : false);
+    }
+
+    public beforeInit() {
+        return;
+    }
+
+    public init(element: HTMLElement) {
+        return false;
+    }
+
+    public afterInit() {
+        return;
+    }
+
     public condition() {
-        return (this.node.element && this.node.element.dataset != null ? (this.node.element.dataset.extension == null || this.node.element.dataset.extension === this.extension) : false);
+        return (this.node.element && this.node.element.dataset && this.extension ? this.included(this.extension) : false);
     }
 
     public processNode() {
@@ -38,10 +58,10 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> {
     }
 
     get linearX() {
-        return NodeList.linearX(this.node.children);
+        return (this.node != null ? NodeList.linearX(this.node.children) : false);
     }
 
     get linearY() {
-        return NodeList.linearY(this.node.children);
+        return (this.node != null ? NodeList.linearY(this.node.children) : false);
     }
 }

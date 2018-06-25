@@ -1,4 +1,4 @@
-/* androme 1.7.9
+/* androme 1.7.10
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -369,17 +369,34 @@
     NodeList.currentId = 0;
 
     class Extension {
-        constructor(tagNames, extension, options) {
+        constructor(tagNames = [], extension, options) {
             this.extension = extension;
             this.options = options;
             this.enabled = true;
+            this.tagNames = [];
             this.tagNames = tagNames.map(value => value.toUpperCase());
         }
         is(tagName) {
             return (this.tagNames.length === 0 || this.tagNames.includes(tagName));
         }
+        included(name, element) {
+            if (element == null) {
+                element = this.element;
+            }
+            const extension = (this.extension || name || '').trim();
+            return (element && element.dataset.extension && extension ? element.dataset.extension.split(',').map(value => value.trim()).includes(extension) : false);
+        }
+        beforeInit() {
+            return;
+        }
+        init(element) {
+            return false;
+        }
+        afterInit() {
+            return;
+        }
         condition() {
-            return (this.node.element && this.node.element.dataset != null ? (this.node.element.dataset.extension == null || this.node.element.dataset.extension === this.extension) : false);
+            return (this.node.element && this.node.element.dataset && this.extension ? this.included(this.extension) : false);
         }
         processNode() {
             return false;
@@ -388,10 +405,10 @@
             return ['', false];
         }
         get linearX() {
-            return NodeList.linearX(this.node.children);
+            return (this.node != null ? NodeList.linearX(this.node.children) : false);
         }
         get linearY() {
-            return NodeList.linearY(this.node.children);
+            return (this.node != null ? NodeList.linearY(this.node.children) : false);
         }
     }
 
@@ -914,8 +931,7 @@
     ];
     const XMLNS_ANDROID = {
         'ANDROID': 'xmlns:android="http://schemas.android.com/apk/res/android"',
-        'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"',
-        'TOOLS': 'xmlns:tools="http://schemas.android.com/tools"'
+        'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"'
     };
     const FONT_ANDROID = {
         'sans-serif': exports.build.ICE_CREAM_SANDWICH,
@@ -976,7 +992,7 @@
         supportRTL: true,
         numberResourceValue: false,
         alwaysReevaluateResources: false,
-        builtInExtensions: ['lists', 'table', 'grid'],
+        builtInExtensions: ['hidden', 'list', 'table', 'grid'],
         excludeTextColor: ['#000000'],
         excludeBackgroundColor: ['#FFFFFF'],
         whitespaceHorizontalOffset: 4,
@@ -994,6 +1010,7 @@
         constructor(TypeT, TypeU) {
             this.TypeT = TypeT;
             this.TypeU = TypeU;
+            this.elements = new Set();
             this.ids = [];
             this.views = [];
             this._extensions = [];
@@ -1144,6 +1161,11 @@
             }
             const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
             this.cache.clear();
+            this.extensions.forEach(item => {
+                item.application = this;
+                item.element = layoutRoot;
+                item.beforeInit();
+            });
             if (layoutRoot != null) {
                 const node = this.insertNode(layoutRoot);
                 if (node != null) {
@@ -1151,10 +1173,21 @@
                 }
             }
             for (const element of Array.from(elements)) {
-                if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
-                    continue;
+                let handled = false;
+                this.extensions.some(item => {
+                    item.application = this;
+                    if (item.init(element)) {
+                        handled = true;
+                        return true;
+                    }
+                    return false;
+                });
+                if (!handled) {
+                    if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
+                        continue;
+                    }
+                    this.insertNode(element);
                 }
-                this.insertNode(element);
             }
             const preAlignment = {};
             this.cache.list.forEach(node => {
@@ -1244,6 +1277,11 @@
                     }
                 }
             });
+            this.extensions.forEach(item => {
+                item.application = this;
+                item.element = layoutRoot;
+                item.afterInit();
+            });
             this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
             this.cache.list.forEach(node => {
                 if (node.element != null) {
@@ -1330,7 +1368,7 @@
                         const parent = nodeY.parent;
                         if (!nodeY.renderParent) {
                             let xml = '';
-                            this.extensions.filter(item => item.enabled).some(item => {
+                            this.extensions.some(item => {
                                 if (item.is(nodeY.tagName)) {
                                     item.application = this;
                                     item.node = nodeY;
@@ -1472,10 +1510,10 @@
             return this._closed;
         }
         get extensions() {
-            return this._extensions;
+            return this._extensions.filter(item => item.enabled);
         }
         get viewData() {
-            return { cache: this.cacheInternal, ids: this.ids, views: this.views };
+            return { cache: this.cacheInternal.list, ids: this.ids, views: this.views };
         }
         get length() {
             return this.views.length;
@@ -2631,7 +2669,7 @@
                     }
                     const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                     const linearX = nodes.linearX;
-                    nodes.list.forEach((current) => {
+                    nodes.list.forEach(current => {
                         if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
                             if (constraint) {
                                 this.setAlignParent(current);
@@ -2646,7 +2684,7 @@
                         }
                     });
                     nodes.list.unshift(node);
-                    nodes.list.forEach((current) => {
+                    nodes.list.forEach(current => {
                         nodes.list.forEach((adjacent) => {
                             if (current === adjacent) {
                                 return;
@@ -2715,7 +2753,7 @@
                                 else {
                                     if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                         if (current.withinY(linear2) || !current.constraint.vertical) {
-                                            current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''));
+                                            current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''), (linear1.left === linear2.left || linear2.right === linear2.right));
                                         }
                                     }
                                     else if (current.viewHeight === 0 && linear1.top === linear2.top && linear1.bottom === linear2.bottom) {
@@ -2784,7 +2822,7 @@
                         });
                     });
                     nodes.list.shift();
-                    nodes.list.forEach((current) => {
+                    nodes.list.forEach(current => {
                         const leftRight = current.anchor(LAYOUT['leftRight']);
                         if (leftRight != null) {
                             current.constraint.horizontal = true;
@@ -2836,7 +2874,7 @@
                             flexNodes = [{ constraint: { horizontalChain, verticalChain } }];
                         }
                         else {
-                            nodes.list.forEach((current) => {
+                            nodes.list.forEach(current => {
                                 let horizontalChain = nodes.filter(item => same(current, item, 'linear.top'));
                                 if (horizontalChain.list.length === 0) {
                                     horizontalChain = nodes.filter(item => same(current, item, 'linear.bottom'));
@@ -2865,7 +2903,7 @@
                             }
                             const inverse = (index === 0 ? 1 : 0);
                             const chainNodes = flexNodes || nodes.slice().list.sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
-                            chainNodes.forEach((current) => {
+                            chainNodes.forEach(current => {
                                 const chainDirection = current.constraint[value];
                                 if (chainDirection && chainDirection.length > 1 && (flex.enabled || chainDirection.list.map(item => parseInt((item.constraint[value].list || [{ id: 0 }]).map((result) => result.id).join(''))).reduce((a, b) => (a === b ? a : 0)) > 0)) {
                                     chainDirection.parent = node;
@@ -3033,9 +3071,9 @@
                                             firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${orientation}Bias`]);
                                         }
                                         if (!flex.enabled) {
-                                            chainDirection.list.forEach((chain) => {
-                                                chain.constraint.horizontalChain = [];
-                                                chain.constraint.verticalChain = [];
+                                            chainDirection.list.forEach(item => {
+                                                item.constraint.horizontalChain = [];
+                                                item.constraint.verticalChain = [];
                                             });
                                         }
                                     }
@@ -3059,7 +3097,7 @@
                         }
                         do {
                             let restart = false;
-                            nodes.list.forEach((current) => {
+                            nodes.list.forEach(current => {
                                 if (!current.anchored) {
                                     const result = (constraint ? search(current.app(), '*constraint*') : search(current.android(), LAYOUT));
                                     for (const [key, value] of result) {
@@ -3085,7 +3123,7 @@
                             }
                         } while (true);
                         if (constraint) {
-                            nodes.list.forEach((opposite) => {
+                            nodes.list.forEach(opposite => {
                                 if (!opposite.anchored) {
                                     this.deleteConstraints(node);
                                     if (SETTINGS.useConstraintGuideline) {
@@ -3143,7 +3181,7 @@
                                     }
                                 }
                             });
-                            nodes.list.forEach((current) => {
+                            nodes.list.forEach(current => {
                                 if (current.app(LAYOUT['right']) === 'parent' && current.app(LAYOUT['leftRight']) == null) {
                                     node.constraint.layoutWidth = true;
                                 }
@@ -3153,7 +3191,7 @@
                             });
                         }
                         else {
-                            nodes.list.forEach((current) => {
+                            nodes.list.forEach(current => {
                                 const parentRight = current.android(parseRTL('layout_alignParentRight'));
                                 const parentBottom = current.android('layout_alignParentBottom');
                                 if (!anchors.includes(current)) {
@@ -3328,7 +3366,7 @@
                     switch (element.type) {
                         case 'radio':
                             if (!recursive) {
-                                const result = node.parentOriginal.children.filter((radio) => (radio.element.type === 'radio' && radio.element.name === element.name));
+                                const result = node.parentOriginal.children.filter(item => (item.element.type === 'radio' && item.element.name === element.name));
                                 let xml = '';
                                 if (result.length > 1) {
                                     const viewGroup = new ViewGroup(this.cache.nextId, node, parent, result);
@@ -3337,14 +3375,14 @@
                                     this.cache.list.push(view);
                                     viewGroup.setViewId(VIEW_ANDROID.RADIO_GROUP);
                                     viewGroup.render(parent);
-                                    result.forEach((radio) => {
-                                        viewGroup.inheritGrid(radio);
-                                        if (radio.element.checked) {
-                                            checked = radio.stringId;
+                                    result.forEach(item => {
+                                        viewGroup.inheritGrid(item);
+                                        if (item.element.checked) {
+                                            checked = item.stringId;
                                         }
-                                        radio.parent = viewGroup;
-                                        radio.render(viewGroup);
-                                        xml += this.renderView(radio, view, VIEW_STANDARD.RADIO, true);
+                                        item.parent = viewGroup;
+                                        item.render(viewGroup);
+                                        xml += this.renderView(item, view, VIEW_STANDARD.RADIO, true);
                                     });
                                     viewGroup.android('orientation', NodeList.linearX(viewGroup.children) ? 'horizontal' : 'vertical');
                                     if (checked !== '') {
@@ -3400,9 +3438,9 @@
         }
         createGroup(node, parent, children) {
             const viewGroup = new ViewGroup(this.cache.nextId, node, parent, children);
-            children.forEach((child) => {
-                child.parent = viewGroup;
-                viewGroup.inheritGrid(child);
+            children.forEach(item => {
+                item.parent = viewGroup;
+                viewGroup.inheritGrid(item);
             });
             viewGroup.setBounds();
             return viewGroup;
@@ -4602,7 +4640,7 @@
                     for (const attr in tagData) {
                         for (const id of tagData[attr]) {
                             if (attr.startsWith('android:background=')) {
-                                const node = viewData.cache.find(id);
+                                const node = viewData.cache.find(item => item.id === id);
                                 if (node && node.android('backround') != null) {
                                     continue;
                                 }
@@ -4616,7 +4654,7 @@
                 }
             }
             for (const id in map) {
-                const node = viewData.cache.find(parseInt(id));
+                const node = viewData.cache.find(item => item.id === parseInt(id));
                 if (node != null) {
                     const styles = map[id].styles;
                     const attributes = map[id].attributes;
@@ -4843,13 +4881,13 @@
             for (let i = 0; i < data.views.length; i++) {
                 files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
             }
-            const drawableXml = this.resourceDrawableToXml();
+            const xml = this.resourceDrawableToXml();
             files.push(...this.parseFileDetails(this.resourceStringToXml()));
             files.push(...this.parseFileDetails(this.resourceStringArrayToXml()));
             files.push(...this.parseFileDetails(this.resourceFontToXml()));
             files.push(...this.parseFileDetails(this.resourceColorToXml()));
             files.push(...this.parseFileDetails(this.resourceStyleToXml()));
-            files.push(...this.parseImageDetails(drawableXml), ...this.parseFileDetails(drawableXml));
+            files.push(...this.parseImageDetails(xml), ...this.parseFileDetails(xml));
             this.saveToDisk(files);
         }
         layoutAllToXml(data, saveToDisk = false) {
@@ -5100,15 +5138,15 @@
             super(tagNames, extension, options);
         }
         condition() {
-            return (super.condition() &&
+            return (super.condition() ||
                 (!this.node.flex.enabled && this.node.children.length > 1 && this.node.children.every(node => !node.flex.enabled && this.node.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right'))));
         }
         render(mapX, mapY) {
             let xml = '';
             let columns = [];
             const columnEnd = [];
-            const useLayoutWeight = (this.options && this.options.useLayoutWeight);
-            if (useLayoutWeight) {
+            const balanceColumns = (this.options && this.options.balanceColumns);
+            if (balanceColumns) {
                 const dimensions = [];
                 for (let l = 0; l < this.node.children.length; l++) {
                     const children = this.node.children[l].children;
@@ -5256,7 +5294,7 @@
             }
             if (columns.length > 1) {
                 this.node.gridColumnEnd = columnEnd;
-                this.node.gridColumnCount = (useLayoutWeight ? columns[0].length : columns.length);
+                this.node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
                 xml = this.application.writeGridLayout(this.node, this.parent, this.node.gridColumnCount);
                 for (let l = 0, count = 0; l < columns.length; l++) {
                     let spacer = 0;
@@ -5265,7 +5303,7 @@
                         if (!node.spacer) {
                             node.parent.hide();
                             node.parent = this.node;
-                            if (useLayoutWeight) {
+                            if (balanceColumns) {
                                 node.gridRowStart = (m === 0);
                                 node.gridRowEnd = (m === columns[l].length - 1);
                                 node.gridFirst = (l === 0 && m === 0);
@@ -5320,7 +5358,7 @@
         processChild(node) {
             let xml = '';
             let siblings;
-            if (this.options && this.options.useLayoutWeight) {
+            if (this.options && this.options.balanceColumns) {
                 siblings = node.gridSiblings;
             }
             else {
@@ -5346,12 +5384,44 @@
         }
     }
 
-    class Lists extends Extension {
+    class Hidden extends Extension {
+        constructor(tagNames, extension, options) {
+            super(tagNames, extension, options);
+        }
+        beforeInit() {
+            if (this.included('androme.hidden')) {
+                if (this.element != null) {
+                    this.element.style.display = '';
+                }
+            }
+        }
+        init(element) {
+            if (this.application != null) {
+                if (this.included('androme.hidden', element) && element.style.display === 'none') {
+                    this.application.elements.add(element);
+                    return true;
+                }
+            }
+            return false;
+        }
+        afterInit() {
+            if (this.included('androme.hidden')) {
+                if (this.element != null) {
+                    this.element.style.display = 'none';
+                }
+            }
+        }
+        render() {
+            return '';
+        }
+    }
+
+    class List extends Extension {
         constructor(tagNames, extension, options) {
             super(tagNames, extension, options);
         }
         condition() {
-            return (super.condition() &&
+            return (super.condition() ||
                 (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (this.linearX || this.linearY)));
         }
         render() {
@@ -5398,19 +5468,19 @@
                     }
                     j++;
                 }
-                node.options('extension.lists', { listStyle: ordinal });
+                node.options(this.extension || 'androme.list', { listStyle: ordinal });
             }
             return xml;
         }
     }
 
-    class ListsExt extends Lists {
+    class ListExt extends List {
         constructor(tagNames, extension = '', options = {}) {
             super(tagNames, extension, options);
         }
         processChild(node) {
             const controllerHandler = this.application.controllerHandler;
-            const options = node.options('extension.lists');
+            const options = node.options(this.extension || 'androme.list');
             if (options && options.listStyle != null) {
                 controllerHandler.prependBefore(node.id, controllerHandler.getViewStatic((options.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (options.listStyle !== '0' ? options.listStyle : '') } })[0]);
                 node.android('layout_columnWeight', '1');
@@ -5422,6 +5492,10 @@
     class Table extends Extension {
         constructor(tagNames, extension, options) {
             super(tagNames, extension, options);
+        }
+        condition() {
+            return (super.condition() ||
+                (this.node != null && this.node.element != null && this.node.element.dataset.extension == null));
         }
         render() {
             const tableRows = [];
@@ -5444,12 +5518,12 @@
             }
             const rowCount = tableRows.length;
             let columnCount = 0;
-            for (let l = 0; l < tableRows.length; l++) {
-                const tr = tableRows[l];
+            for (let i = 0; i < tableRows.length; i++) {
+                const tr = tableRows[i];
                 tr.hide();
                 columnCount = Math.max(tr.children.map(node => node.element).reduce((a, b) => a + b.colSpan, 0), columnCount);
-                for (let m = 0; m < tr.children.length; m++) {
-                    const td = tr.children[m];
+                for (let j = 0; j < tr.children.length; j++) {
+                    const td = tr.children[j];
                     if (td.element != null) {
                         const style = td.element.style;
                         const element = td.element;
@@ -5481,12 +5555,17 @@
     }
 
     let MAIN;
-    const PARSED = new Set();
+    const CACHE = new Set();
     const EXTENSIONS = {
-        'grid': new Grid([], 'grid-ext', { useLayoutWeight: true }),
-        'lists': new ListsExt(['UL', 'OL'], 'lists-ext'),
-        'table': new Table(['TABLE'], 'table-ext')
+        'grid': new Grid([], 'androme.grid', { balanceColumns: true }),
+        'hidden': new Hidden([], 'androme.hidden'),
+        'list': new ListExt(['UL', 'OL'], 'androme.list'),
+        'table': new Table(['TABLE'], 'androme.table')
     };
+    function __app(object) {
+        const app = object;
+        return app;
+    }
     function parseDocument(...elements) {
         let main;
         if (MAIN == null) {
@@ -5499,7 +5578,7 @@
             main.registerController(Controller);
             main.registerResource(Resource);
             for (const name of SETTINGS.builtInExtensions) {
-                const extension = EXTENSIONS[name.trim().toLowerCase()];
+                const extension = EXTENSIONS[name.trim().toLowerCase().replace(/^androme\./, '')];
                 if (extension != null) {
                     main.registerExtension(extension);
                 }
@@ -5514,17 +5593,19 @@
             return;
         }
         main.setStyleMap();
+        main.elements.clear();
         if (main.appName === '' && elements.length === 0) {
             elements.push(document.body);
         }
-        for (let i = 0; i < elements.length; i++) {
-            let element = elements[i];
+        elements.forEach(element => {
             if (typeof element === 'string') {
                 element = document.getElementById(element);
             }
-            if (!(element instanceof HTMLElement)) {
-                continue;
+            if (element instanceof HTMLElement) {
+                main.elements.add(element);
             }
+        });
+        main.elements.forEach(element => {
             if (main.appName === '') {
                 if (element.id === '') {
                     element.id = 'androme';
@@ -5547,19 +5628,21 @@
                 main.replaceInlineAttributes();
             }
             main.replaceAppended();
-            PARSED.add(element);
-        }
+            CACHE.add(element);
+        });
     }
     function registerExtension(extension) {
-        if (MAIN != null) {
+        const main = __app(MAIN);
+        if (main != null) {
             if (extension instanceof Extension) {
-                MAIN.registerExtension(extension);
+                main.registerExtension(extension);
             }
         }
     }
     function configureExtension(name, options) {
-        if (MAIN != null && options != null) {
-            MAIN.extensions.some(item => {
+        const main = __app(MAIN);
+        if (main != null && options != null) {
+            main.extensions.some(item => {
                 if (item.extension === name) {
                     item.options = options;
                     return true;
@@ -5569,45 +5652,51 @@
         }
     }
     function ready() {
-        return (MAIN == null || !MAIN.closed);
+        const main = __app(MAIN);
+        return (main == null || !main.closed);
     }
     function close() {
-        if (MAIN != null && MAIN.length > 0) {
-            MAIN.finalize();
+        const main = __app(MAIN);
+        if (main != null && main.length > 0) {
+            main.finalize();
         }
     }
     function reset() {
-        if (MAIN != null) {
-            PARSED.forEach((element) => {
+        const main = __app(MAIN);
+        if (main != null) {
+            CACHE.forEach((element) => {
                 delete element.dataset.views;
                 delete element.dataset.currentId;
             });
-            PARSED.clear();
-            MAIN.reset();
+            CACHE.clear();
+            main.reset();
         }
     }
     function saveAllToDisk() {
-        if (MAIN && MAIN.length > 0) {
-            if (!MAIN.closed) {
-                MAIN.finalize();
+        const main = __app(MAIN);
+        if (main && main.length > 0) {
+            if (!main.closed) {
+                main.finalize();
             }
-            MAIN.resourceHandler.file.saveAllToDisk(MAIN.viewData);
+            main.resourceHandler.file.saveAllToDisk(main.viewData);
         }
     }
     function writeLayoutAllXml(saveToDisk = false) {
-        if (MAIN != null) {
+        const main = __app(MAIN);
+        if (main != null) {
             autoClose();
-            if (MAIN.closed) {
-                return MAIN.resourceHandler.file.layoutAllToXml(MAIN.viewData, saveToDisk);
+            if (main.closed) {
+                return main.resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
             }
         }
         return '';
     }
     function writeResourceAllXml(saveToDisk = false) {
-        if (MAIN != null) {
+        const main = __app(MAIN);
+        if (main != null) {
             autoClose();
-            if (MAIN.closed) {
-                return MAIN.resourceHandler.file.resourceAllToXml(saveToDisk);
+            if (main.closed) {
+                return main.resourceHandler.file.resourceAllToXml(saveToDisk);
             }
         }
         return '';
@@ -5622,53 +5711,60 @@
         return '';
     }
     function writeResourceArrayXml(saveToDisk = false) {
-        if (MAIN != null) {
+        const main = __app(MAIN);
+        if (main != null) {
             autoClose();
-            if (MAIN.closed) {
-                return MAIN.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
+            if (main.closed) {
+                return main.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
             }
         }
         return '';
     }
     function writeResourceFontXml(saveToDisk = false) {
-        if (MAIN != null) {
+        const main = __app(MAIN);
+        if (main != null) {
             autoClose();
-            if (MAIN.closed) {
-                return MAIN.resourceHandler.file.resourceFontToXml(saveToDisk);
+            if (main.closed) {
+                return main.resourceHandler.file.resourceFontToXml(saveToDisk);
             }
         }
         return '';
     }
     function writeResourceColorXml(saveToDisk = false) {
-        if (MAIN && MAIN.closed) {
+        const main = __app(MAIN);
+        if (main && main.closed) {
             return MAIN.resourceHandler.file.resourceColorToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceStyleXml(saveToDisk = false) {
-        if (MAIN != null) {
+        const main = __app(MAIN);
+        if (main != null) {
             autoClose();
-            if (MAIN.closed) {
-                return MAIN.resourceHandler.file.resourceStyleToXml(saveToDisk);
+            if (main.closed) {
+                return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
             }
         }
         return '';
     }
     function writeResourceDrawableXml(saveToDisk = false) {
-        if (MAIN != null) {
+        const main = __app(MAIN);
+        if (main != null) {
             autoClose();
-            if (MAIN.closed) {
-                return MAIN.resourceHandler.file.resourceDrawableToXml(saveToDisk);
+            if (main.closed) {
+                return main.resourceHandler.file.resourceDrawableToXml(saveToDisk);
             }
         }
         return '';
     }
     function toString() {
-        return (MAIN != null ? MAIN.toString() : '');
+        const main = __app(MAIN);
+        return (main != null ? main.toString() : '');
     }
     function autoClose() {
-        if (SETTINGS.autoCloseOnWrite && MAIN && !MAIN.closed) {
-            MAIN.finalize();
+        const main = __app(MAIN);
+        if (SETTINGS.autoCloseOnWrite && main && !main.closed) {
+            main.finalize();
         }
     }
 

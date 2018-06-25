@@ -10,6 +10,13 @@ export default class Table extends Extension<T, U> {
         super(tagNames, extension, options);
     }
 
+    public condition() {
+        return (
+            super.condition() ||
+            (this.node != null && this.node.element != null && this.node.element.dataset.extension == null)
+        );
+    }
+
     public render() {
         const tableRows: T[] = [];
         const thead = this.node.children.find(node => node.tagName === 'THEAD');

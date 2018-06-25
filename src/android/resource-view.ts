@@ -2,7 +2,6 @@ import { BorderAttribute, ObjectIndex, ObjectMap, ResourceMap } from '../lib/typ
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import ViewList from './viewlist';
 import { formatString, hasValue, padLeft } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
@@ -63,11 +62,10 @@ const METHOD_ANDROID = {
 };
 
 type T = View;
-type TNUll = T | null;
-type U = ViewList<T>;
+type TNUll = T | null | undefined;
 
 interface ViewData {
-    cache: U;
+    cache: T[];
     ids: string[];
     views: string[];
 }
@@ -579,7 +577,7 @@ export default class ResourceView extends Resource<T> {
                 for (const attr in tagData) {
                     for (const id of (<number[]> tagData[attr])) {
                         if (attr.startsWith('android:background=')) {
-                            const node: TNUll = viewData.cache.find(id);
+                            const node: TNUll = viewData.cache.find(item => item.id === id);
                             if (node && node.android('backround') != null) {
                                 continue;
                             }
@@ -593,7 +591,7 @@ export default class ResourceView extends Resource<T> {
             }
         }
         for (const id in map) {
-            const node: TNUll = viewData.cache.find(parseInt(id));
+            const node: TNUll = viewData.cache.find(item => item.id === parseInt(id));
             if (node != null) {
                 const styles = map[id].styles;
                 const attributes = map[id].attributes;

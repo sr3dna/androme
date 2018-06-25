@@ -10,7 +10,7 @@ export default class ListExt<T extends View> extends List {
 
     public processChild(node: T) {
         const controllerHandler = this.application.controllerHandler;
-        const options = node.options('androme.list');
+        const options = node.options(this.extension || 'androme.list');
         if (options && options.listStyle != null) {
             controllerHandler.prependBefore(
                 node.id,

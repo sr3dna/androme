@@ -1,4 +1,4 @@
-import { PlainFile, ResourceMap, StringMap } from '../lib/types';
+import { ArrayMap, PlainFile, ResourceMap } from '../lib/types';
 import { getFileName, hasValue, trim } from '../lib/util';
 
 export default abstract class File {
@@ -17,8 +17,8 @@ export default abstract class File {
         }
     }
 
-    public abstract saveAllToDisk(data: StringMap): void;
-    public abstract layoutAllToXml(data: StringMap, saveToDisk?: boolean): {};
+    public abstract saveAllToDisk(data: ArrayMap): void;
+    public abstract layoutAllToXml(data: ArrayMap, saveToDisk?: boolean): {};
     public abstract resourceAllToXml(saveToDisk?: boolean): {};
     public abstract resourceStringToXml(saveToDisk?: boolean): string;
     public abstract resourceStringArrayToXml(saveToDisk?: boolean): string;

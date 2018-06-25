@@ -1,4 +1,4 @@
-import { PlainFile, RegExpNull, StringMap } from '../lib/types';
+import { ArrayMap, PlainFile, RegExpNull, StringMap } from '../lib/types';
 import File from '../base/file';
 import { caseInsensitve, hasValue, getFileExt, replaceDP } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
@@ -17,7 +17,7 @@ export default class FileRes extends File {
         super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
     }
 
-    public saveAllToDisk(data: StringMap) {
+    public saveAllToDisk(data: ArrayMap) {
         const files: PlainFile[] = [];
         for (let i = 0; i < data.views.length; i++) {
             files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
@@ -32,7 +32,7 @@ export default class FileRes extends File {
         this.saveToDisk(files);
     }
 
-    public layoutAllToXml(data: StringMap, saveToDisk = false) {
+    public layoutAllToXml(data: ArrayMap, saveToDisk = false) {
         const result: StringMap = {};
         const files: PlainFile[] = [];
         for (let i = 0; i < data.views.length; i++) {

@@ -35,84 +35,59 @@
             font-size: 10px;
             margin-top: 6px;
         }
-        ul {
-            margin: 0px;
-            padding: 0px;
-        }
-        li {
-            list-style: none;
+        body > div:first-child > div {
+            width: 200px;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
             margin: 4px;
-            padding: 4px;
-        }
-        span {
-            border: solid 1px #000;
-            padding: 2px;
-            margin: 4px;
+            padding: 10px 0px;
+            background-color: #1B5385;
         }
     </style>
     <script src="../dist/androme.min.js"></script>
     <script>
-        androme.settings.useLayoutWeight = true;
-
+        function showHidden() {
+            document.querySelectorAll('#androme-root > div').forEach(function(element) {
+                element.style.display = '';
+            });
+        }
         document.addEventListener('DOMContentLoaded', () => {
             androme.parseDocument('androme-root');
             androme.close();
 
-            document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
+            const views = androme.writeLayoutAllXml();
+            let output = '';
+            for (const i in views) {
+                output += views[i] + '\n';
+            }
+            document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
             const resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml() + '\n\n' +
-                             androme.writeResourceDrawableXml();
+                             androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
-    <div style="width: 500px;">
-        <ul id="androme-root">
-            <li>
-                <span>1</span>
-                <span>1111</span>
-                <span>---</span>
-                <span>1</span>
-                <span>----</span>
-            </li>
-            <li>
-                <span>2</span>
-                <span>2222</span>
-                <span>---</span>
-                <span>22</span>
-                <span>2</span>
-                <span>---</span>
-            </li>
-            <li>
-                <span>3</span>
-                <span>33</span>
-                <span>3</span>
-                <span>---</span>
-                <span>333</span>
-                <span>---</span>
-            </li>
-            <li>
-                <span>4</span>
-                <span>44</span>
-                <span>44</span>
-                <span>44</span>
-                <span>---</span>
-                <span>4444</span>
-                <span>4</span>
-                <span>4</span>
-                <span>----</span>
-            </li>
-            <li>
-                <span>5</span>
-                <span>555</span>
-                <span>---</span>
-                <span>55555</span>
-                <span>---</span>
-            </li>
-        </ul>
+    <div id="androme-root">
+        <div>
+            1
+        </div>
+        <div data-extension="androme.hidden" style="display: none;">
+            2
+        </div>
+        <div>
+            3
+        </div>
+        <div data-extension="androme.hidden" style="display: none;">
+            4
+        </div>
+        <div>
+            5
+        </div>
     </div>
+    <div style="vertical-align: bottom;"><button onclick="showHidden();">Show Hidden</button></div>
     <div>
         <div class="output">
             <pre id="output"></pre>

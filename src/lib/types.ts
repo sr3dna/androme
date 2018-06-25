@@ -1,3 +1,18 @@
+export interface IExtension {
+    application: any;
+    node: any;
+    parent: any;
+    enabled: boolean;
+    tagNames: string[];
+    is(tagName: string): void;
+    beforeInit(): void;
+    init(element: HTMLElement): boolean;
+    condition(): void;
+    render(mapX?: any, mapY?: any): string;
+    processNode(): boolean;
+    processChild(node: any): any[];
+}
+
 export interface BoxModel {
     marginTop?: number;
     marginRight?: number;
@@ -55,13 +70,17 @@ export interface StringMap {
     [key: string]: string;
 }
 
+export interface ObjectMap {
+    [key: string]: {};
+}
+
+export interface ArrayMap {
+    [key: string]: any[];
+}
+
 export interface ObjectIndex {
     [key: number]: {};
     length: number;
-}
-
-export interface ObjectMap {
-    [key: string]: {};
 }
 
 export interface ResourceMap {

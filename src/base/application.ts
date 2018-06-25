@@ -1,4 +1,4 @@
-import { ObjectIndex } from '../lib/types';
+import { ArrayMap, ObjectIndex } from '../lib/types';
 import Controller from './controller';
 import Extension from './extension';
 import Resource from './resource';
@@ -14,6 +14,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public cache: U;
     public controllerHandler: Controller<T, U>;
     public resourceHandler: Resource<T>;
+    public elements: Set<HTMLElement> = new Set();
 
     private cacheInternal: U;
     private ids: string[] = [];
@@ -183,6 +184,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         this.cache.clear();
+        this.extensions.forEach(item => {
+            item.application = this;
+            item.element = layoutRoot;
+            item.beforeInit();
+        });
         if (layoutRoot != null) {
             const node = this.insertNode(layoutRoot);
             if (node != null) {
@@ -190,10 +196,21 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         for (const element of (<HTMLElement[]> Array.from(elements))) {
-            if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
-                continue;
+            let handled = false;
+            this.extensions.some(item => {
+                item.application = this;
+                if (item.init(element)) {
+                    handled = true;
+                    return true;
+                }
+                return false;
+            });
+            if (!handled) {
+                if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
+                    continue;
+                }
+                this.insertNode(element);
             }
-            this.insertNode(element);
         }
         const preAlignment = {};
         this.cache.list.forEach(node => {
@@ -283,6 +300,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         });
+        this.extensions.forEach(item => {
+            item.application = this;
+            item.element = layoutRoot;
+            item.afterInit();
+        });
         this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
         this.cache.list.forEach(node => {
             if (node.element != null) {
@@ -371,7 +393,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     const parent = (<T> nodeY.parent);
                     if (!nodeY.renderParent) {
                         let xml = '';
-                        this.extensions.filter(item => item.enabled).some(item => {
+                        this.extensions.some(item => {
                             if (item.is(nodeY.tagName)) {
                                 item.application = this;
                                 item.node = nodeY;
@@ -529,11 +551,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     get extensions() {
-        return this._extensions;
+        return this._extensions.filter(item => item.enabled);
     }
 
-    public get viewData() {
-        return { cache: this.cacheInternal, ids: this.ids, views: this.views };
+    public get viewData(): ArrayMap {
+        return { cache: this.cacheInternal.list, ids: this.ids, views: this.views };
     }
 
     public get length() {

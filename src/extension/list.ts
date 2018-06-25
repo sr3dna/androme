@@ -13,7 +13,7 @@ export default abstract class List extends Extension<T, U> {
 
     public condition() {
         return (
-            super.condition() &&
+            super.condition() ||
             (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (this.linearX || this.linearY))
         );
     }
@@ -62,7 +62,7 @@ export default abstract class List extends Extension<T, U> {
                 }
                 j++;
             }
-            node.options('androme.list', { listStyle: ordinal });
+            node.options(this.extension || 'androme.list', { listStyle: ordinal });
         }
         return xml;
     }
