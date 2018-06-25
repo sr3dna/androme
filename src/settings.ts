@@ -13,7 +13,7 @@ export default {
     supportRTL: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
-    builtInExtensions: ['lists', 'table', 'grid'],
+    builtInExtensions: ['list', 'table', 'grid'],
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     whitespaceHorizontalOffset: 4,

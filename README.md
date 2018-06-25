@@ -52,7 +52,7 @@ Library files are in the /dist folder. There is a babel minified for production 
         // optional
         androme.writeLayoutAllXml(true); /* true: save to disk, false: string xml */
         androme.writeResourceAllXml(true);
-        androme.configureExtension('grid', { balanceColumns: false });
+        androme.configureExtension('androme.grid', { balanceColumns: false });
 
         // individual
         androme.writeResourceDrawableXml(true);
@@ -83,7 +83,7 @@ androme.settings = {
     supportRTL: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
-    builtInExtensions: ['lists', 'table', 'grid'],
+    builtInExtensions: ['list', 'table', 'grid'],
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     whitespaceHorizontalOffset: 4,
@@ -121,7 +121,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/grid.png" alt="extension grid: balance columns" />
 
-<img src="demos/android/lists.png" alt="extension lists" />
+<img src="demos/android/list.png" alt="extension list" />
 
 <img src="demos/android/table.png" alt="extension table" />
 

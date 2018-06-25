@@ -6,7 +6,7 @@ import { convertAlpha, convertRoman } from '../lib/util';
 type T = Node;
 type U = NodeList<T>;
 
-export default abstract class Lists extends Extension<T, U> {
+export default abstract class List extends Extension<T, U> {
     constructor(tagNames: string[], extension: string, options: {}) {
         super(tagNames, extension, options);
     }
@@ -62,7 +62,7 @@ export default abstract class Lists extends Extension<T, U> {
                 }
                 j++;
             }
-            node.options('extension.lists', { listStyle: ordinal });
+            node.options('androme.list', { listStyle: ordinal });
         }
         return xml;
     }

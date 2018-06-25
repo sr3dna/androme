@@ -1,16 +1,16 @@
 import View from '../view';
-import Lists from '../../extension/lists';
+import List from '../../extension/list';
 import { VIEW_STANDARD } from '../../lib/constants';
 import parseRTL from '../localization';
 
-export default class ListsExt<T extends View> extends Lists {
+export default class ListExt<T extends View> extends List {
     constructor(tagNames: string[], extension = '', options = {}) {
         super(tagNames, extension, options);
     }
 
     public processChild(node: T) {
         const controllerHandler = this.application.controllerHandler;
-        const options = node.options('extension.lists');
+        const options = node.options('androme.list');
         if (options && options.listStyle != null) {
             controllerHandler.prependBefore(
                 node.id,

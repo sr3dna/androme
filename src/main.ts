@@ -10,16 +10,16 @@ import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 
 import Grid from './extension/grid';
-import Lists from './android/extension/lists';
+import List from './android/extension/list';
 import Table from './extension/table';
 
 let MAIN;
 const PARSED: Set<HTMLElement> = new Set();
 
 const EXTENSIONS = {
-    'grid': new Grid([], 'grid-ext', { balanceColumns: true }),
-    'lists': new Lists(['UL', 'OL'], 'lists-ext'),
-    'table': new Table(['TABLE'], 'table-ext')
+    'grid': new Grid([], 'androme.grid', { balanceColumns: true }),
+    'list': new List(['UL', 'OL'], 'androme.list'),
+    'table': new Table(['TABLE'], 'androme.table')
 };
 
 export function parseDocument(...elements) {
@@ -36,7 +36,7 @@ export function parseDocument(...elements) {
         main.registerController(Controller);
         main.registerResource(Resource);
         for (const name of SETTINGS.builtInExtensions) {
-            const extension: Extension<T, U> = EXTENSIONS[name.trim().toLowerCase()];
+            const extension: Extension<T, U> = EXTENSIONS[name.trim().toLowerCase().replace(/^androme\./, '')];
             if (extension != null) {
                 main.registerExtension(extension);
             }
