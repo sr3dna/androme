@@ -52,7 +52,7 @@ Library files are in the /dist folder. There is a babel minified for production 
         // optional
         androme.writeLayoutAllXml(true); /* true: save to disk, false: string xml */
         androme.writeResourceAllXml(true);
-        androme.configureExtension('grid', { useLayoutWeight: false });
+        androme.configureExtension('grid', { balanceColumns: false });
 
         // individual
         androme.writeResourceDrawableXml(true);
@@ -107,19 +107,23 @@ Most layout issues are probably due to layout_width and layout_height not being 
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and to use single row flexbox layouts instead of floating "right". There is support for basic floating and there are plans to support most of the common floating techniques.
 
-<img src="demos/android/flexbox.png" alt="flexbox" />
+### standard
 
-<img src="demos/android/flexbox_vertical.png" alt="flexbox - vertical" />
+<img src="demos/android/flexbox.png" alt="flexbox: horizontal" />
 
-<img src="demos/android/table.png" alt="gridlayout - table" />
+<img src="demos/android/flexbox_vertical.png" alt="flexbox: vertical" />
 
-<img src="demos/android/layout_weight.png" alt="gridlayout - layout weight" />
+<img src="demos/android/float.png" alt="float: left | right | clear" />
 
-<img src="demos/android/float.png" alt="float - left | right" />
+<img src="demos/android/position_absolute.png" alt="position: absolute" />
 
-<img src="demos/android/nested_lists.png" alt="nested lists" />
+### extensions
 
-<img src="demos/android/position_absolute.png" alt="constraintlayout - position: absolute" />
+<img src="demos/android/grid.png" alt="extension grid: balance columns" />
+
+<img src="demos/android/lists.png" alt="extension lists" />
+
+<img src="demos/android/table.png" alt="extension table" />
 
 ### auto-generated layout
 

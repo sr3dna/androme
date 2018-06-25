@@ -17,7 +17,7 @@ let MAIN;
 const PARSED: Set<HTMLElement> = new Set();
 
 const EXTENSIONS = {
-    'grid': new Grid([], 'grid-ext', { useLayoutWeight: true }),
+    'grid': new Grid([], 'grid-ext', { balanceColumns: true }),
     'lists': new Lists(['UL', 'OL'], 'lists-ext'),
     'table': new Table(['TABLE'], 'table-ext')
 };

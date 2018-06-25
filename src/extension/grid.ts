@@ -24,8 +24,8 @@ export default class Grid extends Extension<T, U> {
         let xml = '';
         let columns: any[][] = [];
         const columnEnd: number[] = [];
-        const useLayoutWeight = (this.options && this.options.useLayoutWeight);
-        if (useLayoutWeight) {
+        const balanceColumns = (this.options && this.options.balanceColumns);
+        if (balanceColumns) {
             const dimensions: number[][] = [];
             for (let l = 0; l < this.node.children.length; l++) {
                 const children = this.node.children[l].children;
@@ -174,7 +174,7 @@ export default class Grid extends Extension<T, U> {
         }
         if (columns.length > 1) {
             this.node.gridColumnEnd = columnEnd;
-            this.node.gridColumnCount = (useLayoutWeight ? columns[0].length : columns.length);
+            this.node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
             xml = this.application.writeGridLayout(this.node, this.parent, this.node.gridColumnCount);
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
@@ -183,7 +183,7 @@ export default class Grid extends Extension<T, U> {
                     if (!node.spacer) {
                         node.parent.hide();
                         node.parent = this.node;
-                        if (useLayoutWeight) {
+                        if (balanceColumns) {
                             node.gridRowStart = (m === 0);
                             node.gridRowEnd = (m === columns[l].length - 1);
                             node.gridFirst = (l === 0 && m === 0);
@@ -239,7 +239,7 @@ export default class Grid extends Extension<T, U> {
     public processChild(node: T) {
         let xml = '';
         let siblings: T[];
-        if (this.options && this.options.useLayoutWeight) {
+        if (this.options && this.options.balanceColumns) {
             siblings = node.gridSiblings;
         }
         else {

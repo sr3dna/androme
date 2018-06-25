@@ -71,8 +71,7 @@ export const FIXED_ANDROID = [
 
 export const XMLNS_ANDROID = {
     'ANDROID': 'xmlns:android="http://schemas.android.com/apk/res/android"',
-    'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"',
-    'TOOLS': 'xmlns:tools="http://schemas.android.com/tools"'
+    'APP': 'xmlns:app="http://schemas.android.com/apk/res-auto"'
 };
 
 export const FONT_ANDROID = {
