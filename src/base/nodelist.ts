@@ -84,7 +84,7 @@ export default abstract class NodeList<T extends Node> {
     }
 
     get elements() {
-        return this._list.filter(node => node.element != null);
+        return this._list.filter(node => node.hasElement);
     }
 
     get first() {

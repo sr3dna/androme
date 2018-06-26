@@ -12,16 +12,18 @@ import SETTINGS from './settings';
 import Grid from './extension/grid';
 import Hidden from './extension/hidden';
 import List from './android/extension/list';
+import Menu from './android/extension/menu';
 import Table from './extension/table';
 
 let MAIN;
 const CACHE: Set<HTMLElement> = new Set();
 
 const EXTENSIONS = {
-    'grid': new Grid([], 'androme.grid', { balanceColumns: true }),
-    'hidden': new Hidden([], 'androme.hidden'),
-    'list': new List(['UL', 'OL'], 'androme.list'),
-    'table': new Table(['TABLE'], 'androme.table')
+    'grid': new Grid('androme.grid', [], { balanceColumns: true }),
+    'hidden': new Hidden('androme.hidden', []),
+    'list': new List('androme.list', ['UL', 'OL']),
+    'menu': new Menu('androme.menu', ['NAV']),
+    'table': new Table('androme.table', ['TABLE'])
 };
 
 function __app(object) {
@@ -81,21 +83,26 @@ export function parseDocument(...elements) {
         }
         else {
             if (element.id === '') {
-                element.id = `view${main.length}`;
+                element.id = `view_${main.length}`;
             }
         }
         element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
         element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/-/g, '_');
-        main.setNodeCache(element);
-        main.setLayoutXml();
-        main.setResources();
-        if (SETTINGS.showAttributes) {
-            main.setMarginPadding();
-            main.setConstraints();
-            main.replaceInlineAttributes();
+        if (main.createNodeCache(element)) {
+            main.setLayoutXml();
+            main.setResources();
+            if (SETTINGS.showAttributes) {
+                main.setMarginPadding();
+                main.setConstraints();
+                main.replaceInlineAttributes();
+            }
+            main.replaceAppended();
+            CACHE.add(element);
         }
-        main.replaceAppended();
-        CACHE.add(element);
+        else {
+            delete element.dataset.views;
+            delete element.dataset.currentId;
+        }
     });
 }
 
@@ -112,7 +119,7 @@ export function configureExtension(name: string, options: {}) {
     const main = __app(MAIN);
     if (main != null && options != null) {
         main.extensions.some(item => {
-            if (item.extension === name) {
+            if (item.name === name) {
                 item.options = options;
                 return true;
             }

@@ -10,19 +10,13 @@ export default {
         customizations: {}
     },
     [BUILD.LOLLIPOP]: {
-        android: ['layout_columnWeight'],
-        customizations: {
-            'Button': {
-                android: {
-                    textAllCaps: 'false'
-                }
-            }
-        }
+        android: ['layout_columnWeight']
     },
     [BUILD.ALL]: {
         customizations: {
             'Button': {
                 android: {
+                    textAllCaps: 'false',
                     minWidth: '0dp',
                     minHeight: '0dp'
                 }

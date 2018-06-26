@@ -255,51 +255,49 @@ export default class ResourceView extends Resource<T> {
                     node = node.label;
                 }
                 const element = node.element;
-                if (element != null) {
-                    const nodeId = (labelFor || node).id;
-                    const stored = Object.assign({}, (<any> element).__fontStyle);
-                    if (stored.fontFamily != null) {
-                        const fontFamily: string = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
-                        let fontStyle = '';
-                        let fontWeight = '';
-                        if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
-                            system = true;
-                            stored.fontFamily = fontFamily;
-                            if (stored.fontStyle === 'normal') {
-                                delete stored.fontStyle;
-                            }
-                            if (stored.fontWeight === '400') {
-                                delete stored.fontWeight;
-                            }
-                        }
-                        else {
-                            stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
-                            fontStyle = stored.fontStyle;
-                            fontWeight = stored.fontWeight;
+                const nodeId = (labelFor || node).id;
+                const stored = Object.assign({}, (<any> element).__fontStyle);
+                if (stored.fontFamily != null) {
+                    const fontFamily: string = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                    let fontStyle = '';
+                    let fontWeight = '';
+                    if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                        system = true;
+                        stored.fontFamily = fontFamily;
+                        if (stored.fontStyle === 'normal') {
                             delete stored.fontStyle;
+                        }
+                        if (stored.fontWeight === '400') {
                             delete stored.fontWeight;
                         }
-                        if (!system) {
-                            if (!STORED.FONTS.has(fontFamily)) {
-                                STORED.FONTS.set(fontFamily, {});
-                            }
-                            STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
-                        }
                     }
-                    const method = METHOD_ANDROID['fontStyle'];
-                    const keys = Object.keys(method);
-                    for (let i = 0; i < keys.length; i++) {
-                        if (sorted[i] == null) {
-                            sorted[i] = {};
+                    else {
+                        stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                        fontStyle = stored.fontStyle;
+                        fontWeight = stored.fontWeight;
+                        delete stored.fontStyle;
+                        delete stored.fontWeight;
+                    }
+                    if (!system) {
+                        if (!STORED.FONTS.has(fontFamily)) {
+                            STORED.FONTS.set(fontFamily, {});
                         }
-                        const value = stored[keys[i]];
-                        if (hasValue(value)) {
-                            const attr = formatString(method[keys[i]], value);
-                            if (sorted[i][attr] == null) {
-                                sorted[i][attr] = [];
-                            }
-                            sorted[i][attr].push(nodeId);
+                        STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
+                    }
+                }
+                const method = METHOD_ANDROID['fontStyle'];
+                const keys = Object.keys(method);
+                for (let i = 0; i < keys.length; i++) {
+                    if (sorted[i] == null) {
+                        sorted[i] = {};
+                    }
+                    const value = stored[keys[i]];
+                    if (hasValue(value)) {
+                        const attr = formatString(method[keys[i]], value);
+                        if (sorted[i][attr] == null) {
+                            sorted[i][attr] = [];
                         }
+                        sorted[i][attr].push(nodeId);
                     }
                 }
             });
@@ -327,10 +325,19 @@ export default class ResourceView extends Resource<T> {
     public setImageSource() {
         super.setImageSource();
         this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
-            const stored = (<any> node.element).__imageSource;
+            const object = (<any> node.element);
+            const stored = object.__imageSource;
             if (stored != null) {
-                const method = METHOD_ANDROID['imageSource'];
-                node.attr(formatString(method['src'], stored));
+                const target = object.__imageSourceTarget;
+                if (target == null) {
+                    const method = METHOD_ANDROID['imageSource'];
+                    node.attr(formatString(method['src'], stored));
+                }
+                else {
+                    target.node[target.namespace](target.attribute, `@drawable/${stored}`);
+                    delete object.__imageSourceTarget;
+                }
+                delete object.__imageSourcePrefix;
             }
         });
     }
@@ -374,8 +381,8 @@ export default class ResourceView extends Resource<T> {
             if (stored != null) {
                 const method = METHOD_ANDROID['valueString'];
                 let name = STORED.STRINGS.get(stored);
-                if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
-                    const match = node.style.textDecoration.match(/(underline|line-through)/);
+                if (node.is(VIEW_STANDARD.TEXT) && node.style != null) {
+                    const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
                     if (match != null) {
                         let value = '';
                         switch (match[0]) {

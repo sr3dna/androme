@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <link rel="stylesheet" type="text/css" href="common/dev.css">
+    <style>
+        body > div > nav, ul {
+            list-style-type: none;
+            padding: 0px;
+            border: solid 1px #aaa;
+        }
+        nav {
+            display: none;
+        }
+        nav div, nav li {
+            font-size: 11px;
+            padding: 12px;
+            border-bottom: solid 1px #aaa;
+        }
+        nav div:last-child, nav li:last-child {
+            border-bottom: none;
+        }
+        nav div:hover:not(:nth-of-type(4)) {
+            background-color: azure;
+            cursor: pointer;
+        }
+        ul li {
+            padding-right: 24px;
+        }
+        div {
+            overflow: hidden;
+        }
+        div img {
+            width: 20px;
+            margin-right: 10px;
+            float: left;
+        }
+        div label {
+            margin-top: 4px;
+            float: left;
+        }
+        div input {
+            float: right;
+        }
+    </style>
+    <script src="/node_modules/systemjs/dist/system.js"></script>
+    <script src="common/dev.js"></script>
+    <script>
+        function toggleMenu() {
+            const submenu = document.getElementById('menu-demo-sub');
+            submenu.style.display = (submenu.style.display == 'block' ? 'none' : 'block');
+        }
+        System.import('/build/main.js').then(function(result) {
+            androme = result;
+            androme.parseDocument('androme-root');
+            androme.close();
+
+            const views = androme.writeLayoutAllXml();
+            let output = '';
+            for (const i in views) {
+                output += views[i] + '\n';
+            }
+            document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
+            const resource = androme.writeResourceStringXml() + '\n\n' +
+                             androme.writeResourceDrawableXml();
+            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+        });
+    </script>
+</head>
+<body>
+    <div id="androme-root" style="width: 200px;">
+        <button onclick="document.getElementById('menu-demo').style.display = 'block';">Show Menu</button>
+        <button onclick="document.getElementById('menu-demo').style.display = 'none';">Hide Menu</button>
+        <nav id="menu-demo" data-extension="androme.menu, androme.hidden">
+            <div
+                data-id="@+id/menu_item_1"
+                data-show-as-action="always"
+                data-alphabetic-shortcut="A"
+                data-alphabetic-modifiers="CTRL|ALT">
+                    <img src="../demos/images/pencil-ldpi.png" />
+                    <label>Item 1</label>
+            </div>
+            <div
+                data-id="@+id/menu_item_2"
+                data-show-as-action="always"
+                data-numeric-shortcut="2"
+                data-numeric-modifiers="CTRL">
+                    Item 2
+            </div>
+            <div data-show-as-action="ifRoom">
+                <img src="../demos/images/pencil-ldpi.png" />
+                <label>Item 3</label>
+            </div>
+            <div>
+                <a href="#" onclick="toggleMenu();">Item 4</a>
+                <nav id="menu-demo-sub">
+                    <ul style="margin: 10px 20px 0px 20px;">
+                        <li>
+                            Item 7 <input type="radio" name="item_4" />
+                        </li>
+                        <li>
+                            Item 8 <input type="radio" name="item_4" /> 
+                        </li>
+                        <li>
+                            Item 9 <input type="radio" name="item_4" />
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            <div>
+                <label>Item 5</label>
+                <input type="checkbox" />
+            </div>
+            <div>
+                <label>Item 6</label>
+                <input type="checkbox" />
+            </div>
+        </nav>
+    </div>
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
+                <button onclick="androme.saveAllToDisk();">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

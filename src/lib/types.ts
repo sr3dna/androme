@@ -1,16 +1,22 @@
 export interface IExtension {
     application: any;
+    name: string;
     node: any;
     parent: any;
-    enabled: boolean;
+    element: HTMLElement | undefined;
     tagNames: string[];
+    dependencies: string[];
+    enabled: boolean;
+    options?: any;
     is(tagName: string): void;
+    included(element?: HTMLElement): boolean;
     beforeInit(): void;
     init(element: HTMLElement): boolean;
+    afterInit(): void;
     condition(): void;
-    render(mapX?: any, mapY?: any): string;
-    processNode(): boolean;
-    processChild(node: any): any[];
+    processNode(mapX?: any, mapY?: any): any[];
+    processChild(mapX?: any, mapY?: any): any[];
+    afterRender(): void;
 }
 
 export interface BoxModel {

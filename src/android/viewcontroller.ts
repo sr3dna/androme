@@ -159,7 +159,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                             else {
                                 if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                    if (current.withinY(linear2) || !current.constraint.vertical) {
+                                    if ((current.app(LAYOUT['bottom']) !== 'parent' || !current.floating) && (current.withinY(linear2) || !current.constraint.vertical)) {
                                         current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''), (linear1.left === linear2.left || linear2.right === linear2.right));
                                     }
                                 }
@@ -858,19 +858,31 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return (<View> viewGroup) as T;
     }
 
-    public getViewStatic(tagName: number, depth: number, options = {}, width = 'wrap_content', height = 'wrap_content') {
-        const node = new View(0, SETTINGS.targetAPI);
-        node.setViewId(View.getViewName(tagName));
+    public getViewStatic(tagName: number | string, depth: number, options = {}, width = 'wrap_content', height = 'wrap_content', id = 0, children = false) {
+        const node = new View(id, SETTINGS.targetAPI);
+        let viewName = '';
+        if (typeof tagName === 'number') {
+            node.setViewId(View.getViewName(tagName));
+            viewName = node.viewName;
+        }
+        else {
+            viewName = tagName;
+        }
         let attributes = '';
         if (SETTINGS.showAttributes) {
             node.apply(options);
-            node.android('id', node.stringId);
-            node.android('layout_width', width);
-            node.android('layout_height', height);
+            if (hasValue(width)) {
+                node.android('layout_width', width);
+            }
+            if (hasValue(height)) {
+                node.android('layout_height', height);
+            }
             const indent = padLeft(depth + 1);
             attributes = node.combine().map(value => `\n${indent + value}`).join('');
         }
-        return [this.getEnclosingTag(depth, node.viewName, 0).replace('{@0}', attributes), node.stringId];
+        let output = this.getEnclosingTag(depth, viewName, id, (children ? `{${id}}` : ''));
+        output = output.replace(`{#${id}}`, attributes);
+        return [output, node.stringId];
     }
 
     public replaceInlineAttributes(output: string, node: T, options: {}) {
@@ -890,16 +902,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     private parseAttributes(node: T) {
         let output = '';
         const attributes = node.combine();
-        if (attributes.length > 0) {
-            const indent = padLeft(node.renderDepth + 1);
-            for (let i = 0; i < attributes.length; i++) {
-                if (attributes[i].startsWith('android:id=')) {
-                    attributes.unshift(...attributes.splice(i, 1));
-                    break;
-                }
-            }
-            output = (node.renderDepth === 0 ? '{@0}' : '') + attributes.map((value: string) => `\n${indent + value}`).join('');
-        }
+        const indent = padLeft(node.renderDepth + 1);
+        output = (node.renderDepth === 0 ? '{@0}' : '') + attributes.map((value: string) => `\n${indent + value}`).join('');
         return output;
     }
 

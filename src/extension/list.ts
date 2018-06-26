@@ -7,24 +7,24 @@ type T = Node;
 type U = NodeList<T>;
 
 export default abstract class List extends Extension<T, U> {
-    constructor(tagNames: string[], extension: string, options: {}) {
-        super(tagNames, extension, options);
+    constructor(name: string, tagNames: string[], options?: {}) {
+        super(name, tagNames, options);
     }
 
     public condition() {
         return (
-            super.condition() ||
+            super.condition() &&
             (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (this.linearX || this.linearY))
         );
     }
 
-    public render() {
+    public processNode() {
         let xml = '';
         if (this.linearY) {
-            xml = this.application.writeGridLayout(this.node, this.parent, 2);
+            xml = this.application.writeGridLayout(this.node, (<T> this.parent), 2);
         }
         else {
-            xml = this.application.writeLinearLayout(this.node, this.parent, this.linearY);
+            xml = this.application.writeLinearLayout(this.node, (<T> this.parent), this.linearY);
         }
         for (let i = 0, j = 0; i < this.node.children.length; i++) {
             const node = this.node.children[i];
@@ -62,8 +62,8 @@ export default abstract class List extends Extension<T, U> {
                 }
                 j++;
             }
-            node.options(this.extension || 'androme.list', { listStyle: ordinal });
+            node.options(this.name, { listStyle: ordinal });
         }
-        return xml;
+        return [xml, false];
     }
 }

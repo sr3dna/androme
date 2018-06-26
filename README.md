@@ -73,8 +73,7 @@ These settings are available in the global variable "androme" to customize your 
 androme.settings = {
     targetAPI: androme.build.OREO,
     density: androme.density.MDPI,
-    showAttributes: true,
-    horizontalPerspective: true,
+    useAppCompatLibrary: true,
     useConstraintLayout: true,
     useConstraintChain: true,
     useConstraintGuideline: true,
@@ -83,13 +82,15 @@ androme.settings = {
     supportRTL: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
-    builtInExtensions: ['hidden', 'list', 'table', 'grid'],
+    builtInExtensions: ['hidden', 'menu', 'list', 'table', 'grid'],
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
+    horizontalPerspective: true,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14,
+    showAttributes: true,
     autoCloseOnWrite: true,
     outputDirectory: 'app/src/main',
     outputArchiveFileType: 'zip', // zip | tar
@@ -124,6 +125,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 <img src="demos/android/list.png" alt="extension: list" />
 
 <img src="demos/android/table.png" alt="extension: table" />
+
+<img src="demos/android/menu.png" alt="extension: menu" />
 
 Extension "hidden": some elements with "display: none" are meant to be in a separate activity layout XML such as navigation menus. See /demo/hidden.html for usage instructions.
 
@@ -624,6 +627,7 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/open"
+					android:textAllCaps="false"
 					style="@style/Button_2" />
 				<Button
 					android:id="@+id/button_2"
@@ -637,6 +641,7 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/all"
+					android:textAllCaps="false"
 					style="@style/Button_2" />
 			</LinearLayout>
 			<Space
@@ -764,6 +769,7 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/update"
+					android:textAllCaps="false"
 					style="@style/Button_1" />
 			</LinearLayout>
 			<Space
@@ -798,7 +804,7 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 				<Spinner
 					android:id="@+id/branch_update"
 					android:background="@drawable/select_hour"
-					android:entries="@array/branch_update_array"
+					android:entries="@array/branch_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
@@ -819,6 +825,7 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/update"
+					android:textAllCaps="false"
 					style="@style/Button_1" />
 				<Button
 					android:id="@+id/button_5"
@@ -832,6 +839,7 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/clone"
+					android:textAllCaps="false"
 					style="@style/Button_1" />
 			</LinearLayout>
 			<Space
@@ -973,6 +981,7 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 					android:paddingHorizontal="6dp"
 					android:paddingVertical="1dp"
 					android:text="@string/update"
+					android:textAllCaps="false"
 					style="@style/Button_1" />
 			</LinearLayout>
 		</GridLayout>
@@ -1034,22 +1043,6 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 		<item>8</item>
 		<item>9</item>
 		<item>10</item>
-	</string-array>
-	<string-array name="branch_update_array">
-		<item>0</item>
-		<item>1</item>
-		<item>2</item>
-		<item>3</item>
-		<item>4</item>
-		<item>5</item>
-		<item>6</item>
-		<item>7</item>
-		<item>8</item>
-		<item>9</item>
-		<item>10</item>
-		<item>11</item>
-		<item>12</item>
-		<item>13</item>
 	</string-array>
 	<string-array name="calendar_array">
 		<item>@string/birth</item>

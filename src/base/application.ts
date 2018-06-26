@@ -15,6 +15,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public controllerHandler: Controller<T, U>;
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
+    public pathnames: string[] = [];
 
     private cacheInternal: U;
     private ids: string[] = [];
@@ -41,14 +42,21 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public registerExtension(extension: Extension<T, U>) {
-        this._extensions.push(extension);
+        const found = this._extensions.find(item => item.name === extension.name);
+        if (found != null) {
+            found.tagNames = extension.tagNames;
+            found.options = extension.options;
+        }
+        else {
+            this._extensions.push(extension);
+        }
     }
 
     public finalize() {
         this.resourceHandler.finalize(this.viewData);
         const views = this.resourceHandler.views;
         for (let i = 0; i < views.length; i++) {
-            let output = views[i].replace(/{[<@&>]{1}[0-9]+}/g, '');
+            let output = views[i].replace(/{[<#@&>]{1}[0-9]+}/g, '');
             if (SETTINGS.useUnitDP) {
                 output = replaceDP(output, SETTINGS.density);
             }
@@ -61,14 +69,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         resetId();
         this.cacheInternal.list.forEach(node => {
             const element: any = node.element;
-            if (element != null) {
-                delete element.__boxSpacing;
-                delete element.__boxStyle;
-                delete element.__fontStyle;
-                delete element.__imageSource;
-                delete element.__optionArray;
-                delete element.__valueString;
-            }
+            delete element.__boxSpacing;
+            delete element.__boxStyle;
+            delete element.__fontStyle;
+            delete element.__imageSource;
+            delete element.__optionArray;
+            delete element.__valueString;
         });
         this.cache.reset();
         this.cacheInternal.reset();
@@ -77,6 +83,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.appName = '';
         this.ids = [];
         this.views = [];
+        this.pathnames = [];
         this._closed = false;
     }
 
@@ -166,7 +173,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public setNodeCache(layoutRoot: HTMLElement) {
+    public createNodeCache(layoutRoot: HTMLElement) {
         let nodeTotal = 0;
         if (layoutRoot === document.body) {
             Array.from(document.body.childNodes).forEach((item: HTMLElement) => {
@@ -183,9 +190,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             });
         }
         const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+        this.cache.parent = undefined;
         this.cache.clear();
         this.extensions.forEach(item => {
             item.application = this;
+            item.parent = undefined;
+            item.node = (<T> this.cache.parent);
             item.element = layoutRoot;
             item.beforeInit();
         });
@@ -193,12 +203,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             const node = this.insertNode(layoutRoot);
             if (node != null) {
                 node.parent = new this.TypeT(0, 0);
+                this.cache.parent = node;
             }
         }
+        this.extensions.forEach(item => item.node = (<T> this.cache.parent));
         for (const element of (<HTMLElement[]> Array.from(elements))) {
             let handled = false;
             this.extensions.some(item => {
-                item.application = this;
                 if (item.init(element)) {
                     handled = true;
                     return true;
@@ -209,13 +220,27 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
                     continue;
                 }
-                this.insertNode(element);
+                let valid = true;
+                let current = element.parentElement;
+                while (current != null) {
+                    if (current === layoutRoot) {
+                        break;
+                    }
+                    else if (current !== layoutRoot && this.elements.has(current)) {
+                        valid = false;
+                        break;
+                    }
+                    current = current.parentElement;
+                }
+                if (valid) {
+                    this.insertNode(element);
+                }
             }
         }
-        const preAlignment = {};
-        this.cache.list.forEach(node => {
-            const element = node.element;
-            if (element != null) {
+        if (this.cache.list.length > 0) {
+            const preAlignment = {};
+            this.cache.list.forEach(node => {
+                const element = node.element;
                 preAlignment[node.id] = {};
                 const style = preAlignment[node.id];
                 switch (node.styleMap.textAlign) {
@@ -240,92 +265,94 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     style.overflow = node.style.overflow;
                     element.style.overflow = 'visible';
                 }
-            }
-            node.setBounds();
-        });
-        const parents = {};
-        this.cache.list.forEach(parent => {
-            this.cache.list.forEach(child => {
-                if (parent !== child) {
-                    if (child.element && child.element.parentElement === parent.element) {
-                        child.parent = parent;
-                        parent.children.push(child);
-                    }
-                    if (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
-                        if (parents[child.id] == null) {
-                            parents[child.id] = [];
+                node.setBounds();
+            });
+            const parents = {};
+            this.cache.list.forEach(parent => {
+                this.cache.list.forEach(child => {
+                    if (parent !== child) {
+                        if (child.element && child.element.parentElement === parent.element) {
+                            child.parent = parent;
+                            parent.children.push(child);
                         }
-                        parents[child.id].push(parent);
+                        if (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
+                            if (parents[child.id] == null) {
+                                parents[child.id] = [];
+                            }
+                            parents[child.id].push(parent);
+                        }
+                    }
+                });
+            });
+            this.cache.list.forEach(node => {
+                const nodes: T[] = parents[node.id];
+                if (nodes != null) {
+                    nodes.push((<T> node.parent));
+                    let minArea = Number.MAX_VALUE;
+                    let closest: T | null = null;
+                    nodes.forEach(current => {
+                        const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
+                        if (area < minArea) {
+                            closest = current;
+                            minArea = area;
+                        }
+                        else if (area === minArea) {
+                            if (current.element === node.parent.element) {
+                                closest = current;
+                            }
+                        }
+                    });
+                    if (closest != null) {
+                        node.parent = closest;
+                    }
+                }
+                if (node.element && node.element.children.length > 0 && !node.children.every((current: T) => INLINE_CHROME.includes(current.tagName))) {
+                    Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
+                        if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
+                            this.insertNode(element, node);
+                        }
+                    });
+                }
+            });
+            this.cache.list.forEach(node => {
+                if (node.hasElement) {
+                    const style = preAlignment[node.id];
+                    if (style != null) {
+                        for (const attr in style) {
+                            node.element.style[attr] = style[attr];
+                        }
                     }
                 }
             });
-        });
-        this.cache.list.forEach(node => {
-            const nodes: T[] = parents[node.id];
-            if (nodes != null) {
-                nodes.push((<T> node.parent));
-                let minArea = Number.MAX_VALUE;
-                let closest: T | null = null;
-                nodes.forEach(current => {
-                    const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
-                    if (area < minArea) {
-                        closest = current;
-                        minArea = area;
-                    }
-                    else if (area === minArea) {
-                        if (current.element === node.parent.element) {
-                            closest = current;
+            this.extensions.forEach(item => {
+                item.node = (<T> this.cache.parent);
+                item.element = layoutRoot;
+                item.afterInit();
+            });
+            this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
+            this.cache.list.forEach(node => {
+                if (node.hasElement) {
+                    let i = 0;
+                    Array.from(node.element.childNodes).forEach((element: any) => {
+                        if (element.__node != null && (element.__node.parent.element === node.element)) {
+                            element.__node.parentIndex = i++;
                         }
-                    }
-                });
-                if (closest != null) {
-                    node.parent = closest;
+                    });
+                    sortAsc(node.children, 'parentIndex');
                 }
-            }
-            if (node.element && node.element.children.length > 0 && !node.children.every((current: T) => INLINE_CHROME.includes(current.tagName))) {
-                Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
-                    if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
-                        this.insertNode(element, node);
-                    }
-                });
-            }
-        });
-        this.cache.list.forEach(node => {
-            if (node.element != null) {
-                const style = preAlignment[node.id];
-                if (style != null) {
-                    for (const attr in style) {
-                        node.element.style[attr] = style[attr];
-                    }
-                }
-            }
-        });
-        this.extensions.forEach(item => {
-            item.application = this;
-            item.element = layoutRoot;
-            item.afterInit();
-        });
-        this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
-        this.cache.list.forEach(node => {
-            if (node.element != null) {
-                let i = 0;
-                Array.from(node.element.childNodes).forEach((element: any) => {
-                    if (element.__node != null && (element.__node.parent.element === node.element)) {
-                        element.__node.parentIndex = i++;
-                    }
-                });
-                sortAsc(node.children, 'parentIndex');
-            }
-        });
-        this.currentId = (<string> layoutRoot.dataset.currentId);
-        this.cacheInternal.list.push(...this.cache.list);
+            });
+            this.currentId = (<string> layoutRoot.dataset.currentId);
+            this.cacheInternal.list.push(...this.cache.list);
+            return true;
+        }
+        return false;
     }
 
     public insertNode(element: HTMLElement, parent?: T) {
         let node: T | null = null;
         if (element.nodeName === '#text') {
             if (element.textContent && element.textContent.trim() !== '') {
-                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'PLAINTEXT' });
+                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element, { parent, tagName: 'PLAINTEXT' });
                 node.setBounds(false, element);
                 if (parent != null) {
                     node.inheritStyle(parent);
@@ -371,7 +398,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 const axisY: T[] = [];
                 const layers: T[] = [];
                 for (const node of (<T[]> mapY[i][coordsY[j]].list)) {
-                    switch (node.style.position) {
+                    switch (node.css('position')) {
                         case 'absolute':
                         case 'relative':
                         case 'fixed':
@@ -394,15 +421,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     if (!nodeY.renderParent) {
                         let xml = '';
                         this.extensions.some(item => {
-                            if (item.is(nodeY.tagName)) {
+                            if (nodeY.renderExtension == null && item.is(nodeY.tagName)) {
                                 item.application = this;
                                 item.node = nodeY;
                                 item.parent = parent;
                                 if (item.condition()) {
-                                    const result = item.render(mapX, mapY);
+                                    const [result, restart] = item.processNode(mapX, mapY);
                                     if (result !== '') {
                                         xml += result;
-                                        if (item.processNode()) {
+                                        if (restart) {
                                             k--;
                                         }
                                     }
@@ -412,8 +439,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             }
                             return false;
                         });
-                        if (parent.renderExtension != null && parent.renderExtension instanceof Extension) {
-                            const [result, restart] = parent.renderExtension.processChild(nodeY);
+                        const renderExtension: Extension<T, U> = parent.renderExtension;
+                        if (renderExtension != null) {
+                            renderExtension.node = nodeY;
+                            renderExtension.parent = parent;
+                            const [result, restart] = parent.renderExtension.processChild();
                             if (result !== '') {
                                 xml += result;
                                 if (restart) {
@@ -463,6 +493,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         this.create = output;
+        this.extensions.forEach(item => {
+            item.parent = undefined;
+            item.node = (<T> this.cache.parent);
+            item.element = undefined;
+            item.afterRender();
+        });
     }
 
     public writeFrameLayout(node: T, parent: T) {
@@ -525,7 +561,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     private set current(value) {
-        this.views[this.views.length - 1] = value;
+        const index = this.views.length - 1;
+        this.views[index] = value;
     }
     private get current() {
         return this.views[this.views.length - 1];
@@ -542,6 +579,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     private set create(value) {
         if (this.views.length < this.ids.length) {
+            this.pathnames[this.views.length] = 'res/layout';
             this.views.push(value);
         }
     }
@@ -555,7 +593,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public get viewData(): ArrayMap {
-        return { cache: this.cacheInternal.list, ids: this.ids, views: this.views };
+        return { cache: this.cacheInternal.list, ids: this.ids, views: this.views, pathnames: this.pathnames };
     }
 
     public get length() {

@@ -1,6 +1,6 @@
 {
   "name": "androme",
-  "version": "1.7.10",
+  "version": "1.7.11",
   "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. Resources are also auto-generated. iOS and Xamarin Forms will be supported possibly including a browser based UI designer.",
   "scripts": {
     "express": "node app.js",

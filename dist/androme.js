@@ -1,4 +1,4 @@
-/* androme 1.7.10
+/* androme 1.7.11
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -348,7 +348,7 @@
             return this._list.filter(node => node.visible);
         }
         get elements() {
-            return this._list.filter(node => node.element != null);
+            return this._list.filter(node => node.hasElement);
         }
         get first() {
             return this._list[0];
@@ -367,50 +367,6 @@
         }
     }
     NodeList.currentId = 0;
-
-    class Extension {
-        constructor(tagNames = [], extension, options) {
-            this.extension = extension;
-            this.options = options;
-            this.enabled = true;
-            this.tagNames = [];
-            this.tagNames = tagNames.map(value => value.toUpperCase());
-        }
-        is(tagName) {
-            return (this.tagNames.length === 0 || this.tagNames.includes(tagName));
-        }
-        included(name, element) {
-            if (element == null) {
-                element = this.element;
-            }
-            const extension = (this.extension || name || '').trim();
-            return (element && element.dataset.extension && extension ? element.dataset.extension.split(',').map(value => value.trim()).includes(extension) : false);
-        }
-        beforeInit() {
-            return;
-        }
-        init(element) {
-            return false;
-        }
-        afterInit() {
-            return;
-        }
-        condition() {
-            return (this.node.element && this.node.element.dataset && this.extension ? this.included(this.extension) : false);
-        }
-        processNode() {
-            return false;
-        }
-        processChild(node) {
-            return ['', false];
-        }
-        get linearX() {
-            return (this.node != null ? NodeList.linearX(this.node.children) : false);
-        }
-        get linearY() {
-            return (this.node != null ? NodeList.linearY(this.node.children) : false);
-        }
-    }
 
     var VIEW_STANDARD;
     (function (VIEW_STANDARD) {
@@ -435,6 +391,16 @@
         VIEW_STANDARD[VIEW_STANDARD["VIEW"] = 19] = "VIEW";
         VIEW_STANDARD[VIEW_STANDARD["SPACE"] = 20] = "SPACE";
     })(VIEW_STANDARD || (VIEW_STANDARD = {}));
+    var VIEW_RESOURCE;
+    (function (VIEW_RESOURCE) {
+        VIEW_RESOURCE[VIEW_RESOURCE["BOX_STYLE"] = 2] = "BOX_STYLE";
+        VIEW_RESOURCE[VIEW_RESOURCE["BOX_SPACING"] = 4] = "BOX_SPACING";
+        VIEW_RESOURCE[VIEW_RESOURCE["FONT_STYLE"] = 8] = "FONT_STYLE";
+        VIEW_RESOURCE[VIEW_RESOURCE["VALUE_STRING"] = 16] = "VALUE_STRING";
+        VIEW_RESOURCE[VIEW_RESOURCE["OPTION_ARRAY"] = 32] = "OPTION_ARRAY";
+        VIEW_RESOURCE[VIEW_RESOURCE["IMAGE_SOURCE"] = 64] = "IMAGE_SOURCE";
+        VIEW_RESOURCE[VIEW_RESOURCE["ALL"] = 126] = "ALL";
+    })(VIEW_RESOURCE || (VIEW_RESOURCE = {}));
     var BOX_STANDARD;
     (function (BOX_STANDARD) {
         BOX_STANDARD[BOX_STANDARD["MARGIN_TOP"] = 2] = "MARGIN_TOP";
@@ -820,7 +786,8 @@
     }
     function sameAsParent(element, attr) {
         if (element && element.parentElement != null) {
-            return (getStyle(element)[attr] === getStyle(element.parentElement)[attr]);
+            const style = getStyle(element);
+            return (style && style[attr] === getStyle(element.parentElement)[attr]);
         }
         return false;
     }
@@ -840,7 +807,7 @@
         return result;
     }
     function hasFreeFormText(element) {
-        return Array.from(element.childNodes).some((item) => (item.nodeName === '#text' && item.textContent != null && item.textContent.trim() !== ''));
+        return Array.from(element.childNodes).some((item) => item.nodeName === '#text' && item.textContent != null && item.textContent.trim() !== '');
     }
     function isVisible(element) {
         switch (element.tagName) {
@@ -853,11 +820,23 @@
             if (bounds.width !== 0 && bounds.height !== 0) {
                 return true;
             }
-            else if (element.children.length > 0) {
-                return Array.from(element.children).some((item) => {
-                    const style = getComputedStyle(item);
-                    return (!(style.position === '' || style.position === 'static') || style.float === 'left' || style.float === 'right');
-                });
+            else {
+                let current = element.parentElement;
+                let valid = true;
+                while (current != null) {
+                    const style = getStyle(current);
+                    if (style.display === 'none') {
+                        valid = false;
+                        break;
+                    }
+                    current = current.parentElement;
+                }
+                if (valid && element.children.length > 0) {
+                    return Array.from(element.children).some((item) => {
+                        const style = getComputedStyle(item);
+                        return (style.position !== 'static' || style.float === 'left' || style.float === 'right');
+                    });
+                }
             }
         }
         return false;
@@ -982,8 +961,7 @@
     var SETTINGS = {
         targetAPI: exports.build.OREO,
         density: exports.density.MDPI,
-        showAttributes: true,
-        horizontalPerspective: true,
+        useAppCompatLibrary: true,
         useConstraintLayout: true,
         useConstraintChain: true,
         useConstraintGuideline: true,
@@ -992,13 +970,15 @@
         supportRTL: true,
         numberResourceValue: false,
         alwaysReevaluateResources: false,
-        builtInExtensions: ['hidden', 'list', 'table', 'grid'],
+        builtInExtensions: ['hidden', 'list', 'table', 'menu', 'grid'],
         excludeTextColor: ['#000000'],
         excludeBackgroundColor: ['#FFFFFF'],
+        horizontalPerspective: true,
         whitespaceHorizontalOffset: 4,
         whitespaceVerticalOffset: 14,
         chainPackedHorizontalOffset: 4,
         chainPackedVerticalOffset: 14,
+        showAttributes: true,
         autoCloseOnWrite: true,
         outputDirectory: 'app/src/main',
         outputArchiveFileType: 'zip',
@@ -1011,6 +991,7 @@
             this.TypeT = TypeT;
             this.TypeU = TypeU;
             this.elements = new Set();
+            this.pathnames = [];
             this.ids = [];
             this.views = [];
             this._extensions = [];
@@ -1027,13 +1008,20 @@
             this.resourceHandler = resource;
         }
         registerExtension(extension) {
-            this._extensions.push(extension);
+            const found = this._extensions.find(item => item.name === extension.name);
+            if (found != null) {
+                found.tagNames = extension.tagNames;
+                found.options = extension.options;
+            }
+            else {
+                this._extensions.push(extension);
+            }
         }
         finalize() {
             this.resourceHandler.finalize(this.viewData);
             const views = this.resourceHandler.views;
             for (let i = 0; i < views.length; i++) {
-                let output = views[i].replace(/{[<@&>]{1}[0-9]+}/g, '');
+                let output = views[i].replace(/{[<#@&>]{1}[0-9]+}/g, '');
                 if (SETTINGS.useUnitDP) {
                     output = replaceDP(output, SETTINGS.density);
                 }
@@ -1045,14 +1033,12 @@
             resetId();
             this.cacheInternal.list.forEach(node => {
                 const element = node.element;
-                if (element != null) {
-                    delete element.__boxSpacing;
-                    delete element.__boxStyle;
-                    delete element.__fontStyle;
-                    delete element.__imageSource;
-                    delete element.__optionArray;
-                    delete element.__valueString;
-                }
+                delete element.__boxSpacing;
+                delete element.__boxStyle;
+                delete element.__fontStyle;
+                delete element.__imageSource;
+                delete element.__optionArray;
+                delete element.__valueString;
             });
             this.cache.reset();
             this.cacheInternal.reset();
@@ -1061,6 +1047,7 @@
             this.appName = '';
             this.ids = [];
             this.views = [];
+            this.pathnames = [];
             this._closed = false;
         }
         resetController() {
@@ -1143,7 +1130,7 @@
                 }
             }
         }
-        setNodeCache(layoutRoot) {
+        createNodeCache(layoutRoot) {
             let nodeTotal = 0;
             if (layoutRoot === document.body) {
                 Array.from(document.body.childNodes).forEach((item) => {
@@ -1160,9 +1147,12 @@
                 });
             }
             const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+            this.cache.parent = undefined;
             this.cache.clear();
             this.extensions.forEach(item => {
                 item.application = this;
+                item.parent = undefined;
+                item.node = this.cache.parent;
                 item.element = layoutRoot;
                 item.beforeInit();
             });
@@ -1170,12 +1160,13 @@
                 const node = this.insertNode(layoutRoot);
                 if (node != null) {
                     node.parent = new this.TypeT(0, 0);
+                    this.cache.parent = node;
                 }
             }
+            this.extensions.forEach(item => item.node = this.cache.parent);
             for (const element of Array.from(elements)) {
                 let handled = false;
                 this.extensions.some(item => {
-                    item.application = this;
                     if (item.init(element)) {
                         handled = true;
                         return true;
@@ -1186,13 +1177,27 @@
                     if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
                         continue;
                     }
-                    this.insertNode(element);
+                    let valid = true;
+                    let current = element.parentElement;
+                    while (current != null) {
+                        if (current === layoutRoot) {
+                            break;
+                        }
+                        else if (current !== layoutRoot && this.elements.has(current)) {
+                            valid = false;
+                            break;
+                        }
+                        current = current.parentElement;
+                    }
+                    if (valid) {
+                        this.insertNode(element);
+                    }
                 }
             }
-            const preAlignment = {};
-            this.cache.list.forEach(node => {
-                const element = node.element;
-                if (element != null) {
+            if (this.cache.list.length > 0) {
+                const preAlignment = {};
+                this.cache.list.forEach(node => {
+                    const element = node.element;
                     preAlignment[node.id] = {};
                     const style = preAlignment[node.id];
                     switch (node.styleMap.textAlign) {
@@ -1217,91 +1222,93 @@
                         style.overflow = node.style.overflow;
                         element.style.overflow = 'visible';
                     }
-                }
-                node.setBounds();
-            });
-            const parents = {};
-            this.cache.list.forEach(parent => {
-                this.cache.list.forEach(child => {
-                    if (parent !== child) {
-                        if (child.element && child.element.parentElement === parent.element) {
-                            child.parent = parent;
-                            parent.children.push(child);
-                        }
-                        if (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
-                            if (parents[child.id] == null) {
-                                parents[child.id] = [];
+                    node.setBounds();
+                });
+                const parents = {};
+                this.cache.list.forEach(parent => {
+                    this.cache.list.forEach(child => {
+                        if (parent !== child) {
+                            if (child.element && child.element.parentElement === parent.element) {
+                                child.parent = parent;
+                                parent.children.push(child);
                             }
-                            parents[child.id].push(parent);
+                            if (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
+                                if (parents[child.id] == null) {
+                                    parents[child.id] = [];
+                                }
+                                parents[child.id].push(parent);
+                            }
+                        }
+                    });
+                });
+                this.cache.list.forEach(node => {
+                    const nodes = parents[node.id];
+                    if (nodes != null) {
+                        nodes.push(node.parent);
+                        let minArea = Number.MAX_VALUE;
+                        let closest = null;
+                        nodes.forEach(current => {
+                            const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
+                            if (area < minArea) {
+                                closest = current;
+                                minArea = area;
+                            }
+                            else if (area === minArea) {
+                                if (current.element === node.parent.element) {
+                                    closest = current;
+                                }
+                            }
+                        });
+                        if (closest != null) {
+                            node.parent = closest;
+                        }
+                    }
+                    if (node.element && node.element.children.length > 0 && !node.children.every((current) => INLINE_CHROME.includes(current.tagName))) {
+                        Array.from(node.element.childNodes).forEach((element) => {
+                            if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
+                                this.insertNode(element, node);
+                            }
+                        });
+                    }
+                });
+                this.cache.list.forEach(node => {
+                    if (node.hasElement) {
+                        const style = preAlignment[node.id];
+                        if (style != null) {
+                            for (const attr in style) {
+                                node.element.style[attr] = style[attr];
+                            }
                         }
                     }
                 });
-            });
-            this.cache.list.forEach(node => {
-                const nodes = parents[node.id];
-                if (nodes != null) {
-                    nodes.push(node.parent);
-                    let minArea = Number.MAX_VALUE;
-                    let closest = null;
-                    nodes.forEach(current => {
-                        const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
-                        if (area < minArea) {
-                            closest = current;
-                            minArea = area;
-                        }
-                        else if (area === minArea) {
-                            if (current.element === node.parent.element) {
-                                closest = current;
+                this.extensions.forEach(item => {
+                    item.node = this.cache.parent;
+                    item.element = layoutRoot;
+                    item.afterInit();
+                });
+                this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
+                this.cache.list.forEach(node => {
+                    if (node.hasElement) {
+                        let i = 0;
+                        Array.from(node.element.childNodes).forEach((element) => {
+                            if (element.__node != null && (element.__node.parent.element === node.element)) {
+                                element.__node.parentIndex = i++;
                             }
-                        }
-                    });
-                    if (closest != null) {
-                        node.parent = closest;
+                        });
+                        sortAsc(node.children, 'parentIndex');
                     }
-                }
-                if (node.element && node.element.children.length > 0 && !node.children.every((current) => INLINE_CHROME.includes(current.tagName))) {
-                    Array.from(node.element.childNodes).forEach((element) => {
-                        if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
-                            this.insertNode(element, node);
-                        }
-                    });
-                }
-            });
-            this.cache.list.forEach(node => {
-                if (node.element != null) {
-                    const style = preAlignment[node.id];
-                    if (style != null) {
-                        for (const attr in style) {
-                            node.element.style[attr] = style[attr];
-                        }
-                    }
-                }
-            });
-            this.extensions.forEach(item => {
-                item.application = this;
-                item.element = layoutRoot;
-                item.afterInit();
-            });
-            this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
-            this.cache.list.forEach(node => {
-                if (node.element != null) {
-                    let i = 0;
-                    Array.from(node.element.childNodes).forEach((element) => {
-                        if (element.__node != null && (element.__node.parent.element === node.element)) {
-                            element.__node.parentIndex = i++;
-                        }
-                    });
-                    sortAsc(node.children, 'parentIndex');
-                }
-            });
-            this.currentId = layoutRoot.dataset.currentId;
-            this.cacheInternal.list.push(...this.cache.list);
+                });
+                this.currentId = layoutRoot.dataset.currentId;
+                this.cacheInternal.list.push(...this.cache.list);
+                return true;
+            }
+            return false;
         }
         insertNode(element, parent) {
             let node = null;
             if (element.nodeName === '#text') {
                 if (element.textContent && element.textContent.trim() !== '') {
-                    node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, undefined, { element, parent, tagName: 'PLAINTEXT' });
+                    node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element, { parent, tagName: 'PLAINTEXT' });
                     node.setBounds(false, element);
                     if (parent != null) {
                         node.inheritStyle(parent);
@@ -1346,7 +1353,7 @@
                     const axisY = [];
                     const layers = [];
                     for (const node of mapY[i][coordsY[j]].list) {
-                        switch (node.style.position) {
+                        switch (node.css('position')) {
                             case 'absolute':
                             case 'relative':
                             case 'fixed':
@@ -1369,15 +1376,15 @@
                         if (!nodeY.renderParent) {
                             let xml = '';
                             this.extensions.some(item => {
-                                if (item.is(nodeY.tagName)) {
+                                if (nodeY.renderExtension == null && item.is(nodeY.tagName)) {
                                     item.application = this;
                                     item.node = nodeY;
                                     item.parent = parent;
                                     if (item.condition()) {
-                                        const result = item.render(mapX, mapY);
+                                        const [result, restart] = item.processNode(mapX, mapY);
                                         if (result !== '') {
                                             xml += result;
-                                            if (item.processNode()) {
+                                            if (restart) {
                                                 k--;
                                             }
                                         }
@@ -1387,8 +1394,11 @@
                                 }
                                 return false;
                             });
-                            if (parent.renderExtension != null && parent.renderExtension instanceof Extension) {
-                                const [result, restart] = parent.renderExtension.processChild(nodeY);
+                            const renderExtension = parent.renderExtension;
+                            if (renderExtension != null) {
+                                renderExtension.node = nodeY;
+                                renderExtension.parent = parent;
+                                const [result, restart] = parent.renderExtension.processChild();
                                 if (result !== '') {
                                     xml += result;
                                     if (restart) {
@@ -1438,6 +1448,12 @@
                 }
             }
             this.create = output;
+            this.extensions.forEach(item => {
+                item.parent = undefined;
+                item.node = this.cache.parent;
+                item.element = undefined;
+                item.afterRender();
+            });
         }
         writeFrameLayout(node, parent) {
             return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.FRAME);
@@ -1488,7 +1504,8 @@
             return (this.resourceHandler != null ? this.resourceHandler.file.appName : '');
         }
         set current(value) {
-            this.views[this.views.length - 1] = value;
+            const index = this.views.length - 1;
+            this.views[index] = value;
         }
         get current() {
             return this.views[this.views.length - 1];
@@ -1503,6 +1520,7 @@
         }
         set create(value) {
             if (this.views.length < this.ids.length) {
+                this.pathnames[this.views.length] = 'res/layout';
                 this.views.push(value);
             }
         }
@@ -1513,10 +1531,82 @@
             return this._extensions.filter(item => item.enabled);
         }
         get viewData() {
-            return { cache: this.cacheInternal.list, ids: this.ids, views: this.views };
+            return { cache: this.cacheInternal.list, ids: this.ids, views: this.views, pathnames: this.pathnames };
         }
         get length() {
             return this.views.length;
+        }
+    }
+
+    class Extension {
+        constructor(name, tagNames = [], options) {
+            this.name = name;
+            this.options = options;
+            this.tagNames = [];
+            this.dependencies = [];
+            this.enabled = true;
+            this.tagNames = tagNames.map(value => value.trim().toUpperCase());
+        }
+        is(tagName) {
+            return (this.tagNames.length === 0 || this.tagNames.includes(tagName));
+        }
+        included(element) {
+            if (element == null) {
+                element = this.element;
+            }
+            return (element != null && element.dataset && element.dataset.extension != null ? element.dataset.extension.split(',').map(value => value.trim()).includes(this.name) : false);
+        }
+        beforeInit() {
+            this.dependencies.forEach(value => {
+                const extension = this.application.extensions.find(item => item.name === value);
+                if (extension != null) {
+                    extension.application = this.application;
+                    extension.element = this.element;
+                    extension.parent = this.parent;
+                    extension.beforeInit();
+                }
+            });
+        }
+        init(element) {
+            return false;
+        }
+        afterInit() {
+            this.dependencies.forEach(value => {
+                const extension = this.application.extensions.find(item => item.name === value);
+                if (extension != null) {
+                    extension.application = this.application;
+                    extension.element = this.element;
+                    extension.parent = this.parent;
+                    extension.afterInit();
+                }
+            });
+        }
+        afterRender() {
+            return;
+        }
+        condition() {
+            if (this.node.element.dataset != null) {
+                if (!this.node.element.dataset.extension) {
+                    return (this.tagNames.length > 0);
+                }
+                else {
+                    const extensions = this.node.element.dataset.extension.split(',');
+                    return (this.tagNames.length === 0 && extensions.length > 1 ? false : this.included());
+                }
+            }
+            return false;
+        }
+        processNode(mapX, mapY) {
+            return ['', false];
+        }
+        processChild(mapX, mapY) {
+            return ['', false];
+        }
+        get linearX() {
+            return (this.node != null ? NodeList.linearX(this.node.children) : false);
+        }
+        get linearY() {
+            return (this.node != null ? NodeList.linearY(this.node.children) : false);
         }
     }
 
@@ -1565,12 +1655,12 @@
             let output = preXml +
                 `{<${id}}`;
             if (hasValue(xml)) {
-                output += indent + `<${tagName}{@${id}}{&${id}}>\n` +
+                output += indent + `<${tagName}{@${id}}{#${id}}{&${id}}>\n` +
                     xml +
                     indent + `</${tagName}>\n`;
             }
             else {
-                output += indent + `<${tagName}{@${id}}{&${id}} />\n`;
+                output += indent + `<${tagName}{@${id}}{#${id}}{&${id}} />\n`;
             }
             output += `{>${id}}` +
                 postXml;
@@ -1581,29 +1671,29 @@
     class Node {
         constructor(id, element, options) {
             this.id = id;
-            this.element = element;
             this.depth = -1;
-            this.style = {};
             this.styleMap = {};
             this.visible = true;
             this.companion = false;
             this.parentIndex = Number.MAX_VALUE;
+            this.ignoreResource = 0;
             this.gridRowSpan = 0;
             this.gridColumnSpan = 0;
             this.gridPadding = { top: 0, right: [], bottom: 0, left: [] };
             this._namespaces = new Set();
             this._options = {};
             Object.assign(this, options);
-            if (element != null || (options && options.element != null)) {
-                const object = this.element;
-                if (this.element instanceof HTMLElement) {
+            if (element != null) {
+                const object = element;
+                if (element instanceof HTMLElement) {
                     const styleMap = object.__styleMap || {};
-                    for (const inline of Array.from(this.element.style)) {
-                        styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
+                    for (const inline of Array.from(element.style)) {
+                        styleMap[hyphenToCamelCase(inline)] = element.style[inline];
                     }
-                    this.style = object.__style || getComputedStyle(this.element);
+                    this.style = object.__style || getComputedStyle(element);
                     this.styleMap = styleMap;
                 }
+                this._element = element;
                 object.__node = this;
             }
         }
@@ -1697,10 +1787,11 @@
             return cascade(this);
         }
         inheritStyle(node) {
+            const style = this.style || this.styleMap;
             for (const attr in node.style) {
                 if (attr.startsWith('font') || attr.startsWith('color')) {
                     const key = hyphenToCamelCase(attr);
-                    this.style[key] = node.style[key];
+                    style[key] = node.style[key];
                 }
             }
         }
@@ -1734,11 +1825,11 @@
             if (arguments.length === 2) {
                 this.styleMap[attr] = (hasValue(value) ? value : '');
             }
-            return this.styleMap[attr] || this.style[attr] || '';
+            return this.styleMap[attr] || (this.style && this.style[attr]) || '';
         }
         setBounds(calibrate = false, element) {
             if (!calibrate) {
-                const bounds = (element != null ? getRangeBounds(element) : (this.element != null ? assignBounds(this.element.getBoundingClientRect()) : null));
+                const bounds = (element != null ? getRangeBounds(element) : (this.hasElement ? assignBounds(this.element.getBoundingClientRect()) : null));
                 if (bounds != null) {
                     this.bounds = bounds;
                 }
@@ -1834,7 +1925,7 @@
             this._tagName = value;
         }
         get tagName() {
-            return this._tagName || (this.element != null ? (this.element.tagName === 'INPUT' ? this.element.type.toUpperCase() : this.element.tagName) : '');
+            return this._tagName || (this.hasElement ? (this.element.tagName === 'INPUT' ? this.element.type.toUpperCase() : this.element.tagName) : '');
         }
         set viewName(value) {
             this._viewName = value;
@@ -1851,31 +1942,41 @@
         get renderParent() {
             return this._renderParent;
         }
+        get element() {
+            return this._element || {};
+        }
+        get hasElement() {
+            return (this._element != null);
+        }
         get parentElement() {
-            return this.element && this.element.parentElement;
+            return this._element && this._element.parentElement;
         }
         get namespaces() {
             return Array.from(this._namespaces);
         }
         get flex() {
             if (this._flex == null) {
-                const parent = this.parentOriginal;
-                this._flex = {
-                    enabled: (this.style.display && this.style.display.indexOf('flex') !== -1),
-                    direction: this.style.flexDirection,
-                    basis: this.style.flexBasis,
-                    grow: convertInt(this.style.flexGrow),
-                    shrink: convertInt(this.style.flexShrink),
-                    wrap: this.style.flexWrap,
-                    alignSelf: (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
-                    justifyContent: this.style.justifyContent,
-                    order: convertInt(this.style.order)
-                };
+                const style = this.style;
+                if (style != null) {
+                    const parent = this.parentOriginal;
+                    this._flex = {
+                        enabled: (style.display && style.display.indexOf('flex') !== -1),
+                        direction: style.flexDirection,
+                        basis: style.flexBasis,
+                        grow: convertInt(style.flexGrow),
+                        shrink: convertInt(style.flexShrink),
+                        wrap: style.flexWrap,
+                        alignSelf: (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf),
+                        justifyContent: style.justifyContent,
+                        order: convertInt(style.order)
+                    };
+                }
             }
-            return this._flex;
+            return this._flex || {};
         }
         get floating() {
-            return (this.style.float === 'left' || this.style.float === 'right');
+            const float = (this.style != null ? this.style.float : '');
+            return (float === 'left' || float === 'right');
         }
         get fixed() {
             return (this.style.display === 'fixed');
@@ -1883,11 +1984,11 @@
         get overflow() {
             if (this._overflow == null) {
                 let value = 0 /* NONE */;
-                if (this.element != null) {
-                    if (this.style.overflow === 'scroll' || (this.style.overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+                if (this.hasElement) {
+                    if (this.css('overflow') === 'scroll' || (this.css('overflowX') === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
                         value |= 2 /* HORIZONTAL */;
                     }
-                    if (this.style.overflow === 'scroll' || (this.style.overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+                    if (this.css('overflow') === 'scroll' || (this.css('overflowY') === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
                         value |= 4 /* VERTICAL */;
                     }
                 }
@@ -1971,19 +2072,13 @@
             customizations: {}
         },
         [exports.build.LOLLIPOP]: {
-            android: ['layout_columnWeight'],
-            customizations: {
-                'Button': {
-                    android: {
-                        textAllCaps: 'false'
-                    }
-                }
-            }
+            android: ['layout_columnWeight']
         },
         [exports.build.ALL]: {
             customizations: {
                 'Button': {
                     android: {
+                        textAllCaps: 'false',
                         minWidth: '0dp',
                         minHeight: '0dp'
                     }
@@ -2091,7 +2186,14 @@
                     }
                 }
             });
-            return result.sort();
+            return result.sort((a, b) => {
+                if (a.startsWith('android:id=')) {
+                    return -1;
+                }
+                else {
+                    return (a > b ? 1 : -1);
+                }
+            });
         }
         applyCustomizations() {
             [API_ANDROID[this.api], API_ANDROID[0]].forEach(item => {
@@ -2118,7 +2220,7 @@
         setViewId(viewName) {
             super.viewName = viewName || this.viewName;
             if (this.viewId == null) {
-                const element = (this.element || {});
+                const element = this.element;
                 this.viewId = generateId('android', element.id || element.name || `${getFileExt(this.viewName).toLowerCase()}_1`);
                 this.android('id', this.stringId);
             }
@@ -2130,6 +2232,9 @@
             let height;
             let wrapContent;
             const renderParent = this.renderParent;
+            if (renderParent == null || renderParent === true) {
+                return;
+            }
             const constraint = this.constraint;
             if (options != null) {
                 parent = options.parent;
@@ -2138,12 +2243,12 @@
             }
             else {
                 parent = this.parent;
-                width = (this.element != null ? this.element.offsetWidth + this.marginLeft + this.marginRight : 0);
-                height = (this.element != null ? this.element.offsetHeight + this.marginTop + this.marginBottom : 0);
+                width = (this.hasElement ? this.element.offsetWidth + this.marginLeft + this.marginRight : 0);
+                height = (this.hasElement ? this.element.offsetHeight + this.marginTop + this.marginBottom : 0);
                 wrapContent = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID);
             }
-            const parentWidth = (parent.element != null ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
-            const parentHeight = (parent.element != null ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
+            const parentWidth = (parent.hasElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
+            const parentHeight = (parent.hasElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
             if (this.overflow !== 0 /* NONE */ && !this.is(VIEW_STANDARD.TEXT)) {
                 this.android('layout_width', (this.horizontal ? 'wrap_content' : 'match_parent'));
                 this.android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
@@ -2181,7 +2286,7 @@
                     }
                 }
                 else if (this.android('layout_width') == null) {
-                    if (wrapContent || renderParent.android('layout_width') === 'wrap_content') {
+                    if (wrapContent || (renderParent.android('layout_width') === 'wrap_content')) {
                         this.android('layout_width', 'wrap_content');
                     }
                     else {
@@ -2192,7 +2297,7 @@
                             if (parent.overflow === 0 /* NONE */ && width >= parentWidth) {
                                 this.android('layout_width', 'match_parent');
                             }
-                            else {
+                            else if (this.style != null) {
                                 switch (this.style.display) {
                                     case 'line-item':
                                     case 'block':
@@ -2236,7 +2341,7 @@
                     let layoutHeight = 'wrap_content';
                     if (height >= parentHeight) {
                         if (!wrapContent) {
-                            if (parent.id !== 0 && parent.overflow === 0 /* NONE */ && !FIXED_ANDROID.includes(this.viewName) && !renderParent.is(VIEW_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content') {
+                            if (parent.hasElement && parent.overflow === 0 /* NONE */ && !FIXED_ANDROID.includes(this.viewName) && (!renderParent.is(VIEW_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content')) {
                                 layoutHeight = 'match_parent';
                             }
                             else if (this.parentOriginal.flex.enabled) {
@@ -2370,7 +2475,7 @@
             const element = this.element;
             const nextElement = element.nextElementSibling;
             let labeled = false;
-            if (element.tagName === 'INPUT' && nextElement && nextElement.htmlFor === element.id) {
+            if (nextElement && nextElement.htmlFor === element.id && element.tagName === 'INPUT') {
                 const node = nextElement.__node;
                 node.setViewId(VIEW_ANDROID.TEXT);
                 this.css('marginRight', node.style.marginRight);
@@ -2417,6 +2522,9 @@
         }
         get stringId() {
             return (hasValue(this.viewId) ? `@+id/${this.viewId}` : '');
+        }
+        set viewName(value) {
+            this._viewName = value;
         }
         get viewName() {
             if (this._viewName != null) {
@@ -2752,7 +2860,7 @@
                                 }
                                 else {
                                     if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                        if (current.withinY(linear2) || !current.constraint.vertical) {
+                                        if ((current.app(LAYOUT['bottom']) !== 'parent' || !current.floating) && (current.withinY(linear2) || !current.constraint.vertical)) {
                                             current.anchor(LAYOUT['topBottom'], adjacent, (adjacent.constraint.vertical ? 'vertical' : ''), (linear1.left === linear2.left || linear2.right === linear2.right));
                                         }
                                     }
@@ -3445,19 +3553,31 @@
             viewGroup.setBounds();
             return viewGroup;
         }
-        getViewStatic(tagName, depth, options = {}, width = 'wrap_content', height = 'wrap_content') {
-            const node = new View(0, SETTINGS.targetAPI);
-            node.setViewId(View.getViewName(tagName));
+        getViewStatic(tagName, depth, options = {}, width = 'wrap_content', height = 'wrap_content', id = 0, children = false) {
+            const node = new View(id, SETTINGS.targetAPI);
+            let viewName = '';
+            if (typeof tagName === 'number') {
+                node.setViewId(View.getViewName(tagName));
+                viewName = node.viewName;
+            }
+            else {
+                viewName = tagName;
+            }
             let attributes = '';
             if (SETTINGS.showAttributes) {
                 node.apply(options);
-                node.android('id', node.stringId);
-                node.android('layout_width', width);
-                node.android('layout_height', height);
+                if (hasValue(width)) {
+                    node.android('layout_width', width);
+                }
+                if (hasValue(height)) {
+                    node.android('layout_height', height);
+                }
                 const indent = padLeft(depth + 1);
                 attributes = node.combine().map(value => `\n${indent + value}`).join('');
             }
-            return [this.getEnclosingTag(depth, node.viewName, 0).replace('{@0}', attributes), node.stringId];
+            let output = this.getEnclosingTag(depth, viewName, id, (children ? `{${id}}` : ''));
+            output = output.replace(`{#${id}}`, attributes);
+            return [output, node.stringId];
         }
         replaceInlineAttributes(output, node, options) {
             node.setViewLayout();
@@ -3473,16 +3593,8 @@
         parseAttributes(node) {
             let output = '';
             const attributes = node.combine();
-            if (attributes.length > 0) {
-                const indent = padLeft(node.renderDepth + 1);
-                for (let i = 0; i < attributes.length; i++) {
-                    if (attributes[i].startsWith('android:id=')) {
-                        attributes.unshift(...attributes.splice(i, 1));
-                        break;
-                    }
-                }
-                output = (node.renderDepth === 0 ? '{@0}' : '') + attributes.map((value) => `\n${indent + value}`).join('');
-            }
+            const indent = padLeft(node.renderDepth + 1);
+            output = (node.renderDepth === 0 ? '{@0}' : '') + attributes.map((value) => `\n${indent + value}`).join('');
             return output;
         }
         setGridSpace(node) {
@@ -3626,7 +3738,7 @@
             }
             return '';
         }
-        static addImage(images) {
+        static addImage(images, prefix = '') {
             let src = '';
             if (images['mdpi'] != null && hasValue(images['mdpi'])) {
                 src = getFileName(images['mdpi']);
@@ -3644,7 +3756,7 @@
                     case 'tiff':
                     case 'webp':
                     case 'xbm':
-                        src = Resource.insertStoredAsset('IMAGES', src, images);
+                        src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
                         break;
                     default:
                         src = '';
@@ -3680,21 +3792,29 @@
             const stored = Resource.STORED[asset];
             if (stored != null) {
                 let storedName = '';
-                if (isNumber(name)) {
-                    name = `__${name}`;
+                for (const [storedKey, storedValue] of stored.entries()) {
+                    if (JSON.stringify(value) === JSON.stringify(storedValue)) {
+                        storedName = storedKey;
+                        break;
+                    }
                 }
-                if (hasValue(value)) {
-                    let i = 0;
-                    do {
-                        storedName = name;
-                        if (i > 0) {
-                            storedName += i;
-                        }
-                        if (!stored.has(storedName)) {
-                            stored.set(storedName, value);
-                        }
-                        i++;
-                    } while (stored.has(storedName) && stored.get(storedName) !== value);
+                if (storedName === '') {
+                    if (isNumber(name)) {
+                        name = `__${name}`;
+                    }
+                    if (hasValue(value)) {
+                        let i = 0;
+                        do {
+                            storedName = name;
+                            if (i > 0) {
+                                storedName += `_${i}`;
+                            }
+                            if (!stored.has(storedName)) {
+                                stored.set(storedName, value);
+                            }
+                            i++;
+                        } while (stored.has(storedName) && stored.get(storedName) !== value);
+                    }
                 }
                 return storedName;
             }
@@ -3707,7 +3827,7 @@
         }
         setBoxSpacing() {
             this.cache.elements.forEach(node => {
-                if (node.element instanceof HTMLElement) {
+                if ((node.ignoreResource & VIEW_RESOURCE.BOX_SPACING) !== VIEW_RESOURCE.BOX_SPACING) {
                     const element = node.element;
                     if (!hasValue(element.__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
                         const result = getBoxSpacing(element);
@@ -3721,7 +3841,7 @@
         }
         setBoxStyle() {
             this.cache.elements.forEach(node => {
-                if (node.element instanceof HTMLElement) {
+                if ((node.ignoreResource & VIEW_RESOURCE.BOX_STYLE) !== VIEW_RESOURCE.BOX_STYLE) {
                     const element = node.element;
                     if (!hasValue(element.__boxStyle) || SETTINGS.alwaysReevaluateResources) {
                         const result = {
@@ -3740,7 +3860,7 @@
                         if (SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')) || result.backgroundColor[2] === '0') {
                             result.backgroundColor = [];
                         }
-                        else {
+                        else if (result.backgroundColor.length > 0) {
                             result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], false);
                         }
                         const borderTop = JSON.stringify(result.borderTop);
@@ -3754,7 +3874,7 @@
         }
         setFontStyle() {
             this.cache.elements.forEach(node => {
-                if (node.visible || node.companion) {
+                if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.FONT_STYLE) !== VIEW_RESOURCE.FONT_STYLE) {
                     const element = node.element;
                     if (!hasValue(element.__fontStyle) || SETTINGS.alwaysReevaluateResources) {
                         if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
@@ -3786,100 +3906,109 @@
         setImageSource() {
             this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
                 const element = node.element;
-                if (!hasValue(element.__imageSource) || SETTINGS.alwaysReevaluateResources) {
-                    const srcset = element.srcset.trim();
-                    const images = {};
-                    if (hasValue(srcset)) {
-                        const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-                        srcset.split(',').forEach((value) => {
-                            const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                            if (match != null) {
-                                if (match[2] == null) {
-                                    match[2] = '1x';
+                const object = element;
+                const prefix = object.__imageSourcePrefix || '';
+                const target = object.__imageSourceTarget;
+                if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE || target != null || prefix !== '') {
+                    if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
+                        const srcset = element.srcset.trim();
+                        const images = {};
+                        if (hasValue(srcset)) {
+                            const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+                            srcset.split(',').forEach((value) => {
+                                const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                                if (match != null) {
+                                    if (match[2] == null) {
+                                        match[2] = '1x';
+                                    }
+                                    const image = filePath + getFileName(match[1]);
+                                    switch (match[2]) {
+                                        case '0.75x':
+                                            images['ldpi'] = image;
+                                            break;
+                                        case '1x':
+                                            images['mdpi'] = image;
+                                            break;
+                                        case '1.5x':
+                                            images['hdpi'] = image;
+                                            break;
+                                        case '2x':
+                                            images['xhdpi'] = image;
+                                            break;
+                                        case '3x':
+                                            images['xxhdpi'] = image;
+                                            break;
+                                        case '4x':
+                                            images['xxxhdpi'] = image;
+                                            break;
+                                    }
                                 }
-                                const image = filepath + getFileName(match[1]);
-                                switch (match[2]) {
-                                    case '0.75x':
-                                        images['ldpi'] = image;
-                                        break;
-                                    case '1x':
-                                        images['mdpi'] = image;
-                                        break;
-                                    case '1.5x':
-                                        images['hdpi'] = image;
-                                        break;
-                                    case '2x':
-                                        images['xhdpi'] = image;
-                                        break;
-                                    case '3x':
-                                        images['xxhdpi'] = image;
-                                        break;
-                                    case '4x':
-                                        images['xxxhdpi'] = image;
-                                        break;
-                                }
-                            }
-                        });
+                            });
+                        }
+                        if (images['mdpi'] == null) {
+                            images['mdpi'] = element.src;
+                        }
+                        const result = Resource.addImage(images, prefix);
+                        object.__imageSource = result;
                     }
-                    if (images['mdpi'] == null) {
-                        images['mdpi'] = element.src;
-                    }
-                    const result = Resource.addImage(images);
-                    element.__imageSource = result;
                 }
             });
         }
         setOptionArray() {
             this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
-                const element = node.element;
-                if (!hasValue(element.__optionArray) || SETTINGS.alwaysReevaluateResources) {
-                    const stringArray = [];
-                    let numberArray = [];
-                    for (let i = 0; i < element.children.length; i++) {
-                        const item = element.children[i];
-                        const value = item.text.trim();
-                        if (value !== '') {
-                            if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
-                                numberArray.push(value);
-                            }
-                            else {
-                                if (numberArray != null && numberArray.length > 0) {
-                                    i = -1;
-                                    numberArray = null;
-                                    continue;
+                if ((node.ignoreResource & VIEW_RESOURCE.OPTION_ARRAY) !== VIEW_RESOURCE.OPTION_ARRAY) {
+                    const element = node.element;
+                    if (!hasValue(element.__optionArray) || SETTINGS.alwaysReevaluateResources) {
+                        const stringArray = [];
+                        let numberArray = [];
+                        for (let i = 0; i < element.children.length; i++) {
+                            const item = element.children[i];
+                            const value = item.text.trim();
+                            if (value !== '') {
+                                if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                                    numberArray.push(value);
                                 }
-                                const result = Resource.addString(value);
-                                if (result !== '') {
-                                    stringArray.push(result);
+                                else {
+                                    if (numberArray != null && numberArray.length > 0) {
+                                        i = -1;
+                                        numberArray = null;
+                                        continue;
+                                    }
+                                    const result = Resource.addString(value);
+                                    if (result !== '') {
+                                        stringArray.push(result);
+                                    }
                                 }
                             }
                         }
+                        element.__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
                     }
-                    element.__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
                 }
             });
         }
         setValueString() {
             this.cache.elements.forEach(node => {
-                const element = node.element;
-                if (!hasValue(element.__valueString) || SETTINGS.alwaysReevaluateResources) {
-                    let name = '';
-                    let value = '';
-                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                        if (element.type !== 'range') {
-                            value = element.value.trim();
+                if ((node.ignoreResource & VIEW_RESOURCE.VALUE_STRING) !== VIEW_RESOURCE.VALUE_STRING) {
+                    const element = node.element;
+                    if (!hasValue(element.__valueString) || SETTINGS.alwaysReevaluateResources) {
+                        let name = '';
+                        let value = '';
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.type !== 'range') {
+                                value = element.value.trim();
+                            }
                         }
-                    }
-                    else if (element.nodeName === '#text') {
-                        value = (element.textContent ? element.textContent.trim() : '');
-                    }
-                    else if (element.children.length === 0 || Array.from(element.children).every((item) => INLINE_CHROME.includes(item.tagName))) {
-                        name = element.innerText.trim();
-                        value = element.innerHTML.trim();
-                    }
-                    if (hasValue(value)) {
-                        Resource.addString(value, name);
-                        element.__valueString = value;
+                        else if (element.nodeName === '#text') {
+                            value = (element.textContent ? element.textContent.trim() : '');
+                        }
+                        else if (element.children.length === 0 || Array.from(element.children).every((item) => INLINE_CHROME.includes(item.tagName))) {
+                            name = element.innerText.trim();
+                            value = element.innerHTML.trim();
+                        }
+                        if (hasValue(value)) {
+                            Resource.addString(value, name);
+                            element.__valueString = value;
+                        }
                     }
                 }
             });
@@ -4323,51 +4452,49 @@
                         node = node.label;
                     }
                     const element = node.element;
-                    if (element != null) {
-                        const nodeId = (labelFor || node).id;
-                        const stored = Object.assign({}, element.__fontStyle);
-                        if (stored.fontFamily != null) {
-                            const fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
-                            let fontStyle = '';
-                            let fontWeight = '';
-                            if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
-                                system = true;
-                                stored.fontFamily = fontFamily;
-                                if (stored.fontStyle === 'normal') {
-                                    delete stored.fontStyle;
-                                }
-                                if (stored.fontWeight === '400') {
-                                    delete stored.fontWeight;
-                                }
-                            }
-                            else {
-                                stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
-                                fontStyle = stored.fontStyle;
-                                fontWeight = stored.fontWeight;
+                    const nodeId = (labelFor || node).id;
+                    const stored = Object.assign({}, element.__fontStyle);
+                    if (stored.fontFamily != null) {
+                        const fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                        let fontStyle = '';
+                        let fontWeight = '';
+                        if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                            system = true;
+                            stored.fontFamily = fontFamily;
+                            if (stored.fontStyle === 'normal') {
                                 delete stored.fontStyle;
+                            }
+                            if (stored.fontWeight === '400') {
                                 delete stored.fontWeight;
                             }
-                            if (!system) {
-                                if (!STORED.FONTS.has(fontFamily)) {
-                                    STORED.FONTS.set(fontFamily, {});
-                                }
-                                STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
-                            }
                         }
-                        const method = METHOD_ANDROID['fontStyle'];
-                        const keys = Object.keys(method);
-                        for (let i = 0; i < keys.length; i++) {
-                            if (sorted[i] == null) {
-                                sorted[i] = {};
+                        else {
+                            stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                            fontStyle = stored.fontStyle;
+                            fontWeight = stored.fontWeight;
+                            delete stored.fontStyle;
+                            delete stored.fontWeight;
+                        }
+                        if (!system) {
+                            if (!STORED.FONTS.has(fontFamily)) {
+                                STORED.FONTS.set(fontFamily, {});
                             }
-                            const value = stored[keys[i]];
-                            if (hasValue(value)) {
-                                const attr = formatString(method[keys[i]], value);
-                                if (sorted[i][attr] == null) {
-                                    sorted[i][attr] = [];
-                                }
-                                sorted[i][attr].push(nodeId);
+                            STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
+                        }
+                    }
+                    const method = METHOD_ANDROID['fontStyle'];
+                    const keys = Object.keys(method);
+                    for (let i = 0; i < keys.length; i++) {
+                        if (sorted[i] == null) {
+                            sorted[i] = {};
+                        }
+                        const value = stored[keys[i]];
+                        if (hasValue(value)) {
+                            const attr = formatString(method[keys[i]], value);
+                            if (sorted[i][attr] == null) {
+                                sorted[i][attr] = [];
                             }
+                            sorted[i][attr].push(nodeId);
                         }
                     }
                 });
@@ -4394,10 +4521,19 @@
         setImageSource() {
             super.setImageSource();
             this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
-                const stored = node.element.__imageSource;
+                const object = node.element;
+                const stored = object.__imageSource;
                 if (stored != null) {
-                    const method = METHOD_ANDROID['imageSource'];
-                    node.attr(formatString(method['src'], stored));
+                    const target = object.__imageSourceTarget;
+                    if (target == null) {
+                        const method = METHOD_ANDROID['imageSource'];
+                        node.attr(formatString(method['src'], stored));
+                    }
+                    else {
+                        target.node[target.namespace](target.attribute, `@drawable/${stored}`);
+                        delete object.__imageSourceTarget;
+                    }
+                    delete object.__imageSourcePrefix;
                 }
             });
         }
@@ -4439,7 +4575,7 @@
                 if (stored != null) {
                     const method = METHOD_ANDROID['valueString'];
                     let name = STORED.STRINGS.get(stored);
-                    if (node.is(VIEW_STANDARD.TEXT) && element instanceof HTMLElement) {
+                    if (node.is(VIEW_STANDARD.TEXT) && node.style != null) {
                         const match = node.style.textDecoration.match(/(underline|line-through)/);
                         if (match != null) {
                             let value = '';
@@ -4879,7 +5015,7 @@
         saveAllToDisk(data) {
             const files = [];
             for (let i = 0; i < data.views.length; i++) {
-                files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
+                files.push(this.getLayoutFile(data.pathnames[i], (i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
             }
             const xml = this.resourceDrawableToXml();
             files.push(...this.parseFileDetails(this.resourceStringToXml()));
@@ -4897,7 +5033,7 @@
                 const view = data.views[i];
                 result[data.ids[i]] = view;
                 if (saveToDisk) {
-                    files.push(this.getLayoutFile((i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), view));
+                    files.push(this.getLayoutFile(data.pathnames[i], (i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), view));
                 }
             }
             if (saveToDisk) {
@@ -5124,24 +5260,24 @@
             }
             return result;
         }
-        getLayoutFile(fileName, content) {
+        getLayoutFile(pathname, filename, content) {
             return {
-                content,
-                pathname: 'res/layout',
-                filename: fileName
+                pathname,
+                filename,
+                content
             };
         }
     }
 
     class Grid extends Extension {
-        constructor(tagNames, extension, options) {
-            super(tagNames, extension, options);
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
         }
         condition() {
-            return (super.condition() ||
+            return (this.included() ||
                 (!this.node.flex.enabled && this.node.children.length > 1 && this.node.children.every(node => !node.flex.enabled && this.node.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right'))));
         }
-        render(mapX, mapY) {
+        processNode(mapX, mapY) {
             let xml = '';
             let columns = [];
             const columnEnd = [];
@@ -5353,23 +5489,23 @@
                     }
                 }
             }
-            return xml;
+            return [xml, false];
         }
-        processChild(node) {
+        processChild() {
             let xml = '';
             let siblings;
+            const parent = this.parent;
             if (this.options && this.options.balanceColumns) {
-                siblings = node.gridSiblings;
+                siblings = this.node.gridSiblings;
             }
             else {
-                const columnEnd = this.parent.gridColumnEnd[node.gridIndex + node.gridColumnSpan];
-                siblings = node.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= node.bounds.right && item.bounds.right <= columnEnd);
+                const columnEnd = parent.gridColumnEnd[this.node.gridIndex + this.node.gridColumnSpan];
+                siblings = this.node.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= this.node.bounds.right && item.bounds.right <= columnEnd);
             }
             if (siblings != null && siblings.length > 0) {
-                const parent = this.parent;
-                siblings.unshift(node);
+                siblings.unshift(this.node);
                 sortAsc(siblings, 'bounds.x');
-                const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
+                const viewGroup = this.application.controllerHandler.createGroup(this.node, parent, siblings);
                 this.application.cache.list.push(viewGroup);
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 if (linearX || linearY) {
@@ -5385,46 +5521,49 @@
     }
 
     class Hidden extends Extension {
-        constructor(tagNames, extension, options) {
-            super(tagNames, extension, options);
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
         }
         beforeInit() {
-            if (this.included('androme.hidden')) {
+            if (this.included()) {
                 if (this.element != null) {
-                    this.element.style.display = '';
+                    const object = this.element;
+                    if (object.__andromeHiddenDisplay == null) {
+                        object.__andromeHiddenDisplay = this.element.style.display;
+                    }
+                    this.element.style.display = 'block';
                 }
             }
         }
         init(element) {
-            if (this.application != null) {
-                if (this.included('androme.hidden', element) && element.style.display === 'none') {
-                    this.application.elements.add(element);
-                    return true;
-                }
+            const style = getStyle(element);
+            if (this.included(element) && style.display === 'none' && element.dataset.extension != null && element.dataset.extension.split(',').length <= 1) {
+                this.application.elements.add(element);
+                return true;
             }
             return false;
         }
         afterInit() {
-            if (this.included('androme.hidden')) {
+            if (this.included()) {
                 if (this.element != null) {
-                    this.element.style.display = 'none';
+                    const object = this.element;
+                    if (object.__andromeHiddenDisplay != null) {
+                        this.element.style.display = object.__andromeHiddenDisplay;
+                    }
                 }
             }
-        }
-        render() {
-            return '';
         }
     }
 
     class List extends Extension {
-        constructor(tagNames, extension, options) {
-            super(tagNames, extension, options);
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
         }
         condition() {
-            return (super.condition() ||
+            return (super.condition() &&
                 (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (this.linearX || this.linearY)));
         }
-        render() {
+        processNode() {
             let xml = '';
             if (this.linearY) {
                 xml = this.application.writeGridLayout(this.node, this.parent, 2);
@@ -5468,19 +5607,20 @@
                     }
                     j++;
                 }
-                node.options(this.extension || 'androme.list', { listStyle: ordinal });
+                node.options(this.name, { listStyle: ordinal });
             }
-            return xml;
+            return [xml, false];
         }
     }
 
-    class ListExt extends List {
-        constructor(tagNames, extension = '', options = {}) {
-            super(tagNames, extension, options);
+    class ListAndroid extends List {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
         }
-        processChild(node) {
+        processChild() {
+            const node = this.node;
             const controllerHandler = this.application.controllerHandler;
-            const options = node.options(this.extension || 'androme.list');
+            const options = node.options(this.name);
             if (options && options.listStyle != null) {
                 controllerHandler.prependBefore(node.id, controllerHandler.getViewStatic((options.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (options.listStyle !== '0' ? options.listStyle : '') } })[0]);
                 node.android('layout_columnWeight', '1');
@@ -5489,15 +5629,225 @@
         }
     }
 
+    class Menu extends Extension {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+            this.dependencies = ['androme.hidden'];
+        }
+        init(element) {
+            if (element && (this.included(element) || this.is(element.tagName))) {
+                let valid = false;
+                if (element.children.length > 0) {
+                    const tagName = element.children[0].tagName;
+                    valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every((item) => item.tagName === tagName && !(item.style.display === 'inline' || item.style.cssFloat === 'left' || item.style.cssFloat === 'right')));
+                    let current = element.parentElement;
+                    while (current != null) {
+                        if (current.tagName === 'NAV' && this.application.elements.has(current)) {
+                            valid = false;
+                            break;
+                        }
+                        current = current.parentElement;
+                    }
+                }
+                if (valid) {
+                    Array.from(element.querySelectorAll('NAV')).forEach((item) => {
+                        const style = getStyle(element);
+                        if (style.display === 'none') {
+                            item.__andromeHiddenDisplay = 'none';
+                            item.style.display = 'block';
+                        }
+                    });
+                    this.application.elements.add(element);
+                    return true;
+                }
+            }
+            return false;
+        }
+        afterRender() {
+            if (this.node != null && this.included(this.node.element)) {
+                Array.from(this.node.element.querySelectorAll('NAV')).forEach((item) => {
+                    const display = item.__andromeHiddenDisplay;
+                    if (display != null) {
+                        item.style.display = display;
+                    }
+                });
+            }
+        }
+    }
+
+    var VIEW_STATIC;
+    (function (VIEW_STATIC) {
+        VIEW_STATIC["MENU"] = "menu";
+        VIEW_STATIC["ITEM"] = "item";
+        VIEW_STATIC["GROUP"] = "group";
+    })(VIEW_STATIC || (VIEW_STATIC = {}));
+    const VALIDATE_ITEM = {
+        id: /^@\+id\/\w+$/,
+        title: /^.+$/,
+        titleCondensed: /^.+$/,
+        icon: /^@drawable\/.+$/,
+        onClick: /^.+$/,
+        showAsAction: /^(ifRoom|never|withText|always|collapseActionView)$/,
+        actionLayout: /^@layout\/.+$/,
+        actionViewClass: /^.+$/,
+        actionProviderClass: /^.+$/,
+        alphabeticShortcut: /^[a-zA-Z]+$/,
+        alphabeticModifiers: /(META|CTRL|ALT|SHIFT|SYM|FUNCTION)+/g,
+        numericShortcut: /^[0-9]+$/,
+        numericModifiers: /(META|CTRL|ALT|SHIFT|SYM|FUNCTION)+/g,
+        checkable: /^(true|false)$/,
+        visible: /^(true|false)$/,
+        enabled: /^(true|false)$/,
+        menuCategory: /^(container|system|secondary|alternative)$/,
+        orderInCategory: /^[0-9]+$/
+    };
+    const VALIDATE_GROUP = {
+        id: /^@\+id\/\w+$/,
+        checkableBehavior: /^(none|all|single)$/,
+        visible: /^(true|false)$/,
+        enabled: /^(true|false)$/,
+        menuCategory: /^(container|system|secondary|alternative)$/,
+        orderInCategory: /^[0-9]+$/
+    };
+    const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
+    class MenuAndroid extends Menu {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+        }
+        processNode() {
+            const node = this.node;
+            node.setViewId(VIEW_STATIC.MENU);
+            let xml = '';
+            xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, node.depth, {}, '', '', node.id, true)[0];
+            node.renderDepth = 0;
+            node.renderParent = true;
+            node.cascade().forEach(item => item.renderExtension = this);
+            node.ignoreResource = VIEW_RESOURCE.ALL;
+            return [xml, false];
+        }
+        processChild() {
+            const parent = this.parent;
+            const node = this.node;
+            node.ignoreResource = VIEW_RESOURCE.ALL;
+            node.renderDepth = parent.renderDepth + 1;
+            node.renderParent = true;
+            const element = node.element;
+            const options = { android: {}, app: {} };
+            let viewName = VIEW_STATIC.ITEM;
+            let children = false;
+            let title = '';
+            if (node.children.some(item => BLOCK_CHROME.includes(item.tagName))) {
+                if (node.children.some(item => item.tagName === 'NAV')) {
+                    node.children.some(item => {
+                        const child = item.element;
+                        if (child != null) {
+                            if (child.nodeName === '#text' && child.textContent != null && child.textContent.trim() !== '') {
+                                title = child.textContent.trim();
+                                item.hide();
+                                return true;
+                            }
+                            else if (child.tagName !== 'NAV') {
+                                title = child.innerText.trim();
+                                item.hide();
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                else if (node.tagName === 'NAV') {
+                    viewName = VIEW_STATIC.MENU;
+                }
+                else {
+                    viewName = VIEW_STATIC.GROUP;
+                    let checkable = '';
+                    if (node.children.every((item) => this.hasInputType(item, 'radio'))) {
+                        checkable = 'single';
+                    }
+                    else if (node.children.every((item) => this.hasInputType(item, 'checkbox'))) {
+                        checkable = 'all';
+                    }
+                    options.android.checkableBehavior = checkable;
+                }
+                children = true;
+            }
+            else {
+                if (parent.android('checkableBehavior') == null) {
+                    if (this.hasInputType(node, 'checkbox')) {
+                        options.android.checkable = 'true';
+                    }
+                }
+                if (element.nodeName === '#text') {
+                    node.hide();
+                    return ['', false];
+                }
+                else {
+                    title = element.innerText.trim();
+                }
+            }
+            switch (viewName) {
+                case VIEW_STATIC.ITEM:
+                    this.parseDataSet(VALIDATE_ITEM, element, options);
+                    if (node.android('icon') == null) {
+                        const image = node.children.find(item => item.element.tagName === 'IMG');
+                        if (image != null) {
+                            const object = image.element;
+                            object.__imageSourcePrefix = 'ic_menu_';
+                            object.__imageSourceTarget = { node, namespace: 'android', attribute: 'icon' };
+                        }
+                    }
+                    break;
+                case VIEW_STATIC.GROUP:
+                    this.parseDataSet(VALIDATE_GROUP, element, options);
+                    break;
+            }
+            if (node.android('title') == null) {
+                if (title !== '') {
+                    Resource.addString(title);
+                    if (Resource.STORED.STRINGS.has(title)) {
+                        title = `@string/${Resource.STORED.STRINGS.get(title)}`;
+                    }
+                    options.android.title = title;
+                }
+            }
+            if (options.android.id == null) {
+                node.setViewId(viewName);
+            }
+            else {
+                node.viewName = viewName;
+            }
+            node.apply(options);
+            const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, {}, '', '', node.id, children)[0];
+            return [xml, false];
+        }
+        afterRender() {
+            super.afterRender();
+            if (this.included(this.node.element)) {
+                this.application.pathnames[this.application.pathnames.length - 1] = 'res/menu';
+            }
+        }
+        parseDataSet(validator, element, options) {
+            for (const attr in element.dataset) {
+                const value = element.dataset[attr];
+                if (value != null && validator[attr] != null) {
+                    const match = value.match(validator[attr]);
+                    if (match != null) {
+                        const namespace = (SETTINGS.useAppCompatLibrary && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
+                        options[namespace][attr] = Array.from(new Set(match)).join('|');
+                    }
+                }
+            }
+        }
+        hasInputType(node, value) {
+            return (node.children.length > 0 && node.children.some(item => item.element.type === value));
+        }
+    }
+
     class Table extends Extension {
-        constructor(tagNames, extension, options) {
-            super(tagNames, extension, options);
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
         }
-        condition() {
-            return (super.condition() ||
-                (this.node != null && this.node.element != null && this.node.element.dataset.extension == null));
-        }
-        render() {
+        processNode() {
             const tableRows = [];
             const thead = this.node.children.find(node => node.tagName === 'THEAD');
             const tbody = this.node.children.find(node => node.tagName === 'TBODY');
@@ -5524,43 +5874,42 @@
                 columnCount = Math.max(tr.children.map(node => node.element).reduce((a, b) => a + b.colSpan, 0), columnCount);
                 for (let j = 0; j < tr.children.length; j++) {
                     const td = tr.children[j];
-                    if (td.element != null) {
-                        const style = td.element.style;
-                        const element = td.element;
-                        if (element.rowSpan > 1) {
-                            td.gridRowSpan = element.rowSpan;
-                        }
-                        if (element.colSpan > 1) {
-                            td.gridColumnSpan = element.colSpan;
-                        }
-                        if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
-                            td.styleMap.textAlign = style.textAlign;
-                        }
-                        if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
-                            td.styleMap.verticalAlign = 'middle';
-                        }
-                        const [width, height] = (this.node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : this.node.style.borderSpacing.split(' '));
-                        delete td.styleMap.margin;
-                        td.styleMap.marginTop = height;
-                        td.styleMap.marginRight = width;
-                        td.styleMap.marginBottom = height;
-                        td.styleMap.marginLeft = width;
-                        td.parent = this.node;
+                    const style = td.element.style;
+                    const element = td.element;
+                    if (element.rowSpan > 1) {
+                        td.gridRowSpan = element.rowSpan;
                     }
+                    if (element.colSpan > 1) {
+                        td.gridColumnSpan = element.colSpan;
+                    }
+                    if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
+                        td.styleMap.textAlign = style.textAlign;
+                    }
+                    if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
+                        td.styleMap.verticalAlign = 'middle';
+                    }
+                    const [width, height] = (this.node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : this.node.style.borderSpacing.split(' '));
+                    delete td.styleMap.margin;
+                    td.styleMap.marginTop = height;
+                    td.styleMap.marginRight = width;
+                    td.styleMap.marginBottom = height;
+                    td.styleMap.marginLeft = width;
+                    td.parent = this.node;
                 }
             }
             const xml = this.application.writeGridLayout(this.node, this.parent, columnCount, rowCount);
-            return xml;
+            return [xml, false];
         }
     }
 
     let MAIN;
     const CACHE = new Set();
     const EXTENSIONS = {
-        'grid': new Grid([], 'androme.grid', { balanceColumns: true }),
-        'hidden': new Hidden([], 'androme.hidden'),
-        'list': new ListExt(['UL', 'OL'], 'androme.list'),
-        'table': new Table(['TABLE'], 'androme.table')
+        'grid': new Grid('androme.grid', [], { balanceColumns: true }),
+        'hidden': new Hidden('androme.hidden', []),
+        'list': new ListAndroid('androme.list', ['UL', 'OL']),
+        'menu': new MenuAndroid('androme.menu', ['NAV']),
+        'table': new Table('androme.table', ['TABLE'])
     };
     function __app(object) {
         const app = object;
@@ -5614,21 +5963,26 @@
             }
             else {
                 if (element.id === '') {
-                    element.id = `view${main.length}`;
+                    element.id = `view_${main.length}`;
                 }
             }
             element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
             element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/-/g, '_');
-            main.setNodeCache(element);
-            main.setLayoutXml();
-            main.setResources();
-            if (SETTINGS.showAttributes) {
-                main.setMarginPadding();
-                main.setConstraints();
-                main.replaceInlineAttributes();
+            if (main.createNodeCache(element)) {
+                main.setLayoutXml();
+                main.setResources();
+                if (SETTINGS.showAttributes) {
+                    main.setMarginPadding();
+                    main.setConstraints();
+                    main.replaceInlineAttributes();
+                }
+                main.replaceAppended();
+                CACHE.add(element);
             }
-            main.replaceAppended();
-            CACHE.add(element);
+            else {
+                delete element.dataset.views;
+                delete element.dataset.currentId;
+            }
         });
     }
     function registerExtension(extension) {
@@ -5643,7 +5997,7 @@
         const main = __app(MAIN);
         if (main != null && options != null) {
             main.extensions.some(item => {
-                if (item.extension === name) {
+                if (item.name === name) {
                     item.options = options;
                     return true;
                 }

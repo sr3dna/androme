@@ -6,18 +6,11 @@ type T = Node;
 type U = NodeList<T>;
 
 export default class Table extends Extension<T, U> {
-    constructor(tagNames: string[], extension?: string, options?: {}) {
-        super(tagNames, extension, options);
+    constructor(name: string, tagNames: string[], options?: {}) {
+        super(name, tagNames, options);
     }
 
-    public condition() {
-        return (
-            super.condition() ||
-            (this.node != null && this.node.element != null && this.node.element.dataset.extension == null)
-        );
-    }
-
-    public render() {
+    public processNode() {
         const tableRows: T[] = [];
         const thead = this.node.children.find(node => node.tagName === 'THEAD');
         const tbody = this.node.children.find(node => node.tagName === 'TBODY');
@@ -41,35 +34,33 @@ export default class Table extends Extension<T, U> {
         for (let i = 0; i < tableRows.length; i++) {
             const tr = tableRows[i];
             tr.hide();
-            columnCount = Math.max(tr.children.map(node => (<HTMLTableDataCellElement> node.element)).reduce((a, b) => a + b.colSpan, 0), columnCount);
+            columnCount = Math.max(tr.children.map(node => node.element).reduce((a, b: HTMLTableDataCellElement) => a + b.colSpan, 0), columnCount);
             for (let j = 0; j < tr.children.length; j++) {
                 const td = tr.children[j];
-                if (td.element != null) {
-                    const style = td.element.style;
-                    const element = (<HTMLTableCellElement> td.element);
-                    if (element.rowSpan > 1) {
-                        td.gridRowSpan = element.rowSpan;
-                    }
-                    if (element.colSpan > 1) {
-                        td.gridColumnSpan = element.colSpan;
-                    }
-                    if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
-                        td.styleMap.textAlign = (<string> style.textAlign);
-                    }
-                    if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
-                        td.styleMap.verticalAlign = 'middle';
-                    }
-                    const [width, height] = (this.node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : this.node.style.borderSpacing.split(' '));
-                    delete td.styleMap.margin;
-                    td.styleMap.marginTop = height;
-                    td.styleMap.marginRight = width;
-                    td.styleMap.marginBottom = height;
-                    td.styleMap.marginLeft = width;
-                    td.parent = this.node;
+                const style = td.element.style;
+                const element = (<HTMLTableCellElement> td.element);
+                if (element.rowSpan > 1) {
+                    td.gridRowSpan = element.rowSpan;
                 }
+                if (element.colSpan > 1) {
+                    td.gridColumnSpan = element.colSpan;
+                }
+                if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
+                    td.styleMap.textAlign = (<string> style.textAlign);
+                }
+                if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
+                    td.styleMap.verticalAlign = 'middle';
+                }
+                const [width, height] = (this.node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : (<string> this.node.style.borderSpacing).split(' '));
+                delete td.styleMap.margin;
+                td.styleMap.marginTop = height;
+                td.styleMap.marginRight = width;
+                td.styleMap.marginBottom = height;
+                td.styleMap.marginLeft = width;
+                td.parent = this.node;
             }
         }
-        const xml = this.application.writeGridLayout(this.node, this.parent, columnCount, rowCount);
-        return xml;
+        const xml = this.application.writeGridLayout(this.node, (<T> this.parent), columnCount, rowCount);
+        return [xml, false];
     }
 }

@@ -34,7 +34,8 @@ export function getStyle(element: HTMLElement) {
 
 export function sameAsParent(element: HTMLElement, attr: string) {
     if (element && element.parentElement != null) {
-        return (getStyle(element)[attr] === getStyle(element.parentElement)[attr]);
+        const style = getStyle(element);
+        return (style && style[attr] === getStyle(element.parentElement)[attr]);
     }
     return false;
 }
@@ -56,7 +57,7 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
 }
 
 export function hasFreeFormText(element: HTMLElement) {
-    return Array.from(element.childNodes).some((item: HTMLElement) => (item.nodeName === '#text' && item.textContent != null && item.textContent.trim() !== ''));
+    return Array.from(element.childNodes).some((item: HTMLElement) => item.nodeName === '#text' && item.textContent != null && item.textContent.trim() !== '');
 }
 
 export function isVisible(element: HTMLElement) {
@@ -70,11 +71,23 @@ export function isVisible(element: HTMLElement) {
         if (bounds.width !== 0 && bounds.height !== 0) {
             return true;
         }
-        else if (element.children.length > 0) {
-            return Array.from(element.children).some((item: HTMLElement) => {
-                const style: any = getComputedStyle(item);
-                return (!(style.position === '' || style.position === 'static') || style.float === 'left' || style.float === 'right');
-            });
+        else {
+            let current = (<HTMLElement> element.parentElement);
+            let valid = true;
+            while (current != null) {
+                const style = getStyle(current);
+                if (style.display === 'none') {
+                    valid = false;
+                    break;
+                }
+                current = (<HTMLElement> current.parentElement);
+            }
+            if (valid && element.children.length > 0) {
+                return Array.from(element.children).some((item: HTMLElement) => {
+                    const style: any = getComputedStyle(item);
+                    return (style.position !== 'static' || style.float === 'left' || style.float === 'right');
+                });
+            }
         }
     }
     return false;

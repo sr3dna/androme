@@ -2,7 +2,7 @@ import { BorderAttribute, StringMap } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { INLINE_CHROME } from '../lib/constants';
+import { INLINE_CHROME, VIEW_RESOURCE } from '../lib/constants';
 import { cameltoLowerCase, convertPX, generateId, getFileExt, getFileName, hasValue, isNumber } from '../lib/util';
 import { findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, sameAsParent } from '../lib/dom';
@@ -41,7 +41,7 @@ export default abstract class Resource<T extends Node> {
         return '';
     }
 
-    public static addImage(images: StringMap) {
+    public static addImage(images: StringMap, prefix = '') {
         let src = '';
         if (images['mdpi'] != null && hasValue(images['mdpi'])) {
             src = getFileName(images['mdpi']);
@@ -59,7 +59,7 @@ export default abstract class Resource<T extends Node> {
                 case 'tiff':
                 case 'webp':
                 case 'xbm':
-                    src = Resource.insertStoredAsset('IMAGES', src, images);
+                    src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
                     break;
                 default:
                     src = '';
@@ -94,25 +94,33 @@ export default abstract class Resource<T extends Node> {
     }
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
-        const stored = Resource.STORED[asset];
+        const stored: Map<string, any> = Resource.STORED[asset];
         if (stored != null) {
             let storedName = '';
-            if (isNumber(name)) {
-                name = `__${name}`;
-            }
-            if (hasValue(value)) {
-                let i = 0;
-                do {
-                    storedName = name;
-                    if (i > 0) {
-                        storedName += i;
-                    }
-                    if (!stored.has(storedName)) {
-                        stored.set(storedName, value);
-                    }
-                    i++;
+            for (const [storedKey, storedValue] of stored.entries()) {
+                if (JSON.stringify(value) === JSON.stringify(storedValue)) {
+                    storedName = storedKey;
+                    break;
                 }
-                while (stored.has(storedName) && stored.get(storedName) !== value);
+            }
+            if (storedName === '') {
+                if (isNumber(name)) {
+                    name = `__${name}`;
+                }
+                if (hasValue(value)) {
+                    let i = 0;
+                    do {
+                        storedName = name;
+                        if (i > 0) {
+                            storedName += `_${i}`;
+                        }
+                        if (!stored.has(storedName)) {
+                            stored.set(storedName, value);
+                        }
+                        i++;
+                    }
+                    while (stored.has(storedName) && stored.get(storedName) !== value);
+                }
             }
             return storedName;
         }
@@ -135,7 +143,7 @@ export default abstract class Resource<T extends Node> {
 
     public setBoxSpacing() {
         this.cache.elements.forEach(node => {
-            if (node.element instanceof HTMLElement) {
+            if ((node.ignoreResource & VIEW_RESOURCE.BOX_SPACING) !== VIEW_RESOURCE.BOX_SPACING) {
                 const element = (<HTMLElement> node.element);
                 if (!hasValue((<any> element).__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
                     const result = getBoxSpacing(element);
@@ -150,7 +158,7 @@ export default abstract class Resource<T extends Node> {
 
     public setBoxStyle() {
         this.cache.elements.forEach(node => {
-            if (node.element instanceof HTMLElement) {
+            if ((node.ignoreResource & VIEW_RESOURCE.BOX_STYLE) !== VIEW_RESOURCE.BOX_STYLE) {
                 const element = (<HTMLElement> node.element);
                 if (!hasValue((<any> element).__boxStyle) || SETTINGS.alwaysReevaluateResources) {
                     const result: any = {
@@ -169,7 +177,7 @@ export default abstract class Resource<T extends Node> {
                     if (SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')) || result.backgroundColor[2] === '0') {
                         result.backgroundColor = [];
                     }
-                    else {
+                    else if (result.backgroundColor.length > 0) {
                         result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], false);
                     }
                     const borderTop = JSON.stringify(result.borderTop);
@@ -184,7 +192,7 @@ export default abstract class Resource<T extends Node> {
 
     public setFontStyle() {
         this.cache.elements.forEach(node => {
-            if (node.visible || node.companion) {
+            if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.FONT_STYLE) !== VIEW_RESOURCE.FONT_STYLE) {
                 const element = (<HTMLElement> node.element);
                 if (!hasValue((<any> element).__fontStyle) || SETTINGS.alwaysReevaluateResources) {
                     if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
@@ -217,102 +225,111 @@ export default abstract class Resource<T extends Node> {
     public setImageSource() {
         this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
             const element = (<HTMLImageElement> node.element);
-            if (!hasValue((<any> element).__imageSource) || SETTINGS.alwaysReevaluateResources) {
-                const srcset = element.srcset.trim();
-                const images: StringMap = {};
-                if (hasValue(srcset)) {
-                    const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-                    srcset.split(',').forEach((value: string) => {
-                        const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                        if (match != null) {
-                            if (match[2] == null) {
-                                match[2] = '1x';
+            const object = (<any> element);
+            const prefix = object.__imageSourcePrefix || '';
+            const target = object.__imageSourceTarget;
+            if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE || target != null || prefix !== '') {
+                if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
+                    const srcset = element.srcset.trim();
+                    const images: StringMap = {};
+                    if (hasValue(srcset)) {
+                        const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+                        srcset.split(',').forEach((value: string) => {
+                            const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                            if (match != null) {
+                                if (match[2] == null) {
+                                    match[2] = '1x';
+                                }
+                                const image = filePath + getFileName(match[1]);
+                                switch (match[2]) {
+                                    case '0.75x':
+                                        images['ldpi'] = image;
+                                        break;
+                                    case '1x':
+                                        images['mdpi'] = image;
+                                        break;
+                                    case '1.5x':
+                                        images['hdpi'] = image;
+                                        break;
+                                    case '2x':
+                                        images['xhdpi'] = image;
+                                        break;
+                                    case '3x':
+                                        images['xxhdpi'] = image;
+                                        break;
+                                    case '4x':
+                                        images['xxxhdpi'] = image;
+                                        break;
+                                }
                             }
-                            const image = filepath + getFileName(match[1]);
-                            switch (match[2]) {
-                                case '0.75x':
-                                    images['ldpi'] = image;
-                                    break;
-                                case '1x':
-                                    images['mdpi'] = image;
-                                    break;
-                                case '1.5x':
-                                    images['hdpi'] = image;
-                                    break;
-                                case '2x':
-                                    images['xhdpi'] = image;
-                                    break;
-                                case '3x':
-                                    images['xxhdpi'] = image;
-                                    break;
-                                case '4x':
-                                    images['xxxhdpi'] = image;
-                                    break;
-                            }
-                        }
-                    });
+                        });
+                    }
+                    if (images['mdpi'] == null) {
+                        images['mdpi'] = element.src;
+                    }
+                    const result = Resource.addImage(images, prefix);
+                    object.__imageSource = result;
                 }
-                if (images['mdpi'] == null) {
-                    images['mdpi'] = element.src;
-                }
-                const result = Resource.addImage(images);
-                (<any> element).__imageSource = result;
             }
         });
     }
 
     public setOptionArray() {
         this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
-            const element = (<HTMLSelectElement> node.element);
-            if (!hasValue((<any> element).__optionArray) || SETTINGS.alwaysReevaluateResources) {
-                const stringArray: string[] = [];
-                let numberArray: string[] | null = [];
-                for (let i = 0; i < element.children.length; i++) {
-                    const item = (<HTMLOptionElement> element.children[i]);
-                    const value = item.text.trim();
-                    if (value !== '') {
-                        if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
-                            numberArray.push(value);
-                        }
-                        else {
-                            if (numberArray != null && numberArray.length > 0) {
-                                i = -1;
-                                numberArray = null;
-                                continue;
+            if ((node.ignoreResource & VIEW_RESOURCE.OPTION_ARRAY) !== VIEW_RESOURCE.OPTION_ARRAY) {
+                const element = (<HTMLSelectElement> node.element);
+                if (!hasValue((<any> element).__optionArray) || SETTINGS.alwaysReevaluateResources) {
+                    const stringArray: string[] = [];
+                    let numberArray: string[] | null = [];
+                    for (let i = 0; i < element.children.length; i++) {
+                        const item = (<HTMLOptionElement> element.children[i]);
+                        const value = item.text.trim();
+                        if (value !== '') {
+                            if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                                numberArray.push(value);
                             }
-                            const result = Resource.addString(value);
-                            if (result !== '') {
-                                stringArray.push(result);
+                            else {
+                                if (numberArray != null && numberArray.length > 0) {
+                                    i = -1;
+                                    numberArray = null;
+                                    continue;
+                                }
+                                const result = Resource.addString(value);
+                                if (result !== '') {
+                                    stringArray.push(result);
+                                }
                             }
                         }
                     }
+                    (<any> element).__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
                 }
-                (<any> element).__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
             }
         });
     }
 
     public setValueString() {
         this.cache.elements.forEach(node => {
-            const element = (<HTMLInputElement> node.element);
-            if (!hasValue((<any> element).__valueString) || SETTINGS.alwaysReevaluateResources) {
-                let name = '';
-                let value = '';
-                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                    if (element.type !== 'range') {
-                        value = element.value.trim();
+            if ((node.ignoreResource & VIEW_RESOURCE.VALUE_STRING) !== VIEW_RESOURCE.VALUE_STRING) {
+                const element = (<HTMLInputElement> node.element);
+                if (!hasValue((<any> element).__valueString) || SETTINGS.alwaysReevaluateResources) {
+                    let name = '';
+                    let value = '';
+                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                        if (element.type !== 'range') {
+                            value = element.value.trim();
+                        }
                     }
-                }
-                else if (element.nodeName === '#text') {
-                    value = (element.textContent ? element.textContent.trim() : '');
-                }
-                else if (element.children.length === 0 || Array.from(element.children).every((item: HTMLElement) => INLINE_CHROME.includes(item.tagName))) {
-                    name = element.innerText.trim();
-                    value = element.innerHTML.trim();
-                }
-                if (hasValue(value)) {
-                    Resource.addString(value, name);
-                    (<any> element).__valueString = value;
+                    else if (element.nodeName === '#text') {
+                        value = (element.textContent ? element.textContent.trim() : '');
+                    }
+                    else if (element.children.length === 0 || Array.from(element.children).every((item: HTMLElement) => INLINE_CHROME.includes(item.tagName))) {
+                        name = element.innerText.trim();
+                        value = element.innerHTML.trim();
+                    }
+                    if (hasValue(value)) {
+                        Resource.addString(value, name);
+                        (<any> element).__valueString = value;
+                    }
                 }
             }
         });

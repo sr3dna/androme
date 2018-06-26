@@ -3,14 +3,15 @@ import List from '../../extension/list';
 import { VIEW_STANDARD } from '../../lib/constants';
 import parseRTL from '../localization';
 
-export default class ListExt<T extends View> extends List {
-    constructor(tagNames: string[], extension = '', options = {}) {
-        super(tagNames, extension, options);
+export default class ListAndroid<T extends View> extends List {
+    constructor(name: string, tagNames: string[], options?: {}) {
+        super(name, tagNames, options);
     }
 
-    public processChild(node: T) {
+    public processChild() {
+        const node = (<T> this.node);
         const controllerHandler = this.application.controllerHandler;
-        const options = node.options(this.extension || 'androme.list');
+        const options = node.options(this.name);
         if (options && options.listStyle != null) {
             controllerHandler.prependBefore(
                 node.id,

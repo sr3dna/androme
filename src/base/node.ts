@@ -7,7 +7,7 @@ type T = Node;
 
 export default abstract class Node implements BoxModel {
     public depth: number = -1;
-    public style: StringMap = {};
+    public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
     public visible: boolean = true;
     public companion: boolean = false;
@@ -18,6 +18,7 @@ export default abstract class Node implements BoxModel {
     public renderDepth: number;
     public viewId: string;
     public renderExtension: any;
+    public ignoreResource: number = 0;
 
     public gridRowSpan: number = 0;
     public gridColumnSpan: number = 0;
@@ -36,6 +37,7 @@ export default abstract class Node implements BoxModel {
 
     protected _viewName: string;
 
+    private _element: HTMLElement;
     private _flex: any;
     private _namespaces = new Set<string>();
     private _overflow: OVERFLOW_CHROME;
@@ -47,20 +49,21 @@ export default abstract class Node implements BoxModel {
 
     constructor(
         public id: number,
-        public element?: HTMLElement | null,
+        element?: HTMLElement | null,
         options?: {})
     {
         Object.assign(this, options);
-        if (element != null || (options && (<any> options).element != null)) {
-            const object: any = this.element;
-            if (this.element instanceof HTMLElement) {
+        if (element != null) {
+            const object: any = element;
+            if (element instanceof HTMLElement) {
                 const styleMap = object.__styleMap || {};
-                for (const inline of Array.from(this.element.style)) {
-                    styleMap[hyphenToCamelCase(inline)] = this.element.style[inline];
+                for (const inline of Array.from(element.style)) {
+                    styleMap[hyphenToCamelCase(inline)] = element.style[inline];
                 }
-                this.style = object.__style || getComputedStyle(this.element);
+                this.style = object.__style || getComputedStyle(element);
                 this.styleMap = styleMap;
             }
+            this._element = element;
             object.__node = this;
         }
     }
@@ -170,10 +173,11 @@ export default abstract class Node implements BoxModel {
     }
 
     public inheritStyle(node: T) {
+        const style = this.style || this.styleMap;
         for (const attr in node.style) {
             if (attr.startsWith('font') || attr.startsWith('color')) {
                 const key = hyphenToCamelCase(attr);
-                this.style[key] = node.style[key];
+                style[key] = node.style[key];
             }
         }
     }
@@ -216,12 +220,12 @@ export default abstract class Node implements BoxModel {
         if (arguments.length === 2) {
             this.styleMap[attr] = (hasValue(value) ? value : '');
         }
-        return this.styleMap[attr] || this.style[attr] || '';
+        return this.styleMap[attr] || (this.style && this.style[attr]) || '';
     }
 
     public setBounds(calibrate: boolean = false, element?: HTMLElement) {
         if (!calibrate) {
-            const bounds = (element != null ? getRangeBounds(element) : (this.element != null ? assignBounds(this.element.getBoundingClientRect()) : null));
+            const bounds = (element != null ? getRangeBounds(element) : (this.hasElement ? assignBounds(this.element.getBoundingClientRect()) : null));
             if (bounds != null) {
                 this.bounds = bounds;
             }
@@ -322,7 +326,7 @@ export default abstract class Node implements BoxModel {
         this._tagName = value;
     }
     get tagName() {
-        return this._tagName || (this.element != null ? (this.element.tagName === 'INPUT' ? (<HTMLInputElement> this.element).type.toUpperCase() : this.element.tagName) : '');
+        return this._tagName || (this.hasElement ? (this.element.tagName === 'INPUT' ? (<HTMLInputElement> this.element).type.toUpperCase() : this.element.tagName) : '');
     }
 
     set viewName(value) {
@@ -342,8 +346,16 @@ export default abstract class Node implements BoxModel {
         return this._renderParent;
     }
 
+    get element() {
+        return this._element || {};
+    }
+
+    get hasElement() {
+        return (this._element != null);
+    }
+
     get parentElement() {
-        return this.element && this.element.parentElement;
+        return this._element && this._element.parentElement;
     }
 
     get namespaces() {
@@ -352,24 +364,28 @@ export default abstract class Node implements BoxModel {
 
     get flex() {
         if (this._flex == null) {
-            const parent = this.parentOriginal;
-            this._flex = {
-                enabled: (this.style.display && this.style.display.indexOf('flex') !== -1),
-                direction: this.style.flexDirection,
-                basis: this.style.flexBasis,
-                grow: convertInt(this.style.flexGrow),
-                shrink: convertInt(this.style.flexShrink),
-                wrap: this.style.flexWrap,
-                alignSelf: (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || this.style.alignSelf === 'auto') ? parent.styleMap.alignItems : this.style.alignSelf),
-                justifyContent: this.style.justifyContent,
-                order: convertInt(this.style.order)
-            };
+            const style = this.style;
+            if (style != null) {
+                const parent = this.parentOriginal;
+                this._flex = {
+                    enabled: (style.display && style.display.indexOf('flex') !== -1),
+                    direction: style.flexDirection,
+                    basis: style.flexBasis,
+                    grow: convertInt(style.flexGrow),
+                    shrink: convertInt(style.flexShrink),
+                    wrap: style.flexWrap,
+                    alignSelf: (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf),
+                    justifyContent: style.justifyContent,
+                    order: convertInt(style.order)
+                };
+            }
         }
-        return this._flex;
+        return this._flex || {};
     }
 
     get floating() {
-        return (this.style.float === 'left' || this.style.float === 'right');
+        const float = (this.style != null ? (<any> this.style).float : '');
+        return (float === 'left' || float === 'right');
     }
 
     get fixed() {
@@ -379,11 +395,11 @@ export default abstract class Node implements BoxModel {
     get overflow() {
         if (this._overflow == null) {
             let value = OVERFLOW_CHROME.NONE;
-            if (this.element != null) {
-                if (this.style.overflow === 'scroll' || (this.style.overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+            if (this.hasElement) {
+                if (this.css('overflow') === 'scroll' || (this.css('overflowX') === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
                     value |= OVERFLOW_CHROME.HORIZONTAL;
                 }
-                if (this.style.overflow === 'scroll' || (this.style.overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+                if (this.css('overflow') === 'scroll' || (this.css('overflowY') === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
                     value |= OVERFLOW_CHROME.VERTICAL;
                 }
             }

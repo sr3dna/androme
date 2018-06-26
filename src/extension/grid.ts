@@ -9,18 +9,18 @@ type T = Node;
 type U = NodeList<T>;
 
 export default class Grid extends Extension<T, U> {
-    constructor(tagNames: string[], extension?: string, options?: {}) {
-        super(tagNames, extension, options);
+    constructor(name: string, tagNames: string[], options?: {}) {
+        super(name, tagNames, options);
     }
 
     public condition() {
         return (
-            super.condition() ||
+            this.included() ||
             (!this.node.flex.enabled && this.node.children.length > 1 && this.node.children.every(node => !node.flex.enabled && this.node.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right')))
         );
     }
 
-    public render(mapX: ObjectIndex, mapY: ObjectIndex) {
+    public processNode(mapX: ObjectIndex, mapY: ObjectIndex) {
         let xml = '';
         let columns: any[][] = [];
         const columnEnd: number[] = [];
@@ -175,7 +175,7 @@ export default class Grid extends Extension<T, U> {
         if (columns.length > 1) {
             this.node.gridColumnEnd = columnEnd;
             this.node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
-            xml = this.application.writeGridLayout(this.node, this.parent, this.node.gridColumnCount);
+            xml = this.application.writeGridLayout(this.node, (<T> this.parent), this.node.gridColumnCount);
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
                 for (let m = 0, start = 0; m < columns[l].length; m++) {
@@ -233,24 +233,24 @@ export default class Grid extends Extension<T, U> {
                 }
             }
         }
-        return xml;
+        return [xml, false];
     }
 
-    public processChild(node: T) {
+    public processChild() {
         let xml = '';
         let siblings: T[];
+        const parent = (<T> this.parent);
         if (this.options && this.options.balanceColumns) {
-            siblings = node.gridSiblings;
+            siblings = this.node.gridSiblings;
         }
         else {
-            const columnEnd = this.parent.gridColumnEnd[node.gridIndex + node.gridColumnSpan];
-            siblings = node.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= node.bounds.right && item.bounds.right <= columnEnd);
+            const columnEnd = parent.gridColumnEnd[this.node.gridIndex + this.node.gridColumnSpan];
+            siblings = this.node.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= this.node.bounds.right && item.bounds.right <= columnEnd);
         }
         if (siblings != null && siblings.length > 0) {
-            const parent = this.parent;
-            siblings.unshift(node);
+            siblings.unshift(this.node);
             sortAsc(siblings, 'bounds.x');
-            const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
+            const viewGroup = this.application.controllerHandler.createGroup(this.node, parent, siblings);
             this.application.cache.list.push(viewGroup);
             const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
             if (linearX || linearY) {

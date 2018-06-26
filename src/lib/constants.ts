@@ -21,6 +21,16 @@ export enum VIEW_STANDARD {
     SPACE
 }
 
+export enum VIEW_RESOURCE {
+    BOX_STYLE = 2,
+    BOX_SPACING = 4,
+    FONT_STYLE = 8,
+    VALUE_STRING = 16,
+    OPTION_ARRAY = 32,
+    IMAGE_SOURCE = 64,
+    ALL = 126
+}
+
 export enum BOX_STANDARD {
     MARGIN_TOP = 2,
     MARGIN_RIGHT = 4,
