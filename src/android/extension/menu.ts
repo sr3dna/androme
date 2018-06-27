@@ -3,7 +3,6 @@ import View from '../view';
 import Menu from '../../extension/menu';
 import Resource from '../../base/resource';
 import { BLOCK_CHROME, VIEW_RESOURCE } from '../../lib/constants';
-import SETTINGS from '../../settings';
 
 enum VIEW_STATIC {
     MENU = 'menu',
@@ -169,7 +168,7 @@ export default class MenuAndroid<T extends View> extends Menu {
             if (value != null && validator[attr] != null) {
                 const match = value.match(validator[attr]);
                 if (match != null) {
-                    const namespace = (SETTINGS.useAppCompatLibrary && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
+                    const namespace = (this.options && this.options.nsAppCompat && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
                     options[namespace][attr] = Array.from(new Set(match)).join('|');
                 }
             }

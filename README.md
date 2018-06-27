@@ -75,7 +75,7 @@ These settings are available in the global variable "androme" to customize your 
 androme.settings = {
     targetAPI: androme.build.OREO,
     density: androme.density.MDPI,
-    useAppCompatLibrary: true,
+    useConstraintLayout: true,
     useConstraintChain: true,
     useConstraintGuideline: true,
     useUnitDP: true,

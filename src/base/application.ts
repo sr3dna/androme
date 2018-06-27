@@ -525,7 +525,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public writeDefaultLayout(node: T, parent: T) {
-        if (SETTINGS.useAppCompatLibrary || node.flex.enabled) {
+        if (SETTINGS.useConstraintLayout || node.flex.enabled) {
             return this.writeConstraintLayout(node, parent);
         }
         else {

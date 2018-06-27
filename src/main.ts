@@ -22,7 +22,7 @@ const EXTENSIONS = {
     'grid': new Grid('androme.grid', [], { balanceColumns: true }),
     'hidden': new Hidden('androme.hidden', []),
     'list': new List('androme.list', ['UL', 'OL']),
-    'menu': new Menu('androme.menu', ['NAV']),
+    'menu': new Menu('androme.menu', ['NAV'], { nsAppCompat: true }),
     'table': new Table('androme.table', ['TABLE'])
 };
 

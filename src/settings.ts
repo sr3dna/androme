@@ -3,7 +3,7 @@ import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 export default {
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
-    useAppCompatLibrary: true,
+    useConstraintLayout: true,
     useConstraintChain: true,
     useConstraintGuideline: true,
     useUnitDP: true,

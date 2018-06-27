@@ -5,7 +5,8 @@
   "scripts": {
     "express": "node app.js",
     "dev": "tsc -w",
-    "prod": "tslint -c tslint.json 'src/**/*.ts' && tsc --inlineSourceMap false && rollup -c rollup.config.js"
+    "prod": "tslint -c tslint.json 'src/**/*.ts' && tsc --inlineSourceMap false && rollup -c rollup.config.js",
+    "clean": "rimraf build/* && rimraf dist/* && rimraf temp/*"
   },
   "repository": {
     "type": "git",
@@ -60,6 +61,7 @@
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.7.0",
     "nodemon": "^1.17.5",
+    "rimraf": "^2.6.2",
     "rollup": "^0.59.4",
     "rollup-plugin-babel": "^3.0.4",
     "rollup-plugin-babel-minify": "^5.0.0",
