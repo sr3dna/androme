@@ -378,6 +378,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                         if (previous != null) {
                                             chain.app(LAYOUT[CHAIN_MAP['leftRightTopBottom'][index]], previous.stringId);
+                                            chain.constraint[`margin${HV}`] = previous.stringId;
                                         }
                                         if (chain.styleMap[dimension] == null) {
                                             const minW = chain.styleMap[`min${WH}`];
@@ -501,9 +502,19 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         if (flex.enabled && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
                                             firstNode.app(chainStyle, 'spread_inside');
                                         }
-                                        else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
+                                        else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || firstNode.linear.left === node.box.left || lastNode.linear.right === node.box.right) {
                                             firstNode.app(chainStyle, 'packed');
-                                            firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${orientation}Bias`]);
+                                            let bias = '';
+                                            if (firstNode.linear.left === node.box.left) {
+                                                bias = '0';
+                                            }
+                                            else if (lastNode.linear.right === node.box.right) {
+                                                bias = '1';
+                                            }
+                                            else {
+                                                bias = firstNode[`${orientation}Bias`];
+                                            }
+                                            firstNode.app(`layout_constraint${HV}_bias`, bias);
                                             this.adjustMargins(chainDirection.list);
                                         }
                                         else {

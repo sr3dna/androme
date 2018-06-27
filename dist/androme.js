@@ -1,4 +1,4 @@
-/* androme 1.7.12
+/* androme 1.7.13
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -3080,6 +3080,7 @@
                                             }
                                             if (previous != null) {
                                                 chain.app(LAYOUT[CHAIN_MAP['leftRightTopBottom'][index]], previous.stringId);
+                                                chain.constraint[`margin${HV}`] = previous.stringId;
                                             }
                                             if (chain.styleMap[dimension] == null) {
                                                 const minW = chain.styleMap[`min${WH}`];
@@ -3203,9 +3204,19 @@
                                             if (flex.enabled && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
                                                 firstNode.app(chainStyle, 'spread_inside');
                                             }
-                                            else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`]) {
+                                            else if (maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || firstNode.linear.left === node.box.left || lastNode.linear.right === node.box.right) {
                                                 firstNode.app(chainStyle, 'packed');
-                                                firstNode.app(`layout_constraint${HV}_bias`, firstNode[`${orientation}Bias`]);
+                                                let bias = '';
+                                                if (firstNode.linear.left === node.box.left) {
+                                                    bias = '0';
+                                                }
+                                                else if (lastNode.linear.right === node.box.right) {
+                                                    bias = '1';
+                                                }
+                                                else {
+                                                    bias = firstNode[`${orientation}Bias`];
+                                                }
+                                                firstNode.app(`layout_constraint${HV}_bias`, bias);
                                                 this.adjustMargins(chainDirection.list);
                                             }
                                             else {
@@ -5105,9 +5116,6 @@
             return result;
         }
         resourceStringToXml(saveToDisk = false) {
-            if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
-                this.stored.STRINGS.set(this.appName, 'app_name');
-            }
             this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
             let xml = '';
             if (this.stored.STRINGS.size > 0) {
@@ -5118,6 +5126,9 @@
                         }]
                 };
                 const rootItem = getDataLevel(data, '0');
+                if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
+                    rootItem['1'].push({ name: 'app_name', value: this.appName });
+                }
                 for (const [name, value] of this.stored.STRINGS.entries()) {
                     rootItem['1'].push({ name: value, value: name });
                 }

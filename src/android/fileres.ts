@@ -71,9 +71,6 @@ export default class FileRes extends File {
     }
 
     public resourceStringToXml(saveToDisk = false) {
-        if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
-            this.stored.STRINGS.set(this.appName, 'app_name');
-        }
         this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
         let xml = '';
         if (this.stored.STRINGS.size > 0) {
@@ -84,6 +81,9 @@ export default class FileRes extends File {
                 }]
             };
             const rootItem = getDataLevel(data, '0');
+            if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
+                rootItem['1'].push({ name: 'app_name', value: this.appName });
+            }
             for (const [name, value] of this.stored.STRINGS.entries()) {
                 rootItem['1'].push({ name: value, value: name });
             }

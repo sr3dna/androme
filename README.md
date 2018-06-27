@@ -1,10 +1,12 @@
 ## androme
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Usually you write about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS will also be supported once the Android version has stabilized. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
-Multiple views per page are supported similiar to iOS Storyboards with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser.
+Multiple views per page are supported with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser similiar to iOS Storyboards.
 
 Layout rendering can also be customized using extensions as the program was built to be nearly completely modular. Some of the common layouts already have built-in extensions which you can load or unload based on your preference.
+
+The ratio is about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application.
 
 ## INSTALLATION (global js variable: androme)
 
@@ -101,13 +103,13 @@ You can preview the library with the provided /demos/*.html which should generat
 
 Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios. To use Constraint circle for placement you have to disable "useConstraintGuideline".
 
-Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Most people prefer not to use tables in HTML although for mobile devices it will generate a very efficient GridLayout with androme and probably will perform faster than ConstraintLayout.
+Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using HTML tables is recommended for most applications as it will generate a very efficient GridLayout. Performance is probably faster than ConstraintLayout and also more accurate.
 
 <img src="demos/android/form.png" alt="form" />
 
-Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is support for most of the common floating techniques.
-
 ### standard
+
+Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for most of the common floating techniques.
 
 <img src="demos/android/flexbox.png" alt="flexbox: horizontal" />
 
