@@ -27,9 +27,19 @@ export function assignBounds(bounds: ClientRect): ClientRect {
     };
 }
 
-export function getStyle(element: HTMLElement) {
+export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaration {
     const object = (<any> element);
-    return (object.__node != null ? (<CSSStyleDeclaration> object.__node.style) : getComputedStyle(element));
+    if (cache) {
+        if (object.__style != null) {
+            return object.__style;
+        }
+        else if (object.__node != null && object.__node.style != null) {
+            return object.__node.style;
+        }
+    }
+    const style = getComputedStyle(element);
+    object.__style = style;
+    return style;
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {

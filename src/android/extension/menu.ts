@@ -72,22 +72,24 @@ export default class MenuAndroid<T extends View> extends Menu {
         let title = '';
         if (node.children.some(item => BLOCK_CHROME.includes(item.tagName))) {
             if (node.children.some(item => item.tagName === 'NAV')) {
-                node.children.some(item => {
-                    const child = item.element;
-                    if (child != null) {
+                if (element.title !== '') {
+                    title = element.title.trim();
+                }
+                else {
+                    node.children.some(item => {
+                        const child = item.element;
                         if (child.nodeName === '#text' && child.textContent != null && child.textContent.trim() !== '') {
                             title = child.textContent.trim();
-                            item.hide();
                             return true;
                         }
                         else if (child.tagName !== 'NAV') {
                             title = child.innerText.trim();
-                            item.hide();
                             return true;
                         }
-                    }
-                    return false;
-                });
+                        return false;
+                    });
+                }
+                node.children.forEach(item => item.tagName !== 'NAV' && item.hide());
             }
             else if (node.tagName === 'NAV') {
                 viewName = VIEW_STATIC.MENU;
@@ -115,19 +117,23 @@ export default class MenuAndroid<T extends View> extends Menu {
                 node.hide();
                 return ['', false];
             }
-            else {
-                title = element.innerText.trim();
-            }
+            title = (element.title !== '' ? element.title : element.innerText).trim();
         }
         switch (viewName) {
             case VIEW_STATIC.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') == null) {
-                    const image = node.children.find(item => item.element.tagName === 'IMG');
-                    if (image != null) {
-                        const object = (<any> image.element);
-                        object.__imageSourcePrefix = 'ic_menu_';
-                        object.__imageSourceTarget = { node, namespace: 'android', attribute: 'icon' };
+                    const resourceName = Resource.addImageURL((<any> element.style).backgroundImage, 'ic_menu_');
+                    if (resourceName !== '') {
+                        options.android.icon = `@drawable/${resourceName}`;
+                    }
+                    else {
+                        const image = node.children.find(item => item.element.tagName === 'IMG');
+                        if (image != null) {
+                            const object = (<any> image.element);
+                            object.__imageSourcePrefix = 'ic_menu_';
+                            object.__imageSourceTarget = { node, namespace: 'android', attribute: 'icon' };
+                        }
                     }
                 }
                 break;

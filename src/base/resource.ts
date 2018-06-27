@@ -3,7 +3,7 @@ import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
 import { INLINE_CHROME, VIEW_RESOURCE } from '../lib/constants';
-import { cameltoLowerCase, convertPX, generateId, getFileExt, getFileName, hasValue, isNumber } from '../lib/util';
+import { cameltoLowerCase, convertPX, generateId, getFileExt, getFileName, hasValue, isNumber, resolveRelativePath } from '../lib/util';
 import { findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, sameAsParent } from '../lib/dom';
 import SETTINGS from '../settings';
@@ -66,6 +66,14 @@ export default abstract class Resource<T extends Node> {
             }
         }
         return src;
+    }
+
+    public static addImageURL(value: string, prefix: string = '') {
+        const match = value.match(/^url\("(.*?)"\)$/);
+        if (match != null) {
+            return Resource.addImage({ 'mdpi': resolveRelativePath(match[1]) }, prefix);
+        }
+        return '';
     }
 
     public static addColor(value: string, hex = true) {
@@ -168,7 +176,7 @@ export default abstract class Resource<T extends Node> {
                         borderLeft: this.parseBorderStyle,
                         borderRadius: this.parseBorderRadius,
                         backgroundColor: parseRGBA,
-                        backgroundImage: this.parseImageURL,
+                        backgroundImage: Resource.addImageURL,
                         backgroundSize: this.parseBoxDimensions
                     };
                     for (const i in result) {
@@ -396,13 +404,5 @@ export default abstract class Resource<T extends Node> {
             }
         }
         return [];
-    }
-
-    private parseImageURL(value: string) {
-        const match = value.match(/^url\("(.*?)"\)$/);
-        if (match != null) {
-            return Resource.addImage({ 'mdpi': match[1] });
-        }
-        return '';
     }
 }
