@@ -1,6 +1,6 @@
 ## androme
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS and Xamarin Forms can also be supported once the Android version is stable. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Usually you write about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
 Multiple views per page are supported similiar to iOS Storyboards with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser.
 
@@ -74,7 +74,6 @@ androme.settings = {
     targetAPI: androme.build.OREO,
     density: androme.density.MDPI,
     useAppCompatLibrary: true,
-    useConstraintLayout: true,
     useConstraintChain: true,
     useConstraintGuideline: true,
     useUnitDP: true,
@@ -106,13 +105,13 @@ Most layout issues are probably due to layout_width and layout_height not being 
 
 <img src="demos/android/form.png" alt="form" />
 
-Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. Doing things from the "left" perspective is preferred and to use single row flexbox layouts instead of floating "right". There is support for basic floating and there are plans to support most of the common floating techniques.
+Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is support for most of the common floating techniques.
 
 ### standard
 
 <img src="demos/android/flexbox.png" alt="flexbox: horizontal" />
 
-<img src="demos/android/flexbox_vertical.png" alt="flexbox: vertical" />
+<img src="demos/android/flexbox_wrap.png" alt="flexbox: wrap" />
 
 <img src="demos/android/float.png" alt="float: left | right | clear" />
 

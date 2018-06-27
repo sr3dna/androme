@@ -10,7 +10,7 @@ type U = NodeList<T>;
 export default abstract class Menu extends Extension<T, U> {
     constructor(name: string, tagNames: string[], options?: {}) {
         super(name, tagNames, options);
-        this.dependencies = ['androme.hidden'];
+        this.require('androme.hidden');
     }
 
     public init(element: HTMLElement) {

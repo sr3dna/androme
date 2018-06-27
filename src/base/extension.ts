@@ -1,4 +1,4 @@
-import { IExtension, ObjectIndex } from '../lib/types';
+import { IExtension, ObjectIndex, ObjectMap } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
@@ -9,13 +9,13 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     public parent: T | undefined;
     public element: HTMLElement | undefined;
     public tagNames: string[] = [];
-    public dependencies: string[] = [];
     public enabled: boolean = true;
+    public dependencies: Set<string> = new Set();
 
     constructor(
         public name: string,
         tagNames: string[] = [],
-        public options?: any)
+        public options: ObjectMap<any> = {})
     {
         this.tagNames = tagNames.map(value => value.trim().toUpperCase());
     }
@@ -76,12 +76,16 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         return false;
     }
 
-    public processNode(mapX?: ObjectIndex, mapY?: ObjectIndex): any[] {
+    public processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): (string | boolean)[] {
         return ['', false];
     }
 
-    public processChild(mapX?: ObjectIndex, mapY?: ObjectIndex): any[] {
+    public processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): (string | boolean)[] {
         return ['', false];
+    }
+
+    public require(value: string) {
+        this.dependencies.add(value.trim());
     }
 
     get linearX() {

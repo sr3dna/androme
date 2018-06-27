@@ -20,7 +20,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     private cacheInternal: U;
     private ids: string[] = [];
     private views: string[] = [];
-    private _extensions: Array<Extension<T, U>> = [];
+    private _extensions: Extension<T, U>[] = [];
     private _closed: boolean = false;
 
     constructor(
@@ -48,6 +48,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             found.options = extension.options;
         }
         else {
+            extension.application = this;
             this._extensions.push(extension);
         }
     }
@@ -193,7 +194,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cache.parent = undefined;
         this.cache.clear();
         this.extensions.forEach(item => {
-            item.application = this;
             item.parent = undefined;
             item.node = (<T> this.cache.parent);
             item.element = layoutRoot;
@@ -371,8 +371,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public setLayoutXml() {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
-        const mapX: ObjectIndex = [];
-        const mapY: ObjectIndex = [];
+        const mapX: ObjectIndex<{}> = [];
+        const mapY: ObjectIndex<{}> = [];
         this.cache.list.forEach(node => {
             const x = Math.floor((<number> node.bounds.x));
             const y = node.parent.id;
@@ -422,7 +422,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         let xml = '';
                         this.extensions.some(item => {
                             if (nodeY.renderExtension == null && item.is(nodeY.tagName)) {
-                                item.application = this;
                                 item.node = nodeY;
                                 item.parent = parent;
                                 if (item.condition()) {
@@ -526,7 +525,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public writeDefaultLayout(node: T, parent: T) {
-        if (SETTINGS.useConstraintLayout || node.flex.enabled) {
+        if (SETTINGS.useAppCompatLibrary || node.flex.enabled) {
             return this.writeConstraintLayout(node, parent);
         }
         else {
@@ -592,7 +591,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return this._extensions.filter(item => item.enabled);
     }
 
-    public get viewData(): ArrayMap {
+    public get viewData(): ArrayMap<T | string> {
         return { cache: this.cacheInternal.list, ids: this.ids, views: this.views, pathnames: this.pathnames };
     }
 

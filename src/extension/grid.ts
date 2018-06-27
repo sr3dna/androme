@@ -20,7 +20,7 @@ export default class Grid extends Extension<T, U> {
         );
     }
 
-    public processNode(mapX: ObjectIndex, mapY: ObjectIndex) {
+    public processNode(mapX: ObjectIndex<{}>, mapY: ObjectIndex<{}>) {
         let xml = '';
         let columns: any[][] = [];
         const columnEnd: number[] = [];

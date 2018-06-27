@@ -1,4 +1,4 @@
-import { BoxModel, BoxRect, ClientRect, Point, StringMap } from '../lib/types';
+import { BoxModel, BoxRect, ClientRect, Flexbox, Point, StringMap } from '../lib/types';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
@@ -38,7 +38,7 @@ export default abstract class Node implements BoxModel {
     protected _viewName: string;
 
     private _element: HTMLElement;
-    private _flex: any;
+    private _flex: Flexbox;
     private _namespaces = new Set<string>();
     private _overflow: OVERFLOW_CHROME;
     private _parent: T;
@@ -368,14 +368,14 @@ export default abstract class Node implements BoxModel {
             if (style != null) {
                 const parent = this.parentOriginal;
                 this._flex = {
-                    enabled: (style.display && style.display.indexOf('flex') !== -1),
-                    direction: style.flexDirection,
-                    basis: style.flexBasis,
+                    enabled: ((<string> style.display).indexOf('flex') !== -1),
+                    direction: (<string> style.flexDirection),
+                    basis: (<string> style.flexBasis),
                     grow: convertInt(style.flexGrow),
                     shrink: convertInt(style.flexShrink),
-                    wrap: style.flexWrap,
-                    alignSelf: (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf),
-                    justifyContent: style.justifyContent,
+                    wrap: (<string> style.flexWrap),
+                    alignSelf: (<string> (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
+                    justifyContent: (<string> style.justifyContent),
                     order: convertInt(style.order)
                 };
             }

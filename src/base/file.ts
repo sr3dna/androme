@@ -17,8 +17,8 @@ export default abstract class File {
         }
     }
 
-    public abstract saveAllToDisk(data: ArrayMap): void;
-    public abstract layoutAllToXml(data: ArrayMap, saveToDisk?: boolean): {};
+    public abstract saveAllToDisk(data: ArrayMap<any>): void;
+    public abstract layoutAllToXml(data: ArrayMap<any>, saveToDisk?: boolean): {};
     public abstract resourceAllToXml(saveToDisk?: boolean): {};
     public abstract resourceStringToXml(saveToDisk?: boolean): string;
     public abstract resourceStringArrayToXml(saveToDisk?: boolean): string;

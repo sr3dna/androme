@@ -25,7 +25,8 @@
     "no-bitwise": false,
     "no-console": false,
     "no-empty": false,
-    "interface-name": false
+    "interface-name": false,
+    "array-type": [true, "array"]
   },
   "rulesDirectory": []
 }

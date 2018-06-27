@@ -1,21 +1,21 @@
 export interface IExtension {
-    application: any;
     name: string;
+    application: any;
     node: any;
     parent: any;
     element: HTMLElement | undefined;
     tagNames: string[];
-    dependencies: string[];
     enabled: boolean;
-    options?: any;
+    options: {};
     is(tagName: string): void;
+    require(value: string): void;
     included(element?: HTMLElement): boolean;
     beforeInit(): void;
     init(element: HTMLElement): boolean;
     afterInit(): void;
     condition(): void;
-    processNode(mapX?: any, mapY?: any): any[];
-    processChild(mapX?: any, mapY?: any): any[];
+    processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): (string | boolean)[];
+    processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): (string | boolean)[];
     afterRender(): void;
 }
 
@@ -59,6 +59,18 @@ export interface Point {
     y: number;
 }
 
+export interface Flexbox {
+    enabled: boolean;
+    direction: string;
+    basis: string;
+    grow: number;
+    shrink: number;
+    wrap: string;
+    alignSelf: string;
+    justifyContent: string;
+    order: number;
+}
+
 export interface BorderAttribute {
     style: string;
     width: string;
@@ -76,27 +88,27 @@ export interface StringMap {
     [key: string]: string;
 }
 
-export interface ObjectMap {
-    [key: string]: {};
+export interface ObjectMap<T> {
+    [key: string]: T;
 }
 
-export interface ArrayMap {
-    [key: string]: any[];
+export interface ArrayMap<T> {
+    [key: string]: T[];
 }
 
-export interface ObjectIndex {
-    [key: number]: {};
+export interface ObjectIndex<T> {
+    [key: number]: T;
     length: number;
 }
 
 export interface ResourceMap {
     STRINGS: Map<string, string>;
     ARRAYS: Map<string, string[]>;
-    FONTS: Map<string, any>;
+    FONTS: Map<string, {}>;
     COLORS: Map<string, string>;
     STYLES: Map<string, any>;
     DRAWABLES: Map<string, string>;
-    IMAGES: Map<string, any>;
+    IMAGES: Map<string, {}>;
 }
 
 export type RegExpNull = RegExpExecArray | null;

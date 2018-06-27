@@ -1,4 +1,4 @@
-import { BorderAttribute, ObjectIndex, ObjectMap, ResourceMap } from '../lib/types';
+import { BorderAttribute, ObjectMap, ResourceMap } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -77,8 +77,8 @@ interface TagStyle {
 }
 
 export default class ResourceView extends Resource<T> {
-    private tagStyle: ObjectMap = {};
-    private tagCount: {} = {};
+    private tagStyle: ObjectMap<any> = {};
+    private tagCount: ObjectMap<number> = {};
 
     constructor(file: File) {
         super(file);
@@ -128,8 +128,8 @@ export default class ResourceView extends Resource<T> {
                     stored.backgroundColor = label.element.__boxStyle.backgroundColor;
                 }
                 if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
-                    let template: ObjectMap;
-                    let data: ObjectMap;
+                    let template: ObjectMap<string>;
+                    let data: ObjectMap<any>;
                     let resourceName = '';
                     if (stored.border != null && stored.backgroundImage === '') {
                         template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
@@ -279,10 +279,9 @@ export default class ResourceView extends Resource<T> {
                         delete stored.fontWeight;
                     }
                     if (!system) {
-                        if (!STORED.FONTS.has(fontFamily)) {
-                            STORED.FONTS.set(fontFamily, {});
-                        }
-                        STORED.FONTS.get(fontFamily)[`${fontStyle}-${fontWeight}`] = true;
+                        const fonts = STORED.FONTS.get(fontFamily) || {};
+                        Object.assign(fonts, { [`${fontStyle}-${fontWeight}`]: true });
+                        STORED.FONTS.set(fontFamily, fonts);
                     }
                 }
                 const method = METHOD_ANDROID['fontStyle'];
@@ -302,7 +301,7 @@ export default class ResourceView extends Resource<T> {
                 }
             });
             if (this.tagStyle[tag] != null) {
-                const tagStyle = (<ObjectIndex> this.tagStyle[tag]);
+                const tagStyle = this.tagStyle[tag];
                 for (let i = 0; i < tagStyle.length; i++) {
                     for (const attr in tagStyle[i]) {
                         if (sorted[i][attr] != null) {
@@ -471,7 +470,7 @@ export default class ResourceView extends Resource<T> {
                             }
                             else if (ids.length === 1) {
                                 layoutKey[attr1] = ids;
-                                sorted[i] = null;
+                                sorted[i][attr1] = null;
                                 revalidate = true;
                             }
                             if (!revalidate) {

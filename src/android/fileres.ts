@@ -17,7 +17,7 @@ export default class FileRes extends File {
         super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
     }
 
-    public saveAllToDisk(data: ArrayMap) {
+    public saveAllToDisk(data: ArrayMap<any>) {
         const files: PlainFile[] = [];
         for (let i = 0; i < data.views.length; i++) {
             files.push(this.getLayoutFile(data.pathnames[i], (i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
@@ -32,7 +32,7 @@ export default class FileRes extends File {
         this.saveToDisk(files);
     }
 
-    public layoutAllToXml(data: ArrayMap, saveToDisk = false) {
+    public layoutAllToXml(data: ArrayMap<any>, saveToDisk = false) {
         const result: StringMap = {};
         const files: PlainFile[] = [];
         for (let i = 0; i < data.views.length; i++) {
