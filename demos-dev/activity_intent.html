@@ -26,8 +26,8 @@
                 if ((count % 2) == 1) {
                     div.style.fontStyle = 'italic';
                 }
-                div.id = 'activity-' + ++count;
-                div.innerHTML = count + ': androme.parseDocument("activity-' + count + '");';
+                div.id = 'activity_' + ++count;
+                div.innerHTML = count + ': androme.parseDocument("activity_' + count + '");';
                 document.getElementById('main').appendChild(div);
                 androme.parseDocument(div.id);
             }

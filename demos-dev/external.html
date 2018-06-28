@@ -20,13 +20,13 @@
     <script src="common/dev.js"></script>
     <script>
         function showHidden() {
-            document.querySelectorAll('#androme-root > div').forEach(function(element) {
+            document.querySelectorAll('#androme_root > div').forEach(function(element) {
                 element.style.display = '';
             });
         }
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.parseDocument('androme-root');
+            androme.parseDocument('androme_root');
             androme.close();
 
             const views = androme.writeLayoutAllXml();
@@ -35,25 +35,24 @@
                 output += views[i] + '\n';
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
-                             androme.writeResourceStyleXml() + '\n\n' +
+            const resource = androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
-    <div id="androme-root">
+    <div id="androme_root">
         <div>
             1
         </div>
-        <div data-extension="androme.hidden" style="display: none;">
+        <div data-extension="androme.external" style="display: none;">
             2
         </div>
         <div>
             3
         </div>
-        <div data-extension="androme.hidden" style="display: none;">
+        <div data-extension="androme.external" style="display: none;">
             4
         </div>
         <div>

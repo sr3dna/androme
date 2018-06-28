@@ -27,7 +27,7 @@
         System.import('/build/main.js').then(function(result) {
             androme = result;
             androme.settings.useLayoutWeight = true;
-            androme.parseDocument('androme-root');
+            androme.parseDocument('androme_root');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -41,7 +41,7 @@
 </head>
 <body>
     <div style="width: 500px;">
-        <ul id="androme-root">
+        <ul id="androme_root">
             <li>
                 <span>1</span>
                 <span>1111</span>

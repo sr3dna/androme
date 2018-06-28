@@ -1,3 +1,4 @@
+import { ExtensionResult } from '../../lib/types';
 import View from '../view';
 import List from '../../extension/list';
 import { VIEW_STANDARD } from '../../lib/constants';
@@ -8,7 +9,7 @@ export default class ListAndroid<T extends View> extends List {
         super(name, tagNames, options);
     }
 
-    public processChild() {
+    public processChild(): ExtensionResult {
         const node = (<T> this.node);
         const controllerHandler = this.application.controllerHandler;
         const options = node.options(this.name);

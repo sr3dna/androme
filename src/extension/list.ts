@@ -1,3 +1,4 @@
+import { ExtensionResult } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -18,7 +19,7 @@ export default abstract class List extends Extension<T, U> {
         );
     }
 
-    public processNode() {
+    public processNode(): ExtensionResult {
         let xml = '';
         if (this.linearY) {
             xml = this.application.writeGridLayout(this.node, (<T> this.parent), 2);

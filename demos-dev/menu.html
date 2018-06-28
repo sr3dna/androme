@@ -49,12 +49,12 @@
     <script src="common/dev.js"></script>
     <script>
         function toggleMenu() {
-            const submenu = document.getElementById('menu-demo-sub');
+            const submenu = document.getElementById('menu_demo_sub');
             submenu.style.display = (submenu.style.display == 'block' ? 'none' : 'block');
         }
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.parseDocument('androme-root');
+            androme.parseDocument('androme_root');
             androme.close();
 
             const views = androme.writeLayoutAllXml();
@@ -70,10 +70,10 @@
     </script>
 </head>
 <body>
-    <div id="androme-root" style="width: 200px;">
-        <button onclick="document.getElementById('menu-demo').style.display = 'block';">Show Menu</button>
-        <button onclick="document.getElementById('menu-demo').style.display = 'none';">Hide Menu</button>
-        <nav id="menu-demo" data-extension="androme.menu, androme.hidden">
+    <div id="androme_root" style="width: 200px;">
+        <button onclick="document.getElementById('menu_demo').style.display = 'block';">Show Menu</button>
+        <button onclick="document.getElementById('menu_demo').style.display = 'none';">Hide Menu</button>
+        <nav id="menu_demo" data-extension="androme.menu, androme.external">
             <div
                 style="background: url(../demos/images/pencil-ldpi.png) no-repeat;" title="Item 1"
                 data-id="@+id/menu_item_1"
@@ -95,7 +95,7 @@
             </div>
             <div>
                 <a href="#" onclick="toggleMenu();">Item 4</a>
-                <nav id="menu-demo-sub">
+                <nav id="menu_demo_sub">
                     <ul style="margin: 10px 20px 0px 20px;">
                         <li>
                             Item 7 <input type="radio" name="item_4" />

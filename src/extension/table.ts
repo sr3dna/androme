@@ -1,3 +1,4 @@
+import { ExtensionResult } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -10,7 +11,7 @@ export default class Table extends Extension<T, U> {
         super(name, tagNames, options);
     }
 
-    public processNode() {
+    public processNode(): ExtensionResult {
         const tableRows: T[] = [];
         const thead = this.node.children.find(node => node.tagName === 'THEAD');
         const tbody = this.node.children.find(node => node.tagName === 'TBODY');

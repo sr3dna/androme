@@ -120,7 +120,8 @@ export default class ResourceView extends Resource<T> {
         super.setBoxStyle();
         this.cache.elements.forEach(node => {
             const element = node.element;
-            const stored = (<any> element).__boxStyle;
+            const object = (<any> element);
+            const stored = object.__boxStyle;
             if (stored != null) {
                 const method = METHOD_ANDROID['boxStyle'];
                 const label = (<any> node.label);
@@ -223,7 +224,7 @@ export default class ResourceView extends Resource<T> {
                     }
                     node.attr(formatString(method['background'], resourceName));
                 }
-                else if ((<any> element).__fontStyle == null && stored.backgroundColor.length > 0) {
+                else if (object.__fontStyle == null && stored.backgroundColor.length > 0) {
                     node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
                 }
             }

@@ -37,9 +37,12 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
             return object.__node.style;
         }
     }
-    const style = getComputedStyle(element);
-    object.__style = style;
-    return style;
+    else if (element.nodeName !== '#text') {
+        const style = getComputedStyle(element);
+        object.__style = style;
+        return style;
+    }
+    return (<CSSStyleDeclaration> {});
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {
@@ -74,6 +77,7 @@ export function isVisible(element: HTMLElement) {
     switch (element.tagName) {
         case 'BR':
         case 'OPTION':
+        case 'AREA':
             return false;
     }
     if (typeof element.getBoundingClientRect === 'function') {

@@ -559,7 +559,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         let restart = false;
                         nodes.list.forEach(current => {
                             if (!current.anchored) {
-                                const result = (constraint ? search((<object> current.app()), '*constraint*') : search((<object> current.android()), LAYOUT));
+                                const result = (constraint ? search(<object> current.app(), '*constraint*') : search(<object> current.android(), LAYOUT));
                                 for (const [key, value] of result) {
                                     if (value !== 'parent') {
                                         if (anchors.find(item => item.stringId === value) != null) {
@@ -785,7 +785,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         node.render(renderParent);
         node.setGravity();
         this.setGridSpace(node);
-        return this.getEnclosingTag(node.renderDepth, View.getViewName(viewName), node.id, `{${node.id}}`, preXml, postXml);
+        return this.getEnclosingTag(node.renderDepth, View.getViewName(viewName), node.id, `{:${node.id}}`, preXml, postXml);
     }
 
     public renderView(node: T, parent: T, viewName: number | string, recursive = false) {
@@ -924,6 +924,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         let attributes = '';
         if (SETTINGS.showAttributes) {
             node.apply(options);
+            for (const obj in options) {
+                this.namespaces.add(obj);
+            }
             if (hasValue(width)) {
                 node.android('layout_width', width);
             }
@@ -933,7 +936,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             const indent = padLeft(depth + 1);
             attributes = node.combine().map(value => `\n${indent + value}`).join('');
         }
-        let output = this.getEnclosingTag(depth, viewName, id, (children ? `{${id}}` : ''));
+        let output = this.getEnclosingTag(depth, viewName, id, (children ? `{:${id}}` : ''));
         output = output.replace(`{#${id}}`, attributes);
         return [output, node.stringId];
     }
@@ -945,7 +948,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     public getRootAttributes(options: {}) {
-        return Object.keys(options).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join('');
+        for (const obj in options) {
+            this.namespaces.add(obj);
+        }
+        return Array.from(this.namespaces).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join('');
     }
 
     public getViewName(value: number) {

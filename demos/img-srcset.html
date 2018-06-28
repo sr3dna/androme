@@ -41,7 +41,7 @@
         let images = 0;
         function loaded() {
             if (++images == 2) {
-                androme.parseDocument('androme-root');
+                androme.parseDocument('androme_root');
                 androme.close();
 
                 document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -52,7 +52,7 @@
     </script>
 </head>
 <body>
-    <div id="androme-root" style="text-align: center;">
+    <div id="androme_root" style="text-align: center;">
         <img id="android" src="images/android.png" srcset="images/android-ldpi.png 0.75x,
                                                            images/android.png 1x,
                                                            images/android-hdpi.png 1.5x,

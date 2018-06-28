@@ -1,4 +1,4 @@
-import { ObjectIndex } from '../lib/types';
+import { ExtensionResult, ObjectIndex } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -16,15 +16,15 @@ export default class Grid extends Extension<T, U> {
     public condition() {
         return (
             this.included() ||
-            (!this.node.flex.enabled && this.node.children.length > 1 && this.node.children.every(node => !node.flex.enabled && this.node.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right')))
+            ((this.node.element.dataset == null || this.node.element.dataset.extension == null) && !this.node.flex.enabled && this.node.children.length > 1 && this.node.children.every(node => !node.flex.enabled && this.node.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right')))
         );
     }
 
-    public processNode(mapX: ObjectIndex<{}>, mapY: ObjectIndex<{}>) {
+    public processNode(mapX: ObjectIndex<{}>, mapY: ObjectIndex<{}>): ExtensionResult {
         let xml = '';
         let columns: any[][] = [];
         const columnEnd: number[] = [];
-        const balanceColumns = (this.options && this.options.balanceColumns);
+        const balanceColumns = this.options.balanceColumns;
         if (balanceColumns) {
             const dimensions: number[][] = [];
             for (let l = 0; l < this.node.children.length; l++) {
@@ -236,11 +236,11 @@ export default class Grid extends Extension<T, U> {
         return [xml, false];
     }
 
-    public processChild() {
+    public processChild(): ExtensionResult {
         let xml = '';
         let siblings: T[];
         const parent = (<T> this.parent);
-        if (this.options && this.options.balanceColumns) {
+        if (this.options.balanceColumns) {
             siblings = this.node.gridSiblings;
         }
         else {

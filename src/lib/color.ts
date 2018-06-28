@@ -250,7 +250,7 @@ export function convertRGB({ rgb }: Color) {
     return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 }
 
-export function parseRGBA(value: string | null): string[] {
+export function parseRGBA(value: string): string[] {
     if (value != null) {
         const color = getByColorName(value);
         if (color !== '') {

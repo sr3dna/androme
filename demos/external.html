@@ -36,72 +36,64 @@
             margin-top: 6px;
         }
         body > div:first-child > div {
-            font-size: 20px;
+            width: 200px;
+            color: #fff;
             font-weight: bold;
-            line-height: 100px;
-            text-align: center; 
-            vertical-align: middle; 
-            margin-bottom: 10px;
+            text-align: center;
+            margin: 4px;
+            padding: 10px 0px;
+            background-color: #1B5385;
         }
     </style>
     <script src="../dist/androme.min.js"></script>
     <script>
-        let count = 0;
-        function addView() {
-            if (androme.ready()) {
-                const div = document.createElement('div');
-                div.style.backgroundColor = ['#ddd', '#bbb', '#999', '#777', '#555'][count % 5];
-                if ((count % 2) == 1) {
-                    div.style.fontStyle = 'italic';
-                }
-                div.id = 'activity_' + ++count;
-                div.innerHTML = count + ': androme.parseDocument("activity_' + count + '");';
-                document.getElementById('main').appendChild(div);
-                androme.parseDocument(div.id);
-            }
+        function showHidden() {
+            document.querySelectorAll('#androme_root > div').forEach(function(element) {
+                element.style.display = '';
+            });
         }
-        function closeDocument() {
+        document.addEventListener('DOMContentLoaded', () => {
+            androme.parseDocument('androme_root');
             androme.close();
+
             const views = androme.writeLayoutAllXml();
             let output = '';
             for (const i in views) {
                 output += views[i] + '\n';
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
-                             androme.writeResourceStyleXml() + '\n\n' +
+            const resource = androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
-        }
-        function resetDocument() {
-            count = 0;
-            androme.reset();
-            document.getElementById('main').innerHTML = '';
-            document.getElementById('output').innerHTML = '';
-            document.getElementById('resource').innerHTML = '';
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            addView();
-            addView();
-            addView();
-            addView();
-            addView();
-            closeDocument();
         });
     </script>
 </head>
 <body>
-    <div id="main" style="width: 500px;"></div>
+    <div id="androme_root">
+        <div>
+            1
+        </div>
+        <div data-extension="androme.external" style="display: none;">
+            2
+        </div>
+        <div>
+            3
+        </div>
+        <div data-extension="androme.external" style="display: none;">
+            4
+        </div>
+        <div>
+            5
+        </div>
+    </div>
+    <div style="vertical-align: bottom;"><button onclick="showHidden();">Show Hidden</button></div>
     <div>
         <div class="output">
             <pre id="output"></pre>
             <div>
-                <button onclick="addView();">Add View (1)</button>
-                <button onclick="closeDocument();">Close (2)</button>
-                <button onclick="closeDocument(); androme.saveAllToDisk();">Save All (3)</button>
-                <button onclick="resetDocument();">Reset (4)</button>
-                &nbsp;&nbsp;
                 <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
+                <button onclick="androme.saveAllToDisk();">Save All</button>
             </div>
         </div>
         <div class="output">

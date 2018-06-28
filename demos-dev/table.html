@@ -16,7 +16,7 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.parseDocument('androme-root');
+            androme.parseDocument('androme_root');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -30,7 +30,7 @@
 </head>
 <body>
     <div>
-        <table id="androme-root">
+        <table id="androme_root">
             <thead style="background-color: #ccc;">
                 <tr>
                     <th colspan="4">head 1</th>
@@ -64,7 +64,7 @@
                     <td>4</td>
                     <td>4</td>
                     <td>
-                        <table id="androme-root">
+                        <table id="androme_root">
                             <thead style="background-color: #ccc;">
                                 <tr>
                                     <th colspan="4">head 1</th>

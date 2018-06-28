@@ -10,11 +10,11 @@ type U = NodeList<T>;
 export default abstract class Menu extends Extension<T, U> {
     constructor(name: string, tagNames: string[], options?: {}) {
         super(name, tagNames, options);
-        this.require('androme.hidden');
+        this.require('androme.external');
     }
 
     public init(element: HTMLElement) {
-        if (element && (this.included(element) || this.is(element.tagName))) {
+        if (this.included(element) || this.is(element.tagName)) {
             let valid = false;
             if (element.children.length > 0) {
                 const tagName = element.children[0].tagName;
@@ -32,7 +32,7 @@ export default abstract class Menu extends Extension<T, U> {
                 Array.from(element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                     const style = getStyle(element);
                     if (style.display === 'none') {
-                        (<any> item).__andromeHiddenDisplay = 'none';
+                        (<any> item).__andromeExternalDisplay = 'none';
                         item.style.display = 'block';
                     }
                 });
@@ -46,7 +46,7 @@ export default abstract class Menu extends Extension<T, U> {
     public afterRender() {
         if (this.node != null && this.included(this.node.element)) {
             Array.from(this.node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
-                const display = (<any> item).__andromeHiddenDisplay;
+                const display = (<any> item).__andromeExternalDisplay;
                 if (display != null) {
                     item.style.display = display;
                 }

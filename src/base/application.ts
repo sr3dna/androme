@@ -5,7 +5,7 @@ import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { hasValue, hyphenToCamelCase, replaceDP, resetId, sortAsc } from '../lib/util';
+import { hasValue, hyphenToCamelCase, replaceDP, resetId, sortAsc, trim } from '../lib/util';
 import { convertRGB, getByColorName } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
@@ -56,8 +56,18 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public finalize() {
         this.resourceHandler.finalize(this.viewData);
         const views = this.resourceHandler.views;
+        this.cacheInternal.list.forEach(node => {
+            this.extensions.forEach(item => {
+                item.parent = undefined;
+                item.node = node;
+                item.element = node.element;
+                if (item.condition()) {
+                    item.finalize(views);
+                }
+            });
+        });
         for (let i = 0; i < views.length; i++) {
-            let output = views[i].replace(/{[<#@&>]{1}[0-9]+}/g, '');
+            let output = views[i].replace(/{[<:#@&>]{1}[0-9]+}/g, '');
             if (SETTINGS.useUnitDP) {
                 output = replaceDP(output, SETTINGS.density);
             }
@@ -193,7 +203,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         this.cache.parent = undefined;
         this.cache.clear();
-        this.extensions.forEach(item => {
+        this.controllerHandler.namespaces.clear();
+        const extensions = this.extensions;
+        extensions.forEach(item => {
             item.parent = undefined;
             item.node = (<T> this.cache.parent);
             item.element = layoutRoot;
@@ -206,10 +218,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 this.cache.parent = node;
             }
         }
-        this.extensions.forEach(item => item.node = (<T> this.cache.parent));
+        extensions.forEach(item => item.node = (<T> this.cache.parent));
         for (const element of (<HTMLElement[]> Array.from(elements))) {
             let handled = false;
-            this.extensions.some(item => {
+            extensions.some(item => {
                 if (item.init(element)) {
                     handled = true;
                     return true;
@@ -324,7 +336,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                 }
             });
-            this.extensions.forEach(item => {
+            extensions.forEach(item => {
                 item.node = (<T> this.cache.parent);
                 item.element = layoutRoot;
                 item.afterInit();
@@ -348,33 +360,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return false;
     }
 
-    public insertNode(element: HTMLElement, parent?: T) {
-        let node: T | null = null;
-        if (element.nodeName === '#text') {
-            if (element.textContent && element.textContent.trim() !== '') {
-                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element, { parent, tagName: 'PLAINTEXT' });
-                node.setBounds(false, element);
-                if (parent != null) {
-                    node.inheritStyle(parent);
-                    parent.children.push(node);
-                }
-            }
-        }
-        else if (isVisible(element)) {
-            node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
-        }
-        if (node != null) {
-            this.cache.list.push(node);
-        }
-        return node;
-    }
-
-    public setLayoutXml() {
-        let output = `<?xml version="1.0" encoding="utf-8"?>\n{0}`;
+    public createLayoutXml() {
+        let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
+        let empty = true;
         const mapX: ObjectIndex<{}> = [];
         const mapY: ObjectIndex<{}> = [];
+        const extensions = this.extensions;
         this.cache.list.forEach(node => {
-            const x = Math.floor((<number> node.bounds.x));
+            const x = Math.floor(<number> node.bounds.x);
             const y = node.parent.id;
             if (mapX[node.depth] == null) {
                 mapX[node.depth] = {};
@@ -420,7 +413,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     const parent = (<T> nodeY.parent);
                     if (!nodeY.renderParent) {
                         let xml = '';
-                        this.extensions.some(item => {
+                        extensions.some(item => {
                             if (nodeY.renderExtension == null && item.is(nodeY.tagName)) {
                                 item.node = nodeY;
                                 item.parent = parent;
@@ -488,16 +481,28 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
             for (const [id, views] of partial.entries()) {
-                output = output.replace(`{${id}}`, views.join(''));
+                output = output.replace(`{:${id}}`, views.join(''));
+                empty = false;
             }
         }
-        this.create = output;
-        this.extensions.forEach(item => {
-            item.parent = undefined;
-            item.node = (<T> this.cache.parent);
-            item.element = undefined;
-            item.afterRender();
-        });
+        let pathname = '';
+        if (this.cache.first.element.dataset != null) {
+            pathname = trim((this.cache.first.element.dataset.pathname || '').trim(), '/');
+        }
+        if (!empty) {
+            this.create(output, pathname);
+            extensions.forEach(item => {
+                item.parent = undefined;
+                item.node = (<T> this.cache.parent);
+                item.element = undefined;
+                item.afterRender();
+            });
+            return true;
+        }
+        else {
+            this.ids.pop();
+            return false;
+        }
     }
 
     public writeFrameLayout(node: T, parent: T) {
@@ -534,8 +539,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public replaceInlineAttributes() {
-        const options = {};
         let output = this.current;
+        const options = {};
         this.cache.visible.forEach(node => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
         output = output.replace('{@0}', this.controllerHandler.getRootAttributes(options));
         this.current = output;
@@ -548,6 +553,34 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public toString() {
         return (this.views.length > 0 ? this.views[0] : '');
+    }
+
+    private insertNode(element: HTMLElement, parent?: T) {
+        let node: T | null = null;
+        if (element.nodeName === '#text') {
+            if (element.textContent && element.textContent.trim() !== '') {
+                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element, { parent, tagName: 'PLAINTEXT' });
+                node.setBounds(false, element);
+                if (parent != null) {
+                    node.inheritStyle(parent);
+                    parent.children.push(node);
+                }
+            }
+        }
+        else if (isVisible(element)) {
+            node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
+        }
+        if (node != null) {
+            this.cache.list.push(node);
+        }
+        return node;
+    }
+
+    private create(value, pathname = '') {
+        if (this.views.length < this.ids.length) {
+            this.pathnames[this.views.length] = (pathname !== '' ? pathname : 'res/layout');
+            this.views.push(value);
+        }
     }
 
     public set appName(value) {
@@ -574,13 +607,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
     protected get currentId() {
         return this.ids[this.ids.length - 1] || '';
-    }
-
-    private set create(value) {
-        if (this.views.length < this.ids.length) {
-            this.pathnames[this.views.length] = 'res/layout';
-            this.views.push(value);
-        }
     }
 
     get closed() {

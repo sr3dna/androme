@@ -35,25 +35,45 @@
             font-size: 10px;
             margin-top: 6px;
         }
-        body > div:first-child > div {
-            width: 200px;
+        #drawer_header {
+            padding: 10px;
+            background-color: slateblue;
+        }
+        div {
+            font-size: 12px;
+            overflow: hidden;
+        }
+        div label {
+            margin-top: 4px;
+            float: left;
+        }
+        div div span {
+            font-size: 11px;
             color: #fff;
-            font-weight: bold;
-            text-align: center;
-            margin: 4px;
-            padding: 10px 0px;
-            background-color: #1B5385;
+        }
+        nav {
+            padding: 0px;
+            border: solid 1px #aaa;
+        }
+        nav div {
+            font-size: 11px;
+            padding: 12px;
+        }
+        nav div:hover {
+            background-color: azure;
+            cursor: pointer;
+        }
+        nav div img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            float: left;
         }
     </style>
     <script src="../dist/androme.min.js"></script>
     <script>
-        function showHidden() {
-            document.querySelectorAll('#androme-root > div').forEach(function(element) {
-                element.style.display = '';
-            });
-        }
         document.addEventListener('DOMContentLoaded', () => {
-            androme.parseDocument('androme-root');
+            androme.parseDocument('androme_root');
             androme.close();
 
             const views = androme.writeLayoutAllXml();
@@ -64,30 +84,43 @@
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
             const resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml();
+                             androme.writeResourceColorXml() + '\n\n' +
+                             androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
-    <div id="androme-root">
-        <div>
-            1
-        </div>
-        <div data-extension="androme.hidden" style="display: none;">
-            2
-        </div>
-        <div>
-            3
-        </div>
-        <div data-extension="androme.hidden" style="display: none;">
-            4
-        </div>
-        <div>
-            5
+    <div id="androme_root" style="width: 200px;">
+        <div id="drawer_demo" data-extension="androme.drawer">
+            <div id="drawer_header">
+                <img src="../demos/images/android-ldpi.png" /><br />
+                <span>android@user.com</span>
+            </div>
+            <nav id="drawer_menu" data-extension="androme.menu">
+                <div>
+                    <img src="../demos/images/icons8-chrome.png" />
+                    <label>Chrome</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-docs.png" />
+                    <label>Docs</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-news.png" />
+                    <label>News</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-play.png" />
+                    <label>Play</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-plus.png" />
+                    <label>Plus</label>
+                </div>
+            </nav>
         </div>
     </div>
-    <div style="vertical-align: bottom;"><button onclick="showHidden();">Show Hidden</button></div>
     <div>
         <div class="output">
             <pre id="output"></pre>

@@ -6,7 +6,7 @@ import { getStyle } from '../lib/dom';
 type T = Node;
 type U = NodeList<T>;
 
-export default class Hidden extends Extension<T, U> {
+export default class External extends Extension<T, U> {
     constructor(name: string, tagNames: string[], options?: {}) {
         super(name, tagNames, options);
     }
@@ -15,8 +15,8 @@ export default class Hidden extends Extension<T, U> {
         if (this.included()) {
             if (this.element != null) {
                 const object = (<any> this.element);
-                if (object.__andromeHiddenDisplay == null) {
-                    object.__andromeHiddenDisplay = this.element.style.display;
+                if (object.__andromeExternalDisplay == null) {
+                    object.__andromeExternalDisplay = getStyle(this.element).display;
                 }
                 this.element.style.display = 'block';
             }
@@ -24,8 +24,7 @@ export default class Hidden extends Extension<T, U> {
     }
 
     public init(element: HTMLElement) {
-        const style = getStyle(element);
-        if (this.included(element) && style.display === 'none' && element.dataset.extension != null && element.dataset.extension.split(',').length <= 1) {
+        if (this.included(element) && element.dataset.extension != null && element.dataset.extension.split(',').length <= 1) {
             this.application.elements.add(element);
             return true;
         }
@@ -36,8 +35,8 @@ export default class Hidden extends Extension<T, U> {
         if (this.included()) {
             if (this.element != null) {
                 const object = (<any> this.element);
-                if (object.__andromeHiddenDisplay != null) {
-                    this.element.style.display = object.__andromeHiddenDisplay;
+                if (object.__andromeExternalDisplay != null) {
+                    this.element.style.display = object.__andromeExternalDisplay;
                 }
             }
         }

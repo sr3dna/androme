@@ -8,6 +8,7 @@ interface ViewAppend {
 
 export default abstract class Controller<T extends Node, U extends NodeList<T>> {
     public cache: U;
+    public namespaces: Set<string> = new Set();
 
     private before: ViewAppend = {};
     private after: ViewAppend = {};

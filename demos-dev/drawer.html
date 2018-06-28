@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <link rel="stylesheet" type="text/css" href="common/dev.css">
+    <style>
+        #drawer_header {
+            padding: 10px;
+            background-color: slateblue;
+        }
+        div {
+            font-size: 12px;
+            overflow: hidden;
+        }
+        div label {
+            margin-top: 4px;
+            float: left;
+        }
+        div div span {
+            font-size: 11px;
+            color: #fff;
+        }
+        nav {
+            padding: 0px;
+            border: solid 1px #aaa;
+        }
+        nav div {
+            font-size: 11px;
+            padding: 12px;
+        }
+        nav div:hover {
+            background-color: azure;
+            cursor: pointer;
+        }
+        nav div img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            float: left;
+        }
+    </style>
+    <script src="/node_modules/systemjs/dist/system.js"></script>
+    <script src="common/dev.js"></script>
+    <script>
+        System.import('/build/main.js').then(function(result) {
+            androme = result;
+            androme.parseDocument('androme_root');
+            androme.close();
+
+            const views = androme.writeLayoutAllXml();
+            let output = '';
+            for (const i in views) {
+                output += views[i] + '\n';
+            }
+            document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
+            const resource = androme.writeResourceStringXml() + '\n\n' +
+                             androme.writeResourceStyleXml() + '\n\n' +
+                             androme.writeResourceColorXml() + '\n\n' +
+                             androme.writeResourceDrawableXml();
+            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+        });
+    </script>
+</head>
+<body>
+    <div id="androme_root" style="width: 200px;">
+        <div id="drawer_demo" data-extension="androme.drawer">
+            <div id="drawer_header">
+                <img src="../demos/images/android-ldpi.png" /><br />
+                <span>android@user.com</span>
+            </div>
+            <nav id="drawer_menu" data-extension="androme.menu">
+                <div>
+                    <img src="../demos/images/icons8-chrome.png" />
+                    <label>Chrome</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-docs.png" />
+                    <label>Docs</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-news.png" />
+                    <label>News</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-play.png" />
+                    <label>Play</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-plus.png" />
+                    <label>Plus</label>
+                </div>
+            </nav>
+        </div>
+    </div>
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
+                <button onclick="androme.saveAllToDisk();">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

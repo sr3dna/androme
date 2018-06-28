@@ -1,4 +1,4 @@
-import { StringMap } from '../../lib/types';
+import { ExtensionResult, StringMap } from '../../lib/types';
 import View from '../view';
 import Menu from '../../extension/menu';
 import Resource from '../../base/resource';
@@ -47,7 +47,7 @@ export default class MenuAndroid<T extends View> extends Menu {
         super(name, tagNames, options);
     }
 
-    public processNode() {
+    public processNode(): ExtensionResult {
         const node = (<T> this.node);
         node.setViewId(VIEW_STATIC.MENU);
         let xml = '';
@@ -59,31 +59,38 @@ export default class MenuAndroid<T extends View> extends Menu {
         return [xml, false];
     }
 
-    public processChild() {
-        const parent = (<T> this.parent);
+    public processChild(): ExtensionResult {
         const node = (<T> this.node);
+        const element = node.element;
+        if (element.nodeName === '#text') {
+            node.hide();
+            return ['', false];
+        }
+        const parent = (<T> this.parent);
         node.ignoreResource = VIEW_RESOURCE.ALL;
         node.renderDepth = parent.renderDepth + 1;
         node.renderParent = true;
-        const element = node.element;
         const options: any = { android: {}, app: {} };
         let viewName = VIEW_STATIC.ITEM;
-        let children = false;
+        let layout = false;
         let title = '';
-        if (node.children.some(item => BLOCK_CHROME.includes(item.tagName))) {
-            if (node.children.some(item => item.tagName === 'NAV')) {
+        const children = (<HTMLElement[]> Array.from(node.element.children));
+        if (children.some(item => BLOCK_CHROME.includes(item.tagName) && item.children.length > 0)) {
+            if (children.some(item => item.tagName === 'NAV')) {
                 if (element.title !== '') {
                     title = element.title.trim();
                 }
                 else {
-                    node.children.some(item => {
-                        const child = item.element;
-                        if (child.nodeName === '#text' && child.textContent != null && child.textContent.trim() !== '') {
-                            title = child.textContent.trim();
-                            return true;
+                    Array.from(node.element.childNodes).some((item: HTMLElement) => {
+                        if (item.nodeName === '#text') {
+                            if (item.textContent != null && item.textContent.trim() !== '') {
+                                title = item.textContent.trim();
+                                return true;
+                            }
+                            return false;
                         }
-                        else if (child.tagName !== 'NAV') {
-                            title = child.innerText.trim();
+                        else if (item.tagName !== 'NAV') {
+                            title = item.innerText.trim();
                             return true;
                         }
                         return false;
@@ -105,17 +112,13 @@ export default class MenuAndroid<T extends View> extends Menu {
                 }
                 options.android.checkableBehavior = checkable;
             }
-            children = true;
+            layout = true;
         }
         else {
             if (parent.android('checkableBehavior') == null) {
                 if (this.hasInputType(node, 'checkbox')) {
                     options.android.checkable = 'true';
                 }
-            }
-            if (element.nodeName === '#text') {
-                node.hide();
-                return ['', false];
             }
             title = (element.title !== '' ? element.title : element.innerText).trim();
         }
@@ -157,7 +160,7 @@ export default class MenuAndroid<T extends View> extends Menu {
             node.viewName = viewName;
         }
         node.apply(options);
-        const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, {}, '', '', node.id, children)[0];
+        const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, {}, '', '', node.id, layout)[0];
         return [xml, false];
     }
 
@@ -174,7 +177,7 @@ export default class MenuAndroid<T extends View> extends Menu {
             if (value != null && validator[attr] != null) {
                 const match = value.match(validator[attr]);
                 if (match != null) {
-                    const namespace = (this.options && this.options.nsAppCompat && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
+                    const namespace = (this.options.nsAppCompat && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
                     options[namespace][attr] = Array.from(new Set(match)).join('|');
                 }
             }

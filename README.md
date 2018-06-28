@@ -73,6 +73,7 @@ These settings are available in the global variable "androme" to customize your 
 
 ```javascript
 androme.settings = {
+    builtInExtensions: ['external', 'list', 'table', 'grid', 'menu', 'drawer'],
     targetAPI: androme.build.OREO,
     density: androme.density.MDPI,
     useConstraintLayout: true,
@@ -83,7 +84,6 @@ androme.settings = {
     supportRTL: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
-    builtInExtensions: ['hidden', 'menu', 'list', 'table', 'grid'],
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     horizontalPerspective: true,
@@ -121,15 +121,24 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 ### extensions
 
+Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
+
+```javascript
+<script>
+    androme.configureExtension('androme.drawer', { android: { layout_width: 'wrap_content', fitsSystemWindows: 'true' } });
+</script>
+```
+<img src="demos/android/drawer.png" alt="extension: drawer" />
+
+<img src="demos/android/table.png" alt="extension: table" />
+
 <img src="demos/android/grid.png" alt="extension: grid - balance columns" />
 
 <img src="demos/android/list.png" alt="extension: list" />
 
-<img src="demos/android/table.png" alt="extension: table" />
-
 <img src="demos/android/menu.png" alt="extension: menu" />
 
-Extension "hidden": some elements with "display: none" are meant to be in a separate activity layout XML such as navigation menus. See /demo/hidden.html for usage instructions.
+Extension "external": used for elements which are meant to be in a separate activity layout XML such as navigation menus.
 
 ### auto-generated layout
 
@@ -138,7 +147,7 @@ Extension "hidden": some elements with "display: none" are meant to be in a sepa
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:id="@+id/androme-root"
+	android:id="@+id/androme_root"
 	android:gravity="top"
 	android:layout_height="wrap_content"
 	android:layout_width="500dp"

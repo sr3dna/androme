@@ -14,10 +14,13 @@ export interface IExtension {
     init(element: HTMLElement): boolean;
     afterInit(): void;
     condition(): void;
-    processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): (string | boolean)[];
-    processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): (string | boolean)[];
+    processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult;
+    processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult;
     afterRender(): void;
+    finalize(views: string[]): void;
 }
+
+export type ExtensionResult = [string, boolean];
 
 export interface BoxModel {
     marginTop?: number;

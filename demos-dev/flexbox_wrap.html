@@ -31,7 +31,7 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.parseDocument('androme-root');
+            androme.parseDocument('androme_root');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -44,7 +44,7 @@
     </script>
 </head>
 <body>
-    <div id="androme-root" style="width: 500px;">
+    <div id="androme_root" style="width: 500px;">
         <ul class="flex-container" style="flex-direction: row; flex-wrap: wrap;">
             <li class="flex-item">A</li>
             <li class="flex-item">B</li>

@@ -1,4 +1,4 @@
-import { IExtension, ObjectIndex, ObjectMap } from '../lib/types';
+import { ExtensionResult, IExtension, ObjectIndex, ObjectMap } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
@@ -76,16 +76,20 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         return false;
     }
 
-    public processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): (string | boolean)[] {
+    public processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult {
         return ['', false];
     }
 
-    public processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): (string | boolean)[] {
+    public processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult {
         return ['', false];
     }
 
     public require(value: string) {
         this.dependencies.add(value.trim());
+    }
+
+    public finalize(views: string[]) {
+        return;
     }
 
     get linearX() {

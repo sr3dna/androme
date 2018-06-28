@@ -1,6 +1,7 @@
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 
 export default {
+    builtInExtensions: ['external', 'list', 'table', 'grid', 'menu', 'drawer'],
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
     useConstraintLayout: true,
@@ -11,7 +12,6 @@ export default {
     supportRTL: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
-    builtInExtensions: ['hidden', 'list', 'table', 'menu', 'grid'],
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     horizontalPerspective: true,

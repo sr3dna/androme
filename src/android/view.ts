@@ -163,7 +163,7 @@ export default class View extends Node {
         super.viewName = viewName || this.viewName;
         if (this.viewId == null) {
             const element = (<HTMLInputElement> this.element);
-            this.viewId = generateId('android', element.id || element.name || `${getFileExt(this.viewName).toLowerCase()}_1`);
+            this.viewId = generateId('android', (element.id || element.name || `${getFileExt(this.viewName).toLowerCase()}_1`).replace(/[^\w]/g, '_'));
             this.android('id', this.stringId);
         }
     }

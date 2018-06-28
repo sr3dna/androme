@@ -9,21 +9,23 @@ import FileRes from './android/fileres';
 import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 
-import Grid from './extension/grid';
-import Hidden from './extension/hidden';
+import External from './extension/external';
 import List from './android/extension/list';
-import Menu from './android/extension/menu';
 import Table from './extension/table';
+import Grid from './extension/grid';
+import Menu from './android/extension/menu';
+import Drawer from './android/extension/drawer';
 
 let MAIN;
 const CACHE: Set<HTMLElement> = new Set();
 
 const EXTENSIONS = {
-    'grid': new Grid('androme.grid', [], { balanceColumns: true }),
-    'hidden': new Hidden('androme.hidden', []),
+    'external': new External('androme.external', []),
     'list': new List('androme.list', ['UL', 'OL']),
+    'table': new Table('androme.table', ['TABLE']),
+    'grid': new Grid('androme.grid', [], { balanceColumns: true }),
     'menu': new Menu('androme.menu', ['NAV'], { nsAppCompat: true }),
-    'table': new Table('androme.table', ['TABLE'])
+    'drawer': new Drawer('androme.drawer', [])
 };
 
 function __app(object) {
@@ -88,8 +90,7 @@ export function parseDocument(...elements) {
         }
         element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
         element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/-/g, '_');
-        if (main.createNodeCache(element)) {
-            main.setLayoutXml();
+        if (main.createNodeCache(element) && main.createLayoutXml()) {
             main.setResources();
             if (SETTINGS.showAttributes) {
                 main.setMarginPadding();
@@ -120,7 +121,7 @@ export function configureExtension(name: string, options: {}) {
     if (main != null && options != null) {
         main.extensions.some(item => {
             if (item.name === name) {
-                item.options = options;
+                Object.assign(item.options, options);
                 return true;
             }
             return false;
