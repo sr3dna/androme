@@ -6,11 +6,11 @@ import NodeList from './nodelist';
 export default abstract class Extension<T extends Node, U extends NodeList<T>> implements IExtension {
     public application: Application<T, U>;
     public node: T;
-    public parent: T | undefined;
-    public element: HTMLElement | undefined;
+    public parent: T | null;
+    public element: HTMLElement | null;
     public tagNames: string[] = [];
     public enabled: boolean = true;
-    public dependencies: Set<string> = new Set();
+    public dependences: {}[] = [];
 
     constructor(
         public name: string,
@@ -26,37 +26,41 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
 
     public included(element?: HTMLElement) {
         if (element == null) {
-            element = this.element;
+            element = (<HTMLElement> this.element);
         }
         return (element != null && element.dataset && element.dataset.extension != null ? element.dataset.extension.split(',').map(value => value.trim()).includes(this.name) : false);
     }
 
-    public beforeInit() {
-        this.dependencies.forEach(value => {
-            const extension = this.application.extensions.find(item => item.name === value);
-            if (extension != null) {
-                extension.application = this.application;
-                extension.element = this.element;
-                extension.parent = this.parent;
-                extension.beforeInit();
-            }
-        });
+    public beforeInit(internal = false) {
+        if (!internal && this.included()) {
+            this.dependences.filter((item: ObjectMap<boolean>) => item.init).forEach((item: any) => {
+                const extension = this.application.findExtension(item.name);
+                if (extension != null) {
+                    extension.parent = this.parent;
+                    extension.node = this.node;
+                    extension.element = this.element;
+                    extension.beforeInit(true);
+                }
+            });
+        }
     }
 
     public init(element: HTMLElement) {
         return false;
     }
 
-    public afterInit() {
-        this.dependencies.forEach(value => {
-            const extension = this.application.extensions.find(item => item.name === value);
-            if (extension != null) {
-                extension.application = this.application;
-                extension.element = this.element;
-                extension.parent = this.parent;
-                extension.afterInit();
-            }
-        });
+    public afterInit(internal = false) {
+        if (!internal && this.included()) {
+            this.dependences.filter((item: ObjectMap<boolean>) => item.init).forEach((item: any) => {
+                const extension = this.application.findExtension(item.name);
+                if (extension != null) {
+                    extension.parent = this.parent;
+                    extension.node = this.node;
+                    extension.element = this.element;
+                    extension.afterInit(true);
+                }
+            });
+        }
     }
 
     public afterRender() {
@@ -64,7 +68,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     }
 
     public condition() {
-        if (this.node.element.dataset != null) {
+        if (this.node && this.node.element.dataset != null) {
             if (!this.node.element.dataset.extension) {
                 return (this.tagNames.length > 0);
             }
@@ -84,11 +88,11 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         return ['', false];
     }
 
-    public require(value: string) {
-        this.dependencies.add(value.trim());
+    public require(value: string, init = false) {
+        this.dependences.push({ name: value, init });
     }
 
-    public finalize(views: string[]) {
+    public finalize() {
         return;
     }
 

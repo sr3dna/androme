@@ -3,21 +3,22 @@ export interface IExtension {
     application: any;
     node: any;
     parent: any;
-    element: HTMLElement | undefined;
+    element: HTMLElement | null;
     tagNames: string[];
     enabled: boolean;
     options: {};
+    dependences: {}[];
     is(tagName: string): void;
     require(value: string): void;
     included(element?: HTMLElement): boolean;
-    beforeInit(): void;
+    beforeInit(internal: boolean): void;
     init(element: HTMLElement): boolean;
-    afterInit(): void;
+    afterInit(internal: boolean): void;
     condition(): void;
     processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult;
     processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult;
     afterRender(): void;
-    finalize(views: string[]): void;
+    finalize(): void;
 }
 
 export type ExtensionResult = [string, boolean];

@@ -14,6 +14,7 @@ export default class DrawerAndroid<T extends View> extends Drawer {
     constructor(name: string, tagNames: string[], options?: {}) {
         super(name, tagNames, options);
     }
+
     public processNode(): ExtensionResult {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
@@ -42,7 +43,7 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         return [xml, false];
     }
 
-    public finalize(views: string[]) {
+    public finalize() {
         let menu = '';
         let headerLayout = '';
         this.application.elements.forEach(item => {
@@ -57,6 +58,7 @@ export default class DrawerAndroid<T extends View> extends Drawer {
                 }
             }
         });
+        const views = this.application.views;
         for (let i = 0; i < views.length; i++) {
             views[i] = views[i].replace(`{androme.drawer:menu:${this.node.id}}`, menu);
             views[i] = views[i].replace(`{androme.drawer:headerLayout:${this.node.id}}`, headerLayout);

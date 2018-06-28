@@ -1,7 +1,14 @@
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 
 export default {
-    builtInExtensions: ['external', 'list', 'table', 'grid', 'menu', 'drawer'],
+    builtInExtensions: [
+        'androme.external',
+        'androme.list',
+        'androme.table',
+        'androme.grid',
+        'androme.menu',
+        'androme.drawer'
+    ],
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
     useConstraintLayout: true,
@@ -22,7 +29,7 @@ export default {
     showAttributes: true,
     autoCloseOnWrite: true,
     outputDirectory: 'app/src/main',
+    outputActivityMainFileName: 'activity_main.xml',
     outputArchiveFileType: 'zip',
-    outputMaxProcessingTime: 30,
-    outputActivityMainFileName: 'activity_main.xml'
+    outputMaxProcessingTime: 30
 };

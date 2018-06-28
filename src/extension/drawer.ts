@@ -8,7 +8,7 @@ type U = NodeList<T>;
 export default abstract class Drawer extends Extension<T, U> {
     constructor(name: string, tagNames: string[], options?: {}) {
         super(name, tagNames, options);
-        this.require('androme.external');
+        this.require('androme.external', true);
         this.require('androme.menu');
     }
 

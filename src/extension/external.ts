@@ -11,8 +11,8 @@ export default class External extends Extension<T, U> {
         super(name, tagNames, options);
     }
 
-    public beforeInit() {
-        if (this.included()) {
+    public beforeInit(init = false) {
+        if (init || this.included()) {
             if (this.element != null) {
                 const object = (<any> this.element);
                 if (object.__andromeExternalDisplay == null) {
@@ -31,8 +31,8 @@ export default class External extends Extension<T, U> {
         return false;
     }
 
-    public afterInit() {
-        if (this.included()) {
+    public afterInit(init = false) {
+        if (init || this.included()) {
             if (this.element != null) {
                 const object = (<any> this.element);
                 if (object.__andromeExternalDisplay != null) {

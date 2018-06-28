@@ -20,12 +20,12 @@ let MAIN;
 const CACHE: Set<HTMLElement> = new Set();
 
 const EXTENSIONS = {
-    'external': new External('androme.external', []),
-    'list': new List('androme.list', ['UL', 'OL']),
-    'table': new Table('androme.table', ['TABLE']),
-    'grid': new Grid('androme.grid', [], { balanceColumns: true }),
-    'menu': new Menu('androme.menu', ['NAV'], { nsAppCompat: true }),
-    'drawer': new Drawer('androme.drawer', [])
+    'androme.external': new External('androme.external', []),
+    'androme.list': new List('androme.list', ['UL', 'OL']),
+    'androme.table': new Table('androme.table', ['TABLE']),
+    'androme.grid': new Grid('androme.grid', [], { balanceColumns: true }),
+    'androme.menu': new Menu('androme.menu', ['NAV'], { nsAppCompat: true }),
+    'androme.drawer': new Drawer('androme.drawer', [])
 };
 
 function __app(object) {
@@ -49,7 +49,7 @@ export function parseDocument(...elements) {
         main.registerController(Controller);
         main.registerResource(Resource);
         for (const name of SETTINGS.builtInExtensions) {
-            const extension: Extension<T, U> = EXTENSIONS[name.trim().toLowerCase().replace(/^androme\./, '')];
+            const extension: Extension<T, U> = EXTENSIONS[name.toLowerCase().trim()];
             if (extension != null) {
                 main.registerExtension(extension);
             }

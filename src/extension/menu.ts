@@ -10,7 +10,7 @@ type U = NodeList<T>;
 export default abstract class Menu extends Extension<T, U> {
     constructor(name: string, tagNames: string[], options?: {}) {
         super(name, tagNames, options);
-        this.require('androme.external');
+        this.require('androme.external', true);
     }
 
     public init(element: HTMLElement) {
@@ -18,7 +18,7 @@ export default abstract class Menu extends Extension<T, U> {
             let valid = false;
             if (element.children.length > 0) {
                 const tagName = element.children[0].tagName;
-                valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every((item: HTMLElement) => item.tagName === tagName && !(item.style.display === 'inline' || item.style.cssFloat === 'left' || item.style.cssFloat === 'right')));
+                valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every((item: HTMLElement) => item.tagName === tagName && !(item.style.display === 'inline' || (<any> item.style).float === 'left' || (<any> item.style).float === 'right')));
                 let current = element.parentElement;
                 while (current != null) {
                     if (current.tagName === 'NAV' && this.application.elements.has(current)) {
@@ -44,7 +44,7 @@ export default abstract class Menu extends Extension<T, U> {
     }
 
     public afterRender() {
-        if (this.node != null && this.included(this.node.element)) {
+        if (this.included(this.node.element)) {
             Array.from(this.node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                 const display = (<any> item).__andromeExternalDisplay;
                 if (display != null) {

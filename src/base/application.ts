@@ -15,11 +15,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public controllerHandler: Controller<T, U>;
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
+    public ids: string[] = [];
+    public views: string[] = [];
     public pathnames: string[] = [];
 
     private cacheInternal: U;
-    private ids: string[] = [];
-    private views: string[] = [];
     private _extensions: Extension<T, U>[] = [];
     private _closed: boolean = false;
 
@@ -42,32 +42,34 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public registerExtension(extension: Extension<T, U>) {
-        const found = this._extensions.find(item => item.name === extension.name);
+        const found = this.findExtension(extension.name);
         if (found != null) {
             found.tagNames = extension.tagNames;
-            found.options = extension.options;
+            Object.assign(found.options, extension.options);
         }
         else {
-            extension.application = this;
-            this._extensions.push(extension);
+            if (extension.dependences.every((item: any) => this.findExtension(item.name) != null)) {
+                extension.application = this;
+                this._extensions.push(extension);
+            }
         }
     }
 
     public finalize() {
         this.resourceHandler.finalize(this.viewData);
-        const views = this.resourceHandler.views;
+        this.views = this.resourceHandler.views;
         this.cacheInternal.list.forEach(node => {
             this.extensions.forEach(item => {
-                item.parent = undefined;
+                item.parent = null;
                 item.node = node;
                 item.element = node.element;
                 if (item.condition()) {
-                    item.finalize(views);
+                    item.finalize();
                 }
             });
         });
-        for (let i = 0; i < views.length; i++) {
-            let output = views[i].replace(/{[<:#@&>]{1}[0-9]+}/g, '');
+        for (let i = 0; i < this.views.length; i++) {
+            let output = this.views[i].replace(/{[<:#@&>]{1}[0-9]+}/g, '');
             if (SETTINGS.useUnitDP) {
                 output = replaceDP(output, SETTINGS.density);
             }
@@ -206,8 +208,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.controllerHandler.namespaces.clear();
         const extensions = this.extensions;
         extensions.forEach(item => {
-            item.parent = undefined;
-            item.node = (<T> this.cache.parent);
+            item.parent = null;
+            item.node = (<T> {});
             item.element = layoutRoot;
             item.beforeInit();
         });
@@ -337,6 +339,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             });
             extensions.forEach(item => {
+                item.parent = null;
                 item.node = (<T> this.cache.parent);
                 item.element = layoutRoot;
                 item.afterInit();
@@ -492,9 +495,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         if (!empty) {
             this.create(output, pathname);
             extensions.forEach(item => {
-                item.parent = undefined;
+                item.parent = null;
                 item.node = (<T> this.cache.parent);
-                item.element = undefined;
+                item.element = null;
                 item.afterRender();
             });
             return true;
@@ -549,6 +552,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public replaceAppended() {
         const output = this.controllerHandler.replaceAppended(this.current);
         this.current = output;
+    }
+
+    public findExtension(name: string) {
+        return this._extensions.find(item => item.name === name);
     }
 
     public toString() {

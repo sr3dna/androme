@@ -17,8 +17,8 @@ Express server through Node.js is available with a provided default configuratio
 * Install Node.js: http://www.nodejs.com
 
 * Install androme: (choose one)
-  1. git clone https://github.com/anpham6/androme
-  2. npm i androme
+  1. git clone https://github.com/anpham6/androme (unstable)
+  2. npm i androme (stable)
 
 * Change directory: (choose one)
   1. cd androme
@@ -31,7 +31,7 @@ Express server through Node.js is available with a provided default configuratio
 * Load web server:
   1. node app.js
 
-* Open Chrome: http://localhost:3000/demos/form.html
+* Open Chrome: http://localhost:3000/demos/index.html
 
 If you install via NPM then it is recommended you put androme into its own separate folder rather than hosting it inside "node_modules".
 
@@ -73,9 +73,16 @@ These settings are available in the global variable "androme" to customize your 
 
 ```javascript
 androme.settings = {
-    builtInExtensions: ['external', 'list', 'table', 'grid', 'menu', 'drawer'],
+    builtInExtensions: [
+        'androme.external',
+        'androme.list',
+        'androme.table',
+        'androme.grid',
+        'androme.menu',
+        'androme.drawer'
+    ],
     targetAPI: androme.build.OREO,
-    density: androme.density.MDPI,
+    density: androme.build.MDPI,
     useConstraintLayout: true,
     useConstraintChain: true,
     useConstraintGuideline: true,
@@ -94,9 +101,9 @@ androme.settings = {
     showAttributes: true,
     autoCloseOnWrite: true,
     outputDirectory: 'app/src/main',
+    outputActivityMainFileName: 'activity_main.xml',
     outputArchiveFileType: 'zip', // zip | tar
-    outputMaxProcessingTime: 30,
-    outputActivityMainFileName: 'activity_main.xml'
+    outputMaxProcessingTime: 30
 };
 ```
 You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. Using the latest Chrome will always generate the most accurate layout.
