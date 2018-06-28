@@ -1,4 +1,4 @@
-import { ArrayMap, PlainFile, RegExpNull, StringMap } from '../lib/types';
+import { ArrayMap, ObjectMap, PlainFile, RegExpNull, StringMap } from '../lib/types';
 import File from '../base/file';
 import { caseInsensitve, hasValue, getFileExt, replaceDP } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
@@ -107,7 +107,7 @@ export default class FileRes extends File {
             };
             const rootItem = getDataLevel(data, '0');
             for (const [name, values] of this.stored.ARRAYS.entries()) {
-                const arrayItem: {} = {
+                const arrayItem: ObjectMap<any> = {
                     name,
                     '2': []
                 };
@@ -131,7 +131,7 @@ export default class FileRes extends File {
         if (this.stored.FONTS.size > 0) {
             const template = parseTemplateMatch(FONT_TMPL);
             for (const [name, font] of this.stored.FONTS.entries()) {
-                const data: {} = {
+                const data: ObjectMap<any> = {
                     '#include': {},
                     '#exclude': {},
                     '0': [{
@@ -192,7 +192,7 @@ export default class FileRes extends File {
             };
             const rootItem = getDataLevel(data, '0');
             for (const [name1, style] of this.stored.STYLES.entries()) {
-                const styleItem: {} = {
+                const styleItem: ObjectMap<any> = {
                     name1,
                     parent: style.parent || '',
                     '2': []
@@ -218,7 +218,7 @@ export default class FileRes extends File {
         let xml = '';
         if (this.stored.DRAWABLES.size > 0 || this.stored.IMAGES.size > 0) {
             const template = parseTemplateMatch(DRAWABLE_TMPL);
-            const data: {} = {
+            const data: ObjectMap<any> = {
                 '0': []
             };
             const rootItem = data['0'];
@@ -228,11 +228,11 @@ export default class FileRes extends File {
             for (const [name, images] of this.stored.IMAGES.entries()) {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
-                        rootItem.push({ name: `res/drawable-${dpi}/${name}.${getFileExt(images[dpi])}`, value: `<!-- image: ${images[dpi]} -->` });
+                        rootItem.push({ name: `res/drawable-${dpi}/${name}.${getFileExt((<any> images)[dpi])}`, value: `<!-- image: ${(<any> images)[dpi]} -->` });
                     }
                 }
-                else if (images['mdpi'] != null) {
-                    rootItem.push({ name: `res/drawable/${name}.${getFileExt(images['mdpi'])}`, value: `<!-- image: ${images['mdpi']} -->` });
+                else if ((<any> images)['mdpi'] != null) {
+                    rootItem.push({ name: `res/drawable/${name}.${getFileExt((<any> images)['mdpi'])}`, value: `<!-- image: ${(<any> images)['mdpi']} -->` });
                 }
             }
             xml = parseTemplateData(template, data);

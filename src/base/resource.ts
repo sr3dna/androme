@@ -1,4 +1,4 @@
-import { BorderAttribute, StringMap } from '../lib/types';
+import { BorderAttribute, ObjectMap, StringMap } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
@@ -9,7 +9,7 @@ import { getBoxSpacing, sameAsParent } from '../lib/dom';
 import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
-    public static STORED = {
+    public static STORED: ObjectMap<any> = {
         STRINGS: new Map(),
         COLORS: new Map(),
         IMAGES: new Map()
@@ -155,7 +155,7 @@ export default abstract class Resource<T extends Node> {
                 const element = node.element;
                 const object = (<any> element);
                 if (!hasValue(object.__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
-                    const result = getBoxSpacing(element);
+                    const result: any = getBoxSpacing(element);
                     for (const i in result) {
                         result[i] += 'px';
                     }
@@ -365,7 +365,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     protected getBorderStyle(border: BorderAttribute) {
-        const result = { solid: `android:color="@color/${border.color}"` };
+        const result: StringMap = { solid: `android:color="@color/${border.color}"` };
         Object.assign(result, {
             inset: result.solid,
             outset: result.solid,

@@ -10,12 +10,12 @@ export default class ViewList<T extends View> extends NodeList<T> {
         super(nodes, parent);
     }
 
-    public slice(...args) {
+    public slice() {
         return new ViewList(this.list.slice.apply(this.list, arguments));
     }
 
-    public filter(...args) {
-        return new ViewList(this.list.filter.apply(this.list, arguments));
+    public filter(callback: (item: T) => boolean) {
+        return new ViewList(this.list.filter.call(this.list, callback));
     }
 
     get anchors() {

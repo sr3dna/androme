@@ -1,4 +1,4 @@
-import { StringMap } from '../lib/types';
+import { ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -13,7 +13,7 @@ export default class View extends Node {
         return VIEW_ANDROID[VIEW_STANDARD[tagName]];
     }
 
-    public constraint: any = {};
+    public constraint: ObjectMap<any> = {};
     public labelFor: T;
     public children: T[] = [];
     public renderChildren: T[] = [];
@@ -26,7 +26,7 @@ export default class View extends Node {
         public id: number,
         public api: number,
         element?: HTMLElement | null,
-        options?: any)
+        options?: ObjectMap<any>)
     {
         super(id, element, options);
     }
@@ -92,7 +92,7 @@ export default class View extends Node {
 
     public modifyBox(area: number, offset: number) {
         for (const key of Object.keys(BOX_STANDARD)) {
-            if ((area & BOX_STANDARD[key]) === BOX_STANDARD[key]) {
+            if ((area & (<any> BOX_STANDARD)[key]) === (<any> BOX_STANDARD)[key]) {
                 const dimension = parseRTL(BOX_ANDROID[key]);
                 const total = formatPX(offset + convertInt(this.android(dimension)));
                 this.css(dimension, total);
@@ -104,7 +104,7 @@ export default class View extends Node {
 
     public supported(obj: string, attr: string) {
         for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
-            const version = API_ANDROID[i];
+            const version = <ObjectMap<string[]>> API_ANDROID[i];
             if (version && version[obj] && version[obj].includes(attr)) {
                 return false;
             }
@@ -115,7 +115,7 @@ export default class View extends Node {
     public combine() {
         const result: string[] = [];
         this.namespaces.forEach(value => {
-            const obj: {} = this[`_${value}`];
+            const obj: StringMap = (<any> this)[`_${value}`];
             for (const attr in obj) {
                 if (value !== '_') {
                     result.push(`${value}:${attr}="${obj[attr]}"`);
@@ -137,7 +137,7 @@ export default class View extends Node {
 
     public applyCustomizations() {
         [API_ANDROID[this.api], API_ANDROID[0]].forEach(item => {
-            if (item != null) {
+            if (item && item.customizations != null) {
                 const customizations = item.customizations[this.viewName];
                 if (customizations != null) {
                     for (const obj in customizations) {

@@ -1,4 +1,4 @@
-import { BoxModel, BoxRect, ClientRect, Flexbox, Point, StringMap } from '../lib/types';
+import { BoxModel, BoxRect, ClientRect, Flexbox, ObjectMap, Point, StringMap } from '../lib/types';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
@@ -6,6 +6,7 @@ import { OVERFLOW_CHROME } from '../lib/constants';
 type T = Node;
 
 export default abstract class Node implements BoxModel {
+    [key: string]: any;
     public depth: number = -1;
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
@@ -45,7 +46,7 @@ export default abstract class Node implements BoxModel {
     private _parentOriginal: T;
     private _renderParent: T | boolean;
     private _tagName: string;
-    private _options: {} = {};
+    private _options: ObjectMap<{}> = {};
 
     constructor(
         public id: number,
@@ -58,7 +59,7 @@ export default abstract class Node implements BoxModel {
             if (element instanceof HTMLElement) {
                 const styleMap = object.__styleMap || {};
                 for (const inline of Array.from(element.style)) {
-                    styleMap[hyphenToCamelCase(inline)] = element.style[inline];
+                    styleMap[hyphenToCamelCase(inline)] = (<any> element.style)[inline];
                 }
                 this.style = object.__style || getComputedStyle(element);
                 this.styleMap = styleMap;
@@ -117,7 +118,7 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public apply(options: {}) {
+    public apply(options: ObjectMap<any>) {
         if (options != null) {
             for (const namespace in options) {
                 const obj = options[namespace];
@@ -141,7 +142,7 @@ export default abstract class Node implements BoxModel {
     public options(attr: string, value?: any, overwrite = true) {
         if (hasValue(value)) {
             if (!overwrite && this._options[attr] != null) {
-                return null;
+                return {};
             }
             this._options[attr] = value;
         }
@@ -173,11 +174,11 @@ export default abstract class Node implements BoxModel {
     }
 
     public inheritStyle(node: T) {
-        const style = this.style || this.styleMap;
+        const style: any = this.style || this.styleMap;
         for (const attr in node.style) {
             if (attr.startsWith('font') || attr.startsWith('color')) {
                 const key = hyphenToCamelCase(attr);
-                style[key] = node.style[key];
+                style[key] = (<any> node.style)[key];
             }
         }
     }
@@ -220,12 +221,12 @@ export default abstract class Node implements BoxModel {
         if (arguments.length === 2) {
             this.styleMap[attr] = (hasValue(value) ? value : '');
         }
-        return this.styleMap[attr] || (this.style && this.style[attr]) || '';
+        return this.styleMap[attr] || (this.style && (<any> this.style)[attr]) || '';
     }
 
     public setBounds(calibrate: boolean = false, element?: HTMLElement) {
         if (!calibrate) {
-            const bounds = (element != null ? getRangeBounds(element) : (this.hasElement ? assignBounds(this.element.getBoundingClientRect()) : null));
+            const bounds = (element != null ? getRangeBounds(element) : (this.hasElement ? assignBounds(<ClientRect> this.element.getBoundingClientRect()) : null));
             if (bounds != null) {
                 this.bounds = bounds;
             }

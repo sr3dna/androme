@@ -5,7 +5,7 @@ export function getRangeBounds(element: HTMLElement) {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = range.getClientRects();
-    const bounds = assignBounds(domRect[domRect.length - 1]);
+    const bounds = assignBounds(<ClientRect> domRect[domRect.length - 1]);
     if (domRect.length > 1) {
         bounds.x = Math.min.apply(null, Array.from(domRect).map((item: ClientRect) => item.x));
         bounds.left = (<number> bounds.x);
@@ -47,15 +47,15 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
 
 export function sameAsParent(element: HTMLElement, attr: string) {
     if (element && element.parentElement != null) {
-        const style = getStyle(element);
-        return (style && style[attr] === getStyle(element.parentElement)[attr]);
+        const style: any = getStyle(element);
+        return (style && style[attr] === (<any> getStyle(element.parentElement))[attr]);
     }
     return false;
 }
 
 export function getBoxSpacing(element: HTMLElement, complete = false) {
     const result: BoxModel = {};
-    const style = getStyle(element);
+    const style: any = getStyle(element);
     const node = (<any> element).__node;
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {

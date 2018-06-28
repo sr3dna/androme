@@ -1,4 +1,4 @@
-import { ExtensionResult, ObjectIndex } from '../lib/types';
+import { ExtensionResult, ObjectIndex, ObjectMap } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -103,12 +103,12 @@ export default class Grid extends Extension<T, U> {
             }
         }
         else {
-            const nextMapX = mapX[this.node.depth + 2];
+            const nextMapX: ObjectMap<T[]> = mapX[this.node.depth + 2];
             const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
             if (nextCoordsX.length > 1) {
                 const columnRight: number[] = [];
                 for (let l = 0; l < nextCoordsX.length; l++) {
-                    const nextAxisX = nextMapX[nextCoordsX[l]].sortAsc('bounds.top');
+                    const nextAxisX = sortAsc(nextMapX[nextCoordsX[l]], 'bounds.top');
                     columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                     for (let m = 0; m < nextAxisX.length; m++) {
                         const nextX = nextAxisX[m];

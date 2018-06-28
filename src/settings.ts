@@ -1,6 +1,7 @@
+import { ObjectMap } from './lib/types';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 
-export default {
+const SETTINGS: ObjectMap<any> = {
     builtInExtensions: [
         'androme.external',
         'androme.list',
@@ -33,3 +34,5 @@ export default {
     outputArchiveFileType: 'zip',
     outputMaxProcessingTime: 30
 };
+
+export default SETTINGS;

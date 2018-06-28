@@ -5,21 +5,21 @@
             "name": "Launch Chrome",
             "type": "chrome",
             "request": "launch",
-            "url": "http://localhost:3000/demos-dev/form.html",
+            "url": "http://localhost:3000/demos-dev/index.html",
             "webRoot": "${workspaceFolder}"
         },
         {
             "name": "Launch Firefox",
             "type": "firefox",
             "request": "launch",
-            "url": "http://localhost:3000/demos-dev/form.html",
+            "url": "http://localhost:3000/demos-dev/index.html",
             "webRoot": "${workspaceFolder}"
         },
         {
             "name": "Launch Edge",
             "type": "edge",
             "request": "launch",
-            "url": "http://localhost:3000/demos-dev/form.html",
+            "url": "http://localhost:3000/demos-dev/index.html",
             "webRoot": "${workspaceFolder}"
         },
         {

@@ -16,10 +16,10 @@ import Grid from './extension/grid';
 import Menu from './android/extension/menu';
 import Drawer from './android/extension/drawer';
 
-let MAIN;
+let MAIN: any;
 const CACHE: Set<HTMLElement> = new Set();
 
-const EXTENSIONS = {
+const EXTENSIONS: any = {
     'androme.external': new External('androme.external', []),
     'androme.list': new List('androme.list', ['UL', 'OL']),
     'androme.table': new Table('androme.table', ['TABLE']),
@@ -28,14 +28,14 @@ const EXTENSIONS = {
     'androme.drawer': new Drawer('androme.drawer', [])
 };
 
-function __app(object) {
+function __app(object: any) {
     type T = View;
     type U = ViewList<T>;
     const app: Application<T, U> = object;
     return app;
 }
 
-export function parseDocument(...elements) {
+export function parseDocument(...elements: (string | HTMLElement | null)[]) {
     type T = View;
     type U = ViewList<T>;
     let main: Application<T, U>;

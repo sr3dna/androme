@@ -1,3 +1,5 @@
+import { ObjectMap } from './types';
+
 interface Color {
     name: string;
     hex: string;
@@ -11,9 +13,10 @@ interface Color {
         s: number;
         l: number;
     };
+    [key: string]: string | {};
 }
 
-const X11_CSS3 = {
+const X11_CSS3: ObjectMap<any> = {
     'Pink':                 { 'hex': '#FFC0CB' },
     'LightPink':            { 'hex': '#FFB6C1' },
     'HotPink':              { 'hex': '#FF69B4' },
@@ -161,7 +164,7 @@ const HSL_SORTED: Color[] = [];
 for (const i in X11_CSS3) {
     const x11: Color = X11_CSS3[i];
     for (const j in x11) {
-        x11.rgb = convertHextoRGB(x11[j]);
+        x11.rgb = convertHextoRGB(<string> x11[j]);
         x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
         HSL_SORTED.push({ name: i, rgb: x11.rgb, hex: x11.hex, hsl: x11.hsl });
     }

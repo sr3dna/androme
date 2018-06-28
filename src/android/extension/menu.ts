@@ -1,4 +1,4 @@
-import { ExtensionResult, StringMap } from '../../lib/types';
+import { ExtensionResult, ObjectMap } from '../../lib/types';
 import View from '../view';
 import Menu from '../../extension/menu';
 import Resource from '../../base/resource';
@@ -171,7 +171,7 @@ export default class MenuAndroid<T extends View> extends Menu {
         }
     }
 
-    private parseDataSet(validator: {}, element: HTMLElement, options: StringMap) {
+    private parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, options: ObjectMap<any>) {
         for (const attr in element.dataset) {
             const value = element.dataset[attr];
             if (value != null && validator[attr] != null) {

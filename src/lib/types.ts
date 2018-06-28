@@ -36,6 +36,7 @@ export interface BoxModel {
     borderRightWidth?: number;
     borderBottomWidth?: number;
     borderLeftWidth?: number;
+    [attr: string]: number | undefined;
 }
 
 export interface BoxRect {
@@ -56,6 +57,7 @@ export interface ClientRect {
     y?: number;
     minWidth?: string;
     minHeight?: string;
+    [attr: string]: number | string | undefined;
 }
 
 export interface Point {
@@ -96,13 +98,13 @@ export interface ObjectMap<T> {
     [key: string]: T;
 }
 
-export interface ArrayMap<T> {
-    [key: string]: T[];
-}
-
 export interface ObjectIndex<T> {
     [key: number]: T;
-    length: number;
+    length?: number;
+}
+
+export interface ArrayMap<T> {
+    [key: string]: T[];
 }
 
 export interface ResourceMap {

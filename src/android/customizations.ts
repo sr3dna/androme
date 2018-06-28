@@ -1,6 +1,13 @@
 import { BUILD_ANDROID as BUILD } from './constants';
 
-export default {
+interface DEFAULT {
+    [index: number]: {
+        android?: string[];
+        customizations?: any;
+    };
+}
+
+const API_ANDROID: DEFAULT = {
     [BUILD.OREO]: {
         android: ['fontWeight', 'layout_marginHorizontal', 'layout_marginVertical', 'paddingHorizontal', 'paddingVertical'],
         customizations: {}
@@ -24,3 +31,5 @@ export default {
         }
     }
 };
+
+export default API_ANDROID;

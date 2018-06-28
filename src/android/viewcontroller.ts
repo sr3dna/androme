@@ -1,4 +1,4 @@
-import { ClientRect, Point } from '../lib/types';
+import { ClientRect, ObjectMap, Point, StringMap } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import View from './view';
@@ -74,7 +74,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                     return;
                 }
-                const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
+                const LAYOUT: StringMap = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                 const linearX = nodes.linearX;
                 nodes.list.forEach(current => {
                     if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
@@ -282,7 +282,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 case 'column-reverse':
                                     directionNodes.reverse();
                             }
-                            const map = {};
+                            const map: any = {};
                             const levels: number[] = [];
                             directionNodes.forEach(item => {
                                 const y = item.linear.top;
@@ -310,16 +310,16 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                     else {
                         nodes.list.forEach(current => {
-                            let horizontalChain = nodes.filter(item => same(current, item, 'linear.top'));
+                            let horizontalChain = nodes.filter((item: T) => same(current, item, 'linear.top'));
                             if (horizontalChain.list.length === 0) {
-                                horizontalChain = nodes.filter(item => same(current, item, 'linear.bottom'));
+                                horizontalChain = nodes.filter((item: T) => same(current, item, 'linear.bottom'));
                             }
                             if (horizontalChain.list.length > 0) {
                                 horizontalChain.sortAsc('linear.x');
                             }
-                            let verticalChain = nodes.filter(item => same(current, item, 'linear.left'));
+                            let verticalChain = nodes.filter((item: T) => same(current, item, 'linear.left'));
                             if (verticalChain.list.length === 0) {
-                                verticalChain = nodes.filter(item => same(current, item, 'linear.right'));
+                                verticalChain = nodes.filter((item: T) => same(current, item, 'linear.right'));
                             }
                             if (verticalChain.list.length > 0) {
                                 verticalChain.sortAsc('linear.y');
@@ -374,7 +374,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                         if (next != null) {
                                             chain.app(LAYOUT[CHAIN_MAP['rightLeftBottomTop'][index]], next.stringId);
-                                            maxOffset = Math.max(next.linear[LT] - chain.linear[RB], maxOffset);
+                                            maxOffset = Math.max(<number> next.linear[LT] - <number> chain.linear[RB], maxOffset);
                                         }
                                         if (previous != null) {
                                             chain.app(LAYOUT[CHAIN_MAP['leftRightTopBottom'][index]], previous.stringId);
@@ -403,7 +403,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             }
                                         }
                                         if (flex.enabled) {
-                                            const map = LAYOUT_MAP.constraint;
+                                            const map: StringMap = LAYOUT_MAP.constraint;
                                             chain.app(`layout_constraint${HV}_weight`, chain.flex.grow.toString());
                                             if (chain[`view${WH}`] == null && chain.flex.grow === 0 && chain.flex.shrink <= 1) {
                                                 chain.android(`layout_${dimension}`, 'wrap_content');
@@ -468,7 +468,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 break;
                                             case 'space-around':
                                                 const leftTop = (index === 0 ? 'left' : 'top');
-                                                const percent = (firstNode.bounds[leftTop] - node.box[leftTop]) / node.box[dimension];
+                                                const percent = (firstNode.bounds[leftTop] - node.box[leftTop]) / (<number> node.box[dimension]);
                                                 firstNode.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
                                                 this.createGuideline(node, firstNode, orientation, false, parseFloat(percent.toFixed(2)));
                                                 this.createGuideline(node, lastNode, orientation, true, parseFloat((1 - percent).toFixed(2)));
@@ -559,7 +559,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         let restart = false;
                         nodes.list.forEach(current => {
                             if (!current.anchored) {
-                                const result = (constraint ? search(<object> current.app(), '*constraint*') : search(<object> current.android(), LAYOUT));
+                                const result = (constraint ? search(<ObjectMap<string>> current.app(), '*constraint*') : search(<ObjectMap<string>> current.android(), LAYOUT));
                                 for (const [key, value] of result) {
                                     if (value !== 'parent') {
                                         if (anchors.find(item => item.stringId === value) != null) {
@@ -720,7 +720,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
     }
 
-    public renderGroup(node: T, parent: T, viewName: number, options?) {
+    public renderGroup(node: T, parent: T, viewName: number, options: ObjectMap<any> = {}) {
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
@@ -941,7 +941,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return [output, node.stringId];
     }
 
-    public replaceInlineAttributes(output: string, node: T, options: {}) {
+    public replaceInlineAttributes(output: string, node: T, options: ObjectMap<boolean>) {
         node.setViewLayout();
         node.namespaces.forEach((value: string) => options[value] = true);
         return output.replace(`{@${node.id}}`, this.parseAttributes(node));
@@ -1005,7 +1005,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private setAlignParent(node: T, orientation = '', bias = false) {
-        const map = LAYOUT_MAP.constraint;
+        const map: any = LAYOUT_MAP.constraint;
         ['horizontal', 'vertical'].forEach((value, index) => {
             if (orientation === '' || value === orientation) {
                 node.app(map[(index === 0 ? 'left' : 'top')], 'parent');
@@ -1019,7 +1019,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private createGuideline(parent: T, node: T, orientation = '', opposite = false, percent = -1) {
-        const map = LAYOUT_MAP.constraint;
+        const map: any = LAYOUT_MAP.constraint;
         const beginPercent = `layout_constraintGuide_${(percent !== -1 ? 'percent' : 'begin')}`;
         ['horizontal', 'vertical'].forEach((value, index) => {
             if ((orientation === '' && !node.constraint[value]) || orientation === value) {
@@ -1044,7 +1044,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private deleteConstraints(node: T, orientation = '') {
-        const map = LAYOUT_MAP.constraint;
+        const map: any = LAYOUT_MAP.constraint;
         if (orientation === '' || orientation === 'horizontal') {
             node.delete('app', map['leftRight'], map['rightLeft']);
             node.constraint.horizontal = false;

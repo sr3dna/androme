@@ -1,3 +1,5 @@
+import { ObjectMap } from '../lib/types';
+
 export enum VIEW_STANDARD {
     FRAME = 1,
     LINEAR,
@@ -42,7 +44,7 @@ export enum BOX_STANDARD {
     PADDING_LEFT = 256
 }
 
-export const MAPPING_CHROME = {
+export const MAPPING_CHROME: ObjectMap<number> = {
     'PLAINTEXT': VIEW_STANDARD.TEXT,
     'HR': VIEW_STANDARD.VIEW,
     'IMG': VIEW_STANDARD.IMAGE,

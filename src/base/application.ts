@@ -1,4 +1,4 @@
-import { ArrayMap, ObjectIndex } from '../lib/types';
+import { ArrayMap, ObjectIndex, StringMap } from '../lib/types';
 import Controller from './controller';
 import Extension from './extension';
 import Resource from './resource';
@@ -148,19 +148,19 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         for (const attr of Array.from(element.style)) {
                             attributes.add(hyphenToCamelCase(attr));
                         }
-                        const style = getComputedStyle(element);
-                        const styleMap = {};
+                        const style: any = getComputedStyle(element);
+                        const styleMap: StringMap = {};
                         for (const name of attributes) {
                             if (name.toLowerCase().indexOf('color') !== -1) {
-                                const color = getByColorName(cssRule.style[name]);
+                                const color = getByColorName((<any> cssRule.style)[name]);
                                 if (color !== '') {
-                                    cssRule.style[name] = convertRGB(color);
+                                    (<any> cssRule.style)[name] = convertRGB(color);
                                 }
                             }
-                            if (hasValue(element.style[name])) {
-                                styleMap[name] = element.style[name];
+                            if (hasValue((<any> element.style)[name])) {
+                                styleMap[name] = (<any> element.style)[name];
                             }
-                            else if (style[name] === cssRule.style[name]) {
+                            else if (style[name] === (<any> cssRule.style)[name]) {
                                 styleMap[name] = style[name];
                             }
                         }
@@ -252,7 +252,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         if (this.cache.list.length > 0) {
-            const preAlignment = {};
+            const preAlignment: ObjectIndex<any> = {};
             this.cache.list.forEach(node => {
                 const element = node.element;
                 preAlignment[node.id] = {};
@@ -281,7 +281,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
                 node.setBounds();
             });
-            const parents = {};
+            const parents: ObjectIndex<T[]> = {};
             this.cache.list.forEach(parent => {
                 this.cache.list.forEach(child => {
                     if (parent !== child) {
@@ -333,7 +333,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     const style = preAlignment[node.id];
                     if (style != null) {
                         for (const attr in style) {
-                            node.element.style[attr] = style[attr];
+                            (<any> node.element).style[attr] = style[attr];
                         }
                     }
                 }
@@ -366,8 +366,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public createLayoutXml() {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
         let empty = true;
-        const mapX: ObjectIndex<{}> = [];
-        const mapY: ObjectIndex<{}> = [];
+        const mapX: any = [];
+        const mapY: any = [];
         const extensions = this.extensions;
         this.cache.list.forEach(node => {
             const x = Math.floor(<number> node.bounds.x);
@@ -583,7 +583,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return node;
     }
 
-    private create(value, pathname = '') {
+    private create(value: string, pathname = '') {
         if (this.views.length < this.ids.length) {
             this.pathnames[this.views.length] = (pathname !== '' ? pathname : 'res/layout');
             this.views.push(value);

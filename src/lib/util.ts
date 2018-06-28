@@ -1,4 +1,6 @@
-let ID;
+import { ArrayMap, ObjectMap, StringMap } from '../lib/types';
+
+let ID: ArrayMap<string>;
 resetId();
 
 function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
@@ -218,7 +220,7 @@ export function resolveRelativePath(value: string) {
     return value;
 }
 
-export function search(obj: {}, value: string | object) {
+export function search(obj: ObjectMap<string>, value: string | StringMap) {
     const result: any[][] = [];
     if (typeof value === 'object') {
         for (const term in value) {

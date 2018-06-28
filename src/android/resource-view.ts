@@ -1,4 +1,4 @@
-import { BorderAttribute, ObjectMap, ResourceMap } from '../lib/types';
+import { BorderAttribute, ObjectIndex, ObjectMap, ResourceMap, StringMap } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -108,7 +108,7 @@ export default class ResourceView extends Resource<T> {
         this.cache.elements.forEach(node => {
             const stored = (<any> node.element).__boxSpacing;
             if (stored != null) {
-                const method = METHOD_ANDROID['boxSpacing'];
+                const method: StringMap = METHOD_ANDROID['boxSpacing'];
                 for (const i in stored) {
                     node.attr(formatString(parseRTL(method[i]), stored[i]));
                 }
@@ -190,7 +190,7 @@ export default class ResourceView extends Resource<T> {
                         [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute, index) => {
                             if (this.borderVisible(item)) {
                                 const hideWidth = `-${item.width}`;
-                                const layerList: {} = {
+                                const layerList: ObjectMap<any> = {
                                     'top': hideWidth,
                                     'right': hideWidth,
                                     'bottom': hideWidth,
@@ -233,7 +233,7 @@ export default class ResourceView extends Resource<T> {
 
     public setFontStyle() {
         super.setFontStyle();
-        const tagName = {};
+        const tagName: ObjectMap<T[]> = {};
         this.cache.elements.forEach(node => {
             if ((<any> node.element).__fontStyle != null) {
                 if (tagName[node.tagName] == null) {
@@ -285,7 +285,7 @@ export default class ResourceView extends Resource<T> {
                         STORED.FONTS.set(fontFamily, fonts);
                     }
                 }
-                const method = METHOD_ANDROID['fontStyle'];
+                const method: StringMap = METHOD_ANDROID['fontStyle'];
                 const keys = Object.keys(method);
                 for (let i = 0; i < keys.length; i++) {
                     if (sorted[i] == null) {
@@ -409,8 +409,8 @@ export default class ResourceView extends Resource<T> {
     }
 
     private processFontStyle(viewData: ViewData) {
-        const style = {};
-        const layout = {};
+        const style: ObjectMap<any> = {};
+        const layout: ObjectMap<any> = {};
         for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
@@ -449,17 +449,17 @@ export default class ResourceView extends Resource<T> {
                     sorted.length = 0;
                 }
                 else {
-                    const styleKey = {};
-                    const layoutKey = {};
+                    const styleKey: ObjectMap<number[]> = {};
+                    const layoutKey: ObjectMap<number[]> = {};
                     for (let i = 0; i < sorted.length; i++) {
-                        const filtered = {};
-                        const combined = {};
+                        const filtered: ObjectMap<number[]> = {};
+                        const combined: ObjectMap<Set<string>> = {};
                         const deleteKeys = new Set();
                         for (const attr1 in sorted[i]) {
                             if (sorted[i] == null) {
                                 continue;
                             }
-                            const ids = sorted[i][attr1];
+                            const ids: number[] = sorted[i][attr1];
                             let revalidate = false;
                             if (ids == null || ids.length === 0) {
                                 continue;
@@ -475,7 +475,7 @@ export default class ResourceView extends Resource<T> {
                                 revalidate = true;
                             }
                             if (!revalidate) {
-                                const found = {};
+                                const found: ObjectMap<number[]> = {};
                                 let merged = false;
                                 for (let j = 0; j < sorted.length; j++) {
                                     if (i !== j) {
@@ -551,7 +551,7 @@ export default class ResourceView extends Resource<T> {
             }
             while (sorted.length > 0);
         }
-        const resource = {};
+        const resource: ObjectMap<TagStyle[]> = {};
         for (const tagName in style) {
             const tag = style[tagName];
             const tagData: TagStyle[] = [];
@@ -569,7 +569,7 @@ export default class ResourceView extends Resource<T> {
             resource[tagName] = tagData;
         }
         const inherit = new Set();
-        const map = {};
+        const map: ObjectIndex<any> = {};
         for (const tagName in resource) {
             for (const item of (<TagStyle[]> resource[tagName])) {
                 for (const id of item.ids) {
@@ -672,7 +672,7 @@ export default class ResourceView extends Resource<T> {
             case 'radiusInit':
                 return (stored.borderRadius.length > 1 ? [] : false);
             case 'radiusAll':
-                const result = {};
+                const result: StringMap = {};
                 stored.borderRadius.forEach((value: string, index: number) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
                 return result;
         }
