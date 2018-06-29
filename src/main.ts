@@ -88,8 +88,8 @@ export function parseDocument(...elements: (string | HTMLElement | null)[]) {
                 element.id = `view_${main.length}`;
             }
         }
-        element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
-        element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/-/g, '_');
+        element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
+        element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
         if (main.createNodeCache(element) && main.createLayoutXml()) {
             main.setResources();
             if (SETTINGS.showAttributes) {

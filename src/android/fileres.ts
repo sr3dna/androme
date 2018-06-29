@@ -5,12 +5,12 @@ import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml'
 import SETTINGS from '../settings';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 
-import STRING_TMPL from './tmpl/resources/string';
-import STRINGARRAY_TMPL from './tmpl/resources/string-array';
-import STYLE_TMPL from './tmpl/resources/style';
-import FONT_TMPL from './tmpl/resources/font';
-import COLOR_TMPL from './tmpl/resources/color';
-import DRAWABLE_TMPL from './tmpl/resources/drawable';
+import STRING_TMPL from './template/resources/string';
+import STRINGARRAY_TMPL from './template/resources/string-array';
+import STYLE_TMPL from './template/resources/style';
+import FONT_TMPL from './template/resources/font';
+import COLOR_TMPL from './template/resources/color';
+import DRAWABLE_TMPL from './template/resources/drawable';
 
 export default class FileRes extends File {
     constructor() {

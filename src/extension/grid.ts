@@ -16,7 +16,7 @@ export default class Grid extends Extension<T, U> {
     public condition() {
         return (
             this.included() ||
-            ((this.node.element.dataset == null || this.node.element.dataset.extension == null) && !this.node.flex.enabled && this.node.children.length > 1 && this.node.children.every(node => !node.flex.enabled && this.node.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right')))
+            (this.node.element.dataset != null && this.node.element.dataset.extension == null && !this.node.flex.enabled && this.node.children.length > 1 && BLOCK_CHROME.includes(this.node.children[0].tagName) && this.node.children.every(node => !node.flex.enabled && node.children.length > 1 && this.node.children[0].tagName === node.tagName && !node.children.some(child => child.css('float') === 'right')))
         );
     }
 

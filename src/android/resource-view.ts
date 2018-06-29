@@ -10,8 +10,8 @@ import SETTINGS from '../settings';
 import { VIEW_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 
-import SHAPERECTANGLE_TMPL from './tmpl/resources/shape-rectangle';
-import LAYERLIST_TMPL from './tmpl/resources/layer-list';
+import SHAPERECTANGLE_TMPL from './template/resources/shape-rectangle';
+import LAYERLIST_TMPL from './template/resources/layer-list';
 
 const STORED: ResourceMap = {
     ARRAYS: new Map(),
