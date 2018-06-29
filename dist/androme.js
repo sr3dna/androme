@@ -1,4 +1,4 @@
-/* androme 1.7.14
+/* androme 1.7.15
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -1002,8 +1002,15 @@
         '900': 'black'
     };
 
-    var SETTINGS = {
-        builtInExtensions: ['external', 'list', 'table', 'grid', 'menu', 'drawer'],
+    const SETTINGS = {
+        builtInExtensions: [
+            'androme.external',
+            'androme.list',
+            'androme.table',
+            'androme.grid',
+            'androme.menu',
+            'androme.drawer'
+        ],
         targetAPI: exports.build.OREO,
         density: exports.density.MDPI,
         useConstraintLayout: true,
@@ -1024,9 +1031,9 @@
         showAttributes: true,
         autoCloseOnWrite: true,
         outputDirectory: 'app/src/main',
+        outputActivityMainFileName: 'activity_main.xml',
         outputArchiveFileType: 'zip',
-        outputMaxProcessingTime: 30,
-        outputActivityMainFileName: 'activity_main.xml'
+        outputMaxProcessingTime: 30
     };
 
     class Application {
@@ -1034,9 +1041,9 @@
             this.TypeT = TypeT;
             this.TypeU = TypeU;
             this.elements = new Set();
-            this.pathnames = [];
             this.ids = [];
             this.views = [];
+            this.pathnames = [];
             this._extensions = [];
             this._closed = false;
             this.cache = new this.TypeU();
@@ -1051,31 +1058,33 @@
             this.resourceHandler = resource;
         }
         registerExtension(extension) {
-            const found = this._extensions.find(item => item.name === extension.name);
+            const found = this.findExtension(extension.name);
             if (found != null) {
                 found.tagNames = extension.tagNames;
-                found.options = extension.options;
+                Object.assign(found.options, extension.options);
             }
             else {
-                extension.application = this;
-                this._extensions.push(extension);
+                if (extension.dependences.every((item) => this.findExtension(item.name) != null)) {
+                    extension.application = this;
+                    this._extensions.push(extension);
+                }
             }
         }
         finalize() {
             this.resourceHandler.finalize(this.viewData);
-            const views = this.resourceHandler.views;
+            this.views = this.resourceHandler.views;
             this.cacheInternal.list.forEach(node => {
                 this.extensions.forEach(item => {
-                    item.parent = undefined;
+                    item.parent = null;
                     item.node = node;
                     item.element = node.element;
                     if (item.condition()) {
-                        item.finalize(views);
+                        item.finalize();
                     }
                 });
             });
-            for (let i = 0; i < views.length; i++) {
-                let output = views[i].replace(/{[<:#@&>]{1}[0-9]+}/g, '');
+            for (let i = 0; i < this.views.length; i++) {
+                let output = this.views[i].replace(/{[<:#@&>]{1}[0-9]+}/g, '');
                 if (SETTINGS.useUnitDP) {
                     output = replaceDP(output, SETTINGS.density);
                 }
@@ -1206,8 +1215,8 @@
             this.controllerHandler.namespaces.clear();
             const extensions = this.extensions;
             extensions.forEach(item => {
-                item.parent = undefined;
-                item.node = this.cache.parent;
+                item.parent = null;
+                item.node = {};
                 item.element = layoutRoot;
                 item.beforeInit();
             });
@@ -1337,6 +1346,7 @@
                     }
                 });
                 extensions.forEach(item => {
+                    item.parent = null;
                     item.node = this.cache.parent;
                     item.element = layoutRoot;
                     item.afterInit();
@@ -1491,9 +1501,9 @@
             if (!empty) {
                 this.create(output, pathname);
                 extensions.forEach(item => {
-                    item.parent = undefined;
+                    item.parent = null;
                     item.node = this.cache.parent;
-                    item.element = undefined;
+                    item.element = null;
                     item.afterRender();
                 });
                 return true;
@@ -1539,6 +1549,9 @@
         replaceAppended() {
             const output = this.controllerHandler.replaceAppended(this.current);
             this.current = output;
+        }
+        findExtension(name) {
+            return this._extensions.find(item => item.name === name);
         }
         toString() {
             return (this.views.length > 0 ? this.views[0] : '');
@@ -1612,7 +1625,7 @@
             this.options = options;
             this.tagNames = [];
             this.enabled = true;
-            this.dependencies = new Set();
+            this.dependences = [];
             this.tagNames = tagNames.map(value => value.trim().toUpperCase());
         }
         is(tagName) {
@@ -1624,36 +1637,40 @@
             }
             return (element != null && element.dataset && element.dataset.extension != null ? element.dataset.extension.split(',').map(value => value.trim()).includes(this.name) : false);
         }
-        beforeInit() {
-            this.dependencies.forEach(value => {
-                const extension = this.application.extensions.find(item => item.name === value);
-                if (extension != null) {
-                    extension.application = this.application;
-                    extension.element = this.element;
-                    extension.parent = this.parent;
-                    extension.beforeInit();
-                }
-            });
+        beforeInit(internal = false) {
+            if (!internal && this.included()) {
+                this.dependences.filter((item) => item.init).forEach((item) => {
+                    const extension = this.application.findExtension(item.name);
+                    if (extension != null) {
+                        extension.parent = this.parent;
+                        extension.node = this.node;
+                        extension.element = this.element;
+                        extension.beforeInit(true);
+                    }
+                });
+            }
         }
         init(element) {
             return false;
         }
-        afterInit() {
-            this.dependencies.forEach(value => {
-                const extension = this.application.extensions.find(item => item.name === value);
-                if (extension != null) {
-                    extension.application = this.application;
-                    extension.element = this.element;
-                    extension.parent = this.parent;
-                    extension.afterInit();
-                }
-            });
+        afterInit(internal = false) {
+            if (!internal && this.included()) {
+                this.dependences.filter((item) => item.init).forEach((item) => {
+                    const extension = this.application.findExtension(item.name);
+                    if (extension != null) {
+                        extension.parent = this.parent;
+                        extension.node = this.node;
+                        extension.element = this.element;
+                        extension.afterInit(true);
+                    }
+                });
+            }
         }
         afterRender() {
             return;
         }
         condition() {
-            if (this.node.element.dataset != null) {
+            if (this.node && this.node.element.dataset != null) {
                 if (!this.node.element.dataset.extension) {
                     return (this.tagNames.length > 0);
                 }
@@ -1670,10 +1687,10 @@
         processChild(mapX, mapY) {
             return ['', false];
         }
-        require(value) {
-            this.dependencies.add(value.trim());
+        require(value, init = false) {
+            this.dependences.push({ name: value, init });
         }
-        finalize(views) {
+        finalize() {
             return;
         }
         get linearX() {
@@ -1833,7 +1850,7 @@
         options(attr, value, overwrite = true) {
             if (hasValue(value)) {
                 if (!overwrite && this._options[attr] != null) {
-                    return null;
+                    return {};
                 }
                 this._options[attr] = value;
             }
@@ -2137,7 +2154,7 @@
         return value;
     }
 
-    var API_ANDROID = {
+    const API_ANDROID = {
         [exports.build.OREO]: {
             android: ['fontWeight', 'layout_marginHorizontal', 'layout_marginVertical', 'paddingHorizontal', 'paddingVertical'],
             customizations: {}
@@ -2272,7 +2289,7 @@
         }
         applyCustomizations() {
             [API_ANDROID[this.api], API_ANDROID[0]].forEach(item => {
-                if (item != null) {
+                if (item && item.customizations != null) {
                     const customizations = item.customizations[this.viewName];
                     if (customizations != null) {
                         for (const obj in customizations) {
@@ -2763,11 +2780,11 @@
         constructor(nodes, parent) {
             super(nodes, parent);
         }
-        slice(...args) {
+        slice() {
             return new ViewList(this.list.slice.apply(this.list, arguments));
         }
-        filter(...args) {
-            return new ViewList(this.list.filter.apply(this.list, arguments));
+        filter(callback) {
+            return new ViewList(this.list.filter.call(this.list, callback));
         }
         get anchors() {
             return this.list.filter(node => node.anchored);
@@ -3086,16 +3103,16 @@
                         }
                         else {
                             nodes.list.forEach(current => {
-                                let horizontalChain = nodes.filter(item => same(current, item, 'linear.top'));
+                                let horizontalChain = nodes.filter((item) => same(current, item, 'linear.top'));
                                 if (horizontalChain.list.length === 0) {
-                                    horizontalChain = nodes.filter(item => same(current, item, 'linear.bottom'));
+                                    horizontalChain = nodes.filter((item) => same(current, item, 'linear.bottom'));
                                 }
                                 if (horizontalChain.list.length > 0) {
                                     horizontalChain.sortAsc('linear.x');
                                 }
-                                let verticalChain = nodes.filter(item => same(current, item, 'linear.left'));
+                                let verticalChain = nodes.filter((item) => same(current, item, 'linear.left'));
                                 if (verticalChain.list.length === 0) {
-                                    verticalChain = nodes.filter(item => same(current, item, 'linear.right'));
+                                    verticalChain = nodes.filter((item) => same(current, item, 'linear.right'));
                                 }
                                 if (verticalChain.list.length > 0) {
                                     verticalChain.sortAsc('linear.y');
@@ -3493,7 +3510,7 @@
                 }
             });
         }
-        renderGroup(node, parent, viewName, options) {
+        renderGroup(node, parent, viewName, options = {}) {
             let preXml = '';
             let postXml = '';
             let renderParent = parent;
@@ -3961,10 +3978,14 @@
             }
             return '';
         }
+        addFile(pathname, filename, content = '', uri = '') {
+            this.file.addFile(pathname, filename, content, uri);
+        }
         reset() {
             Resource.STORED.STRINGS = new Map();
             Resource.STORED.COLORS = new Map();
             Resource.STORED.IMAGES = new Map();
+            this.file.reset();
         }
         setBoxSpacing() {
             this.cache.elements.forEach(node => {
@@ -4315,7 +4336,7 @@
             const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
             let match;
             while ((match = pattern.exec(output)) != null) {
-                if (include[match[1]]) {
+                if (include && include[match[1]]) {
                     const attribute = `{#${match[1]}=${match[2]}}`;
                     if (data[match[2]] != null) {
                         output = output.replace(attribute, data[match[2]]);
@@ -4324,7 +4345,7 @@
                         output = output.replace(attribute, match[2]);
                     }
                 }
-                else if (exclude[match[1]]) {
+                else if (exclude && exclude[match[1]]) {
                     output = output.replace(match[0], '');
                 }
             }
@@ -4450,6 +4471,7 @@
             STORED.COLORS = new Map();
             STORED.IMAGES = new Map();
             Object.assign(STORED, Resource.STORED);
+            this.file.reset();
             this.tagStyle = {};
             this.tagCount = {};
         }
@@ -4494,9 +4516,9 @@
                                     }]
                             };
                             if (stored.borderRadius.length > 1) {
-                                const shapeItem = getDataLevel(data, '0', '2');
+                                const shape = getDataLevel(data, '0', '2');
                                 const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                shapeItem['5'].push(borderRadius);
+                                shape['5'].push(borderRadius);
                             }
                         }
                         else if (stored.border != null) {
@@ -4513,9 +4535,9 @@
                                     }]
                             };
                             if (stored.borderRadius.length > 1) {
-                                const shapeItem = getDataLevel(data, '0', '1');
+                                const shape = getDataLevel(data, '0', '1');
                                 const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                shapeItem['5'].push(borderRadius);
+                                shape['5'].push(borderRadius);
                             }
                         }
                         else {
@@ -4526,7 +4548,7 @@
                                         '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
                                     }]
                             };
-                            const rootItem = getDataLevel(data, '0');
+                            const root = getDataLevel(data, '0');
                             const borderRadius = {};
                             if (stored.borderRadius.length > 1) {
                                 Object.assign(borderRadius, {
@@ -4553,11 +4575,11 @@
                                     if (stored.borderRadius.length > 1) {
                                         layerList['5'].push(borderRadius);
                                     }
-                                    rootItem['1'].push(layerList);
+                                    root['1'].push(layerList);
                                 }
                             });
-                            if (rootItem['1'].length === 0) {
-                                rootItem['1'] = false;
+                            if (root['1'].length === 0) {
+                                root['1'] = false;
                             }
                         }
                         const xml = parseTemplateData(template, data);
@@ -5025,10 +5047,19 @@
             this.directory = directory;
             this.processingTime = processingTime;
             this.appName = '';
+            this.queue = [];
             this.compression = 'zip';
             if (hasValue(compression)) {
                 this.compression = compression;
             }
+        }
+        addFile(pathname, filename, content, uri) {
+            if (content !== '' || uri !== '') {
+                this.queue.push({ pathname, filename, content, uri });
+            }
+        }
+        reset() {
+            this.queue = [];
         }
         saveToDisk(files) {
             if (!location.protocol.startsWith('http')) {
@@ -5036,6 +5067,7 @@
                 return;
             }
             if (files != null && files.length > 0) {
+                files.push(...this.queue);
                 fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.compression.toLocaleLowerCase()}&processingtime=${this.processingTime.toString().trim()}`, {
                     method: 'POST',
                     body: JSON.stringify(files),
@@ -5223,12 +5255,12 @@
                             '1': []
                         }]
                 };
-                const rootItem = getDataLevel(data, '0');
+                const root = getDataLevel(data, '0');
                 if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
-                    rootItem['1'].push({ name: 'app_name', value: this.appName });
+                    root['1'].push({ name: 'app_name', value: this.appName });
                 }
-                for (const [name, value] of this.stored.STRINGS.entries()) {
-                    rootItem['1'].push({ name: value, value: name });
+                for (const [value, name] of this.stored.STRINGS.entries()) {
+                    root['1'].push({ name, value });
                 }
                 xml = parseTemplateData(template, data);
                 if (saveToDisk) {
@@ -5247,7 +5279,7 @@
                             '1': []
                         }]
                 };
-                const rootItem = getDataLevel(data, '0');
+                const root = getDataLevel(data, '0');
                 for (const [name, values] of this.stored.ARRAYS.entries()) {
                     const arrayItem = {
                         name,
@@ -5257,7 +5289,7 @@
                     for (const value of values) {
                         item.push({ value });
                     }
-                    rootItem['1'].push(arrayItem);
+                    root['1'].push(arrayItem);
                 }
                 xml = parseTemplateData(template, data);
                 if (saveToDisk) {
@@ -5281,10 +5313,10 @@
                             }]
                     };
                     data[(SETTINGS.targetAPI < exports.build.OREO ? '#include' : '#exclude')]['app'] = true;
-                    const rootItem = getDataLevel(data, '0');
+                    const root = getDataLevel(data, '0');
                     for (const attr in font) {
                         const [style, weight] = attr.split('-');
-                        rootItem['1'].push({
+                        root['1'].push({
                             style,
                             weight,
                             font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
@@ -5308,9 +5340,9 @@
                             '1': []
                         }]
                 };
-                const rootItem = getDataLevel(data, '0');
+                const root = getDataLevel(data, '0');
                 for (const [name, value] of this.stored.COLORS.entries()) {
-                    rootItem['1'].push({ name, value });
+                    root['1'].push({ name, value });
                 }
                 xml = parseTemplateData(template, data);
                 if (saveToDisk) {
@@ -5329,7 +5361,7 @@
                             '1': []
                         }]
                 };
-                const rootItem = getDataLevel(data, '0');
+                const root = getDataLevel(data, '0');
                 for (const [name1, style] of this.stored.STYLES.entries()) {
                     const styleItem = {
                         name1,
@@ -5340,7 +5372,7 @@
                         const [name2, value] = attr.split('=');
                         styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
                     });
-                    rootItem['1'].push(styleItem);
+                    root['1'].push(styleItem);
                 }
                 xml = parseTemplateData(template, data);
                 if (SETTINGS.useUnitDP) {
@@ -5359,18 +5391,18 @@
                 const data = {
                     '0': []
                 };
-                const rootItem = data['0'];
+                const root = data['0'];
                 for (const [name, value] of this.stored.DRAWABLES.entries()) {
-                    rootItem.push({ name: `res/drawable/${name}.xml`, value });
+                    root.push({ name: `res/drawable/${name}.xml`, value });
                 }
                 for (const [name, images] of this.stored.IMAGES.entries()) {
                     if (Object.keys(images).length > 1) {
                         for (const dpi in images) {
-                            rootItem.push({ name: `res/drawable-${dpi}/${name}.${getFileExt(images[dpi])}`, value: `<!-- image: ${images[dpi]} -->` });
+                            root.push({ name: `res/drawable-${dpi}/${name}.${getFileExt(images[dpi])}`, value: `<!-- image: ${images[dpi]} -->` });
                         }
                     }
                     else if (images['mdpi'] != null) {
-                        rootItem.push({ name: `res/drawable/${name}.${getFileExt(images['mdpi'])}`, value: `<!-- image: ${images['mdpi']} -->` });
+                        root.push({ name: `res/drawable/${name}.${getFileExt(images['mdpi'])}`, value: `<!-- image: ${images['mdpi']} -->` });
                     }
                 }
                 xml = parseTemplateData(template, data);
@@ -5424,8 +5456,8 @@
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
         }
-        beforeInit() {
-            if (this.included()) {
+        beforeInit(init = false) {
+            if (init || this.included()) {
                 if (this.element != null) {
                     const object = this.element;
                     if (object.__andromeExternalDisplay == null) {
@@ -5442,8 +5474,8 @@
             }
             return false;
         }
-        afterInit() {
-            if (this.included()) {
+        afterInit(init = false) {
+            if (init || this.included()) {
                 if (this.element != null) {
                     const object = this.element;
                     if (object.__andromeExternalDisplay != null) {
@@ -5593,7 +5625,7 @@
         }
         condition() {
             return (this.included() ||
-                ((this.node.element.dataset == null || this.node.element.dataset.extension == null) && !this.node.flex.enabled && this.node.children.length > 1 && this.node.children.every(node => !node.flex.enabled && this.node.children[0].tagName === node.tagName && BLOCK_CHROME.includes(node.tagName) && node.children.length > 1 && node.children.every(child => child.css('float') !== 'right'))));
+                (this.node.element.dataset != null && this.node.element.dataset.extension == null && !this.node.flex.enabled && this.node.children.length > 1 && BLOCK_CHROME.includes(this.node.children[0].tagName) && this.node.children.every(node => !node.flex.enabled && node.children.length > 1 && this.node.children[0].tagName === node.tagName && !node.children.some(child => child.css('float') === 'right'))));
         }
         processNode(mapX, mapY) {
             let xml = '';
@@ -5682,7 +5714,7 @@
                 if (nextCoordsX.length > 1) {
                     const columnRight = [];
                     for (let l = 0; l < nextCoordsX.length; l++) {
-                        const nextAxisX = nextMapX[nextCoordsX[l]].sortAsc('bounds.top');
+                        const nextAxisX = sortAsc(nextMapX[nextCoordsX[l]], 'bounds.top');
                         columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                         for (let m = 0; m < nextAxisX.length; m++) {
                             const nextX = nextAxisX[m];
@@ -5841,14 +5873,14 @@
     class Menu extends Extension {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
-            this.require('androme.external');
+            this.require('androme.external', true);
         }
         init(element) {
             if (this.included(element) || this.is(element.tagName)) {
                 let valid = false;
                 if (element.children.length > 0) {
                     const tagName = element.children[0].tagName;
-                    valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every((item) => item.tagName === tagName && !(item.style.display === 'inline' || item.style.cssFloat === 'left' || item.style.cssFloat === 'right')));
+                    valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every((item) => item.tagName === tagName && !(item.style.display === 'inline' || item.style.float === 'left' || item.style.float === 'right')));
                     let current = element.parentElement;
                     while (current != null) {
                         if (current.tagName === 'NAV' && this.application.elements.has(current)) {
@@ -5873,7 +5905,7 @@
             return false;
         }
         afterRender() {
-            if (this.node != null && this.included(this.node.element)) {
+            if (this.included(this.node.element)) {
                 Array.from(this.node.element.querySelectorAll('NAV')).forEach((item) => {
                     const display = item.__andromeExternalDisplay;
                     if (display != null) {
@@ -6064,7 +6096,7 @@
     class Drawer extends Extension {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
-            this.require('androme.external');
+            this.require('androme.external', true);
             this.require('androme.menu');
         }
         init(element) {
@@ -6081,6 +6113,23 @@
         }
     }
 
+    const template$8 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '   <style name="{@appTheme}" parent="{@parentTheme}">',
+        '       <item name="android:windowDrawsSystemBarBackgrounds">true</item>',
+        '       <item name="android:statusBarColor">@android:color/transparent</item>',
+        '       <item name="android:windowTranslucentStatus">true</item>',
+        '!1',
+        '       <item name="{name}">{value}</item>',
+        '!1',
+        '   </style>',
+        '</resources>',
+        '!0'
+    ];
+    var EXTENSION_DRAWER_TMPL = template$8.join('\n');
+
     class DrawerAndroid extends Drawer {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
@@ -6090,29 +6139,29 @@
             const node = this.node;
             node.setViewId("android.support.v4.widget.DrawerLayout" /* DRAWER */);
             let xml = controller.getViewStatic("android.support.v4.widget.DrawerLayout" /* DRAWER */, node.depth, {}, '', '', node.id, true)[0];
-            node.android('layout_width', (this.options.layout_width != null ? this.options.layout_width : 'match_parent'));
-            node.android('layout_height', (this.options.layout_height != null ? this.options.layout_height : 'match_parent'));
-            node.android('fitsSystemWindows', (this.options.fitsSystemWindows != null ? this.options.fitsSystemWindows : 'false'));
+            node.android('layout_width', (this.options.layout_width || 'match_parent'));
+            node.android('layout_height', (this.options.layout_height || 'match_parent'));
+            node.android('fitsSystemWindows', (this.options.fitsSystemWindows || 'true'));
             node.renderDepth = 0;
             node.renderParent = true;
             node.ignoreResource = VIEW_RESOURCE.ALL;
+            this.createResources();
             const options = {
                 android: {
                     id: `${node.stringId}_view`,
-                    layout_gravity: parseRTL((this.options.layout_gravity != null ? this.options.layout_gravity : 'left')),
-                    fitsSystemWindows: (this.options.fitsSystemWindows != null ? this.options.fitsSystemWindows : 'false'),
+                    layout_gravity: parseRTL(this.options.layout_gravity || 'left'),
+                    fitsSystemWindows: (this.options.fitsSystemWindows || 'true')
                 },
                 app: {
                     menu: `@menu/{androme.drawer:menu:${node.id}}`,
                     headerLayout: `@layout/{androme.drawer:headerLayout:${node.id}}`
                 }
             };
-            const content = controller.getViewStatic(VIEW_ANDROID.FRAME, node.depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent')[0];
             const navigation = controller.getViewStatic("android.support.design.widget.NavigationView" /* NAVIGATION */, node.depth + 1, options, 'wrap_content', 'match_parent')[0];
-            xml = xml.replace(`{:${node.id}}`, content + navigation);
+            xml = xml.replace(`{:${node.id}}`, navigation);
             return [xml, false];
         }
-        finalize(views) {
+        finalize() {
             let menu = '';
             let headerLayout = '';
             this.application.elements.forEach(item => {
@@ -6127,53 +6176,65 @@
                     }
                 }
             });
+            const views = this.application.views;
             for (let i = 0; i < views.length; i++) {
                 views[i] = views[i].replace(`{androme.drawer:menu:${this.node.id}}`, menu);
                 views[i] = views[i].replace(`{androme.drawer:headerLayout:${this.node.id}}`, headerLayout);
             }
         }
-    }
-
-    let MAIN;
-    const CACHE = new Set();
-    const EXTENSIONS = {
-        'external': new External('androme.external', []),
-        'list': new ListAndroid('androme.list', ['UL', 'OL']),
-        'table': new Table('androme.table', ['TABLE']),
-        'grid': new Grid('androme.grid', [], { balanceColumns: true }),
-        'menu': new MenuAndroid('androme.menu', ['NAV'], { nsAppCompat: true }),
-        'drawer': new DrawerAndroid('androme.drawer', [])
-    };
-    function __app(object) {
-        const app = object;
-        return app;
-    }
-    function parseDocument(...elements) {
-        let main;
-        if (MAIN == null) {
-            const Node = View;
-            const NodeList = ViewList;
-            const Controller = new ViewController();
-            const File = new FileRes();
-            const Resource = new ResourceView(File);
-            main = new Application(Node, NodeList);
-            main.registerController(Controller);
-            main.registerResource(Resource);
-            for (const name of SETTINGS.builtInExtensions) {
-                const extension = EXTENSIONS[name.trim().toLowerCase().replace(/^androme\./, '')];
-                if (extension != null) {
-                    main.registerExtension(extension);
+        createResources() {
+            const template = parseTemplateMatch(EXTENSION_DRAWER_TMPL);
+            const data = {
+                '0': [{
+                        'appTheme': this.options.appTheme || 'AppTheme',
+                        'parentTheme': this.options.parentTheme || 'Theme.AppCompat.Light.NoActionBar',
+                        '1': []
+                    }]
+            };
+            if (this.options.item != null) {
+                const root = getDataLevel(data, '0');
+                for (const name in this.options.item) {
+                    root['1'].push({
+                        name,
+                        value: this.options.item[name]
+                    });
                 }
             }
-            MAIN = main;
+            const pathname = (this.options.output && this.options.output.path != null ? this.options.output.path : 'res/values-v21');
+            const filename = (this.options.output && this.options.output.file != null ? this.options.output.file : 'androme.drawer.xml');
+            const xml = parseTemplateData(template, data);
+            this.application.resourceHandler.addFile(pathname, filename, xml);
         }
-        else {
-            main = MAIN;
-            main.resetController();
+    }
+
+    const CACHE = new Set();
+    const EXTENSIONS = {
+        'androme.external': new External('androme.external', []),
+        'androme.list': new ListAndroid('androme.list', ['UL', 'OL']),
+        'androme.table': new Table('androme.table', ['TABLE']),
+        'androme.grid': new Grid('androme.grid', [], { balanceColumns: true }),
+        'androme.menu': new MenuAndroid('androme.menu', ['NAV'], { nsAppCompat: true }),
+        'androme.drawer': new DrawerAndroid('androme.drawer', [])
+    };
+    const Node$1 = View;
+    const NodeList$1 = ViewList;
+    const Controller$1 = new ViewController();
+    const File$1 = new FileRes();
+    const Resource$1 = new ResourceView(File$1);
+    const main = new Application(Node$1, NodeList$1);
+    main.registerController(Controller$1);
+    main.registerResource(Resource$1);
+    for (const name of SETTINGS.builtInExtensions) {
+        const extension = EXTENSIONS[name.toLowerCase().trim()];
+        if (extension != null) {
+            main.registerExtension(extension);
         }
+    }
+    function parseDocument(...elements) {
         if (main.closed) {
             return;
         }
+        main.resetController();
         main.setStyleMap();
         main.elements.clear();
         if (main.appName === '' && elements.length === 0) {
@@ -6199,8 +6260,8 @@
                     element.id = `view_${main.length}`;
                 }
             }
-            element.dataset.views = (element.dataset.views ? parseInt(element.dataset.views) + 1 : '1').toString();
-            element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/-/g, '_');
+            element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
+            element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
             if (main.createNodeCache(element) && main.createLayoutXml()) {
                 main.setResources();
                 if (SETTINGS.showAttributes) {
@@ -6218,49 +6279,36 @@
         });
     }
     function registerExtension(extension) {
-        const main = __app(MAIN);
-        if (main != null) {
-            if (extension instanceof Extension) {
-                main.registerExtension(extension);
-            }
+        if (extension instanceof Extension) {
+            main.registerExtension(extension);
         }
     }
     function configureExtension(name, options) {
-        const main = __app(MAIN);
-        if (main != null && options != null) {
-            main.extensions.some(item => {
-                if (item.name === name) {
-                    Object.assign(item.options, options);
-                    return true;
-                }
-                return false;
-            });
+        if (options != null) {
+            const extension = main.findExtension(name);
+            if (extension != null) {
+                Object.assign(extension.options, options);
+            }
         }
     }
     function ready() {
-        const main = __app(MAIN);
-        return (main == null || !main.closed);
+        return !main.closed;
     }
     function close() {
-        const main = __app(MAIN);
-        if (main != null && main.length > 0) {
+        if (main.length > 0) {
             main.finalize();
         }
     }
     function reset() {
-        const main = __app(MAIN);
-        if (main != null) {
-            CACHE.forEach((element) => {
-                delete element.dataset.views;
-                delete element.dataset.currentId;
-            });
-            CACHE.clear();
-            main.reset();
-        }
+        CACHE.forEach((element) => {
+            delete element.dataset.views;
+            delete element.dataset.currentId;
+        });
+        CACHE.clear();
+        main.reset();
     }
     function saveAllToDisk() {
-        const main = __app(MAIN);
-        if (main && main.length > 0) {
+        if (main.length > 0) {
             if (!main.closed) {
                 main.finalize();
             }
@@ -6268,88 +6316,65 @@
         }
     }
     function writeLayoutAllXml(saveToDisk = false) {
-        const main = __app(MAIN);
-        if (main != null) {
-            autoClose();
-            if (main.closed) {
-                return main.resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
-            }
+        autoClose();
+        if (main.closed) {
+            return main.resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
         }
         return '';
     }
     function writeResourceAllXml(saveToDisk = false) {
-        const main = __app(MAIN);
-        if (main != null) {
-            autoClose();
-            if (main.closed) {
-                return main.resourceHandler.file.resourceAllToXml(saveToDisk);
-            }
+        autoClose();
+        if (main.closed) {
+            return main.resourceHandler.file.resourceAllToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceStringXml(saveToDisk = false) {
-        if (MAIN != null) {
-            autoClose();
-            if (MAIN.closed) {
-                return MAIN.resourceHandler.file.resourceStringToXml(saveToDisk);
-            }
+        autoClose();
+        if (main.closed) {
+            return main.resourceHandler.file.resourceStringToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceArrayXml(saveToDisk = false) {
-        const main = __app(MAIN);
-        if (main != null) {
-            autoClose();
-            if (main.closed) {
-                return main.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
-            }
+        autoClose();
+        if (main.closed) {
+            return main.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceFontXml(saveToDisk = false) {
-        const main = __app(MAIN);
-        if (main != null) {
-            autoClose();
-            if (main.closed) {
-                return main.resourceHandler.file.resourceFontToXml(saveToDisk);
-            }
+        autoClose();
+        if (main.closed) {
+            return main.resourceHandler.file.resourceFontToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceColorXml(saveToDisk = false) {
-        const main = __app(MAIN);
-        if (main && main.closed) {
-            return MAIN.resourceHandler.file.resourceColorToXml(saveToDisk);
+        if (main.closed) {
+            return main.resourceHandler.file.resourceColorToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceStyleXml(saveToDisk = false) {
-        const main = __app(MAIN);
-        if (main != null) {
-            autoClose();
-            if (main.closed) {
-                return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
-            }
+        autoClose();
+        if (main.closed) {
+            return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
         }
         return '';
     }
     function writeResourceDrawableXml(saveToDisk = false) {
-        const main = __app(MAIN);
-        if (main != null) {
-            autoClose();
-            if (main.closed) {
-                return main.resourceHandler.file.resourceDrawableToXml(saveToDisk);
-            }
+        autoClose();
+        if (main.closed) {
+            return main.resourceHandler.file.resourceDrawableToXml(saveToDisk);
         }
         return '';
     }
     function toString() {
-        const main = __app(MAIN);
-        return (main != null ? main.toString() : '');
+        return main.toString();
     }
     function autoClose() {
-        const main = __app(MAIN);
-        if (SETTINGS.autoCloseOnWrite && main && !main.closed) {
+        if (SETTINGS.autoCloseOnWrite && !main.closed) {
             main.finalize();
         }
     }

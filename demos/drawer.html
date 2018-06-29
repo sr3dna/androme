@@ -73,6 +73,17 @@
     <script src="../dist/androme.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            androme.configureExtension('androme.drawer', { // default configuratoin is provided
+                output: {
+                    path: 'res/values-v21',
+                    file: 'androme.drawer.xml'
+                },
+                appTheme: 'AppTheme',
+                parentTheme: 'Theme.AppCompat.Light.NoActionBar',
+                item: {
+                    colorPrimary: '@color/slate_blue'
+                }
+            });
             androme.parseDocument('androme_root');
             androme.close();
 

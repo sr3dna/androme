@@ -16,9 +16,10 @@ import Grid from './extension/grid';
 import Menu from './android/extension/menu';
 import Drawer from './android/extension/drawer';
 
-let MAIN: any;
-const CACHE: Set<HTMLElement> = new Set();
+type T = View;
+type U = ViewList<T>;
 
+const CACHE: Set<HTMLElement> = new Set();
 const EXTENSIONS: any = {
     'androme.external': new External('androme.external', []),
     'androme.list': new List('androme.list', ['UL', 'OL']),
@@ -28,41 +29,27 @@ const EXTENSIONS: any = {
     'androme.drawer': new Drawer('androme.drawer', [])
 };
 
-function __app(object: any) {
-    type T = View;
-    type U = ViewList<T>;
-    const app: Application<T, U> = object;
-    return app;
+const Node = View;
+const NodeList = ViewList;
+const Controller = new ViewController();
+const File = new FileRes();
+const Resource = new ResourceView(File);
+
+const main = new Application<T, U>(Node, NodeList);
+main.registerController(Controller);
+main.registerResource(Resource);
+for (const name of SETTINGS.builtInExtensions) {
+    const extension: Extension<T, U> = EXTENSIONS[name.toLowerCase().trim()];
+    if (extension != null) {
+        main.registerExtension(extension);
+    }
 }
 
 export function parseDocument(...elements: (string | HTMLElement | null)[]) {
-    type T = View;
-    type U = ViewList<T>;
-    let main: Application<T, U>;
-    if (MAIN == null) {
-        const Node = View;
-        const NodeList = ViewList;
-        const Controller = new ViewController();
-        const File = new FileRes();
-        const Resource = new ResourceView(File);
-        main = new Application<T, U>(Node, NodeList);
-        main.registerController(Controller);
-        main.registerResource(Resource);
-        for (const name of SETTINGS.builtInExtensions) {
-            const extension: Extension<T, U> = EXTENSIONS[name.toLowerCase().trim()];
-            if (extension != null) {
-                main.registerExtension(extension);
-            }
-        }
-        MAIN = main;
-    }
-    else {
-        main = MAIN;
-        main.resetController();
-    }
     if (main.closed) {
         return;
     }
+    main.resetController();
     main.setStyleMap();
     main.elements.clear();
     if (main.appName === '' && elements.length === 0) {
@@ -108,54 +95,41 @@ export function parseDocument(...elements: (string | HTMLElement | null)[]) {
 }
 
 export function registerExtension(extension: any) {
-    const main = __app(MAIN);
-    if (main != null) {
-        if (extension instanceof Extension) {
-            main.registerExtension(extension);
-        }
+    if (extension instanceof Extension) {
+        main.registerExtension(extension);
     }
 }
 
 export function configureExtension(name: string, options: {}) {
-    const main = __app(MAIN);
-    if (main != null && options != null) {
-        main.extensions.some(item => {
-            if (item.name === name) {
-                Object.assign(item.options, options);
-                return true;
-            }
-            return false;
-        });
+    if (options != null) {
+        const extension = main.findExtension(name);
+        if (extension != null) {
+            Object.assign(extension.options, options);
+        }
     }
 }
 
 export function ready() {
-    const main = __app(MAIN);
-    return (main == null || !main.closed);
+    return !main.closed;
 }
 
 export function close() {
-    const main = __app(MAIN);
-    if (main != null && main.length > 0) {
+    if (main.length > 0) {
         main.finalize();
     }
 }
 
 export function reset() {
-    const main = __app(MAIN);
-    if (main != null) {
-        CACHE.forEach((element: HTMLElement) => {
-            delete element.dataset.views;
-            delete element.dataset.currentId;
-        });
-        CACHE.clear();
-        main.reset();
-    }
+    CACHE.forEach((element: HTMLElement) => {
+        delete element.dataset.views;
+        delete element.dataset.currentId;
+    });
+    CACHE.clear();
+    main.reset();
 }
 
 export function saveAllToDisk() {
-    const main = __app(MAIN);
-    if (main && main.length > 0) {
+    if (main.length > 0) {
         if (!main.closed) {
             main.finalize();
         }
@@ -164,97 +138,74 @@ export function saveAllToDisk() {
 }
 
 export function writeLayoutAllXml(saveToDisk = false) {
-    const main = __app(MAIN);
-    if (main != null) {
-        autoClose();
-        if (main.closed) {
-            return main.resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
-        }
+    autoClose();
+    if (main.closed) {
+        return main.resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
     }
     return '';
 }
 
 export function writeResourceAllXml(saveToDisk = false) {
-    const main = __app(MAIN);
-    if (main != null) {
-        autoClose();
-        if (main.closed) {
-            return main.resourceHandler.file.resourceAllToXml(saveToDisk);
-        }
+    autoClose();
+    if (main.closed) {
+        return main.resourceHandler.file.resourceAllToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStringXml(saveToDisk = false) {
-    if (MAIN != null) {
-        autoClose();
-        if (MAIN.closed) {
-            return MAIN.resourceHandler.file.resourceStringToXml(saveToDisk);
-        }
+    autoClose();
+    if (main.closed) {
+        return main.resourceHandler.file.resourceStringToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceArrayXml(saveToDisk = false) {
-    const main = __app(MAIN);
-    if (main != null) {
-        autoClose();
-        if (main.closed) {
-            return main.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
-        }
+    autoClose();
+    if (main.closed) {
+        return main.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceFontXml(saveToDisk = false) {
-    const main = __app(MAIN);
-    if (main != null) {
-        autoClose();
-        if (main.closed) {
-            return main.resourceHandler.file.resourceFontToXml(saveToDisk);
-        }
+    autoClose();
+    if (main.closed) {
+        return main.resourceHandler.file.resourceFontToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceColorXml(saveToDisk = false) {
-    const main = __app(MAIN);
-    if (main && main.closed) {
-        return MAIN.resourceHandler.file.resourceColorToXml(saveToDisk);
+    if (main.closed) {
+        return main.resourceHandler.file.resourceColorToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStyleXml(saveToDisk = false) {
-    const main = __app(MAIN);
-    if (main != null) {
-        autoClose();
-        if (main.closed) {
-            return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
-        }
+    autoClose();
+    if (main.closed) {
+        return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceDrawableXml(saveToDisk = false) {
-    const main = __app(MAIN);
-    if (main != null) {
-        autoClose();
-        if (main.closed) {
-            return main.resourceHandler.file.resourceDrawableToXml(saveToDisk);
-        }
+    autoClose();
+    if (main.closed) {
+        return main.resourceHandler.file.resourceDrawableToXml(saveToDisk);
     }
     return '';
 }
 
 export function toString() {
-    const main = __app(MAIN);
-    return (main != null ? main.toString() : '');
+    return main.toString();
 }
 
 function autoClose() {
-    const main = __app(MAIN);
-    if (SETTINGS.autoCloseOnWrite && main && !main.closed) {
+    if (SETTINGS.autoCloseOnWrite && !main.closed) {
         main.finalize();
     }
 }

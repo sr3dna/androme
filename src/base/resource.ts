@@ -143,10 +143,15 @@ export default abstract class Resource<T extends Node> {
 
     public abstract finalize(viewData: {}): void;
 
+    public addFile(pathname: string, filename: string, content = '', uri = '') {
+        this.file.addFile(pathname, filename, content, uri);
+    }
+
     public reset() {
         Resource.STORED.STRINGS = new Map();
         Resource.STORED.COLORS = new Map();
         Resource.STORED.IMAGES = new Map();
+        this.file.reset();
     }
 
     public setBoxSpacing() {

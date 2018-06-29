@@ -327,7 +327,7 @@ export function withinFraction(lower: number, upper: number) {
     return (lower === upper || Math.ceil(lower) === Math.floor(upper));
 }
 
-export function caseInsensitve(a: any, b: any) {
+export function caseInsensitve(a: string | string[], b: string | string[]) {
     return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
 }
 

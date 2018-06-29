@@ -5,12 +5,12 @@ import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml'
 import SETTINGS from '../settings';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 
-import STRING_TMPL from './template/resources/string';
-import STRINGARRAY_TMPL from './template/resources/string-array';
-import STYLE_TMPL from './template/resources/style';
-import FONT_TMPL from './template/resources/font';
-import COLOR_TMPL from './template/resources/color';
-import DRAWABLE_TMPL from './template/resources/drawable';
+import STRING_TMPL from './template/resource/string';
+import STRINGARRAY_TMPL from './template/resource/string-array';
+import STYLE_TMPL from './template/resource/style';
+import FONT_TMPL from './template/resource/font';
+import COLOR_TMPL from './template/resource/color';
+import DRAWABLE_TMPL from './template/resource/drawable';
 
 export default class FileRes extends File {
     constructor() {
@@ -80,12 +80,12 @@ export default class FileRes extends File {
                     '1': []
                 }]
             };
-            const rootItem = getDataLevel(data, '0');
+            const root = getDataLevel(data, '0');
             if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
-                rootItem['1'].push({ name: 'app_name', value: this.appName });
+                root['1'].push({ name: 'app_name', value: this.appName });
             }
-            for (const [name, value] of this.stored.STRINGS.entries()) {
-                rootItem['1'].push({ name: value, value: name });
+            for (const [value, name] of this.stored.STRINGS.entries()) {
+                root['1'].push({ name, value });
             }
             xml = parseTemplateData(template, data);
             if (saveToDisk) {
@@ -105,7 +105,7 @@ export default class FileRes extends File {
                     '1': []
                 }]
             };
-            const rootItem = getDataLevel(data, '0');
+            const root = getDataLevel(data, '0');
             for (const [name, values] of this.stored.ARRAYS.entries()) {
                 const arrayItem: ObjectMap<any> = {
                     name,
@@ -115,7 +115,7 @@ export default class FileRes extends File {
                 for (const value of values) {
                     item.push({ value });
                 }
-                rootItem['1'].push(arrayItem);
+                root['1'].push(arrayItem);
             }
             xml = parseTemplateData(template, data);
             if (saveToDisk) {
@@ -140,10 +140,10 @@ export default class FileRes extends File {
                     }]
                 };
                 data[(SETTINGS.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
-                const rootItem = getDataLevel(data, '0');
+                const root = getDataLevel(data, '0');
                 for (const attr in font) {
                     const [style, weight] = attr.split('-');
-                    rootItem['1'].push({
+                    root['1'].push({
                         style,
                         weight,
                         font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
@@ -168,9 +168,9 @@ export default class FileRes extends File {
                     '1': []
                 }]
             };
-            const rootItem = getDataLevel(data, '0');
+            const root = getDataLevel(data, '0');
             for (const [name, value] of this.stored.COLORS.entries()) {
-                rootItem['1'].push({ name, value });
+                root['1'].push({ name, value });
             }
             xml = parseTemplateData(template, data);
             if (saveToDisk) {
@@ -190,7 +190,7 @@ export default class FileRes extends File {
                     '1': []
                 }]
             };
-            const rootItem = getDataLevel(data, '0');
+            const root = getDataLevel(data, '0');
             for (const [name1, style] of this.stored.STYLES.entries()) {
                 const styleItem: ObjectMap<any> = {
                     name1,
@@ -201,7 +201,7 @@ export default class FileRes extends File {
                     const [name2, value] = attr.split('=');
                     styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
                 });
-                rootItem['1'].push(styleItem);
+                root['1'].push(styleItem);
             }
             xml = parseTemplateData(template, data);
             if (SETTINGS.useUnitDP) {
@@ -221,18 +221,18 @@ export default class FileRes extends File {
             const data: ObjectMap<any> = {
                 '0': []
             };
-            const rootItem = data['0'];
+            const root = data['0'];
             for (const [name, value] of this.stored.DRAWABLES.entries()) {
-                rootItem.push({ name: `res/drawable/${name}.xml`, value});
+                root.push({ name: `res/drawable/${name}.xml`, value});
             }
             for (const [name, images] of this.stored.IMAGES.entries()) {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
-                        rootItem.push({ name: `res/drawable-${dpi}/${name}.${getFileExt((<any> images)[dpi])}`, value: `<!-- image: ${(<any> images)[dpi]} -->` });
+                        root.push({ name: `res/drawable-${dpi}/${name}.${getFileExt((<any> images)[dpi])}`, value: `<!-- image: ${(<any> images)[dpi]} -->` });
                     }
                 }
                 else if ((<any> images)['mdpi'] != null) {
-                    rootItem.push({ name: `res/drawable/${name}.${getFileExt((<any> images)['mdpi'])}`, value: `<!-- image: ${(<any> images)['mdpi']} -->` });
+                    root.push({ name: `res/drawable/${name}.${getFileExt((<any> images)['mdpi'])}`, value: `<!-- image: ${(<any> images)['mdpi']} -->` });
                 }
             }
             xml = parseTemplateData(template, data);

@@ -10,8 +10,8 @@ import SETTINGS from '../settings';
 import { VIEW_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 
-import SHAPERECTANGLE_TMPL from './template/resources/shape-rectangle';
-import LAYERLIST_TMPL from './template/resources/layer-list';
+import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
+import LAYERLIST_TMPL from './template/resource/layer-list';
 
 const STORED: ResourceMap = {
     ARRAYS: new Map(),
@@ -99,6 +99,7 @@ export default class ResourceView extends Resource<T> {
         STORED.COLORS = new Map();
         STORED.IMAGES = new Map();
         Object.assign(STORED, Resource.STORED);
+        this.file.reset();
         this.tagStyle = {};
         this.tagCount = {};
     }
@@ -145,9 +146,9 @@ export default class ResourceView extends Resource<T> {
                             }]
                         };
                         if (stored.borderRadius.length > 1) {
-                            const shapeItem = getDataLevel(data, '0', '2');
+                            const shape = getDataLevel(data, '0', '2');
                             const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                            shapeItem['5'].push(borderRadius);
+                            shape['5'].push(borderRadius);
                         }
                     }
                     else if (stored.border != null) {
@@ -164,9 +165,9 @@ export default class ResourceView extends Resource<T> {
                             }]
                         };
                         if (stored.borderRadius.length > 1) {
-                            const shapeItem = getDataLevel(data, '0', '1');
+                            const shape = getDataLevel(data, '0', '1');
                             const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                            shapeItem['5'].push(borderRadius);
+                            shape['5'].push(borderRadius);
                         }
                     }
                     else {
@@ -177,7 +178,7 @@ export default class ResourceView extends Resource<T> {
                                 '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
                             }]
                         };
-                        const rootItem = getDataLevel(data, '0');
+                        const root = getDataLevel(data, '0');
                         const borderRadius = {};
                         if (stored.borderRadius.length > 1) {
                             Object.assign(borderRadius, {
@@ -204,11 +205,11 @@ export default class ResourceView extends Resource<T> {
                                 if (stored.borderRadius.length > 1) {
                                     layerList['5'].push(borderRadius);
                                 }
-                                rootItem['1'].push(layerList);
+                                root['1'].push(layerList);
                             }
                         });
-                        if (rootItem['1'].length === 0) {
-                            rootItem['1'] = false;
+                        if (root['1'].length === 0) {
+                            root['1'] = false;
                         }
                     }
                     const xml = parseTemplateData(template, data);
