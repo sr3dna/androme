@@ -5,23 +5,25 @@ import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { hasValue, hyphenToCamelCase, replaceDP, resetId, sortAsc, trim } from '../lib/util';
+import { hasValue, hyphenToCamelCase, indentLines, removePlaceholders, replaceDP, resetId, sortAsc, trim } from '../lib/util';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
     public cache: U;
+    public cacheInternal: U;
     public controllerHandler: Controller<T, U>;
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
     public ids: string[] = [];
     public views: string[] = [];
     public pathnames: string[] = [];
+    public insert: ObjectIndex<string> = {};
 
-    private cacheInternal: U;
+    private _currentIndex = -1;
     private _extensions: Extension<T, U>[] = [];
-    private _closed: boolean = false;
+    private _closed = false;
 
     constructor(
         private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
@@ -69,7 +71,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             });
         });
         for (let i = 0; i < this.views.length; i++) {
-            let output = this.views[i].replace(/{[<:#@&>]{1}[0-9]+}/g, '');
+            let output = removePlaceholders(this.views[i]);
             if (SETTINGS.useUnitDP) {
                 output = replaceDP(output, SETTINGS.density);
             }
@@ -97,6 +99,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.ids = [];
         this.views = [];
         this.pathnames = [];
+        this.insert = {};
+        this._currentIndex = -1;
         this._closed = false;
     }
 
@@ -186,9 +190,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public createNodeCache(layoutRoot: HTMLElement) {
+    public createNodeCache(root: HTMLElement) {
         let nodeTotal = 0;
-        if (layoutRoot === document.body) {
+        if (root === document.body) {
             Array.from(document.body.childNodes).forEach((item: HTMLElement) => {
                 if (item.nodeName === '#text') {
                     if (item.textContent && item.textContent.trim() !== '') {
@@ -202,7 +206,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             });
         }
-        const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+        const elements = (root !== document.body ? root.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         this.cache.parent = undefined;
         this.cache.clear();
         this.controllerHandler.namespaces.clear();
@@ -210,11 +214,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         extensions.forEach(item => {
             item.parent = null;
             item.node = (<T> {});
-            item.element = layoutRoot;
+            item.element = root;
             item.beforeInit();
         });
-        if (layoutRoot != null) {
-            const node = this.insertNode(layoutRoot);
+        if (root != null) {
+            const node = this.insertNode(root);
             if (node != null) {
                 node.parent = new this.TypeT(0, 0);
                 this.cache.parent = node;
@@ -222,32 +226,34 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         extensions.forEach(item => item.node = (<T> this.cache.parent));
         for (const element of (<HTMLElement[]> Array.from(elements))) {
-            let handled = false;
-            extensions.some(item => {
-                if (item.init(element)) {
-                    handled = true;
-                    return true;
-                }
-                return false;
-            });
-            if (!handled) {
-                if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
-                    continue;
-                }
-                let valid = true;
-                let current = element.parentElement;
-                while (current != null) {
-                    if (current === layoutRoot) {
-                        break;
+            if (!this.elements.has(element)) {
+                let handled = false;
+                extensions.some(item => {
+                    if (item.init(element)) {
+                        handled = true;
+                        return true;
                     }
-                    else if (current !== layoutRoot && this.elements.has(current)) {
-                        valid = false;
-                        break;
+                    return false;
+                });
+                if (!handled) {
+                    if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
+                        continue;
                     }
-                    current = current.parentElement;
-                }
-                if (valid) {
-                    this.insertNode(element);
+                    let valid = true;
+                    let current = element.parentElement;
+                    while (current != null) {
+                        if (current === root) {
+                            break;
+                        }
+                        else if (current !== root && this.elements.has(current)) {
+                            valid = false;
+                            break;
+                        }
+                        current = current.parentElement;
+                    }
+                    if (valid) {
+                        this.insertNode(element);
+                    }
                 }
             }
         }
@@ -341,7 +347,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             extensions.forEach(item => {
                 item.parent = null;
                 item.node = (<T> this.cache.parent);
-                item.element = layoutRoot;
+                item.element = root;
                 item.afterInit();
             });
             this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
@@ -356,7 +362,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     sortAsc(node.children, 'parentIndex');
                 }
             });
-            this.currentId = (<string> layoutRoot.dataset.currentId);
+            this.currentId = (<string> root.dataset.currentId);
             this.cacheInternal.list.push(...this.cache.list);
             return true;
         }
@@ -416,15 +422,35 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     const parent = (<T> nodeY.parent);
                     if (!nodeY.renderParent) {
                         let xml = '';
+                        let append = '';
+                        let restart = false;
+                        let proceed = false;
+                        const renderExtension: Extension<T, U> = parent.renderExtension;
+                        if (renderExtension != null) {
+                            renderExtension.node = nodeY;
+                            renderExtension.parent = parent;
+                            renderExtension.element = nodeY.element;
+                            [append, restart, proceed] = parent.renderExtension.processChild();
+                            if (append !== '') {
+                                xml += append;
+                                if (restart) {
+                                    k--;
+                                }
+                            }
+                            if (proceed) {
+                                continue;
+                            }
+                        }
                         extensions.some(item => {
-                            if (nodeY.renderExtension == null && item.is(nodeY.tagName)) {
-                                item.node = nodeY;
+                            if (nodeY.renderExtension == null && item.is(nodeY)) {
                                 item.parent = parent;
+                                item.node = nodeY;
+                                item.element = nodeY.element;
                                 if (item.condition()) {
-                                    const [result, restart] = item.processNode(mapX, mapY);
-                                    if (result !== '') {
-                                        xml += result;
-                                        if (restart) {
+                                    [append, restart, proceed] = item.processNode(mapX, mapY);
+                                    if (append !== '') {
+                                        xml += append;
+                                        if (restart && nodeY === axisY[k]) {
                                             k--;
                                         }
                                     }
@@ -434,17 +460,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             }
                             return false;
                         });
-                        const renderExtension: Extension<T, U> = parent.renderExtension;
-                        if (renderExtension != null) {
-                            renderExtension.node = nodeY;
-                            renderExtension.parent = parent;
-                            const [result, restart] = parent.renderExtension.processChild();
-                            if (result !== '') {
-                                xml += result;
-                                if (restart) {
-                                    k--;
-                                }
-                            }
+                        if (proceed) {
+                            continue;
                         }
                         if (xml === '') {
                             let tagName = nodeY.viewName;
@@ -453,8 +470,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                     if (!nodeY.renderParent) {
                                         if (nodeY.children.length === 1 && linearX && linearY) {
-                                            if (nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0) {
+                                            if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0) {
                                                 nodeY.children[0].parent = parent;
+                                                nodeY.cascade().forEach(item => item.renderDepth--);
                                                 nodeY.hide();
                                                 continue;
                                             }
@@ -491,27 +509,38 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
             for (const [id, views] of partial.entries()) {
-                output = output.replace(`{:${id}}`, views.join(''));
-                empty = false;
+                const placeholder = `{:${id}}`;
+                if (output.indexOf(placeholder) !== -1) {
+                    output = output.replace(placeholder, views.join(''));
+                    empty = false;
+                }
+                else {
+                    this.insert[id] = views.join('');
+                }
             }
         }
         let pathname = '';
-        if (this.cache.first.element.dataset != null) {
-            pathname = trim((this.cache.first.element.dataset.pathname || '').trim(), '/');
-        }
-        if (!empty) {
-            this.create(output, pathname);
-            extensions.forEach(item => {
-                item.parent = null;
-                item.node = (<T> this.cache.parent);
-                item.element = null;
-                item.afterRender();
-            });
-            return true;
+        const root = (<T> this.cache.parent);
+        const extension: Extension<T, U> = root.renderExtension;
+        if (extension == null || root.options(`${extension.name}:insert`) == null) {
+            if (root.element.dataset != null) {
+                pathname = trim((root.element.dataset.pathname || '').trim(), '/');
+            }
+            this.create((!empty ? output : ''), pathname, (root.renderExtension != null && root.renderExtension.activityMain));
         }
         else {
             this.ids.pop();
-            return false;
+        }
+        if (!empty) {
+            extensions.forEach(item => {
+                item.parent = null;
+                item.node = root;
+                item.element = null;
+                item.afterRender();
+            });
+        }
+        else {
+            root.visible = false;
         }
     }
 
@@ -550,19 +579,54 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public replaceInlineAttributes() {
         let output = this.current;
-        const options = {};
-        this.cache.visible.forEach(node => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
-        output = output.replace('{@0}', this.controllerHandler.getRootAttributes(options));
-        this.current = output;
+        if (output) {
+            const options = {};
+            this.cache.visible.forEach(node => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
+            output = output.replace('{@0}', this.controllerHandler.getRootAttributes(options));
+            this.current = output;
+        }
+        this.cache.list.forEach(node => {
+            if (node.renderExtension != null) {
+                const attr = `${node.renderExtension.name}:insert`;
+                output = (<string> node.options(attr));
+                if (output) {
+                    const children = this.insert[node.id];
+                    if (children != null) {
+                        output = output.replace(`{:${node.id}}`, children);
+                    }
+                    output = this.controllerHandler.replaceInlineAttributes(output, node);
+                    node.children.forEach(item => output = this.controllerHandler.replaceInlineAttributes(output, <T> item));
+                    node.options(attr, output);
+                }
+            }
+        });
     }
 
     public replaceAppended() {
-        const output = this.controllerHandler.replaceAppended(this.current);
-        this.current = output;
+        let output = this.current;
+        if (output) {
+            output = this.controllerHandler.replaceAppended(output);
+            this.current = output;
+        }
+        this.cache.list.forEach(node => {
+            if (node.renderExtension != null) {
+                const attr = `${node.renderExtension.name}:insert`;
+                output = (<string> node.options(attr));
+                if (output) {
+                    output = this.controllerHandler.replaceAppended(output);
+                    output = indentLines(output.trim());
+                    node.options(attr, output);
+                }
+            }
+        });
     }
 
     public findExtension(name: string) {
         return this._extensions.find(item => item.name === name);
+    }
+
+    public findByDomId(id: string) {
+        return this.cacheInternal.list.find(node => node.element.id === id);
     }
 
     public toString() {
@@ -590,10 +654,19 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return node;
     }
 
-    private create(value: string, pathname = '') {
+    private create(value: string, pathname = '', activityMain = false) {
         if (this.views.length < this.ids.length) {
-            this.pathnames[this.views.length] = (pathname !== '' ? pathname : 'res/layout');
-            this.views.push(value);
+            pathname = pathname || 'res/layout';
+            if (activityMain && this.views.length > 0 && this.views[0] === '') {
+                this.views[0] = value;
+                this.pathnames[0] = pathname;
+                this.ids[0] = (<string> this.ids.pop());
+                this._currentIndex = 0;
+            }
+            else {
+                this.pathnames[this._currentIndex] = pathname;
+                this.views[this._currentIndex] = value;
+            }
         }
     }
 
@@ -607,20 +680,20 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     private set current(value) {
-        const index = this.views.length - 1;
-        this.views[index] = value;
+        this.views[this._currentIndex] = value;
     }
     private get current() {
-        return this.views[this.views.length - 1];
+        return this.views[this._currentIndex];
     }
 
     protected set currentId(value: string) {
         if (this.ids.length === this.views.length) {
+            this._currentIndex = this.ids.length;
             this.ids.push(value);
         }
     }
     protected get currentId() {
-        return this.ids[this.ids.length - 1] || '';
+        return this.ids[this._currentIndex] || '';
     }
 
     get closed() {

@@ -2,7 +2,7 @@ import { BorderAttribute, ObjectIndex, ObjectMap, ResourceMap, StringMap } from 
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { formatString, hasValue, padLeft } from '../lib/util';
+import { formatString, hasValue, indentLines, padLeft } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import parseRTL from './localization';
@@ -329,16 +329,8 @@ export default class ResourceView extends Resource<T> {
             const object = (<any> node.element);
             const stored = object.__imageSource;
             if (stored != null) {
-                const target = object.__imageSourceTarget;
-                if (target == null) {
-                    const method = METHOD_ANDROID['imageSource'];
-                    node.attr(formatString(method['src'], stored));
-                }
-                else {
-                    target.node[target.namespace](target.attribute, `@drawable/${stored}`);
-                    delete object.__imageSourceTarget;
-                }
-                delete object.__imageSourcePrefix;
+                const method = METHOD_ANDROID['imageSource'];
+                node.attr(formatString(method['src'], stored));
             }
         });
     }
@@ -612,12 +604,31 @@ export default class ResourceView extends Resource<T> {
                 if (attributes.length > 0) {
                     attributes.sort().forEach((value: string) => append += `\n${indent}${value}`);
                 }
-                for (let i = 0; i < viewData.views.length; i++) {
-                    const output: string = viewData.views[i];
-                    const pattern = `{&${id}}`;
-                    if (new RegExp(pattern).test(output)) {
-                        viewData.views[i] = output.replace(pattern, append);
-                        break;
+                let replaced = false;
+                [node, node.parent].some(item => {
+                    if (item.renderExtension != null) {
+                        const attr = `${item.renderExtension.name}:insert`;
+                        let output = (<string> item.options(attr));
+                        if (output) {
+                            const pattern = `{&${id}}`;
+                            if (output.indexOf(pattern) !== -1) {
+                                output = output.replace(`{&${id}}`, indentLines(append));
+                                item.options(attr, output);
+                                replaced = true;
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                });
+                if (!replaced) {
+                    for (let i = 0; i < viewData.views.length; i++) {
+                        const output: string = viewData.views[i];
+                        const pattern = `{&${id}}`;
+                        if (output.indexOf(pattern) !== -1) {
+                            viewData.views[i] = output.replace(pattern, append);
+                            break;
+                        }
                     }
                 }
             }

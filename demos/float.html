@@ -54,18 +54,19 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             androme.parseDocument('androme_root');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-            const resource = androme.writeResourceStyleXml() + '\n\n' +
+            var resource = androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="androme_root" style="width: 500px;">
         <div>
             <div style="float: left;">1</div>
@@ -123,6 +124,8 @@
             <div style="float: right;">6</div>
         </div>
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>
@@ -142,8 +145,8 @@
     </div>
     <script>
         function copy(id) {
-            const element = document.getElementById(id);
-            const range = document.createRange();
+            var element = document.getElementById(id);
+            var range = document.createRange();
             range.selectNode(element);
             window.getSelection().addRange(range);
             document.execCommand('copy');

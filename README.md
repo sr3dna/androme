@@ -45,7 +45,7 @@ Library files are in the /dist folder. There is a babel minified for production 
 
     // without Express: use either console.log() or element.innerHTML to display using "write" commands
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
         // required: zero or more
         androme.parseDocument(/* document.getElementById('mainview') */, /* 'subview' */, /* etc... */);
         androme.close();
@@ -78,8 +78,9 @@ androme.settings = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.menu',
-        'androme.drawer'
+        'androme.widget.menu',
+        'androme.widget.toolbar',
+        'androme.widget.drawer'
     ],
     targetAPI: androme.build.OREO,
     density: androme.build.MDPI,
@@ -132,10 +133,10 @@ Most of the Android support library extensions can be configured using the same 
 
 ```javascript
 <script>
-    androme.configureExtension('androme.drawer', { android: { layout_width: 'wrap_content', fitsSystemWindows: 'true' } });
+    androme.configureExtension('androme.widget.drawer', { android: { layout_width: 'wrap_content', fitsSystemWindows: 'true' } });
 </script>
 ```
-<img src="demos/android/drawer.png" alt="extension: drawer" />
+<img src="demos/android/drawer.png" alt="extension: drawer - actionbar" />
 
 <img src="demos/android/table.png" alt="extension: table" />
 

@@ -31,13 +31,14 @@
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-            const resource = androme.writeResourceStyleXml() + '\n\n' +
+            var resource = androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div style="width: 500px;">
         <div id="androme_root" style="display: flex;">
             <div class="column">
@@ -105,6 +106,8 @@
             </div>
         </div>
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>

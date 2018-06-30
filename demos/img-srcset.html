@@ -38,20 +38,21 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script>
-        let images = 0;
+        var images = 0;
         function loaded() {
             if (++images == 2) {
                 androme.parseDocument('androme_root');
                 androme.close();
 
                 document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-                const resource = androme.writeResourceDrawableXml();
+                var resource = androme.writeResourceDrawableXml();
                 document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
             }
         }
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="androme_root" style="text-align: center;">
         <img id="android" src="images/android.png" srcset="images/android-ldpi.png 0.75x,
                                                            images/android.png 1x,
@@ -67,6 +68,8 @@
                                                          images/pencil-xxhdpi.png 3x,
                                                          images/pencil-xxxhdpi.png 4x" onload="loaded();" />
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>
@@ -86,8 +89,8 @@
     </div>
     <script>
         function copy(id) {
-            const element = document.getElementById(id);
-            const range = document.createRange();
+            var element = document.getElementById(id);
+            var range = document.createRange();
             range.selectNode(element);
             window.getSelection().addRange(range);
             document.execCommand('copy');

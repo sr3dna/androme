@@ -16,7 +16,7 @@ export default class Grid extends Extension<T, U> {
     public condition() {
         return (
             this.included() ||
-            (this.node.element.dataset != null && this.node.element.dataset.extension == null && !this.node.flex.enabled && this.node.children.length > 1 && BLOCK_CHROME.includes(this.node.children[0].tagName) && this.node.children.every(node => !node.flex.enabled && node.children.length > 1 && this.node.children[0].tagName === node.tagName && !node.children.some(child => child.css('float') === 'right')))
+            (this.node.element.dataset != null && this.node.element.dataset.ext == null && !this.node.flex.enabled && this.node.children.length > 1 && BLOCK_CHROME.includes(this.node.children[0].tagName) && this.node.children.every(node => !node.flex.enabled && node.children.length > 1 && this.node.children[0].tagName === node.tagName && !node.children.some(child => child.css('float') === 'right')))
         );
     }
 
@@ -233,7 +233,7 @@ export default class Grid extends Extension<T, U> {
                 }
             }
         }
-        return [xml, false];
+        return [xml, false, false];
     }
 
     public processChild(): ExtensionResult {
@@ -259,8 +259,8 @@ export default class Grid extends Extension<T, U> {
             else {
                 xml = this.application.writeDefaultLayout(viewGroup, parent);
             }
-            return [xml, true];
+            return [xml, true, false];
         }
-        return ['', false];
+        return ['', false, false];
     }
 }

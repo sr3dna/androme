@@ -1,7 +1,9 @@
 import { ExtensionResult, ObjectMap } from '../../lib/types';
 import View from '../view';
-import Drawer from '../../extension/drawer';
+import Drawer from '../../extension/widget/drawer';
 import { VIEW_RESOURCE } from '../../lib/constants';
+import { removePlaceholders, setDefaultOption } from '../../lib/util';
+import { VIEW_ANDROID } from '../constants';
 import parseRTL from '../localization';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../../lib/xml';
 
@@ -20,29 +22,25 @@ export default class DrawerAndroid<T extends View> extends Drawer {
     public processNode(): ExtensionResult {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
+        const depth = node.depth + node.renderDepth;
         node.setViewId(VIEW_STATIC.DRAWER);
-        let xml = controller.getViewStatic(VIEW_STATIC.DRAWER, node.depth, {}, '', '', node.id, true)[0];
-        node.android('layout_width', (this.options.layout_width || 'match_parent'));
-        node.android('layout_height', (this.options.layout_height || 'match_parent'));
-        node.android('fitsSystemWindows', (this.options.fitsSystemWindows || 'true'));
-        node.renderDepth = 0;
+        let options = Object.assign({}, this.options.drawerLayout);
+        setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
+        let xml = controller.getViewStatic(VIEW_STATIC.DRAWER, depth, { android: options.android }, 'match_parent', 'match_parent', node.id, true)[0];
         node.renderParent = true;
         node.ignoreResource = VIEW_RESOURCE.ALL;
         this.createResources();
-        const options = {
-            android: {
-                id: `${node.stringId}_view`,
-                layout_gravity: parseRTL(this.options.layout_gravity || 'left'),
-                fitsSystemWindows: (this.options.fitsSystemWindows || 'true')
-            },
-            app: {
-                menu: `@menu/{androme.drawer:menu:${node.id}}`,
-                headerLayout: `@layout/{androme.drawer:headerLayout:${node.id}}`
-            }
-        };
-        const navigation = controller.getViewStatic(VIEW_STATIC.NAVIGATION, node.depth + 1, options, 'wrap_content', 'match_parent')[0];
-        xml = xml.replace(`{:${node.id}}`, navigation);
-        return [xml, false];
+        options = Object.assign({}, this.options.navigationView);
+        setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
+        setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
+        setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
+        setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.drawer:menu:${node.id}}`);
+        setDefaultOption(options, 'app', 'headerLayout', `@layout/{!androme.widget.drawer:headerLayout:${node.id}}`);
+        let layout = controller.getViewStatic(VIEW_ANDROID.LINEAR, depth + 1, { android: { id: `${node.stringId}_content`, orientation: 'vertical' } }, 'match_parent', 'match_parent', 0, true)[0];
+        layout = removePlaceholders(layout.replace('{:0}', `{!androme.widget.drawer:toolbar:${node.id}}`), false);
+        const navigation = controller.getViewStatic(VIEW_STATIC.NAVIGATION, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent')[0];
+        xml = xml.replace(`{:${node.id}}`, layout + navigation);
+        return [xml, false, false];
     }
 
     public finalize() {
@@ -50,11 +48,11 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         let headerLayout = '';
         this.application.elements.forEach(item => {
             if (item.parentElement === this.element) {
-                switch (item.dataset.extension) {
+                switch (item.dataset.ext) {
                     case 'androme.external':
                         headerLayout = (<string> item.dataset.currentId);
                         break;
-                    case 'androme.menu':
+                    case 'androme.widget.menu':
                         menu = (<string> item.dataset.currentId);
                         break;
                 }
@@ -62,31 +60,34 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         });
         const views = this.application.views;
         for (let i = 0; i < views.length; i++) {
-            views[i] = views[i].replace(`{androme.drawer:menu:${this.node.id}}`, menu);
-            views[i] = views[i].replace(`{androme.drawer:headerLayout:${this.node.id}}`, headerLayout);
+            views[i] = views[i].replace(`{!androme.widget.drawer:menu:${this.node.id}}`, menu);
+            views[i] = views[i].replace(`{!androme.widget.drawer:headerLayout:${this.node.id}}`, headerLayout);
         }
     }
 
     private createResources() {
+        const options = Object.assign({}, this.options.resource);
+        setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
+        setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const template: ObjectMap<string> = parseTemplateMatch(EXTENSION_DRAWER_TMPL);
         const data: ObjectMap<any> = {
             '0': [{
-                'appTheme': this.options.appTheme || 'AppTheme',
-                'parentTheme': this.options.parentTheme || 'Theme.AppCompat.Light.NoActionBar',
+                'appTheme': this.options.resource.appTheme,
+                'parentTheme': this.options.resource.parentTheme,
                 '1': []
             }]
         };
-        if (this.options.item != null) {
+        if (options.item != null) {
             const root = getDataLevel(data, '0');
-            for (const name in this.options.item) {
+            for (const name in options.item) {
                 root['1'].push({
                     name,
-                    value: this.options.item[name]
+                    value: options.item[name]
                 });
             }
         }
-        const pathname = (this.options.output && this.options.output.path != null ? this.options.output.path : 'res/values-v21');
-        const filename = (this.options.output && this.options.output.file != null ? this.options.output.file : 'androme.drawer.xml');
+        const pathname = (options.output && options.output.path != null ? options.output.path : 'res/values-v21');
+        const filename = (options.output && options.output.file != null ? options.output.file : 'androme.widget.drawer.xml');
         const xml = parseTemplateData(template, data);
         this.application.resourceHandler.addFile(pathname, filename, xml);
     }

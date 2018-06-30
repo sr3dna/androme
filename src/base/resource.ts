@@ -41,6 +41,47 @@ export default abstract class Resource<T extends Node> {
         return '';
     }
 
+    public static addImageSrcSet(element: HTMLImageElement, prefix = '') {
+        const srcset = element.srcset.trim();
+        const images: StringMap = {};
+        if (hasValue(srcset)) {
+            const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+            srcset.split(',').forEach((value: string) => {
+                const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                if (match != null) {
+                    if (match[2] == null) {
+                        match[2] = '1x';
+                    }
+                    const image = filePath + getFileName(match[1]);
+                    switch (match[2]) {
+                        case '0.75x':
+                            images['ldpi'] = image;
+                            break;
+                        case '1x':
+                            images['mdpi'] = image;
+                            break;
+                        case '1.5x':
+                            images['hdpi'] = image;
+                            break;
+                        case '2x':
+                            images['xhdpi'] = image;
+                            break;
+                        case '3x':
+                            images['xxhdpi'] = image;
+                            break;
+                        case '4x':
+                            images['xxxhdpi'] = image;
+                            break;
+                    }
+                }
+            });
+        }
+        if (images['mdpi'] == null) {
+            images['mdpi'] = element.src;
+        }
+        return Resource.addImage(images, prefix);
+    }
+
     public static addImage(images: StringMap, prefix = '') {
         let src = '';
         if (images['mdpi'] != null && hasValue(images['mdpi'])) {
@@ -254,48 +295,9 @@ export default abstract class Resource<T extends Node> {
         this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
             const element = (<HTMLImageElement> node.element);
             const object = (<any> element);
-            const prefix = object.__imageSourcePrefix || '';
-            const target = object.__imageSourceTarget;
-            if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE || target != null || prefix !== '') {
+            if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE) {
                 if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
-                    const srcset = element.srcset.trim();
-                    const images: StringMap = {};
-                    if (hasValue(srcset)) {
-                        const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-                        srcset.split(',').forEach((value: string) => {
-                            const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                            if (match != null) {
-                                if (match[2] == null) {
-                                    match[2] = '1x';
-                                }
-                                const image = filePath + getFileName(match[1]);
-                                switch (match[2]) {
-                                    case '0.75x':
-                                        images['ldpi'] = image;
-                                        break;
-                                    case '1x':
-                                        images['mdpi'] = image;
-                                        break;
-                                    case '1.5x':
-                                        images['hdpi'] = image;
-                                        break;
-                                    case '2x':
-                                        images['xhdpi'] = image;
-                                        break;
-                                    case '3x':
-                                        images['xxhdpi'] = image;
-                                        break;
-                                    case '4x':
-                                        images['xxxhdpi'] = image;
-                                        break;
-                                }
-                            }
-                        });
-                    }
-                    if (images['mdpi'] == null) {
-                        images['mdpi'] = element.src;
-                    }
-                    const result = Resource.addImage(images, prefix);
+                    const result = Resource.addImageSrcSet(element);
                     object.__imageSource = result;
                 }
             }
@@ -352,7 +354,7 @@ export default abstract class Resource<T extends Node> {
                     else if (element.nodeName === '#text') {
                         value = (element.textContent ? element.textContent.trim() : '');
                     }
-                    else if (element.children.length === 0 || node.cascade().every(item => !item.hasElement || (MAPPING_CHROME[item.tagName] == null && INLINE_CHROME.includes(item.tagName)))) {
+                    else if ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => (MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName))))) {
                         name = element.innerText.trim();
                         value = element.innerHTML.trim();
                     }

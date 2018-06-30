@@ -32,7 +32,7 @@
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
+            var resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
@@ -40,6 +40,7 @@
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="androme_root" style="width: 300px;">
         <ul style="list-style-type: lower-alpha;">
             <li>Item 1</li>
@@ -64,6 +65,8 @@
             <li>Item 6</li>
         </ul>
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>

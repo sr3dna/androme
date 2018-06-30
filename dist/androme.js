@@ -1,4 +1,4 @@
-/* androme 1.7.15
+/* androme 1.7.16
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -77,6 +77,16 @@
             }
         }
         return value;
+    }
+    function removePlaceholders(value, extension = true) {
+        value = value.replace(/{[<:#@&>]{1}[0-9]+}/g, '');
+        if (extension) {
+            value = value.replace(/{!.*?}/g, '');
+        }
+        return value;
+    }
+    function indentLines(value) {
+        return value.split('\n').map(line => `>>>>${line}`).join('\n');
     }
     function convertAlpha(value) {
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -295,6 +305,14 @@
     }
     function hasValue(value) {
         return (typeof value !== 'undefined' && value !== null && value.toString() !== '');
+    }
+    function setDefaultOption(options, namespace, attr, value) {
+        if (options[namespace] == null) {
+            options[namespace] = {};
+        }
+        if (options[namespace][attr] == null) {
+            options[namespace][attr] = value;
+        }
     }
     function withinRange(a, b, n = 1) {
         return (b >= (a - n) && b <= (a + n));
@@ -760,7 +778,7 @@
                 return [color.hex, convertRGB(color), '1'];
             }
             const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
-            if (match && match.length >= 4) {
+            if (match && match.length >= 4 && match[4] !== '0') {
                 return [`#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[0], match[4] || '1'];
             }
         }
@@ -950,7 +968,8 @@
         VIEW_ANDROID.SELECT,
         VIEW_ANDROID.CHECKBOX,
         VIEW_ANDROID.RADIO,
-        VIEW_ANDROID.BUTTON
+        VIEW_ANDROID.BUTTON,
+        VIEW_ANDROID.IMAGE
     ];
     const XMLNS_ANDROID = {
         'ANDROID': 'xmlns:android="http://schemas.android.com/apk/res/android"',
@@ -1008,8 +1027,9 @@
             'androme.list',
             'androme.table',
             'androme.grid',
-            'androme.menu',
-            'androme.drawer'
+            'androme.widget.menu',
+            'androme.widget.toolbar',
+            'androme.widget.drawer'
         ],
         targetAPI: exports.build.OREO,
         density: exports.density.MDPI,
@@ -1044,6 +1064,8 @@
             this.ids = [];
             this.views = [];
             this.pathnames = [];
+            this.insert = {};
+            this._currentIndex = -1;
             this._extensions = [];
             this._closed = false;
             this.cache = new this.TypeU();
@@ -1084,7 +1106,7 @@
                 });
             });
             for (let i = 0; i < this.views.length; i++) {
-                let output = this.views[i].replace(/{[<:#@&>]{1}[0-9]+}/g, '');
+                let output = removePlaceholders(this.views[i]);
                 if (SETTINGS.useUnitDP) {
                     output = replaceDP(output, SETTINGS.density);
                 }
@@ -1111,6 +1133,8 @@
             this.ids = [];
             this.views = [];
             this.pathnames = [];
+            this.insert = {};
+            this._currentIndex = -1;
             this._closed = false;
         }
         resetController() {
@@ -1193,9 +1217,9 @@
                 }
             }
         }
-        createNodeCache(layoutRoot) {
+        createNodeCache(root) {
             let nodeTotal = 0;
-            if (layoutRoot === document.body) {
+            if (root === document.body) {
                 Array.from(document.body.childNodes).forEach((item) => {
                     if (item.nodeName === '#text') {
                         if (item.textContent && item.textContent.trim() !== '') {
@@ -1209,7 +1233,7 @@
                     }
                 });
             }
-            const elements = (layoutRoot !== document.body ? layoutRoot.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+            const elements = (root !== document.body ? root.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
             this.cache.parent = undefined;
             this.cache.clear();
             this.controllerHandler.namespaces.clear();
@@ -1217,11 +1241,11 @@
             extensions.forEach(item => {
                 item.parent = null;
                 item.node = {};
-                item.element = layoutRoot;
+                item.element = root;
                 item.beforeInit();
             });
-            if (layoutRoot != null) {
-                const node = this.insertNode(layoutRoot);
+            if (root != null) {
+                const node = this.insertNode(root);
                 if (node != null) {
                     node.parent = new this.TypeT(0, 0);
                     this.cache.parent = node;
@@ -1229,32 +1253,34 @@
             }
             extensions.forEach(item => item.node = this.cache.parent);
             for (const element of Array.from(elements)) {
-                let handled = false;
-                extensions.some(item => {
-                    if (item.init(element)) {
-                        handled = true;
-                        return true;
-                    }
-                    return false;
-                });
-                if (!handled) {
-                    if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
-                        continue;
-                    }
-                    let valid = true;
-                    let current = element.parentElement;
-                    while (current != null) {
-                        if (current === layoutRoot) {
-                            break;
+                if (!this.elements.has(element)) {
+                    let handled = false;
+                    extensions.some(item => {
+                        if (item.init(element)) {
+                            handled = true;
+                            return true;
                         }
-                        else if (current !== layoutRoot && this.elements.has(current)) {
-                            valid = false;
-                            break;
+                        return false;
+                    });
+                    if (!handled) {
+                        if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
+                            continue;
                         }
-                        current = current.parentElement;
-                    }
-                    if (valid) {
-                        this.insertNode(element);
+                        let valid = true;
+                        let current = element.parentElement;
+                        while (current != null) {
+                            if (current === root) {
+                                break;
+                            }
+                            else if (current !== root && this.elements.has(current)) {
+                                valid = false;
+                                break;
+                            }
+                            current = current.parentElement;
+                        }
+                        if (valid) {
+                            this.insertNode(element);
+                        }
                     }
                 }
             }
@@ -1348,7 +1374,7 @@
                 extensions.forEach(item => {
                     item.parent = null;
                     item.node = this.cache.parent;
-                    item.element = layoutRoot;
+                    item.element = root;
                     item.afterInit();
                 });
                 this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
@@ -1363,7 +1389,7 @@
                         sortAsc(node.children, 'parentIndex');
                     }
                 });
-                this.currentId = layoutRoot.dataset.currentId;
+                this.currentId = root.dataset.currentId;
                 this.cacheInternal.list.push(...this.cache.list);
                 return true;
             }
@@ -1422,15 +1448,35 @@
                         const parent = nodeY.parent;
                         if (!nodeY.renderParent) {
                             let xml = '';
+                            let append = '';
+                            let restart = false;
+                            let proceed = false;
+                            const renderExtension = parent.renderExtension;
+                            if (renderExtension != null) {
+                                renderExtension.node = nodeY;
+                                renderExtension.parent = parent;
+                                renderExtension.element = nodeY.element;
+                                [append, restart, proceed] = parent.renderExtension.processChild();
+                                if (append !== '') {
+                                    xml += append;
+                                    if (restart) {
+                                        k--;
+                                    }
+                                }
+                                if (proceed) {
+                                    continue;
+                                }
+                            }
                             extensions.some(item => {
-                                if (nodeY.renderExtension == null && item.is(nodeY.tagName)) {
-                                    item.node = nodeY;
+                                if (nodeY.renderExtension == null && item.is(nodeY)) {
                                     item.parent = parent;
+                                    item.node = nodeY;
+                                    item.element = nodeY.element;
                                     if (item.condition()) {
-                                        const [result, restart] = item.processNode(mapX, mapY);
-                                        if (result !== '') {
-                                            xml += result;
-                                            if (restart) {
+                                        [append, restart, proceed] = item.processNode(mapX, mapY);
+                                        if (append !== '') {
+                                            xml += append;
+                                            if (restart && nodeY === axisY[k]) {
                                                 k--;
                                             }
                                         }
@@ -1440,26 +1486,25 @@
                                 }
                                 return false;
                             });
-                            const renderExtension = parent.renderExtension;
-                            if (renderExtension != null) {
-                                renderExtension.node = nodeY;
-                                renderExtension.parent = parent;
-                                const [result, restart] = parent.renderExtension.processChild();
-                                if (result !== '') {
-                                    xml += result;
-                                    if (restart) {
-                                        k--;
-                                    }
-                                }
+                            if (proceed) {
+                                continue;
                             }
                             if (xml === '') {
                                 let tagName = nodeY.viewName;
                                 if (tagName === '') {
-                                    if (nodeY.children.length > 0 && nodeY.children.some(node => !INLINE_CHROME.includes(node.tagName))) {
+                                    if (nodeY.children.length > 0 && nodeY.cascade().some(node => MAPPING_CHROME[node.tagName] != null || !INLINE_CHROME.includes(node.tagName))) {
                                         const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                         if (!nodeY.renderParent) {
                                             if (nodeY.children.length === 1 && linearX && linearY) {
-                                                xml += this.writeFrameLayout(nodeY, parent);
+                                                if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0) {
+                                                    nodeY.children[0].parent = parent;
+                                                    nodeY.cascade().forEach(item => item.renderDepth--);
+                                                    nodeY.hide();
+                                                    continue;
+                                                }
+                                                else {
+                                                    xml += this.writeFrameLayout(nodeY, parent);
+                                                }
                                             }
                                             else if ((linearX || linearY) && (!nodeY.flex.enabled || nodeY.children.every(node => node.flex.enabled)) && (!nodeY.children.some(node => node.css('float') === 'right') || nodeY.children.every(node => node.css('float') === 'right'))) {
                                                 xml += this.writeLinearLayout(nodeY, parent, linearY);
@@ -1490,27 +1535,38 @@
                     }
                 }
                 for (const [id, views] of partial.entries()) {
-                    output = output.replace(`{:${id}}`, views.join(''));
-                    empty = false;
+                    const placeholder = `{:${id}}`;
+                    if (output.indexOf(placeholder) !== -1) {
+                        output = output.replace(placeholder, views.join(''));
+                        empty = false;
+                    }
+                    else {
+                        this.insert[id] = views.join('');
+                    }
                 }
             }
             let pathname = '';
-            if (this.cache.first.element.dataset != null) {
-                pathname = trim((this.cache.first.element.dataset.pathname || '').trim(), '/');
-            }
-            if (!empty) {
-                this.create(output, pathname);
-                extensions.forEach(item => {
-                    item.parent = null;
-                    item.node = this.cache.parent;
-                    item.element = null;
-                    item.afterRender();
-                });
-                return true;
+            const root = this.cache.parent;
+            const extension = root.renderExtension;
+            if (extension == null || root.options(`${extension.name}:insert`) == null) {
+                if (root.element.dataset != null) {
+                    pathname = trim((root.element.dataset.pathname || '').trim(), '/');
+                }
+                this.create((!empty ? output : ''), pathname, (root.renderExtension != null && root.renderExtension.activityMain));
             }
             else {
                 this.ids.pop();
-                return false;
+            }
+            if (!empty) {
+                extensions.forEach(item => {
+                    item.parent = null;
+                    item.node = root;
+                    item.element = null;
+                    item.afterRender();
+                });
+            }
+            else {
+                root.visible = false;
             }
         }
         writeFrameLayout(node, parent) {
@@ -1541,17 +1597,51 @@
         }
         replaceInlineAttributes() {
             let output = this.current;
-            const options = {};
-            this.cache.visible.forEach(node => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
-            output = output.replace('{@0}', this.controllerHandler.getRootAttributes(options));
-            this.current = output;
+            if (output) {
+                const options = {};
+                this.cache.visible.forEach(node => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
+                output = output.replace('{@0}', this.controllerHandler.getRootAttributes(options));
+                this.current = output;
+            }
+            this.cache.list.forEach(node => {
+                if (node.renderExtension != null) {
+                    const attr = `${node.renderExtension.name}:insert`;
+                    output = node.options(attr);
+                    if (output) {
+                        const children = this.insert[node.id];
+                        if (children != null) {
+                            output = output.replace(`{:${node.id}}`, children);
+                        }
+                        output = this.controllerHandler.replaceInlineAttributes(output, node);
+                        node.children.forEach(item => output = this.controllerHandler.replaceInlineAttributes(output, item));
+                        node.options(attr, output);
+                    }
+                }
+            });
         }
         replaceAppended() {
-            const output = this.controllerHandler.replaceAppended(this.current);
-            this.current = output;
+            let output = this.current;
+            if (output) {
+                output = this.controllerHandler.replaceAppended(output);
+                this.current = output;
+            }
+            this.cache.list.forEach(node => {
+                if (node.renderExtension != null) {
+                    const attr = `${node.renderExtension.name}:insert`;
+                    output = node.options(attr);
+                    if (output) {
+                        output = this.controllerHandler.replaceAppended(output);
+                        output = indentLines(output.trim());
+                        node.options(attr, output);
+                    }
+                }
+            });
         }
         findExtension(name) {
             return this._extensions.find(item => item.name === name);
+        }
+        findByDomId(id) {
+            return this.cacheInternal.list.find(node => node.element.id === id);
         }
         toString() {
             return (this.views.length > 0 ? this.views[0] : '');
@@ -1576,10 +1666,19 @@
             }
             return node;
         }
-        create(value, pathname = '') {
+        create(value, pathname = '', activityMain = false) {
             if (this.views.length < this.ids.length) {
-                this.pathnames[this.views.length] = (pathname !== '' ? pathname : 'res/layout');
-                this.views.push(value);
+                pathname = pathname || 'res/layout';
+                if (activityMain && this.views.length > 0 && this.views[0] === '') {
+                    this.views[0] = value;
+                    this.pathnames[0] = pathname;
+                    this.ids[0] = this.ids.pop();
+                    this._currentIndex = 0;
+                }
+                else {
+                    this.pathnames[this._currentIndex] = pathname;
+                    this.views[this._currentIndex] = value;
+                }
             }
         }
         set appName(value) {
@@ -1591,19 +1690,19 @@
             return (this.resourceHandler != null ? this.resourceHandler.file.appName : '');
         }
         set current(value) {
-            const index = this.views.length - 1;
-            this.views[index] = value;
+            this.views[this._currentIndex] = value;
         }
         get current() {
-            return this.views[this.views.length - 1];
+            return this.views[this._currentIndex];
         }
         set currentId(value) {
             if (this.ids.length === this.views.length) {
+                this._currentIndex = this.ids.length;
                 this.ids.push(value);
             }
         }
         get currentId() {
-            return this.ids[this.ids.length - 1] || '';
+            return this.ids[this._currentIndex] || '';
         }
         get closed() {
             return this._closed;
@@ -1626,16 +1725,17 @@
             this.tagNames = [];
             this.enabled = true;
             this.dependences = [];
+            this.activityMain = false;
             this.tagNames = tagNames.map(value => value.trim().toUpperCase());
         }
-        is(tagName) {
-            return (this.tagNames.length === 0 || this.tagNames.includes(tagName));
+        is(node) {
+            return (this.tagNames.length === 0 || (this.tagNames.includes(node.tagName)));
         }
         included(element) {
             if (element == null) {
                 element = this.element;
             }
-            return (element != null && element.dataset && element.dataset.extension != null ? element.dataset.extension.split(',').map(value => value.trim()).includes(this.name) : false);
+            return (element != null && element.dataset && element.dataset.ext != null ? element.dataset.ext.split(',').map(value => value.trim()).includes(this.name) : false);
         }
         beforeInit(internal = false) {
             if (!internal && this.included()) {
@@ -1671,21 +1771,21 @@
         }
         condition() {
             if (this.node && this.node.element.dataset != null) {
-                if (!this.node.element.dataset.extension) {
+                if (!this.node.element.dataset.ext) {
                     return (this.tagNames.length > 0);
                 }
                 else {
-                    const extensions = this.node.element.dataset.extension.split(',');
+                    const extensions = this.node.element.dataset.ext.split(',');
                     return (this.tagNames.length === 0 && extensions.length > 1 ? false : this.included());
                 }
             }
             return false;
         }
         processNode(mapX, mapY) {
-            return ['', false];
+            return ['', false, false];
         }
         processChild(mapX, mapY) {
-            return ['', false];
+            return ['', false, this.application.elements.has(this.node.element)];
         }
         require(value, init = false) {
             this.dependences.push({ name: value, init });
@@ -1763,12 +1863,13 @@
     class Node {
         constructor(id, element, options) {
             this.id = id;
-            this.depth = -1;
             this.styleMap = {};
-            this.visible = true;
-            this.companion = false;
+            this.depth = -1;
+            this.renderDepth = 0;
             this.parentIndex = Number.MAX_VALUE;
             this.ignoreResource = 0;
+            this.visible = true;
+            this.companion = false;
             this.gridRowSpan = 0;
             this.gridColumnSpan = 0;
             this.gridPadding = { top: 0, right: [], bottom: 0, left: [] };
@@ -2038,7 +2139,7 @@
             return this._element || {};
         }
         get hasElement() {
-            return (this._element != null);
+            return (this._element != null && this._element.id != null);
         }
         get parentElement() {
             return this._element && this._element.parentElement;
@@ -3710,7 +3811,6 @@
             }
             let attributes = '';
             if (SETTINGS.showAttributes) {
-                node.apply(options);
                 for (const obj in options) {
                     this.namespaces.add(obj);
                 }
@@ -3720,14 +3820,14 @@
                 if (hasValue(height)) {
                     node.android('layout_height', height);
                 }
+                node.apply(options);
                 const indent = padLeft(depth + 1);
                 attributes = node.combine().map(value => `\n${indent + value}`).join('');
             }
-            let output = this.getEnclosingTag(depth, viewName, id, (children ? `{:${id}}` : ''));
-            output = output.replace(`{#${id}}`, attributes);
+            const output = this.getEnclosingTag(depth, viewName, id, (children ? `{:${id}}` : '')).replace(`{#${id}}`, attributes);
             return [output, node.stringId];
         }
-        replaceInlineAttributes(output, node, options) {
+        replaceInlineAttributes(output, node, options = {}) {
             node.setViewLayout();
             node.namespaces.forEach((value) => options[value] = true);
             return output.replace(`{@${node.id}}`, this.parseAttributes(node));
@@ -3889,6 +3989,46 @@
             }
             return '';
         }
+        static addImageSrcSet(element, prefix = '') {
+            const srcset = element.srcset.trim();
+            const images = {};
+            if (hasValue(srcset)) {
+                const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+                srcset.split(',').forEach((value) => {
+                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                    if (match != null) {
+                        if (match[2] == null) {
+                            match[2] = '1x';
+                        }
+                        const image = filePath + getFileName(match[1]);
+                        switch (match[2]) {
+                            case '0.75x':
+                                images['ldpi'] = image;
+                                break;
+                            case '1x':
+                                images['mdpi'] = image;
+                                break;
+                            case '1.5x':
+                                images['hdpi'] = image;
+                                break;
+                            case '2x':
+                                images['xhdpi'] = image;
+                                break;
+                            case '3x':
+                                images['xxhdpi'] = image;
+                                break;
+                            case '4x':
+                                images['xxxhdpi'] = image;
+                                break;
+                        }
+                    }
+                });
+            }
+            if (images['mdpi'] == null) {
+                images['mdpi'] = element.src;
+            }
+            return Resource.addImage(images, prefix);
+        }
         static addImage(images, prefix = '') {
             let src = '';
             if (images['mdpi'] != null && hasValue(images['mdpi'])) {
@@ -4022,7 +4162,7 @@
                             result[i] = result[i](node.css(i), node, i);
                         }
                         if (result.backgroundColor.length > 0) {
-                            if (SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0' || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                            if (SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
                                 result.backgroundColor = [];
                             }
                             else {
@@ -4059,7 +4199,7 @@
                             }
                             let backgroundColor = parseRGBA(node.css('backgroundColor'));
                             if (backgroundColor.length > 0) {
-                                if (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) || backgroundColor[2] === '0' || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                                if (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
                                     backgroundColor = [];
                                 }
                                 else {
@@ -4084,48 +4224,9 @@
             this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
                 const element = node.element;
                 const object = element;
-                const prefix = object.__imageSourcePrefix || '';
-                const target = object.__imageSourceTarget;
-                if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE || target != null || prefix !== '') {
+                if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE) {
                     if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
-                        const srcset = element.srcset.trim();
-                        const images = {};
-                        if (hasValue(srcset)) {
-                            const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-                            srcset.split(',').forEach((value) => {
-                                const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                                if (match != null) {
-                                    if (match[2] == null) {
-                                        match[2] = '1x';
-                                    }
-                                    const image = filePath + getFileName(match[1]);
-                                    switch (match[2]) {
-                                        case '0.75x':
-                                            images['ldpi'] = image;
-                                            break;
-                                        case '1x':
-                                            images['mdpi'] = image;
-                                            break;
-                                        case '1.5x':
-                                            images['hdpi'] = image;
-                                            break;
-                                        case '2x':
-                                            images['xhdpi'] = image;
-                                            break;
-                                        case '3x':
-                                            images['xxhdpi'] = image;
-                                            break;
-                                        case '4x':
-                                            images['xxxhdpi'] = image;
-                                            break;
-                                    }
-                                }
-                            });
-                        }
-                        if (images['mdpi'] == null) {
-                            images['mdpi'] = element.src;
-                        }
-                        const result = Resource.addImage(images, prefix);
+                        const result = Resource.addImageSrcSet(element);
                         object.__imageSource = result;
                     }
                 }
@@ -4180,7 +4281,7 @@
                         else if (element.nodeName === '#text') {
                             value = (element.textContent ? element.textContent.trim() : '');
                         }
-                        else if (element.children.length === 0 || Array.from(element.children).every((item) => INLINE_CHROME.includes(item.tagName))) {
+                        else if ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child) => (MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName))))) {
                             name = element.innerText.trim();
                             value = element.innerHTML.trim();
                         }
@@ -4697,16 +4798,8 @@
                 const object = node.element;
                 const stored = object.__imageSource;
                 if (stored != null) {
-                    const target = object.__imageSourceTarget;
-                    if (target == null) {
-                        const method = METHOD_ANDROID['imageSource'];
-                        node.attr(formatString(method['src'], stored));
-                    }
-                    else {
-                        target.node[target.namespace](target.attribute, `@drawable/${stored}`);
-                        delete object.__imageSourceTarget;
-                    }
-                    delete object.__imageSourcePrefix;
+                    const method = METHOD_ANDROID['imageSource'];
+                    node.attr(formatString(method['src'], stored));
                 }
             });
         }
@@ -4976,12 +5069,31 @@
                     if (attributes.length > 0) {
                         attributes.sort().forEach((value) => append += `\n${indent}${value}`);
                     }
-                    for (let i = 0; i < viewData.views.length; i++) {
-                        const output = viewData.views[i];
-                        const pattern = `{&${id}}`;
-                        if (new RegExp(pattern).test(output)) {
-                            viewData.views[i] = output.replace(pattern, append);
-                            break;
+                    let replaced = false;
+                    [node, node.parent].some(item => {
+                        if (item.renderExtension != null) {
+                            const attr = `${item.renderExtension.name}:insert`;
+                            let output = item.options(attr);
+                            if (output) {
+                                const pattern = `{&${id}}`;
+                                if (output.indexOf(pattern) !== -1) {
+                                    output = output.replace(`{&${id}}`, indentLines(append));
+                                    item.options(attr, output);
+                                    replaced = true;
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    });
+                    if (!replaced) {
+                        for (let i = 0; i < viewData.views.length; i++) {
+                            const output = viewData.views[i];
+                            const pattern = `{&${id}}`;
+                            if (output.indexOf(pattern) !== -1) {
+                                viewData.views[i] = output.replace(pattern, append);
+                                break;
+                            }
                         }
                     }
                 }
@@ -5461,14 +5573,20 @@
                 if (this.element != null) {
                     const object = this.element;
                     if (object.__andromeExternalDisplay == null) {
-                        object.__andromeExternalDisplay = getStyle(this.element).display;
+                        const display = [];
+                        let current = this.element;
+                        while (current != null) {
+                            display.push(getStyle(current).display);
+                            current.style.display = 'block';
+                            current = current.parentElement;
+                        }
+                        object.__andromeExternalDisplay = display;
                     }
-                    this.element.style.display = 'block';
                 }
             }
         }
         init(element) {
-            if (this.included(element) && element.dataset.extension != null && element.dataset.extension.split(',').length <= 1) {
+            if (this.included(element) && element.dataset.ext != null && element.dataset.ext.split(',').length <= 1) {
                 this.application.elements.add(element);
                 return true;
             }
@@ -5479,7 +5597,15 @@
                 if (this.element != null) {
                     const object = this.element;
                     if (object.__andromeExternalDisplay != null) {
-                        this.element.style.display = object.__andromeExternalDisplay;
+                        const display = object.__andromeExternalDisplay;
+                        let current = this.element;
+                        let i = 0;
+                        while (current != null) {
+                            current.style.display = display[i];
+                            current = current.parentElement;
+                            i++;
+                        }
+                        delete object.__andromeExternalDisplay;
                     }
                 }
             }
@@ -5540,7 +5666,7 @@
                 }
                 node.options(this.name, { listStyle: ordinal });
             }
-            return [xml, false];
+            return [xml, false, false];
         }
     }
 
@@ -5553,10 +5679,10 @@
             const controllerHandler = this.application.controllerHandler;
             const options = node.options(this.name);
             if (options && options.listStyle != null) {
-                controllerHandler.prependBefore(node.id, controllerHandler.getViewStatic((options.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (options.listStyle !== '0' ? options.listStyle : '') } })[0]);
+                controllerHandler.prependBefore(node.id, controllerHandler.getViewStatic((options.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth + node.renderDepth, { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (options.listStyle !== '0' ? options.listStyle : '') } })[0]);
                 node.android('layout_columnWeight', '1');
             }
-            return ['', false];
+            return ['', false, false];
         }
     }
 
@@ -5615,7 +5741,7 @@
                 }
             }
             const xml = this.application.writeGridLayout(this.node, this.parent, columnCount, rowCount);
-            return [xml, false];
+            return [xml, false, false];
         }
     }
 
@@ -5625,7 +5751,7 @@
         }
         condition() {
             return (this.included() ||
-                (this.node.element.dataset != null && this.node.element.dataset.extension == null && !this.node.flex.enabled && this.node.children.length > 1 && BLOCK_CHROME.includes(this.node.children[0].tagName) && this.node.children.every(node => !node.flex.enabled && node.children.length > 1 && this.node.children[0].tagName === node.tagName && !node.children.some(child => child.css('float') === 'right'))));
+                (this.node.element.dataset != null && this.node.element.dataset.ext == null && !this.node.flex.enabled && this.node.children.length > 1 && BLOCK_CHROME.includes(this.node.children[0].tagName) && this.node.children.every(node => !node.flex.enabled && node.children.length > 1 && this.node.children[0].tagName === node.tagName && !node.children.some(child => child.css('float') === 'right'))));
         }
         processNode(mapX, mapY) {
             let xml = '';
@@ -5839,7 +5965,7 @@
                     }
                 }
             }
-            return [xml, false];
+            return [xml, false, false];
         }
         processChild() {
             let xml = '';
@@ -5864,9 +5990,9 @@
                 else {
                     xml = this.application.writeDefaultLayout(viewGroup, parent);
                 }
-                return [xml, true];
+                return [xml, true, false];
             }
-            return ['', false];
+            return ['', false, false];
         }
     }
 
@@ -5876,7 +6002,7 @@
             this.require('androme.external', true);
         }
         init(element) {
-            if (this.included(element) || this.is(element.tagName)) {
+            if (this.included(element) && !this.application.elements.has(element)) {
                 let valid = false;
                 if (element.children.length > 0) {
                     const tagName = element.children[0].tagName;
@@ -5959,19 +6085,18 @@
             const node = this.node;
             node.setViewId(VIEW_STATIC.MENU);
             let xml = '';
-            xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, node.depth, {}, '', '', node.id, true)[0];
-            node.renderDepth = 0;
+            xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, 0, {}, '', '', node.id, true)[0];
             node.renderParent = true;
             node.cascade().forEach(item => item.renderExtension = this);
             node.ignoreResource = VIEW_RESOURCE.ALL;
-            return [xml, false];
+            return [xml, false, false];
         }
         processChild() {
             const node = this.node;
             const element = node.element;
             if (element.nodeName === '#text') {
                 node.hide();
-                return ['', false];
+                return ['', false, false];
             }
             const parent = this.parent;
             node.ignoreResource = VIEW_RESOURCE.ALL;
@@ -6040,9 +6165,10 @@
                         else {
                             const image = node.children.find(item => item.element.tagName === 'IMG');
                             if (image != null) {
-                                const object = image.element;
-                                object.__imageSourcePrefix = 'ic_menu_';
-                                object.__imageSourceTarget = { node, namespace: 'android', attribute: 'icon' };
+                                const result = Resource.addImageSrcSet(image.element);
+                                if (result !== '') {
+                                    options.android.icon = `@drawable/${result}`;
+                                }
                             }
                         }
                     }
@@ -6068,7 +6194,7 @@
             }
             node.apply(options);
             const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, {}, '', '', node.id, layout)[0];
-            return [xml, false];
+            return [xml, false, false];
         }
         afterRender() {
             super.afterRender();
@@ -6093,23 +6219,141 @@
         }
     }
 
-    class Drawer extends Extension {
+    class Toolbar extends Extension {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
-            this.require('androme.external', true);
-            this.require('androme.menu');
+            this.require('androme.widget.menu');
         }
         init(element) {
             if (this.included(element)) {
                 Array.from(element.children).forEach((item) => {
-                    if (item.tagName !== 'NAV' && item.dataset.extension == null) {
-                        item.dataset.extension = 'androme.external';
+                    if (item.tagName === 'NAV' && item.dataset.ext == null) {
+                        item.dataset.ext = 'androme.external';
+                    }
+                });
+                if (element.dataset.extActionBarFor != null) {
+                    this.application.elements.add(element);
+                    return true;
+                }
+            }
+            return false;
+        }
+        condition() {
+            return (super.condition() && this.included());
+        }
+    }
+
+    class ToolbarAndroid extends Toolbar {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+        }
+        processNode() {
+            const controller = this.application.controllerHandler;
+            const node = this.node;
+            node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
+            node.setViewId("android.support.v7.widget.Toolbar" /* TOOLBAR */);
+            const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
+            setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.toolbar:menu:${node.id}}`);
+            let children = 0;
+            Array.from(node.element.childNodes).forEach((element) => {
+                if (element.tagName === 'IMG') {
+                    const prefix = 'ic_menu_';
+                    if (element.dataset.navigationIcon != null) {
+                        const result = Resource.addImageSrcSet(element, prefix);
+                        if (result !== '') {
+                            setDefaultOption(options, 'app', 'navigationIcon', `@drawable/${result}`);
+                            if (getStyle(element).display !== 'none') {
+                                children++;
+                            }
+                        }
+                    }
+                    if (element.dataset.collapseIcon != null) {
+                        const result = Resource.addImageSrcSet(element, prefix);
+                        if (result !== '') {
+                            setDefaultOption(options, 'app', 'collapseIcon', `@drawable/${result}`);
+                            if (getStyle(element).display !== 'none') {
+                                children++;
+                            }
+                        }
+                    }
+                }
+            });
+            const actionBar = (node.element.dataset.extActionBarFor != null);
+            if (actionBar) {
+                setDefaultOption(options, 'android', 'layout_width', 'match_parent');
+                setDefaultOption(options, 'android', 'layout_height', 'wrap_content');
+                setDefaultOption(options, 'android', 'minHeight', '?attr/actionBarSize');
+                setDefaultOption(options, 'android', 'elevation', '4px');
+            }
+            let xml = controller.getViewStatic("android.support.v7.widget.Toolbar" /* TOOLBAR */, (actionBar ? 0 : node.depth + node.renderDepth), { android: options.android, app: options.app }, '', '', node.id, (node.children.length - children > 0))[0];
+            if (actionBar) {
+                node.options('androme.widget.toolbar:insert', xml);
+                node.renderParent = true;
+                xml = '';
+            }
+            else {
+                node.render(this.parent);
+            }
+            return [xml, false, false];
+        }
+        processChild() {
+            const element = this.element;
+            if (element != null) {
+                if (element.tagName === 'IMG') {
+                    if (element.dataset.navigationIcon != null || element.dataset.collapseIcon != null) {
+                        this.node.hide();
+                    }
+                }
+            }
+            return ['', false, false];
+        }
+        finalize() {
+            const actionBar = this.node.element.dataset.extActionBarFor;
+            const menu = Array.from(this.node.element.childNodes).find((element) => element.tagName === 'NAV' && element.dataset.currentId != null);
+            if (actionBar != null) {
+                const parent = this.application.findByDomId(actionBar);
+                if (parent != null) {
+                    let xml = this.node.options('androme.widget.toolbar:insert') || '';
+                    xml = xml.replace(/>>>>/g, padLeft(parent.renderDepth + 2));
+                    if (menu != null) {
+                        xml = removePlaceholders(xml.replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, menu.dataset.currentId)).replace(/\s*$/g, '');
+                    }
+                    const views = this.application.views;
+                    for (let i = 0; i < views.length; i++) {
+                        views[i] = views[i].replace(`{!androme.widget.drawer:toolbar:${parent.id}}`, xml + '\n');
+                    }
+                }
+            }
+            else {
+                const views = this.application.views;
+                for (let i = 0; i < views.length; i++) {
+                    views[i] = views[i].replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, menu.dataset.currentId);
+                }
+            }
+        }
+    }
+
+    class Drawer extends Extension {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+            this.activityMain = true;
+            this.require('androme.external', true);
+            this.require('androme.widget.menu');
+        }
+        init(element) {
+            if (this.included(element)) {
+                Array.from(element.children).forEach((item) => {
+                    if (item.tagName === 'NAV' && item.dataset.ext == null) {
+                        item.dataset.ext = 'androme.external';
                     }
                 });
                 this.application.elements.add(element);
                 return true;
             }
             return false;
+        }
+        condition() {
+            return (super.condition() && this.included());
         }
     }
 
@@ -6137,40 +6381,36 @@
         processNode() {
             const controller = this.application.controllerHandler;
             const node = this.node;
+            const depth = node.depth + node.renderDepth;
             node.setViewId("android.support.v4.widget.DrawerLayout" /* DRAWER */);
-            let xml = controller.getViewStatic("android.support.v4.widget.DrawerLayout" /* DRAWER */, node.depth, {}, '', '', node.id, true)[0];
-            node.android('layout_width', (this.options.layout_width || 'match_parent'));
-            node.android('layout_height', (this.options.layout_height || 'match_parent'));
-            node.android('fitsSystemWindows', (this.options.fitsSystemWindows || 'true'));
-            node.renderDepth = 0;
+            let options = Object.assign({}, this.options.drawerLayout);
+            setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
+            let xml = controller.getViewStatic("android.support.v4.widget.DrawerLayout" /* DRAWER */, depth, { android: options.android }, 'match_parent', 'match_parent', node.id, true)[0];
             node.renderParent = true;
             node.ignoreResource = VIEW_RESOURCE.ALL;
             this.createResources();
-            const options = {
-                android: {
-                    id: `${node.stringId}_view`,
-                    layout_gravity: parseRTL(this.options.layout_gravity || 'left'),
-                    fitsSystemWindows: (this.options.fitsSystemWindows || 'true')
-                },
-                app: {
-                    menu: `@menu/{androme.drawer:menu:${node.id}}`,
-                    headerLayout: `@layout/{androme.drawer:headerLayout:${node.id}}`
-                }
-            };
-            const navigation = controller.getViewStatic("android.support.design.widget.NavigationView" /* NAVIGATION */, node.depth + 1, options, 'wrap_content', 'match_parent')[0];
-            xml = xml.replace(`{:${node.id}}`, navigation);
-            return [xml, false];
+            options = Object.assign({}, this.options.navigationView);
+            setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
+            setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
+            setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
+            setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.drawer:menu:${node.id}}`);
+            setDefaultOption(options, 'app', 'headerLayout', `@layout/{!androme.widget.drawer:headerLayout:${node.id}}`);
+            let layout = controller.getViewStatic(VIEW_ANDROID.LINEAR, depth + 1, { android: { id: `${node.stringId}_content`, orientation: 'vertical' } }, 'match_parent', 'match_parent', 0, true)[0];
+            layout = removePlaceholders(layout.replace('{:0}', `{!androme.widget.drawer:toolbar:${node.id}}`), false);
+            const navigation = controller.getViewStatic("android.support.design.widget.NavigationView" /* NAVIGATION */, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent')[0];
+            xml = xml.replace(`{:${node.id}}`, layout + navigation);
+            return [xml, false, false];
         }
         finalize() {
             let menu = '';
             let headerLayout = '';
             this.application.elements.forEach(item => {
                 if (item.parentElement === this.element) {
-                    switch (item.dataset.extension) {
+                    switch (item.dataset.ext) {
                         case 'androme.external':
                             headerLayout = item.dataset.currentId;
                             break;
-                        case 'androme.menu':
+                        case 'androme.widget.menu':
                             menu = item.dataset.currentId;
                             break;
                     }
@@ -6178,30 +6418,33 @@
             });
             const views = this.application.views;
             for (let i = 0; i < views.length; i++) {
-                views[i] = views[i].replace(`{androme.drawer:menu:${this.node.id}}`, menu);
-                views[i] = views[i].replace(`{androme.drawer:headerLayout:${this.node.id}}`, headerLayout);
+                views[i] = views[i].replace(`{!androme.widget.drawer:menu:${this.node.id}}`, menu);
+                views[i] = views[i].replace(`{!androme.widget.drawer:headerLayout:${this.node.id}}`, headerLayout);
             }
         }
         createResources() {
+            const options = Object.assign({}, this.options.resource);
+            setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
+            setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
             const template = parseTemplateMatch(EXTENSION_DRAWER_TMPL);
             const data = {
                 '0': [{
-                        'appTheme': this.options.appTheme || 'AppTheme',
-                        'parentTheme': this.options.parentTheme || 'Theme.AppCompat.Light.NoActionBar',
+                        'appTheme': this.options.resource.appTheme,
+                        'parentTheme': this.options.resource.parentTheme,
                         '1': []
                     }]
             };
-            if (this.options.item != null) {
+            if (options.item != null) {
                 const root = getDataLevel(data, '0');
-                for (const name in this.options.item) {
+                for (const name in options.item) {
                     root['1'].push({
                         name,
-                        value: this.options.item[name]
+                        value: options.item[name]
                     });
                 }
             }
-            const pathname = (this.options.output && this.options.output.path != null ? this.options.output.path : 'res/values-v21');
-            const filename = (this.options.output && this.options.output.file != null ? this.options.output.file : 'androme.drawer.xml');
+            const pathname = (options.output && options.output.path != null ? options.output.path : 'res/values-v21');
+            const filename = (options.output && options.output.file != null ? options.output.file : 'androme.widget.drawer.xml');
             const xml = parseTemplateData(template, data);
             this.application.resourceHandler.addFile(pathname, filename, xml);
         }
@@ -6213,8 +6456,9 @@
         'androme.list': new ListAndroid('androme.list', ['UL', 'OL']),
         'androme.table': new Table('androme.table', ['TABLE']),
         'androme.grid': new Grid('androme.grid', [], { balanceColumns: true }),
-        'androme.menu': new MenuAndroid('androme.menu', ['NAV'], { nsAppCompat: true }),
-        'androme.drawer': new DrawerAndroid('androme.drawer', [])
+        'androme.widget.menu': new MenuAndroid('androme.widget.menu', ['NAV'], { nsAppCompat: true }),
+        'androme.widget.toolbar': new ToolbarAndroid('androme.widget.toolbar', []),
+        'androme.widget.drawer': new DrawerAndroid('androme.widget.drawer', [])
     };
     const Node$1 = View;
     const NodeList$1 = ViewList;
@@ -6262,7 +6506,8 @@
             }
             element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
             element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
-            if (main.createNodeCache(element) && main.createLayoutXml()) {
+            if (main.createNodeCache(element)) {
+                main.createLayoutXml();
                 main.setResources();
                 if (SETTINGS.showAttributes) {
                     main.setMarginPadding();
@@ -6271,10 +6516,6 @@
                 }
                 main.replaceAppended();
                 CACHE.add(element);
-            }
-            else {
-                delete element.dataset.views;
-                delete element.dataset.currentId;
             }
         });
     }
@@ -6290,6 +6531,9 @@
                 Object.assign(extension.options, options);
             }
         }
+    }
+    function getExtension(name) {
+        return main.findExtension(name);
     }
     function ready() {
         return !main.closed;
@@ -6382,6 +6626,7 @@
     exports.parseDocument = parseDocument;
     exports.registerExtension = registerExtension;
     exports.configureExtension = configureExtension;
+    exports.getExtension = getExtension;
     exports.ready = ready;
     exports.close = close;
     exports.reset = reset;

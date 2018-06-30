@@ -65,6 +65,6 @@ export default abstract class List extends Extension<T, U> {
             }
             node.options(this.name, { listStyle: ordinal });
         }
-        return [xml, false];
+        return [xml, false, false];
     }
 }

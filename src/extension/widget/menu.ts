@@ -1,8 +1,8 @@
-import Extension from '../base/extension';
-import Node from '../base/node';
-import NodeList from '../base/nodelist';
-import { BLOCK_CHROME } from '../lib/constants';
-import { getStyle } from '../lib/dom';
+import Extension from '../../base/extension';
+import Node from '../../base/node';
+import NodeList from '../../base/nodelist';
+import { BLOCK_CHROME } from '../../lib/constants';
+import { getStyle } from '../../lib/dom';
 
 type T = Node;
 type U = NodeList<T>;
@@ -14,7 +14,7 @@ export default abstract class Menu extends Extension<T, U> {
     }
 
     public init(element: HTMLElement) {
-        if (this.included(element) || this.is(element.tagName)) {
+        if (this.included(element) && !this.application.elements.has(element)) {
             let valid = false;
             if (element.children.length > 0) {
                 const tagName = element.children[0].tagName;

@@ -9,8 +9,9 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     public parent: T | null;
     public element: HTMLElement | null;
     public tagNames: string[] = [];
-    public enabled: boolean = true;
+    public enabled = true;
     public dependences: {}[] = [];
+    public activityMain = false;
 
     constructor(
         public name: string,
@@ -20,15 +21,15 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         this.tagNames = tagNames.map(value => value.trim().toUpperCase());
     }
 
-    public is(tagName: string) {
-        return (this.tagNames.length === 0 || this.tagNames.includes(tagName));
+    public is(node: T) {
+        return (this.tagNames.length === 0 || (this.tagNames.includes(node.tagName)));
     }
 
     public included(element?: HTMLElement) {
         if (element == null) {
             element = (<HTMLElement> this.element);
         }
-        return (element != null && element.dataset && element.dataset.extension != null ? element.dataset.extension.split(',').map(value => value.trim()).includes(this.name) : false);
+        return (element != null && element.dataset && element.dataset.ext != null ? element.dataset.ext.split(',').map(value => value.trim()).includes(this.name) : false);
     }
 
     public beforeInit(internal = false) {
@@ -69,11 +70,11 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
 
     public condition() {
         if (this.node && this.node.element.dataset != null) {
-            if (!this.node.element.dataset.extension) {
+            if (!this.node.element.dataset.ext) {
                 return (this.tagNames.length > 0);
             }
             else {
-                const extensions = this.node.element.dataset.extension.split(',');
+                const extensions = this.node.element.dataset.ext.split(',');
                 return (this.tagNames.length === 0 && extensions.length > 1 ? false : this.included());
             }
         }
@@ -81,11 +82,11 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     }
 
     public processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult {
-        return ['', false];
+        return ['', false, false];
     }
 
     public processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult {
-        return ['', false];
+        return ['', false, this.application.elements.has(this.node.element)];
     }
 
     public require(value: string, init = false) {

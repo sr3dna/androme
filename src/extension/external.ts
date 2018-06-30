@@ -16,15 +16,21 @@ export default class External extends Extension<T, U> {
             if (this.element != null) {
                 const object = (<any> this.element);
                 if (object.__andromeExternalDisplay == null) {
-                    object.__andromeExternalDisplay = getStyle(this.element).display;
+                    const display: string[] = [];
+                    let current = this.element;
+                    while (current != null) {
+                        display.push(<string> getStyle(current).display);
+                        current.style.display = 'block';
+                        current = (<HTMLElement> current.parentElement);
+                    }
+                    object.__andromeExternalDisplay = display;
                 }
-                this.element.style.display = 'block';
             }
         }
     }
 
     public init(element: HTMLElement) {
-        if (this.included(element) && element.dataset.extension != null && element.dataset.extension.split(',').length <= 1) {
+        if (this.included(element) && element.dataset.ext != null && element.dataset.ext.split(',').length <= 1) {
             this.application.elements.add(element);
             return true;
         }
@@ -36,7 +42,15 @@ export default class External extends Extension<T, U> {
             if (this.element != null) {
                 const object = (<any> this.element);
                 if (object.__andromeExternalDisplay != null) {
-                    this.element.style.display = object.__andromeExternalDisplay;
+                    const display: string[] = object.__andromeExternalDisplay;
+                    let current = this.element;
+                    let i = 0;
+                    while (current != null) {
+                        current.style.display = display[i];
+                        current = (<HTMLElement> current.parentElement);
+                        i++;
+                    }
+                    delete object.__andromeExternalDisplay;
                 }
             }
         }

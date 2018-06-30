@@ -14,6 +14,7 @@ import List from './android/extension/list';
 import Table from './extension/table';
 import Grid from './extension/grid';
 import Menu from './android/extension/menu';
+import Toolbar from './android/extension/toolbar';
 import Drawer from './android/extension/drawer';
 
 type T = View;
@@ -25,8 +26,9 @@ const EXTENSIONS: any = {
     'androme.list': new List('androme.list', ['UL', 'OL']),
     'androme.table': new Table('androme.table', ['TABLE']),
     'androme.grid': new Grid('androme.grid', [], { balanceColumns: true }),
-    'androme.menu': new Menu('androme.menu', ['NAV'], { nsAppCompat: true }),
-    'androme.drawer': new Drawer('androme.drawer', [])
+    'androme.widget.menu': new Menu('androme.widget.menu', ['NAV'], { nsAppCompat: true }),
+    'androme.widget.toolbar': new Toolbar('androme.widget.toolbar', []),
+    'androme.widget.drawer': new Drawer('androme.widget.drawer', [])
 };
 
 const Node = View;
@@ -78,7 +80,8 @@ export function parseDocument(...elements: (string | HTMLElement | null)[]) {
         }
         element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
         element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
-        if (main.createNodeCache(element) && main.createLayoutXml()) {
+        if (main.createNodeCache(element)) {
+            main.createLayoutXml();
             main.setResources();
             if (SETTINGS.showAttributes) {
                 main.setMarginPadding();
@@ -87,10 +90,6 @@ export function parseDocument(...elements: (string | HTMLElement | null)[]) {
             }
             main.replaceAppended();
             CACHE.add(element);
-        }
-        else {
-            delete element.dataset.views;
-            delete element.dataset.currentId;
         }
     });
 }
@@ -108,6 +107,10 @@ export function configureExtension(name: string, options: {}) {
             Object.assign(extension.options, options);
         }
     }
+}
+
+export function getExtension(name: string) {
+    return main.findExtension(name);
 }
 
 export function ready() {

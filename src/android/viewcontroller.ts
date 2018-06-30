@@ -923,7 +923,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         }
         let attributes = '';
         if (SETTINGS.showAttributes) {
-            node.apply(options);
             for (const obj in options) {
                 this.namespaces.add(obj);
             }
@@ -933,15 +932,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             if (hasValue(height)) {
                 node.android('layout_height', height);
             }
+            node.apply(options);
             const indent = padLeft(depth + 1);
             attributes = node.combine().map(value => `\n${indent + value}`).join('');
         }
-        let output = this.getEnclosingTag(depth, viewName, id, (children ? `{:${id}}` : ''));
-        output = output.replace(`{#${id}}`, attributes);
+        const output = this.getEnclosingTag(depth, viewName, id, (children ? `{:${id}}` : '')).replace(`{#${id}}`, attributes);
         return [output, node.stringId];
     }
 
-    public replaceInlineAttributes(output: string, node: T, options: ObjectMap<boolean>) {
+    public replaceInlineAttributes(output: string, node: T, options: ObjectMap<boolean> = {}) {
         node.setViewLayout();
         node.namespaces.forEach((value: string) => options[value] = true);
         return output.replace(`{@${node.id}}`, this.parseAttributes(node));

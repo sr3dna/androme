@@ -1,14 +1,17 @@
+import Node from '../base/node';
+
 export interface IExtension {
     name: string;
     application: any;
-    node: any;
-    parent: any;
+    node: Node;
+    parent: Node | null;
     element: HTMLElement | null;
     tagNames: string[];
     enabled: boolean;
+    activityMain: boolean;
     options: {};
     dependences: {}[];
-    is(tagName: string): void;
+    is(node: Node): void;
     require(value: string): void;
     included(element?: HTMLElement): boolean;
     beforeInit(internal: boolean): void;
@@ -21,7 +24,7 @@ export interface IExtension {
     finalize(): void;
 }
 
-export type ExtensionResult = [string, boolean];
+export type ExtensionResult = [string, boolean, boolean];
 
 export interface BoxModel {
     marginTop?: number;

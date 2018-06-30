@@ -7,22 +7,22 @@ type T = Node;
 
 export default abstract class Node implements BoxModel {
     [key: string]: any;
-    public depth: number = -1;
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
-    public visible: boolean = true;
-    public companion: boolean = false;
-    public parentIndex: number = Number.MAX_VALUE;
+    public viewId: string;
+    public depth = -1;
+    public renderDepth = 0;
+    public parentIndex = Number.MAX_VALUE;
     public bounds: ClientRect;
     public linear: ClientRect;
     public box: ClientRect;
-    public renderDepth: number;
-    public viewId: string;
     public renderExtension: any;
-    public ignoreResource: number = 0;
+    public ignoreResource = 0;
+    public visible = true;
+    public companion = false;
 
-    public gridRowSpan: number = 0;
-    public gridColumnSpan: number = 0;
+    public gridRowSpan = 0;
+    public gridColumnSpan = 0;
     public gridColumnEnd: number[];
     public gridIndex: number;
     public gridFirst: boolean;
@@ -352,7 +352,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get hasElement() {
-        return (this._element != null);
+        return (this._element != null && this._element.id != null);
     }
 
     get parentElement() {

@@ -21,9 +21,16 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
+        System.import('/build/main.js').then(function(result) {
+            androme = result;
+            androme.settings.useConstraintGuideline = false;
+            androme.settings.alwaysReevaluateResources = true;
+            addView();
+            closeDocument();
+        });
         function addView() {
             if (androme.ready()) {
-                for (const span of document.getElementsByTagName('span')) {
+                for (var span of document.getElementsByTagName('span')) {
                     span.style.top = `${400 * Math.random()}px`;
                     span.style.left = `${400 * Math.random()}px`;
                 }
@@ -32,14 +39,13 @@
         }
         function closeDocument() {
             androme.close();
-            const views = androme.writeLayoutAllXml();
-            let output = '';
-            for (const i in views) {
+            var views = androme.writeLayoutAllXml();
+            var output = '';
+            for (var i in views) {
                 output += views[i] + '\n';
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
-                             androme.writeResourceStyleXml() + '\n\n' +
+            var resource = androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         }
@@ -48,16 +54,10 @@
             document.getElementById('output').innerHTML = '';
             document.getElementById('resource').innerHTML = '';
         }
-        System.import('/build/main.js').then(function(result) {
-            androme = result;
-            androme.settings.useConstraintGuideline = false;
-            androme.settings.alwaysReevaluateResources = true;
-            addView();
-            closeDocument();
-        });
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="androme_root" style="width: 500px;">
         &nbsp;
         <span>1</span>
@@ -66,6 +66,8 @@
         <span>4</span>
         <span>5</span>
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>

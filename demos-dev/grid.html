@@ -31,7 +31,7 @@
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
+            var resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml() + '\n\n' +
                              androme.writeResourceDrawableXml();
@@ -40,6 +40,7 @@
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div style="width: 500px;">
         <ul id="androme_root">
             <li>
@@ -85,6 +86,8 @@
             </li>
         </ul>
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>

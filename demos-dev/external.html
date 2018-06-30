@@ -19,40 +19,41 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        function showHidden() {
-            document.querySelectorAll('#androme_root > div').forEach(function(element) {
-                element.style.display = '';
-            });
-        }
         System.import('/build/main.js').then(function(result) {
             androme = result;
             androme.parseDocument('androme_root');
             androme.close();
 
-            const views = androme.writeLayoutAllXml();
-            let output = '';
-            for (const i in views) {
+            var views = androme.writeLayoutAllXml();
+            var output = '';
+            for (var i in views) {
                 output += views[i] + '\n';
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
-            const resource = androme.writeResourceStyleXml() + '\n\n' +
+            var resource = androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
+        function showHidden() {
+            document.querySelectorAll('#androme_root > div').forEach(function(element) {
+                element.style.display = '';
+            });
+        }
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="androme_root">
         <div>
             1
         </div>
-        <div data-extension="androme.external" style="display: none;">
+        <div data-ext="androme.external" style="display: none;">
             2
         </div>
         <div>
             3
         </div>
-        <div data-extension="androme.external" style="display: none;">
+        <div data-ext="androme.external" style="display: none;">
             4
         </div>
         <div>
@@ -60,6 +61,8 @@
         </div>
     </div>
     <div style="vertical-align: bottom;"><button onclick="showHidden();">Show Hidden</button></div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>

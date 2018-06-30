@@ -132,12 +132,12 @@
         androme.settings.targetAPI = androme.build.OREO;
         androme.settings.density = androme.density.MDPI;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             androme.parseDocument('androme_root');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
+            var resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceArrayXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml() + '\n\n' +
@@ -147,9 +147,10 @@
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="androme_root" style="width: 500px;">
         <h2>Entry</h2>
-        <form name="entry" autocomplete="off">
+        <form name="entry" autocompvare="off">
             <ul>
                 <li>
                     <label style="font-style: italic;">Order:</label>
@@ -606,6 +607,8 @@
             </ul>
         </form>
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>
@@ -625,8 +628,8 @@
     </div>
     <script>
         function copy(id) {
-            const element = document.getElementById(id);
-            const range = document.createRange();
+            var element = document.getElementById(id);
+            var range = document.createRange();
             range.selectNode(element);
             window.getSelection().addRange(range);
             document.execCommand('copy');

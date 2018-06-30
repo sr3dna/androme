@@ -1,6 +1,6 @@
 import { ExtensionResult, ObjectMap } from '../../lib/types';
 import View from '../view';
-import Menu from '../../extension/menu';
+import Menu from '../../extension/widget/menu';
 import Resource from '../../base/resource';
 import { BLOCK_CHROME, VIEW_RESOURCE } from '../../lib/constants';
 
@@ -51,12 +51,11 @@ export default class MenuAndroid<T extends View> extends Menu {
         const node = (<T> this.node);
         node.setViewId(VIEW_STATIC.MENU);
         let xml = '';
-        xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, node.depth, {}, '', '', node.id, true)[0];
-        node.renderDepth = 0;
+        xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, 0, {}, '', '', node.id, true)[0];
         node.renderParent = true;
         node.cascade().forEach(item => item.renderExtension = this);
         node.ignoreResource = VIEW_RESOURCE.ALL;
-        return [xml, false];
+        return [xml, false, false];
     }
 
     public processChild(): ExtensionResult {
@@ -64,7 +63,7 @@ export default class MenuAndroid<T extends View> extends Menu {
         const element = node.element;
         if (element.nodeName === '#text') {
             node.hide();
-            return ['', false];
+            return ['', false, false];
         }
         const parent = (<T> this.parent);
         node.ignoreResource = VIEW_RESOURCE.ALL;
@@ -133,9 +132,10 @@ export default class MenuAndroid<T extends View> extends Menu {
                     else {
                         const image = node.children.find(item => item.element.tagName === 'IMG');
                         if (image != null) {
-                            const object = (<any> image.element);
-                            object.__imageSourcePrefix = 'ic_menu_';
-                            object.__imageSourceTarget = { node, namespace: 'android', attribute: 'icon' };
+                            const result = Resource.addImageSrcSet(<HTMLImageElement> image.element);
+                            if (result !== '') {
+                                options.android.icon = `@drawable/${result}`;
+                            }
                         }
                     }
                 }
@@ -161,7 +161,7 @@ export default class MenuAndroid<T extends View> extends Menu {
         }
         node.apply(options);
         const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, {}, '', '', node.id, layout)[0];
-        return [xml, false];
+        return [xml, false, false];
     }
 
     public afterRender() {

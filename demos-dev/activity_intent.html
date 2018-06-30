@@ -18,10 +18,19 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        let count = 0;
+        SystemJS.import('/build/main.js').then(function(result) {
+            androme = result;
+            addView();
+            addView();
+            addView();
+            addView();
+            addView();
+            closeDocument();
+        });
+        var count = 0;
         function addView() {
             if (androme.ready()) {
-                const div = document.createElement('div');
+                var div = document.createElement('div');
                 div.style.backgroundColor = ['#ddd', '#bbb', '#999', '#777', '#555'][count % 5];
                 if ((count % 2) == 1) {
                     div.style.fontStyle = 'italic';
@@ -34,13 +43,13 @@
         }
         function closeDocument() {
             androme.close();
-            const views = androme.writeLayoutAllXml();
-            let output = '';
-            for (const i in views) {
+            var views = androme.writeLayoutAllXml();
+            var output = '';
+            for (var i in views) {
                 output += views[i] + '\n';
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
+            var resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
@@ -52,19 +61,13 @@
             document.getElementById('output').innerHTML = '';
             document.getElementById('resource').innerHTML = '';
         }
-        SystemJS.import('/build/main.js').then(function(result) {
-            androme = result;
-            addView();
-            addView();
-            addView();
-            addView();
-            addView();
-            closeDocument();
-        });
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="main" style="width: 500px;"></div>
+    <!-- END: DEMO -->
+
     <div>
         <div class="output">
             <pre id="output"></pre>

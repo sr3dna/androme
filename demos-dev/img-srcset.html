@@ -8,10 +8,10 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        let images = 0;
         SystemJS.import('/build/main.js').then(function(result) {
             androme = result;
         });
+        var images = 0;
         function loaded() {
             if (++images >= 2) {
                 if (androme == null) {
@@ -22,13 +22,14 @@
                 androme.close();
 
                 document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-                const resource = androme.writeResourceDrawableXml();
+                var resource = androme.writeResourceDrawableXml();
                 document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
             }
         }
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="androme_root" style="text-align: center;">
         <img id="android" src="../demos/images/android.png" srcset="../demos/images/android-ldpi.png 0.75x,
                                                                     ../demos/images/android.png 1x,
@@ -44,6 +45,8 @@
                                                                   ../demos/images/pencil-xxhdpi.png 3x,
                                                                   ../demos/images/pencil-xxxhdpi.png 4x" onload="loaded();" />
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>

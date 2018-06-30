@@ -18,12 +18,12 @@ export default class ListAndroid<T extends View> extends List {
                 node.id,
                 controllerHandler.getViewStatic(
                     (options.listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE),
-                    node.depth,
+                    node.depth + node.renderDepth,
                     { android: { gravity: parseRTL('right'), layout_gravity: 'fill', layout_columnWeight: '0', [parseRTL('layout_marginRight')]: '8px', text: (options.listStyle !== '0' ? options.listStyle : '') } }
                 )[0]
             );
             node.android('layout_columnWeight', '1');
         }
-        return ['', false];
+        return ['', false, false];
     }
 }

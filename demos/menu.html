@@ -76,31 +76,32 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script>
-        function toggleMenu() {
-            const submenu = document.getElementById('menu_demo_sub');
-            submenu.style.display = (submenu.style.display == 'block' ? 'none' : 'block');
-        }
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             androme.parseDocument('androme_root');
             androme.close();
 
-            const views = androme.writeLayoutAllXml();
-            let output = '';
-            for (const i in views) {
+            var views = androme.writeLayoutAllXml();
+            var output = '';
+            for (var i in views) {
                 output += views[i] + '\n';
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
+            var resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
+        function toggleMenu() {
+            var submenu = document.getElementById('menu_demo_sub');
+            submenu.style.display = (submenu.style.display == 'block' ? 'none' : 'block');
+        }
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div id="androme_root" style="width: 200px;">
         <button onclick="document.getElementById('menu_demo').style.display = 'block';">Show Menu</button>
         <button onclick="document.getElementById('menu_demo').style.display = 'none';">Hide Menu</button>
-        <nav id="menu_demo" data-extension="androme.menu">
+        <nav id="menu_demo" data-ext="androme.widget.menu">
             <div
                 style="background: url(../demos/images/pencil-ldpi.png) no-repeat;" title="Item 1"
                 data-id="@+id/menu_item_1"
@@ -146,6 +147,8 @@
             </div>
         </nav>
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>
@@ -165,8 +168,8 @@
     </div>
     <script>
         function copy(id) {
-            const element = document.getElementById(id);
-            const range = document.createRange();
+            var element = document.getElementById(id);
+            var range = document.createRange();
             range.selectNode(element);
             window.getSelection().addRange(range);
             document.execCommand('copy');

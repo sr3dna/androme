@@ -54,12 +54,12 @@
     <script>
         androme.settings.useLayoutWeight = true;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             androme.parseDocument('androme_root');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-            const resource = androme.writeResourceStringXml() + '\n\n' +
+            var resource = androme.writeResourceStringXml() + '\n\n' +
                              androme.writeResourceStyleXml() + '\n\n' +
                              androme.writeResourceColorXml() + '\n\n' +
                              androme.writeResourceDrawableXml();
@@ -68,6 +68,7 @@
     </script>
 </head>
 <body>
+    <!-- START: DEMO -->
     <div style="width: 500px;">
         <ul id="androme_root">
             <li>
@@ -113,6 +114,8 @@
             </li>
         </ul>
     </div>
+    <!-- END: DEMO -->
+    
     <div>
         <div class="output">
             <pre id="output"></pre>
@@ -132,8 +135,8 @@
     </div>
     <script>
         function copy(id) {
-            const element = document.getElementById(id);
-            const range = document.createRange();
+            var element = document.getElementById(id);
+            var range = document.createRange();
             range.selectNode(element);
             window.getSelection().addRange(range);
             document.execCommand('copy');

@@ -79,6 +79,18 @@ export function hyphenToCamelCase(value: string) {
     return value;
 }
 
+export function removePlaceholders(value: string, extension = true) {
+    value = value.replace(/{[<:#@&>]{1}[0-9]+}/g, '');
+    if (extension) {
+        value = value.replace(/{!.*?}/g, '');
+    }
+    return value;
+}
+
+export function indentLines(value: string) {
+    return value.split('\n').map(line => `>>>>${line}`).join('\n');
+}
+
 export function convertAlpha(value: number) {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let result = '';
@@ -317,6 +329,15 @@ export function calculateBias(start: number, end: number) {
 
 export function hasValue<T>(value: T) {
     return (typeof value !== 'undefined' && value !== null && value.toString() !== '');
+}
+
+export function setDefaultOption(options: ObjectMap<any>, namespace: string, attr: string, value: string) {
+    if (options[namespace] == null) {
+        options[namespace] = {};
+    }
+    if (options[namespace][attr] == null) {
+        options[namespace][attr] = value;
+    }
 }
 
 export function withinRange(a: number, b: number, n = 1) {

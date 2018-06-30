@@ -2,7 +2,7 @@ import { ArrayMap, PlainFile, ResourceMap } from '../lib/types';
 import { getFileName, hasValue, trim } from '../lib/util';
 
 export default abstract class File {
-    public appName: string = '';
+    public appName = '';
     public stored: ResourceMap;
 
     protected queue: PlainFile[] = [];
