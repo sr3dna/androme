@@ -2,7 +2,7 @@ import { BorderAttribute, ObjectMap, StringMap } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { INLINE_CHROME, VIEW_RESOURCE } from '../lib/constants';
+import { INLINE_CHROME, MAPPING_CHROME, VIEW_RESOURCE } from '../lib/constants';
 import { cameltoLowerCase, convertPX, generateId, getFileExt, getFileName, hasValue, isNumber, resolveRelativePath } from '../lib/util';
 import { findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, sameAsParent } from '../lib/dom';
@@ -190,7 +190,7 @@ export default abstract class Resource<T extends Node> {
                         result[i] = result[i](node.css(i), node, i);
                     }
                     if (result.backgroundColor.length > 0) {
-                        if (SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || result.backgroundColor[2] === '0' || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                        if (SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
                             result.backgroundColor = [];
                         }
                         else {
@@ -228,7 +228,7 @@ export default abstract class Resource<T extends Node> {
                         }
                         let backgroundColor = parseRGBA(node.css('backgroundColor'));
                         if (backgroundColor.length > 0) {
-                            if (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) || backgroundColor[2] === '0' || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                            if (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
                                 backgroundColor = [];
                             }
                             else {
@@ -352,7 +352,7 @@ export default abstract class Resource<T extends Node> {
                     else if (element.nodeName === '#text') {
                         value = (element.textContent ? element.textContent.trim() : '');
                     }
-                    else if (element.children.length === 0 || Array.from(element.children).every((item: HTMLElement) => INLINE_CHROME.includes(item.tagName))) {
+                    else if (element.children.length === 0 || node.cascade().every(item => !item.hasElement || (MAPPING_CHROME[item.tagName] == null && INLINE_CHROME.includes(item.tagName)))) {
                         name = element.innerText.trim();
                         value = element.innerHTML.trim();
                     }

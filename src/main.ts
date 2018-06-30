@@ -38,6 +38,7 @@ const Resource = new ResourceView(File);
 const main = new Application<T, U>(Node, NodeList);
 main.registerController(Controller);
 main.registerResource(Resource);
+
 for (const name of SETTINGS.builtInExtensions) {
     const extension: Extension<T, U> = EXTENSIONS[name.toLowerCase().trim()];
     if (extension != null) {

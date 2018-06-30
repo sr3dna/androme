@@ -6,7 +6,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import { hasValue, hyphenToCamelCase, replaceDP, resetId, sortAsc, trim } from '../lib/util';
-import { convertRGB, getByColorName } from '../lib/color';
+import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import SETTINGS from '../settings';
 
@@ -449,11 +449,18 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (xml === '') {
                             let tagName = nodeY.viewName;
                             if (tagName === '') {
-                                if (nodeY.children.length > 0 && nodeY.children.some(node => !INLINE_CHROME.includes(node.tagName))) {
+                                if (nodeY.children.length > 0 && nodeY.cascade().some(node => MAPPING_CHROME[node.tagName] != null || !INLINE_CHROME.includes(node.tagName))) {
                                     const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                     if (!nodeY.renderParent) {
                                         if (nodeY.children.length === 1 && linearX && linearY) {
-                                            xml += this.writeFrameLayout(nodeY, parent);
+                                            if (nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0) {
+                                                nodeY.children[0].parent = parent;
+                                                nodeY.hide();
+                                                continue;
+                                            }
+                                            else {
+                                                xml += this.writeFrameLayout(nodeY, parent);
+                                            }
                                         }
                                         else if ((linearX || linearY) && (!nodeY.flex.enabled || nodeY.children.every(node => node.flex.enabled)) && (!nodeY.children.some(node => node.css('float') === 'right') || nodeY.children.every(node => node.css('float') === 'right'))) {
                                             xml += this.writeLinearLayout(nodeY, parent, linearY);
