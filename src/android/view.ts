@@ -1,4 +1,4 @@
-import { ObjectMap, StringMap } from '../lib/types';
+import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -25,7 +25,7 @@ export default class View extends Node {
     constructor(
         public id: number,
         public api: number,
-        element?: HTMLElement | null,
+        element?: Null<HTMLElement>,
         options?: ObjectMap<any>)
     {
         super(id, element, options);
@@ -435,7 +435,7 @@ export default class View extends Node {
                 if (!labeled) {
                     let parent: T = this.renderParent;
                     let current: T = this;
-                    let label: T | null = null;
+                    let label: Null<T> = null;
                     while (parent && parent.renderChildren != null) {
                         const index = parent.renderChildren.findIndex(node => node === current);
                         if (index > 0) {

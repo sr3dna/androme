@@ -1,16 +1,18 @@
 import Node from '../base/node';
 
+export type Null<T> = T | null | undefined;
+
 export interface IExtension {
     name: string;
     application: any;
     node: Node;
-    parent: Node | null;
-    element: HTMLElement | null;
+    parent: Null<Node>;
+    element: Null<HTMLElement>;
     tagNames: string[];
     enabled: boolean;
-    activityMain: boolean;
     options: {};
     dependences: {}[];
+    activityMain: boolean;
     is(node: Node): void;
     require(value: string): void;
     included(element?: HTMLElement): boolean;
@@ -119,5 +121,3 @@ export interface ResourceMap {
     DRAWABLES: Map<string, string>;
     IMAGES: Map<string, {}>;
 }
-
-export type RegExpNull = RegExpExecArray | null;

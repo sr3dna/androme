@@ -1,4 +1,4 @@
-import { ExtensionResult, IExtension, ObjectIndex, ObjectMap } from '../lib/types';
+import { ExtensionResult, IExtension, Null, ObjectIndex, ObjectMap } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
@@ -6,8 +6,8 @@ import NodeList from './nodelist';
 export default abstract class Extension<T extends Node, U extends NodeList<T>> implements IExtension {
     public application: Application<T, U>;
     public node: T;
-    public parent: T | null;
-    public element: HTMLElement | null;
+    public parent: Null<T>;
+    public element: Null<HTMLElement>;
     public tagNames: string[] = [];
     public enabled = true;
     public dependences: {}[] = [];
@@ -23,6 +23,10 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
 
     public is(node: T) {
         return (this.tagNames.length === 0 || (this.tagNames.includes(node.tagName)));
+    }
+
+    public require(value: string, init = false) {
+        this.dependences.push({ name: value, init });
     }
 
     public included(element?: HTMLElement) {
@@ -64,10 +68,6 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         }
     }
 
-    public afterRender() {
-        return;
-    }
-
     public condition() {
         if (this.node && this.node.element.dataset != null) {
             if (!this.node.element.dataset.ext) {
@@ -89,19 +89,11 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         return ['', false, this.application.elements.has(this.node.element)];
     }
 
-    public require(value: string, init = false) {
-        this.dependences.push({ name: value, init });
+    public afterRender() {
+        return;
     }
 
     public finalize() {
         return;
-    }
-
-    get linearX() {
-        return (this.node != null ? NodeList.linearX(this.node.children) : false);
-    }
-
-    get linearY() {
-        return (this.node != null ? NodeList.linearY(this.node.children) : false);
     }
 }

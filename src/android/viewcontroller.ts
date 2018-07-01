@@ -1,4 +1,4 @@
-import { ClientRect, ObjectMap, Point, StringMap } from '../lib/types';
+import { ClientRect, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import View from './view';
@@ -267,7 +267,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                 });
                 if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect()) && !nodes.list.some(item => item.floating)) {
-                    let flexNodes: any[] | null = null;
+                    let flexNodes: Null<any[]> = null;
                     if (flex.enabled) {
                         const directionNodes = nodes.list.slice();
                         if (flex.direction.indexOf('column') !== -1 && directionNodes.every(item => directionNodes[0].linear.left === item.linear.left || directionNodes[0].linear.right === item.linear.right)) {

@@ -1,3 +1,4 @@
+import { Null } from './lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
@@ -20,15 +21,15 @@ import Drawer from './android/extension/drawer';
 type T = View;
 type U = ViewList<T>;
 
-const CACHE: Set<HTMLElement> = new Set();
+const ROOT_CACHE: Set<HTMLElement> = new Set();
 const EXTENSIONS: any = {
-    'androme.external': new External('androme.external', []),
+    'androme.external': new External('androme.external'),
     'androme.list': new List('androme.list', ['UL', 'OL']),
     'androme.table': new Table('androme.table', ['TABLE']),
     'androme.grid': new Grid('androme.grid', [], { balanceColumns: true }),
     'androme.widget.menu': new Menu('androme.widget.menu', ['NAV'], { nsAppCompat: true }),
-    'androme.widget.toolbar': new Toolbar('androme.widget.toolbar', []),
-    'androme.widget.drawer': new Drawer('androme.widget.drawer', [])
+    'androme.widget.toolbar': new Toolbar('androme.widget.toolbar'),
+    'androme.widget.drawer': new Drawer('androme.widget.drawer')
 };
 
 const Node = View;
@@ -48,7 +49,7 @@ for (const name of SETTINGS.builtInExtensions) {
     }
 }
 
-export function parseDocument(...elements: (string | HTMLElement | null)[]) {
+export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
     if (main.closed) {
         return;
     }
@@ -89,7 +90,7 @@ export function parseDocument(...elements: (string | HTMLElement | null)[]) {
                 main.replaceInlineAttributes();
             }
             main.replaceAppended();
-            CACHE.add(element);
+            ROOT_CACHE.add(element);
         }
     });
 }
@@ -124,11 +125,11 @@ export function close() {
 }
 
 export function reset() {
-    CACHE.forEach((element: HTMLElement) => {
+    ROOT_CACHE.forEach((element: HTMLElement) => {
         delete element.dataset.views;
         delete element.dataset.currentId;
     });
-    CACHE.clear();
+    ROOT_CACHE.clear();
     main.reset();
 }
 

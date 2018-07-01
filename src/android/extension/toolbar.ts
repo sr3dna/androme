@@ -11,7 +11,7 @@ const enum VIEW_STATIC {
 }
 
 export default class ToolbarAndroid<T extends View> extends Toolbar {
-    constructor(name: string, tagNames: string[], options?: {}) {
+    constructor(name: string, tagNames: string[] = [], options?: {}) {
         super(name, tagNames, options);
     }
 

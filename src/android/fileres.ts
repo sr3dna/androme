@@ -1,4 +1,4 @@
-import { ArrayMap, ObjectMap, PlainFile, RegExpNull, StringMap } from '../lib/types';
+import { ArrayMap, Null, ObjectMap, PlainFile, StringMap } from '../lib/types';
 import File from '../base/file';
 import { caseInsensitve, hasValue, getFileExt, replaceDP } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
@@ -249,7 +249,7 @@ export default class FileRes extends File {
     private parseImageDetails(xml: string) {
         const result: PlainFile[] = [];
         const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
-        let match: RegExpNull = null;
+        let match: Null<RegExpExecArray> = null;
         while ((match = pattern.exec(xml)) != null) {
             result.push({
                 uri: match[1],
@@ -264,7 +264,7 @@ export default class FileRes extends File {
     private parseFileDetails(xml: string) {
         const result: PlainFile[] = [];
         const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
-        let match: RegExpNull = null;
+        let match: Null<RegExpExecArray> = null;
         while ((match = pattern.exec(xml)) != null) {
             result.push({
                 content: match[0].replace(match[1], '').trim(),

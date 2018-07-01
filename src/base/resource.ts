@@ -1,4 +1,4 @@
-import { BorderAttribute, ObjectMap, StringMap } from '../lib/types';
+import { BorderAttribute, Null, ObjectMap, StringMap } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
@@ -311,7 +311,7 @@ export default abstract class Resource<T extends Node> {
                 const object = (<any> element);
                 if (!hasValue(object.__optionArray) || SETTINGS.alwaysReevaluateResources) {
                     const stringArray: string[] = [];
-                    let numberArray: string[] | null = [];
+                    let numberArray: Null<string[]> = [];
                     for (let i = 0; i < element.children.length; i++) {
                         const item = (<HTMLOptionElement> element.children[i]);
                         const value = item.text.trim();

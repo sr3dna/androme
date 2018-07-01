@@ -15,7 +15,7 @@ const enum VIEW_STATIC {
 }
 
 export default class DrawerAndroid<T extends View> extends Drawer {
-    constructor(name: string, tagNames: string[], options?: {}) {
+    constructor(name: string, tagNames: string[] = [], options?: {}) {
         super(name, tagNames, options);
     }
 

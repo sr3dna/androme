@@ -1,4 +1,4 @@
-import { BoxModel, BoxRect, ClientRect, Flexbox, ObjectMap, Point, StringMap } from '../lib/types';
+import { BoxModel, BoxRect, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
@@ -50,7 +50,7 @@ export default abstract class Node implements BoxModel {
 
     constructor(
         public id: number,
-        element?: HTMLElement | null,
+        element?: Null<HTMLElement>,
         options?: {})
     {
         Object.assign(this, options);

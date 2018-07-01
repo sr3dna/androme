@@ -1,4 +1,4 @@
-import { ObjectMap, RegExpNull } from '../lib/types';
+import { Null, ObjectMap } from '../lib/types';
 import { hasValue } from './util';
 
 export function getDataLevel(data: {}, ...levels: string[]): ObjectMap<any> {
@@ -12,8 +12,8 @@ export function getDataLevel(data: {}, ...levels: string[]): ObjectMap<any> {
 
 export function parseTemplateMatch(template: string) {
     const result: ObjectMap<string> = {};
-    let pattern: RegExp | null = null;
-    let match: RegExpNull | boolean = false;
+    let pattern: Null<RegExp> = null;
+    let match: Null<RegExpExecArray> | boolean = false;
     let section = 0;
     let characters = template.length;
     do {
@@ -47,7 +47,7 @@ export function parseTemplateMatch(template: string) {
     return result;
 }
 
-export function parseTemplateData(template: ObjectMap<string>, data: ObjectMap<any>, index?: string | null, include?: ObjectMap<any>, exclude?: ObjectMap<any>) {
+export function parseTemplateData(template: ObjectMap<string>, data: ObjectMap<any>, index?: Null<string>, include?: ObjectMap<any>, exclude?: ObjectMap<any>) {
     let output: string = (index != null ? template[index] : '');
     if (data['#include'] != null) {
         include = data['#include'];
@@ -81,7 +81,7 @@ export function parseTemplateData(template: ObjectMap<string>, data: ObjectMap<a
             output = '';
         }
         const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-        let match: RegExpNull;
+        let match: Null<RegExpExecArray>;
         while ((match = pattern.exec(output)) != null) {
             if (include && include[match[1]]) {
                 const attribute = `{#${match[1]}=${match[2]}}`;

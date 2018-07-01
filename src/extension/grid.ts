@@ -1,4 +1,4 @@
-import { ExtensionResult, ObjectIndex, ObjectMap } from '../lib/types';
+import { ExtensionResult, Null, ObjectIndex, ObjectMap } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -147,7 +147,7 @@ export default class Grid extends Extension<T, U> {
                 columns = columns.filter(item => item);
                 const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                 for (let l = 0; l < columnLength; l++) {
-                    let top: number | null = null;
+                    let top: Null<number> = null;
                     for (let m = 0; m < columns.length; m++) {
                         const nodeX = columns[m][l];
                         if (nodeX != null) {
@@ -237,9 +237,9 @@ export default class Grid extends Extension<T, U> {
     }
 
     public processChild(): ExtensionResult {
-        let xml = '';
-        let siblings: T[];
         const parent = (<T> this.parent);
+        let siblings: T[];
+        let xml = '';
         if (this.options.balanceColumns) {
             siblings = this.node.gridSiblings;
         }

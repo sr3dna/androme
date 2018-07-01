@@ -1,4 +1,4 @@
-import { ArrayMap, ObjectIndex, StringMap } from '../lib/types';
+import { ArrayMap, Null, ObjectIndex, StringMap } from '../lib/types';
 import Controller from './controller';
 import Extension from './extension';
 import Resource from './resource';
@@ -309,7 +309,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 if (nodes != null) {
                     nodes.push((<T> node.parent));
                     let minArea = Number.MAX_VALUE;
-                    let closest: T | null = null;
+                    let closest: Null<T> = null;
                     nodes.forEach(current => {
                         const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
                         if (area < minArea) {
@@ -634,7 +634,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     private insertNode(element: HTMLElement, parent?: T) {
-        let node: T | null = null;
+        let node: Null<T> = null;
         if (element.nodeName === '#text') {
             if (element.textContent && element.textContent.trim() !== '') {
                 node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element, { parent, tagName: 'PLAINTEXT' });

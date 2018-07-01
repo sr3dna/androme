@@ -1,3 +1,4 @@
+import { Null } from '../lib/types';
 import View from './view';
 import { VIEW_STANDARD } from '../lib/constants';
 
@@ -7,7 +8,7 @@ export default class ViewGroup extends View {
     constructor(
         id: number,
         node: T,
-        parent: T | null,
+        parent: Null<T>,
         children: T[])
     {
         const options = {
