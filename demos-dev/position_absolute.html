@@ -8,14 +8,16 @@
     <style>
         span {
             position: absolute;
-            width: 100px;
-            height: 100px;
-            line-height: 100px;
-            color: #fff;
-            font-size: 30px;
+            width: 80px;
+            height: 80px;
+            line-height: 80px;
+            font-size: 20px;
             font-weight: bold;
+            color: white;
             text-align: center;
-            background-color: #1B5385;
+            background-color: darkblue;
+            border: 1px solid yellowgreen;
+            border-radius: 8px;
         }
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
@@ -31,8 +33,8 @@
         function addView() {
             if (androme.ready()) {
                 for (var span of document.getElementsByTagName('span')) {
-                    span.style.top = `${400 * Math.random()}px`;
-                    span.style.left = `${400 * Math.random()}px`;
+                    span.style.top = `${320 * Math.random()}px`;
+                    span.style.left = `${320 * Math.random()}px`;
                 }
                 androme.parseDocument('androme_root');
             }
@@ -46,7 +48,8 @@
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
             var resource = androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml();
+                           androme.writeResourceColorXml() + '\n\n' +
+                           androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         }
         function resetDocument() {
@@ -58,7 +61,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root" style="width: 500px;">
+    <div id="androme_root" style="width: 400px;">
         &nbsp;
         <span>1</span>
         <span>2</span>

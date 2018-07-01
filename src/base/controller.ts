@@ -65,6 +65,10 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
         }
     }
 
+    public hasAppendProcessing(id: number) {
+        return (this.before[id] != null || this.after[id] != null);
+    }
+
     protected getEnclosingTag(depth: number, tagName: string, id: number, xml = '', preXml = '', postXml = '') {
         const indent = padLeft(depth);
         let output = preXml +

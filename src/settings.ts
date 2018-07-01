@@ -7,9 +7,7 @@ const SETTINGS: ObjectMap<any> = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.widget.menu',
-        'androme.widget.toolbar',
-        'androme.widget.drawer'
+        'androme.widget'
     ],
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,

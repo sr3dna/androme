@@ -249,7 +249,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setFontStyle() {
-        this.cache.elements.forEach(node => {
+        this.cache.list.forEach(node => {
             if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.FONT_STYLE) !== VIEW_RESOURCE.FONT_STYLE) {
                 const element = node.element;
                 const object = (<any> element);
@@ -339,11 +339,11 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setValueString() {
-        this.cache.elements.forEach(node => {
-            if ((node.ignoreResource & VIEW_RESOURCE.VALUE_STRING) !== VIEW_RESOURCE.VALUE_STRING) {
+        this.cache.list.forEach(node => {
+            if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.VALUE_STRING) !== VIEW_RESOURCE.VALUE_STRING) {
                 const element = (<HTMLInputElement> node.element);
                 const object = (<any> element);
-                if (!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources) {
+                if ((!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources)) {
                     let name = '';
                     let value = '';
                     if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
@@ -354,7 +354,7 @@ export default abstract class Resource<T extends Node> {
                     else if (element.nodeName === '#text') {
                         value = (element.textContent ? element.textContent.trim() : '');
                     }
-                    else if ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => (MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName))))) {
+                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => (MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName))))))) {
                         name = element.innerText.trim();
                         value = element.innerHTML.trim();
                     }

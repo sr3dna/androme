@@ -78,9 +78,7 @@ androme.settings = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.widget.menu',
-        'androme.widget.toolbar',
-        'androme.widget.drawer'
+        'androme.widget' // androme.widget.menu | androme.widget.toolbar | androme.widget.drawer
     ],
     targetAPI: androme.build.OREO,
     density: androme.build.MDPI,
@@ -107,7 +105,7 @@ androme.settings = {
     outputMaxProcessingTime: 30
 };
 ```
-You can preview the library with the provided /demos/*.html which should generate the same XML you see here in the README. Using the latest Chrome will always generate the most accurate layout.
+You can preview the library with the provided /demos/*.html which for the the time being is the only form of documentation. Using the latest Chrome will always generate the most accurate layout.
 
 Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. ConstraintLayout and RelativeLayout should render the same UI although ConstraintLayout is preferred for most scenarios. To use Constraint circle for placement you have to disable "useConstraintGuideline".
 
@@ -121,13 +119,25 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/flexbox.png" alt="flexbox: horizontal" />
 
+<img src="demos/android/flexbox_vertical.png" alt="flexbox: vertical" />
+
 <img src="demos/android/flexbox_wrap.png" alt="flexbox: wrap" />
 
 <img src="demos/android/float.png" alt="float: left | right | clear" />
 
 <img src="demos/android/position_absolute.png" alt="position: absolute" />
 
-### extensions
+### extensions: standard
+
+<img src="demos/android/table.png" alt="extension: table" />
+
+<img src="demos/android/grid.png" alt="extension: grid - balance columns" />
+
+<img src="demos/android/list.png" alt="extension: list" />
+
+Extension "external": used for elements which are meant to be in a separate activity layout XML such as navigation menus.
+
+### extensions: widgets
 
 Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
 
@@ -138,15 +148,7 @@ Most of the Android support library extensions can be configured using the same 
 ```
 <img src="demos/android/drawer.png" alt="extension: drawer - actionbar" />
 
-<img src="demos/android/table.png" alt="extension: table" />
-
-<img src="demos/android/grid.png" alt="extension: grid - balance columns" />
-
-<img src="demos/android/list.png" alt="extension: list" />
-
 <img src="demos/android/menu.png" alt="extension: menu" />
-
-Extension "external": used for elements which are meant to be in a separate activity layout XML such as navigation menus.
 
 ### auto-generated layout
 
@@ -158,10 +160,11 @@ Extension "external": used for elements which are meant to be in a separate acti
 	android:id="@+id/androme_root"
 	android:gravity="top"
 	android:layout_height="wrap_content"
-	android:layout_width="500dp"
+	android:layout_width="wrap_content"
 	android:orientation="vertical">
 	<TextView
 		android:id="@+id/textview_1"
+		android:background="@drawable/h2_textview_1"
 		android:layout_height="wrap_content"
 		android:layout_width="match_parent"
 		android:padding="8dp"
@@ -188,7 +191,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:labelFor="@+id/order"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/order"
 				style="@style/Label_2" />
@@ -210,7 +213,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_3"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/date_add"
 				style="@style/Label_1" />
@@ -232,7 +235,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/day0"
@@ -247,7 +250,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					app:layout_constraintEnd_toStartOf="@+id/year0"
 					app:layout_constraintStart_toEndOf="@+id/month0"
 					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/year0"
@@ -262,7 +265,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day0"
 					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/month1"
@@ -270,7 +273,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:entries="@array/month0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="12dp"
+					android:layout_marginTop="13dp"
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
@@ -279,7 +282,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/month0"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/day1"
@@ -288,14 +291,14 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
-					android:layout_marginTop="12dp"
+					android:layout_marginTop="13dp"
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					app:layout_constraintEnd_toStartOf="@+id/year1"
 					app:layout_constraintStart_toEndOf="@+id/month1"
 					app:layout_constraintTop_toBottomOf="@+id/day0"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/year1"
@@ -304,14 +307,14 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
-					android:layout_marginTop="12dp"
+					android:layout_marginTop="13dp"
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day1"
 					app:layout_constraintTop_toBottomOf="@+id/year0"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/month2"
@@ -319,17 +322,16 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:entries="@array/month0_array"
 					android:focusable="true"
 					android:layout_height="wrap_content"
-					android:layout_marginTop="12dp"
+					android:layout_marginTop="13dp"
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toBottomOf="parent"
 					app:layout_constraintEnd_toStartOf="@+id/day2"
 					app:layout_constraintHorizontal_bias="0"
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/month1"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/day2"
@@ -338,15 +340,14 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
-					android:layout_marginTop="12dp"
+					android:layout_marginTop="13dp"
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toBottomOf="parent"
 					app:layout_constraintEnd_toStartOf="@+id/year2"
 					app:layout_constraintStart_toEndOf="@+id/month2"
 					app:layout_constraintTop_toBottomOf="@+id/day1"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/year2"
@@ -355,15 +356,14 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
-					android:layout_marginTop="12dp"
+					android:layout_marginTop="13dp"
 					android:layout_width="wrap_content"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
-					app:layout_constraintBottom_toBottomOf="parent"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day2"
 					app:layout_constraintTop_toBottomOf="@+id/year1"
-					app:layout_constraintWidth_min="37dp"
+					app:layout_constraintWidth_min="50dp"
 					style="@style/Select_1" />
 			</android.support.constraint.ConstraintLayout>
 			<Space
@@ -375,7 +375,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_4"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/time"
 				style="@style/Label_1" />
@@ -391,7 +391,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -403,7 +403,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -417,7 +417,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_5"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/type"
 				style="@style/Label_1" />
@@ -428,7 +428,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="160dp"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -442,7 +442,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:labelFor="@+id/topic0"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/topic_add"
 				style="@style/Label_1" />
@@ -469,7 +469,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -483,7 +483,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_7"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/series"
 				style="@style/Label_1" />
@@ -494,7 +494,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="200dp"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -507,7 +507,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_8"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/subset"
 				style="@style/Label_1" />
@@ -518,7 +518,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -531,7 +531,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_9"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/active"
 				style="@style/Label_1" />
@@ -542,7 +542,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -565,7 +565,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_10"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/series"
 				style="@style/Label_2" />
@@ -576,7 +576,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="200dp"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -589,7 +589,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_11"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/subset"
 				style="@style/Label_1" />
@@ -600,7 +600,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -613,7 +613,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_12"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/entries"
 				style="@style/Label_1" />
@@ -629,7 +629,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="200dp"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -671,7 +671,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_13"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/mode"
 				style="@style/Label_1" />
@@ -682,7 +682,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -695,7 +695,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_14"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/style"
 				style="@style/Label_1" />
@@ -706,7 +706,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -719,7 +719,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_15"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/calendar"
 				style="@style/Label_1" />
@@ -730,7 +730,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="37dp"
+				android:minWidth="50dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -743,7 +743,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_16"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/version"
 				style="@style/Label_1" />
@@ -759,7 +759,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -771,7 +771,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -799,7 +799,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_17"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/branch"
 				style="@style/Label_1" />
@@ -815,7 +815,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -827,7 +827,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -870,7 +870,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:labelFor="@+id/customname0"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/custom_add"
 				style="@style/Label_1" />
@@ -897,7 +897,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -909,7 +909,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -923,7 +923,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 				android:id="@+id/textview_19"
 				android:layout_height="wrap_content"
 				android:layout_marginEnd="5dp"
-				android:layout_width="100dp"
+				android:layout_width="80dp"
 				android:paddingTop="3dp"
 				android:text="@string/conclusion"
 				style="@style/Label_1" />
@@ -939,7 +939,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="100dp"
-					android:minWidth="37dp"
+					android:minWidth="50dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -1045,7 +1045,6 @@ Extension "external": used for elements which are meant to be in a separate acti
 </resources>
 <!-- filename: res/values/strings.xml -->
 ```
-
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
@@ -1207,7 +1206,7 @@ Extension "external": used for elements which are meant to be in a separate acti
 		<item name="android:textSize">11sp</item>
 	</style>
 	<style name="H2_1">
-		<item name="android:background">@color/slate_gray</item>
+		<item name="android:background">@color/dark_blue</item>
 		<item name="android:fontFamily">tahoma</item>
 		<item name="android:fontWeight">700</item>
 		<item name="android:textColor">@color/white</item>
@@ -1257,8 +1256,9 @@ Extension "external": used for elements which are meant to be in a separate acti
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<color name="black">#000000</color>
-	<color name="slate_gray">#708090</color>
+	<color name="dark_blue">#00008B</color>
 	<color name="gray">#808080</color>
+	<color name="yellow_green">#9ACD32</color>
 	<color name="dark_gray">#A9A9A9</color>
 	<color name="light_gray_1">#CCCCCC</color>
 	<color name="white_smoke_1">#DDDDDD</color>
@@ -1269,6 +1269,13 @@ Extension "external": used for elements which are meant to be in a separate acti
 ### drawable resources
 
 ```xml
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	<stroke android:width="1dp" android:color="@color/yellow_green" />
+	<solid android:color="@color/dark_blue" />
+</shape>
+<!-- filename: res/drawable/h2_textview_1.xml -->
+
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<stroke android:width="1dp" android:color="@color/light_gray_1" />

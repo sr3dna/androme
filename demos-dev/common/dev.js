@@ -1,4 +1,4 @@
-let androme = null;
+var androme = null;
 
 SystemJS.config({
     packages: {
@@ -12,8 +12,8 @@ SystemJS.config({
 });
 
 function copy(id) {
-    const element = document.getElementById(id);
-    const range = document.createRange();
+    var element = document.getElementById(id);
+    var range = document.createRange();
     range.selectNode(element);
     window.getSelection().addRange(range);
     document.execCommand('copy');

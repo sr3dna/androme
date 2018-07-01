@@ -3,7 +3,7 @@ import Node from '../base/node';
 import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_ANDROID } from './constants';
 import parseRTL from './localization';
 import API_ANDROID from './customizations';
-import { BOX_STANDARD, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
+import { BLOCK_CHROME, BOX_STANDARD, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import { averageInt, calculateBias, convertInt, convertPX, formatPX, generateId, getFileExt, hasValue, isPercent } from '../lib/util';
 
 type T = View;
@@ -186,8 +186,8 @@ export default class View extends Node {
         }
         else {
             parent = (<T> this.parent);
-            width = (this.hasElement ? this.element.offsetWidth + this.marginLeft + this.marginRight : 0);
-            height = (this.hasElement ? this.element.offsetHeight + this.marginTop + this.marginBottom : 0);
+            width = (this.hasElement ? this.element.clientWidth + this.marginLeft + this.marginRight + this.borderLeftWidth + this.borderRightWidth : 0);
+            height = (this.hasElement ? this.element.clientHeight + this.marginTop + this.marginBottom + this.borderTopWidth + this.borderBottomWidth : 0);
             wrapContent = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID);
         }
         const parentWidth = (parent.hasElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
@@ -229,29 +229,11 @@ export default class View extends Node {
                 }
             }
             else if (this.android('layout_width') == null) {
-                if (wrapContent || (renderParent.android('layout_width') === 'wrap_content')) {
-                    this.android('layout_width', 'wrap_content');
+                if (!wrapContent && !(parent.is(VIEW_STANDARD.LINEAR) && parent.horizontal) && ((parent.overflow === OVERFLOW_CHROME.NONE && width > 0 && width >= parentWidth) || (this.hasElement && BLOCK_CHROME.includes(this.tagName) && (<any> this.style).display.indexOf('inline') === -1 && !this.floating))) {
+                    this.android('layout_width', 'match_parent');
                 }
                 else {
-                    if (FIXED_ANDROID.includes(this.viewName) || this.floating) {
-                        this.android('layout_width', 'wrap_content');
-                    }
-                    else {
-                        if (parent.overflow === OVERFLOW_CHROME.NONE && width >= parentWidth) {
-                            this.android('layout_width', 'match_parent');
-                        }
-                        else if (this.style != null) {
-                            switch (this.style.display) {
-                                case 'line-item':
-                                case 'block':
-                                case 'inherit':
-                                    this.android('layout_width', 'match_parent');
-                                    break;
-                                default:
-                                    this.android('layout_width', 'wrap_content');
-                            }
-                        }
-                    }
+                    this.android('layout_width',  'wrap_content');
                 }
             }
             if (this.android('layout_height') !== '0px') {
@@ -394,8 +376,8 @@ export default class View extends Node {
             }
             switch (this.renderParent.viewName) {
                 case VIEW_ANDROID.GRID:
-                    const fillX = (horizontal === 'center_horizontal' || horizontal === 'center');
-                    const fillY = (vertical === 'center_vertical' || vertical === 'middle');
+                    const fillX = (horizontal !== '' && horizontal !== parseRTL('left') && horizontal !== 'start');
+                    const fillY = (vertical !== '' && vertical !== 'top');
                     if ((fillX && fillY) || this.renderParent.tagName === 'TABLE') {
                         this.android('layout_gravity', 'fill');
                     }

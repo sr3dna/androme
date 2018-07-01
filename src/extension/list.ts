@@ -21,8 +21,9 @@ export default abstract class List extends Extension<T, U> {
 
     public processNode(): ExtensionResult {
         let xml = '';
-        if (NodeList.linearX(this.node.children)) {
+        if (NodeList.linearY(this.node.children)) {
             xml = this.application.writeGridLayout(this.node, (<T> this.parent), 2);
+            this.node.android('layout_width', 'match_parent');
         }
         else {
             xml = this.application.writeLinearLayout(this.node, (<T> this.parent), NodeList.linearY(this.node.children));

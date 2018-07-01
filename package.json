@@ -1,11 +1,11 @@
 {
   "name": "androme",
-  "version": "1.7.16",
+  "version": "1.7.17",
   "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. Resources are also auto-generated. iOS will be supported including a browser based UI designer.",
   "scripts": {
     "express": "node app.js",
     "dev": "tsc -w",
-    "prod": "tslint -c tslint.json 'src/**/*.ts' && tsc --inlineSourceMap false && rollup -c rollup.config.js",
+    "prod": "npm run clean && tslint -c tslint.json 'src/**/*.ts' && tsc --inlineSourceMap false && rollup -c rollup.config.js",
     "clean": "rimraf build/* && rimraf dist/* && rimraf temp/*"
   },
   "repository": {

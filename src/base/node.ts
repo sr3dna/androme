@@ -174,13 +174,14 @@ export default abstract class Node implements BoxModel {
     }
 
     public inheritStyle(node: T) {
-        const style: any = this.style || this.styleMap;
+        const style: StringMap = {};
         for (const attr in node.style) {
             if (attr.startsWith('font') || attr.startsWith('color')) {
                 const key = hyphenToCamelCase(attr);
                 style[key] = (<any> node.style)[key];
             }
         }
+        Object.assign(this.styleMap, style);
     }
 
     public inheritStyleMap(node: T) {

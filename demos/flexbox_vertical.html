@@ -6,16 +6,21 @@
     <title>https://github.com/anpham6/androme</title>
     <style>
         body {
-            font-family: monospace, consolas;
+            font-family: Tahoma, Arial;
             padding: 10px;
             margin: 0px;
+            background-color: #eee;
         }
         body > div {
             vertical-align: top;
             display: inline-block;
         }
+        button {
+            font-size: 10px;
+            margin-top: 6px;
+        }
         .output {
-            width: 425px;
+            width: 400px;
             overflow: auto;
             float: left;
         }
@@ -25,28 +30,27 @@
             margin: 0px 0px 0px 15px;
             padding: 10px;
             background-color: floralwhite;
-            border: solid 1px #ccc;
+            border: 1px solid #ccc;
             overflow: auto;
         }
         .output div {
             text-align: right;
         }
-        button {
-            font-size: 10px;
-            margin-top: 6px;
-        }
         .column {
-            margin-right: 4px;
+            margin-bottom: 4px;
+            padding: 4px;
             display: flex;
             flex-direction: column;
         }
         .column > div {
-            font-size: 20px;
+            width: 30px;
+            font-size: 12px;
             color: white;
             text-align: center;
-            background: #1B5385;
-            margin: 2px;
-            padding: 18px;
+            margin: 1px;
+            padding: 6px 0px;
+            background-color: darkblue;
+            border: 1px solid yellowgreen;
             border-radius: 3px;
             flex: 1;
         }
@@ -59,15 +63,16 @@
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
             var resource = androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml();
+                           androme.writeResourceColorXml() + '\n\n' +
+                           androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
     <!-- START: DEMO -->
-    <div style="width: 500px;">
-        <div id="androme_root" style="display: flex;">
+    <div>
+        <div id="androme_root" style="height: 300px; display: flex;">
             <div class="column">
                 <div>1</div>
             </div>

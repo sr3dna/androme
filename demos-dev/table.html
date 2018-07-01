@@ -7,11 +7,23 @@
     <link rel="stylesheet" type="text/css" href="common/dev.css">
     <style>
         table {
-            display: inline;
+            padding: 2px;
+            background-color: #fff;
+            border: 1px solid #ccc;
         }
-        th, td {
-            border: solid 1px #000;
-            padding: 4px;
+        th {
+            font-size: 12px;
+            color: white;
+            text-align: center;
+            margin: 2px;
+            padding: 6px 0px;
+            background-color: darkblue;
+            border-radius: 3px;
+        }
+        td {
+            font-size: 12px;
+            border: 1px solid yellowgreen;
+            padding: 6px;
         }
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
@@ -33,101 +45,103 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <table id="androme_root">
-        <thead style="background-color: #ccc;">
-            <tr>
-                <th colspan="4">head 1</th>
-                <th colspan="4">head 2</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td rowspan="5">1</td>
-                <td rowspan="2" colspan="2">1111</td>
-                <td rowspan="3">---</td>
-                <td colspan="3">1</td>
-                <td>----</td>
-            </tr>
-            <tr>
-                <td>22</td>
-                <td>2</td>
-                <td>2</td>
-                <td rowspan="2">---</td>
-            </tr>
-            <tr>
-                <td>33</td>
-                <td>3</td>
-                <td colspan="3">333</td>
-            </tr>
-            <tr>
-                <td>44</td>
-                <td>44</td>
-                <td rowspan="2">---</td>
-                <td>4444</td>
-                <td>4</td>
-                <td>4</td>
-                <td>
-                    <table id="androme_root">
-                        <thead style="background-color: #ccc;">
-                            <tr>
-                                <th colspan="4">head 1</th>
-                                <th colspan="4">head 2</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td rowspan="5">1</td>
-                                <td rowspan="2" colspan="2">1111</td>
-                                <td rowspan="3">---</td>
-                                <td colspan="3">1</td>
-                                <td>----</td>
-                            </tr>
-                            <tr>
-                                <td>22</td>
-                                <td>2</td>
-                                <td>2</td>
-                                <td rowspan="2">---</td>
-                            </tr>
-                            <tr>
-                                <td>33</td>
-                                <td>3</td>
-                                <td colspan="3">333</td>
-                            </tr>
-                            <tr>
-                                <td>44</td>
-                                <td>44</td>
-                                <td rowspan="2">---</td>
-                                <td>4444</td>
-                                <td>4</td>
-                                <td>4</td>
-                                <td>----</td>
-                            </tr>
-                            <tr>
-                                <td colspan="2">555</td>
-                                <td colspan="3">55555</td>
-                                <td>---</td>
-                            </tr>
-                        </tbody>
-                        <tfoot style="background-color: #aaa;">
-                            <tr>
-                                <th colspan="8">foot 1</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">555</td>
-                <td colspan="3">55555</td>
-                <td>---</td>
-            </tr>
-        </tbody>
-        <tfoot style="background-color: #aaa;">
-            <tr>
-                <th colspan="8">foot 1</th>
-            </tr>
-        </tfoot>
-    </table>
+    <div>
+        <table id="androme_root">
+            <thead style="background-color: #ccc;">
+                <tr>
+                    <th colspan="4">head 1</th>
+                    <th colspan="4">head 2</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td rowspan="5">1</td>
+                    <td rowspan="2" colspan="2">1111</td>
+                    <td rowspan="3">---</td>
+                    <td colspan="3">1</td>
+                    <td>----</td>
+                </tr>
+                <tr>
+                    <td>22</td>
+                    <td>2</td>
+                    <td>2</td>
+                    <td rowspan="2">---</td>
+                </tr>
+                <tr>
+                    <td>33</td>
+                    <td>3</td>
+                    <td colspan="3">333</td>
+                </tr>
+                <tr>
+                    <td>44</td>
+                    <td>44</td>
+                    <td rowspan="2">---</td>
+                    <td>4444</td>
+                    <td>4</td>
+                    <td>4</td>
+                    <td>
+                        <table id="androme_root">
+                            <thead style="background-color: #ccc;">
+                                <tr>
+                                    <th colspan="4">head 1</th>
+                                    <th colspan="4">head 2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td rowspan="5">1</td>
+                                    <td rowspan="2" colspan="2">1111</td>
+                                    <td rowspan="3">---</td>
+                                    <td colspan="3">1</td>
+                                    <td>----</td>
+                                </tr>
+                                <tr>
+                                    <td>22</td>
+                                    <td>2</td>
+                                    <td>2</td>
+                                    <td rowspan="2">---</td>
+                                </tr>
+                                <tr>
+                                    <td>33</td>
+                                    <td>3</td>
+                                    <td colspan="3">333</td>
+                                </tr>
+                                <tr>
+                                    <td>44</td>
+                                    <td>44</td>
+                                    <td rowspan="2">---</td>
+                                    <td>4444</td>
+                                    <td>4</td>
+                                    <td>4</td>
+                                    <td>----</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">555</td>
+                                    <td colspan="3">55555</td>
+                                    <td>---</td>
+                                </tr>
+                            </tbody>
+                            <tfoot style="background-color: #aaa;">
+                                <tr>
+                                    <th colspan="8">foot 1</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">555</td>
+                    <td colspan="3">55555</td>
+                    <td>---</td>
+                </tr>
+            </tbody>
+            <tfoot style="background-color: #aaa;">
+                <tr>
+                    <th colspan="8">foot 1</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
     <!-- END: DEMO -->
     
     <div>

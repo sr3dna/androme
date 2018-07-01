@@ -42,12 +42,18 @@ const main = new Application<T, U>(Node, NodeList);
 main.registerController(Controller);
 main.registerResource(Resource);
 
-for (const name of SETTINGS.builtInExtensions) {
-    const extension: Extension<T, U> = EXTENSIONS[name.toLowerCase().trim()];
-    if (extension != null) {
-        main.registerExtension(extension);
+(() => {
+    const load = new Set<Extension<T, U>>();
+    for (let name of SETTINGS.builtInExtensions) {
+        name = name.toLowerCase().trim();
+        for (const ext in EXTENSIONS) {
+            if (name === ext || ext.startsWith(`${name}.`)) {
+                load.add(EXTENSIONS[ext]);
+            }
+        }
     }
-}
+    load.forEach(item => main.registerExtension(item));
+})();
 
 export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
     if (main.closed) {

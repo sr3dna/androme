@@ -6,16 +6,21 @@
     <title>https://github.com/anpham6/androme</title>
     <style>
         body {
-            font-family: monospace, consolas;
+            font-family: Tahoma, Arial;
             padding: 10px;
             margin: 0px;
+            background-color: #eee;
         }
         body > div {
             vertical-align: top;
             display: inline-block;
         }
+        button {
+            font-size: 10px;
+            margin-top: 6px;
+        }
         .output {
-            width: 425px;
+            width: 400px;
             overflow: auto;
             float: left;
         }
@@ -25,34 +30,31 @@
             margin: 0px 0px 0px 15px;
             padding: 10px;
             background-color: floralwhite;
-            border: solid 1px #ccc;
+            border: 1px solid #ccc;
             overflow: auto;
         }
         .output div {
             text-align: right;
         }
-        button {
-            font-size: 10px;
-            margin-top: 6px;
-        }
         .flex-container {
-            background-color: silver;
             list-style: none;
-            margin: 0px 0px 10px 0px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            margin: 0px 0px 8px 0px;
             padding: 4px;
             overflow: hidden;
             display: flex;
         }
         .flex-item {
-            width: 50px;
+            width: 30px;
+            font-size: 12px;
             color: white;
-            font-weight: bold;
-            font-size: 2em;
-            line-height: 50px;
             text-align: center;
-            background: #1B5385;
-            padding: 4px;
-            margin: 4px;
+            margin: 2px;
+            padding: 6px 0px;
+            background-color: darkblue;
+            border: 1px solid yellowgreen;
+            border-radius: 3px;
         }
     </style>
     <script src="../dist/androme.min.js"></script>
@@ -72,7 +74,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root" style="width: 500px;">
+    <div id="androme_root" style="width: 400px;">
         <ul class="flex-container" style="flex-direction: row; flex-wrap: wrap;">
             <li class="flex-item">A</li>
             <li class="flex-item">B</li>
@@ -89,6 +91,17 @@
             <li class="flex-item">M</li>
             <li class="flex-item">N</li>
             <li class="flex-item">O</li>
+            <li class="flex-item">P</li>
+            <li class="flex-item">Q</li>
+            <li class="flex-item">R</li>
+            <li class="flex-item">S</li>
+            <li class="flex-item">T</li>
+            <li class="flex-item">U</li>
+            <li class="flex-item">V</li>
+            <li class="flex-item">W</li>
+            <li class="flex-item">X</li>
+            <li class="flex-item">Y</li>
+            <li class="flex-item">Z</li>
         </ul>
         <ul class="flex-container" style="flex-direction: row; flex-wrap: wrap-reverse;">
             <li class="flex-item">A</li>
@@ -106,8 +119,19 @@
             <li class="flex-item">M</li>
             <li class="flex-item">N</li>
             <li class="flex-item">O</li>
+            <li class="flex-item">P</li>
+            <li class="flex-item">Q</li>
+            <li class="flex-item">R</li>
+            <li class="flex-item">S</li>
+            <li class="flex-item">T</li>
+            <li class="flex-item">U</li>
+            <li class="flex-item">V</li>
+            <li class="flex-item">W</li>
+            <li class="flex-item">X</li>
+            <li class="flex-item">Y</li>
+            <li class="flex-item">Z</li>
         </ul>
-        <ul class="flex-container" style="height: 200px; flex-direction: column; flex-wrap: wrap;">
+        <ul class="flex-container" style="height: 100px; flex-direction: column; flex-wrap: wrap;">
             <li class="flex-item">A</li>
             <li class="flex-item">B</li>
             <li class="flex-item">C</li>
@@ -123,8 +147,19 @@
             <li class="flex-item">M</li>
             <li class="flex-item">N</li>
             <li class="flex-item">O</li>
+            <li class="flex-item">P</li>
+            <li class="flex-item">Q</li>
+            <li class="flex-item">R</li>
+            <li class="flex-item">S</li>
+            <li class="flex-item">T</li>
+            <li class="flex-item">U</li>
+            <li class="flex-item">V</li>
+            <li class="flex-item">W</li>
+            <li class="flex-item">X</li>
+            <li class="flex-item">Y</li>
+            <li class="flex-item">Z</li>
         </ul>
-        <ul class="flex-container" style="height: 200px; flex-direction: column; flex-wrap: wrap-reverse;">
+        <ul class="flex-container" style="height: 100px; flex-direction: column; flex-wrap: wrap-reverse;">
             <li class="flex-item">A</li>
             <li class="flex-item">B</li>
             <li class="flex-item">C</li>
@@ -140,6 +175,17 @@
             <li class="flex-item">M</li>
             <li class="flex-item">N</li>
             <li class="flex-item">O</li>
+            <li class="flex-item">P</li>
+            <li class="flex-item">Q</li>
+            <li class="flex-item">R</li>
+            <li class="flex-item">S</li>
+            <li class="flex-item">T</li>
+            <li class="flex-item">U</li>
+            <li class="flex-item">V</li>
+            <li class="flex-item">W</li>
+            <li class="flex-item">X</li>
+            <li class="flex-item">Y</li>
+            <li class="flex-item">Z</li>
         </ul>
     </div>
     <!-- END: DEMO -->

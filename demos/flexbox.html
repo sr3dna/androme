@@ -6,16 +6,21 @@
     <title>https://github.com/anpham6/androme</title>
     <style>
         body {
-            font-family: monospace, consolas;
+            font-family: Tahoma, Arial;
             padding: 10px;
             margin: 0px;
+            background-color: #eee;
         }
         body > div {
             vertical-align: top;
             display: inline-block;
         }
+        button {
+            font-size: 10px;
+            margin-top: 6px;
+        }
         .output {
-            width: 425px;
+            width: 400px;
             overflow: auto;
             float: left;
         }
@@ -25,30 +30,40 @@
             margin: 0px 0px 0px 15px;
             padding: 10px;
             background-color: floralwhite;
-            border: solid 1px #ccc;
+            border: 1px solid #ccc;
             overflow: auto;
         }
         .output div {
             text-align: right;
         }
-        button {
-            font-size: 10px;
-            margin-top: 6px;
-        }
         .flex-container {
-            background-color: silver;
-            margin: 0px;
+            list-style: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            margin: 0px 0px 8px 0px;
+            padding: 4px;
             overflow: hidden;
             display: flex;
         }
         .item {
-            width: 110px;
-            font-family: monospace;
-            font-size: 13px;
+            width: 50px;
+            font-size: 12px;
             color: white;
-            background-color: #1B5385;
-            margin: 4px;
-            padding: 4px;
+            margin: 2px;
+            padding: 4px 6px 6px 8px;
+            background-color: darkblue;
+            border: 1px solid yellowgreen;
+        }
+        .flex-item {
+            width: 30px;
+            font-size: 12px;
+            color: white;
+            text-align: center;
+            margin: 2px;
+            padding: 6px 0px;
+            background-color: darkblue;
+            border: 1px solid yellowgreen;
+            border-radius: 3px;
         }
         .initial {
             flex: initial;
@@ -58,22 +73,6 @@
         }
         .none {
             flex: none;
-        }
-        .four {
-            flex: 4;
-        }
-        .two {
-            flex: 2;
-        }
-        .one {
-            flex: 1;
-        }
-        ul.flex-container {
-            height: 200px;
-            list-style: none;
-            padding: 4px;
-            overflow: hidden;
-            display: flex;
         }
         .flex-start {
             align-self: flex-start;
@@ -90,46 +89,22 @@
         .stretch {
             align-self: stretch;
         }
-        .flex-item {
-            width: 50px;
-            color: white;
-            font-weight: bold;
-            font-size: 2em;
-            line-height: 50px;
-            text-align: center;
-            background: #1B5385;
-            padding: 4px;
-            margin: 4px;
-        }
-        div div .flex-container {
-            height: auto;
-            padding: 0px;
-            margin: 4px 0px;
-            list-style: none;
-            display: flex;
-        }
-        div div .flex-start {
+        .flex-start {
             justify-content: flex-start;
         }
-        div div .flex-end {
+        .flex-end {
             justify-content: flex-end;
         }
-        div div .flex-item {
-            width: 50px;
-            height: 50px;
-            line-height: 50px;
-            text-align: center;
-        }
-        div div .center {
+        .center {
             justify-content: center;
         }
-        div div .space-between {
+        .space-between {
             justify-content: space-between;
         }
-        div div .space-around {
+        .space-around {
             justify-content: space-around;
         }
-        div div .space-evenly {
+        .space-evenly {
             justify-content: space-evenly;
         }
     </style>
@@ -150,83 +125,81 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root" style="width: 500px;">
-        <div class="flex-container">
-            <div class="item auto">auto</div>
-            <div class="item auto">auto</div>
-            <div class="item auto">auto</div>
-        </div>
-        <div class="flex-container">
-            <div class="item auto">auto</div>
-            <div class="item initial">initial</div>
-            <div class="item initial">initial</div>
-        </div>
-        <div class="flex-container">
-            <div class="item auto">auto</div>
-            <div class="item auto">auto</div>
-            <div class="item none">none</div>
-        </div>
-        <div class="flex-container">
-            <div class="item initial">initial</div>
-            <div class="item none">none</div>
-            <div class="item none">none</div>
-        </div>
-        <div class="flex-container">
-            <div class="item four">4</div>
-            <div class="item two">2</div>
-            <div class="item one">1</div>
-        </div>
+    <div id="androme_root" style="width: 400px;">
         <ul class="flex-container">
+            <li class="item auto">auto</li>
+            <li class="item auto">auto</li>
+            <li class="item auto">auto</li>
+        </ul>
+        <ul class="flex-container">
+            <li class="item auto">auto</li>
+            <li class="item initial">initial</li>
+            <li class="item initial">initial</li>
+        </ul>
+        <ul class="flex-container">
+            <li class="item auto">auto</li>
+            <li class="item auto">auto</li>
+            <li class="item none">none</li>
+        </ul>
+        <ul class="flex-container">
+            <li class="item initial">initial</li>
+            <li class="item none">none</li>
+            <li class="item none">none</li>
+        </ul>
+        <ul class="flex-container">
+            <li class="item" style="flex: 4;">4</li>
+            <li class="item" style="flex: 2;">2</li>
+            <li class="item" style="flex: 1;">1</li>
+        </ul>
+        <ul class="flex-container" style="height: 150px; overflow: hidden;">
             <li class="flex-item flex-start">1</li>
             <li class="flex-item flex-end">2</li>
             <li class="flex-item center">3</li>
             <li class="flex-item baseline">4</li>
             <li class="flex-item stretch">5</li>
         </ul>
-        <div>
-            <ul class="flex-container flex-start">
-                <li class="flex-item">1</li>
-                <li class="flex-item">2</li>
-                <li class="flex-item">3</li>
-                <li class="flex-item">4</li>
-                <li class="flex-item">5</li>
-            </ul>
-            <ul class="flex-container flex-end">
-                <li class="flex-item">1</li>
-                <li class="flex-item">2</li>
-                <li class="flex-item">3</li>
-                <li class="flex-item">4</li>
-                <li class="flex-item">5</li>
-            </ul>
-            <ul class="flex-container center">
-                <li class="flex-item">1</li>
-                <li class="flex-item">2</li>
-                <li class="flex-item">3</li>
-                <li class="flex-item">4</li>
-                <li class="flex-item">5</li>
-            </ul>
-            <ul class="flex-container space-between">
-                <li class="flex-item">1</li>
-                <li class="flex-item">2</li>
-                <li class="flex-item">3</li>
-                <li class="flex-item">4</li>
-                <li class="flex-item">5</li>
-            </ul>
-            <ul class="flex-container space-around">
-                <li class="flex-item">1</li>
-                <li class="flex-item">2</li>
-                <li class="flex-item">3</li>
-                <li class="flex-item">4</li>
-                <li class="flex-item">5</li>
-            </ul>
-            <ul class="flex-container space-evenly">
-                <li class="flex-item">1</li>
-                <li class="flex-item">2</li>
-                <li class="flex-item">3</li>
-                <li class="flex-item">4</li>
-                <li class="flex-item">5</li>
-            </ul>
-        </div>
+        <ul class="flex-container flex-start">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container flex-end">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container center">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container space-between">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container space-around">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
+        <ul class="flex-container space-evenly">
+            <li class="flex-item">1</li>
+            <li class="flex-item">2</li>
+            <li class="flex-item">3</li>
+            <li class="flex-item">4</li>
+            <li class="flex-item">5</li>
+        </ul>
     </div>
     <!-- END: DEMO -->
     

@@ -26,7 +26,7 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         node.setViewId(VIEW_STATIC.DRAWER);
         let options = Object.assign({}, this.options.drawerLayout);
         setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-        let xml = controller.getViewStatic(VIEW_STATIC.DRAWER, depth, { android: options.android }, 'match_parent', 'match_parent', node.id, true)[0];
+        let xml = controller.getViewStatic(VIEW_STATIC.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node.id, true)[0];
         node.renderParent = true;
         node.ignoreResource = VIEW_RESOURCE.ALL;
         this.createResources();
@@ -80,15 +80,12 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         if (options.item != null) {
             const root = getDataLevel(data, '0');
             for (const name in options.item) {
-                root['1'].push({
-                    name,
-                    value: options.item[name]
-                });
+                root['1'].push({ name, value: options.item[name] });
             }
         }
-        const pathname = (options.output && options.output.path != null ? options.output.path : 'res/values-v21');
-        const filename = (options.output && options.output.file != null ? options.output.file : 'androme.widget.drawer.xml');
+        setDefaultOption(options, 'output', 'path', 'res/values-v21');
+        setDefaultOption(options, 'output', 'file', 'androme.widget.drawer.xml');
         const xml = parseTemplateData(template, data);
-        this.application.resourceHandler.addFile(pathname, filename, xml);
+        this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
     }
 }

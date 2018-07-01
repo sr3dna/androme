@@ -470,7 +470,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                     if (!nodeY.renderParent) {
                                         if (nodeY.children.length === 1 && linearX && linearY) {
-                                            if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0) {
+                                            if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
                                                 nodeY.children[0].parent = parent;
                                                 nodeY.cascade().forEach(item => item.renderDepth--);
                                                 nodeY.hide();
@@ -480,7 +480,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                                 xml += this.writeFrameLayout(nodeY, parent);
                                             }
                                         }
-                                        else if ((linearX || linearY) && (!nodeY.flex.enabled || nodeY.children.every(node => node.flex.enabled)) && (!nodeY.children.some(node => node.css('float') === 'right') || nodeY.children.every(node => node.css('float') === 'right'))) {
+                                        else if ((linearX || linearY) && (!nodeY.flex.enabled || (linearX && nodeY.children.every(node => node.flex.enabled))) && (!nodeY.children.some(node => node.floating && node.css('clear') !== 'none') && (nodeY.children.every(node => node.css('float') !== 'right') || nodeY.children.every(node => node.css('float') === 'right')))) {
                                             xml += this.writeLinearLayout(nodeY, parent, linearY);
                                         }
                                         else {

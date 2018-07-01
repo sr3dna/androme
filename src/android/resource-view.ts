@@ -234,7 +234,7 @@ export default class ResourceView extends Resource<T> {
     public setFontStyle() {
         super.setFontStyle();
         const tagName: ObjectMap<T[]> = {};
-        this.cache.elements.forEach(node => {
+        this.cache.list.forEach(node => {
             if ((<any> node.element).__fontStyle != null) {
                 if (tagName[node.tagName] == null) {
                     tagName[node.tagName] = [];
@@ -367,7 +367,7 @@ export default class ResourceView extends Resource<T> {
 
     public setValueString() {
         super.setValueString();
-        this.cache.elements.forEach(node => {
+        this.cache.list.forEach(node => {
             const element = (node.label != null ? node.label.element : node.element);
             const stored = (<any> element).__valueString;
             if (stored != null) {
