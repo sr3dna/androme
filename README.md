@@ -83,7 +83,6 @@ androme.settings = {
     targetAPI: androme.build.OREO,
     density: androme.build.MDPI,
     useConstraintLayout: true,
-    useConstraintChain: true,
     useConstraintGuideline: true,
     useUnitDP: true,
     useFontAlias: true,

@@ -67,7 +67,7 @@ export default class MenuAndroid<T extends View> extends Menu {
         node.ignoreResource = VIEW_RESOURCE.ALL;
         node.renderDepth = parent.renderDepth + 1;
         node.renderParent = true;
-        const options: any = { android: {}, app: {} };
+        const options: ObjectMap<any> = { android: {}, app: {} };
         let viewName = VIEW_STATIC.ITEM;
         let layout = false;
         let title = '';

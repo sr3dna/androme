@@ -1,4 +1,4 @@
-import { BoxModel, BoxRect, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { BoxModel, BoxRect, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
@@ -16,7 +16,7 @@ export default abstract class Node implements BoxModel {
     public bounds: ClientRect;
     public linear: ClientRect;
     public box: ClientRect;
-    public renderExtension: any;
+    public renderExtension: Null<IExtension>;
     public ignoreResource = 0;
     public visible = true;
     public companion = false;
@@ -46,7 +46,7 @@ export default abstract class Node implements BoxModel {
     private _parentOriginal: T;
     private _renderParent: T | boolean;
     private _tagName: string;
-    private _options: ObjectMap<{}> = {};
+    private _options: ObjectMap<any> = {};
 
     constructor(
         public id: number,
@@ -95,16 +95,16 @@ export default abstract class Node implements BoxModel {
         return (this[name] && this[name][attr] != null ? this[name][attr] : '');
     }
 
-    public delete(obj: string, ...attributes: any[]) {
+    public delete(obj: string, ...attrs: any[]) {
         const name = `_${obj || '_'}`;
         if (this[name] != null) {
-            if (typeof attributes[0] === 'object') {
-                for (const key in attributes[0]) {
-                    delete this[name][attributes[0][key]];
+            if (typeof attrs[0] === 'object') {
+                for (const key in attrs[0]) {
+                    delete this[name][attrs[0][key]];
                 }
             }
             else {
-                for (const attr of attributes) {
+                for (const attr of attrs) {
                     if (attr.indexOf('*') !== -1) {
                         for (const [key] of search(this[name], attr)) {
                             delete this[name][key];

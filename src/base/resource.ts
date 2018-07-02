@@ -179,7 +179,7 @@ export default abstract class Resource<T extends Node> {
     public views: string[];
     public cache: NodeList<T>;
 
-    constructor(public file: File) {
+    constructor(public file: File<T>) {
     }
 
     public abstract finalize(viewData: {}): void;

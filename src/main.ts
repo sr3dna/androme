@@ -6,7 +6,7 @@ import ViewController from './android/viewcontroller';
 import View from './android/view';
 import ViewList from './android/viewlist';
 import ResourceView from './android/resource-view';
-import FileRes from './android/fileres';
+import FileRes from './android/file-res';
 import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 
@@ -26,7 +26,7 @@ const EXTENSIONS: any = {
     'androme.external': new External('androme.external'),
     'androme.list': new List('androme.list', ['UL', 'OL']),
     'androme.table': new Table('androme.table', ['TABLE']),
-    'androme.grid': new Grid('androme.grid', [], { balanceColumns: true }),
+    'androme.grid': new Grid('androme.grid', ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET'], { balanceColumns: true }),
     'androme.widget.menu': new Menu('androme.widget.menu', ['NAV'], { appCompat: true }),
     'androme.widget.toolbar': new Toolbar('androme.widget.toolbar'),
     'androme.widget.drawer': new Drawer('androme.widget.drawer')
@@ -101,7 +101,7 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
     });
 }
 
-export function registerExtension(extension: any) {
+export function registerExtension(extension: Extension<T, U>) {
     if (extension instanceof Extension) {
         main.registerExtension(extension);
     }

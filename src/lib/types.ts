@@ -112,6 +112,18 @@ export interface ArrayMap<T> {
     [key: string]: T[];
 }
 
+export interface ArrayIndex<T> {
+    [key: number]: T[];
+    length?: number;
+}
+
+export interface ViewData<T> {
+    cache: T[];
+    ids: string[];
+    views: string[];
+    pathnames: string[];
+}
+
 export interface ResourceMap {
     STRINGS: Map<string, string>;
     ARRAYS: Map<string, string[]>;

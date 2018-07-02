@@ -1,4 +1,4 @@
-import { ClientRect, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { ArrayIndex, ClientRect, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import View from './view';
@@ -215,13 +215,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 if (current.linear.left === node.box.left) {
                                     current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
                                 }
-                                if (current.linear.right === node.box.right) {
+                                else if (current.linear.right === node.box.right) {
                                     current.anchor(parseRTL('layout_alignParentRight'), adjacent, 'horizontal');
                                 }
                                 if (current.linear.top === node.box.top) {
                                     current.anchor('layout_alignParentTop', adjacent, 'vertical');
                                 }
-                                if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset)) {
+                                else if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset)) {
                                     current.anchor('layout_alignParentBottom', adjacent, 'vertical');
                                 }
                             }
@@ -282,7 +282,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         current.constraint.marginVertical = topBottom;
                     }
                 });
-                if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect()) && !nodes.list.some(item => item.floating)) {
+                if (flex.enabled || (constraint && !nodes.intersect() && !nodes.list.some(item => item.floating))) {
                     let flexNodes: Null<any[]> = null;
                     if (flex.enabled) {
                         const directionNodes = nodes.list.slice();
@@ -309,7 +309,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 case 'column-reverse':
                                     directionNodes.reverse();
                             }
-                            const map: any = {};
+                            const map: ArrayIndex<T> = {};
                             const levels: number[] = [];
                             directionNodes.forEach(item => {
                                 const y = item.linear.top;
@@ -693,13 +693,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 const parentLeft = parseRTL('layout_alignParentLeft');
                                 current.delete('android', LAYOUT);
                                 if (current.android(parentLeft) !== 'true') {
-                                    const left = formatPX(current.bounds.left - node.box.left);
+                                    const left = formatPX(Math.max(0, current.bounds.left - node.box.left));
                                     current.css(parseRTL('marginLeft'), left);
                                     current.android(parentLeft, 'true');
                                     current.android(parseRTL('layout_marginLeft'), left);
                                 }
                                 if (parentBottom !== 'true') {
-                                    const top = formatPX(current.bounds.top - node.box.top);
+                                    const top = formatPX(Math.max(0, current.bounds.top - node.box.top));
                                     current.css('marginTop', top);
                                     current.android('layout_alignParentTop', 'true');
                                     current.android('layout_marginTop', top);
@@ -1038,7 +1038,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private setAlignParent(node: T, orientation = '', bias = false) {
-        const map: any = LAYOUT_MAP.constraint;
+        const map: StringMap = LAYOUT_MAP.constraint;
         ['horizontal', 'vertical'].forEach((value, index) => {
             if (orientation === '' || value === orientation) {
                 node.app(map[(index === 0 ? 'left' : 'top')], 'parent');
@@ -1052,7 +1052,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private createGuideline(parent: T, node: T, orientation = '', opposite = false, percent = -1) {
-        const map: any = LAYOUT_MAP.constraint;
+        const map: StringMap = LAYOUT_MAP.constraint;
         const beginPercent = `layout_constraintGuide_${(percent !== -1 ? 'percent' : 'begin')}`;
         ['horizontal', 'vertical'].forEach((value, index) => {
             if ((orientation === '' && !node.constraint[value]) || orientation === value) {

@@ -1,4 +1,4 @@
-import { BorderAttribute, Null, ObjectIndex, ObjectMap, ResourceMap, StringMap } from '../lib/types';
+import { BorderAttribute, Null, ObjectIndex, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -61,30 +61,22 @@ const METHOD_ANDROID = {
     }
 };
 
-type T = View;
-
-interface ViewData {
-    cache: T[];
-    ids: string[];
-    views: string[];
-}
-
 interface TagStyle {
     name?: string;
     attributes: string;
     ids: number[];
 }
 
-export default class ResourceView extends Resource<T> {
+export default class ResourceView<T extends View> extends Resource<T> {
     private tagStyle: ObjectMap<any> = {};
     private tagCount: ObjectMap<number> = {};
 
-    constructor(file: File) {
+    constructor(file: File<T>) {
         super(file);
         this.file.stored = STORED;
     }
 
-    public finalize(viewData: ViewData) {
+    public finalize(viewData: ViewData<T>) {
         this.processFontStyle(viewData);
     }
 
@@ -253,7 +245,7 @@ export default class ResourceView extends Resource<T> {
                 let labelFor: Null<T> = null;
                 if (node.label != null) {
                     labelFor = node;
-                    node = node.label;
+                    node = (<T> node.label);
                 }
                 const element = node.element;
                 const nodeId = (labelFor || node).id;
@@ -400,7 +392,7 @@ export default class ResourceView extends Resource<T> {
         });
     }
 
-    private processFontStyle(viewData: ViewData) {
+    private processFontStyle(viewData: ViewData<T>) {
         const style: ObjectMap<any> = {};
         const layout: ObjectMap<any> = {};
         for (const tag in this.tagStyle) {
@@ -672,7 +664,7 @@ export default class ResourceView extends Resource<T> {
         });
     }
 
-    private getShapeAttribute(stored: any, name: string) {
+    private getShapeAttribute(stored: ObjectMap<any>, name: string) {
         switch (name) {
             case 'stroke':
                 return (stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);

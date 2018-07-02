@@ -1,5 +1,6 @@
-import { ArrayMap, Null, ObjectMap, PlainFile, StringMap } from '../lib/types';
+import { Null, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import File from '../base/file';
+import View from './view';
 import { caseInsensitve, hasValue, getFileExt, replaceDP } from '../lib/util';
 import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
 import SETTINGS from '../settings';
@@ -12,12 +13,12 @@ import FONT_TMPL from './template/resource/font';
 import COLOR_TMPL from './template/resource/color';
 import DRAWABLE_TMPL from './template/resource/drawable';
 
-export default class FileRes extends File {
+export default class FileRes<T extends View> extends File<T> {
     constructor() {
         super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
     }
 
-    public saveAllToDisk(data: ArrayMap<any>) {
+    public saveAllToDisk(data: ViewData<T>) {
         const files: PlainFile[] = [];
         for (let i = 0; i < data.views.length; i++) {
             files.push(this.getLayoutFile(data.pathnames[i], (i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
@@ -32,7 +33,7 @@ export default class FileRes extends File {
         this.saveToDisk(files);
     }
 
-    public layoutAllToXml(data: ArrayMap<any>, saveToDisk = false) {
+    public layoutAllToXml(data: ViewData<T>, saveToDisk = false) {
         const result: StringMap = {};
         const files: PlainFile[] = [];
         for (let i = 0; i < data.views.length; i++) {

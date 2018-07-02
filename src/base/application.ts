@@ -1,4 +1,4 @@
-import { ArrayMap, Null, ObjectIndex, StringMap } from '../lib/types';
+import { Null, ObjectIndex, StringMap, ViewData } from '../lib/types';
 import Controller from './controller';
 import Extension from './extension';
 import Resource from './resource';
@@ -425,12 +425,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         let append = '';
                         let restart = false;
                         let proceed = false;
-                        const renderExtension: Extension<T, U> = parent.renderExtension;
+                        const renderExtension = (<Extension<T, U>> parent.renderExtension);
                         if (renderExtension != null) {
                             renderExtension.node = nodeY;
                             renderExtension.parent = parent;
                             renderExtension.element = nodeY.element;
-                            [append, restart, proceed] = parent.renderExtension.processChild();
+                            [append, restart, proceed] = renderExtension.processChild();
                             if (append !== '') {
                                 xml += append;
                                 if (restart) {
@@ -521,7 +521,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         let pathname = '';
         const root = (<T> this.cache.parent);
-        const extension: Extension<T, U> = root.renderExtension;
+        const extension = (<Extension<T, U>> root.renderExtension);
         if (extension == null || root.options(`${extension.name}:insert`) == null) {
             if (root.element.dataset != null) {
                 pathname = trim((root.element.dataset.pathname || '').trim(), '/');
@@ -704,7 +704,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return this._extensions.filter(item => item.enabled);
     }
 
-    public get viewData(): ArrayMap<T | string> {
+    public get viewData(): ViewData<T> {
         return { cache: this.cacheInternal.list, ids: this.ids, views: this.views, pathnames: this.pathnames };
     }
 

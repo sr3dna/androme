@@ -1,9 +1,10 @@
+import { ObjectMap } from '../lib/types';
 import { BUILD_ANDROID as BUILD } from './constants';
 
 interface DEFAULT {
     [index: number]: {
         android?: string[];
-        customizations?: any;
+        customizations?: ObjectMap<any>;
     };
 }
 

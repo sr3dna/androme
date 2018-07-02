@@ -38,7 +38,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
 
     public beforeInit(internal = false) {
         if (!internal && this.included()) {
-            this.dependences.filter((item: ObjectMap<boolean>) => item.init).forEach((item: any) => {
+            this.dependences.filter((item: ObjectMap<boolean>) => item.init).forEach((item: Extension<T, U>) => {
                 const extension = this.application.findExtension(item.name);
                 if (extension != null) {
                     extension.parent = this.parent;
@@ -56,7 +56,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
 
     public afterInit(internal = false) {
         if (!internal && this.included()) {
-            this.dependences.filter((item: ObjectMap<boolean>) => item.init).forEach((item: any) => {
+            this.dependences.filter((item: ObjectMap<boolean>) => item.init).forEach((item: Extension<T, U>) => {
                 const extension = this.application.findExtension(item.name);
                 if (extension != null) {
                     extension.parent = this.parent;
