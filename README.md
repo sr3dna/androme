@@ -146,7 +146,7 @@ Most of the Android support library extensions can be configured using the same 
     androme.configureExtension('androme.widget.drawer', { android: { layout_width: 'wrap_content', fitsSystemWindows: 'true' } });
 </script>
 ```
-<img src="demos/android/drawer.png" alt="extension: drawer - actionbar" />
+<img src="demos/android/drawer.navigationview.png" alt="extension: drawer - actionbar" />
 
 <img src="demos/android/menu.png" alt="extension: menu" />
 
