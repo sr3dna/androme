@@ -1,3 +1,4 @@
+import { Null } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import { hasValue, padLeft } from '../lib/util';
@@ -21,7 +22,7 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     public abstract renderGroup(node: T, parent: T, viewName: number, options?: {}): string;
     public abstract renderView(node: T, parent: T, viewName: number | string): string;
     public abstract createGroup(node: T, parent: T, children: T[]): T;
-    public abstract getViewStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, id?: number, children?: boolean): string[];
+    public abstract getViewStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
     public abstract getViewName(value: number): string;
     public abstract getRootAttributes(options: {}): string;
     public abstract replaceInlineAttributes(output: string, node: T, namespaces?: {}): string;
@@ -74,12 +75,12 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
         let output = preXml +
                      `{<${id}}`;
         if (hasValue(xml)) {
-            output += indent + `<${tagName}{@${id}}{#${id}}{&${id}}>\n` +
+            output += indent + `<${tagName}{@${id}}{&${id}}>\n` +
                                xml +
                       indent + `</${tagName}>\n`;
         }
         else {
-            output += indent + `<${tagName}{@${id}}{#${id}}{&${id}} />\n`;
+            output += indent + `<${tagName}{@${id}}{&${id}} />\n`;
         }
         output += `{>${id}}` +
                   postXml;

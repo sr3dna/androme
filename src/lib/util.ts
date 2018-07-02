@@ -80,7 +80,7 @@ export function hyphenToCamelCase(value: string) {
 }
 
 export function removePlaceholders(value: string, extension = true) {
-    value = value.replace(/{[<:#@&>]{1}[0-9]+}/g, '');
+    value = value.replace(/{[<:@&>]{1}[0-9]+}/g, '');
     if (extension) {
         value = value.replace(/{!.*?}/g, '');
     }

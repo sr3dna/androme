@@ -6,50 +6,25 @@
     <title>https://github.com/anpham6/androme</title>
     <link rel="stylesheet" type="text/css" href="common/dev.css">
     <style>
-        #drawer_demo {
-            display: none;
-        }
-        #drawer_demo nav {
-            padding: 0px;
+        #drawer_aside {
+            width: 200px;
+            margin: 0px;
+            padding: 4px;
+            background-color: #fff;
             border: solid 1px #aaa;
         }
-        #drawer_demo nav div {
+        #drawer_aside div {
             font-size: 11px;
-            padding: 12px;
+            padding: 8px;
         }
-        #drawer_demo nav div:hover {
+        #drawer_aside div:hover {
             background-color: azure;
             cursor: pointer;
         }
-        #drawer_demo nav div img {
+        #drawer_aside div img {
             width: 20px;
             height: 20px;
             margin-right: 10px;
-            float: left;
-        }
-        #drawer_header {
-            padding: 10px;
-            background-color: slateblue;
-        }
-        #drawer_header span {
-            font-size: 11px;
-            color: #fff;
-        }
-        #toolbar_demo {
-            background-color: #6A5ACD;
-        }
-        #toolbar_demo img {
-            margin: 2px 0px 0px 4px;
-            cursor: pointer;
-        }
-        #toolbar_menu img {
-            margin-left: 0px;
-        }
-        #toolbar_menu {
-            border: none;
-            float: right;
-        }
-        #toolbar_menu div {
             float: left;
         }
         div {
@@ -64,43 +39,9 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        function toggleDrawer(element, display) {
-            document.getElementById('drawer_demo').style.display = (display ? 'block' : 'none');
-            element.style.display = 'none';
-            element[(display ? 'nextElementSibling' : 'previousElementSibling')].style.display = 'inline';
-        }
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.configureExtension('androme.widget.drawer', { // optional: default configuration is provided
-                drawerLayout: {
-                    android: {
-                        fitsSystemWindows: 'true'
-                    }
-                },
-                navigationView: {
-                    android: {
-                        fitsSystemWindows: 'true'
-                    }
-                },
-                resource: {
-                    output: {
-                        path: 'res/values-v21',
-                        file: 'androme.widget.drawer.xml'
-                    },
-                    appTheme: 'AppTheme',
-                    parentTheme: 'Theme.AppCompat.Light.NoActionBar',
-                    item: {
-                        colorPrimary: '@color/slate_blue'
-                    }
-                }
-            });
-            androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided
-                toolbar_demo: {
-                    app: {
-                        titleTextColor: '@color/white'
-                    }
-                }
-            });
+            androme.settings.excludeBackgroundColor = [];
             androme.parseDocument('androme_root');
             androme.close();
 
@@ -111,38 +52,18 @@
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
             var resource = androme.writeResourceStringXml() + '\n\n' +
-                             androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml() + '\n\n' +
-                             androme.writeResourceDrawableXml();
+                           androme.writeResourceStyleXml() + '\n\n' +
+                           androme.writeResourceColorXml() + '\n\n' +
+                           androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root" style="width: 200px;">
-        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-ext-action-bar-for="drawer_demo">
-            <img src="../demos/images/icons8-menu-24.png" data-navigation-icon="true" onclick="toggleDrawer(this, true);" />
-            <img src="../demos/images/icons8-left-24.png" data-collapse-icon="true" onclick="toggleDrawer(this, false);" style="display: none;" />
-            <nav id="toolbar_menu" data-ext="androme.widget.menu">
-                <div
-                    data-show-as-action="always"
-                    title="Web">
-                    <img src="../demos/images/icons8-web-24.png" />
-                </div>
-                <div 
-                    data-show-as-action="always"
-                    title="Browse Page">
-                    <img src="../demos/images/icons8-browse-page-24.png" />
-                </div>
-            </nav>
-        </div>
+    <div id="androme_root">
         <div id="drawer_demo" data-ext="androme.widget.drawer">
-            <div id="drawer_header" data-ext="androme.external">
-                <img src="../demos/images/android-ldpi.png" /><br />
-                <span>android@user.com</span>
-            </div>
-            <nav id="drawer_menu" data-ext="androme.widget.menu">
+            <aside id="drawer_aside">
                 <div>
                     <img src="../demos/images/icons8-chrome.png" />
                     <label>Chrome</label>
@@ -163,7 +84,7 @@
                     <img src="../demos/images/icons8-google-plus.png" />
                     <label>Plus</label>
                 </div>
-            </nav>
+            </aside>
         </div>
     </div>
     <!-- END: DEMO -->

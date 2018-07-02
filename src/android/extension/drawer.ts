@@ -23,46 +23,65 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
         const depth = node.depth + node.renderDepth;
-        node.setViewId(VIEW_STATIC.DRAWER);
+        const hasNavView = this.haNavView(node);
         let options = Object.assign({}, this.options.drawerLayout);
-        setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-        let xml = controller.getViewStatic(VIEW_STATIC.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node.id, true)[0];
+        if (hasNavView) {
+            setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
+        }
+        let xml = controller.getViewStatic(VIEW_STATIC.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node, true);
         node.renderParent = true;
         node.ignoreResource = VIEW_RESOURCE.ALL;
-        this.createResources();
-        options = Object.assign({}, this.options.navigationView);
-        setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
-        setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
-        setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-        setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.drawer:menu:${node.id}}`);
-        setDefaultOption(options, 'app', 'headerLayout', `@layout/{!androme.widget.drawer:headerLayout:${node.id}}`);
-        let layout = controller.getViewStatic(VIEW_ANDROID.LINEAR, depth + 1, { android: { id: `${node.stringId}_content`, orientation: 'vertical' } }, 'match_parent', 'match_parent', 0, true)[0];
-        layout = removePlaceholders(layout.replace('{:0}', `{!androme.widget.drawer:toolbar:${node.id}}`), false);
-        const navigation = controller.getViewStatic(VIEW_STATIC.NAVIGATION, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent')[0];
-        xml = xml.replace(`{:${node.id}}`, layout + navigation);
+        let layout = controller.getViewStatic(VIEW_ANDROID.LINEAR, depth + 1, { android: { id: `${node.stringId}_content`, orientation: 'vertical' } }, 'match_parent', 'match_parent', null, true);
+        if (hasNavView) {
+            this.createResources();
+            options = Object.assign({}, this.options.navigationView);
+            setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
+            setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
+            setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
+            setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.drawer:menu:${node.id}}`);
+            setDefaultOption(options, 'app', 'headerLayout', `@layout/{!androme.widget.drawer:headerLayout:${node.id}}`);
+            layout = removePlaceholders(layout.replace('{:0}', `{!androme.widget.drawer:toolbar:${node.id}}`), false);
+            const navigation = controller.getViewStatic(VIEW_STATIC.NAVIGATION, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
+            xml = xml.replace(`{:${node.id}}`, layout + navigation);
+        }
+        else {
+            const navView = node.children[node.children.length - 1];
+            options = this.options.navigationView;
+            if (node.children.length === 1) {
+                this.application.controllerHandler.prependBefore(navView.id, layout);
+            }
+            navView.android('layout_gravity', parseRTL((options && options.layout_gravity != null ? options.layout_gravity : 'left')));
+        }
         return [xml, false, false];
     }
 
     public finalize() {
-        let menu = '';
-        let headerLayout = '';
-        this.application.elements.forEach(item => {
-            if (item.parentElement === this.element) {
-                switch (item.dataset.ext) {
-                    case 'androme.external':
-                        headerLayout = (<string> item.dataset.currentId);
-                        break;
-                    case 'androme.widget.menu':
-                        menu = (<string> item.dataset.currentId);
-                        break;
+        const node = (<T> this.node);
+        if (this.haNavView(node)) {
+            let menu = '';
+            let headerLayout = '';
+            this.application.elements.forEach(item => {
+                if (item.parentElement === this.element) {
+                    switch (item.dataset.ext) {
+                        case 'androme.external':
+                            headerLayout = (<string> item.dataset.currentId);
+                            break;
+                        case 'androme.widget.menu':
+                            menu = (<string> item.dataset.currentId);
+                            break;
+                    }
                 }
+            });
+            const views = this.application.views;
+            for (let i = 0; i < views.length; i++) {
+                views[i] = views[i].replace(`{!androme.widget.drawer:menu:${this.node.id}}`, menu);
+                views[i] = views[i].replace(`{!androme.widget.drawer:headerLayout:${this.node.id}}`, headerLayout);
             }
-        });
-        const views = this.application.views;
-        for (let i = 0; i < views.length; i++) {
-            views[i] = views[i].replace(`{!androme.widget.drawer:menu:${this.node.id}}`, menu);
-            views[i] = views[i].replace(`{!androme.widget.drawer:headerLayout:${this.node.id}}`, headerLayout);
         }
+    }
+
+    private haNavView(node: T) {
+        return Array.from(node.element.children).some((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.menu') !== -1);
     }
 
     private createResources() {

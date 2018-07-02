@@ -14,7 +14,7 @@ export default abstract class Drawer extends Extension<T, U> {
     }
 
     public init(element: HTMLElement) {
-        if (this.included(element)) {
+        if (this.included(element) && element.children.length > 0) {
             Array.from(element.children).forEach((item: HTMLElement) => {
                 if (item.tagName === 'NAV' && item.dataset.ext == null) {
                     item.dataset.ext = 'androme.external';

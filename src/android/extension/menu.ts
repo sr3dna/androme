@@ -49,9 +49,7 @@ export default class MenuAndroid<T extends View> extends Menu {
 
     public processNode(): ExtensionResult {
         const node = (<T> this.node);
-        node.setViewId(VIEW_STATIC.MENU);
-        let xml = '';
-        xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, 0, {}, '', '', node.id, true)[0];
+        const xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, 0, {}, '', '', node, true);
         node.renderParent = true;
         node.cascade().forEach(item => item.renderExtension = this);
         node.ignoreResource = VIEW_RESOURCE.ALL;
@@ -159,8 +157,7 @@ export default class MenuAndroid<T extends View> extends Menu {
         else {
             node.viewName = viewName;
         }
-        node.apply(options);
-        const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, {}, '', '', node.id, layout)[0];
+        const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, options, '', '', node, layout);
         return [xml, false, false];
     }
 
@@ -177,7 +174,7 @@ export default class MenuAndroid<T extends View> extends Menu {
             if (value != null && validator[attr] != null) {
                 const match = value.match(validator[attr]);
                 if (match != null) {
-                    const namespace = (this.options.nsAppCompat && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
+                    const namespace = (this.options.appCompat && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
                     options[namespace][attr] = Array.from(new Set(match)).join('|');
                 }
             }

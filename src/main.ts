@@ -27,7 +27,7 @@ const EXTENSIONS: any = {
     'androme.list': new List('androme.list', ['UL', 'OL']),
     'androme.table': new Table('androme.table', ['TABLE']),
     'androme.grid': new Grid('androme.grid', [], { balanceColumns: true }),
-    'androme.widget.menu': new Menu('androme.widget.menu', ['NAV'], { nsAppCompat: true }),
+    'androme.widget.menu': new Menu('androme.widget.menu', ['NAV'], { appCompat: true }),
     'androme.widget.toolbar': new Toolbar('androme.widget.toolbar'),
     'androme.widget.drawer': new Drawer('androme.widget.drawer')
 };

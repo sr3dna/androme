@@ -32,7 +32,7 @@
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
             var resource = androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml();
+                           androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
         function showHidden() {
@@ -63,7 +63,7 @@
     </div>
     <div style="vertical-align: bottom;"><button onclick="showHidden();">Show Hidden</button></div>
     <!-- END: DEMO -->
-    
+
     <div>
         <div class="output">
             <pre id="output"></pre>

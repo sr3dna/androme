@@ -28,7 +28,7 @@ export default class ListAndroid<T extends View> extends List {
                             text: (options.listStyle !== '0' ? options.listStyle : '')
                         }
                     }
-                )[0]
+                )
             );
             node.android('layout_columnWeight', '1');
         }

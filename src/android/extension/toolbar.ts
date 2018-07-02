@@ -19,7 +19,6 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
         node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
-        node.setViewId(VIEW_STATIC.TOOLBAR);
         const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
         setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.toolbar:menu:${node.id}}`);
         let children = 0;
@@ -51,16 +50,20 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
             setDefaultOption(options, 'android', 'layout_width', 'match_parent');
             setDefaultOption(options, 'android', 'layout_height', 'wrap_content');
             setDefaultOption(options, 'android', 'minHeight', '?attr/actionBarSize');
+            setDefaultOption(options, 'android', 'background', '?attr/colorPrimaryLight');
             setDefaultOption(options, 'android', 'elevation', '4px');
         }
-        let xml = controller.getViewStatic(VIEW_STATIC.TOOLBAR, (actionBar ? 0 : node.depth + node.renderDepth), { android: options.android, app: options.app }, '', '', node.id, (node.children.length - children > 0))[0];
+        setDefaultOption(options, 'app', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
+        let xml = controller.getViewStatic(VIEW_STATIC.TOOLBAR, (actionBar ? 0 : node.depth + node.renderDepth), { android: options.android, app: options.app }, '', '', node, (node.children.length - children > 0));
         if (actionBar) {
             node.options('androme.widget.toolbar:insert', xml);
             node.renderParent = true;
             xml = '';
         }
         else {
+            node.applyCustomizations();
             node.render(<T> this.parent);
+            node.setGravity();
         }
         return [xml, false, false];
     }

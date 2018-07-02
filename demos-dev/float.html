@@ -34,9 +34,9 @@
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
             var resource = androme.writeResourceStringXml() + '\n\n' +
-                             androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml() + '\n\n' +
-                             androme.writeResourceDrawableXml();
+                           androme.writeResourceStyleXml() + '\n\n' +
+                           androme.writeResourceColorXml() + '\n\n' +
+                           androme.writeResourceDrawableXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         });
     </script>
@@ -101,7 +101,7 @@
         </div>
     </div>
     <!-- END: DEMO -->
-    
+
     <div>
         <div class="output">
             <pre id="output"></pre>

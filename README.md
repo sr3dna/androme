@@ -235,7 +235,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/day0"
@@ -250,7 +250,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintEnd_toStartOf="@+id/year0"
 					app:layout_constraintStart_toEndOf="@+id/month0"
 					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/year0"
@@ -265,7 +265,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day0"
 					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/month1"
@@ -282,7 +282,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/month0"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/day1"
@@ -298,7 +298,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintEnd_toStartOf="@+id/year1"
 					app:layout_constraintStart_toEndOf="@+id/month1"
 					app:layout_constraintTop_toBottomOf="@+id/day0"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/year1"
@@ -314,7 +314,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day1"
 					app:layout_constraintTop_toBottomOf="@+id/year0"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/month2"
@@ -331,7 +331,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintHorizontal_chainStyle="packed"
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/month1"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/day2"
@@ -347,7 +347,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintEnd_toStartOf="@+id/year2"
 					app:layout_constraintStart_toEndOf="@+id/month2"
 					app:layout_constraintTop_toBottomOf="@+id/day1"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 				<Spinner
 					android:id="@+id/year2"
@@ -363,7 +363,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day2"
 					app:layout_constraintTop_toBottomOf="@+id/year1"
-					app:layout_constraintWidth_min="50dp"
+					app:layout_constraintWidth_min="37dp"
 					style="@style/Select_1" />
 			</android.support.constraint.ConstraintLayout>
 			<Space
@@ -391,7 +391,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -403,7 +403,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -428,7 +428,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="160dp"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -469,7 +469,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -494,7 +494,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="200dp"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -518,7 +518,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -542,7 +542,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -576,7 +576,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="200dp"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -600,7 +600,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -629,7 +629,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="200dp"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -682,7 +682,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -706,7 +706,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -730,7 +730,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:focusable="true"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:minWidth="50dp"
+				android:minWidth="37dp"
 				android:paddingBottom="2dp"
 				android:paddingTop="1dp"
 				style="@style/Select_1" />
@@ -759,7 +759,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -771,7 +771,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -815,7 +815,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -827,7 +827,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -897,7 +897,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -909,7 +909,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_height="wrap_content"
 					android:layout_marginStart="4dp"
 					android:layout_width="wrap_content"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />
@@ -939,7 +939,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:focusable="true"
 					android:layout_height="wrap_content"
 					android:layout_width="100dp"
-					android:minWidth="50dp"
+					android:minWidth="37dp"
 					android:paddingBottom="2dp"
 					android:paddingTop="1dp"
 					style="@style/Select_1" />

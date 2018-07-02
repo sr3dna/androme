@@ -78,8 +78,8 @@
             }
             document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
             var resource = androme.writeResourceStringXml() + '\n\n' +
-                             androme.writeResourceStyleXml() + '\n\n' +
-                             androme.writeResourceColorXml();
+                           androme.writeResourceStyleXml() + '\n\n' +
+                           androme.writeResourceColorXml();
             document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         }
         function resetDocument() {
@@ -95,7 +95,7 @@
     <!-- START: DEMO -->
     <div id="main" style="width: 500px;"></div>
     <!-- END: DEMO -->
-    
+
     <div>
         <div class="output">
             <pre id="output"></pre>

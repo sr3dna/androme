@@ -936,42 +936,42 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     public createGroup(node: T, parent: T, children: T[]) {
-        const viewGroup = new ViewGroup(this.cache.nextId, node, parent, children);
+        const viewGroup = (<View> new ViewGroup(this.cache.nextId, node, parent, children) as T);
         children.forEach(item => {
             item.parent = viewGroup;
             viewGroup.inheritGrid(item);
         });
         viewGroup.setBounds();
-        return (<View> viewGroup) as T;
+        this.cache.list.push(viewGroup);
+        return viewGroup;
     }
 
-    public getViewStatic(tagName: number | string, depth: number, options = {}, width = 'wrap_content', height = 'wrap_content', id = 0, children = false) {
-        const node = new View(id, SETTINGS.targetAPI);
-        let viewName = '';
-        if (typeof tagName === 'number') {
-            node.setViewId(View.getViewName(tagName));
-            viewName = node.viewName;
+    public getViewStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = 'wrap_content', height = 'wrap_content', node: Null<T> = null, children = false) {
+        if (node == null) {
+            node = (<T> new View(0, SETTINGS.targetAPI));
         }
-        else {
-            viewName = tagName;
+        const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
+        node.setViewId(viewName);
+        if (hasValue(width)) {
+            node.android('layout_width', width);
         }
-        let attributes = '';
-        if (SETTINGS.showAttributes) {
-            for (const obj in options) {
+        if (hasValue(height)) {
+            node.android('layout_height', height);
+        }
+        for (const obj in options) {
+            if (options[obj] != null) {
                 this.namespaces.add(obj);
             }
-            if (hasValue(width)) {
-                node.android('layout_width', width);
-            }
-            if (hasValue(height)) {
-                node.android('layout_height', height);
-            }
-            node.apply(options);
-            const indent = padLeft(depth + 1);
-            attributes = node.combine().map(value => `\n${indent + value}`).join('');
         }
-        const output = this.getEnclosingTag(depth, viewName, id, (children ? `{:${id}}` : '')).replace(`{#${id}}`, attributes);
-        return [output, node.stringId];
+        node.apply(options);
+        let output = this.getEnclosingTag(depth, viewName, node.id, (children ? `{:${node.id}}` : ''));
+        if (SETTINGS.showAttributes && node.id === 0) {
+            const indent = padLeft(depth + 1);
+            const attributes = node.combine().map(value => `\n${indent + value}`).join('');
+            output = output.replace(`{@${node.id}}`, attributes);
+        }
+        options.stringId = node.stringId;
+        return output;
     }
 
     public replaceInlineAttributes(output: string, node: T, options: ObjectMap<boolean> = {}) {
@@ -1026,7 +1026,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         node.parent.gridPadding.bottom = heightBottom;
                     }
                     else {
-                        this.appendAfter(node.id, this.getViewStatic(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom))[0]);
+                        this.appendAfter(node.id, this.getViewStatic(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom)));
                     }
                 }
                 const marginRight = dimensions.marginRight + dimensions.paddingRight;
@@ -1057,7 +1057,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         ['horizontal', 'vertical'].forEach((value, index) => {
             if ((orientation === '' && !node.constraint[value]) || orientation === value) {
                 const position = (index === 0 ? 'left' : 'top');
-                const options = {
+                const options: ObjectMap<any> = {
                     android: {
                         orientation: (index === 0 ? 'vertical' : 'horizontal')
                     },
@@ -1067,9 +1067,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 };
                 const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
                 const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-                const [xml, id] = this.getViewStatic(VIEW_STANDARD.GUIDELINE, node.renderDepth, options);
+                const xml = this.getViewStatic(VIEW_STANDARD.GUIDELINE, node.renderDepth, options);
                 this.appendAfter(node.id, xml, -1);
-                node.app(map[LRTB], id);
+                node.app(map[LRTB], options.stringId);
                 node.delete('app', map[RLBT]);
                 node.constraint[value] = true;
             }
