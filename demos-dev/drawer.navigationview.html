@@ -67,6 +67,7 @@
         System.import('/build/main.js').then(function(result) {
             androme = result;
             androme.configureExtension('androme.widget.drawer', { // optional: default configuration is provided
+                includes: true,
                 drawerLayout: {
                     android: {
                         fitsSystemWindows: 'true'
@@ -91,8 +92,15 @@
             });
             androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided
                 toolbar_demo: {
-                    app: {
-                        titleTextColor: '@color/white'
+                    appBar: {
+                        app: {
+                            theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
+                        }
+                    },
+                    toolbar: {
+                        app: {
+                            titleTextColor: '@color/white'
+                        }
                     }
                 }
             });

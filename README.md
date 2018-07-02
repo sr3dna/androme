@@ -37,6 +37,8 @@ If you install via NPM then it is recommended you put androme into its own separ
 
 Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
 
+NOTE: Calling "parseDocument" before the images have completely loaded can sometimes cause them to be excluded from the generated layout when you reload the page. This problem will be fixed soon.
+
 ```javascript
 <script src="/dist/androme.js"></script>
 <script>
@@ -1278,6 +1280,7 @@ Most of the Android support library extensions can be configured using the same 
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<stroke android:width="1dp" android:color="@color/light_gray_1" />
+	<solid android:color="@color/white" />
 </shape>
 <!-- filename: res/drawable/form_entry.xml -->
 

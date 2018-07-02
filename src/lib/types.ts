@@ -91,7 +91,7 @@ export interface BorderAttribute {
 export interface PlainFile {
     pathname: string;
     filename: string;
-    content?: string;
+    content: string;
     uri?: string;
 }
 
@@ -119,9 +119,8 @@ export interface ArrayIndex<T> {
 
 export interface ViewData<T> {
     cache: T[];
-    ids: string[];
-    views: string[];
-    pathnames: string[];
+    views: PlainFile[];
+    includes: PlainFile[];
 }
 
 export interface ResourceMap {

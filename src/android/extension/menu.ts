@@ -164,7 +164,8 @@ export default class MenuAndroid<T extends View> extends Menu {
     public afterRender() {
         super.afterRender();
         if (this.included(this.node.element)) {
-            this.application.pathnames[this.application.pathnames.length - 1] = 'res/menu';
+            const view = this.application.current;
+            view.pathname = 'res/menu';
         }
     }
 

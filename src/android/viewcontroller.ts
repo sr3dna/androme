@@ -1,4 +1,4 @@
-import { ArrayIndex, ClientRect, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { ArrayIndex, ClientRect, Null, ObjectMap, Point, StringMap, ViewData } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import View from './view';
@@ -946,9 +946,11 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return viewGroup;
     }
 
-    public getViewStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = 'wrap_content', height = 'wrap_content', node: Null<T> = null, children = false) {
+    public getViewStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = '', height = '', node: Null<T> = null, children = false) {
+        let minimal = false;
         if (node == null) {
             node = (<T> new View(0, SETTINGS.targetAPI));
+            minimal = true;
         }
         const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
         node.setViewId(viewName);
@@ -958,13 +960,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         if (hasValue(height)) {
             node.android('layout_height', height);
         }
-        for (const obj in options) {
-            if (options[obj] != null) {
-                this.namespaces.add(obj);
-            }
-        }
+        node.renderDepth = depth;
         node.apply(options);
-        let output = this.getEnclosingTag(depth, viewName, node.id, (children ? `{:${node.id}}` : ''));
+        let output = this.getEnclosingTag((depth === 0 && minimal ? -1 : depth), viewName, node.id, (children ? `{:${node.id}}` : ''));
         if (SETTINGS.showAttributes && node.id === 0) {
             const indent = padLeft(depth + 1);
             const attributes = node.combine().map(value => `\n${indent + value}`).join('');
@@ -974,17 +972,20 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return output;
     }
 
-    public replaceInlineAttributes(output: string, node: T, options: ObjectMap<boolean> = {}) {
-        node.setViewLayout();
-        node.namespaces.forEach((value: string) => options[value] = true);
-        return output.replace(`{@${node.id}}`, this.parseAttributes(node));
+    public setAttributes(data: ViewData<T>) {
+        const cache: any = data.cache.filter(node => node.visible).map(node => {
+            node.setViewLayout();
+            return { pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) };
+        });
+        [...data.views, ...data.includes].forEach(view => {
+            cache.forEach((item: StringMap) => view.content = view.content.replace(item.pattern, item.attributes));
+            view.content = view.content.replace(`{#0}`, this.getRootAttributes(view.content));
+        });
     }
 
-    public getRootAttributes(options: {}) {
-        for (const obj in options) {
-            this.namespaces.add(obj);
-        }
-        return Array.from(this.namespaces).sort().map(value => (XMLNS_ANDROID[value.toUpperCase()] != null ? `\n\t${XMLNS_ANDROID[value.toUpperCase()]}` : '')).join('');
+    public replaceAttributes(output: string, node: T) {
+        node.setViewLayout();
+        return output.replace(`{@${node.id}}`, this.parseAttributes(node));
     }
 
     public getViewName(value: number) {
@@ -995,7 +996,17 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         let output = '';
         const attributes = node.combine();
         const indent = padLeft(node.renderDepth + 1);
-        output = (node.renderDepth === 0 ? '{@0}' : '') + attributes.map((value: string) => `\n${indent + value}`).join('');
+        output = attributes.map((value: string) => `\n${indent + value}`).join('');
+        return output;
+    }
+
+    private getRootAttributes(content: string) {
+        let output = '';
+        for (const namespace in XMLNS_ANDROID) {
+            if (new RegExp(`\\s+${namespace}:`).test(content)) {
+                output += `\n\t${XMLNS_ANDROID[namespace]}`;
+            }
+        }
         return output;
     }
 
@@ -1067,7 +1078,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 };
                 const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
                 const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-                const xml = this.getViewStatic(VIEW_STANDARD.GUIDELINE, node.renderDepth, options);
+                const xml = this.getViewStatic(VIEW_STANDARD.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
                 this.appendAfter(node.id, xml, -1);
                 node.app(map[LRTB], options.stringId);
                 node.delete('app', map[RLBT]);

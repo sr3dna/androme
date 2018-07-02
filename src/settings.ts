@@ -11,7 +11,7 @@ const SETTINGS: ObjectMap<any> = {
     ],
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
-    useConstraintLayout: false,
+    useConstraintLayout: true,
     useConstraintGuideline: true,
     useUnitDP: true,
     useFontAlias: true,

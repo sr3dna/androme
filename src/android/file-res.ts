@@ -20,8 +20,10 @@ export default class FileRes<T extends View> extends File<T> {
 
     public saveAllToDisk(data: ViewData<T>) {
         const files: PlainFile[] = [];
-        for (let i = 0; i < data.views.length; i++) {
-            files.push(this.getLayoutFile(data.pathnames[i], (i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), data.views[i]));
+        const views = [...data.views, ...data.includes];
+        for (let i = 0; i < views.length; i++) {
+            const view = views[i];
+            files.push(this.getLayoutFile(view.pathname, (i === 0 ? SETTINGS.outputActivityMainFileName : `${view.filename}.xml`), view.content));
         }
         const xml = this.resourceDrawableToXml();
         files.push(...this.parseFileDetails(this.resourceStringToXml()));
@@ -36,11 +38,12 @@ export default class FileRes<T extends View> extends File<T> {
     public layoutAllToXml(data: ViewData<T>, saveToDisk = false) {
         const result: StringMap = {};
         const files: PlainFile[] = [];
-        for (let i = 0; i < data.views.length; i++) {
-            const view = data.views[i];
-            result[data.ids[i]] = view;
+        const views = [...data.views, ...data.includes];
+        for (let i = 0; i < views.length; i++) {
+            const view = views[i];
+            result[view.filename] = view.content;
             if (saveToDisk) {
-                files.push(this.getLayoutFile(data.pathnames[i], (i === 0 ? SETTINGS.outputActivityMainFileName : `${data.ids[i]}.xml`), view));
+                files.push(this.getLayoutFile(view.pathname, (i === 0 ? SETTINGS.outputActivityMainFileName : `${view.filename}.xml`), view.content));
             }
         }
         if (saveToDisk) {
@@ -255,7 +258,8 @@ export default class FileRes<T extends View> extends File<T> {
             result.push({
                 uri: match[1],
                 pathname: match[2],
-                filename: match[3]
+                filename: match[3],
+                content: ''
             });
             xml = xml.replace(match[0], '');
         }

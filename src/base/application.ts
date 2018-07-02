@@ -1,4 +1,4 @@
-import { Null, ObjectIndex, StringMap, ViewData } from '../lib/types';
+import { Null, ObjectIndex, PlainFile, StringMap, ViewData } from '../lib/types';
 import Controller from './controller';
 import Extension from './extension';
 import Resource from './resource';
@@ -16,12 +16,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public controllerHandler: Controller<T, U>;
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
-    public ids: string[] = [];
-    public views: string[] = [];
-    public pathnames: string[] = [];
     public insert: ObjectIndex<string> = {};
 
-    private _currentIndex = -1;
+    private views: PlainFile[] = [];
+    private includes: PlainFile[] = [];
+    private currentIndex = -1;
     private _extensions: Extension<T, U>[] = [];
     private _closed = false;
 
@@ -59,24 +58,16 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public finalize() {
         this.resourceHandler.finalize(this.viewData);
-        this.views = this.resourceHandler.views;
-        this.cacheInternal.list.forEach(node => {
-            this.extensions.forEach(item => {
-                item.parent = null;
-                item.node = node;
-                item.element = node.element;
-                if (item.condition()) {
-                    item.finalize();
-                }
-            });
-        });
-        for (let i = 0; i < this.views.length; i++) {
-            let output = removePlaceholders(this.views[i]);
-            if (SETTINGS.useUnitDP) {
-                output = replaceDP(output, SETTINGS.density);
-            }
-            this.views[i] = output;
+        this.setAuxillaryViews();
+        if (SETTINGS.showAttributes) {
+            this.setAttributes();
         }
+        this.layouts.forEach(layout => {
+            layout.content = removePlaceholders(layout.content);
+            if (SETTINGS.useUnitDP) {
+                layout.content = replaceDP(layout.content, SETTINGS.density);
+            }
+        });
         this._closed = true;
     }
 
@@ -96,11 +87,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.resetController();
         this.resetResource();
         this.appName = '';
-        this.ids = [];
         this.views = [];
-        this.pathnames = [];
+        this.includes = [];
         this.insert = {};
-        this._currentIndex = -1;
+        this.currentIndex = -1;
         this._closed = false;
     }
 
@@ -209,7 +199,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const elements = (root !== document.body ? root.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         this.cache.parent = undefined;
         this.cache.clear();
-        this.controllerHandler.namespaces.clear();
         const extensions = this.extensions;
         extensions.forEach(item => {
             item.parent = null;
@@ -362,8 +351,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     sortAsc(node.children, 'parentIndex');
                 }
             });
-            this.currentId = (<string> root.dataset.currentId);
-            this.cacheInternal.list.push(...this.cache.list);
+            this.addLayout((<string> root.dataset.currentId));
             return true;
         }
         return false;
@@ -526,10 +514,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (root.element.dataset != null) {
                 pathname = trim((root.element.dataset.pathname || '').trim(), '/');
             }
-            this.create((!empty ? output : ''), pathname, (root.renderExtension != null && root.renderExtension.activityMain));
+            this.setLayout(pathname, (!empty ? output : ''), (root.renderExtension != null && root.renderExtension.activityMain));
         }
         else {
-            this.ids.pop();
+            this.views.pop();
         }
         if (!empty) {
             extensions.forEach(item => {
@@ -542,6 +530,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         else {
             root.visible = false;
         }
+        this.cacheInternal.list.push(...this.cache.list);
     }
 
     public writeFrameLayout(node: T, parent: T) {
@@ -577,47 +566,80 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public replaceInlineAttributes() {
-        let output = this.current;
-        if (output) {
-            const options = {};
-            this.cache.visible.forEach(node => output = this.controllerHandler.replaceInlineAttributes(output, node, options));
-            output = output.replace('{@0}', this.controllerHandler.getRootAttributes(options));
-            this.current = output;
-        }
-        this.cache.list.forEach(node => {
-            if (node.renderExtension != null) {
+    public setAttributes() {
+        this.controllerHandler.setAttributes(this.viewData);
+    }
+
+    public setAuxillaryViews() {
+        this.cacheInternal.list.forEach(node => {
+            if (!node.visible && node.renderExtension != null) {
                 const attr = `${node.renderExtension.name}:insert`;
-                output = (<string> node.options(attr));
+                let output = (<string> node.options(attr));
                 if (output) {
                     const children = this.insert[node.id];
                     if (children != null) {
                         output = output.replace(`{:${node.id}}`, children);
                     }
-                    output = this.controllerHandler.replaceInlineAttributes(output, node);
-                    node.children.forEach(item => output = this.controllerHandler.replaceInlineAttributes(output, <T> item));
+                    output = this.controllerHandler.replaceAttributes(output, node);
+                    node.children.forEach(item => output = this.controllerHandler.replaceAttributes(output, <T> item));
                     node.options(attr, output);
                 }
             }
         });
-    }
-
-    public replaceAppended() {
-        let output = this.current;
-        if (output) {
-            output = this.controllerHandler.replaceAppended(output);
-            this.current = output;
-        }
-        this.cache.list.forEach(node => {
-            if (node.renderExtension != null) {
+        [...this.views, ...this.includes].forEach(view => view.content = this.controllerHandler.replaceAuxillaryViews(view.content));
+        this.cacheInternal.list.forEach(node => {
+            if (!node.visible && node.renderExtension != null) {
                 const attr = `${node.renderExtension.name}:insert`;
-                output = (<string> node.options(attr));
+                let output = (<string> node.options(attr));
                 if (output) {
-                    output = this.controllerHandler.replaceAppended(output);
+                    output = this.controllerHandler.replaceAuxillaryViews(output);
                     output = indentLines(output.trim());
                     node.options(attr, output);
                 }
             }
+            this.extensions.forEach(item => {
+                item.parent = null;
+                item.node = node;
+                item.element = node.element;
+                if (item.condition()) {
+                    item.finalize();
+                }
+            });
+        });
+    }
+
+    public addLayout(value: string) {
+        const layout: PlainFile = {
+            filename: value,
+            pathname: '',
+            content: ''
+        };
+        this.currentIndex = this.views.length;
+        this.views.push(layout);
+    }
+
+    public setLayout(pathname = '', content: string, activityMain = false) {
+        pathname = pathname || 'res/layout';
+        if (activityMain && this.views.length > 0 && this.views[0].content === '') {
+            const view = this.views[0];
+            const current = (<PlainFile> this.views.pop());
+            view.pathname = pathname;
+            view.filename = current.filename;
+            view.content = content;
+            this.currentIndex = 0;
+        }
+        else {
+            const view = this.current;
+            view.pathname = pathname;
+            view.content = content;
+        }
+    }
+
+    public addInclude(filename: string, content: string) {
+        this.includes.push({
+            pathname: 'res/layout',
+            filename,
+            content
         });
     }
 
@@ -630,7 +652,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public toString() {
-        return (this.views.length > 0 ? this.views[0] : '');
+        return (this.views.length > 0 ? this.views[0].content : '');
     }
 
     private insertNode(element: HTMLElement, parent?: T) {
@@ -654,22 +676,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return node;
     }
 
-    private create(value: string, pathname = '', activityMain = false) {
-        if (this.views.length < this.ids.length) {
-            pathname = pathname || 'res/layout';
-            if (activityMain && this.views.length > 0 && this.views[0] === '') {
-                this.views[0] = value;
-                this.pathnames[0] = pathname;
-                this.ids[0] = (<string> this.ids.pop());
-                this._currentIndex = 0;
-            }
-            else {
-                this.pathnames[this._currentIndex] = pathname;
-                this.views[this._currentIndex] = value;
-            }
-        }
-    }
-
     public set appName(value) {
         if (this.resourceHandler != null) {
             this.resourceHandler.file.appName = value;
@@ -679,21 +685,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return (this.resourceHandler != null ? this.resourceHandler.file.appName : '');
     }
 
-    private set current(value) {
-        this.views[this._currentIndex] = value;
+    public set current(value) {
+        this.views[this.currentIndex] = value;
     }
-    private get current() {
-        return this.views[this._currentIndex];
+    public get current() {
+        return this.views[this.currentIndex];
     }
 
-    protected set currentId(value: string) {
-        if (this.ids.length === this.views.length) {
-            this._currentIndex = this.ids.length;
-            this.ids.push(value);
-        }
-    }
-    protected get currentId() {
-        return this.ids[this._currentIndex] || '';
+    get layouts() {
+        return [...this.views, ...this.includes];
     }
 
     get closed() {
@@ -705,7 +705,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public get viewData(): ViewData<T> {
-        return { cache: this.cacheInternal.list, ids: this.ids, views: this.views, pathnames: this.pathnames };
+        return { cache: this.cacheInternal.list, views: this.views, includes: this.includes };
     }
 
     public get length() {

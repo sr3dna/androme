@@ -4,11 +4,8 @@ import Toolbar from '../../extension/widget/toolbar';
 import { padLeft, removePlaceholders, setDefaultOption } from '../../lib/util';
 import Resource from '../../base/resource';
 import { VIEW_RESOURCE } from '../../lib/constants';
+import { VIEW_SUPPORT } from './lib/constants';
 import { getStyle } from '../../lib/dom';
-
-const enum VIEW_STATIC {
-    TOOLBAR = 'android.support.v7.widget.Toolbar'
-}
 
 export default class ToolbarAndroid<T extends View> extends Toolbar {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
@@ -19,16 +16,18 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
         node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
+        const actionBar = (node.element.dataset.extActionBarFor != null);
+        const depth = (actionBar ? 0 : node.depth + node.renderDepth);
         const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
-        setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.toolbar:menu:${node.id}}`);
+        const toolbar = Object.assign({}, options.toolbar);
         let children = 0;
-        Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
+        Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
                 const prefix = 'ic_menu_';
                 if (element.dataset.navigationIcon != null) {
                     const result = Resource.addImageSrcSet(<HTMLImageElement> element, prefix);
                     if (result !== '') {
-                        setDefaultOption(options, 'app', 'navigationIcon', `@drawable/${result}`);
+                        setDefaultOption(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
                             children++;
                         }
@@ -37,7 +36,7 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
                 if (element.dataset.collapseIcon != null) {
                     const result = Resource.addImageSrcSet(<HTMLImageElement> element, prefix);
                     if (result !== '') {
-                        setDefaultOption(options, 'app', 'collapseIcon', `@drawable/${result}`);
+                        setDefaultOption(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
                             children++;
                         }
@@ -45,27 +44,32 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
                 }
             }
         });
-        const actionBar = (node.element.dataset.extActionBarFor != null);
         if (actionBar) {
-            setDefaultOption(options, 'android', 'layout_width', 'match_parent');
-            setDefaultOption(options, 'android', 'layout_height', 'wrap_content');
-            setDefaultOption(options, 'android', 'minHeight', '?attr/actionBarSize');
-            setDefaultOption(options, 'android', 'background', '?attr/colorPrimaryLight');
-            setDefaultOption(options, 'android', 'elevation', '4px');
+            setDefaultOption(toolbar, 'android', 'layout_height', '?attr/actionBarSize');
+            setDefaultOption(toolbar, 'android', 'background', '?attr/colorPrimary');
+            setDefaultOption(toolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
         }
-        setDefaultOption(options, 'app', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
-        let xml = controller.getViewStatic(VIEW_STATIC.TOOLBAR, (actionBar ? 0 : node.depth + node.renderDepth), { android: options.android, app: options.app }, '', '', node, (node.children.length - children > 0));
+        if (this.getMenu(node) != null) {
+            setDefaultOption(toolbar, 'app', 'menu', `@menu/{!androme.widget.toolbar:menu:${node.id}}`);
+        }
+        let xml = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, depth + 1, { android: toolbar.android, app: toolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
+        if (actionBar || this.options.appBar != null) {
+            const appBar = Object.assign({}, options.appBar);
+            setDefaultOption(appBar, 'android', 'id', `${node.stringId}_appbar`);
+            setDefaultOption(appBar, 'app', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
+            xml = controller.getViewStatic(VIEW_SUPPORT.APPBAR, depth, { android: appBar.android, app: appBar.app }, 'match_parent', 'wrap_content', null, true).replace(`{:0}`, xml);
+        }
         if (actionBar) {
             node.options('androme.widget.toolbar:insert', xml);
-            node.renderParent = true;
-            xml = '';
+            node.hide();
+            return ['', false, true];
         }
         else {
             node.applyCustomizations();
             node.render(<T> this.parent);
             node.setGravity();
+            return [xml, false, false];
         }
-        return [xml, false, false];
     }
 
     public processChild(): ExtensionResult {
@@ -82,7 +86,8 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
 
     public finalize() {
         const actionBar = (<string> this.node.element.dataset.extActionBarFor);
-        const menu = (<HTMLElement> Array.from(this.node.element.childNodes).find((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.currentId != null));
+        const menu = this.getMenu(<T> this.node);
+        const layouts = this.application.layouts;
         if (actionBar != null) {
             const parent = this.application.findByDomId(actionBar);
             if (parent != null) {
@@ -91,17 +96,19 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
                 if (menu != null) {
                     xml = removePlaceholders(xml.replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, <string> menu.dataset.currentId)).replace(/\s*$/g, '');
                 }
-                const views = this.application.views;
-                for (let i = 0; i < views.length; i++) {
-                    views[i] = views[i].replace(`{!androme.widget.drawer:toolbar:${parent.id}}`, xml + '\n');
+                for (let i = 0; i < layouts.length; i++) {
+                    layouts[i].content = layouts[i].content.replace(`{!androme.widget.drawer:toolbar:${parent.id}}`, xml + '\n');
                 }
             }
         }
-        else {
-            const views = this.application.views;
-            for (let i = 0; i < views.length; i++) {
-                views[i] = views[i].replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, <string> menu.dataset.currentId);
+        else if (menu != null) {
+            for (let i = 0; i < layouts.length; i++) {
+                layouts[i].content = layouts[i].content.replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, <string> menu.dataset.currentId);
             }
         }
+    }
+
+    private getMenu(node: T) {
+        return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.menu') !== -1));
     }
 }

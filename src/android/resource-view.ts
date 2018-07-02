@@ -613,11 +613,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     return false;
                 });
                 if (!replaced) {
-                    for (let i = 0; i < viewData.views.length; i++) {
-                        const output: string = viewData.views[i];
+                    const views = viewData.views;
+                    for (let i = 0; i < views.length; i++) {
+                        const output = views[i].content;
                         const pattern = `{&${id}}`;
                         if (output.indexOf(pattern) !== -1) {
-                            viewData.views[i] = output.replace(pattern, append);
+                            views[i].content = output.replace(pattern, append);
                             break;
                         }
                     }
@@ -635,7 +636,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
             });
         }
-        this.views = viewData.views;
     }
 
     private deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {

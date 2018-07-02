@@ -60,7 +60,7 @@ app.post('/api/savetodisk', (req, res) => {
                 try {
                     mkdirp.sync(pathname);
                     const entrydata = { name: `${(directory ? `${req.query.directory}/` : '')}${file.pathname}/${file.filename}` };
-                    if (file.content != null) {
+                    if (file.content != null && file.content.trim() !== '') {
                         delayed++;
                         fs.writeFile(filename, file.content, (err) => {
                             if (delayed != -1) {
@@ -72,7 +72,7 @@ app.post('/api/savetodisk', (req, res) => {
                             }
                         });
                     }
-                    else if (file.uri != null) {
+                    else if (file.uri) {
                         delayed++;
                         const stream = fs.createWriteStream(filename);
                         stream.on('finish', () => {

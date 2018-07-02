@@ -90,12 +90,8 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
         if (main.createNodeCache(element)) {
             main.createLayoutXml();
             main.setResources();
-            if (SETTINGS.showAttributes) {
-                main.setMarginPadding();
-                main.setConstraints();
-                main.replaceInlineAttributes();
-            }
-            main.replaceAppended();
+            main.setMarginPadding();
+            main.setConstraints();
             ROOT_CACHE.add(element);
         }
     });
