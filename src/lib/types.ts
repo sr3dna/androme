@@ -1,4 +1,5 @@
 import Node from '../base/node';
+import NodeList from '../base/nodelist';
 
 export type Null<T> = T | null | undefined;
 
@@ -10,8 +11,8 @@ export interface IExtension {
     element: Null<HTMLElement>;
     tagNames: string[];
     enabled: boolean;
-    options: {};
-    dependences: {}[];
+    options: ObjectMap<any>;
+    dependencies: ExtensionDependency[];
     activityMain: boolean;
     is(node: Node): void;
     require(value: string): void;
@@ -20,10 +21,15 @@ export interface IExtension {
     init(element: HTMLElement): boolean;
     afterInit(internal: boolean): void;
     condition(): void;
-    processNode(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult;
-    processChild(mapX?: ObjectIndex<{}>, mapY?: ObjectIndex<{}>): ExtensionResult;
+    processNode(mapX?: ObjectIndex<ObjectIndex<NodeList<Node>>>, mapY?: ObjectIndex<ObjectIndex<NodeList<Node>>>): ExtensionResult;
+    processChild(mapX?: ObjectIndex<ObjectIndex<NodeList<Node>>>, mapY?: ObjectIndex<ObjectIndex<NodeList<Node>>>): ExtensionResult;
     afterRender(): void;
     finalize(): void;
+}
+
+export interface ExtensionDependency {
+    name: string;
+    init: boolean;
 }
 
 export type ExtensionResult = [string, boolean, boolean];

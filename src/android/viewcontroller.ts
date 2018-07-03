@@ -955,16 +955,17 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             minimal = true;
         }
         const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
+        tagName = (node != null && node.hasElement ? node.tagName : viewName);
         node.setViewId(viewName);
         if (hasValue(width)) {
-            if (SETTINGS.dimensResourceValue && !isNaN(parseInt(width))) {
-                height = `{%${(node != null && node.hasElement ? node.tagName : viewName)}-width-${width}}`;
+            if (!isNaN(parseInt(width))) {
+                width = formatDimen(tagName, 'width', width);
             }
             node.android('layout_width', width);
         }
         if (hasValue(height)) {
-            if (SETTINGS.dimensResourceValue && !isNaN(parseInt(height))) {
-                height = `{%${(node != null && node.hasElement ? node.tagName : viewName).toLowerCase()}-height-${height}}`;
+            if (!isNaN(parseInt(height))) {
+                height = formatDimen(tagName, 'height', height);
             }
             node.android('layout_height', height);
         }
@@ -1011,8 +1012,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         this.addDimenGroup(group, node, name);
                     }
                 }
-                ['layout_width', 'layout_height', 'minWidth', 'minHeight'].forEach((attr, index) => this.addDimenGroup(group, node, ['width', 'height', 'minwidth', 'minheight'][index], attr, <string> node.android(attr)));
-                ['layout_constraintWidth_min', 'layout_constraintHeight_min'].forEach((attr, index) => this.addDimenGroup(group, node, ['constraintwidth_min', 'constraintheight_min'][index], attr, <string> node.app(attr)));
+                ['android:layout_width:width', 'android:layout_height:height', 'android:minWidth:minwidth', 'android:minHeight:minheight', 'app:layout_constraintWidth_min:constraintwidth_min', 'app:layout_constraintHeight_min:constraintheight_min'].forEach(value => {
+                    const [namespace, attr, dimen] = value.split(':');
+                    this.addDimenGroup(group, node, dimen, attr, <string> node[namespace](attr));
+                });
             }
         });
         if (SETTINGS.dimensResourceValue) {

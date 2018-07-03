@@ -60,7 +60,7 @@
     <script src="../dist/androme.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            androme.settings.useLayoutWeight = true;
+            androme.configureExtension('androme.grid', { balanceColumns: true });
             androme.parseDocument('androme_ui');
             androme.close();
 

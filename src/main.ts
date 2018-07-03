@@ -27,7 +27,7 @@ const EXTENSIONS: any = {
     'androme.external': new External('androme.external'),
     'androme.list': new List('androme.list', ['UL', 'OL']),
     'androme.table': new Table('androme.table', ['TABLE']),
-    'androme.grid': new Grid('androme.grid', ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET'], { balanceColumns: true }),
+    'androme.grid': new Grid('androme.grid', ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET']),
     'androme.widget.menu': new Menu('androme.widget.menu', ['NAV'], { appCompat: true }),
     'androme.widget.toolbar': new Toolbar('androme.widget.toolbar'),
     'androme.widget.drawer': new Drawer('androme.widget.drawer')

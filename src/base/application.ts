@@ -50,7 +50,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             Object.assign(found.options, extension.options);
         }
         else {
-            if (extension.dependences.every((item: any) => this.findExtension(item.name) != null)) {
+            if (extension.dependencies.every(item => this.findExtension(item.name) != null)) {
                 extension.application = this;
                 this._extensions.push(extension);
             }

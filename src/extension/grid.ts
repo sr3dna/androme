@@ -1,4 +1,4 @@
-import { ExtensionResult, Null, ObjectIndex, ObjectMap } from '../lib/types';
+import { ExtensionResult, Null, ObjectIndex } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -20,7 +20,7 @@ export default class Grid extends Extension<T, U> {
         );
     }
 
-    public processNode(mapX: ObjectIndex<{}>, mapY: ObjectIndex<{}>): ExtensionResult {
+    public processNode(mapX: ObjectIndex<ObjectIndex<U>>, mapY: ObjectIndex<ObjectIndex<U>>): ExtensionResult {
         let xml = '';
         let columns: any[][] = [];
         const columnEnd: number[] = [];
@@ -103,12 +103,12 @@ export default class Grid extends Extension<T, U> {
             }
         }
         else {
-            const nextMapX: ObjectMap<T[]> = mapX[this.node.depth + 2];
+            const nextMapX: ObjectIndex<U> = mapX[this.node.depth + 2];
             const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
             if (nextCoordsX.length > 1) {
                 const columnRight: number[] = [];
                 for (let l = 0; l < nextCoordsX.length; l++) {
-                    const nextAxisX = sortAsc(nextMapX[nextCoordsX[l]], 'bounds.top');
+                    const nextAxisX = (<U> nextMapX[parseInt(nextCoordsX[l])]).sortAsc('bounds.top');
                     columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                     for (let m = 0; m < nextAxisX.length; m++) {
                         const nextX = nextAxisX[m];
@@ -152,11 +152,11 @@ export default class Grid extends Extension<T, U> {
                         const nodeX = columns[m][l];
                         if (nodeX != null) {
                             if (top == null) {
-                                top = nodeX.bounds.top;
+                                top = nodeX.linear.top;
                             }
-                            else if (nodeX.bounds.top !== top) {
+                            else if (nodeX.linear.top !== top) {
                                 const nextRowX = columns[m - 1][l + 1];
-                                if (columns[m][l - 1] == null || (nextRowX && nextRowX.bounds.top === nodeX.bounds.top)) {
+                                if (columns[m][l - 1] == null || (nextRowX && nextRowX.linear.top === nodeX.linear.top)) {
                                     columns[m].splice(l, 0, { spacer: 1 });
                                 }
                                 else if (columns[m][l + 1] == null) {
