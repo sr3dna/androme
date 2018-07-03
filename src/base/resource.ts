@@ -2,16 +2,17 @@ import { BorderAttribute, Null, ObjectMap, StringMap } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { INLINE_CHROME, MAPPING_CHROME, VIEW_RESOURCE } from '../lib/constants';
-import { cameltoLowerCase, convertPX, generateId, getFileExt, getFileName, hasValue, isNumber, resolveRelativePath } from '../lib/util';
+import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber, resolvePath, lastIndexOf } from '../lib/util';
 import { findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, sameAsParent } from '../lib/dom';
+import { INLINE_CHROME, MAPPING_CHROME, VIEW_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
     public static STORED: ObjectMap<any> = {
         STRINGS: new Map(),
         COLORS: new Map(),
+        DIMENS: new Map(),
         IMAGES: new Map()
     };
 
@@ -52,7 +53,7 @@ export default abstract class Resource<T extends Node> {
                     if (match[2] == null) {
                         match[2] = '1x';
                     }
-                    const image = filePath + getFileName(match[1]);
+                    const image = filePath + lastIndexOf(match[1]);
                     switch (match[2]) {
                         case '0.75x':
                             images['ldpi'] = image;
@@ -85,21 +86,16 @@ export default abstract class Resource<T extends Node> {
     public static addImage(images: StringMap, prefix = '') {
         let src = '';
         if (images['mdpi'] != null && hasValue(images['mdpi'])) {
-            src = getFileName(images['mdpi']);
-            const format = getFileExt(src).toLowerCase();
+            src = lastIndexOf(images['mdpi']);
+            const format = lastIndexOf(src, '.').toLowerCase();
             src = src.replace(/.\w+$/, '').replace(/-/g, '_');
             switch (format) {
                 case 'bmp':
-                case 'bmpf':
                 case 'cur':
                 case 'gif':
                 case 'ico':
                 case 'jpg':
                 case 'png':
-                case 'tif':
-                case 'tiff':
-                case 'webp':
-                case 'xbm':
                     src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
                     break;
                 default:
@@ -112,7 +108,7 @@ export default abstract class Resource<T extends Node> {
     public static addImageURL(value: string, prefix: string = '') {
         const match = value.match(/^url\("(.*?)"\)$/);
         if (match != null) {
-            return Resource.addImage({ 'mdpi': resolveRelativePath(match[1]) }, prefix);
+            return Resource.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
         }
         return '';
     }

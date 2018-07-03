@@ -14,7 +14,8 @@
                 androme.close();
 
                 document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
-                var resource = androme.writeResourceDrawableXml();
+                var resource = androme.writeResourceDimenXml() + '\n\n' +
+                               androme.writeResourceDrawableXml();
                 document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
             });
         });

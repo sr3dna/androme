@@ -74,6 +74,7 @@ export default abstract class Node implements BoxModel {
     public abstract setViewLayout(options?: any): void;
     public abstract applyCustomizations(): void;
     public abstract modifyBox(area: number, offset: number): void;
+    public abstract boxValue(area: number): string[];
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;

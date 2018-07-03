@@ -1,11 +1,12 @@
 import { ExtensionResult } from '../../lib/types';
 import View from '../view';
 import Toolbar from '../../extension/widget/toolbar';
-import { padLeft, removePlaceholders, setDefaultOption } from '../../lib/util';
 import Resource from '../../base/resource';
+import { repeat, setDefaultOption } from '../../lib/util';
+import { removePlaceholders } from '../../lib/xml';
+import { getStyle } from '../../lib/dom';
 import { VIEW_RESOURCE } from '../../lib/constants';
 import { VIEW_SUPPORT } from './lib/constants';
-import { getStyle } from '../../lib/dom';
 
 export default class ToolbarAndroid<T extends View> extends Toolbar {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
@@ -92,7 +93,7 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
             const parent = this.application.findByDomId(actionBar);
             if (parent != null) {
                 let xml = (<string> this.node.options('androme.widget.toolbar:insert')) || '';
-                xml = xml.replace(/>>>>/g, padLeft(parent.renderDepth + 2));
+                xml = xml.replace(/>>>>/g, repeat(parent.renderDepth + 2));
                 if (menu != null) {
                     xml = removePlaceholders(xml.replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, <string> menu.dataset.currentId)).replace(/\s*$/g, '');
                 }

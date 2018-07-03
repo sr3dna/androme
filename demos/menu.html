@@ -88,7 +88,8 @@
                 }
                 document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
                 var resource = androme.writeResourceStringXml() + '\n\n' +
-                            androme.writeResourceDrawableXml();
+                               androme.writeResourceDimenXml() + '\n\n' +
+                               androme.writeResourceDrawableXml();
                 document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
             });
         });

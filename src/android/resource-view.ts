@@ -2,24 +2,25 @@ import { BorderAttribute, Null, ObjectIndex, ObjectMap, ResourceMap, StringMap, 
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { formatString, hasValue, indentLines, padLeft } from '../lib/util';
-import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
+import { formatString, hasValue, repeat } from '../lib/util';
+import { getTemplateLevel, indentLines, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
-import parseRTL from './localization';
-import SETTINGS from '../settings';
 import { VIEW_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTWEIGHT_ANDROID } from './constants';
+import parseRTL from './localization';
+import SETTINGS from '../settings';
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';
 
 const STORED: ResourceMap = {
+    STRINGS: new Map(),
     ARRAYS: new Map(),
     FONTS: new Map(),
-    DRAWABLES: new Map(),
-    STYLES: new Map(),
-    STRINGS: new Map(),
     COLORS: new Map(),
+    STYLES: new Map(),
+    DIMENS: new Map(),
+    DRAWABLES: new Map(),
     IMAGES: new Map()
 };
 
@@ -84,11 +85,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.reset();
         STORED.ARRAYS = new Map();
         STORED.FONTS = new Map();
-        STORED.DRAWABLES = new Map();
         STORED.STYLES = new Map();
-        STORED.STRINGS = new Map();
-        STORED.COLORS = new Map();
-        STORED.IMAGES = new Map();
+        STORED.DRAWABLES = new Map();
         Object.assign(STORED, Resource.STORED);
         this.file.reset();
         this.tagStyle = {};
@@ -125,7 +123,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     let data: ObjectMap<any>;
                     let resourceName = '';
                     if (stored.border != null && stored.backgroundImage === '') {
-                        template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
+                        template = parseTemplate(SHAPERECTANGLE_TMPL);
                         data = {
                             '0': [{
                                 '1': this.getShapeAttribute(stored, 'stroke'),
@@ -137,13 +135,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }]
                         };
                         if (stored.borderRadius.length > 1) {
-                            const shape = getDataLevel(data, '0', '2');
+                            const shape = getTemplateLevel(data, '0', '2');
                             const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
                             shape['5'].push(borderRadius);
                         }
                     }
                     else if (stored.border != null) {
-                        template = parseTemplateMatch(LAYERLIST_TMPL);
+                        template = parseTemplate(LAYERLIST_TMPL);
                         data = {
                             '0': [{
                                 '1': [{
@@ -156,20 +154,20 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }]
                         };
                         if (stored.borderRadius.length > 1) {
-                            const shape = getDataLevel(data, '0', '1');
+                            const shape = getTemplateLevel(data, '0', '1');
                             const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
                             shape['5'].push(borderRadius);
                         }
                     }
                     else {
-                        template = parseTemplateMatch(LAYERLIST_TMPL);
+                        template = parseTemplate(LAYERLIST_TMPL);
                         data = {
                             '0': [{
                                 '1': [],
                                 '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
                             }]
                         };
-                        const root = getDataLevel(data, '0');
+                        const root = getTemplateLevel(data, '0');
                         const borderRadius = {};
                         if (stored.borderRadius.length > 1) {
                             Object.assign(borderRadius, {
@@ -203,7 +201,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             root['1'] = false;
                         }
                     }
-                    const xml = parseTemplateData(template, data);
+                    const xml = insertTemplateData(template, data);
                     for (const [name, value] of STORED.DRAWABLES.entries()) {
                         if (value === xml) {
                             resourceName = name;
@@ -586,14 +584,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (node != null) {
                 const styles = map[id].styles;
                 const attributes = map[id].attributes;
-                const indent = padLeft(node.renderDepth + 1);
+                const indent = repeat(node.renderDepth + 1);
                 let append = '';
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
                     append += `\n${indent}style="@style/${styles.pop()}"`;
                 }
                 if (attributes.length > 0) {
-                    attributes.sort().forEach((value: string) => append += `\n${indent}${value}`);
+                    attributes.sort().forEach((value: string) => append += `\n${indent}${replaceDP(value, SETTINGS.density, true)}`);
                 }
                 let replaced = false;
                 [node, node.parent].some(item => {

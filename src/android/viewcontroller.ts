@@ -1,15 +1,16 @@
 import { ArrayIndex, ClientRect, Null, ObjectMap, Point, StringMap, ViewData } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
+import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
 import ViewList from './viewlist';
-import { convertPX, formatPX, hasValue, indexOf, padLeft, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
+import { convertPX, formatPX, generateId, hasValue, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { getBoxSpacing } from '../lib/dom';
-import parseRTL from './localization';
-import SETTINGS from '../settings';
 import { BOX_STANDARD, OVERFLOW_CHROME, VIEW_STANDARD } from '../lib/constants';
 import { VIEW_ANDROID, XMLNS_ANDROID } from './constants';
+import parseRTL from './localization';
+import SETTINGS from '../settings';
 
 const LAYOUT_MAP = {
     relative: {
@@ -789,7 +790,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             viewGroup.css('minHeight', node.styleMap.minHeight);
                             viewGroup.css('overflowY', node.styleMap.overflowY);
                     }
-                    const indent = padLeft(scrollDepth--);
+                    const indent = repeat(scrollDepth--);
                     preXml = indent + `<${scrollName}{@${viewGroup.id}}>\n` + preXml;
                     postXml += indent + `</${scrollName}>\n`;
                     if (current === node) {
@@ -955,16 +956,22 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
         node.setViewId(viewName);
         if (hasValue(width)) {
+            if (SETTINGS.dimensResourceValue && !isNaN(parseInt(width))) {
+                height = `{%${(node != null && node.hasElement ? node.tagName : viewName)}-width-${width}}`;
+            }
             node.android('layout_width', width);
         }
         if (hasValue(height)) {
+            if (SETTINGS.dimensResourceValue && !isNaN(parseInt(height))) {
+                height = `{%${(node != null && node.hasElement ? node.tagName : viewName).toLowerCase()}-height-${height}}`;
+            }
             node.android('layout_height', height);
         }
         node.renderDepth = depth;
         node.apply(options);
         let output = this.getEnclosingTag((depth === 0 && minimal ? -1 : depth), viewName, node.id, (children ? `{:${node.id}}` : ''));
         if (SETTINGS.showAttributes && node.id === 0) {
-            const indent = padLeft(depth + 1);
+            const indent = repeat(depth + 1);
             const attributes = node.combine().map(value => `\n${indent + value}`).join('');
             output = output.replace(`{@${node.id}}`, attributes);
         }
@@ -974,18 +981,63 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     public setAttributes(data: ViewData<T>) {
         const cache: any = data.cache.filter(node => node.visible).map(node => {
-            node.setViewLayout();
             return { pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) };
         });
         [...data.views, ...data.includes].forEach(view => {
             cache.forEach((item: StringMap) => view.content = view.content.replace(item.pattern, item.attributes));
-            view.content = view.content.replace(`{#0}`, this.getRootAttributes(view.content));
+            view.content = view.content.replace(`{#0}`, this.getRootNamespace(view.content));
         });
     }
 
-    public replaceAttributes(output: string, node: T) {
-        node.setViewLayout();
+    public insertAttributes(output: string, node: T) {
         return output.replace(`{@${node.id}}`, this.parseAttributes(node));
+    }
+
+    public setDimensions(data: ViewData<T>) {
+        const groups: ObjectMap<any> = {};
+        data.cache.forEach(node => {
+            node.setViewLayout();
+            if (SETTINGS.dimensResourceValue && node.visible) {
+                const tagName = node.tagName.toLowerCase();
+                if (groups[tagName] == null) {
+                    groups[tagName] = {};
+                }
+                const group: ObjectMap<T[]> = groups[tagName];
+                for (const key of Object.keys(BOX_STANDARD)) {
+                    const result = node.boxValue(parseInt(key));
+                    if (result[0] !== '' && result[1] !== '0px') {
+                        const name = `${(<any> BOX_STANDARD)[key].toLowerCase()}-${result[0]}-${result[1]}`;
+                        this.addDimenGroup(group, node, name);
+                    }
+                }
+                ['layout_width', 'layout_height', 'minWidth', 'minHeight'].forEach((attr, index) => this.addDimenGroup(group, node, ['width', 'height', 'minwidth', 'minheight'][index], attr, <string> node.android(attr)));
+                ['layout_constraintWidth_min', 'layout_constraintHeight_min'].forEach((attr, index) => this.addDimenGroup(group, node, ['constraintwidth_min', 'constraintheight_min'][index], attr, <string> node.app(attr)));
+            }
+        });
+        if (SETTINGS.dimensResourceValue) {
+            const resource = (<Map<string, string>> Resource.STORED.DIMENS);
+            for (const tagName in groups) {
+                const group: ObjectMap<T[]> = groups[tagName];
+                for (const name in group) {
+                    const [dimen, attr, value] = name.split('-');
+                    const key = this.getDimenKey(resource, `${tagName}_${parseRTL(dimen)}`, value);
+                    group[name].forEach(node => node[(attr.indexOf('constraint') !== -1 ? 'app' : 'android')](attr, `@dimen/${key}`));
+                    resource.set(key, value);
+                }
+            }
+        }
+    }
+
+    public parseDimensions(content: string) {
+        const resource = (<Map<string, string>> Resource.STORED.DIMENS);
+        const pattern = /\s+\w+:\w+="({%(\w+)-(\w+)-(\w+)})"/g;
+        let match: Null<RegExpExecArray>;
+        while ((match = pattern.exec(content)) != null) {
+            const key = this.getDimenKey(resource, `${match[2]}_${parseRTL(match[3])}`, match[4]);
+            resource.set(key, match[4]);
+            content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
+        }
+        return content;
     }
 
     public getViewName(value: number) {
@@ -995,12 +1047,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     private parseAttributes(node: T) {
         let output = '';
         const attributes = node.combine();
-        const indent = padLeft(node.renderDepth + 1);
+        const indent = repeat(node.renderDepth + 1);
         output = attributes.map((value: string) => `\n${indent + value}`).join('');
         return output;
     }
 
-    private getRootAttributes(content: string) {
+    private getRootNamespace(content: string) {
         let output = '';
         for (const namespace in XMLNS_ANDROID) {
             if (new RegExp(`\\s+${namespace}:`).test(content)) {
@@ -1008,6 +1060,29 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             }
         }
         return output;
+    }
+
+    private addDimenGroup(group: ObjectMap<T[]>, node: T, dimen: string, attr?: string, value?: string) {
+        let name = dimen;
+        if (arguments.length === 5) {
+            if (value && /(px|dp|sp)$/.test(value)) {
+                name = `${dimen}-${attr}-${value}`;
+            }
+            else {
+                return;
+            }
+        }
+        if (group[name] == null) {
+            group[name] = [];
+        }
+        group[name].push(node);
+    }
+
+    private getDimenKey(resource: Map<string, string>, key: string, value: string) {
+        if (resource.has(key) && resource.get(key) !== value) {
+            key = generateId('dimens', `${key}_1`);
+        }
+        return key;
     }
 
     private setGridSpace(node: T) {

@@ -1,7 +1,28 @@
 import { Null, ObjectMap } from '../lib/types';
-import { hasValue } from './util';
+import { convertDP, hasValue } from './util';
+import SETTINGS from '../settings';
 
-export function getDataLevel(data: {}, ...levels: string[]): ObjectMap<any> {
+export function removePlaceholders(value: string, extension = true) {
+    value = value.replace(/{[<:@&>]{1}[0-9]+}/g, '');
+    if (extension) {
+        value = value.replace(/{!.*?}/g, '');
+    }
+    return value;
+}
+
+export function indentLines(value: string) {
+    return value.split('\n').map(line => `>>>>${line}`).join('\n');
+}
+
+export function replaceDP(xml: string, dpi = 160, font = false) {
+    return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, font) + capture[2]);
+}
+
+export function formatDimen(tagName: string, attr: string, size: string) {
+    return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()}-${attr}-${size}}` : size);
+}
+
+export function getTemplateLevel(data: {}, ...levels: string[]): ObjectMap<any> {
     let current: any = data;
     for (const level of levels) {
         const [index, array = '0'] = level.split('-');
@@ -10,7 +31,7 @@ export function getDataLevel(data: {}, ...levels: string[]): ObjectMap<any> {
     return current;
 }
 
-export function parseTemplateMatch(template: string) {
+export function parseTemplate(template: string) {
     const result: ObjectMap<string> = {};
     let pattern: Null<RegExp> = null;
     let match: Null<RegExpExecArray> | boolean = false;
@@ -47,8 +68,8 @@ export function parseTemplateMatch(template: string) {
     return result;
 }
 
-export function parseTemplateData(template: ObjectMap<string>, data: ObjectMap<any>, index?: Null<string>, include?: ObjectMap<any>, exclude?: ObjectMap<any>) {
-    let output: string = (index != null ? template[index] : '');
+export function insertTemplateData(template: ObjectMap<string>, data: ObjectMap<any>, index?: Null<string>, include?: ObjectMap<any>, exclude?: ObjectMap<any>) {
+    let output = (index != null ? template[index] : '');
     if (data['#include'] != null) {
         include = data['#include'];
         delete data['#include'];
@@ -65,7 +86,7 @@ export function parseTemplateData(template: ObjectMap<string>, data: ObjectMap<a
         }
         else if (Array.isArray(data[i])) {
             for (const j in data[i]) {
-                value += parseTemplateData(template, data[i][j], i, include, exclude);
+                value += insertTemplateData(template, data[i][j], i, include, exclude);
             }
         }
         else {

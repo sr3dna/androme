@@ -53,10 +53,16 @@ export const VIEW_ANDROID: StringMap = {
 };
 
 export const BOX_ANDROID: StringMap = {
+    MARGIN: 'layout_margin',
+    MARGIN_VERTICAL: 'layout_marginVertical',
+    MARGIN_HORIZONTAL: 'layout_marginHorizontal',
     MARGIN_TOP: 'layout_marginTop',
     MARGIN_RIGHT: 'layout_marginRight',
     MARGIN_BOTTOM: 'layout_marginBottom',
     MARGIN_LEFT: 'layout_marginLeft',
+    PADDING: 'padding',
+    PADDING_VERTICAL: 'paddingVertical',
+    PADDING_HORIZONTAL: 'paddingHorizontal',
     PADDING_TOP: 'paddingTop',
     PADDING_RIGHT: 'paddingRight',
     PADDING_BOTTOM: 'paddingBottom',

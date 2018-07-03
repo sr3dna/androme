@@ -79,59 +79,12 @@ export function hyphenToCamelCase(value: string) {
     return value;
 }
 
-export function removePlaceholders(value: string, extension = true) {
-    value = value.replace(/{[<:@&>]{1}[0-9]+}/g, '');
-    if (extension) {
-        value = value.replace(/{!.*?}/g, '');
-    }
-    return value;
+export function averageInt(values: number[]) {
+    return Math.floor(values.reduce((a, b) => a + b) / values.length);
 }
 
-export function indentLines(value: string) {
-    return value.split('\n').map(line => `>>>>${line}`).join('\n');
-}
-
-export function convertAlpha(value: number) {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
-    while (value >= alphabet.length) {
-        const base = Math.floor(value / alphabet.length);
-        if (base > 1 && base <= alphabet.length) {
-            result += alphabet.charAt(base - 1);
-            value -= base * alphabet.length;
-        }
-        else if (base > alphabet.length) {
-            result += convertAlpha(base * alphabet.length);
-            value -= base * alphabet.length;
-        }
-        const index = value % alphabet.length;
-        result += alphabet.charAt(index);
-        value -= index + alphabet.length;
-    }
-    result = alphabet.charAt(value) + result;
-    return result;
-}
-
-export function convertRoman(value: number) {
-    let result = '';
-    const digits = value.toString().split('');
-    const numerals = ['', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
-                      '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
-                      '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
-    let i = 3;
-    while (i--) {
-        result = (numerals[parseInt(<string> digits.pop()) + (i * 10)] || '') + result;
-    }
-    return 'M'.repeat(parseInt(digits.join(''))) + result;
-}
-
-export function padLeft(n: number, value = '\t') {
-    return value.repeat(n);
-}
-
-export function formatPX(value: any) {
-    value = parseFloat(value);
-    return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
+export function convertInt(value: any) {
+    return parseInt(value) || 0;
 }
 
 export function convertPX(value: any) {
@@ -169,16 +122,53 @@ export function convertDP(value: any, dpi = 160, font = false) {
     return '0dp';
 }
 
-export function replaceDP(xml: string, dpi = 160, font = false) {
-    return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, font) + capture[2]);
+export function convertAlpha(value: number) {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    while (value >= alphabet.length) {
+        const base = Math.floor(value / alphabet.length);
+        if (base > 1 && base <= alphabet.length) {
+            result += alphabet.charAt(base - 1);
+            value -= base * alphabet.length;
+        }
+        else if (base > alphabet.length) {
+            result += convertAlpha(base * alphabet.length);
+            value -= base * alphabet.length;
+        }
+        const index = value % alphabet.length;
+        result += alphabet.charAt(index);
+        value -= index + alphabet.length;
+    }
+    result = alphabet.charAt(value) + result;
+    return result;
 }
 
-export function convertInt(value: any) {
-    return parseInt(value) || 0;
+export function convertRoman(value: number) {
+    let result = '';
+    const digits = value.toString().split('');
+    const numerals = ['', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
+                      '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
+                      '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+    let i = 3;
+    while (i--) {
+        result = (numerals[parseInt(<string> digits.pop()) + (i * 10)] || '') + result;
+    }
+    return 'M'.repeat(parseInt(digits.join(''))) + result;
 }
 
-export function averageInt(values: number[]) {
-    return Math.floor(values.reduce((a, b) => a + b) / values.length);
+export function convertEnum(base: {}, derived: {}, value: number) {
+    for (const key of Object.keys(base)) {
+        const index: number = (<any> base)[key];
+        if (value === index) {
+            return (<string> (<any> derived)[key]);
+        }
+    }
+    return '';
+}
+
+export function formatPX(value: any) {
+    value = parseFloat(value);
+    return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
 }
 
 export function isNumber(value: string) {
@@ -189,19 +179,7 @@ export function isPercent(value: string) {
     return /^[0-9]+%$/.test(value);
 }
 
-export function trim(value: string, character: string) {
-    return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
-}
-
-export function getFileName(value: string) {
-    return value.substring(value.lastIndexOf('/') + 1);
-}
-
-export function getFileExt(value: string) {
-    return value.substring(value.lastIndexOf('.') + 1);
-}
-
-export function resolveRelativePath(value: string) {
+export function resolvePath(value: string) {
     if (!/^\w+:\/\//.test(value)) {
         let pathname = location.pathname.split('/');
         pathname.pop();
@@ -230,6 +208,40 @@ export function resolveRelativePath(value: string) {
         }
     }
     return value;
+}
+
+export function trim(value: string, character: string) {
+    return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
+}
+
+export function repeat(n: number, value = '\t') {
+    return value.repeat(n);
+}
+
+export function indexOf(value: string, ...terms: string[]) {
+    if (hasValue(value)) {
+        for (const term of terms) {
+            const index = value.indexOf(term);
+            if (index !== -1) {
+                return index;
+            }
+        }
+    }
+    return -1;
+}
+
+export function lastIndexOf(value: string, character = '/') {
+    return value.substring(value.lastIndexOf(character) + 1);
+}
+
+export function same(obj1: {}, obj2: {}, ...attributes: string[]) {
+    for (const attr of attributes) {
+        const result = compare(obj1, obj2, attr);
+        if (!result || result[0] !== result[1]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 export function search(obj: ObjectMap<string>, value: string | StringMap) {
@@ -264,28 +276,6 @@ export function search(obj: ObjectMap<string>, value: string | StringMap) {
     return result;
 }
 
-export function indexOf(value: string, ...terms: string[]) {
-    if (hasValue(value)) {
-        for (const term of terms) {
-            const index = value.indexOf(term);
-            if (index !== -1) {
-                return index;
-            }
-        }
-    }
-    return -1;
-}
-
-export function same(obj1: {}, obj2: {}, ...attributes: string[]) {
-    for (const attr of attributes) {
-        const result = compare(obj1, obj2, attr);
-        if (!result || result[0] !== result[1]) {
-            return false;
-        }
-    }
-    return true;
-}
-
 export function compare(obj1: {}, obj2: {}, attr: string) {
     const namespaces = attr.split('.');
     let current1: any = obj1;
@@ -311,16 +301,6 @@ export function compare(obj1: {}, obj2: {}, attr: string) {
     else {
         return [current1, current2];
     }
-}
-
-export function parseUnit(value: string) {
-    if (hasValue(value)) {
-        const match = value.match(/(?:"|>)([0-9]+)(?:(px|pt|em|dp|sp))(?:"|<)/);
-        if (match != null) {
-            return parseFloat(match[1]);
-        }
-    }
-    return 0;
 }
 
 export function calculateBias(start: number, end: number) {

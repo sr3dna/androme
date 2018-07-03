@@ -129,6 +129,23 @@ export interface ResourceMap {
     FONTS: Map<string, {}>;
     COLORS: Map<string, string>;
     STYLES: Map<string, any>;
+    DIMENS: Map<string, string>;
     DRAWABLES: Map<string, string>;
     IMAGES: Map<string, {}>;
+}
+
+export interface Color {
+    name: string;
+    hex: string;
+    rgb: {
+        r: number;
+        g: number;
+        b: number;
+    };
+    hsl: {
+        h: number;
+        s: number;
+        l: number;
+    };
+    [key: string]: string | {};
 }

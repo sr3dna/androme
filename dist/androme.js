@@ -1,4 +1,4 @@
-/* androme 1.7.18
+/* androme 1.7.19
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -78,54 +78,11 @@
         }
         return value;
     }
-    function removePlaceholders(value, extension = true) {
-        value = value.replace(/{[<:@&>]{1}[0-9]+}/g, '');
-        if (extension) {
-            value = value.replace(/{!.*?}/g, '');
-        }
-        return value;
+    function averageInt(values) {
+        return Math.floor(values.reduce((a, b) => a + b) / values.length);
     }
-    function indentLines(value) {
-        return value.split('\n').map(line => `>>>>${line}`).join('\n');
-    }
-    function convertAlpha(value) {
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        let result = '';
-        while (value >= alphabet.length) {
-            const base = Math.floor(value / alphabet.length);
-            if (base > 1 && base <= alphabet.length) {
-                result += alphabet.charAt(base - 1);
-                value -= base * alphabet.length;
-            }
-            else if (base > alphabet.length) {
-                result += convertAlpha(base * alphabet.length);
-                value -= base * alphabet.length;
-            }
-            const index = value % alphabet.length;
-            result += alphabet.charAt(index);
-            value -= index + alphabet.length;
-        }
-        result = alphabet.charAt(value) + result;
-        return result;
-    }
-    function convertRoman(value) {
-        let result = '';
-        const digits = value.toString().split('');
-        const numerals = ['', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
-            '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
-            '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
-        let i = 3;
-        while (i--) {
-            result = (numerals[parseInt(digits.pop()) + (i * 10)] || '') + result;
-        }
-        return 'M'.repeat(parseInt(digits.join(''))) + result;
-    }
-    function padLeft(n, value = '\t') {
-        return value.repeat(n);
-    }
-    function formatPX(value) {
-        value = parseFloat(value);
-        return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
+    function convertInt(value) {
+        return parseInt(value) || 0;
     }
     function convertPX(value) {
         if (hasValue(value)) {
@@ -160,14 +117,50 @@
         }
         return '0dp';
     }
-    function replaceDP(xml, dpi = 160, font = false) {
-        return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, font) + capture[2]);
+    function convertAlpha(value) {
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let result = '';
+        while (value >= alphabet.length) {
+            const base = Math.floor(value / alphabet.length);
+            if (base > 1 && base <= alphabet.length) {
+                result += alphabet.charAt(base - 1);
+                value -= base * alphabet.length;
+            }
+            else if (base > alphabet.length) {
+                result += convertAlpha(base * alphabet.length);
+                value -= base * alphabet.length;
+            }
+            const index = value % alphabet.length;
+            result += alphabet.charAt(index);
+            value -= index + alphabet.length;
+        }
+        result = alphabet.charAt(value) + result;
+        return result;
     }
-    function convertInt(value) {
-        return parseInt(value) || 0;
+    function convertRoman(value) {
+        let result = '';
+        const digits = value.toString().split('');
+        const numerals = ['', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
+            '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
+            '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+        let i = 3;
+        while (i--) {
+            result = (numerals[parseInt(digits.pop()) + (i * 10)] || '') + result;
+        }
+        return 'M'.repeat(parseInt(digits.join(''))) + result;
     }
-    function averageInt(values) {
-        return Math.floor(values.reduce((a, b) => a + b) / values.length);
+    function convertEnum(base, derived, value) {
+        for (const key of Object.keys(base)) {
+            const index = base[key];
+            if (value === index) {
+                return derived[key];
+            }
+        }
+        return '';
+    }
+    function formatPX(value) {
+        value = parseFloat(value);
+        return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
     }
     function isNumber(value) {
         return /^[0-9]+\.?[0-9]*$/.test(value.toString().trim());
@@ -175,16 +168,7 @@
     function isPercent(value) {
         return /^[0-9]+%$/.test(value);
     }
-    function trim(value, character) {
-        return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
-    }
-    function getFileName(value) {
-        return value.substring(value.lastIndexOf('/') + 1);
-    }
-    function getFileExt(value) {
-        return value.substring(value.lastIndexOf('.') + 1);
-    }
-    function resolveRelativePath(value) {
+    function resolvePath(value) {
         if (!/^\w+:\/\//.test(value)) {
             let pathname = location.pathname.split('/');
             pathname.pop();
@@ -213,6 +197,35 @@
             }
         }
         return value;
+    }
+    function trim(value, character) {
+        return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
+    }
+    function repeat(n, value = '\t') {
+        return value.repeat(n);
+    }
+    function indexOf(value, ...terms) {
+        if (hasValue(value)) {
+            for (const term of terms) {
+                const index = value.indexOf(term);
+                if (index !== -1) {
+                    return index;
+                }
+            }
+        }
+        return -1;
+    }
+    function lastIndexOf(value, character = '/') {
+        return value.substring(value.lastIndexOf(character) + 1);
+    }
+    function same(obj1, obj2, ...attributes) {
+        for (const attr of attributes) {
+            const result = compare(obj1, obj2, attr);
+            if (!result || result[0] !== result[1]) {
+                return false;
+            }
+        }
+        return true;
     }
     function search(obj, value) {
         const result = [];
@@ -245,26 +258,6 @@
         }
         return result;
     }
-    function indexOf(value, ...terms) {
-        if (hasValue(value)) {
-            for (const term of terms) {
-                const index = value.indexOf(term);
-                if (index !== -1) {
-                    return index;
-                }
-            }
-        }
-        return -1;
-    }
-    function same(obj1, obj2, ...attributes) {
-        for (const attr of attributes) {
-            const result = compare(obj1, obj2, attr);
-            if (!result || result[0] !== result[1]) {
-                return false;
-            }
-        }
-        return true;
-    }
     function compare(obj1, obj2, attr) {
         const namespaces = attr.split('.');
         let current1 = obj1;
@@ -290,15 +283,6 @@
         else {
             return [current1, current2];
         }
-    }
-    function parseUnit(value) {
-        if (hasValue(value)) {
-            const match = value.match(/(?:"|>)([0-9]+)(?:(px|pt|em|dp|sp))(?:"|<)/);
-            if (match != null) {
-                return parseFloat(match[1]);
-            }
-        }
-        return 0;
     }
     function calculateBias(start, end) {
         return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(2));
@@ -416,131 +400,273 @@
     }
     NodeList.currentId = 0;
 
-    var VIEW_STANDARD;
-    (function (VIEW_STANDARD) {
-        VIEW_STANDARD[VIEW_STANDARD["FRAME"] = 1] = "FRAME";
-        VIEW_STANDARD[VIEW_STANDARD["LINEAR"] = 2] = "LINEAR";
-        VIEW_STANDARD[VIEW_STANDARD["CONSTRAINT"] = 3] = "CONSTRAINT";
-        VIEW_STANDARD[VIEW_STANDARD["GUIDELINE"] = 4] = "GUIDELINE";
-        VIEW_STANDARD[VIEW_STANDARD["RELATIVE"] = 5] = "RELATIVE";
-        VIEW_STANDARD[VIEW_STANDARD["GRID"] = 6] = "GRID";
-        VIEW_STANDARD[VIEW_STANDARD["SCROLL_VERTICAL"] = 7] = "SCROLL_VERTICAL";
-        VIEW_STANDARD[VIEW_STANDARD["SCROLL_HORIZONTAL"] = 8] = "SCROLL_HORIZONTAL";
-        VIEW_STANDARD[VIEW_STANDARD["SCROLL_NESTED"] = 9] = "SCROLL_NESTED";
-        VIEW_STANDARD[VIEW_STANDARD["RADIO_GROUP"] = 10] = "RADIO_GROUP";
-        VIEW_STANDARD[VIEW_STANDARD["TEXT"] = 11] = "TEXT";
-        VIEW_STANDARD[VIEW_STANDARD["EDIT"] = 12] = "EDIT";
-        VIEW_STANDARD[VIEW_STANDARD["IMAGE"] = 13] = "IMAGE";
-        VIEW_STANDARD[VIEW_STANDARD["SELECT"] = 14] = "SELECT";
-        VIEW_STANDARD[VIEW_STANDARD["RANGE"] = 15] = "RANGE";
-        VIEW_STANDARD[VIEW_STANDARD["CHECKBOX"] = 16] = "CHECKBOX";
-        VIEW_STANDARD[VIEW_STANDARD["RADIO"] = 17] = "RADIO";
-        VIEW_STANDARD[VIEW_STANDARD["BUTTON"] = 18] = "BUTTON";
-        VIEW_STANDARD[VIEW_STANDARD["VIEW"] = 19] = "VIEW";
-        VIEW_STANDARD[VIEW_STANDARD["SPACE"] = 20] = "SPACE";
-    })(VIEW_STANDARD || (VIEW_STANDARD = {}));
-    var VIEW_RESOURCE;
-    (function (VIEW_RESOURCE) {
-        VIEW_RESOURCE[VIEW_RESOURCE["BOX_STYLE"] = 2] = "BOX_STYLE";
-        VIEW_RESOURCE[VIEW_RESOURCE["BOX_SPACING"] = 4] = "BOX_SPACING";
-        VIEW_RESOURCE[VIEW_RESOURCE["FONT_STYLE"] = 8] = "FONT_STYLE";
-        VIEW_RESOURCE[VIEW_RESOURCE["VALUE_STRING"] = 16] = "VALUE_STRING";
-        VIEW_RESOURCE[VIEW_RESOURCE["OPTION_ARRAY"] = 32] = "OPTION_ARRAY";
-        VIEW_RESOURCE[VIEW_RESOURCE["IMAGE_SOURCE"] = 64] = "IMAGE_SOURCE";
-        VIEW_RESOURCE[VIEW_RESOURCE["ALL"] = 126] = "ALL";
-    })(VIEW_RESOURCE || (VIEW_RESOURCE = {}));
-    var BOX_STANDARD;
-    (function (BOX_STANDARD) {
-        BOX_STANDARD[BOX_STANDARD["MARGIN_TOP"] = 2] = "MARGIN_TOP";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_RIGHT"] = 4] = "MARGIN_RIGHT";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_BOTTOM"] = 8] = "MARGIN_BOTTOM";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_LEFT"] = 16] = "MARGIN_LEFT";
-        BOX_STANDARD[BOX_STANDARD["PADDING_TOP"] = 32] = "PADDING_TOP";
-        BOX_STANDARD[BOX_STANDARD["PADDING_RIGHT"] = 64] = "PADDING_RIGHT";
-        BOX_STANDARD[BOX_STANDARD["PADDING_BOTTOM"] = 128] = "PADDING_BOTTOM";
-        BOX_STANDARD[BOX_STANDARD["PADDING_LEFT"] = 256] = "PADDING_LEFT";
-    })(BOX_STANDARD || (BOX_STANDARD = {}));
-    const MAPPING_CHROME = {
-        'PLAINTEXT': VIEW_STANDARD.TEXT,
-        'HR': VIEW_STANDARD.VIEW,
-        'IMG': VIEW_STANDARD.IMAGE,
-        'SELECT': VIEW_STANDARD.SELECT,
-        'RANGE': VIEW_STANDARD.RANGE,
-        'TEXT': VIEW_STANDARD.EDIT,
-        'PASSWORD': VIEW_STANDARD.EDIT,
-        'NUMBER': VIEW_STANDARD.EDIT,
-        'EMAIL': VIEW_STANDARD.EDIT,
-        'SEARCH': VIEW_STANDARD.EDIT,
-        'URL': VIEW_STANDARD.EDIT,
-        'CHECKBOX': VIEW_STANDARD.CHECKBOX,
-        'RADIO': VIEW_STANDARD.RADIO,
-        'BUTTON': VIEW_STANDARD.BUTTON,
-        'SUBMIT': VIEW_STANDARD.BUTTON,
-        'RESET': VIEW_STANDARD.BUTTON,
-        'TEXTAREA': VIEW_STANDARD.EDIT
+    (function (BUILD_ANDROID) {
+        BUILD_ANDROID[BUILD_ANDROID["P"] = 28] = "P";
+        BUILD_ANDROID[BUILD_ANDROID["OREO_1"] = 27] = "OREO_1";
+        BUILD_ANDROID[BUILD_ANDROID["OREO"] = 26] = "OREO";
+        BUILD_ANDROID[BUILD_ANDROID["NOUGAT_1"] = 25] = "NOUGAT_1";
+        BUILD_ANDROID[BUILD_ANDROID["NOUGAT"] = 24] = "NOUGAT";
+        BUILD_ANDROID[BUILD_ANDROID["MARSHMALLOW"] = 23] = "MARSHMALLOW";
+        BUILD_ANDROID[BUILD_ANDROID["LOLLIPOP_1"] = 22] = "LOLLIPOP_1";
+        BUILD_ANDROID[BUILD_ANDROID["LOLLIPOP"] = 21] = "LOLLIPOP";
+        BUILD_ANDROID[BUILD_ANDROID["KITKAT_1"] = 20] = "KITKAT_1";
+        BUILD_ANDROID[BUILD_ANDROID["KITKAT"] = 19] = "KITKAT";
+        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN_2"] = 18] = "JELLYBEAN_2";
+        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN_1"] = 17] = "JELLYBEAN_1";
+        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN"] = 16] = "JELLYBEAN";
+        BUILD_ANDROID[BUILD_ANDROID["ICE_CREAM_SANDWICH_1"] = 15] = "ICE_CREAM_SANDWICH_1";
+        BUILD_ANDROID[BUILD_ANDROID["ICE_CREAM_SANDWICH"] = 14] = "ICE_CREAM_SANDWICH";
+        BUILD_ANDROID[BUILD_ANDROID["ALL"] = 0] = "ALL";
+        BUILD_ANDROID[BUILD_ANDROID["LATEST"] = 28] = "LATEST";
+    })(exports.build || (exports.build = {}));
+    (function (DENSITY_ANDROID) {
+        DENSITY_ANDROID[DENSITY_ANDROID["LDPI"] = 120] = "LDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["MDPI"] = 160] = "MDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["HDPI"] = 240] = "HDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["XHDPI"] = 320] = "XHDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["XXHDPI"] = 480] = "XXHDPI";
+        DENSITY_ANDROID[DENSITY_ANDROID["XXXHDPI"] = 640] = "XXXHDPI";
+    })(exports.density || (exports.density = {}));
+    const VIEW_ANDROID = {
+        FRAME: 'FrameLayout',
+        LINEAR: 'LinearLayout',
+        CONSTRAINT: 'android.support.constraint.ConstraintLayout',
+        GUIDELINE: 'android.support.constraint.Guideline',
+        RELATIVE: 'RelativeLayout',
+        GRID: 'GridLayout',
+        SCROLL_VERTICAL: 'ScrollView',
+        SCROLL_HORIZONTAL: 'HorizontalScrollView',
+        SCROLL_NESTED: 'NestedScrollView',
+        RADIO_GROUP: 'RadioGroup',
+        TEXT: 'TextView',
+        EDIT: 'EditText',
+        IMAGE: 'ImageView',
+        SELECT: 'Spinner',
+        RANGE: 'SeekBar',
+        CHECKBOX: 'CheckBox',
+        RADIO: 'RadioButton',
+        BUTTON: 'Button',
+        VIEW: 'View',
+        SPACE: 'Space'
     };
-    const BLOCK_CHROME = [
-        'ADDRESS',
-        'ARTICLE',
-        'ASIDE',
-        'BLOCKQUOTE',
-        'CANVAS',
-        'DD',
-        'DIV',
-        'DL',
-        'DT',
-        'FIELDSET',
-        'FIGCAPTION',
-        'FIGURE',
-        'FOOTER',
-        'FORM',
-        'H1',
-        'H2',
-        'H3',
-        'H4',
-        'H5',
-        'H6',
-        'HEADER',
-        'LI',
-        'MAIN',
-        'NAV',
-        'OL',
-        'OUTPUT',
-        'P',
-        'PRE',
-        'SECTION',
-        'TABLE',
-        'TFOOT',
-        'UL',
-        'VIDEO'
+    const BOX_ANDROID = {
+        MARGIN: 'layout_margin',
+        MARGIN_VERTICAL: 'layout_marginVertical',
+        MARGIN_HORIZONTAL: 'layout_marginHorizontal',
+        MARGIN_TOP: 'layout_marginTop',
+        MARGIN_RIGHT: 'layout_marginRight',
+        MARGIN_BOTTOM: 'layout_marginBottom',
+        MARGIN_LEFT: 'layout_marginLeft',
+        PADDING: 'padding',
+        PADDING_VERTICAL: 'paddingVertical',
+        PADDING_HORIZONTAL: 'paddingHorizontal',
+        PADDING_TOP: 'paddingTop',
+        PADDING_RIGHT: 'paddingRight',
+        PADDING_BOTTOM: 'paddingBottom',
+        PADDING_LEFT: 'paddingLeft'
+    };
+    const FIXED_ANDROID = [
+        VIEW_ANDROID.EDIT,
+        VIEW_ANDROID.SELECT,
+        VIEW_ANDROID.CHECKBOX,
+        VIEW_ANDROID.RADIO,
+        VIEW_ANDROID.BUTTON,
+        VIEW_ANDROID.IMAGE
     ];
-    const INLINE_CHROME = [
-        'STRONG',
-        'B',
-        'EM',
-        'CITE',
-        'DFN',
-        'I',
-        'BIG',
-        'SMALL',
-        'FONT',
-        'BLOCKQUOTE',
-        'TT',
-        'A',
-        'U',
-        'SUP',
-        'SUB',
-        'STRIKE',
-        'H1',
-        'H2',
-        'H3',
-        'H4',
-        'H5',
-        'H6',
-        'DEL',
-        'LABEL',
-        'PLAINTEXT'
-    ];
+    const XMLNS_ANDROID = {
+        'android': 'xmlns:android="http://schemas.android.com/apk/res/android"',
+        'app': 'xmlns:app="http://schemas.android.com/apk/res-auto"'
+    };
+    const FONT_ANDROID = {
+        'sans-serif': exports.build.ICE_CREAM_SANDWICH,
+        'sans-serif-thin': exports.build.JELLYBEAN,
+        'sans-serif-light': exports.build.JELLYBEAN,
+        'sans-serif-condensed': exports.build.JELLYBEAN,
+        'sans-serif-condensed-light': exports.build.JELLYBEAN,
+        'sans-serif-medium': exports.build.LOLLIPOP,
+        'sans-serif-black': exports.build.LOLLIPOP,
+        'sans-serif-smallcaps': exports.build.LOLLIPOP,
+        'serif-monospace': exports.build.LOLLIPOP,
+        'serif': exports.build.LOLLIPOP,
+        'casual': exports.build.LOLLIPOP,
+        'cursive': exports.build.LOLLIPOP,
+        'monospace': exports.build.LOLLIPOP,
+        'sans-serif-condensed-medium': exports.build.OREO
+    };
+    const FONTALIAS_ANDROID = {
+        'arial': 'sans-serif',
+        'helvetica': 'sans-serif',
+        'tahoma': 'sans-serif',
+        'verdana': 'sans-serif',
+        'times': 'serif',
+        'times new roman': 'serif',
+        'palatino': 'serif',
+        'georgia': 'serif',
+        'baskerville': 'serif',
+        'goudy': 'serif',
+        'fantasy': 'serif',
+        'itc stone serif': 'serif',
+        'sans-serif-monospace': 'monospace',
+        'monaco': 'monospace',
+        'courier': 'serif-monospace',
+        'courier new': 'serif-monospace'
+    };
+    const FONTWEIGHT_ANDROID = {
+        '100': 'thin',
+        '200': 'extra_light',
+        '300': 'light',
+        '400': 'normal',
+        '500': 'medium',
+        '600': 'semi_bold',
+        '700': 'bold',
+        '800': 'extra_bold',
+        '900': 'black'
+    };
+
+    const SETTINGS = {
+        builtInExtensions: [
+            'androme.external',
+            'androme.list',
+            'androme.table',
+            'androme.grid',
+            'androme.widget'
+        ],
+        targetAPI: exports.build.OREO,
+        density: exports.density.MDPI,
+        useConstraintLayout: true,
+        useConstraintGuideline: true,
+        useUnitDP: true,
+        useFontAlias: true,
+        supportRTL: true,
+        dimensResourceValue: true,
+        numberResourceValue: false,
+        alwaysReevaluateResources: false,
+        excludeTextColor: ['#000000'],
+        excludeBackgroundColor: ['#FFFFFF'],
+        horizontalPerspective: true,
+        whitespaceHorizontalOffset: 4,
+        whitespaceVerticalOffset: 14,
+        chainPackedHorizontalOffset: 4,
+        chainPackedVerticalOffset: 14,
+        showAttributes: true,
+        autoCloseOnWrite: true,
+        outputDirectory: 'app/src/main',
+        outputActivityMainFileName: 'activity_main.xml',
+        outputArchiveFileType: 'zip',
+        outputMaxProcessingTime: 30
+    };
+
+    function removePlaceholders(value, extension = true) {
+        value = value.replace(/{[<:@&>]{1}[0-9]+}/g, '');
+        if (extension) {
+            value = value.replace(/{!.*?}/g, '');
+        }
+        return value;
+    }
+    function indentLines(value) {
+        return value.split('\n').map(line => `>>>>${line}`).join('\n');
+    }
+    function replaceDP(xml, dpi = 160, font = false) {
+        return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, font) + capture[2]);
+    }
+    function formatDimen(tagName, attr, size) {
+        return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()}-${attr}-${size}}` : size);
+    }
+    function getTemplateLevel(data, ...levels) {
+        let current = data;
+        for (const level of levels) {
+            const [index, array = '0'] = level.split('-');
+            current = current[index][array];
+        }
+        return current;
+    }
+    function parseTemplate(template) {
+        const result = {};
+        let pattern = null;
+        let match = false;
+        let section = 0;
+        let characters = template.length;
+        do {
+            if (match) {
+                const segment = match[0].replace(new RegExp(match[1], 'g'), '');
+                for (const index in result) {
+                    result[index] = result[index].replace(new RegExp(match[0], 'g'), `{%${match[2]}}`);
+                }
+                result[match[2]] = segment;
+                characters -= match[0].length;
+            }
+            if (match == null || characters === 0) {
+                template = result[section++];
+                if (!hasValue(template)) {
+                    break;
+                }
+                characters = template.length;
+                match = null;
+            }
+            if (!match) {
+                pattern = /(!([0-9]+)\n?)[\w\W]*\1/g;
+            }
+            if (pattern != null) {
+                match = pattern.exec(template);
+            }
+            else {
+                break;
+            }
+        } while (true);
+        return result;
+    }
+    function insertTemplateData(template, data, index, include, exclude) {
+        let output = (index != null ? template[index] : '');
+        if (data['#include'] != null) {
+            include = data['#include'];
+            delete data['#include'];
+        }
+        if (data['#exclude'] != null) {
+            exclude = data['#exclude'];
+            delete data['#exclude'];
+        }
+        for (const i in data) {
+            let value = '';
+            if (data[i] === false) {
+                output = output.replace(`{%${i}}`, '');
+                continue;
+            }
+            else if (Array.isArray(data[i])) {
+                for (const j in data[i]) {
+                    value += insertTemplateData(template, data[i][j], i, include, exclude);
+                }
+            }
+            else {
+                value = data[i];
+            }
+            if (hasValue(value)) {
+                output = (index != null ? output.replace(new RegExp(`{[%@&]*${i}}`), value) : value.trim());
+            }
+            else if (new RegExp(`{%${i}}`).test(output) || value === false) {
+                output = output.replace(`{%${i}}`, '');
+            }
+            else if (new RegExp(`{&${i}}`).test(output)) {
+                output = '';
+            }
+            const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
+            let match;
+            while ((match = pattern.exec(output)) != null) {
+                if (include && include[match[1]]) {
+                    const attribute = `{#${match[1]}=${match[2]}}`;
+                    if (data[match[2]] != null) {
+                        output = output.replace(attribute, data[match[2]]);
+                    }
+                    else {
+                        output = output.replace(attribute, match[2]);
+                    }
+                }
+                else if (exclude && exclude[match[1]]) {
+                    output = output.replace(match[0], '');
+                }
+            }
+        }
+        return output.replace(/\s+[\w:]+="{@\w+}"/g, '');
+    }
 
     const X11_CSS3 = {
         'Pink': { 'hex': '#FFC0CB' },
@@ -904,154 +1030,137 @@
         return false;
     }
 
-    (function (BUILD_ANDROID) {
-        BUILD_ANDROID[BUILD_ANDROID["P"] = 28] = "P";
-        BUILD_ANDROID[BUILD_ANDROID["OREO_1"] = 27] = "OREO_1";
-        BUILD_ANDROID[BUILD_ANDROID["OREO"] = 26] = "OREO";
-        BUILD_ANDROID[BUILD_ANDROID["NOUGAT_1"] = 25] = "NOUGAT_1";
-        BUILD_ANDROID[BUILD_ANDROID["NOUGAT"] = 24] = "NOUGAT";
-        BUILD_ANDROID[BUILD_ANDROID["MARSHMALLOW"] = 23] = "MARSHMALLOW";
-        BUILD_ANDROID[BUILD_ANDROID["LOLLIPOP_1"] = 22] = "LOLLIPOP_1";
-        BUILD_ANDROID[BUILD_ANDROID["LOLLIPOP"] = 21] = "LOLLIPOP";
-        BUILD_ANDROID[BUILD_ANDROID["KITKAT_1"] = 20] = "KITKAT_1";
-        BUILD_ANDROID[BUILD_ANDROID["KITKAT"] = 19] = "KITKAT";
-        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN_2"] = 18] = "JELLYBEAN_2";
-        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN_1"] = 17] = "JELLYBEAN_1";
-        BUILD_ANDROID[BUILD_ANDROID["JELLYBEAN"] = 16] = "JELLYBEAN";
-        BUILD_ANDROID[BUILD_ANDROID["ICE_CREAM_SANDWICH_1"] = 15] = "ICE_CREAM_SANDWICH_1";
-        BUILD_ANDROID[BUILD_ANDROID["ICE_CREAM_SANDWICH"] = 14] = "ICE_CREAM_SANDWICH";
-        BUILD_ANDROID[BUILD_ANDROID["ALL"] = 0] = "ALL";
-        BUILD_ANDROID[BUILD_ANDROID["LATEST"] = 28] = "LATEST";
-    })(exports.build || (exports.build = {}));
-    (function (DENSITY_ANDROID) {
-        DENSITY_ANDROID[DENSITY_ANDROID["LDPI"] = 120] = "LDPI";
-        DENSITY_ANDROID[DENSITY_ANDROID["MDPI"] = 160] = "MDPI";
-        DENSITY_ANDROID[DENSITY_ANDROID["HDPI"] = 240] = "HDPI";
-        DENSITY_ANDROID[DENSITY_ANDROID["XHDPI"] = 320] = "XHDPI";
-        DENSITY_ANDROID[DENSITY_ANDROID["XXHDPI"] = 480] = "XXHDPI";
-        DENSITY_ANDROID[DENSITY_ANDROID["XXXHDPI"] = 640] = "XXXHDPI";
-    })(exports.density || (exports.density = {}));
-    const VIEW_ANDROID = {
-        FRAME: 'FrameLayout',
-        LINEAR: 'LinearLayout',
-        CONSTRAINT: 'android.support.constraint.ConstraintLayout',
-        GUIDELINE: 'android.support.constraint.Guideline',
-        RELATIVE: 'RelativeLayout',
-        GRID: 'GridLayout',
-        SCROLL_VERTICAL: 'ScrollView',
-        SCROLL_HORIZONTAL: 'HorizontalScrollView',
-        SCROLL_NESTED: 'NestedScrollView',
-        RADIO_GROUP: 'RadioGroup',
-        TEXT: 'TextView',
-        EDIT: 'EditText',
-        IMAGE: 'ImageView',
-        SELECT: 'Spinner',
-        RANGE: 'SeekBar',
-        CHECKBOX: 'CheckBox',
-        RADIO: 'RadioButton',
-        BUTTON: 'Button',
-        VIEW: 'View',
-        SPACE: 'Space'
+    var VIEW_STANDARD;
+    (function (VIEW_STANDARD) {
+        VIEW_STANDARD[VIEW_STANDARD["FRAME"] = 1] = "FRAME";
+        VIEW_STANDARD[VIEW_STANDARD["LINEAR"] = 2] = "LINEAR";
+        VIEW_STANDARD[VIEW_STANDARD["CONSTRAINT"] = 3] = "CONSTRAINT";
+        VIEW_STANDARD[VIEW_STANDARD["GUIDELINE"] = 4] = "GUIDELINE";
+        VIEW_STANDARD[VIEW_STANDARD["RELATIVE"] = 5] = "RELATIVE";
+        VIEW_STANDARD[VIEW_STANDARD["GRID"] = 6] = "GRID";
+        VIEW_STANDARD[VIEW_STANDARD["SCROLL_VERTICAL"] = 7] = "SCROLL_VERTICAL";
+        VIEW_STANDARD[VIEW_STANDARD["SCROLL_HORIZONTAL"] = 8] = "SCROLL_HORIZONTAL";
+        VIEW_STANDARD[VIEW_STANDARD["SCROLL_NESTED"] = 9] = "SCROLL_NESTED";
+        VIEW_STANDARD[VIEW_STANDARD["RADIO_GROUP"] = 10] = "RADIO_GROUP";
+        VIEW_STANDARD[VIEW_STANDARD["TEXT"] = 11] = "TEXT";
+        VIEW_STANDARD[VIEW_STANDARD["EDIT"] = 12] = "EDIT";
+        VIEW_STANDARD[VIEW_STANDARD["IMAGE"] = 13] = "IMAGE";
+        VIEW_STANDARD[VIEW_STANDARD["SELECT"] = 14] = "SELECT";
+        VIEW_STANDARD[VIEW_STANDARD["RANGE"] = 15] = "RANGE";
+        VIEW_STANDARD[VIEW_STANDARD["CHECKBOX"] = 16] = "CHECKBOX";
+        VIEW_STANDARD[VIEW_STANDARD["RADIO"] = 17] = "RADIO";
+        VIEW_STANDARD[VIEW_STANDARD["BUTTON"] = 18] = "BUTTON";
+        VIEW_STANDARD[VIEW_STANDARD["VIEW"] = 19] = "VIEW";
+        VIEW_STANDARD[VIEW_STANDARD["SPACE"] = 20] = "SPACE";
+    })(VIEW_STANDARD || (VIEW_STANDARD = {}));
+    var VIEW_RESOURCE;
+    (function (VIEW_RESOURCE) {
+        VIEW_RESOURCE[VIEW_RESOURCE["BOX_STYLE"] = 2] = "BOX_STYLE";
+        VIEW_RESOURCE[VIEW_RESOURCE["BOX_SPACING"] = 4] = "BOX_SPACING";
+        VIEW_RESOURCE[VIEW_RESOURCE["FONT_STYLE"] = 8] = "FONT_STYLE";
+        VIEW_RESOURCE[VIEW_RESOURCE["VALUE_STRING"] = 16] = "VALUE_STRING";
+        VIEW_RESOURCE[VIEW_RESOURCE["OPTION_ARRAY"] = 32] = "OPTION_ARRAY";
+        VIEW_RESOURCE[VIEW_RESOURCE["IMAGE_SOURCE"] = 64] = "IMAGE_SOURCE";
+        VIEW_RESOURCE[VIEW_RESOURCE["ALL"] = 126] = "ALL";
+    })(VIEW_RESOURCE || (VIEW_RESOURCE = {}));
+    var BOX_STANDARD;
+    (function (BOX_STANDARD) {
+        BOX_STANDARD[BOX_STANDARD["MARGIN_TOP"] = 2] = "MARGIN_TOP";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_RIGHT"] = 4] = "MARGIN_RIGHT";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_BOTTOM"] = 8] = "MARGIN_BOTTOM";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_LEFT"] = 16] = "MARGIN_LEFT";
+        BOX_STANDARD[BOX_STANDARD["PADDING_TOP"] = 32] = "PADDING_TOP";
+        BOX_STANDARD[BOX_STANDARD["PADDING_RIGHT"] = 64] = "PADDING_RIGHT";
+        BOX_STANDARD[BOX_STANDARD["PADDING_BOTTOM"] = 128] = "PADDING_BOTTOM";
+        BOX_STANDARD[BOX_STANDARD["PADDING_LEFT"] = 256] = "PADDING_LEFT";
+        BOX_STANDARD[BOX_STANDARD["MARGIN"] = 30] = "MARGIN";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_VERTICAL"] = 10] = "MARGIN_VERTICAL";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_HORIZONTAL"] = 20] = "MARGIN_HORIZONTAL";
+        BOX_STANDARD[BOX_STANDARD["PADDING"] = 480] = "PADDING";
+        BOX_STANDARD[BOX_STANDARD["PADDING_VERTICAL"] = 160] = "PADDING_VERTICAL";
+        BOX_STANDARD[BOX_STANDARD["PADDING_HORIZONTAL"] = 320] = "PADDING_HORIZONTAL";
+    })(BOX_STANDARD || (BOX_STANDARD = {}));
+    const MAPPING_CHROME = {
+        'PLAINTEXT': VIEW_STANDARD.TEXT,
+        'HR': VIEW_STANDARD.VIEW,
+        'IMG': VIEW_STANDARD.IMAGE,
+        'SELECT': VIEW_STANDARD.SELECT,
+        'RANGE': VIEW_STANDARD.RANGE,
+        'TEXT': VIEW_STANDARD.EDIT,
+        'PASSWORD': VIEW_STANDARD.EDIT,
+        'NUMBER': VIEW_STANDARD.EDIT,
+        'EMAIL': VIEW_STANDARD.EDIT,
+        'SEARCH': VIEW_STANDARD.EDIT,
+        'URL': VIEW_STANDARD.EDIT,
+        'CHECKBOX': VIEW_STANDARD.CHECKBOX,
+        'RADIO': VIEW_STANDARD.RADIO,
+        'BUTTON': VIEW_STANDARD.BUTTON,
+        'SUBMIT': VIEW_STANDARD.BUTTON,
+        'RESET': VIEW_STANDARD.BUTTON,
+        'TEXTAREA': VIEW_STANDARD.EDIT
     };
-    const BOX_ANDROID = {
-        MARGIN_TOP: 'layout_marginTop',
-        MARGIN_RIGHT: 'layout_marginRight',
-        MARGIN_BOTTOM: 'layout_marginBottom',
-        MARGIN_LEFT: 'layout_marginLeft',
-        PADDING_TOP: 'paddingTop',
-        PADDING_RIGHT: 'paddingRight',
-        PADDING_BOTTOM: 'paddingBottom',
-        PADDING_LEFT: 'paddingLeft'
-    };
-    const FIXED_ANDROID = [
-        VIEW_ANDROID.EDIT,
-        VIEW_ANDROID.SELECT,
-        VIEW_ANDROID.CHECKBOX,
-        VIEW_ANDROID.RADIO,
-        VIEW_ANDROID.BUTTON,
-        VIEW_ANDROID.IMAGE
+    const BLOCK_CHROME = [
+        'ADDRESS',
+        'ARTICLE',
+        'ASIDE',
+        'BLOCKQUOTE',
+        'CANVAS',
+        'DD',
+        'DIV',
+        'DL',
+        'DT',
+        'FIELDSET',
+        'FIGCAPTION',
+        'FIGURE',
+        'FOOTER',
+        'FORM',
+        'H1',
+        'H2',
+        'H3',
+        'H4',
+        'H5',
+        'H6',
+        'HEADER',
+        'LI',
+        'MAIN',
+        'NAV',
+        'OL',
+        'OUTPUT',
+        'P',
+        'PRE',
+        'SECTION',
+        'TABLE',
+        'TFOOT',
+        'UL',
+        'VIDEO'
     ];
-    const XMLNS_ANDROID = {
-        'android': 'xmlns:android="http://schemas.android.com/apk/res/android"',
-        'app': 'xmlns:app="http://schemas.android.com/apk/res-auto"'
-    };
-    const FONT_ANDROID = {
-        'sans-serif': exports.build.ICE_CREAM_SANDWICH,
-        'sans-serif-thin': exports.build.JELLYBEAN,
-        'sans-serif-light': exports.build.JELLYBEAN,
-        'sans-serif-condensed': exports.build.JELLYBEAN,
-        'sans-serif-condensed-light': exports.build.JELLYBEAN,
-        'sans-serif-medium': exports.build.LOLLIPOP,
-        'sans-serif-black': exports.build.LOLLIPOP,
-        'sans-serif-smallcaps': exports.build.LOLLIPOP,
-        'serif-monospace': exports.build.LOLLIPOP,
-        'serif': exports.build.LOLLIPOP,
-        'casual': exports.build.LOLLIPOP,
-        'cursive': exports.build.LOLLIPOP,
-        'monospace': exports.build.LOLLIPOP,
-        'sans-serif-condensed-medium': exports.build.OREO
-    };
-    const FONTALIAS_ANDROID = {
-        'arial': 'sans-serif',
-        'helvetica': 'sans-serif',
-        'tahoma': 'sans-serif',
-        'verdana': 'sans-serif',
-        'times': 'serif',
-        'times new roman': 'serif',
-        'palatino': 'serif',
-        'georgia': 'serif',
-        'baskerville': 'serif',
-        'goudy': 'serif',
-        'fantasy': 'serif',
-        'itc stone serif': 'serif',
-        'sans-serif-monospace': 'monospace',
-        'monaco': 'monospace',
-        'courier': 'serif-monospace',
-        'courier new': 'serif-monospace'
-    };
-    const FONTWEIGHT_ANDROID = {
-        '100': 'thin',
-        '200': 'extra_light',
-        '300': 'light',
-        '400': 'normal',
-        '500': 'medium',
-        '600': 'semi_bold',
-        '700': 'bold',
-        '800': 'extra_bold',
-        '900': 'black'
-    };
-
-    const SETTINGS = {
-        builtInExtensions: [
-            'androme.external',
-            'androme.list',
-            'androme.table',
-            'androme.grid',
-            'androme.widget'
-        ],
-        targetAPI: exports.build.OREO,
-        density: exports.density.MDPI,
-        useConstraintLayout: true,
-        useConstraintGuideline: true,
-        useUnitDP: true,
-        useFontAlias: true,
-        supportRTL: true,
-        numberResourceValue: false,
-        alwaysReevaluateResources: false,
-        excludeTextColor: ['#000000'],
-        excludeBackgroundColor: ['#FFFFFF'],
-        horizontalPerspective: true,
-        whitespaceHorizontalOffset: 4,
-        whitespaceVerticalOffset: 14,
-        chainPackedHorizontalOffset: 4,
-        chainPackedVerticalOffset: 14,
-        showAttributes: true,
-        autoCloseOnWrite: true,
-        outputDirectory: 'app/src/main',
-        outputActivityMainFileName: 'activity_main.xml',
-        outputArchiveFileType: 'zip',
-        outputMaxProcessingTime: 30
-    };
+    const INLINE_CHROME = [
+        'STRONG',
+        'B',
+        'EM',
+        'CITE',
+        'DFN',
+        'I',
+        'BIG',
+        'SMALL',
+        'FONT',
+        'BLOCKQUOTE',
+        'TT',
+        'A',
+        'U',
+        'SUP',
+        'SUB',
+        'STRIKE',
+        'H1',
+        'H2',
+        'H3',
+        'H4',
+        'H5',
+        'H6',
+        'DEL',
+        'LABEL',
+        'PLAINTEXT'
+    ];
 
     class Application {
         constructor(TypeT, TypeU) {
@@ -1089,6 +1198,7 @@
             }
         }
         finalize() {
+            this.controllerHandler.setDimensions(this.viewData);
             this.resourceHandler.finalize(this.viewData);
             this.setAuxillaryViews();
             if (SETTINGS.showAttributes) {
@@ -1096,6 +1206,9 @@
             }
             this.layouts.forEach(layout => {
                 layout.content = removePlaceholders(layout.content);
+                if (SETTINGS.dimensResourceValue) {
+                    layout.content = this.controllerHandler.parseDimensions(layout.content);
+                }
                 if (SETTINGS.useUnitDP) {
                     layout.content = replaceDP(layout.content, SETTINGS.density);
                 }
@@ -1585,30 +1698,21 @@
             this.controllerHandler.setAttributes(this.viewData);
         }
         setAuxillaryViews() {
+            [...this.views, ...this.includes].forEach(view => view.content = this.controllerHandler.insertAuxillaryViews(view.content));
             this.cacheInternal.list.forEach(node => {
                 if (!node.visible && node.renderExtension != null) {
-                    const attr = `${node.renderExtension.name}:insert`;
-                    let output = node.options(attr);
+                    const insert = `${node.renderExtension.name}:insert`;
+                    let output = node.options(insert);
                     if (output) {
+                        output = this.controllerHandler.insertAuxillaryViews(output);
                         const children = this.insert[node.id];
                         if (children != null) {
                             output = output.replace(`{:${node.id}}`, children);
                         }
-                        output = this.controllerHandler.replaceAttributes(output, node);
-                        node.children.forEach(item => output = this.controllerHandler.replaceAttributes(output, item));
-                        node.options(attr, output);
-                    }
-                }
-            });
-            [...this.views, ...this.includes].forEach(view => view.content = this.controllerHandler.replaceAuxillaryViews(view.content));
-            this.cacheInternal.list.forEach(node => {
-                if (!node.visible && node.renderExtension != null) {
-                    const attr = `${node.renderExtension.name}:insert`;
-                    let output = node.options(attr);
-                    if (output) {
-                        output = this.controllerHandler.replaceAuxillaryViews(output);
+                        output = this.controllerHandler.insertAttributes(output, node);
                         output = indentLines(output.trim());
-                        node.options(attr, output);
+                        node.children.forEach(item => output = this.controllerHandler.insertAttributes(output, item));
+                        node.options(insert, output);
                     }
                 }
                 this.extensions.forEach(item => {
@@ -1708,85 +1812,8 @@
         get viewData() {
             return { cache: this.cacheInternal.list, views: this.views, includes: this.includes };
         }
-        get length() {
-            return this.views.length;
-        }
-    }
-
-    class Extension {
-        constructor(name, tagNames = [], options = {}) {
-            this.name = name;
-            this.options = options;
-            this.tagNames = [];
-            this.enabled = true;
-            this.dependences = [];
-            this.activityMain = false;
-            this.tagNames = tagNames.map(value => value.trim().toUpperCase());
-        }
-        is(node) {
-            return (this.tagNames.length === 0 || (this.tagNames.includes(node.tagName)));
-        }
-        require(value, init = false) {
-            this.dependences.push({ name: value, init });
-        }
-        included(element) {
-            if (element == null) {
-                element = this.element;
-            }
-            return (element != null && element.dataset && element.dataset.ext != null ? element.dataset.ext.split(',').map(value => value.trim()).includes(this.name) : false);
-        }
-        beforeInit(internal = false) {
-            if (!internal && this.included()) {
-                this.dependences.filter((item) => item.init).forEach((item) => {
-                    const extension = this.application.findExtension(item.name);
-                    if (extension != null) {
-                        extension.parent = this.parent;
-                        extension.node = this.node;
-                        extension.element = this.element;
-                        extension.beforeInit(true);
-                    }
-                });
-            }
-        }
-        init(element) {
-            return false;
-        }
-        afterInit(internal = false) {
-            if (!internal && this.included()) {
-                this.dependences.filter((item) => item.init).forEach((item) => {
-                    const extension = this.application.findExtension(item.name);
-                    if (extension != null) {
-                        extension.parent = this.parent;
-                        extension.node = this.node;
-                        extension.element = this.element;
-                        extension.afterInit(true);
-                    }
-                });
-            }
-        }
-        condition() {
-            if (this.node && this.node.element.dataset != null) {
-                if (!this.node.element.dataset.ext) {
-                    return (this.tagNames.length > 0);
-                }
-                else {
-                    const extensions = this.node.element.dataset.ext.split(',');
-                    return (this.tagNames.length === 0 && extensions.length > 1 ? false : this.included());
-                }
-            }
-            return false;
-        }
-        processNode(mapX, mapY) {
-            return ['', false, false];
-        }
-        processChild(mapX, mapY) {
-            return ['', false, this.application.elements.has(this.node.element)];
-        }
-        afterRender() {
-            return;
-        }
-        finalize() {
-            return;
+        get size() {
+            return this.views.length + this.includes.length;
         }
     }
 
@@ -1799,7 +1826,7 @@
             this.before = {};
             this.after = {};
         }
-        replaceAuxillaryViews(output) {
+        insertAuxillaryViews(output) {
             for (const id in this.before) {
                 output = output.replace(`{<${id}}`, this.before[id].join(''));
             }
@@ -1834,7 +1861,7 @@
             return (this.before[id] != null || this.after[id] != null);
         }
         getEnclosingTag(depth, tagName, id, xml = '', preXml = '', postXml = '') {
-            const indent = padLeft(Math.max(0, depth));
+            const indent = repeat(Math.max(0, depth));
             let output = preXml +
                 `{<${id}}`;
             if (hasValue(xml)) {
@@ -1850,6 +1877,400 @@
             return output;
         }
     }
+
+    class Resource {
+        constructor(file) {
+            this.file = file;
+        }
+        static addString(value, name = '') {
+            if (hasValue(value)) {
+                if (name === '') {
+                    name = value;
+                }
+                const num = isNumber(value);
+                if (SETTINGS.numberResourceValue || !num) {
+                    for (const key of Resource.STORED.STRINGS.keys()) {
+                        if (key === value) {
+                            return key;
+                        }
+                    }
+                    name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
+                    if (num || /^[0-9]/.test(value)) {
+                        name = `__${name}`;
+                    }
+                    else if (name === '') {
+                        name = `__symbol${Math.ceil(Math.random() * 100000)}`;
+                    }
+                    Resource.STORED.STRINGS.set(value, name);
+                }
+                return value;
+            }
+            return '';
+        }
+        static addImageSrcSet(element, prefix = '') {
+            const srcset = element.srcset.trim();
+            const images = {};
+            if (hasValue(srcset)) {
+                const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+                srcset.split(',').forEach((value) => {
+                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                    if (match != null) {
+                        if (match[2] == null) {
+                            match[2] = '1x';
+                        }
+                        const image = filePath + lastIndexOf(match[1]);
+                        switch (match[2]) {
+                            case '0.75x':
+                                images['ldpi'] = image;
+                                break;
+                            case '1x':
+                                images['mdpi'] = image;
+                                break;
+                            case '1.5x':
+                                images['hdpi'] = image;
+                                break;
+                            case '2x':
+                                images['xhdpi'] = image;
+                                break;
+                            case '3x':
+                                images['xxhdpi'] = image;
+                                break;
+                            case '4x':
+                                images['xxxhdpi'] = image;
+                                break;
+                        }
+                    }
+                });
+            }
+            if (images['mdpi'] == null) {
+                images['mdpi'] = element.src;
+            }
+            return Resource.addImage(images, prefix);
+        }
+        static addImage(images, prefix = '') {
+            let src = '';
+            if (images['mdpi'] != null && hasValue(images['mdpi'])) {
+                src = lastIndexOf(images['mdpi']);
+                const format = lastIndexOf(src, '.').toLowerCase();
+                src = src.replace(/.\w+$/, '').replace(/-/g, '_');
+                switch (format) {
+                    case 'bmp':
+                    case 'cur':
+                    case 'gif':
+                    case 'ico':
+                    case 'jpg':
+                    case 'png':
+                        src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
+                        break;
+                    default:
+                        src = '';
+                }
+            }
+            return src;
+        }
+        static addImageURL(value, prefix = '') {
+            const match = value.match(/^url\("(.*?)"\)$/);
+            if (match != null) {
+                return Resource.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
+            }
+            return '';
+        }
+        static addColor(value) {
+            value = value.toUpperCase().trim();
+            if (value !== '') {
+                let colorName = '';
+                if (!Resource.STORED.COLORS.has(value)) {
+                    const color = findNearestColor(value);
+                    if (color !== '') {
+                        color.name = cameltoLowerCase(color.name);
+                        if (value === color.hex) {
+                            colorName = color.name;
+                        }
+                        else {
+                            colorName = generateId('color', `${color.name}_1`);
+                        }
+                        Resource.STORED.COLORS.set(value, colorName);
+                    }
+                }
+                else {
+                    colorName = Resource.STORED.COLORS.get(value);
+                }
+                return colorName;
+            }
+            return '';
+        }
+        static insertStoredAsset(asset, name, value) {
+            const stored = Resource.STORED[asset];
+            if (stored != null) {
+                let storedName = '';
+                for (const [storedKey, storedValue] of stored.entries()) {
+                    if (JSON.stringify(value) === JSON.stringify(storedValue)) {
+                        storedName = storedKey;
+                        break;
+                    }
+                }
+                if (storedName === '') {
+                    if (isNumber(name)) {
+                        name = `__${name}`;
+                    }
+                    if (hasValue(value)) {
+                        let i = 0;
+                        do {
+                            storedName = name;
+                            if (i > 0) {
+                                storedName += `_${i}`;
+                            }
+                            if (!stored.has(storedName)) {
+                                stored.set(storedName, value);
+                            }
+                            i++;
+                        } while (stored.has(storedName) && stored.get(storedName) !== value);
+                    }
+                }
+                return storedName;
+            }
+            return '';
+        }
+        addFile(pathname, filename, content = '', uri = '') {
+            this.file.addFile(pathname, filename, content, uri);
+        }
+        reset() {
+            Resource.STORED.STRINGS = new Map();
+            Resource.STORED.COLORS = new Map();
+            Resource.STORED.IMAGES = new Map();
+            this.file.reset();
+        }
+        setBoxSpacing() {
+            this.cache.elements.forEach(node => {
+                if ((node.ignoreResource & VIEW_RESOURCE.BOX_SPACING) !== VIEW_RESOURCE.BOX_SPACING) {
+                    const element = node.element;
+                    const object = element;
+                    if (!hasValue(object.__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
+                        const result = getBoxSpacing(element);
+                        for (const i in result) {
+                            result[i] += 'px';
+                        }
+                        object.__boxSpacing = result;
+                    }
+                }
+            });
+        }
+        setBoxStyle() {
+            this.cache.elements.forEach(node => {
+                if ((node.ignoreResource & VIEW_RESOURCE.BOX_STYLE) !== VIEW_RESOURCE.BOX_STYLE) {
+                    const element = node.element;
+                    const object = element;
+                    if (!hasValue(object.__boxStyle) || SETTINGS.alwaysReevaluateResources) {
+                        const result = {
+                            borderTop: this.parseBorderStyle,
+                            borderRight: this.parseBorderStyle,
+                            borderBottom: this.parseBorderStyle,
+                            borderLeft: this.parseBorderStyle,
+                            borderRadius: this.parseBorderRadius,
+                            backgroundColor: parseRGBA,
+                            backgroundImage: Resource.addImageURL,
+                            backgroundSize: this.parseBoxDimensions
+                        };
+                        for (const i in result) {
+                            result[i] = result[i](node.css(i), node, i);
+                        }
+                        if (result.backgroundColor.length > 0) {
+                            if ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                                result.backgroundColor = [];
+                            }
+                            else {
+                                result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0]);
+                            }
+                        }
+                        const borderTop = JSON.stringify(result.borderTop);
+                        if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
+                            result.border = result.borderTop;
+                        }
+                        object.__boxStyle = result;
+                    }
+                }
+            });
+        }
+        setFontStyle() {
+            this.cache.list.forEach(node => {
+                if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.FONT_STYLE) !== VIEW_RESOURCE.FONT_STYLE) {
+                    const element = node.element;
+                    const object = element;
+                    if (!hasValue(object.__fontStyle) || SETTINGS.alwaysReevaluateResources) {
+                        if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
+                            return;
+                        }
+                        else {
+                            let color = parseRGBA(node.css('color'));
+                            if (color.length > 0) {
+                                if (SETTINGS.excludeTextColor.includes(color[0]) && color[1] !== node.styleMap.color) {
+                                    color = [];
+                                }
+                                else {
+                                    color[0] = Resource.addColor(color[0]);
+                                }
+                            }
+                            let backgroundColor = parseRGBA(node.css('backgroundColor'));
+                            if (backgroundColor.length > 0) {
+                                if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                                    backgroundColor = [];
+                                }
+                                else {
+                                    backgroundColor[0] = Resource.addColor(backgroundColor[0]);
+                                }
+                            }
+                            const result = {
+                                fontFamily: node.css('fontFamily'),
+                                fontStyle: node.css('fontStyle'),
+                                fontSize: node.css('fontSize'),
+                                fontWeight: node.css('fontWeight'),
+                                color: (color.length > 0 ? `@color/${color[0]}` : ''),
+                                backgroundColor: (backgroundColor.length > 0 ? `@color/${backgroundColor[0]}` : '')
+                            };
+                            object.__fontStyle = result;
+                        }
+                    }
+                }
+            });
+        }
+        setImageSource() {
+            this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
+                const element = node.element;
+                const object = element;
+                if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE) {
+                    if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
+                        const result = Resource.addImageSrcSet(element);
+                        object.__imageSource = result;
+                    }
+                }
+            });
+        }
+        setOptionArray() {
+            this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
+                if ((node.ignoreResource & VIEW_RESOURCE.OPTION_ARRAY) !== VIEW_RESOURCE.OPTION_ARRAY) {
+                    const element = node.element;
+                    const object = element;
+                    if (!hasValue(object.__optionArray) || SETTINGS.alwaysReevaluateResources) {
+                        const stringArray = [];
+                        let numberArray = [];
+                        for (let i = 0; i < element.children.length; i++) {
+                            const item = element.children[i];
+                            const value = item.text.trim();
+                            if (value !== '') {
+                                if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                                    numberArray.push(value);
+                                }
+                                else {
+                                    if (numberArray != null && numberArray.length > 0) {
+                                        i = -1;
+                                        numberArray = null;
+                                        continue;
+                                    }
+                                    const result = Resource.addString(value);
+                                    if (result !== '') {
+                                        stringArray.push(result);
+                                    }
+                                }
+                            }
+                        }
+                        object.__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
+                    }
+                }
+            });
+        }
+        setValueString() {
+            this.cache.list.forEach(node => {
+                if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.VALUE_STRING) !== VIEW_RESOURCE.VALUE_STRING) {
+                    const element = node.element;
+                    const object = element;
+                    if ((!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources)) {
+                        let name = '';
+                        let value = '';
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            if (element.type !== 'range') {
+                                value = element.value.trim();
+                            }
+                        }
+                        else if (element.nodeName === '#text') {
+                            value = (element.textContent ? element.textContent.trim() : '');
+                        }
+                        else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child) => (MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName))))))) {
+                            name = element.innerText.trim();
+                            value = element.innerHTML.trim();
+                        }
+                        if (hasValue(value)) {
+                            Resource.addString(value, name);
+                            object.__valueString = value;
+                        }
+                    }
+                }
+            });
+        }
+        borderVisible(border) {
+            return (border != null && !(border.style === 'none' || border.width === '0px'));
+        }
+        getBorderStyle(border) {
+            const result = { solid: `android:color="@color/${border.color}"` };
+            Object.assign(result, {
+                inset: result.solid,
+                outset: result.solid,
+                dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
+                dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
+            });
+            return result[border.style] || 'android:color="@android:color/black"';
+        }
+        parseBorderStyle(value, node, attribute) {
+            const style = node.css(`${attribute}Style`) || 'none';
+            let width = node.css(`${attribute}Width`) || '1px';
+            const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`)) : []);
+            if (color.length > 0) {
+                color[0] = Resource.addColor(color[0]);
+            }
+            if (style === 'inset' && width === '0px') {
+                width = '1px';
+            }
+            return { style, width, color: (color.length > 0 ? color[0] : '#000000') };
+        }
+        parseBorderRadius(value, node, attribute) {
+            const radiusTop = node.css('borderTopLeftRadius');
+            const radiusRight = node.css('borderTopRightRadius');
+            const radiusBottom = node.css('borderBottomLeftRadius');
+            const radiusLeft = node.css('borderBottomRightRadius');
+            if (radiusTop === radiusRight && radiusRight === radiusBottom && radiusBottom === radiusLeft) {
+                return (radiusTop === '' || radiusTop === '0px' ? [] : [radiusTop]);
+            }
+            else {
+                return [radiusTop, radiusRight, radiusBottom, radiusLeft];
+            }
+        }
+        parseBoxDimensions(value, node, attribute) {
+            const match = value.match(/^([0-9]+(?:px|pt|em)|auto)(?: ([0-9]+(?:px|pt|em)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
+            if (match != null) {
+                if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
+                    return [];
+                }
+                if (match[1] === 'auto' || match[2] === 'auto') {
+                    return [(match[1] === 'auto' ? '' : convertPX(match[1])), (match[2] === 'auto' ? '' : convertPX(match[2]))];
+                }
+                else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
+                    return [convertPX(match[1])];
+                }
+                else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
+                    return [convertPX(match[1]), convertPX(match[2])];
+                }
+                else {
+                    return [convertPX(match[1]), convertPX(match[2]), convertPX(match[3]), convertPX(match[4])];
+                }
+            }
+            return [];
+        }
+    }
+    Resource.STORED = {
+        STRINGS: new Map(),
+        COLORS: new Map(),
+        DIMENS: new Map(),
+        IMAGES: new Map()
+    };
 
     class Node {
         constructor(id, element, options) {
@@ -2241,19 +2662,6 @@
         }
     }
 
-    function parseRTL(value) {
-        if (SETTINGS.supportRTL && SETTINGS.targetAPI >= exports.build.JELLYBEAN_1) {
-            switch (value) {
-                case 'left':
-                    return 'start';
-                case 'right':
-                    return 'end';
-            }
-            value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
-        }
-        return value;
-    }
-
     const API_ANDROID = {
         [exports.build.OREO]: {
             android: ['fontWeight', 'layout_marginHorizontal', 'layout_marginVertical', 'paddingHorizontal', 'paddingVertical'],
@@ -2271,13 +2679,21 @@
                 'Button': {
                     android: {
                         textAllCaps: 'false',
-                        minWidth: '0dp',
-                        minHeight: '0dp'
+                        minWidth: '0px',
+                        minHeight: '0px'
                     }
                 }
             }
         }
     };
+
+    function parseRTL(value) {
+        if (SETTINGS.supportRTL && SETTINGS.targetAPI >= exports.build.JELLYBEAN_1) {
+            value = value.replace(/left/g, 'start').replace(/right/g, 'end');
+            value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
+        }
+        return value;
+    }
 
     class View extends Node {
         constructor(id, api, element, options) {
@@ -2352,15 +2768,22 @@
             }
         }
         modifyBox(area, offset) {
-            for (const key of Object.keys(BOX_STANDARD)) {
-                if ((area & BOX_STANDARD[key]) === BOX_STANDARD[key]) {
-                    const dimension = parseRTL(BOX_ANDROID[key]);
-                    const total = formatPX(offset + convertInt(this.android(dimension)));
-                    this.css(dimension, total);
-                    this.android(dimension, total);
-                }
+            const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
+            if (value !== '') {
+                const dimen = parseRTL(value);
+                const total = formatPX(offset + convertInt(this.android(dimen)));
+                this.css(dimen, total);
+                this.android(dimen, total);
+                this.setBounds(true);
             }
-            this.setBounds(true);
+        }
+        boxValue(area) {
+            const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
+            if (value !== '') {
+                const dimen = parseRTL(value);
+                return [dimen, this.android(dimen) || '0px'];
+            }
+            return ['', '0px'];
         }
         supported(obj, attr) {
             for (let i = this.api + 1; i < exports.build.LATEST; i++) {
@@ -2419,7 +2842,7 @@
             super.viewName = viewName || this.viewName;
             if (this.viewId == null) {
                 const element = this.element;
-                this.viewId = generateId('android', (element.id || element.name || `${getFileExt(this.viewName).toLowerCase()}_1`).replace(/[^\w]/g, '_'));
+                this.viewId = generateId('android', (element.id || element.name || `${lastIndexOf(this.viewName, '.').toLowerCase()}_1`).replace(/[^\w]/g, '_'));
                 this.android('id', this.stringId);
             }
         }
@@ -3667,7 +4090,7 @@
                             viewGroup.css('minHeight', node.styleMap.minHeight);
                             viewGroup.css('overflowY', node.styleMap.overflowY);
                     }
-                    const indent = padLeft(scrollDepth--);
+                    const indent = repeat(scrollDepth--);
                     preXml = indent + `<${scrollName}{@${viewGroup.id}}>\n` + preXml;
                     postXml += indent + `</${scrollName}>\n`;
                     if (current === node) {
@@ -3830,16 +4253,22 @@
             const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
             node.setViewId(viewName);
             if (hasValue(width)) {
+                if (SETTINGS.dimensResourceValue && !isNaN(parseInt(width))) {
+                    height = `{%${(node != null && node.hasElement ? node.tagName : viewName)}-width-${width}}`;
+                }
                 node.android('layout_width', width);
             }
             if (hasValue(height)) {
+                if (SETTINGS.dimensResourceValue && !isNaN(parseInt(height))) {
+                    height = `{%${(node != null && node.hasElement ? node.tagName : viewName).toLowerCase()}-height-${height}}`;
+                }
                 node.android('layout_height', height);
             }
             node.renderDepth = depth;
             node.apply(options);
             let output = this.getEnclosingTag((depth === 0 && minimal ? -1 : depth), viewName, node.id, (children ? `{:${node.id}}` : ''));
             if (SETTINGS.showAttributes && node.id === 0) {
-                const indent = padLeft(depth + 1);
+                const indent = repeat(depth + 1);
                 const attributes = node.combine().map(value => `\n${indent + value}`).join('');
                 output = output.replace(`{@${node.id}}`, attributes);
             }
@@ -3848,17 +4277,60 @@
         }
         setAttributes(data) {
             const cache = data.cache.filter(node => node.visible).map(node => {
-                node.setViewLayout();
                 return { pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) };
             });
             [...data.views, ...data.includes].forEach(view => {
                 cache.forEach((item) => view.content = view.content.replace(item.pattern, item.attributes));
-                view.content = view.content.replace(`{#0}`, this.getRootAttributes(view.content));
+                view.content = view.content.replace(`{#0}`, this.getRootNamespace(view.content));
             });
         }
-        replaceAttributes(output, node) {
-            node.setViewLayout();
+        insertAttributes(output, node) {
             return output.replace(`{@${node.id}}`, this.parseAttributes(node));
+        }
+        setDimensions(data) {
+            const groups = {};
+            data.cache.forEach(node => {
+                node.setViewLayout();
+                if (SETTINGS.dimensResourceValue && node.visible) {
+                    const tagName = node.tagName.toLowerCase();
+                    if (groups[tagName] == null) {
+                        groups[tagName] = {};
+                    }
+                    const group = groups[tagName];
+                    for (const key of Object.keys(BOX_STANDARD)) {
+                        const result = node.boxValue(parseInt(key));
+                        if (result[0] !== '' && result[1] !== '0px') {
+                            const name = `${BOX_STANDARD[key].toLowerCase()}-${result[0]}-${result[1]}`;
+                            this.addDimenGroup(group, node, name);
+                        }
+                    }
+                    ['layout_width', 'layout_height', 'minWidth', 'minHeight'].forEach((attr, index) => this.addDimenGroup(group, node, ['width', 'height', 'minwidth', 'minheight'][index], attr, node.android(attr)));
+                    ['layout_constraintWidth_min', 'layout_constraintHeight_min'].forEach((attr, index) => this.addDimenGroup(group, node, ['constraintwidth_min', 'constraintheight_min'][index], attr, node.app(attr)));
+                }
+            });
+            if (SETTINGS.dimensResourceValue) {
+                const resource = Resource.STORED.DIMENS;
+                for (const tagName in groups) {
+                    const group = groups[tagName];
+                    for (const name in group) {
+                        const [dimen, attr, value] = name.split('-');
+                        const key = this.getDimenKey(resource, `${tagName}_${parseRTL(dimen)}`, value);
+                        group[name].forEach(node => node[(attr.indexOf('constraint') !== -1 ? 'app' : 'android')](attr, `@dimen/${key}`));
+                        resource.set(key, value);
+                    }
+                }
+            }
+        }
+        parseDimensions(content) {
+            const resource = Resource.STORED.DIMENS;
+            const pattern = /\s+\w+:\w+="({%(\w+)-(\w+)-(\w+)})"/g;
+            let match;
+            while ((match = pattern.exec(content)) != null) {
+                const key = this.getDimenKey(resource, `${match[2]}_${parseRTL(match[3])}`, match[4]);
+                resource.set(key, match[4]);
+                content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
+            }
+            return content;
         }
         getViewName(value) {
             return View.getViewName(value);
@@ -3866,11 +4338,11 @@
         parseAttributes(node) {
             let output = '';
             const attributes = node.combine();
-            const indent = padLeft(node.renderDepth + 1);
+            const indent = repeat(node.renderDepth + 1);
             output = attributes.map((value) => `\n${indent + value}`).join('');
             return output;
         }
-        getRootAttributes(content) {
+        getRootNamespace(content) {
             let output = '';
             for (const namespace in XMLNS_ANDROID) {
                 if (new RegExp(`\\s+${namespace}:`).test(content)) {
@@ -3878,6 +4350,27 @@
                 }
             }
             return output;
+        }
+        addDimenGroup(group, node, dimen, attr, value) {
+            let name = dimen;
+            if (arguments.length === 5) {
+                if (value && /(px|dp|sp)$/.test(value)) {
+                    name = `${dimen}-${attr}-${value}`;
+                }
+                else {
+                    return;
+                }
+            }
+            if (group[name] == null) {
+                group[name] = [];
+            }
+            group[name].push(node);
+        }
+        getDimenKey(resource, key, value) {
+            if (resource.has(key) && resource.get(key) !== value) {
+                key = generateId('dimens', `${key}_1`);
+            }
+            return key;
         }
         setGridSpace(node) {
             if (node.parent.is(VIEW_STANDARD.GRID)) {
@@ -3991,500 +4484,6 @@
         }
     }
 
-    class Resource {
-        constructor(file) {
-            this.file = file;
-        }
-        static addString(value, name = '') {
-            if (hasValue(value)) {
-                if (name === '') {
-                    name = value;
-                }
-                const num = isNumber(value);
-                if (SETTINGS.numberResourceValue || !num) {
-                    for (const key of Resource.STORED.STRINGS.keys()) {
-                        if (key === value) {
-                            return key;
-                        }
-                    }
-                    name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
-                    if (num || /^[0-9]/.test(value)) {
-                        name = `__${name}`;
-                    }
-                    else if (name === '') {
-                        name = `__symbol${Math.ceil(Math.random() * 100000)}`;
-                    }
-                    Resource.STORED.STRINGS.set(value, name);
-                }
-                return value;
-            }
-            return '';
-        }
-        static addImageSrcSet(element, prefix = '') {
-            const srcset = element.srcset.trim();
-            const images = {};
-            if (hasValue(srcset)) {
-                const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-                srcset.split(',').forEach((value) => {
-                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                    if (match != null) {
-                        if (match[2] == null) {
-                            match[2] = '1x';
-                        }
-                        const image = filePath + getFileName(match[1]);
-                        switch (match[2]) {
-                            case '0.75x':
-                                images['ldpi'] = image;
-                                break;
-                            case '1x':
-                                images['mdpi'] = image;
-                                break;
-                            case '1.5x':
-                                images['hdpi'] = image;
-                                break;
-                            case '2x':
-                                images['xhdpi'] = image;
-                                break;
-                            case '3x':
-                                images['xxhdpi'] = image;
-                                break;
-                            case '4x':
-                                images['xxxhdpi'] = image;
-                                break;
-                        }
-                    }
-                });
-            }
-            if (images['mdpi'] == null) {
-                images['mdpi'] = element.src;
-            }
-            return Resource.addImage(images, prefix);
-        }
-        static addImage(images, prefix = '') {
-            let src = '';
-            if (images['mdpi'] != null && hasValue(images['mdpi'])) {
-                src = getFileName(images['mdpi']);
-                const format = getFileExt(src).toLowerCase();
-                src = src.replace(/.\w+$/, '').replace(/-/g, '_');
-                switch (format) {
-                    case 'bmp':
-                    case 'bmpf':
-                    case 'cur':
-                    case 'gif':
-                    case 'ico':
-                    case 'jpg':
-                    case 'png':
-                    case 'tif':
-                    case 'tiff':
-                    case 'webp':
-                    case 'xbm':
-                        src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
-                        break;
-                    default:
-                        src = '';
-                }
-            }
-            return src;
-        }
-        static addImageURL(value, prefix = '') {
-            const match = value.match(/^url\("(.*?)"\)$/);
-            if (match != null) {
-                return Resource.addImage({ 'mdpi': resolveRelativePath(match[1]) }, prefix);
-            }
-            return '';
-        }
-        static addColor(value) {
-            value = value.toUpperCase().trim();
-            if (value !== '') {
-                let colorName = '';
-                if (!Resource.STORED.COLORS.has(value)) {
-                    const color = findNearestColor(value);
-                    if (color !== '') {
-                        color.name = cameltoLowerCase(color.name);
-                        if (value === color.hex) {
-                            colorName = color.name;
-                        }
-                        else {
-                            colorName = generateId('color', `${color.name}_1`);
-                        }
-                        Resource.STORED.COLORS.set(value, colorName);
-                    }
-                }
-                else {
-                    colorName = Resource.STORED.COLORS.get(value);
-                }
-                return colorName;
-            }
-            return '';
-        }
-        static insertStoredAsset(asset, name, value) {
-            const stored = Resource.STORED[asset];
-            if (stored != null) {
-                let storedName = '';
-                for (const [storedKey, storedValue] of stored.entries()) {
-                    if (JSON.stringify(value) === JSON.stringify(storedValue)) {
-                        storedName = storedKey;
-                        break;
-                    }
-                }
-                if (storedName === '') {
-                    if (isNumber(name)) {
-                        name = `__${name}`;
-                    }
-                    if (hasValue(value)) {
-                        let i = 0;
-                        do {
-                            storedName = name;
-                            if (i > 0) {
-                                storedName += `_${i}`;
-                            }
-                            if (!stored.has(storedName)) {
-                                stored.set(storedName, value);
-                            }
-                            i++;
-                        } while (stored.has(storedName) && stored.get(storedName) !== value);
-                    }
-                }
-                return storedName;
-            }
-            return '';
-        }
-        addFile(pathname, filename, content = '', uri = '') {
-            this.file.addFile(pathname, filename, content, uri);
-        }
-        reset() {
-            Resource.STORED.STRINGS = new Map();
-            Resource.STORED.COLORS = new Map();
-            Resource.STORED.IMAGES = new Map();
-            this.file.reset();
-        }
-        setBoxSpacing() {
-            this.cache.elements.forEach(node => {
-                if ((node.ignoreResource & VIEW_RESOURCE.BOX_SPACING) !== VIEW_RESOURCE.BOX_SPACING) {
-                    const element = node.element;
-                    const object = element;
-                    if (!hasValue(object.__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
-                        const result = getBoxSpacing(element);
-                        for (const i in result) {
-                            result[i] += 'px';
-                        }
-                        object.__boxSpacing = result;
-                    }
-                }
-            });
-        }
-        setBoxStyle() {
-            this.cache.elements.forEach(node => {
-                if ((node.ignoreResource & VIEW_RESOURCE.BOX_STYLE) !== VIEW_RESOURCE.BOX_STYLE) {
-                    const element = node.element;
-                    const object = element;
-                    if (!hasValue(object.__boxStyle) || SETTINGS.alwaysReevaluateResources) {
-                        const result = {
-                            borderTop: this.parseBorderStyle,
-                            borderRight: this.parseBorderStyle,
-                            borderBottom: this.parseBorderStyle,
-                            borderLeft: this.parseBorderStyle,
-                            borderRadius: this.parseBorderRadius,
-                            backgroundColor: parseRGBA,
-                            backgroundImage: Resource.addImageURL,
-                            backgroundSize: this.parseBoxDimensions
-                        };
-                        for (const i in result) {
-                            result[i] = result[i](node.css(i), node, i);
-                        }
-                        if (result.backgroundColor.length > 0) {
-                            if ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
-                                result.backgroundColor = [];
-                            }
-                            else {
-                                result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0]);
-                            }
-                        }
-                        const borderTop = JSON.stringify(result.borderTop);
-                        if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
-                            result.border = result.borderTop;
-                        }
-                        object.__boxStyle = result;
-                    }
-                }
-            });
-        }
-        setFontStyle() {
-            this.cache.list.forEach(node => {
-                if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.FONT_STYLE) !== VIEW_RESOURCE.FONT_STYLE) {
-                    const element = node.element;
-                    const object = element;
-                    if (!hasValue(object.__fontStyle) || SETTINGS.alwaysReevaluateResources) {
-                        if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
-                            return;
-                        }
-                        else {
-                            let color = parseRGBA(node.css('color'));
-                            if (color.length > 0) {
-                                if (SETTINGS.excludeTextColor.includes(color[0]) && color[1] !== node.styleMap.color) {
-                                    color = [];
-                                }
-                                else {
-                                    color[0] = Resource.addColor(color[0]);
-                                }
-                            }
-                            let backgroundColor = parseRGBA(node.css('backgroundColor'));
-                            if (backgroundColor.length > 0) {
-                                if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
-                                    backgroundColor = [];
-                                }
-                                else {
-                                    backgroundColor[0] = Resource.addColor(backgroundColor[0]);
-                                }
-                            }
-                            const result = {
-                                fontFamily: node.css('fontFamily'),
-                                fontStyle: node.css('fontStyle'),
-                                fontSize: node.css('fontSize'),
-                                fontWeight: node.css('fontWeight'),
-                                color: (color.length > 0 ? `@color/${color[0]}` : ''),
-                                backgroundColor: (backgroundColor.length > 0 ? `@color/${backgroundColor[0]}` : '')
-                            };
-                            object.__fontStyle = result;
-                        }
-                    }
-                }
-            });
-        }
-        setImageSource() {
-            this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
-                const element = node.element;
-                const object = element;
-                if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE) {
-                    if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
-                        const result = Resource.addImageSrcSet(element);
-                        object.__imageSource = result;
-                    }
-                }
-            });
-        }
-        setOptionArray() {
-            this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
-                if ((node.ignoreResource & VIEW_RESOURCE.OPTION_ARRAY) !== VIEW_RESOURCE.OPTION_ARRAY) {
-                    const element = node.element;
-                    const object = element;
-                    if (!hasValue(object.__optionArray) || SETTINGS.alwaysReevaluateResources) {
-                        const stringArray = [];
-                        let numberArray = [];
-                        for (let i = 0; i < element.children.length; i++) {
-                            const item = element.children[i];
-                            const value = item.text.trim();
-                            if (value !== '') {
-                                if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
-                                    numberArray.push(value);
-                                }
-                                else {
-                                    if (numberArray != null && numberArray.length > 0) {
-                                        i = -1;
-                                        numberArray = null;
-                                        continue;
-                                    }
-                                    const result = Resource.addString(value);
-                                    if (result !== '') {
-                                        stringArray.push(result);
-                                    }
-                                }
-                            }
-                        }
-                        object.__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
-                    }
-                }
-            });
-        }
-        setValueString() {
-            this.cache.list.forEach(node => {
-                if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.VALUE_STRING) !== VIEW_RESOURCE.VALUE_STRING) {
-                    const element = node.element;
-                    const object = element;
-                    if ((!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources)) {
-                        let name = '';
-                        let value = '';
-                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                            if (element.type !== 'range') {
-                                value = element.value.trim();
-                            }
-                        }
-                        else if (element.nodeName === '#text') {
-                            value = (element.textContent ? element.textContent.trim() : '');
-                        }
-                        else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child) => (MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName))))))) {
-                            name = element.innerText.trim();
-                            value = element.innerHTML.trim();
-                        }
-                        if (hasValue(value)) {
-                            Resource.addString(value, name);
-                            object.__valueString = value;
-                        }
-                    }
-                }
-            });
-        }
-        borderVisible(border) {
-            return (border != null && !(border.style === 'none' || border.width === '0px'));
-        }
-        getBorderStyle(border) {
-            const result = { solid: `android:color="@color/${border.color}"` };
-            Object.assign(result, {
-                inset: result.solid,
-                outset: result.solid,
-                dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
-                dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
-            });
-            return result[border.style] || 'android:color="@android:color/black"';
-        }
-        parseBorderStyle(value, node, attribute) {
-            const style = node.css(`${attribute}Style`) || 'none';
-            let width = node.css(`${attribute}Width`) || '1px';
-            const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`)) : []);
-            if (color.length > 0) {
-                color[0] = Resource.addColor(color[0]);
-            }
-            if (style === 'inset' && width === '0px') {
-                width = '1px';
-            }
-            return { style, width, color: (color.length > 0 ? color[0] : '#000000') };
-        }
-        parseBorderRadius(value, node, attribute) {
-            const radiusTop = node.css('borderTopLeftRadius');
-            const radiusRight = node.css('borderTopRightRadius');
-            const radiusBottom = node.css('borderBottomLeftRadius');
-            const radiusLeft = node.css('borderBottomRightRadius');
-            if (radiusTop === radiusRight && radiusRight === radiusBottom && radiusBottom === radiusLeft) {
-                return (radiusTop === '' || radiusTop === '0px' ? [] : [radiusTop]);
-            }
-            else {
-                return [radiusTop, radiusRight, radiusBottom, radiusLeft];
-            }
-        }
-        parseBoxDimensions(value, node, attribute) {
-            const match = value.match(/^([0-9]+(?:px|pt|em)|auto)(?: ([0-9]+(?:px|pt|em)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
-            if (match != null) {
-                if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
-                    return [];
-                }
-                if (match[1] === 'auto' || match[2] === 'auto') {
-                    return [(match[1] === 'auto' ? '' : convertPX(match[1])), (match[2] === 'auto' ? '' : convertPX(match[2]))];
-                }
-                else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
-                    return [convertPX(match[1])];
-                }
-                else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
-                    return [convertPX(match[1]), convertPX(match[2])];
-                }
-                else {
-                    return [convertPX(match[1]), convertPX(match[2]), convertPX(match[3]), convertPX(match[4])];
-                }
-            }
-            return [];
-        }
-    }
-    Resource.STORED = {
-        STRINGS: new Map(),
-        COLORS: new Map(),
-        IMAGES: new Map()
-    };
-
-    function getDataLevel(data, ...levels) {
-        let current = data;
-        for (const level of levels) {
-            const [index, array = '0'] = level.split('-');
-            current = current[index][array];
-        }
-        return current;
-    }
-    function parseTemplateMatch(template) {
-        const result = {};
-        let pattern = null;
-        let match = false;
-        let section = 0;
-        let characters = template.length;
-        do {
-            if (match) {
-                const segment = match[0].replace(new RegExp(match[1], 'g'), '');
-                for (const index in result) {
-                    result[index] = result[index].replace(new RegExp(match[0], 'g'), `{%${match[2]}}`);
-                }
-                result[match[2]] = segment;
-                characters -= match[0].length;
-            }
-            if (match == null || characters === 0) {
-                template = result[section++];
-                if (!hasValue(template)) {
-                    break;
-                }
-                characters = template.length;
-                match = null;
-            }
-            if (!match) {
-                pattern = /(!([0-9]+)\n?)[\w\W]*\1/g;
-            }
-            if (pattern != null) {
-                match = pattern.exec(template);
-            }
-            else {
-                break;
-            }
-        } while (true);
-        return result;
-    }
-    function parseTemplateData(template, data, index, include, exclude) {
-        let output = (index != null ? template[index] : '');
-        if (data['#include'] != null) {
-            include = data['#include'];
-            delete data['#include'];
-        }
-        if (data['#exclude'] != null) {
-            exclude = data['#exclude'];
-            delete data['#exclude'];
-        }
-        for (const i in data) {
-            let value = '';
-            if (data[i] === false) {
-                output = output.replace(`{%${i}}`, '');
-                continue;
-            }
-            else if (Array.isArray(data[i])) {
-                for (const j in data[i]) {
-                    value += parseTemplateData(template, data[i][j], i, include, exclude);
-                }
-            }
-            else {
-                value = data[i];
-            }
-            if (hasValue(value)) {
-                output = (index != null ? output.replace(new RegExp(`{[%@&]*${i}}`), value) : value.trim());
-            }
-            else if (new RegExp(`{%${i}}`).test(output) || value === false) {
-                output = output.replace(`{%${i}}`, '');
-            }
-            else if (new RegExp(`{&${i}}`).test(output)) {
-                output = '';
-            }
-            const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-            let match;
-            while ((match = pattern.exec(output)) != null) {
-                if (include && include[match[1]]) {
-                    const attribute = `{#${match[1]}=${match[2]}}`;
-                    if (data[match[2]] != null) {
-                        output = output.replace(attribute, data[match[2]]);
-                    }
-                    else {
-                        output = output.replace(attribute, match[2]);
-                    }
-                }
-                else if (exclude && exclude[match[1]]) {
-                    output = output.replace(match[0], '');
-                }
-            }
-        }
-        return output.replace(/\s+[\w:]+="{@\w+}"/g, '');
-    }
-
     const template = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
@@ -4539,12 +4538,13 @@
     var LAYERLIST_TMPL = template$1.join('\n');
 
     const STORED = {
+        STRINGS: new Map(),
         ARRAYS: new Map(),
         FONTS: new Map(),
-        DRAWABLES: new Map(),
-        STYLES: new Map(),
-        STRINGS: new Map(),
         COLORS: new Map(),
+        STYLES: new Map(),
+        DIMENS: new Map(),
+        DRAWABLES: new Map(),
         IMAGES: new Map()
     };
     Object.assign(STORED, Resource.STORED);
@@ -4597,11 +4597,8 @@
             super.reset();
             STORED.ARRAYS = new Map();
             STORED.FONTS = new Map();
-            STORED.DRAWABLES = new Map();
             STORED.STYLES = new Map();
-            STORED.STRINGS = new Map();
-            STORED.COLORS = new Map();
-            STORED.IMAGES = new Map();
+            STORED.DRAWABLES = new Map();
             Object.assign(STORED, Resource.STORED);
             this.file.reset();
             this.tagStyle = {};
@@ -4636,7 +4633,7 @@
                         let data;
                         let resourceName = '';
                         if (stored.border != null && stored.backgroundImage === '') {
-                            template = parseTemplateMatch(SHAPERECTANGLE_TMPL);
+                            template = parseTemplate(SHAPERECTANGLE_TMPL);
                             data = {
                                 '0': [{
                                         '1': this.getShapeAttribute(stored, 'stroke'),
@@ -4648,13 +4645,13 @@
                                     }]
                             };
                             if (stored.borderRadius.length > 1) {
-                                const shape = getDataLevel(data, '0', '2');
+                                const shape = getTemplateLevel(data, '0', '2');
                                 const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
                                 shape['5'].push(borderRadius);
                             }
                         }
                         else if (stored.border != null) {
-                            template = parseTemplateMatch(LAYERLIST_TMPL);
+                            template = parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
                                         '1': [{
@@ -4667,20 +4664,20 @@
                                     }]
                             };
                             if (stored.borderRadius.length > 1) {
-                                const shape = getDataLevel(data, '0', '1');
+                                const shape = getTemplateLevel(data, '0', '1');
                                 const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
                                 shape['5'].push(borderRadius);
                             }
                         }
                         else {
-                            template = parseTemplateMatch(LAYERLIST_TMPL);
+                            template = parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
                                         '1': [],
                                         '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
                                     }]
                             };
-                            const root = getDataLevel(data, '0');
+                            const root = getTemplateLevel(data, '0');
                             const borderRadius = {};
                             if (stored.borderRadius.length > 1) {
                                 Object.assign(borderRadius, {
@@ -4714,7 +4711,7 @@
                                 root['1'] = false;
                             }
                         }
-                        const xml = parseTemplateData(template, data);
+                        const xml = insertTemplateData(template, data);
                         for (const [name, value] of STORED.DRAWABLES.entries()) {
                             if (value === xml) {
                                 resourceName = name;
@@ -5091,14 +5088,14 @@
                 if (node != null) {
                     const styles = map[id].styles;
                     const attributes = map[id].attributes;
-                    const indent = padLeft(node.renderDepth + 1);
+                    const indent = repeat(node.renderDepth + 1);
                     let append = '';
                     if (styles.length > 0) {
                         inherit.add(styles.join('.'));
                         append += `\n${indent}style="@style/${styles.pop()}"`;
                     }
                     if (attributes.length > 0) {
-                        attributes.sort().forEach((value) => append += `\n${indent}${value}`);
+                        attributes.sort().forEach((value) => append += `\n${indent}${replaceDP(value, SETTINGS.density, true)}`);
                     }
                     let replaced = false;
                     [node, node.parent].some(item => {
@@ -5222,7 +5219,7 @@
                         if (json.zipname != null) {
                             fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
                                 .then((res) => res.blob())
-                                .then(blob => this.downloadToDisk(blob, getFileName(json.zipname)));
+                                .then(blob => this.downloadToDisk(blob, lastIndexOf(json.zipname)));
                         }
                         else if (json.system != null) {
                             alert(`${json.application}\n\n${json.system}`);
@@ -5286,6 +5283,32 @@
     const template$4 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
+        '<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
+        '!1',
+        '	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" app:fontStyle="{#app=style}" app:fontWeight="{#app=weight}" app:font="{#app=font}" />',
+        '!1',
+        '</font-family>',
+        '<!-- filename: res/font/{name}.xml -->',
+        '!0'
+    ];
+    var FONT_TMPL = template$4.join('\n');
+
+    const template$5 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '!1',
+        '	<color name="{value}">{name}</color>',
+        '!1',
+        '</resources>',
+        '<!-- filename: res/values/colors.xml -->',
+        '!0'
+    ];
+    var COLOR_TMPL = template$5.join('\n');
+
+    const template$6 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
         '!1',
         '	<style name="{name1}" parent="{@parent}">',
@@ -5298,41 +5321,28 @@
         '<!-- filename: res/values/styles.xml -->',
         '!0'
     ];
-    var STYLE_TMPL = template$4.join('\n');
+    var STYLE_TMPL = template$6.join('\n');
 
-    const template$5 = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
-        '!1',
-        '	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" app:fontStyle="{#app=style}" app:fontWeight="{#app=weight}" app:font="{#app=font}" />',
-        '!1',
-        '</font-family>',
-        '<!-- filename: res/font/{name}.xml -->',
-        '!0'
-    ];
-    var FONT_TMPL = template$5.join('\n');
-
-    const template$6 = [
+    const template$7 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
         '!1',
-        '	<color name="{value}">{name}</color>',
+        '	<dimen name="{name}">{value}</dimen>',
         '!1',
         '</resources>',
-        '<!-- filename: res/values/colors.xml -->',
+        '<!-- filename: res/values/dimens.xml -->',
         '!0'
     ];
-    var COLOR_TMPL = template$6.join('\n');
+    var DIMEN_TMPL = template$7.join('\n');
 
-    const template$7 = [
+    const template$8 = [
         '!0',
         '{value}',
         '<!-- filename: {name} -->',
         '!0'
     ];
-    var DRAWABLE_TMPL = template$7.join('\n');
+    var DRAWABLE_TMPL = template$8.join('\n');
 
     class FileRes extends File {
         constructor() {
@@ -5351,6 +5361,7 @@
             files.push(...this.parseFileDetails(this.resourceFontToXml()));
             files.push(...this.parseFileDetails(this.resourceColorToXml()));
             files.push(...this.parseFileDetails(this.resourceStyleToXml()));
+            files.push(...this.parseFileDetails(this.resourceDimenToXml()));
             files.push(...this.parseImageDetails(xml), ...this.parseFileDetails(xml));
             this.saveToDisk(files);
         }
@@ -5377,6 +5388,7 @@
                 font: this.resourceFontToXml(),
                 color: this.resourceColorToXml(),
                 style: this.resourceStyleToXml(),
+                dimen: this.resourceDimenToXml(),
                 drawable: this.resourceDrawableToXml()
             };
             if (saveToDisk) {
@@ -5395,20 +5407,20 @@
             this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
             let xml = '';
             if (this.stored.STRINGS.size > 0) {
-                const template = parseTemplateMatch(STRING_TMPL);
+                const template = parseTemplate(STRING_TMPL);
                 const data = {
                     '0': [{
                             '1': []
                         }]
                 };
-                const root = getDataLevel(data, '0');
+                const root = getTemplateLevel(data, '0');
                 if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
                     root['1'].push({ name: 'app_name', value: this.appName });
                 }
                 for (const [value, name] of this.stored.STRINGS.entries()) {
                     root['1'].push({ name, value });
                 }
-                xml = parseTemplateData(template, data);
+                xml = insertTemplateData(template, data);
                 if (saveToDisk) {
                     this.saveToDisk(this.parseFileDetails(xml));
                 }
@@ -5419,13 +5431,13 @@
             this.stored.ARRAYS = new Map([...this.stored.ARRAYS.entries()].sort());
             let xml = '';
             if (this.stored.ARRAYS.size > 0) {
-                const template = parseTemplateMatch(STRINGARRAY_TMPL);
+                const template = parseTemplate(STRINGARRAY_TMPL);
                 const data = {
                     '0': [{
                             '1': []
                         }]
                 };
-                const root = getDataLevel(data, '0');
+                const root = getTemplateLevel(data, '0');
                 for (const [name, values] of this.stored.ARRAYS.entries()) {
                     const arrayItem = {
                         name,
@@ -5437,7 +5449,7 @@
                     }
                     root['1'].push(arrayItem);
                 }
-                xml = parseTemplateData(template, data);
+                xml = insertTemplateData(template, data);
                 if (saveToDisk) {
                     this.saveToDisk(this.parseFileDetails(xml));
                 }
@@ -5448,7 +5460,7 @@
             this.stored.FONTS = new Map([...this.stored.FONTS.entries()].sort());
             let xml = '';
             if (this.stored.FONTS.size > 0) {
-                const template = parseTemplateMatch(FONT_TMPL);
+                const template = parseTemplate(FONT_TMPL);
                 for (const [name, font] of this.stored.FONTS.entries()) {
                     const data = {
                         '#include': {},
@@ -5459,7 +5471,7 @@
                             }]
                     };
                     data[(SETTINGS.targetAPI < exports.build.OREO ? '#include' : '#exclude')]['app'] = true;
-                    const root = getDataLevel(data, '0');
+                    const root = getTemplateLevel(data, '0');
                     for (const attr in font) {
                         const [style, weight] = attr.split('-');
                         root['1'].push({
@@ -5468,7 +5480,7 @@
                             font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
                         });
                     }
-                    xml += '\n\n' + parseTemplateData(template, data);
+                    xml += '\n\n' + insertTemplateData(template, data);
                 }
                 if (saveToDisk) {
                     this.saveToDisk(this.parseFileDetails(xml));
@@ -5480,17 +5492,17 @@
             let xml = '';
             if (this.stored.COLORS.size > 0) {
                 this.stored.COLORS = new Map([...this.stored.COLORS.entries()].sort());
-                const template = parseTemplateMatch(COLOR_TMPL);
+                const template = parseTemplate(COLOR_TMPL);
                 const data = {
                     '0': [{
                             '1': []
                         }]
                 };
-                const root = getDataLevel(data, '0');
+                const root = getTemplateLevel(data, '0');
                 for (const [name, value] of this.stored.COLORS.entries()) {
                     root['1'].push({ name, value });
                 }
-                xml = parseTemplateData(template, data);
+                xml = insertTemplateData(template, data);
                 if (saveToDisk) {
                     this.saveToDisk(this.parseFileDetails(xml));
                 }
@@ -5501,13 +5513,13 @@
             let xml = '';
             if (this.stored.STYLES.size > 0) {
                 this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort());
-                const template = parseTemplateMatch(STYLE_TMPL);
+                const template = parseTemplate(STYLE_TMPL);
                 const data = {
                     '0': [{
                             '1': []
                         }]
                 };
-                const root = getDataLevel(data, '0');
+                const root = getTemplateLevel(data, '0');
                 for (const [name1, style] of this.stored.STYLES.entries()) {
                     const styleItem = {
                         name1,
@@ -5520,9 +5532,33 @@
                     });
                     root['1'].push(styleItem);
                 }
-                xml = parseTemplateData(template, data);
+                xml = insertTemplateData(template, data);
                 if (SETTINGS.useUnitDP) {
                     xml = replaceDP(xml, SETTINGS.density, true);
+                }
+                if (saveToDisk) {
+                    this.saveToDisk(this.parseFileDetails(xml));
+                }
+            }
+            return xml;
+        }
+        resourceDimenToXml(saveToDisk = false) {
+            this.stored.DIMENS = new Map([...this.stored.DIMENS.entries()].sort());
+            let xml = '';
+            if (this.stored.DIMENS.size > 0) {
+                const template = parseTemplate(DIMEN_TMPL);
+                const data = {
+                    '0': [{
+                            '1': []
+                        }]
+                };
+                const root = getTemplateLevel(data, '0');
+                for (const [name, value] of this.stored.DIMENS.entries()) {
+                    root['1'].push({ name, value });
+                }
+                xml = insertTemplateData(template, data);
+                if (SETTINGS.useUnitDP) {
+                    xml = replaceDP(xml, SETTINGS.density);
                 }
                 if (saveToDisk) {
                     this.saveToDisk(this.parseFileDetails(xml));
@@ -5533,7 +5569,7 @@
         resourceDrawableToXml(saveToDisk = false) {
             let xml = '';
             if (this.stored.DRAWABLES.size > 0 || this.stored.IMAGES.size > 0) {
-                const template = parseTemplateMatch(DRAWABLE_TMPL);
+                const template = parseTemplate(DRAWABLE_TMPL);
                 const data = {
                     '0': []
                 };
@@ -5544,14 +5580,14 @@
                 for (const [name, images] of this.stored.IMAGES.entries()) {
                     if (Object.keys(images).length > 1) {
                         for (const dpi in images) {
-                            root.push({ name: `res/drawable-${dpi}/${name}.${getFileExt(images[dpi])}`, value: `<!-- image: ${images[dpi]} -->` });
+                            root.push({ name: `res/drawable-${dpi}/${name}.${lastIndexOf(images[dpi], '.')}`, value: `<!-- image: ${images[dpi]} -->` });
                         }
                     }
                     else if (images['mdpi'] != null) {
-                        root.push({ name: `res/drawable/${name}.${getFileExt(images['mdpi'])}`, value: `<!-- image: ${images['mdpi']} -->` });
+                        root.push({ name: `res/drawable/${name}.${lastIndexOf(images['mdpi'], '.')}`, value: `<!-- image: ${images['mdpi']} -->` });
                     }
                 }
-                xml = parseTemplateData(template, data);
+                xml = insertTemplateData(template, data);
                 if (SETTINGS.useUnitDP) {
                     xml = replaceDP(xml, SETTINGS.density);
                 }
@@ -5596,6 +5632,83 @@
                 filename,
                 content
             };
+        }
+    }
+
+    class Extension {
+        constructor(name, tagNames = [], options = {}) {
+            this.name = name;
+            this.options = options;
+            this.tagNames = [];
+            this.enabled = true;
+            this.dependences = [];
+            this.activityMain = false;
+            this.tagNames = tagNames.map(value => value.trim().toUpperCase());
+        }
+        is(node) {
+            return (this.tagNames.length === 0 || (this.tagNames.includes(node.tagName)));
+        }
+        require(value, init = false) {
+            this.dependences.push({ name: value, init });
+        }
+        included(element) {
+            if (element == null) {
+                element = this.element;
+            }
+            return (element != null && element.dataset && element.dataset.ext != null ? element.dataset.ext.split(',').map(value => value.trim()).includes(this.name) : false);
+        }
+        beforeInit(internal = false) {
+            if (!internal && this.included()) {
+                this.dependences.filter((item) => item.init).forEach((item) => {
+                    const extension = this.application.findExtension(item.name);
+                    if (extension != null) {
+                        extension.parent = this.parent;
+                        extension.node = this.node;
+                        extension.element = this.element;
+                        extension.beforeInit(true);
+                    }
+                });
+            }
+        }
+        init(element) {
+            return false;
+        }
+        afterInit(internal = false) {
+            if (!internal && this.included()) {
+                this.dependences.filter((item) => item.init).forEach((item) => {
+                    const extension = this.application.findExtension(item.name);
+                    if (extension != null) {
+                        extension.parent = this.parent;
+                        extension.node = this.node;
+                        extension.element = this.element;
+                        extension.afterInit(true);
+                    }
+                });
+            }
+        }
+        condition() {
+            if (this.node && this.node.element.dataset != null) {
+                if (!this.node.element.dataset.ext) {
+                    return (this.tagNames.length > 0);
+                }
+                else {
+                    const extensions = this.node.element.dataset.ext.split(',');
+                    return (this.tagNames.length === 0 && extensions.length > 1 ? false : this.included());
+                }
+            }
+            return false;
+        }
+        processNode(mapX, mapY) {
+            return ['', false, false];
+        }
+        processChild(mapX, mapY) {
+            return ['', false, this.application.elements.has(this.node.element)];
+        }
+        afterRender() {
+            return;
+        }
+        finalize() {
+            return;
         }
     }
 
@@ -5720,7 +5833,7 @@
                         gravity: parseRTL('right'),
                         layout_gravity: 'fill',
                         layout_columnWeight: '0',
-                        [parseRTL('layout_marginRight')]: '8px',
+                        [parseRTL('layout_marginRight')]: formatDimen(node.tagName, parseRTL('margin_right'), '8px'),
                         text: (options.listStyle !== '0' ? options.listStyle : '')
                     }
                 }));
@@ -6272,7 +6385,7 @@
                         item.dataset.ext = 'androme.external';
                     }
                 });
-                if (element.dataset.extActionBarFor != null) {
+                if (element.dataset.extFor != null) {
                     this.application.elements.add(element);
                     return true;
                 }
@@ -6300,7 +6413,7 @@
             const controller = this.application.controllerHandler;
             const node = this.node;
             node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
-            const actionBar = (node.element.dataset.extActionBarFor != null);
+            const actionBar = (node.element.dataset.extFor != null);
             const depth = (actionBar ? 0 : node.depth + node.renderDepth);
             const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
             const toolbar = Object.assign({}, options.toolbar);
@@ -6367,14 +6480,14 @@
             return ['', false, false];
         }
         finalize() {
-            const actionBar = this.node.element.dataset.extActionBarFor;
+            const actionBar = this.node.element.dataset.extFor;
             const menu = this.getMenu(this.node);
             const layouts = this.application.layouts;
             if (actionBar != null) {
                 const parent = this.application.findByDomId(actionBar);
                 if (parent != null) {
                     let xml = this.node.options('androme.widget.toolbar:insert') || '';
-                    xml = xml.replace(/>>>>/g, padLeft(parent.renderDepth + 2));
+                    xml = xml.replace(/>>>>/g, repeat(parent.renderDepth + 2));
                     if (menu != null) {
                         xml = removePlaceholders(xml.replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, menu.dataset.currentId)).replace(/\s*$/g, '');
                     }
@@ -6418,7 +6531,7 @@
         }
     }
 
-    const template$8 = [
+    const template$9 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
@@ -6433,7 +6546,7 @@
         '</resources>',
         '!0'
     ];
-    var EXTENSION_DRAWER_TMPL = template$8.join('\n');
+    var EXTENSION_DRAWER_TMPL = template$9.join('\n');
 
     class DrawerAndroid extends Drawer {
         constructor(name, tagNames = [], options) {
@@ -6514,7 +6627,7 @@
             const options = Object.assign({}, this.options.resource);
             setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
             setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
-            const template = parseTemplateMatch(EXTENSION_DRAWER_TMPL);
+            const template = parseTemplate(EXTENSION_DRAWER_TMPL);
             const data = {
                 '0': [{
                         'appTheme': this.options.resource.appTheme,
@@ -6523,18 +6636,19 @@
                     }]
             };
             if (options.item != null) {
-                const root = getDataLevel(data, '0');
+                const root = getTemplateLevel(data, '0');
                 for (const name in options.item) {
                     root['1'].push({ name, value: options.item[name] });
                 }
             }
             setDefaultOption(options, 'output', 'path', 'res/values-v21');
             setDefaultOption(options, 'output', 'file', 'androme.widget.drawer.xml');
-            const xml = parseTemplateData(template, data);
+            const xml = insertTemplateData(template, data);
             this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
         }
     }
 
+    let LOADING = false;
     const ROOT_CACHE = new Set();
     const EXTENSIONS = {
         'androme.external': new External('androme.external'),
@@ -6569,6 +6683,7 @@
         if (main.closed) {
             return;
         }
+        LOADING = false;
         main.resetController();
         main.setStyleMap();
         main.elements.clear();
@@ -6583,28 +6698,59 @@
                 main.elements.add(element);
             }
         });
-        main.elements.forEach(element => {
-            if (main.appName === '') {
-                if (element.id === '') {
-                    element.id = 'androme';
+        let __THEN;
+        function parseResume() {
+            LOADING = false;
+            main.elements.forEach(element => {
+                if (main.appName === '') {
+                    if (element.id === '') {
+                        element.id = 'untitled';
+                    }
+                    main.appName = element.id;
                 }
-                main.appName = element.id;
+                else {
+                    if (element.id === '') {
+                        element.id = `view_${main.size}`;
+                    }
+                }
+                element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
+                element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
+                if (main.createNodeCache(element)) {
+                    main.createLayoutXml();
+                    main.setResources();
+                    main.setMarginPadding();
+                    main.setConstraints();
+                    ROOT_CACHE.add(element);
+                }
+            });
+            if (typeof __THEN === 'function') {
+                __THEN.call(main);
             }
-            else {
-                if (element.id === '') {
-                    element.id = `view_${main.length}`;
+        }
+        const images = Array.from(main.elements).map((element) => Array.from(element.querySelectorAll('IMG'))).reduce((a, b) => a.concat(b), []).filter(element => !element.complete);
+        if (images.length === 0) {
+            parseResume();
+        }
+        else {
+            LOADING = true;
+            const queue = images.map(image => {
+                return new Promise((resolve, reject) => {
+                    image.onload = resolve;
+                    image.onerror = reject;
+                });
+            });
+            Promise.all(queue).then(() => parseResume());
+        }
+        return {
+            then: (resolve) => {
+                if (LOADING) {
+                    __THEN = resolve;
+                }
+                else {
+                    resolve();
                 }
             }
-            element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
-            element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
-            if (main.createNodeCache(element)) {
-                main.createLayoutXml();
-                main.setResources();
-                main.setMarginPadding();
-                main.setConstraints();
-                ROOT_CACHE.add(element);
-            }
-        });
+        };
     }
     function registerExtension(extension) {
         if (extension instanceof Extension) {
@@ -6623,10 +6769,10 @@
         return main.findExtension(name);
     }
     function ready() {
-        return !main.closed;
+        return (!LOADING && !main.closed);
     }
     function close() {
-        if (main.length > 0) {
+        if (!LOADING && main.size > 0) {
             main.finalize();
         }
     }
@@ -6639,7 +6785,7 @@
         main.reset();
     }
     function saveAllToDisk() {
-        if (main.length > 0) {
+        if (!LOADING && main.size > 0) {
             if (!main.closed) {
                 main.finalize();
             }
@@ -6694,6 +6840,13 @@
         }
         return '';
     }
+    function writeResourceDimenXml(saveToDisk = false) {
+        autoClose();
+        if (main.closed) {
+            return main.resourceHandler.file.resourceDimenToXml(saveToDisk);
+        }
+        return '';
+    }
     function writeResourceDrawableXml(saveToDisk = false) {
         autoClose();
         if (main.closed) {
@@ -6705,7 +6858,7 @@
         return main.toString();
     }
     function autoClose() {
-        if (SETTINGS.autoCloseOnWrite && !main.closed) {
+        if (SETTINGS.autoCloseOnWrite && !LOADING && !main.closed) {
             main.finalize();
         }
     }
@@ -6725,6 +6878,7 @@
     exports.writeResourceFontXml = writeResourceFontXml;
     exports.writeResourceColorXml = writeResourceColorXml;
     exports.writeResourceStyleXml = writeResourceStyleXml;
+    exports.writeResourceDimenXml = writeResourceDimenXml;
     exports.writeResourceDrawableXml = writeResourceDrawableXml;
     exports.toString = toString;
     exports.api = API_ANDROID;

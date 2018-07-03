@@ -1,6 +1,6 @@
 import { PlainFile, ResourceMap, ViewData } from '../lib/types';
 import Node from './node';
-import { getFileName, hasValue, trim } from '../lib/util';
+import { lastIndexOf, hasValue, trim } from '../lib/util';
 
 export default abstract class File<T extends Node> {
     public appName = '';
@@ -28,6 +28,7 @@ export default abstract class File<T extends Node> {
     public abstract resourceFontToXml(saveToDisk?: boolean): string;
     public abstract resourceColorToXml(saveToDisk?: boolean): string;
     public abstract resourceStyleToXml(saveToDisk?: boolean): string;
+    public abstract resourceDimenToXml(saveToDisk?: boolean): string;
     public abstract resourceDrawableToXml(saveToDisk?: boolean): string;
 
     public addFile(pathname: string, filename: string, content: string, uri: string) {
@@ -58,7 +59,7 @@ export default abstract class File<T extends Node> {
                         if (json.zipname != null) {
                             fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
                                 .then((res: Response) => res.blob())
-                                .then(blob => this.downloadToDisk(blob, getFileName(json.zipname)));
+                                .then(blob => this.downloadToDisk(blob, lastIndexOf(json.zipname)));
                         }
                         else if (json.system != null) {
                             alert(`${json.application}\n\n${json.system}`);

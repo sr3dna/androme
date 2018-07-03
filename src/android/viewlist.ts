@@ -1,5 +1,5 @@
-import View from './view';
 import NodeList from '../base/nodelist';
+import View from './view';
 import { calculateBias } from '../lib/util';
 
 export default class ViewList<T extends View> extends NodeList<T> {

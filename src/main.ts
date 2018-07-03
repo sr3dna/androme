@@ -1,12 +1,12 @@
 import { Null } from './lib/types';
 import Application from './base/application';
-import Extension from './base/extension';
-import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import ViewController from './android/viewcontroller';
-import View from './android/view';
-import ViewList from './android/viewlist';
 import ResourceView from './android/resource-view';
 import FileRes from './android/file-res';
+import Extension from './base/extension';
+import View from './android/view';
+import ViewList from './android/viewlist';
+import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 
@@ -81,13 +81,13 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
         main.elements.forEach(element => {
             if (main.appName === '') {
                 if (element.id === '') {
-                    element.id = 'androme';
+                    element.id = 'untitled';
                 }
                 main.appName = element.id;
             }
             else {
                 if (element.id === '') {
-                    element.id = `view_${main.length}`;
+                    element.id = `view_${main.size}`;
                 }
             }
             element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
@@ -154,7 +154,7 @@ export function ready() {
 }
 
 export function close() {
-    if (!LOADING && main.length > 0) {
+    if (!LOADING && main.size > 0) {
         main.finalize();
     }
 }
@@ -169,7 +169,7 @@ export function reset() {
 }
 
 export function saveAllToDisk() {
-    if (!LOADING && main.length > 0) {
+    if (!LOADING && main.size > 0) {
         if (!main.closed) {
             main.finalize();
         }
@@ -228,6 +228,14 @@ export function writeResourceStyleXml(saveToDisk = false) {
     autoClose();
     if (main.closed) {
         return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
+    }
+    return '';
+}
+
+export function writeResourceDimenXml(saveToDisk = false) {
+    autoClose();
+    if (main.closed) {
+        return main.resourceHandler.file.resourceDimenToXml(saveToDisk);
     }
     return '';
 }

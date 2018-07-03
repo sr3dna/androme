@@ -1,7 +1,7 @@
 import { Null, ViewData } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
-import { hasValue, padLeft } from '../lib/util';
+import { hasValue, repeat } from '../lib/util';
 
 interface ViewAppend {
     [id: number]: string[];
@@ -18,8 +18,10 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
 
     public abstract setConstraints(): void;
     public abstract setMarginPadding(): void;
+    public abstract setDimensions(data: ViewData<T>): void;
+    public abstract parseDimensions(content: string): string;
     public abstract setAttributes(data: ViewData<T>): void;
-    public abstract replaceAttributes(output: string, node: T): string;
+    public abstract insertAttributes(output: string, node: T): string;
     public abstract renderGroup(node: T, parent: T, viewName: number, options?: {}): string;
     public abstract renderView(node: T, parent: T, viewName: number | string): string;
     public abstract createGroup(node: T, parent: T, children: T[]): T;
@@ -31,7 +33,7 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
         this.after = {};
     }
 
-    public replaceAuxillaryViews(output: string) {
+    public insertAuxillaryViews(output: string) {
         for (const id in this.before) {
             output = output.replace(`{<${id}}`, this.before[id].join(''));
         }
@@ -70,7 +72,7 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     }
 
     protected getEnclosingTag(depth: number, tagName: string, id: number, xml = '', preXml = '', postXml = '') {
-        const indent = padLeft(Math.max(0, depth));
+        const indent = repeat(Math.max(0, depth));
         let output = preXml +
                      `{<${id}}`;
         if (hasValue(xml)) {

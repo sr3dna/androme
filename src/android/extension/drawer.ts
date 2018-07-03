@@ -1,11 +1,11 @@
 import { ExtensionResult, ObjectMap } from '../../lib/types';
 import View from '../view';
 import Drawer from '../../extension/widget/drawer';
+import { setDefaultOption } from '../../lib/util';
+import { getTemplateLevel, insertTemplateData, parseTemplate } from '../../lib/xml';
 import { VIEW_RESOURCE } from '../../lib/constants';
 import { VIEW_SUPPORT } from './lib/constants';
-import { setDefaultOption } from '../../lib/util';
 import parseRTL from '../localization';
-import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../../lib/xml';
 import SETTINGS from '../../settings';
 
 import EXTENSION_DRAWER_TMPL from '../template/extension/drawer';
@@ -93,7 +93,7 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         const options = Object.assign({}, this.options.resource);
         setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
         setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
-        const template: ObjectMap<string> = parseTemplateMatch(EXTENSION_DRAWER_TMPL);
+        const template: ObjectMap<string> = parseTemplate(EXTENSION_DRAWER_TMPL);
         const data: ObjectMap<any> = {
             '0': [{
                 'appTheme': this.options.resource.appTheme,
@@ -102,14 +102,14 @@ export default class DrawerAndroid<T extends View> extends Drawer {
             }]
         };
         if (options.item != null) {
-            const root = getDataLevel(data, '0');
+            const root = getTemplateLevel(data, '0');
             for (const name in options.item) {
                 root['1'].push({ name, value: options.item[name] });
             }
         }
         setDefaultOption(options, 'output', 'path', 'res/values-v21');
         setDefaultOption(options, 'output', 'file', 'androme.widget.drawer.xml');
-        const xml = parseTemplateData(template, data);
+        const xml = insertTemplateData(template, data);
         this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
     }
 }

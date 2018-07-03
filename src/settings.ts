@@ -16,6 +16,7 @@ const SETTINGS: ObjectMap<any> = {
     useUnitDP: true,
     useFontAlias: true,
     supportRTL: true,
+    dimensResourceValue: true,
     numberResourceValue: false,
     alwaysReevaluateResources: false,
     excludeTextColor: ['#000000'],

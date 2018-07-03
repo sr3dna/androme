@@ -1,16 +1,17 @@
 import { Null, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import File from '../base/file';
 import View from './view';
-import { caseInsensitve, hasValue, getFileExt, replaceDP } from '../lib/util';
-import { getDataLevel, parseTemplateData, parseTemplateMatch } from '../lib/xml';
-import SETTINGS from '../settings';
+import { caseInsensitve, hasValue, lastIndexOf } from '../lib/util';
+import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
+import SETTINGS from '../settings';
 
 import STRING_TMPL from './template/resource/string';
 import STRINGARRAY_TMPL from './template/resource/string-array';
-import STYLE_TMPL from './template/resource/style';
 import FONT_TMPL from './template/resource/font';
 import COLOR_TMPL from './template/resource/color';
+import STYLE_TMPL from './template/resource/style';
+import DIMEN_TMPL from './template/resource/dimen';
 import DRAWABLE_TMPL from './template/resource/drawable';
 
 export default class FileRes<T extends View> extends File<T> {
@@ -31,6 +32,7 @@ export default class FileRes<T extends View> extends File<T> {
         files.push(...this.parseFileDetails(this.resourceFontToXml()));
         files.push(...this.parseFileDetails(this.resourceColorToXml()));
         files.push(...this.parseFileDetails(this.resourceStyleToXml()));
+        files.push(...this.parseFileDetails(this.resourceDimenToXml()));
         files.push(...this.parseImageDetails(xml), ...this.parseFileDetails(xml));
         this.saveToDisk(files);
     }
@@ -59,6 +61,7 @@ export default class FileRes<T extends View> extends File<T> {
             font: this.resourceFontToXml(),
             color: this.resourceColorToXml(),
             style: this.resourceStyleToXml(),
+            dimen: this.resourceDimenToXml(),
             drawable: this.resourceDrawableToXml()
         };
         if (saveToDisk) {
@@ -78,20 +81,20 @@ export default class FileRes<T extends View> extends File<T> {
         this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
         let xml = '';
         if (this.stored.STRINGS.size > 0) {
-            const template = parseTemplateMatch(STRING_TMPL);
+            const template = parseTemplate(STRING_TMPL);
             const data: {} = {
                 '0': [{
                     '1': []
                 }]
             };
-            const root = getDataLevel(data, '0');
+            const root = getTemplateLevel(data, '0');
             if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
                 root['1'].push({ name: 'app_name', value: this.appName });
             }
             for (const [value, name] of this.stored.STRINGS.entries()) {
                 root['1'].push({ name, value });
             }
-            xml = parseTemplateData(template, data);
+            xml = insertTemplateData(template, data);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -103,13 +106,13 @@ export default class FileRes<T extends View> extends File<T> {
         this.stored.ARRAYS = new Map([...this.stored.ARRAYS.entries()].sort());
         let xml = '';
         if (this.stored.ARRAYS.size > 0) {
-            const template = parseTemplateMatch(STRINGARRAY_TMPL);
+            const template = parseTemplate(STRINGARRAY_TMPL);
             const data: {} = {
                 '0': [{
                     '1': []
                 }]
             };
-            const root = getDataLevel(data, '0');
+            const root = getTemplateLevel(data, '0');
             for (const [name, values] of this.stored.ARRAYS.entries()) {
                 const arrayItem: ObjectMap<any> = {
                     name,
@@ -121,7 +124,7 @@ export default class FileRes<T extends View> extends File<T> {
                 }
                 root['1'].push(arrayItem);
             }
-            xml = parseTemplateData(template, data);
+            xml = insertTemplateData(template, data);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -133,7 +136,7 @@ export default class FileRes<T extends View> extends File<T> {
         this.stored.FONTS = new Map([...this.stored.FONTS.entries()].sort());
         let xml = '';
         if (this.stored.FONTS.size > 0) {
-            const template = parseTemplateMatch(FONT_TMPL);
+            const template = parseTemplate(FONT_TMPL);
             for (const [name, font] of this.stored.FONTS.entries()) {
                 const data: ObjectMap<any> = {
                     '#include': {},
@@ -144,7 +147,7 @@ export default class FileRes<T extends View> extends File<T> {
                     }]
                 };
                 data[(SETTINGS.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
-                const root = getDataLevel(data, '0');
+                const root = getTemplateLevel(data, '0');
                 for (const attr in font) {
                     const [style, weight] = attr.split('-');
                     root['1'].push({
@@ -153,7 +156,7 @@ export default class FileRes<T extends View> extends File<T> {
                         font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
                     });
                 }
-                xml += '\n\n' + parseTemplateData(template, data);
+                xml += '\n\n' + insertTemplateData(template, data);
             }
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
@@ -166,17 +169,17 @@ export default class FileRes<T extends View> extends File<T> {
         let xml = '';
         if (this.stored.COLORS.size > 0) {
             this.stored.COLORS = new Map([...this.stored.COLORS.entries()].sort());
-            const template = parseTemplateMatch(COLOR_TMPL);
+            const template = parseTemplate(COLOR_TMPL);
             const data: {} = {
                 '0': [{
                     '1': []
                 }]
             };
-            const root = getDataLevel(data, '0');
+            const root = getTemplateLevel(data, '0');
             for (const [name, value] of this.stored.COLORS.entries()) {
                 root['1'].push({ name, value });
             }
-            xml = parseTemplateData(template, data);
+            xml = insertTemplateData(template, data);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -188,13 +191,13 @@ export default class FileRes<T extends View> extends File<T> {
         let xml = '';
         if (this.stored.STYLES.size > 0) {
             this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort());
-            const template = parseTemplateMatch(STYLE_TMPL);
+            const template = parseTemplate(STYLE_TMPL);
             const data: {} = {
                 '0': [{
                     '1': []
                 }]
             };
-            const root = getDataLevel(data, '0');
+            const root = getTemplateLevel(data, '0');
             for (const [name1, style] of this.stored.STYLES.entries()) {
                 const styleItem: ObjectMap<any> = {
                     name1,
@@ -207,9 +210,34 @@ export default class FileRes<T extends View> extends File<T> {
                 });
                 root['1'].push(styleItem);
             }
-            xml = parseTemplateData(template, data);
+            xml = insertTemplateData(template, data);
             if (SETTINGS.useUnitDP) {
                 xml = replaceDP(xml, SETTINGS.density, true);
+            }
+            if (saveToDisk) {
+                this.saveToDisk(this.parseFileDetails(xml));
+            }
+        }
+        return xml;
+    }
+
+    public resourceDimenToXml(saveToDisk = false) {
+        this.stored.DIMENS = new Map([...this.stored.DIMENS.entries()].sort());
+        let xml = '';
+        if (this.stored.DIMENS.size > 0) {
+            const template = parseTemplate(DIMEN_TMPL);
+            const data: {} = {
+                '0': [{
+                    '1': []
+                }]
+            };
+            const root = getTemplateLevel(data, '0');
+            for (const [name, value] of this.stored.DIMENS.entries()) {
+                root['1'].push({ name, value });
+            }
+            xml = insertTemplateData(template, data);
+            if (SETTINGS.useUnitDP) {
+                xml = replaceDP(xml, SETTINGS.density);
             }
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
@@ -221,7 +249,7 @@ export default class FileRes<T extends View> extends File<T> {
     public resourceDrawableToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.DRAWABLES.size > 0 || this.stored.IMAGES.size > 0) {
-            const template = parseTemplateMatch(DRAWABLE_TMPL);
+            const template = parseTemplate(DRAWABLE_TMPL);
             const data: ObjectMap<any> = {
                 '0': []
             };
@@ -232,14 +260,14 @@ export default class FileRes<T extends View> extends File<T> {
             for (const [name, images] of this.stored.IMAGES.entries()) {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
-                        root.push({ name: `res/drawable-${dpi}/${name}.${getFileExt((<any> images)[dpi])}`, value: `<!-- image: ${(<any> images)[dpi]} -->` });
+                        root.push({ name: `res/drawable-${dpi}/${name}.${lastIndexOf((<any> images)[dpi], '.')}`, value: `<!-- image: ${(<any> images)[dpi]} -->` });
                     }
                 }
                 else if ((<any> images)['mdpi'] != null) {
-                    root.push({ name: `res/drawable/${name}.${getFileExt((<any> images)['mdpi'])}`, value: `<!-- image: ${(<any> images)['mdpi']} -->` });
+                    root.push({ name: `res/drawable/${name}.${lastIndexOf((<any> images)['mdpi'], '.')}`, value: `<!-- image: ${(<any> images)['mdpi']} -->` });
                 }
             }
-            xml = parseTemplateData(template, data);
+            xml = insertTemplateData(template, data);
             if (SETTINGS.useUnitDP) {
                 xml = replaceDP(xml, SETTINGS.density);
             }

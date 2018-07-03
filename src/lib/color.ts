@@ -1,20 +1,4 @@
-import { ObjectMap } from './types';
-
-interface Color {
-    name: string;
-    hex: string;
-    rgb: {
-        r: number;
-        g: number;
-        b: number;
-    };
-    hsl: {
-        h: number;
-        s: number;
-        l: number;
-    };
-    [key: string]: string | {};
-}
+import { Color, ObjectMap } from './types';
 
 const X11_CSS3: ObjectMap<any> = {
     'Pink':                 { 'hex': '#FFC0CB' },

@@ -1,10 +1,10 @@
 import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_ANDROID } from './constants';
-import parseRTL from './localization';
+import { averageInt, calculateBias, convertEnum, convertInt, convertPX, formatPX, generateId, hasValue, isPercent, lastIndexOf } from '../lib/util';
 import API_ANDROID from './customizations';
+import parseRTL from './localization';
 import { BLOCK_CHROME, BOX_STANDARD, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { averageInt, calculateBias, convertInt, convertPX, formatPX, generateId, getFileExt, hasValue, isPercent } from '../lib/util';
+import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_ANDROID } from './constants';
 
 type T = View;
 
@@ -98,15 +98,23 @@ export default class View extends Node {
     }
 
     public modifyBox(area: number, offset: number) {
-        for (const key of Object.keys(BOX_STANDARD)) {
-            if ((area & (<any> BOX_STANDARD)[key]) === (<any> BOX_STANDARD)[key]) {
-                const dimension = parseRTL(BOX_ANDROID[key]);
-                const total = formatPX(offset + convertInt(this.android(dimension)));
-                this.css(dimension, total);
-                this.android(dimension, total);
-            }
+        const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
+        if (value !== '') {
+            const dimen = parseRTL(value);
+            const total = formatPX(offset + convertInt(this.android(dimen)));
+            this.css(dimen, total);
+            this.android(dimen, total);
+            this.setBounds(true);
         }
-        this.setBounds(true);
+    }
+
+    public boxValue(area: number) {
+        const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
+        if (value !== '') {
+            const dimen = parseRTL(value);
+            return [dimen, (<string> this.android(dimen)) || '0px'];
+        }
+        return ['', '0px'];
     }
 
     public supported(obj: string, attr: string) {
@@ -170,7 +178,7 @@ export default class View extends Node {
         super.viewName = viewName || this.viewName;
         if (this.viewId == null) {
             const element = (<HTMLInputElement> this.element);
-            this.viewId = generateId('android', (element.id || element.name || `${getFileExt(this.viewName).toLowerCase()}_1`).replace(/[^\w]/g, '_'));
+            this.viewId = generateId('android', (element.id || element.name || `${lastIndexOf(this.viewName, '.').toLowerCase()}_1`).replace(/[^\w]/g, '_'));
             this.android('id', this.stringId);
         }
     }

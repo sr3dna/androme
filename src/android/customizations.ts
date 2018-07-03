@@ -25,8 +25,8 @@ const API_ANDROID: DEFAULT = {
             'Button': {
                 android: {
                     textAllCaps: 'false',
-                    minWidth: '0dp',
-                    minHeight: '0dp'
+                    minWidth: '0px',
+                    minHeight: '0px'
                 }
             }
         }

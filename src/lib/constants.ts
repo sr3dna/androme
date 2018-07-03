@@ -41,7 +41,13 @@ export enum BOX_STANDARD {
     PADDING_TOP = 32,
     PADDING_RIGHT = 64,
     PADDING_BOTTOM = 128,
-    PADDING_LEFT = 256
+    PADDING_LEFT = 256,
+    MARGIN = 2 | 4 | 8 | 16,
+    MARGIN_VERTICAL = 2 | 8,
+    MARGIN_HORIZONTAL = 4 | 16,
+    PADDING = 32 | 64 | 128 | 256,
+    PADDING_VERTICAL = 32 | 128,
+    PADDING_HORIZONTAL = 64 | 256
 }
 
 export const MAPPING_CHROME: ObjectMap<number> = {

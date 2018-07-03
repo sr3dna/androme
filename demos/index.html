@@ -64,7 +64,7 @@
         select {
             min-width: 37px;
             font-size: 11px;
-            padding: 1px 0px 2px 0px;
+            padding: 2px 0px;
         }
         input[type=button], input[type=submit] {
             font-size: 12px;
@@ -136,6 +136,7 @@
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
             var resource = androme.writeResourceStringXml() + '\n\n' +
                            androme.writeResourceArrayXml() + '\n\n' +
+                           androme.writeResourceDimenXml() + '\n\n' +
                            androme.writeResourceStyleXml() + '\n\n' +
                            androme.writeResourceColorXml() + '\n\n' +
                            androme.writeResourceDrawableXml();

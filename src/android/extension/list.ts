@@ -1,8 +1,9 @@
 import { ExtensionResult, ObjectMap } from '../../lib/types';
 import View from '../view';
 import List from '../../extension/list';
-import { VIEW_STANDARD } from '../../lib/constants';
+import { formatDimen } from '../../lib/xml';
 import parseRTL from '../localization';
+import { VIEW_STANDARD } from '../../lib/constants';
 
 export default class ListAndroid<T extends View> extends List {
     constructor(name: string, tagNames: string[], options?: {}) {
@@ -24,7 +25,7 @@ export default class ListAndroid<T extends View> extends List {
                             gravity: parseRTL('right'),
                             layout_gravity: 'fill',
                             layout_columnWeight: '0',
-                            [parseRTL('layout_marginRight')]: '8px',
+                            [parseRTL('layout_marginRight')]: formatDimen(node.tagName, parseRTL('margin_right'), '8px'),
                             text: (options.listStyle !== '0' ? options.listStyle : '')
                         }
                     }

@@ -4,10 +4,11 @@ import Extension from './extension';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { hasValue, hyphenToCamelCase, indentLines, removePlaceholders, replaceDP, resetId, sortAsc, trim } from '../lib/util';
+import { hasValue, hyphenToCamelCase, resetId, sortAsc, trim } from '../lib/util';
+import { indentLines, removePlaceholders, replaceDP } from '../lib/xml';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
+import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
@@ -57,6 +58,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public finalize() {
+        this.controllerHandler.setDimensions(this.viewData);
         this.resourceHandler.finalize(this.viewData);
         this.setAuxillaryViews();
         if (SETTINGS.showAttributes) {
@@ -64,6 +66,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         this.layouts.forEach(layout => {
             layout.content = removePlaceholders(layout.content);
+            if (SETTINGS.dimensResourceValue) {
+                layout.content = this.controllerHandler.parseDimensions(layout.content);
+            }
             if (SETTINGS.useUnitDP) {
                 layout.content = replaceDP(layout.content, SETTINGS.density);
             }
@@ -571,30 +576,21 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public setAuxillaryViews() {
+        [...this.views, ...this.includes].forEach(view => view.content = this.controllerHandler.insertAuxillaryViews(view.content));
         this.cacheInternal.list.forEach(node => {
             if (!node.visible && node.renderExtension != null) {
-                const attr = `${node.renderExtension.name}:insert`;
-                let output = (<string> node.options(attr));
+                const insert = `${node.renderExtension.name}:insert`;
+                let output = (<string> node.options(insert));
                 if (output) {
+                    output = this.controllerHandler.insertAuxillaryViews(output);
                     const children = this.insert[node.id];
                     if (children != null) {
                         output = output.replace(`{:${node.id}}`, children);
                     }
-                    output = this.controllerHandler.replaceAttributes(output, node);
-                    node.children.forEach(item => output = this.controllerHandler.replaceAttributes(output, <T> item));
-                    node.options(attr, output);
-                }
-            }
-        });
-        [...this.views, ...this.includes].forEach(view => view.content = this.controllerHandler.replaceAuxillaryViews(view.content));
-        this.cacheInternal.list.forEach(node => {
-            if (!node.visible && node.renderExtension != null) {
-                const attr = `${node.renderExtension.name}:insert`;
-                let output = (<string> node.options(attr));
-                if (output) {
-                    output = this.controllerHandler.replaceAuxillaryViews(output);
+                    output = this.controllerHandler.insertAttributes(output, node);
                     output = indentLines(output.trim());
-                    node.options(attr, output);
+                    node.children.forEach(item => output = this.controllerHandler.insertAttributes(output, <T> item));
+                    node.options(insert, output);
                 }
             }
             this.extensions.forEach(item => {
@@ -708,7 +704,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return { cache: this.cacheInternal.list, views: this.views, includes: this.includes };
     }
 
-    public get length() {
-        return this.views.length;
+    public get size() {
+        return this.views.length + this.includes.length;
     }
 }
