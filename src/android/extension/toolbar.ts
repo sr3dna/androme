@@ -16,7 +16,7 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
         node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
-        const actionBar = (node.element.dataset.extActionBarFor != null);
+        const actionBar = (node.element.dataset.extFor != null);
         const depth = (actionBar ? 0 : node.depth + node.renderDepth);
         const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
         const toolbar = Object.assign({}, options.toolbar);
@@ -85,7 +85,7 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
     }
 
     public finalize() {
-        const actionBar = (<string> this.node.element.dataset.extActionBarFor);
+        const actionBar = (<string> this.node.element.dataset.extFor);
         const menu = this.getMenu(<T> this.node);
         const layouts = this.application.layouts;
         if (actionBar != null) {

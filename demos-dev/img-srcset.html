@@ -10,22 +10,14 @@
     <script>
         SystemJS.import('/build/main.js').then(function(result) {
             androme = result;
-        });
-        var images = 0;
-        function loaded() {
-            if (++images >= 2) {
-                if (androme == null) {
-                    setTimeout(function() { loaded(); }, 100);
-                    return;
-                }
-                androme.parseDocument('androme_root');
+            androme.parseDocument('androme_root').then(function() {
                 androme.close();
 
                 document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
                 var resource = androme.writeResourceDrawableXml();
                 document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
-            }
-        }
+            });
+        });
     </script>
 </head>
 <body>
@@ -36,14 +28,14 @@
                                                                     ../demos/images/android-hdpi.png 1.5x,
                                                                     ../demos/images/android-xhdpi.png 2x,
                                                                     ../demos/images/android-xxhdpi.png 3x,
-                                                                    ../demos/images/android-xxxhdpi.png 4x" onload="loaded();" />
+                                                                    ../demos/images/android-xxxhdpi.png 4x" />
         <br /><br />
         <img id="pencil" src="../demos/images/pencil.png" srcset="../demos/images/pencil-ldpi.png 0.75x,
                                                                   ../demos/images/pencil.png,
                                                                   ../demos/images/pencil-hdpi.png 1.5x,
                                                                   ../demos/images/pencil-xhdpi.png 2x,
                                                                   ../demos/images/pencil-xxhdpi.png 3x,
-                                                                  ../demos/images/pencil-xxxhdpi.png 4x" onload="loaded();" />
+                                                                  ../demos/images/pencil-xxxhdpi.png 4x" />
     </div>
     <!-- END: DEMO -->
 

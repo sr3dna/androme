@@ -1,4 +1,4 @@
-## androme
+# androme
 
 This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS will also be supported once the Android version has stabilized. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
@@ -8,7 +8,7 @@ Layout rendering can also be customized using extensions as the program was buil
 
 The ratio is about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application.
 
-## INSTALLATION (global js variable: androme)
+## Installation (global js variable: androme)
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). Chrome is the preferred browser when generating the production version of your program. ***
 
@@ -37,7 +37,7 @@ If you install via NPM then it is recommended you put androme into its own separ
 
 Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
 
-NOTE: Calling "parseDocument" before the images have completely loaded can sometimes cause them to be excluded from the generated layout when you reload the page. This problem will be fixed soon.
+NOTE: Calling "save" or "write" methods before the images have completely loaded can sometimes cause them to be excluded from the generated layout. In these cases you should use the "parseDocument" chain method "then" to set a callback for your commands.
 
 ```javascript
 <script src="/dist/androme.js"></script>
@@ -68,6 +68,12 @@ NOTE: Calling "parseDocument" before the images have completely loaded can somet
 
         // start new "parseDocument" session
         androme.reset();
+
+        // only required when you are using IMG tags to display images
+        androme.parseDocument(/* 'mainview' */, /* 'subview' */).then(function() {
+            androme.close();
+            androme.saveAllToDisk();
+        });
     });
 </script>
 ```
@@ -114,7 +120,7 @@ Most layout issues are probably due to layout_width and layout_height not being 
 
 <img src="demos/android/form.png" alt="form" />
 
-### standard
+### Standard
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for most of the common floating techniques.
 
@@ -128,7 +134,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/position_absolute.png" alt="position: absolute" />
 
-### extensions: standard
+### Extensions: Standard
 
 <img src="demos/android/table.png" alt="extension: table" />
 
@@ -138,7 +144,7 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 Extension "external": used for elements which are meant to be in a separate activity layout XML such as navigation menus.
 
-### extensions: widgets
+### Extensions: Widgets
 
 Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
 
@@ -151,7 +157,7 @@ Most of the Android support library extensions can be configured using the same 
 
 <img src="demos/android/menu.png" alt="extension: menu" />
 
-### auto-generated layout
+### Auto-generated Layout
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1007,7 +1013,7 @@ Most of the Android support library extensions can be configured using the same 
 	</LinearLayout>
 </LinearLayout>
 ```
-### string resources
+### String Resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1189,7 +1195,7 @@ Most of the Android support library extensions can be configured using the same 
 </resources>
 <!-- filename: res/values/string_arrays.xml -->
 ```
-### styles and themes
+### Styles and Themes
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1235,7 +1241,7 @@ Most of the Android support library extensions can be configured using the same 
 </resources>
 <!-- filename: res/values/styles.xml -->
 ```
-### bundled fonts
+### Bundled Fonts
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1251,7 +1257,7 @@ Most of the Android support library extensions can be configured using the same 
 </font-family>
 <!-- filename: res/font/tahoma.xml -->
 ```
-### color resources
+### Color Resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1267,7 +1273,7 @@ Most of the Android support library extensions can be configured using the same 
 </resources>
 <!-- filename: res/values/colors.xml -->
 ```
-### drawable resources
+### Drawable Resources
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -1303,7 +1309,7 @@ Most of the Android support library extensions can be configured using the same 
 </shape>
 <!-- filename: res/drawable/button_button_1.xml -->
 ```
-## user written html
+## User Written HTML
 
 Using excessive DIV and FORM tags are not required for mobile devices which can cause additional LinearLayouts to be auto-generated. Block level elements are always rendered in order to preserve any CSS which is applied to the tag.
 

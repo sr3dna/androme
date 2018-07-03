@@ -39,17 +39,15 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script>
-        var images = 0;
-        function loaded() {
-            if (++images == 2) {
-                androme.parseDocument('androme_root');
+        document.addEventListener('DOMContentLoaded', function() {
+            androme.parseDocument('androme_root').then(function() {
                 androme.close();
 
                 document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
                 var resource = androme.writeResourceDrawableXml();
                 document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
-            }
-        }
+            });
+        });
     </script>
 </head>
 <body>
@@ -60,14 +58,14 @@
                                                            images/android-hdpi.png 1.5x,
                                                            images/android-xhdpi.png 2x,
                                                            images/android-xxhdpi.png 3x,
-                                                           images/android-xxxhdpi.png 4x" onload="loaded();" />
+                                                           images/android-xxxhdpi.png 4x" />
         <br /><br />
         <img id="pencil" src="images/pencil.png" srcset="images/pencil-ldpi.png 0.75x,
                                                          images/pencil.png,
                                                          images/pencil-hdpi.png 1.5x,
                                                          images/pencil-xhdpi.png 2x,
                                                          images/pencil-xxhdpi.png 3x,
-                                                         images/pencil-xxxhdpi.png 4x" onload="loaded();" />
+                                                         images/pencil-xxxhdpi.png 4x" />
     </div>
     <!-- END: DEMO -->
 

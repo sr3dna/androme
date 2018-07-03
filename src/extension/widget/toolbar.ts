@@ -18,7 +18,7 @@ export default abstract class Toolbar extends Extension<T, U> {
                     item.dataset.ext = 'androme.external';
                 }
             });
-            if (element.dataset.extActionBarFor != null) {
+            if (element.dataset.extFor != null) {
                 this.application.elements.add(element);
                 return true;
             }

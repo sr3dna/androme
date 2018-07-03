@@ -21,6 +21,7 @@ import Drawer from './android/extension/drawer';
 type T = View;
 type U = ViewList<T>;
 
+let LOADING = false;
 const ROOT_CACHE: Set<HTMLElement> = new Set();
 const EXTENSIONS: any = {
     'androme.external': new External('androme.external'),
@@ -59,6 +60,7 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
     if (main.closed) {
         return;
     }
+    LOADING = false;
     main.resetController();
     main.setStyleMap();
     main.elements.clear();
@@ -73,28 +75,59 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
             main.elements.add(element);
         }
     });
-    main.elements.forEach(element => {
-        if (main.appName === '') {
-            if (element.id === '') {
-                element.id = 'androme';
+    let __THEN: () => void;
+    function parseResume() {
+        LOADING = false;
+        main.elements.forEach(element => {
+            if (main.appName === '') {
+                if (element.id === '') {
+                    element.id = 'androme';
+                }
+                main.appName = element.id;
             }
-            main.appName = element.id;
+            else {
+                if (element.id === '') {
+                    element.id = `view_${main.length}`;
+                }
+            }
+            element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
+            element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
+            if (main.createNodeCache(element)) {
+                main.createLayoutXml();
+                main.setResources();
+                main.setMarginPadding();
+                main.setConstraints();
+                ROOT_CACHE.add(element);
+            }
+        });
+        if (typeof __THEN === 'function') {
+            __THEN.call(main);
         }
-        else {
-            if (element.id === '') {
-                element.id = `view_${main.length}`;
+    }
+    const images: HTMLImageElement[] = Array.from(main.elements).map((element: HTMLElement) => <HTMLImageElement[]> Array.from(element.querySelectorAll('IMG'))).reduce((a, b) => a.concat(b), []).filter(element => !element.complete);
+    if (images.length === 0) {
+        parseResume();
+    }
+    else {
+        LOADING = true;
+        const queue = images.map(image => {
+            return new Promise((resolve, reject) => {
+                image.onload = resolve;
+                image.onerror = reject;
+            });
+        });
+        Promise.all(queue).then(() => parseResume());
+    }
+    return {
+        then: (resolve: () => void) => {
+            if (LOADING) {
+                __THEN = resolve;
+            }
+            else {
+                resolve();
             }
         }
-        element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
-        element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
-        if (main.createNodeCache(element)) {
-            main.createLayoutXml();
-            main.setResources();
-            main.setMarginPadding();
-            main.setConstraints();
-            ROOT_CACHE.add(element);
-        }
-    });
+    };
 }
 
 export function registerExtension(extension: Extension<T, U>) {
@@ -117,11 +150,11 @@ export function getExtension(name: string) {
 }
 
 export function ready() {
-    return !main.closed;
+    return (!LOADING && !main.closed);
 }
 
 export function close() {
-    if (main.length > 0) {
+    if (!LOADING && main.length > 0) {
         main.finalize();
     }
 }
@@ -136,7 +169,7 @@ export function reset() {
 }
 
 export function saveAllToDisk() {
-    if (main.length > 0) {
+    if (!LOADING && main.length > 0) {
         if (!main.closed) {
             main.finalize();
         }
@@ -212,7 +245,7 @@ export function toString() {
 }
 
 function autoClose() {
-    if (SETTINGS.autoCloseOnWrite && !main.closed) {
+    if (SETTINGS.autoCloseOnWrite && !LOADING && !main.closed) {
         main.finalize();
     }
 }
