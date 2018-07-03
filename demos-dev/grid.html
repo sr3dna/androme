@@ -33,7 +33,7 @@
         System.import('/build/main.js').then(function(result) {
             androme = result;
             androme.settings.useLayoutWeight = true;
-            androme.parseDocument('androme_root');
+            androme.parseDocument('androme_ui');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -48,7 +48,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root">
+    <div id="androme_ui">
         <ul>
             <li>
                 <span>1</span>

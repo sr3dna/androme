@@ -59,7 +59,7 @@
     <script src="../dist/androme.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            androme.parseDocument('androme_root');
+            androme.parseDocument('androme_ui');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -75,7 +75,7 @@
 <body>
     <!-- START: DEMO -->
     <div>
-        <table id="androme_root">
+        <table id="androme_ui">
             <thead style="background-color: #ccc;">
                 <tr>
                     <th colspan="4">head 1</th>
@@ -109,7 +109,7 @@
                     <td>4</td>
                     <td>4</td>
                     <td>
-                        <table id="androme_root">
+                        <table id="androme_ui">
                             <thead style="background-color: #ccc;">
                                 <tr>
                                     <th colspan="4">head 1</th>
@@ -198,7 +198,7 @@
             window.getSelection().addRange(range);
             document.execCommand('copy');
             setTimeout(function() {
-                window.getSelection().removeAllRanges()
+                window.getSelection().removeAllRanges();
             }, 100);
         }
     </script>

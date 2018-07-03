@@ -58,7 +58,7 @@
     <script src="../dist/androme.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            androme.parseDocument('androme_root');
+            androme.parseDocument('androme_ui');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -73,7 +73,7 @@
 <body>
     <!-- START: DEMO -->
     <div>
-        <div id="androme_root" style="height: 300px; display: flex;">
+        <div id="androme_ui" style="height: 300px; display: flex;">
             <div class="column">
                 <div>1</div>
             </div>
@@ -166,7 +166,7 @@
             window.getSelection().addRange(range);
             document.execCommand('copy');
             setTimeout(function() {
-                window.getSelection().removeAllRanges()
+                window.getSelection().removeAllRanges();
             }, 100);
         }
     </script>

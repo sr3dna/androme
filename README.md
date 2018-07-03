@@ -164,10 +164,10 @@ Most of the Android support library extensions can be configured using the same 
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:id="@+id/androme_root"
+	android:id="@+id/androme_ui"
 	android:gravity="top"
 	android:layout_height="wrap_content"
-	android:layout_width="@dimen/div_width"
+	android:layout_width="wrap_content"
 	android:orientation="vertical">
 	<TextView
 		android:id="@+id/textview_1"
@@ -176,7 +176,7 @@ Most of the Android support library extensions can be configured using the same 
 		android:layout_width="match_parent"
 		android:padding="@dimen/h2_padding"
 		android:text="@string/entry"
-		style="@style/H2_1" />
+		style="@style/H2" />
 	<LinearLayout
 		android:id="@+id/entry"
 		android:background="@drawable/form_entry"
@@ -201,7 +201,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/order"
-				style="@style/Label_2" />
+				style="@style/Label_1" />
 			<EditText
 				android:id="@+id/order"
 				android:background="@drawable/text_order"
@@ -210,7 +210,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_height="wrap_content"
 				android:layout_width="@dimen/text_width"
 				android:paddingVertical="@dimen/text_padding_vertical"
-				style="@style/Text_1" />
+				style="@style/Text" />
 			<Space
 				android:id="@+id/space_1"
 				android:layout_columnSpan="2"
@@ -223,7 +223,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/date_add"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<android.support.constraint.ConstraintLayout
 				android:id="@+id/constraintlayout_1"
 				android:layout_height="wrap_content"
@@ -242,7 +242,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toTopOf="parent"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/day0"
 					android:background="@drawable/select_hour"
@@ -256,7 +256,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toEndOf="@+id/month0"
 					app:layout_constraintTop_toTopOf="parent"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/year0"
 					android:background="@drawable/select_hour"
@@ -270,7 +270,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toEndOf="@+id/day0"
 					app:layout_constraintTop_toTopOf="parent"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/month1"
 					android:background="@drawable/select_hour"
@@ -286,7 +286,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/month0"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/day1"
 					android:background="@drawable/select_hour"
@@ -301,7 +301,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toEndOf="@+id/month1"
 					app:layout_constraintTop_toBottomOf="@+id/day0"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/year1"
 					android:background="@drawable/select_hour"
@@ -316,7 +316,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toEndOf="@+id/day1"
 					app:layout_constraintTop_toBottomOf="@+id/year0"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/month2"
 					android:background="@drawable/select_hour"
@@ -332,7 +332,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toStartOf="parent"
 					app:layout_constraintTop_toBottomOf="@+id/month1"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/day2"
 					android:background="@drawable/select_hour"
@@ -347,7 +347,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toEndOf="@+id/month2"
 					app:layout_constraintTop_toBottomOf="@+id/day1"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/year2"
 					android:background="@drawable/select_hour"
@@ -362,7 +362,7 @@ Most of the Android support library extensions can be configured using the same 
 					app:layout_constraintStart_toEndOf="@+id/day2"
 					app:layout_constraintTop_toBottomOf="@+id/year1"
 					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select_1" />
+					style="@style/Select" />
 			</android.support.constraint.ConstraintLayout>
 			<Space
 				android:id="@+id/space_2"
@@ -376,7 +376,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/time"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<LinearLayout
 				android:id="@+id/linearlayout_1"
 				android:layout_height="wrap_content"
@@ -391,7 +391,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/minute"
 					android:background="@drawable/select_hour"
@@ -402,7 +402,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_3"
@@ -416,7 +416,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/type"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<Spinner
 				android:id="@+id/typeofentry"
 				android:background="@drawable/select_hour"
@@ -426,7 +426,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/select_width"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 			<Space
 				android:id="@+id/space_4"
 				android:layout_columnSpan="2"
@@ -440,7 +440,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/topic_add"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<LinearLayout
 				android:id="@+id/linearlayout_2"
 				android:layout_height="wrap_content"
@@ -455,7 +455,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_marginEnd="@dimen/text_margin_end"
 					android:layout_width="@dimen/text_width_1"
 					android:paddingVertical="@dimen/text_padding_vertical"
-					style="@style/Text_1" />
+					style="@style/Text" />
 				<Spinner
 					android:id="@+id/prominence0"
 					android:background="@drawable/select_hour"
@@ -466,7 +466,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_5"
@@ -480,7 +480,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/series"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<Spinner
 				android:id="@+id/series"
 				android:background="@drawable/select_hour"
@@ -490,7 +490,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/select_width_1"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 			<Space
 				android:id="@+id/space_6"
 				android:layout_columnSpan="2"
@@ -503,7 +503,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/subset"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<Spinner
 				android:id="@+id/subset"
 				android:background="@drawable/select_hour"
@@ -513,7 +513,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="wrap_content"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 			<Space
 				android:id="@+id/space_7"
 				android:layout_columnSpan="2"
@@ -526,7 +526,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/active"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<Spinner
 				android:id="@+id/entryactive"
 				android:background="@drawable/select_hour"
@@ -536,7 +536,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="wrap_content"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 		</GridLayout>
 		<View
 			android:id="@+id/view_1"
@@ -559,7 +559,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/series"
-				style="@style/Label_2" />
+				style="@style/Label_1" />
 			<Spinner
 				android:id="@+id/series_1"
 				android:background="@drawable/select_hour"
@@ -569,7 +569,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/select_width_1"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 			<Space
 				android:id="@+id/space_8"
 				android:layout_columnSpan="2"
@@ -582,7 +582,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/subset"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<Spinner
 				android:id="@+id/subset_1"
 				android:background="@drawable/select_hour"
@@ -592,7 +592,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="wrap_content"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 			<Space
 				android:id="@+id/space_9"
 				android:layout_columnSpan="2"
@@ -605,7 +605,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/entries"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<LinearLayout
 				android:id="@+id/linearlayout_3"
 				android:layout_height="wrap_content"
@@ -620,7 +620,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="@dimen/select_width_1"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Button
 					android:id="@+id/button_1"
 					android:background="@drawable/button_button_1"
@@ -634,7 +634,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:paddingVertical="@dimen/button_padding_vertical"
 					android:text="@string/open"
 					android:textAllCaps="false"
-					style="@style/Button_2" />
+					style="@style/Button_1" />
 				<Button
 					android:id="@+id/button_2"
 					android:background="@drawable/button_button_1"
@@ -648,7 +648,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:paddingVertical="@dimen/button_padding_vertical"
 					android:text="@string/all"
 					android:textAllCaps="false"
-					style="@style/Button_2" />
+					style="@style/Button_1" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_10"
@@ -662,7 +662,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/mode"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<Spinner
 				android:id="@+id/mode"
 				android:background="@drawable/select_hour"
@@ -672,7 +672,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="wrap_content"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 			<Space
 				android:id="@+id/space_11"
 				android:layout_columnSpan="2"
@@ -685,7 +685,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/style"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<Spinner
 				android:id="@+id/style1"
 				android:background="@drawable/select_hour"
@@ -695,7 +695,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="wrap_content"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 			<Space
 				android:id="@+id/space_12"
 				android:layout_columnSpan="2"
@@ -708,7 +708,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/calendar"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<Spinner
 				android:id="@+id/calendar"
 				android:background="@drawable/select_hour"
@@ -718,7 +718,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="wrap_content"
 				android:minWidth="@dimen/select_minwidth"
 				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select_1" />
+				style="@style/Select" />
 			<Space
 				android:id="@+id/space_13"
 				android:layout_columnSpan="2"
@@ -731,7 +731,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/version"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<LinearLayout
 				android:id="@+id/linearlayout_4"
 				android:layout_height="wrap_content"
@@ -746,7 +746,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/version_update"
 					android:background="@drawable/select_hour"
@@ -757,7 +757,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Button
 					android:id="@+id/button_3"
 					android:background="@drawable/button_button_1"
@@ -771,7 +771,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:paddingVertical="@dimen/button_padding_vertical"
 					android:text="@string/update"
 					android:textAllCaps="false"
-					style="@style/Button_1" />
+					style="@style/Button" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_14"
@@ -785,7 +785,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/branch"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<LinearLayout
 				android:id="@+id/linearlayout_5"
 				android:layout_height="wrap_content"
@@ -800,7 +800,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/branch_update"
 					android:background="@drawable/select_hour"
@@ -811,7 +811,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Button
 					android:id="@+id/button_4"
 					android:background="@drawable/button_button_1"
@@ -825,7 +825,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:paddingVertical="@dimen/button_padding_vertical"
 					android:text="@string/update"
 					android:textAllCaps="false"
-					style="@style/Button_1" />
+					style="@style/Button" />
 				<Button
 					android:id="@+id/button_5"
 					android:background="@drawable/button_button_1"
@@ -839,7 +839,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:paddingVertical="@dimen/button_padding_vertical"
 					android:text="@string/clone"
 					android:textAllCaps="false"
-					style="@style/Button_1" />
+					style="@style/Button" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_15"
@@ -854,7 +854,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/custom_add"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<LinearLayout
 				android:id="@+id/linearlayout_6"
 				android:layout_height="wrap_content"
@@ -869,7 +869,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_marginEnd="@dimen/text_margin_end"
 					android:layout_width="@dimen/text_width_1"
 					android:paddingVertical="@dimen/text_padding_vertical"
-					style="@style/Text_1" />
+					style="@style/Text" />
 				<Spinner
 					android:id="@+id/custommonth0"
 					android:background="@drawable/select_hour"
@@ -880,7 +880,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<Spinner
 					android:id="@+id/customday0"
 					android:background="@drawable/select_hour"
@@ -891,7 +891,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="wrap_content"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 			</LinearLayout>
 			<Space
 				android:id="@+id/space_16"
@@ -905,7 +905,7 @@ Most of the Android support library extensions can be configured using the same 
 				android:layout_width="@dimen/label_width"
 				android:paddingTop="@dimen/label_padding_top"
 				android:text="@string/conclusion"
-				style="@style/Label_1" />
+				style="@style/Label" />
 			<LinearLayout
 				android:id="@+id/linearlayout_7"
 				android:layout_height="wrap_content"
@@ -920,7 +920,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_width="@dimen/select_width_2"
 					android:minWidth="@dimen/select_minwidth"
 					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select_1" />
+					style="@style/Select" />
 				<LinearLayout
 					android:id="@+id/linearlayout_8"
 					android:layout_height="wrap_content"
@@ -942,7 +942,7 @@ Most of the Android support library extensions can be configured using the same 
 							android:layout_marginTop="@dimen/radio_margin_top"
 							android:layout_width="wrap_content"
 							android:text="@string/birth"
-							style="@style/Radio_1" />
+							style="@style/Radio" />
 						<RadioButton
 							android:id="@+id/c3"
 							android:focusable="true"
@@ -952,7 +952,7 @@ Most of the Android support library extensions can be configured using the same 
 							android:layout_marginTop="@dimen/radio_margin_top"
 							android:layout_width="wrap_content"
 							android:text="@string/death"
-							style="@style/Radio_1" />
+							style="@style/Radio" />
 					</RadioGroup>
 					<CheckBox
 						android:id="@+id/c4"
@@ -963,7 +963,7 @@ Most of the Android support library extensions can be configured using the same 
 						android:layout_marginVertical="@dimen/checkbox_margin_vertical"
 						android:layout_width="wrap_content"
 						android:text="@string/none"
-						style="@style/Checkbox_1" />
+						style="@style/Checkbox" />
 				</LinearLayout>
 				<Button
 					android:id="@+id/button_6"
@@ -978,7 +978,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:paddingVertical="@dimen/button_padding_vertical"
 					android:text="@string/update"
 					android:textAllCaps="false"
-					style="@style/Button_1" />
+					style="@style/Button" />
 			</LinearLayout>
 		</GridLayout>
 	</LinearLayout>
@@ -1171,41 +1171,41 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<style name="Button_1">
+	<style name="Button">
 		<item name="android:background">@color/white_smoke_1</item>
 		<item name="android:fontFamily">arial</item>
 		<item name="android:textSize">10sp</item>
 	</style>
-	<style name="Button_2" parent="Button_1">
+	<style name="Button_1" parent="Button">
 		<item name="android:textColor">@color/gray</item>
 	</style>
-	<style name="Checkbox_1">
+	<style name="Checkbox">
 		<item name="android:fontFamily">sans-serif</item>
 		<item name="android:textSize">11sp</item>
 	</style>
-	<style name="H2_1">
+	<style name="H2">
 		<item name="android:background">@color/dark_blue</item>
 		<item name="android:fontFamily">tahoma</item>
 		<item name="android:fontWeight">700</item>
 		<item name="android:textColor">@color/white</item>
 		<item name="android:textSize">12sp</item>
 	</style>
-	<style name="Label_1">
+	<style name="Label">
 		<item name="android:fontFamily">arial</item>
 		<item name="android:textSize">11sp</item>
 	</style>
-	<style name="Label_2" parent="Label_1">
+	<style name="Label_1" parent="Label">
 		<item name="android:textStyle">italic</item>
 	</style>
-	<style name="Radio_1">
+	<style name="Radio">
 		<item name="android:fontFamily">sans-serif</item>
 		<item name="android:textSize">11sp</item>
 	</style>
-	<style name="Select_1">
+	<style name="Select">
 		<item name="android:fontFamily">arial</item>
 		<item name="android:textSize">11sp</item>
 	</style>
-	<style name="Text_1">
+	<style name="Text">
 		<item name="android:fontFamily">arial</item>
 		<item name="android:textSize">13.33sp</item>
 	</style>

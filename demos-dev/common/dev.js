@@ -18,6 +18,6 @@ function copy(id) {
     window.getSelection().addRange(range);
     document.execCommand('copy');
     setTimeout(function() {
-        window.getSelection().removeAllRanges()
+        window.getSelection().removeAllRanges();
     }, 100);
 }

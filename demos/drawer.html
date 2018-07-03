@@ -69,7 +69,7 @@
     <script src="../dist/androme.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            androme.parseDocument('androme_root').then(function() {
+            androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
                 var views = androme.writeLayoutAllXml();
@@ -90,7 +90,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root">
+    <div id="androme_ui">
         <div id="drawer_demo" data-ext="androme.widget.drawer">
             <aside id="drawer_aside">
                 <div>
@@ -143,7 +143,7 @@
             window.getSelection().addRange(range);
             document.execCommand('copy');
             setTimeout(function() {
-                window.getSelection().removeAllRanges()
+                window.getSelection().removeAllRanges();
             }, 100);
         }
     </script>

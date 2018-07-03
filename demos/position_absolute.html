@@ -64,7 +64,7 @@
                     span.style.top = `${320 * Math.random()}px`;
                     span.style.left = `${320 * Math.random()}px`;
                 }
-                androme.parseDocument('androme_root');
+                androme.parseDocument('androme_ui');
             }
         }
         function closeDocument() {
@@ -90,7 +90,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root" style="width: 400px;">
+    <div id="androme_ui" style="width: 400px;">
         &nbsp;
         <span>1</span>
         <span>2</span>
@@ -128,7 +128,7 @@
             window.getSelection().addRange(range);
             document.execCommand('copy');
             setTimeout(function() {
-                window.getSelection().removeAllRanges()
+                window.getSelection().removeAllRanges();
             }, 100);
         }
     </script>

@@ -2,7 +2,7 @@ import { BorderAttribute, Null, ObjectIndex, ObjectMap, ResourceMap, StringMap, 
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { formatString, hasValue, repeat } from '../lib/util';
+import { capitalize, formatString, hasValue, repeat } from '../lib/util';
 import { getTemplateLevel, indentLines, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { VIEW_STANDARD } from '../lib/constants';
@@ -547,7 +547,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
                 return (c >= d ? -1 : 1);
             });
-            tagData.forEach((item, index) => item.name = `${tagName.charAt(0) + tagName.substring(1).toLowerCase()}_${(index + 1)}`);
+            tagData.forEach((item, index) => item.name = capitalize(tagName) + (index > 0 ? `_${index}` : ''));
             resource[tagName] = tagData;
         }
         const inherit = new Set();
@@ -626,9 +626,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
         for (const styles of inherit) {
             let parent = '';
             styles.split('.').forEach((value: string) => {
-                const match = value.match(/^(\w+)_([0-9]+)$/);
+                const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                 if (match != null) {
-                    const tagData = resource[match[1].toUpperCase()][parseInt(match[2]) - 1];
+                    const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];
                     STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
                     parent = value;
                 }

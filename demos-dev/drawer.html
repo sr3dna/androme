@@ -41,7 +41,7 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.parseDocument('androme_root').then(function() {
+            androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
                 var views = androme.writeLayoutAllXml();
@@ -62,7 +62,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root">
+    <div id="androme_ui">
         <div id="drawer_demo" data-ext="androme.widget.drawer">
             <aside id="drawer_aside">
                 <div>

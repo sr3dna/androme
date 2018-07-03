@@ -102,7 +102,7 @@
     <script>
         SystemJS.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.parseDocument('androme_root');
+            androme.parseDocument('androme_ui');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -118,7 +118,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root">
+    <div id="androme_ui">
         <h2>Entry</h2>
         <form name="entry" autocompvare="off">
             <ul>

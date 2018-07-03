@@ -79,6 +79,10 @@ export function hyphenToCamelCase(value: string) {
     return value;
 }
 
+export function capitalize(value: string) {
+    return value.charAt(0).toUpperCase() + value.substring(1).toLowerCase();
+}
+
 export function averageInt(values: number[]) {
     return Math.floor(values.reduce((a, b) => a + b) / values.length);
 }

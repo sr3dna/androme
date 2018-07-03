@@ -141,7 +141,7 @@
                     }
                 }
             });
-            androme.parseDocument('androme_root').then(function() {
+            androme.parseDocument('androme_ui').then(function() {
                 androme.close();
                 
                 var views = androme.writeLayoutAllXml();
@@ -167,7 +167,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root" style="width: 200px;">
+    <div id="androme_ui" style="width: 200px;">
         <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-ext-for="drawer_demo">
             <img src="images/icons8-menu-24.png" data-navigation-icon="true" onclick="toggleDrawer(this, true);" />
             <img src="images/icons8-left-24.png" data-collapse-icon="true" onclick="toggleDrawer(this, false);" style="display: none;" />
@@ -245,7 +245,7 @@
             window.getSelection().addRange(range);
             document.execCommand('copy');
             setTimeout(function() {
-                window.getSelection().removeAllRanges()
+                window.getSelection().removeAllRanges();
             }, 100);
         }
     </script>

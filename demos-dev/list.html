@@ -40,7 +40,7 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.parseDocument('androme_root');
+            androme.parseDocument('androme_ui');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -55,7 +55,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root" style="width: 300px;">
+    <div id="androme_ui" style="width: 300px;">
         <ul>
             <li>Item 1</li>
             <li>Item 2</li>

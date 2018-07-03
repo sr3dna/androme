@@ -61,7 +61,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.settings.useLayoutWeight = true;
-            androme.parseDocument('androme_root');
+            androme.parseDocument('androme_ui');
             androme.close();
 
             document.getElementById('output').innerHTML = androme.toString().replace(/</g, '&lt;');
@@ -76,7 +76,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root">
+    <div id="androme_ui">
         <ul>
             <li>
                 <span>1</span>
@@ -147,7 +147,7 @@
             window.getSelection().addRange(range);
             document.execCommand('copy');
             setTimeout(function() {
-                window.getSelection().removeAllRanges()
+                window.getSelection().removeAllRanges();
             }, 100);
         }
     </script>

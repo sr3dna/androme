@@ -50,7 +50,7 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.parseDocument('androme_root').then(function() {
+            androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
                 var views = androme.writeLayoutAllXml();
@@ -73,7 +73,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_root" style="width: 200px;">
+    <div id="androme_ui" style="width: 200px;">
         <button onclick="document.getElementById('menu_demo').style.display = 'block';">Show Menu</button>
         <button onclick="document.getElementById('menu_demo').style.display = 'none';">Hide Menu</button>
         <nav id="menu_demo" data-ext="androme.widget.menu">
