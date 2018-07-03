@@ -11,7 +11,10 @@
         }
         #drawer_demo nav {
             padding: 0px;
-            border: solid 1px #aaa;
+        }
+        #drawer_demo nav nav div {
+            padding-right: 0px;
+            padding-left: 0px;
         }
         #drawer_demo nav div {
             font-size: 11px;
@@ -34,6 +37,12 @@
         #drawer_header span {
             font-size: 11px;
             color: #fff;
+        }
+        #drawer_menu {
+            border: solid 1px #aaa;
+        }
+        #drawer_menu > div:nth-child(2) {
+            border-top: solid 1px #ccc;
         }
         #toolbar_demo {
             background-color: #6A5ACD;
@@ -158,20 +167,25 @@
                     <label>Chrome</label>
                 </div>
                 <div>
-                    <img src="../demos/images/icons8-google-docs.png" />
-                    <label>Docs</label>
-                </div>
-                <div>
-                    <img src="../demos/images/icons8-google-news.png" />
-                    <label>News</label>
-                </div>
-                <div>
-                    <img src="../demos/images/icons8-google-play.png" />
-                    <label>Play</label>
-                </div>
-                <div>
-                    <img src="../demos/images/icons8-google-plus.png" />
-                    <label>Plus</label>
+                    Google
+                    <nav>
+                        <div>
+                            <img src="../demos/images/icons8-google-docs.png" />
+                            <label>Docs</label>
+                        </div>
+                        <div>
+                            <img src="../demos/images/icons8-google-news.png" />
+                            <label>News</label>
+                        </div>
+                        <div>
+                            <img src="../demos/images/icons8-google-play.png" />
+                            <label>Play</label>
+                        </div>
+                        <div>
+                            <img src="../demos/images/icons8-google-plus.png" />
+                            <label>Plus</label>
+                        </div>
+                    </nav>
                 </div>
             </nav>
         </div>
