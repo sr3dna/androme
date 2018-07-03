@@ -6,6 +6,7 @@ import View from './view';
 import ViewGroup from './viewgroup';
 import ViewList from './viewlist';
 import { convertPX, formatPX, generateId, hasValue, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
+import { formatDimen } from '../lib/xml';
 import { getBoxSpacing } from '../lib/dom';
 import { BOX_STANDARD, OVERFLOW_CHROME, VIEW_STANDARD } from '../lib/constants';
 import { VIEW_ANDROID, XMLNS_ANDROID } from './constants';
@@ -670,7 +671,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         degrees = (center1.x > center2.x ? 90 : 270);
                                     }
                                     opposite.app('layout_constraintCircle', adjacent.stringId);
-                                    opposite.app('layout_constraintCircleRadius', formatPX(radius));
+                                    opposite.app('layout_constraintCircleRadius', formatDimen(`${opposite.tagName}`, 'constraintcircleradius', formatPX(radius)));
                                     opposite.app('layout_constraintCircleAngle', degrees.toString());
                                     opposite.constraint.horizontal = true;
                                     opposite.constraint.vertical = true;
@@ -1148,7 +1149,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         orientation: (index === 0 ? 'vertical' : 'horizontal')
                     },
                     app: {
-                        [beginPercent]: (percent !== -1 ? percent : formatPX(Math.max(node.bounds[position] - parent.box[position], 0)))
+                        [beginPercent]: (percent !== -1 ? percent : formatDimen(node.tagName, 'constraintguide_begin', formatPX(Math.max(node.bounds[position] - parent.box[position], 0))))
                     }
                 };
                 const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
