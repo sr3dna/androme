@@ -28,7 +28,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     }
 
     public is(node: T) {
-        return (this.tagNames.length === 0 || (this.tagNames.includes(node.tagName)));
+        return (node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.element.tagName)));
     }
 
     public require(value: string, init = false) {
@@ -75,7 +75,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     }
 
     public condition() {
-        if (this.node && this.node.element.dataset != null) {
+        if (this.node && this.node.hasElement && this.node.element.dataset != null) {
             if (!this.node.element.dataset.ext) {
                 return (this.tagNames.length > 0);
             }

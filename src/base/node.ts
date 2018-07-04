@@ -20,6 +20,7 @@ export default abstract class Node implements BoxModel {
     public ignoreResource = 0;
     public visible = true;
     public companion = false;
+    public isolated = false;
 
     public gridRowSpan = 0;
     public gridColumnSpan = 0;

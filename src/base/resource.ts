@@ -219,7 +219,7 @@ export default abstract class Resource<T extends Node> {
                         borderLeft: this.parseBorderStyle,
                         borderRadius: this.parseBorderRadius,
                         backgroundColor: parseRGBA,
-                        backgroundImage: Resource.addImageURL,
+                        backgroundImage: this.parseBackgroundImage,
                         backgroundSize: this.parseBoxDimensions
                     };
                     for (const i in result) {
@@ -287,12 +287,12 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setImageSource() {
-        this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
+        this.cache.list.filter(node => (node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image'))).forEach(node => {
             const element = (<HTMLImageElement> node.element);
             const object = (<any> element);
             if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE) {
                 if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
-                    const result = Resource.addImageSrcSet(element);
+                    const result = (node.tagName === 'IMG' ? Resource.addImageSrcSet(element) : Resource.addImage({ 'mdpi': element.src }));
                     object.__imageSource = result;
                 }
             }
@@ -390,7 +390,11 @@ export default abstract class Resource<T extends Node> {
         return { style, width, color: (color.length > 0 ? color[0] : '#000000') };
     }
 
-    private parseBorderRadius(value: string, node: T, attribute: string) {
+    private parseBackgroundImage(value: string, node?: T, attribute?: string) {
+        return Resource.addImageURL(value);
+    }
+
+    private parseBorderRadius(value: string, node: T, attribute?: string) {
         const radiusTop = node.css('borderTopLeftRadius');
         const radiusRight = node.css('borderTopRightRadius');
         const radiusBottom = node.css('borderBottomLeftRadius');
@@ -404,22 +408,24 @@ export default abstract class Resource<T extends Node> {
     }
 
     private parseBoxDimensions(value: string, node?: T, attribute?: string) {
-        const match = value.match(/^([0-9]+(?:px|pt|em)|auto)(?: ([0-9]+(?:px|pt|em)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
-        if (match != null) {
-            if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
-                return [];
-            }
-            if (match[1] === 'auto' || match[2] === 'auto') {
-                return [(match[1] === 'auto' ? '' : convertPX(match[1])), (match[2] === 'auto' ? '' : convertPX(match[2]))];
-            }
-            else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
-                return [convertPX(match[1])];
-            }
-            else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
-                return [convertPX(match[1]), convertPX(match[2])];
-            }
-            else {
-                return [convertPX(match[1]), convertPX(match[2]), convertPX(match[3]), convertPX(match[4])];
+        if (value !== 'auto') {
+            const match = value.match(/^([0-9]+(?:px|pt|em)|auto)(?: ([0-9]+(?:px|pt|em)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
+            if (match != null) {
+                if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
+                    return [];
+                }
+                if (match[1] === 'auto' || match[2] === 'auto') {
+                    return [(match[1] === 'auto' ? '' : convertPX(match[1])), (match[2] === 'auto' ? '' : convertPX(match[2]))];
+                }
+                else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
+                    return [convertPX(match[1])];
+                }
+                else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
+                    return [convertPX(match[1]), convertPX(match[2])];
+                }
+                else {
+                    return [convertPX(match[1]), convertPX(match[2]), convertPX(match[3]), convertPX(match[4])];
+                }
             }
         }
         return [];

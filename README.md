@@ -87,7 +87,7 @@ androme.settings = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.widget' // androme.widget.menu | androme.widget.toolbar | androme.widget.drawer
+        'androme.widget' // androme.widget.menu | androme.widget.toolbar | androme.widget.drawer | androme.widget.button
     ],
     targetAPI: androme.build.OREO,
     density: androme.build.MDPI,
@@ -153,6 +153,8 @@ Most of the Android support library extensions can be configured using the same 
     androme.configureExtension('androme.widget.drawer', { android: { layout_width: 'wrap_content', fitsSystemWindows: 'true' } });
 </script>
 ```
+<img src="demos/android/drawer.png" alt="extension: drawer - floating action button" />f
+
 <img src="demos/android/drawer.navigationview.png" alt="extension: drawer - actionbar" />
 
 <img src="demos/android/menu.png" alt="extension: menu" />
@@ -236,6 +238,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
 					android:paddingVertical="@dimen/select_padding_vertical"
+					app:layout_constraintBottom_toTopOf="@+id/month1"
 					app:layout_constraintEnd_toStartOf="@+id/day0"
 					app:layout_constraintHorizontal_bias="0"
 					app:layout_constraintHorizontal_chainStyle="packed"
@@ -252,6 +255,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_marginStart="@dimen/select_margin_start"
 					android:layout_width="wrap_content"
 					android:paddingVertical="@dimen/select_padding_vertical"
+					app:layout_constraintBottom_toTopOf="@+id/day1"
 					app:layout_constraintEnd_toStartOf="@+id/year0"
 					app:layout_constraintStart_toEndOf="@+id/month0"
 					app:layout_constraintTop_toTopOf="parent"
@@ -266,6 +270,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_marginStart="@dimen/select_margin_start"
 					android:layout_width="wrap_content"
 					android:paddingVertical="@dimen/select_padding_vertical"
+					app:layout_constraintBottom_toTopOf="@+id/year1"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day0"
 					app:layout_constraintTop_toTopOf="parent"
@@ -280,6 +285,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_marginTop="@dimen/select_margin_top"
 					android:layout_width="wrap_content"
 					android:paddingVertical="@dimen/select_padding_vertical"
+					app:layout_constraintBottom_toTopOf="@+id/month2"
 					app:layout_constraintEnd_toStartOf="@+id/day1"
 					app:layout_constraintHorizontal_bias="0"
 					app:layout_constraintHorizontal_chainStyle="packed"
@@ -297,6 +303,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_marginTop="@dimen/select_margin_top"
 					android:layout_width="wrap_content"
 					android:paddingVertical="@dimen/select_padding_vertical"
+					app:layout_constraintBottom_toTopOf="@+id/day2"
 					app:layout_constraintEnd_toStartOf="@+id/year1"
 					app:layout_constraintStart_toEndOf="@+id/month1"
 					app:layout_constraintTop_toBottomOf="@+id/day0"
@@ -312,6 +319,7 @@ Most of the Android support library extensions can be configured using the same 
 					android:layout_marginTop="@dimen/select_margin_top"
 					android:layout_width="wrap_content"
 					android:paddingVertical="@dimen/select_padding_vertical"
+					app:layout_constraintBottom_toTopOf="@+id/year2"
 					app:layout_constraintEnd_toEndOf="parent"
 					app:layout_constraintStart_toEndOf="@+id/day1"
 					app:layout_constraintTop_toBottomOf="@+id/year0"

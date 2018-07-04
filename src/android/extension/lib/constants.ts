@@ -5,5 +5,11 @@ export const VIEW_SUPPORT: StringMap = {
     NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
     COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
     APPBAR: 'android.support.design.widget.AppBarLayout',
-    TOOLBAR: 'android.support.v7.widget.Toolbar'
+    TOOLBAR: 'android.support.v7.widget.Toolbar',
+    FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton'
+};
+
+export const DRAWABLE_PREFIX: StringMap = {
+    MENU: 'ic_menu_',
+    DIALOG: 'ic_dialog_'
 };

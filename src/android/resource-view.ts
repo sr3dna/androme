@@ -186,7 +186,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     'bottom': hideWidth,
                                     'left': hideWidth,
                                     '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
-                                    '3': false,
+                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
                                     '4': this.getShapeAttribute(stored, 'radius'),
                                     '5': this.getShapeAttribute(stored, 'radiusInit')
                                 };
@@ -611,12 +611,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     return false;
                 });
                 if (!replaced) {
-                    const views = viewData.views;
-                    for (let i = 0; i < views.length; i++) {
-                        const output = views[i].content;
+                    const layouts = [...viewData.views, ...viewData.includes];
+                    for (let i = 0; i < layouts.length; i++) {
+                        const output = layouts[i].content;
                         const pattern = `{&${id}}`;
                         if (output.indexOf(pattern) !== -1) {
-                            views[i].content = output.replace(pattern, append);
+                            layouts[i].content = output.replace(pattern, append);
                             break;
                         }
                     }

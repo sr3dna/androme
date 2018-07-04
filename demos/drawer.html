@@ -36,12 +36,35 @@
         .output div {
             text-align: right;
         }
+        #drawer_demo {
+            position: relative;
+            width: 300px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+        #drawer_demo button, #drawer_demo input[type=button] {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: slateblue;
+            border: none;
+            border-radius: 20px;
+            margin: 8px;
+            padding: 0px;
+        }
         #drawer_aside {
+            position: absolute;
+            top: 0px;
+            left: 0px;
             width: 200px;
+            height: 100%;
             margin: 0px;
             padding: 4px;
             background-color: #fff;
-            border: solid 1px #aaa;
+            border-right: solid 1px #aaa;
+            opacity: 0.8;
         }
         #drawer_aside div {
             font-size: 11px;
@@ -86,12 +109,34 @@
                 document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
             });
         });
+        function toggleAside() {
+            var element = document.getElementById('drawer_aside');
+            element.style.display = (element.style.display == 'block' ? 'none' : 'block');
+        }
     </script>
 </head>
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui">
-        <div id="drawer_demo" data-ext="androme.widget.drawer">
+        <div id="drawer_demo" data-ext="androme.widget.drawer" onclick="toggleAside();">
+            <div style="padding: 20px;">
+                <h2>title</h2>
+                <div style="color: #fff; background-color: #aaa; padding: 8px;">
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                </div>
+                <input id="fab_menu" type="button" style="position: static; background-image: url(images/icons8-squared-menu-24.png); float: right;" data-ext="androme.widget.button" />
+                <br /><br /><br /><br /><br /><br /><br />
+            </div>
+            <button id="fab_web" style="top: 0px; right: 0px; background-image: url(images/icons8-web-24.png);" data-ext="androme.widget.button"></button>
+            <button id="fab_browse_page" style="bottom: 0px; right: 0px; background-image: url(images/icons8-browse-page-24.png);" data-ext="androme.widget.button"></button>
+            <button id="fab_left" style="bottom: 0px; left: 0px; background-image: url(images/icons8-left-24.png);" data-ext="androme.widget.button"></button>
             <aside id="drawer_aside">
                 <div>
                     <img src="images/icons8-chrome.png" />

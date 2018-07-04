@@ -59,8 +59,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public finalize() {
         this.controllerHandler.setDimensions(this.viewData);
-        this.resourceHandler.finalize(this.viewData);
         this.setAuxillaryViews();
+        this.resourceHandler.finalize(this.viewData);
         if (SETTINGS.showAttributes) {
             this.setAttributes();
         }
@@ -576,7 +576,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public setAuxillaryViews() {
-        [...this.views, ...this.includes].forEach(view => view.content = this.controllerHandler.insertAuxillaryViews(view.content));
+        const viewIds = Object.keys(this.insert);
+        viewIds.push(...viewIds.slice().reverse());
+        [...this.views, ...this.includes].forEach(view => {
+            viewIds.forEach(id => view.content = view.content.replace(`{:${id}}`, this.insert[parseInt(id)]));
+            view.content = this.controllerHandler.insertAuxillaryViews(view.content);
+        });
         this.cacheInternal.list.forEach(node => {
             if (!node.visible && node.renderExtension != null) {
                 const insert = `${node.renderExtension.name}:insert`;
@@ -665,6 +670,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         else if (isVisible(element)) {
             node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
+            if ((<any> element).__nodeIsolated) {
+                node.isolated = true;
+            }
         }
         if (node != null) {
             this.cache.list.push(node);

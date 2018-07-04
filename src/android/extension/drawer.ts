@@ -20,41 +20,48 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         const node = (<T> this.node);
         node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
         let depth = node.depth + node.renderDepth;
-        const menu = this.getMenu(node);
         let options = Object.assign({}, this.options.drawerLayout);
+        let menu = this.getMenu(node);
         if (menu != null) {
             setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
         }
         let drawer = controller.getViewStatic(VIEW_SUPPORT.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node, true);
-        let include = '';
         const filename = `${node.viewId}_content`;
+        let include = '';
         if (this.options.includes == null || this.options.includes) {
             include = controller.getViewStatic('include', depth + 1, { layout: `@layout/${filename}` });
             depth = -1;
         }
-        let coordinator = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', new View(0, SETTINGS.targetAPI), true);
+        const coordinator = new View(this.application.cache.nextId, SETTINGS.targetAPI, null, { depth: 0 });
+        this.application.cache.list.push(coordinator);
+        let content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', coordinator, true);
+        options = Object.assign({}, this.options.navigationView);
+        setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
             this.createResources();
-            options = Object.assign({}, this.options.navigationView);
             setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
-            setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
             setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
             setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.drawer:menu:${node.id}}`);
             setDefaultOption(options, 'app', 'headerLayout', `@layout/{!androme.widget.drawer:headerLayout:${node.id}}`);
-            coordinator = coordinator.replace('{:0}', `{!androme.widget.drawer:toolbar:${node.id}}`);
+            content = content.replace(`{:${coordinator.id}}`, `{!androme.widget.drawer:toolbar:${node.id}}`);
             const navigation = controller.getViewStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
-            drawer = drawer.replace(`{:${node.id}}`, (include !== '' ? include : coordinator) + navigation);
+            drawer = drawer.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
         }
         else {
             const navView = node.children[node.children.length - 1];
-            options = this.options.navigationView;
-            if (node.children.length === 1) {
-                this.application.controllerHandler.prependBefore(navView.id, (include !== '' ? include : coordinator));
-            }
-            navView.android('layout_gravity', parseRTL((options && options.layout_gravity != null ? options.layout_gravity : 'left')));
+            navView.android('layout_gravity', options.android.layout_gravity);
+            navView.isolated = true;
+            this.application.controllerHandler.prependBefore(navView.id, (include !== '' ? include : content));
+            menu = navView.element;
         }
+        node.children.forEach(item => {
+            if ((<any> menu).__node !== item) {
+                item.parent = coordinator;
+                coordinator.children.push(item);
+            }
+        });
         if (include !== '') {
-            this.application.addInclude(filename, coordinator);
+            this.application.addInclude(filename, content);
         }
         node.renderParent = true;
         return [drawer, false, false];

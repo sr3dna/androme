@@ -3,6 +3,7 @@ import View from '../view';
 import Menu from '../../extension/widget/menu';
 import Resource from '../../base/resource';
 import { BLOCK_CHROME, VIEW_RESOURCE } from '../../lib/constants';
+import { DRAWABLE_PREFIX } from './lib/constants';
 
 enum VIEW_STATIC {
     MENU = 'menu',
@@ -123,16 +124,16 @@ export default class MenuAndroid<T extends View> extends Menu {
             case VIEW_STATIC.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') == null) {
-                    const resourceName = Resource.addImageURL((<any> element.style).backgroundImage, 'ic_menu_');
-                    if (resourceName !== '') {
-                        options.android.icon = `@drawable/${resourceName}`;
+                    let src = Resource.addImageURL((<any> element.style).backgroundImage, DRAWABLE_PREFIX.MENU);
+                    if (src !== '') {
+                        options.android.icon = `@drawable/${src}`;
                     }
                     else {
                         const image = node.children.find(item => item.element.tagName === 'IMG');
                         if (image != null) {
-                            const result = Resource.addImageSrcSet(<HTMLImageElement> image.element);
-                            if (result !== '') {
-                                options.android.icon = `@drawable/${result}`;
+                            src = Resource.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
+                            if (src !== '') {
+                                options.android.icon = `@drawable/${src}`;
                             }
                         }
                     }

@@ -6,7 +6,7 @@ import { repeat, setDefaultOption } from '../../lib/util';
 import { removePlaceholders } from '../../lib/xml';
 import { getStyle } from '../../lib/dom';
 import { VIEW_RESOURCE } from '../../lib/constants';
-import { VIEW_SUPPORT } from './lib/constants';
+import { DRAWABLE_PREFIX, VIEW_SUPPORT } from './lib/constants';
 
 export default class ToolbarAndroid<T extends View> extends Toolbar {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
@@ -24,9 +24,8 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
         let children = 0;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
-                const prefix = 'ic_menu_';
                 if (element.dataset.navigationIcon != null) {
-                    const result = Resource.addImageSrcSet(<HTMLImageElement> element, prefix);
+                    const result = Resource.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
                         setDefaultOption(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
@@ -35,7 +34,7 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
                     }
                 }
                 if (element.dataset.collapseIcon != null) {
-                    const result = Resource.addImageSrcSet(<HTMLImageElement> element, prefix);
+                    const result = Resource.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
                         setDefaultOption(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
