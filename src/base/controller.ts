@@ -27,6 +27,7 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     public abstract createGroup(node: T, parent: T, children: T[]): T;
     public abstract getViewStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
     public abstract getViewName(value: number): string;
+    public abstract addXmlNamespace(name: string, uri: string): void;
 
     public reset() {
         this.before = {};

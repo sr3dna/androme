@@ -262,6 +262,10 @@ export function customize(build: number, widget: string, options: StringMap) {
     }
 }
 
+export function addXmlNamespace(name: string, uri: string) {
+    main.addXmlNamespace(name, uri);
+}
+
 export function toString() {
     return main.toString();
 }

@@ -31,11 +31,11 @@ export default class View extends Node {
         super(id, element, options);
     }
 
-    public add(obj: string, attr: string, value = '', overwrite = true) {
-        if (!this.supported(obj, attr)) {
+    public add(ns: string, attr: string, value = '', overwrite = true) {
+        if (!this.supported(ns, attr)) {
             return false;
         }
-        return super.add(obj, attr, value, overwrite);
+        return super.add(ns, attr, value, overwrite);
     }
 
     public android(attr: string = '', value: string = '', overwrite = true) {
@@ -117,9 +117,9 @@ export default class View extends Node {
         return ['', '0px'];
     }
 
-    public supported(obj: string, attr: string) {
+    public supported(ns: string, attr: string) {
         for (let i = this.api + 1; i <= BUILD_ANDROID.LATEST; i++) {
-            const version = (<string[]> (<any> API_ANDROID[i])[obj]);
+            const version = (<string[]> (<any> API_ANDROID[i])[ns]);
             if (version && version.includes(attr)) {
                 return false;
             }
@@ -130,13 +130,13 @@ export default class View extends Node {
     public combine() {
         const result: string[] = [];
         this.namespaces.forEach(value => {
-            const obj: StringMap = (<any> this)[`_${value}`];
-            for (const attr in obj) {
+            const ns: StringMap = (<any> this)[`_${value}`];
+            for (const attr in ns) {
                 if (value !== '_') {
-                    result.push(`${value}:${attr}="${obj[attr]}"`);
+                    result.push(`${value}:${attr}="${ns[attr]}"`);
                 }
                 else {
-                    result.push(`${attr}="${obj[attr]}"`);
+                    result.push(`${attr}="${ns[attr]}"`);
                 }
             }
         });
@@ -155,9 +155,9 @@ export default class View extends Node {
             if (item && item.customizations != null) {
                 const customizations = item.customizations[this.viewName];
                 if (customizations != null) {
-                    for (const obj in customizations) {
-                        for (const attr in customizations[obj]) {
-                            this.add(obj, attr, customizations[obj][attr], false);
+                    for (const ns in customizations) {
+                        for (const attr in customizations[ns]) {
+                            this.add(ns, attr, customizations[ns][attr], false);
                         }
                     }
                 }

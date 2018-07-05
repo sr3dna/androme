@@ -648,6 +648,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return this._extensions.find(item => item.name === name);
     }
 
+    public addXmlNamespace(name: string, uri: string) {
+        this.controllerHandler.addXmlNamespace(name, uri);
+    }
+
     public findByDomId(id: string) {
         return this.cacheInternal.list.find(node => node.element.id === id);
     }

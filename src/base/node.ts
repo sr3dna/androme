@@ -77,11 +77,11 @@ export default abstract class Node implements BoxModel {
     public abstract modifyBox(area: number, offset: number): void;
     public abstract boxValue(area: number): string[];
 
-    public add(obj: string, attr: string, value = '', overwrite = true) {
-        const name = `_${obj || '_'}`;
+    public add(ns: string, attr: string, value = '', overwrite = true) {
+        const name = `_${ns || '_'}`;
         if (hasValue(value)) {
             if (this[name] == null) {
-                this._namespaces.add(obj);
+                this._namespaces.add(ns);
                 this[name] = {};
             }
             if (!overwrite && this[name][attr] != null) {
@@ -92,13 +92,13 @@ export default abstract class Node implements BoxModel {
         return this[name] && this[name][attr];
     }
 
-    public get(obj: string, attr: string): string {
-        const name = `_${obj || '_'}`;
+    public get(ns: string, attr: string): string {
+        const name = `_${ns || '_'}`;
         return (this[name] && this[name][attr] != null ? this[name][attr] : '');
     }
 
-    public delete(obj: string, ...attrs: any[]) {
-        const name = `_${obj || '_'}`;
+    public delete(ns: string, ...attrs: any[]) {
+        const name = `_${ns || '_'}`;
         if (this[name] != null) {
             if (typeof attrs[0] === 'object') {
                 for (const key in attrs[0]) {

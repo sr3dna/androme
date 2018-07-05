@@ -1084,6 +1084,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return content;
     }
 
+    public addXmlNamespace(name: string, uri: string) {
+        XMLNS_ANDROID[name] = uri;
+    }
+
     public getViewName(value: number) {
         return View.getViewName(value);
     }
