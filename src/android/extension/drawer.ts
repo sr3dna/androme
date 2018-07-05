@@ -16,7 +16,8 @@ export default class DrawerAndroid<T extends View> extends Drawer {
     }
 
     public processNode(): ExtensionResult {
-        const controller = this.application.controllerHandler;
+        const application = this.application;
+        const controller = application.controllerHandler;
         const node = (<T> this.node);
         node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
         let depth = node.depth + node.renderDepth;
@@ -25,15 +26,19 @@ export default class DrawerAndroid<T extends View> extends Drawer {
         if (menu != null) {
             setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
         }
-        let drawer = controller.getViewStatic(VIEW_SUPPORT.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node, true);
+        let xml = controller.getViewStatic(VIEW_SUPPORT.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node, true);
         const filename = `${node.viewId}_content`;
         let include = '';
         if (this.options.includes == null || this.options.includes) {
             include = controller.getViewStatic('include', depth + 1, { layout: `@layout/${filename}` });
             depth = -1;
         }
-        const coordinator = new View(this.application.cache.nextId, SETTINGS.targetAPI, null, { depth: 0 });
-        this.application.cache.list.push(coordinator);
+        const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, null, { depth: 0 });
+        coordinator.parent = node.parent;
+        coordinator.inheritBase(node);
+        coordinator.renderExtension = application.findExtension('androme.widget.coordinator');
+        coordinator.ignoreResource = VIEW_RESOURCE.ALL;
+        application.cache.list.push(coordinator);
         let content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', coordinator, true);
         options = Object.assign({}, this.options.navigationView);
         setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
@@ -41,17 +46,17 @@ export default class DrawerAndroid<T extends View> extends Drawer {
             this.createResources();
             setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
             setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-            setDefaultOption(options, 'app', 'menu', `@menu/{!androme.widget.drawer:menu:${node.id}}`);
-            setDefaultOption(options, 'app', 'headerLayout', `@layout/{!androme.widget.drawer:headerLayout:${node.id}}`);
-            content = content.replace(`{:${coordinator.id}}`, `{!androme.widget.drawer:toolbar:${node.id}}`);
+            setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:androme.widget.drawer:menu}`);
+            setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:androme.widget.drawer:headerLayout}`);
+            content = content.replace(`{:${coordinator.id}}`, `{${node.id}:androme.widget.drawer:toolbar}`);
             const navigation = controller.getViewStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
-            drawer = drawer.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
+            xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
         }
         else {
             const navView = node.children[node.children.length - 1];
             navView.android('layout_gravity', options.android.layout_gravity);
             navView.isolated = true;
-            this.application.controllerHandler.prependBefore(navView.id, (include !== '' ? include : content));
+            application.controllerHandler.prependBefore(navView.id, (include !== '' ? include : content));
             menu = navView.element;
         }
         node.children.forEach(item => {
@@ -61,18 +66,19 @@ export default class DrawerAndroid<T extends View> extends Drawer {
             }
         });
         if (include !== '') {
-            this.application.addInclude(filename, content);
+            application.addInclude(filename, content);
         }
         node.renderParent = true;
-        return [drawer, false, false];
+        return [xml, false, false];
     }
 
     public finalize() {
+        const application = this.application;
         const node = (<T> this.node);
         if (this.getMenu(node) != null) {
             let menu = '';
             let headerLayout = '';
-            this.application.elements.forEach(item => {
+            application.elements.forEach(item => {
                 if (item.parentElement === this.element) {
                     switch (item.dataset.ext) {
                         case 'androme.external':
@@ -84,10 +90,10 @@ export default class DrawerAndroid<T extends View> extends Drawer {
                     }
                 }
             });
-            const views = this.application.viewData.views;
+            const views = application.viewData.views;
             for (let i = 0; i < views.length; i++) {
-                views[i].content = views[i].content.replace(`{!androme.widget.drawer:menu:${this.node.id}}`, menu);
-                views[i].content = views[i].content.replace(`{!androme.widget.drawer:headerLayout:${this.node.id}}`, headerLayout);
+                views[i].content = views[i].content.replace(`{${this.node.id}:androme.widget.drawer:menu}`, menu);
+                views[i].content = views[i].content.replace(`{${this.node.id}:androme.widget.drawer:headerLayout}`, headerLayout);
             }
         }
     }

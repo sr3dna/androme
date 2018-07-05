@@ -182,6 +182,13 @@ export default abstract class Node implements BoxModel {
         return cascade(this);
     }
 
+    public inheritBase(node: T) {
+        this.style = node.style;
+        this.bounds = node.bounds;
+        this.linear = node.linear;
+        this.box = node.box;
+    }
+
     public inheritStyle(node: T) {
         const style: StringMap = {};
         for (const attr in node.style) {
@@ -242,7 +249,7 @@ export default abstract class Node implements BoxModel {
             }
         }
         if (this.bounds != null) {
-            this.linear = {
+            const linear: ClientRect = {
                 top: this.bounds.top - this.marginTop,
                 right: this.bounds.right + this.marginRight,
                 bottom: this.bounds.bottom + this.marginBottom,
@@ -250,7 +257,13 @@ export default abstract class Node implements BoxModel {
                 width: 0,
                 height: 0
             };
-            this.box = {
+            if (this.linear != null) {
+                Object.assign(this.linear, linear);
+            }
+            else {
+                this.linear = linear;
+            }
+            const box: ClientRect = {
                 top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
                 right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
                 bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
@@ -258,6 +271,12 @@ export default abstract class Node implements BoxModel {
                 width: 0,
                 height: 0
             };
+            if (this.box != null) {
+                Object.assign(this.box, box);
+            }
+            else {
+                this.box = box;
+            }
             this.setDimensions();
         }
     }
@@ -318,9 +337,7 @@ export default abstract class Node implements BoxModel {
             this._parentOriginal = this._parent;
         }
         this._parent = value;
-        if (this.depth === -1) {
-            this.depth = value.depth + 1;
-        }
+        this.depth = value.depth + 1;
     }
     get parent() {
         return this._parent;

@@ -145,9 +145,9 @@ export default class MenuAndroid<T extends View> extends Menu {
         }
         if (node.android('title') == null) {
             if (title !== '') {
-                Resource.addString(title);
-                if (Resource.STORED.STRINGS.has(title)) {
-                    title = `@string/${Resource.STORED.STRINGS.get(title)}`;
+                const name = Resource.addString(title);
+                if (name !== '') {
+                    title = `@string/${name}`;
                 }
                 options.android.title = title;
             }

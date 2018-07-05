@@ -11,6 +11,7 @@ export default abstract class Drawer extends Extension<T, U> {
         this.activityMain = true;
         this.require('androme.external', true);
         this.require('androme.widget.menu');
+        this.require('androme.widget.coordinator');
     }
 
     public init(element: HTMLElement) {

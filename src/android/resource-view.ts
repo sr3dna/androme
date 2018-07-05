@@ -1,4 +1,4 @@
-import { BorderAttribute, Null, ObjectIndex, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
+import { ArrayMap, BorderAttribute, Null, ObjectIndex, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -327,14 +327,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setOptionArray() {
         super.setOptionArray();
         this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
-            const stored = (<any> node.element).__optionArray;
+            const stored: ArrayMap<string> = (<any> node.element).__optionArray;
             const method = METHOD_ANDROID['optionArray'];
             let result: string[] = [];
             if (stored.stringArray != null) {
-                for (const value of stored.stringArray) {
-                    const name = STORED.STRINGS.get(value);
-                    result.push((name != null ? `@string/${name}` : value));
-                }
+                result = stored.stringArray.map(value => `@string/${value}`);
             }
             if (stored.numberArray != null) {
                 result = stored.numberArray;
@@ -362,30 +359,22 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const stored = (<any> element).__valueString;
             if (stored != null) {
                 const method = METHOD_ANDROID['valueString'];
-                let name = STORED.STRINGS.get(stored);
+                let value = (<string> STORED.STRINGS.get(stored));
                 if (node.is(VIEW_STANDARD.TEXT) && node.style != null) {
                     const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
                     if (match != null) {
-                        let value = '';
                         switch (match[0]) {
                             case 'underline':
-                                value = `<u>${stored}</u>`;
+                                value = `<u>${value}</u>`;
                                 break;
                             case 'line-through':
-                                value = `<strike>${stored}</strike>`;
+                                value = `<strike>${value}</strike>`;
                                 break;
                         }
-                        if (name == null) {
-                            name = `${value.replace(/[^\w+]/g, '')}`;
-                        }
-                        if (/^[0-9]/.test(name)) {
-                            name = `__${name}`;
-                        }
-                        STORED.STRINGS.delete(stored);
-                        STORED.STRINGS.set(value, name);
+                        STORED.STRINGS.set(stored, value);
                     }
                 }
-                node.attr(formatString(method['text'], (name != null ? `@string/${name}` : stored)));
+                node.attr(formatString(method['text'], ((parseInt(stored) || '').toString() !== stored ? `@string/${stored}` : stored)));
             }
         });
     }

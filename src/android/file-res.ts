@@ -91,7 +91,7 @@ export default class FileRes<T extends View> extends File<T> {
             if (hasValue(this.appName) && !this.stored.STRINGS.has('app_name')) {
                 root['1'].push({ name: 'app_name', value: this.appName });
             }
-            for (const [value, name] of this.stored.STRINGS.entries()) {
+            for (const [name, value] of this.stored.STRINGS.entries()) {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);

@@ -119,7 +119,8 @@ export function convertDP(value: any, dpi = 160, font = false) {
     if (hasValue(value)) {
         value = parseFloat(convertPX(value));
         if (!isNaN(value)) {
-            value = parseFloat((value / (dpi / 160)).toFixed(2));
+            value /= (dpi / 160);
+            value = (value >= 1 || value === 0 ? Math.floor(value) : value.toFixed(2));
             return value + (font ? 'sp' : 'dp');
         }
     }

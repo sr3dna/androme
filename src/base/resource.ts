@@ -21,23 +21,26 @@ export default abstract class Resource<T extends Node> {
             if (name === '') {
                 name = value;
             }
-            const num = isNumber(value);
-            if (SETTINGS.numberResourceValue || !num) {
-                for (const key of Resource.STORED.STRINGS.keys()) {
-                    if (key === value) {
-                        return (<string> key);
+            const numeric = isNumber(value);
+            if (SETTINGS.numberResourceValue || !numeric) {
+                for (const [resourceName, resourceValue] of Resource.STORED.STRINGS.entries()) {
+                    if (resourceValue === value) {
+                        return resourceName;
                     }
                 }
                 name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
-                if (num || /^[0-9]/.test(value)) {
+                if (numeric || /^[0-9]/.test(value)) {
                     name = `__${name}`;
                 }
                 else if (name === '') {
                     name = `__symbol${Math.ceil(Math.random() * 100000)}`;
                 }
-                Resource.STORED.STRINGS.set(value, name);
+                if (Resource.STORED.STRINGS.has(name)) {
+                    name = generateId('strings', `${name}_1`);
+                }
+                Resource.STORED.STRINGS.set(name, value);
             }
-            return value;
+            return name;
         }
         return '';
     }
@@ -311,7 +314,7 @@ export default abstract class Resource<T extends Node> {
                         const item = (<HTMLOptionElement> element.children[i]);
                         const value = item.text.trim();
                         if (value !== '') {
-                            if (numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                            if (!SETTINGS.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
                                 numberArray.push(value);
                             }
                             else {
@@ -354,8 +357,8 @@ export default abstract class Resource<T extends Node> {
                         value = element.innerHTML.trim();
                     }
                     if (hasValue(value)) {
-                        Resource.addString(value, name);
-                        object.__valueString = value;
+                        const result = Resource.addString(value, name);
+                        object.__valueString = result;
                     }
                 }
             }

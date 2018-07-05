@@ -5,7 +5,7 @@ import SETTINGS from '../settings';
 export function removePlaceholders(value: string, extension = true) {
     value = value.replace(/{[<:@&>]{1}[0-9]+}/g, '');
     if (extension) {
-        value = value.replace(/{!.*?}/g, '');
+        value = value.replace(/{[0-9]+:.*?}/g, '');
     }
     return value;
 }

@@ -22,7 +22,7 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     public abstract parseDimensions(content: string): string;
     public abstract setAttributes(data: ViewData<T>): void;
     public abstract insertAttributes(output: string, node: T): string;
-    public abstract renderGroup(node: T, parent: T, viewName: number, options?: {}): string;
+    public abstract renderGroup(node: T, parent: T, viewName: number | string, options?: {}): string;
     public abstract renderView(node: T, parent: T, viewName: number | string): string;
     public abstract createGroup(node: T, parent: T, children: T[]): T;
     public abstract getViewStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;

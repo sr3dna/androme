@@ -50,7 +50,7 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
             setDefaultOption(toolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
         }
         if (this.getMenu(node) != null) {
-            setDefaultOption(toolbar, 'app', 'menu', `@menu/{!androme.widget.toolbar:menu:${node.id}}`);
+            setDefaultOption(toolbar, 'app', 'menu', `@menu/{${node.id}:androme.widget.toolbar:menu}`);
         }
         let xml = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, depth + 1, { android: toolbar.android, app: toolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
         if (actionBar || this.options.appBar != null) {
@@ -94,16 +94,16 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
                 let xml = (<string> this.node.options('androme.widget.toolbar:insert')) || '';
                 xml = xml.replace(/>>>>/g, repeat(parent.renderDepth + 2));
                 if (menu != null) {
-                    xml = removePlaceholders(xml.replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, <string> menu.dataset.currentId)).replace(/\s*$/g, '');
+                    xml = removePlaceholders(xml.replace(`{${this.node.id}:androme.widget.toolbar:menu}`, <string> menu.dataset.currentId)).replace(/\s*$/g, '');
                 }
                 for (let i = 0; i < layouts.length; i++) {
-                    layouts[i].content = layouts[i].content.replace(`{!androme.widget.drawer:toolbar:${parent.id}}`, xml + '\n');
+                    layouts[i].content = layouts[i].content.replace(`{${parent.id}:androme.widget.drawer:toolbar}`, xml + '\n');
                 }
             }
         }
         else if (menu != null) {
             for (let i = 0; i < layouts.length; i++) {
-                layouts[i].content = layouts[i].content.replace(`{!androme.widget.toolbar:menu:${this.node.id}}`, <string> menu.dataset.currentId);
+                layouts[i].content = layouts[i].content.replace(`{${this.node.id}:androme.widget.toolbar:menu}`, <string> menu.dataset.currentId);
             }
         }
     }

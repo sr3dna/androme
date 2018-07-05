@@ -59,7 +59,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             rightLeft: parseRTL('layout_constraintRight_toLeftOf')
         });
         this.cache.visible.forEach(node => {
-            const nodes = (<U> new ViewList(node.renderChildren, node));
+            const nodes = (<U> new ViewList(node.renderChildren.filter(item => !item.isolated), node));
             const constraint = node.is(VIEW_STANDARD.CONSTRAINT);
             const relative = node.is(VIEW_STANDARD.RELATIVE);
             const flex = node.flex;
@@ -317,6 +317,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             if (current.floating) {
                                 mapDelete(current, (current.css('float') === 'right' ? 'left' : 'right'));
                             }
+                            current.android('layout_width', 'match_parent');
                         }
                     }
                 });
@@ -574,7 +575,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         if (flex.enabled && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
                                             firstNode.app(chainStyle, 'spread_inside');
                                         }
-                                        else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || firstNode.linear.left === node.box.left || lastNode.linear.right === node.box.right) {
+                                        else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === 'horizontal' && (firstNode.linear.left === node.box.left || lastNode.linear.right === node.box.right))) {
                                             firstNode.app(chainStyle, 'packed');
                                             let bias = '';
                                             if (withinFraction(node.box.left, firstNode.linear.left)) {
@@ -792,11 +793,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
     }
 
-    public renderGroup(node: T, parent: T, viewName: number, options: ObjectMap<any> = {}) {
+    public renderGroup(node: T, parent: T, viewName: number | string, options: ObjectMap<any> = {}) {
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
-        node.setViewId(View.getViewName(viewName));
+        if (typeof viewName === 'number') {
+            viewName = View.getViewName(viewName);
+        }
+        node.setViewId(viewName);
         if (node.overflow !== OVERFLOW_CHROME.NONE) {
             const scrollView: string[] = [];
             if (node.overflowX) {
@@ -857,7 +861,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         node.render(renderParent);
         node.setGravity();
         this.setGridSpace(node);
-        return this.getEnclosingTag(node.renderDepth, View.getViewName(viewName), node.id, `{:${node.id}}`, preXml, postXml);
+        return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
 
     public renderView(node: T, parent: T, viewName: number | string, recursive = false) {

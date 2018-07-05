@@ -87,7 +87,7 @@ androme.settings = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.widget' // androme.widget.menu | androme.widget.toolbar | androme.widget.drawer | androme.widget.button
+        'androme.widget' // androme.widget.menu | androme.widget.button | androme.widget.coordinator | androme.widget.toolbar | androme.widget.drawer
     ],
     targetAPI: androme.build.OREO,
     density: androme.build.MDPI,
@@ -153,9 +153,11 @@ Most of the Android support library extensions can be configured using the same 
     androme.configureExtension('androme.widget.drawer', { android: { layout_width: 'wrap_content', fitsSystemWindows: 'true' } });
 </script>
 ```
-<img src="demos/android/drawer.png" alt="extension: drawer - floating action button" />f
+<img src="demos/android/drawer.png" alt="extension: drawer - floating action button" />
 
 <img src="demos/android/drawer.navigationview.png" alt="extension: drawer - actionbar" />
+
+<img src="demos/android/coordinator.png" alt="extension: coordinator" />
 
 <img src="demos/android/menu.png" alt="extension: menu" />
 
@@ -997,18 +999,18 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+	<string name="app_name">androme_ui</string>
 	<string name="__00_inactive">00 - Inactive</string>
 	<string name="__01_active">01 - Active</string>
 	<string name="active">Active:</string>
 	<string name="all">All</string>
-	<string name="app_name">androme</string>
 	<string name="birth">Birth</string>
 	<string name="branch">Branch:</string>
 	<string name="calendar">Calendar:</string>
 	<string name="clone">Clone</string>
 	<string name="conclusion">Conclusion:</string>
-	<string name="custom_add">Custom (<a href="#" style="">Add</a>):</string>
-	<string name="date_add">Date (<a href="#" style="">Add</a>):</string>
+	<string name="custom_add">Custom (<a href="#">Add</a>):</string>
+	<string name="date_add">Date (<a href="#">Add</a>):</string>
 	<string name="death">Death</string>
 	<string name="entries">Entries:</string>
 	<string name="entry">Entry</string>
@@ -1022,7 +1024,7 @@ Most of the Android support library extensions can be configured using the same 
 	<string name="style">Style:</string>
 	<string name="subset">Subset:</string>
 	<string name="time">Time:</string>
-	<string name="topic_add">Topic (<a href="#" style="">Add</a>):</string>
+	<string name="topic_add">Topic (<a href="#">Add</a>):</string>
 	<string name="type">Type:</string>
 	<string name="update">Update</string>
 	<string name="variant">Variant</string>
@@ -1215,7 +1217,7 @@ Most of the Android support library extensions can be configured using the same 
 	</style>
 	<style name="Text">
 		<item name="android:fontFamily">arial</item>
-		<item name="android:textSize">13.33sp</item>
+		<item name="android:textSize">13sp</item>
 	</style>
 </resources>
 <!-- filename: res/values/styles.xml -->
@@ -1267,7 +1269,6 @@ Most of the Android support library extensions can be configured using the same 
 	<dimen name="checkbox_margin_start">8dp</dimen>
 	<dimen name="checkbox_margin_vertical">3dp</dimen>
 	<dimen name="div_margin_start">4dp</dimen>
-	<dimen name="div_width">500dp</dimen>
 	<dimen name="form_padding_horizontal">10dp</dimen>
 	<dimen name="form_padding_vertical">5dp</dimen>
 	<dimen name="h2_padding">8dp</dimen>
