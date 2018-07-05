@@ -69,6 +69,7 @@ export default class DrawerAndroid<T extends View> extends Drawer {
             application.addInclude(filename, content);
         }
         node.renderParent = true;
+        node.applyCustomizations();
         return [xml, false, false];
     }
 

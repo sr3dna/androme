@@ -53,7 +53,7 @@ export default class ToolbarAndroid<T extends View> extends Toolbar {
             setDefaultOption(toolbar, 'app', 'menu', `@menu/{${node.id}:androme.widget.toolbar:menu}`);
         }
         let xml = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, depth + 1, { android: toolbar.android, app: toolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
-        if (actionBar || this.options.appBar != null) {
+        if (actionBar || options.appBar != null) {
             const appBar = Object.assign({}, options.appBar);
             setDefaultOption(appBar, 'android', 'id', `${node.stringId}_appbar`);
             setDefaultOption(appBar, 'app', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');

@@ -1,32 +1,97 @@
-import { ObjectMap } from '../lib/types';
+import { ObjectMap, StringMap } from '../lib/types';
 import { BUILD_ANDROID as BUILD } from './constants';
 
 interface DEFAULT {
     [index: number]: {
-        android?: string[];
-        customizations?: ObjectMap<any>;
+        android: string[];
+        app: string[];
+        customizations: ObjectMap<ObjectMap<StringMap>>;
     };
 }
 
 const API_ANDROID: DEFAULT = {
+    [BUILD.P]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.OREO_1]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
     [BUILD.OREO]: {
         android: ['fontWeight', 'layout_marginHorizontal', 'layout_marginVertical', 'paddingHorizontal', 'paddingVertical'],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.NOUGAT_1]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.NOUGAT]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.MARSHMALLOW]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.LOLLIPOP_1]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.LOLLIPOP]: {
+        android: ['layout_columnWeight'],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.KITKAT_1]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.KITKAT]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.JELLYBEAN_2]: {
+        android: [],
+        app: [],
         customizations: {}
     },
     [BUILD.JELLYBEAN_1]: {
         android: ['labelFor'],
+        app: [],
         customizations: {}
     },
-    [BUILD.LOLLIPOP]: {
-        android: ['layout_columnWeight']
+    [BUILD.JELLYBEAN]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.ICE_CREAM_SANDWICH_1]: {
+        android: [],
+        app: [],
+        customizations: {}
+    },
+    [BUILD.ICE_CREAM_SANDWICH]: {
+        android: [],
+        app: [],
+        customizations: {}
     },
     [BUILD.ALL]: {
+        android: [],
+        app: [],
         customizations: {
             'Button': {
                 android: {
-                    textAllCaps: 'false',
-                    minWidth: '0px',
-                    minHeight: '0px'
+                    textAllCaps: 'false'
                 }
             }
         }

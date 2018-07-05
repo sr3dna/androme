@@ -24,7 +24,7 @@ export default class Coordinator extends Extension<T, U> {
         let xml = controller.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
         const nodes = node.children.filter(item => !item.isolated);
         if (nodes.length > 0) {
-            const constraint = new View(application.cache.nextId, SETTINGS.targetAPI, null, { depth: node.depth + 1 });
+            const constraint = new View(application.cache.nextId, SETTINGS.targetAPI, null, { viewId: `${node.viewId}_content` });
             constraint.parent = node;
             constraint.inheritBase(node);
             nodes.forEach(item => {
@@ -44,9 +44,9 @@ export default class Coordinator extends Extension<T, U> {
         const node = (<T> this.node);
         const parent = (<T> this.parent);
         node.renderParent = parent;
-        const gravity: string[] = [];
         const horizontalBias = node.horizontalBias;
         const verticalBias = node.verticalBias;
+        const gravity: string[] = [];
         if (horizontalBias < 0.5) {
             gravity.push(parseRTL('left'));
         }
@@ -58,6 +58,7 @@ export default class Coordinator extends Extension<T, U> {
         }
         if (verticalBias < 0.5) {
             gravity.push('top');
+            node.app('layout_dodgeInsetEdges', 'top');
         }
         else if (verticalBias > 0.5) {
             gravity.push('bottom');

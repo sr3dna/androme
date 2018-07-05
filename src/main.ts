@@ -1,4 +1,4 @@
-import { Null } from './lib/types';
+import { Null, StringMap } from './lib/types';
 import Application from './base/application';
 import ViewController from './android/viewcontroller';
 import ResourceView from './android/resource-view';
@@ -252,6 +252,16 @@ export function writeResourceDrawableXml(saveToDisk = false) {
     return '';
 }
 
+export function customize(build: number, widget: string, options: StringMap) {
+    if (API_ANDROID[build] != null) {
+        const customizations = API_ANDROID[build].customizations;
+        if (customizations[widget] == null) {
+            customizations[widget] = {};
+        }
+        Object.assign(customizations[widget], options);
+    }
+}
+
 export function toString() {
     return main.toString();
 }
@@ -262,4 +272,4 @@ function autoClose() {
     }
 }
 
-export { API_ANDROID as api, BUILD_ANDROID as build, DENSITY_ANDROID as density, SETTINGS as settings };
+export { BUILD_ANDROID as build, DENSITY_ANDROID as density, SETTINGS as settings };

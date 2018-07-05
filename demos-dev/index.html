@@ -102,6 +102,12 @@
     <script>
         SystemJS.import('/build/main.js').then(function(result) {
             androme = result;
+            androme.customize(androme.settings.targetAPI, 'Button', {
+                android: {
+                    minWidth: '0px',
+                    minHeight: '0px'
+                }
+            });
             androme.parseDocument('androme_ui');
             androme.close();
 

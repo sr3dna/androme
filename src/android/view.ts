@@ -32,7 +32,7 @@ export default class View extends Node {
     }
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
-        if (hasValue(attr) && !this.supported(obj, attr)) {
+        if (!this.supported(obj, attr)) {
             return false;
         }
         return super.add(obj, attr, value, overwrite);
@@ -118,9 +118,9 @@ export default class View extends Node {
     }
 
     public supported(obj: string, attr: string) {
-        for (let i = this.api + 1; i < BUILD_ANDROID.LATEST; i++) {
-            const version = <ObjectMap<string[]>> API_ANDROID[i];
-            if (version && version[obj] && version[obj].includes(attr)) {
+        for (let i = this.api + 1; i <= BUILD_ANDROID.LATEST; i++) {
+            const version = (<string[]> (<any> API_ANDROID[i])[obj]);
+            if (version && version.includes(attr)) {
                 return false;
             }
         }
@@ -179,8 +179,8 @@ export default class View extends Node {
         if (this.viewId == null) {
             const element = (<HTMLInputElement> this.element);
             this.viewId = generateId('android', (element.id || element.name || `${lastIndexOf(this.viewName, '.').toLowerCase()}_1`).replace(/[^\w]/g, '_'));
-            this.android('id', this.stringId);
         }
+        this.android('id', this.stringId);
     }
 
     public setViewLayout(options?: any) {
