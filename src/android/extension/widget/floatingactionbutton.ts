@@ -1,11 +1,11 @@
-import { ExtensionResult } from '../../lib/types';
-import View from '../view';
-import Button from '../../extension/widget/button';
-import Resource from '../../base/resource';
-import { parseRGBA } from '../../lib/color';
-import { VIEW_RESOURCE } from '../../lib/constants';
-import { DRAWABLE_PREFIX, VIEW_SUPPORT } from './lib/constants';
-import { setDefaultOption } from '../../lib/util';
+import { ExtensionResult } from '../../../lib/types';
+import View from '../../view';
+import Button from '../../../extension/button';
+import Resource from '../../../base/resource';
+import { parseRGBA } from '../../../lib/color';
+import { VIEW_RESOURCE } from '../../../lib/constants';
+import { DRAWABLE_PREFIX, VIEW_SUPPORT } from '../lib/constants';
+import { setDefaultOption } from '../../../lib/util';
 
 export default class FloatingActionButton<T extends View> extends Button {
     constructor(name: string, tagNames: string[], options?: {}) {

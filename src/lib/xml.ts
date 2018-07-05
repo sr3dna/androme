@@ -1,4 +1,4 @@
-import { Null, ObjectMap } from '../lib/types';
+import { Null, ObjectMap } from './types';
 import { convertDP, hasValue } from './util';
 import SETTINGS from '../settings';
 

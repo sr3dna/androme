@@ -167,7 +167,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 if (Math.floor(linear1.top) === linear2.top) {
                                     current.anchor(LAYOUT['top'], adjacent, 'vertical');
                                 }
-                                if (withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset)) {
+                                if (withinRange(Math.ceil(linear1.bottom), linear2.bottom, (current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap') ? SETTINGS.whitespaceHorizontalOffset : 0))) {
                                     current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
                                 }
                             }
@@ -236,7 +236,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 if (Math.floor(current.linear.top) === node.box.top) {
                                     current.anchor('layout_alignParentTop', adjacent, 'vertical');
                                 }
-                                else if (withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset)) {
+                                else if (withinRange(Math.ceil(current.linear.bottom), node.box.bottom, (current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap') ? SETTINGS.whitespaceHorizontalOffset : 0))) {
                                     current.anchor('layout_alignParentBottom', adjacent, 'vertical');
                                 }
                             }

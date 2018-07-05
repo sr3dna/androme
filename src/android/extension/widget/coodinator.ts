@@ -1,12 +1,12 @@
-import { ExtensionResult } from '../../lib/types';
-import View from '../view';
-import ViewList from '../viewlist';
-import Extension from '../../base/extension';
-import { VIEW_ANDROID } from '../constants';
-import { VIEW_SUPPORT } from './lib/constants';
-import { convertPX } from '../../lib/util';
-import parseRTL from '../localization';
-import SETTINGS from '../../settings';
+import { ExtensionResult } from '../../../lib/types';
+import View from '../../view';
+import ViewList from '../../viewlist';
+import Extension from '../../../base/extension';
+import { VIEW_ANDROID } from '../../constants';
+import { VIEW_SUPPORT } from '../lib/constants';
+import { convertPX } from '../../../lib/util';
+import parseRTL from '../../localization';
+import SETTINGS from '../../../settings';
 
 type T = View;
 type U = ViewList<T>;

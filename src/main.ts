@@ -14,11 +14,11 @@ import External from './extension/external';
 import List from './android/extension/list';
 import Table from './extension/table';
 import Grid from './extension/grid';
-import Button from './android/extension/floatingactionbutton';
-import Menu from './android/extension/menu';
-import Toolbar from './android/extension/toolbar';
-import Drawer from './android/extension/drawer';
-import Coordinator from './android/extension/coodinator';
+import Button from './android/extension/widget/floatingactionbutton';
+import Menu from './android/extension/widget/menu';
+import Coordinator from './android/extension/widget/coodinator';
+import Toolbar from './android/extension/widget/toolbar';
+import Drawer from './android/extension/widget/drawer';
 
 type T = View;
 type U = ViewList<T>;

@@ -1,4 +1,4 @@
-import { ArrayMap, ObjectMap, StringMap } from '../lib/types';
+import { ArrayMap, ObjectMap, StringMap } from './types';
 
 let ID: ArrayMap<string>;
 resetId();

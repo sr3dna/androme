@@ -1,16 +1,39 @@
-import { ExtensionResult } from '../../lib/types';
-import View from '../view';
-import Toolbar from '../../extension/widget/toolbar';
-import Resource from '../../base/resource';
-import { repeat, setDefaultOption } from '../../lib/util';
-import { removePlaceholders } from '../../lib/xml';
-import { getStyle } from '../../lib/dom';
-import { VIEW_RESOURCE } from '../../lib/constants';
-import { DRAWABLE_PREFIX, VIEW_SUPPORT } from './lib/constants';
+import { ExtensionResult } from '../../../lib/types';
+import View from '../../view';
+import ViewList from '../../viewlist';
+import Extension from '../../../base/extension';
+import Resource from '../../../base/resource';
+import { repeat, setDefaultOption } from '../../../lib/util';
+import { removePlaceholders } from '../../../lib/xml';
+import { getStyle } from '../../../lib/dom';
+import { VIEW_RESOURCE } from '../../../lib/constants';
+import { DRAWABLE_PREFIX, VIEW_SUPPORT } from '../lib/constants';
 
-export default class ToolbarAndroid<T extends View> extends Toolbar {
+type T = View;
+type U = ViewList<T>;
+
+export default class ToolbarAndroid extends Extension<T, U> {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
         super(name, tagNames, options);
+    }
+
+    public init(element: HTMLElement) {
+        if (this.included(element)) {
+            Array.from(element.children).forEach((item: HTMLElement) => {
+                if (item.tagName === 'NAV' && item.dataset.ext == null) {
+                    item.dataset.ext = 'androme.external';
+                }
+            });
+            if (element.dataset.extFor != null) {
+                this.application.elements.add(element);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public condition() {
+        return (super.condition() && this.included());
     }
 
     public processNode(): ExtensionResult {

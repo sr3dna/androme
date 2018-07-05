@@ -1,7 +1,7 @@
-import Extension from '../../base/extension';
-import Node from '../../base/node';
-import NodeList from '../../base/nodelist';
-import { getStyle } from '../../lib/dom';
+import Extension from '../base/extension';
+import Node from '../base/node';
+import NodeList from '../base/nodelist';
+import { getStyle } from '../lib/dom';
 
 type T = Node;
 type U = NodeList<T>;

@@ -1,9 +1,9 @@
-import { ExtensionResult, ObjectMap } from '../../lib/types';
-import View from '../view';
-import Menu from '../../extension/widget/menu';
-import Resource from '../../base/resource';
-import { BLOCK_CHROME, VIEW_RESOURCE } from '../../lib/constants';
-import { DRAWABLE_PREFIX } from './lib/constants';
+import { ExtensionResult, ObjectMap } from '../../../lib/types';
+import View from '../../view';
+import Nav from '../../../extension/nav';
+import Resource from '../../../base/resource';
+import { BLOCK_CHROME, VIEW_RESOURCE } from '../../../lib/constants';
+import { DRAWABLE_PREFIX } from '../lib/constants';
 
 enum VIEW_STATIC {
     MENU = 'menu',
@@ -43,7 +43,7 @@ const VALIDATE_GROUP = {
 
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
-export default class MenuAndroid<T extends View> extends Menu {
+export default class MenuAndroid<T extends View> extends Nav {
     constructor(name: string, tagNames: string[], options?: {}) {
         super(name, tagNames, options);
     }

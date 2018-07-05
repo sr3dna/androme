@@ -1,4 +1,4 @@
-import { ObjectMap } from '../lib/types';
+import { ObjectMap } from './types';
 
 export enum VIEW_STANDARD {
     FRAME = 1,

@@ -1,18 +1,43 @@
-import { ExtensionResult, ObjectMap } from '../../lib/types';
-import View from '../view';
-import Drawer from '../../extension/widget/drawer';
-import { setDefaultOption } from '../../lib/util';
-import { getTemplateLevel, insertTemplateData, parseTemplate } from '../../lib/xml';
-import { VIEW_RESOURCE } from '../../lib/constants';
-import { VIEW_SUPPORT } from './lib/constants';
-import parseRTL from '../localization';
-import SETTINGS from '../../settings';
+import { ExtensionResult, ObjectMap } from '../../../lib/types';
+import View from '../../view';
+import ViewList from '../../viewlist';
+import Extension from '../../../base/extension';
+import { setDefaultOption } from '../../../lib/util';
+import { getTemplateLevel, insertTemplateData, parseTemplate } from '../../../lib/xml';
+import { VIEW_RESOURCE } from '../../../lib/constants';
+import { VIEW_SUPPORT } from '../lib/constants';
+import parseRTL from '../../localization';
+import SETTINGS from '../../../settings';
 
-import EXTENSION_DRAWER_TMPL from '../template/extension/drawer';
+import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
-export default class DrawerAndroid<T extends View> extends Drawer {
+type T = View;
+type U = ViewList<T>;
+
+export default class DrawerAndroid extends Extension<T, U> {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
         super(name, tagNames, options);
+        this.activityMain = true;
+        this.require('androme.external', true);
+        this.require('androme.widget.menu');
+        this.require('androme.widget.coordinator');
+    }
+
+    public init(element: HTMLElement) {
+        if (this.included(element) && element.children.length > 0) {
+            Array.from(element.children).forEach((item: HTMLElement) => {
+                if (item.tagName === 'NAV' && item.dataset.ext == null) {
+                    item.dataset.ext = 'androme.external';
+                }
+            });
+            this.application.elements.add(element);
+            return true;
+        }
+        return false;
+    }
+
+    public condition() {
+        return (super.condition() && this.included());
     }
 
     public processNode(): ExtensionResult {
