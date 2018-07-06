@@ -7,7 +7,8 @@ import { setDefaultOption } from '../../../lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../../../lib/xml';
 import { parseHex } from '../../../lib/color';
 import { VIEW_RESOURCE } from '../../../lib/constants';
-import { VIEW_SUPPORT } from '../lib/constants';
+import { EXT_NAME } from '../../../extension/lib/constants';
+import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import parseRTL from '../../localization';
 import SETTINGS from '../../../settings';
 
@@ -20,16 +21,16 @@ export default class Drawer extends Extension<T, U> {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
         super(name, tagNames, options);
         this.activityMain = true;
-        this.require('androme.external', true);
-        this.require('androme.widget.menu');
-        this.require('androme.widget.coordinator');
+        this.require(EXT_NAME.EXTERNAL, true);
+        this.require(WIDGET_NAME.MENU);
+        this.require(WIDGET_NAME.COORDINATOR);
     }
 
     public init(element: HTMLElement) {
         if (this.included(element) && element.children.length > 0) {
             Array.from(element.children).forEach((item: HTMLElement) => {
                 if (item.tagName === 'NAV' && item.dataset.ext == null) {
-                    item.dataset.ext = 'androme.external';
+                    item.dataset.ext = EXT_NAME.EXTERNAL;
                 }
             });
             this.application.elements.add(element);
@@ -63,7 +64,7 @@ export default class Drawer extends Extension<T, U> {
         const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, null, { depth: 0 });
         coordinator.parent = node;
         coordinator.inheritBase(node);
-        coordinator.renderExtension = application.findExtension('androme.widget.coordinator');
+        coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
         coordinator.ignoreResource = VIEW_RESOURCE.ALL;
         coordinator.isolated = true;
         application.cache.list.push(coordinator);
@@ -74,8 +75,8 @@ export default class Drawer extends Extension<T, U> {
             this.createResources();
             setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
             setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-            setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${this.name}:menu}`);
-            setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:${this.name}:headerLayout}`);
+            setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
+            setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
             const navigation = controller.getViewStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
             xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
         }
@@ -109,10 +110,10 @@ export default class Drawer extends Extension<T, U> {
             application.elements.forEach(item => {
                 if (item.parentElement === node.element) {
                     switch (item.dataset.ext) {
-                        case 'androme.external':
+                        case EXT_NAME.EXTERNAL:
                             headerLayout = (<string> item.dataset.currentId);
                             break;
-                        case 'androme.widget.menu':
+                        case WIDGET_NAME.MENU:
                             menu = (<string> item.dataset.currentId);
                             break;
                     }
@@ -120,14 +121,14 @@ export default class Drawer extends Extension<T, U> {
             });
             const views = application.viewData.views;
             for (let i = 0; i < views.length; i++) {
-                views[i].content = views[i].content.replace(`{${node.id}:${this.name}:menu}`, menu);
-                views[i].content = views[i].content.replace(`{${node.id}:${this.name}:headerLayout}`, headerLayout);
+                views[i].content = views[i].content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu);
+                views[i].content = views[i].content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`, headerLayout);
             }
         }
     }
 
     private getMenu(node: T) {
-        return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.menu') !== -1));
+        return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1));
     }
 
     private createResources() {
@@ -154,7 +155,7 @@ export default class Drawer extends Extension<T, U> {
             }
         }
         setDefaultOption(options, 'output', 'path', 'res/values-v21');
-        setDefaultOption(options, 'output', 'file', `${this.name}.xml`);
+        setDefaultOption(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
         const xml = insertTemplateData(template, data);
         this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
     }

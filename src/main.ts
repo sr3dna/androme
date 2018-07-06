@@ -7,6 +7,8 @@ import Extension from './base/extension';
 import View from './android/view';
 import ViewList from './android/viewlist';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
+import { EXT_NAME } from './extension/lib/constants';
+import { WIDGET_NAME } from './android/extension/lib/constants';
 import API_ANDROID from './android/customizations';
 import SETTINGS from './settings';
 
@@ -26,15 +28,15 @@ type U = ViewList<T>;
 let LOADING = false;
 const ROOT_CACHE: Set<HTMLElement> = new Set();
 const EXTENSIONS: any = {
-    'androme.external': new External('androme.external'),
-    'androme.list': new List('androme.list', ['UL', 'OL']),
-    'androme.table': new Table('androme.table', ['TABLE']),
-    'androme.grid': new Grid('androme.grid', ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET']),
-    'androme.widget.floatingactionbutton': new Button('androme.widget.floatingactionbutton', ['BUTTON', 'INPUT', 'IMG']),
-    'androme.widget.menu': new Menu('androme.widget.menu', ['NAV'], { appCompat: true }),
-    'androme.widget.coordinator': new Coordinator('androme.widget.coordinator'),
-    'androme.widget.toolbar': new Toolbar('androme.widget.toolbar'),
-    'androme.widget.drawer': new Drawer('androme.widget.drawer')
+    [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
+    [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL']),
+    [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
+    [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET']),
+    [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
+    [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, ['NAV'], { appCompat: true }),
+    [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
+    [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR),
+    [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
 };
 
 const Node = View;

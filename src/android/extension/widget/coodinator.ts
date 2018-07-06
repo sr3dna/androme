@@ -5,7 +5,7 @@ import Extension from '../../../base/extension';
 import { setDefaultOption } from '../../../lib/util';
 import { VIEW_RESOURCE } from '../../../lib/constants';
 import { VIEW_ANDROID } from '../../constants';
-import { VIEW_SUPPORT } from '../lib/constants';
+import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import SETTINGS from '../../../settings';
 
 type T = View;
@@ -31,7 +31,7 @@ export default class Coordinator extends Extension<T, U> {
             let offsetHeight = 0;
             let collapsingToolbar = null;
             if (toolbar != null) {
-                const extension = application.findExtension('androme.widget.toolbar');
+                const extension = application.findExtension(WIDGET_NAME.TOOLBAR);
                 if (extension != null) {
                     offsetX = toolbar.linear.bottom;
                     offsetHeight = toolbar.linear.height;
@@ -100,7 +100,7 @@ export default class Coordinator extends Extension<T, U> {
     }
 
     private getToolbar(node: T): Null<T> {
-        const toolbar = (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.toolbar') !== -1));
+        const toolbar = (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.TOOLBAR) !== -1));
         return (toolbar != null ? (<any> toolbar).__node : null);
     }
 

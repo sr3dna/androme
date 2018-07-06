@@ -19,8 +19,7 @@ export default class ListAndroid<T extends View> extends List {
                 node.id,
                 controllerHandler.getViewStatic(
                     (listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE),
-                    node.depth + node.renderDepth,
-                    {
+                    node.depth + node.renderDepth, {
                         android: {
                             gravity: parseRTL('right'),
                             layout_gravity: 'fill',

@@ -7,8 +7,9 @@ import { setDefaultOption, convertPX } from '../../../lib/util';
 import { formatDimen, getTemplateLevel, insertTemplateData, parseTemplate, restoreIndent } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
 import { parseHex } from '../../../lib/color';
+import { EXT_NAME } from '../../../extension/lib/constants';
+import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import { VIEW_RESOURCE } from '../../../lib/constants';
-import { DRAWABLE_PREFIX, VIEW_SUPPORT } from '../lib/constants';
 
 import EXTENSION_COLLAPSINGTOOLBAR_TMPL from '../../template/extension/collapsingtoolbar';
 
@@ -24,17 +25,17 @@ export default class Toolbar extends Extension<T, U> {
         if (this.included(element)) {
             Array.from(element.children).forEach((item: HTMLElement) => {
                 if (item.tagName === 'NAV' && item.dataset.ext == null) {
-                    item.dataset.ext = 'androme.external';
+                    item.dataset.ext = EXT_NAME.EXTERNAL;
                 }
             });
             if (element.dataset.extFor != null) {
                 const extFor = document.getElementById(element.dataset.extFor);
-                if (extFor && element.parentElement !== extFor && extFor.dataset.ext && extFor.dataset.ext.indexOf('androme.widget.coordinator') === -1) {
+                if (extFor && element.parentElement !== extFor && extFor.dataset.ext && extFor.dataset.ext.indexOf(WIDGET_NAME.COORDINATOR) === -1) {
                     this.application.elements.add(element);
                     return true;
                 }
             }
-            if (element.parentElement && element.parentElement.dataset.ext && element.parentElement.dataset.ext.indexOf('androme.widget.coordinator') !== -1) {
+            if (element.parentElement && element.parentElement.dataset.ext && element.parentElement.dataset.ext.indexOf(WIDGET_NAME.COORDINATOR) !== -1) {
                 (<any> element).__nodeIsolated = true;
             }
         }
@@ -97,7 +98,7 @@ export default class Toolbar extends Extension<T, U> {
             setDefaultOption(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
         }
         if (this.getMenu(node) != null) {
-            setDefaultOption(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${this.name}:menu}`);
+            setDefaultOption(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
         }
         node.depth = depth + (appBar ? 1 : 0) + (options.collapsingToolbar ? 1 : 0);
         let xml  = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, node.depth, { android: optionsToolbar.android, app: optionsToolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
@@ -132,7 +133,7 @@ export default class Toolbar extends Extension<T, U> {
         }
         let proceed = false;
         if (extFor) {
-            node.data(`${this.name}:insert`, xml);
+            node.data(`${WIDGET_NAME.TOOLBAR}:insert`, xml);
             node.render(node);
             xml = '';
             proceed = true;
@@ -148,12 +149,8 @@ export default class Toolbar extends Extension<T, U> {
 
     public processChild(): ExtensionResult {
         const element = this.element;
-        if (element != null) {
-            if (element.tagName === 'IMG') {
-                if (element.dataset.navigationIcon != null || element.dataset.collapseIcon != null) {
-                    this.node.hide();
-                }
-            }
+        if (element && element.tagName === 'IMG' && (element.dataset.navigationIcon != null || element.dataset.collapseIcon != null)) {
+            this.node.hide();
         }
         return { xml: '' };
     }
@@ -166,7 +163,7 @@ export default class Toolbar extends Extension<T, U> {
             const parent = (<T> application.findByDomId(extFor));
             const coordinator = application.cacheInternal.list.find(item => (item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR));
             if (coordinator != null) {
-                let xml = (<string> node.data(`${this.name}:insert`)) || '';
+                let xml = (<string> node.data(`${WIDGET_NAME.TOOLBAR}:insert`)) || '';
                 if (xml !== '') {
                     xml = restoreIndent(xml, node.renderDepth);
                     node.renderDepth = node.depth + 1;
@@ -187,13 +184,13 @@ export default class Toolbar extends Extension<T, U> {
         if (menu != null) {
             const layouts = this.application.layouts;
             for (let i = 0; i < layouts.length; i++) {
-                layouts[i].content = layouts[i].content.replace(`{${node.id}:${this.name}:menu}`, <string> menu.dataset.currentId);
+                layouts[i].content = layouts[i].content.replace(`{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`, <string> menu.dataset.currentId);
             }
         }
     }
 
     private getMenu(node: T) {
-        return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.menu') !== -1));
+        return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1));
     }
 
     private createResources(appBarOverlay: string, popupOverlay: string) {
@@ -222,7 +219,7 @@ export default class Toolbar extends Extension<T, U> {
             }
         }
         setDefaultOption(options, 'output', 'path', 'res/values');
-        setDefaultOption(options, 'output', 'file', `${this.name}.xml`);
+        setDefaultOption(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
         const xml = insertTemplateData(template, data);
         this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
     }

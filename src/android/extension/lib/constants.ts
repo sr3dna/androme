@@ -1,5 +1,13 @@
 import { StringMap } from '../../../lib/types';
 
+export const WIDGET_NAME: StringMap = {
+    FAB: 'androme.widget.floatingactionbutton',
+    MENU: 'androme.widget.menu',
+    COORDINATOR: 'androme.widget.coordinator',
+    TOOLBAR: 'androme.widget.toolbar',
+    DRAWER: 'androme.widget.drawer'
+};
+
 export const VIEW_SUPPORT: StringMap = {
     DRAWER: 'android.support.v4.widget.DrawerLayout',
     NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',

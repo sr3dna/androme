@@ -80,10 +80,10 @@ export default class FloatingActionButton<T extends View> extends Button {
     }
 
     public insert() {
-        const application = this.application;
         const node = (<T> this.node);
         const extFor = node.parent.element.dataset.extFor;
         if (extFor != null) {
+            const application = this.application;
             const parent = application.findByDomId(extFor);
             if (parent != null && parent.viewName === VIEW_SUPPORT.COORDINATOR) {
                 let xml = (<string> node.data(`${this.name}:insert`)) || '';
