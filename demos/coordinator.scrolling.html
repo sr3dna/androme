@@ -37,12 +37,24 @@
             text-align: right;
         }
         #androme_ui {
-            position: relative;
             width: 300px;
             background-color: #fff;
             border: 1px solid #ccc;
         }
-        #androme_ui button, #androme_ui input[type=button] {
+        #coordinator_demo {
+            padding: 0px 20px 20px 20px;
+        }
+        #coordinator_demo > div {
+            font-size: 12px;
+            padding: 20px;
+            display: inline-block;
+        }
+        #coordinator_toolbar {
+            position: relative;
+            height: 180px;
+            background-color: #343434;
+        }
+        #coordinator_toolbar button {
             position: absolute;
             width: 56px;
             height: 56px;
@@ -51,18 +63,55 @@
             background-color: slateblue;
             border: none;
             border-radius: 28px;
-            margin: 8px;
+            margin: 16px;
             padding: 0px;
         }
-        #androme_ui > div {
-            font-size: 12px;
-            padding: 20px;
-            display: inline-block;
+        #toolbar_menu img {
+            margin-left: 0px;
+        }
+        #toolbar_menu {
+            margin: 8px;
+            border: none;
+            float: right;
+        }
+        #toolbar_menu div {
+            margin-left: 8px;
+            float: left;
+        }
+        h3 {
+            margin-top: 0px;
         }
     </style>
     <script src="../dist/androme.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided
+                includes: true,
+                coordinator_toolbar: {
+                    appBar: {
+                        android: {
+                            theme: 'ThemeOverlay.AppCompat.Dark.ActionBar'
+                        }
+                    },
+                    collapsingToolbar: {},
+                    toolbar: {
+                        app: {
+                            popupTheme: 'ThemeOverlay.AppCompat.Light'
+                        }
+                    }
+                },
+                resource: {
+                    output: {
+                        path: 'res/values',
+                        file: 'androme.widget.toolbar.xml'
+                    },
+                    appTheme: 'AppTheme',
+                    parentTheme: 'Theme.AppCompat.Light.DarkActionBar',
+                    item: {
+                        colorPrimary: '#343434'
+                    }
+                }
+            });
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
@@ -85,24 +134,38 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div>
+        <div id="coordinator_toolbar" data-ext="androme.widget.toolbar" data-ext-for="androme_ui">
+            <nav id="toolbar_menu" data-ext="androme.widget.menu">
+                <div
+                    data-show-as-action="always"
+                    title="Web">
+                    <img src="../demos/images/icons8-web-24.png" />
+                </div>
+                <div
+                    data-show-as-action="always"
+                    title="Browse Page">
+                    <img src="../demos/images/icons8-browse-page-24.png" />
+                </div>
+            </nav>
+            <button id="fab_menu" style="bottom: 0px; right: 0px; background-image: url(../demos/images/icons8-menu-24.png);" data-ext="androme.widget.floatingactionbutton"></button>
+        </div>
+        <div style="font-size: 12px; padding: 20px;">
             <h3>title</h2>
             <div style="color: #fff; background-color: #aaa; padding: 8px;">
                 content content content content content content content content content content
                 content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
             </div>
         </div>
-        <div style="color: #fff; background-color: #aaa; margin: 20px; padding: 8px;">
-            content content content content content content content content content content
-            content content content content content content content content content content
-        </div>
-        <div style="color: #fff; background-color: #aaa; margin: 20px; padding: 8px;">
-            content content content content content content content content content content
-            content content content content content content content content content content
-        </div>
-        <button id="fab_web" style="bottom: 64px; right: 0px; background-image: url(../demos/images/icons8-web-24.png);" data-ext="androme.widget.floatingactionbutton"></button>
-        <button id="fab_browse_page" style="bottom: 0px; right: 0px; background-image: url(../demos/images/icons8-browse-page-24.png);" data-ext="androme.widget.floatingactionbutton"></button>
-        <button id="fab_left" style="bottom: 0px; left: 0px; background-image: url(../demos/images/icons8-left-24.png);" data-ext="androme.widget.floatingactionbutton"></button>
     </div>
     <!-- END: DEMO -->
 

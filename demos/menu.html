@@ -84,7 +84,7 @@
                 var views = androme.writeLayoutAllXml();
                 var output = '';
                 for (var i in views) {
-                    output += views[i] + '\n';
+                    output += views[i] + '\n\n';
                 }
                 document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
                 var resource = androme.writeResourceStringXml() + '\n\n' +

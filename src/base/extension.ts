@@ -88,14 +88,22 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     }
 
     public processNode(mapX?: ObjectIndex<ObjectIndex<U>>, mapY?: ObjectIndex<ObjectIndex<U>>): ExtensionResult {
-        return ['', false, false];
+        return { xml: '' };
     }
 
     public processChild(mapX?: ObjectIndex<ObjectIndex<U>>, mapY?: ObjectIndex<ObjectIndex<U>>): ExtensionResult {
-        return ['', false, this.application.elements.has(this.node.element)];
+        return { xml: '', proceed: this.application.elements.has(this.node.element) };
     }
 
     public afterRender() {
+        return;
+    }
+
+    public insert() {
+        return;
+    }
+
+    public afterInsert() {
         return;
     }
 

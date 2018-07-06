@@ -1,5 +1,5 @@
 import { Null, ObjectMap } from './types';
-import { convertDP, hasValue } from './util';
+import { convertDP, hasValue, repeat } from './util';
 import SETTINGS from '../settings';
 
 export function removePlaceholders(value: string, extension = true) {
@@ -7,11 +7,23 @@ export function removePlaceholders(value: string, extension = true) {
     if (extension) {
         value = value.replace(/{[0-9]+:.*?}/g, '');
     }
-    return value;
+    return value.trim();
 }
 
-export function indentLines(value: string) {
-    return value.split('\n').map(line => `>>>>${line}`).join('\n');
+export function placeIndent(value: string) {
+    return value.split('\n').map(line => {
+        const match = /^({.*?})(.*)/g.exec(line);
+        if (match != null) {
+            return `${match[1]}>>>>${match[2]}`;
+        }
+        else {
+            return `>>>>${line}`;
+        }
+    }).join('\n');
+}
+
+export function restoreIndent(value: string, depth: number) {
+    return value.replace(/>>>>/g, repeat(depth)).replace(/\s*$/, '');
 }
 
 export function replaceDP(xml: string, dpi = 160, font = false) {
@@ -93,7 +105,7 @@ export function insertTemplateData(template: ObjectMap<string>, data: ObjectMap<
             value = data[i];
         }
         if (hasValue(value)) {
-            output = (index != null ? output.replace(new RegExp(`{[%@&]*${i}}`), value) : value.trim());
+            output = (index != null ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim());
         }
         else if (new RegExp(`{%${i}}`).test(output) || value === false) {
             output = output.replace(`{%${i}}`, '');

@@ -5,6 +5,7 @@ export const VIEW_SUPPORT: StringMap = {
     NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
     COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
     APPBAR: 'android.support.design.widget.AppBarLayout',
+    COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
     TOOLBAR: 'android.support.v7.widget.Toolbar',
     FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton'
 };

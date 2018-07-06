@@ -118,10 +118,12 @@ export default class View extends Node {
     }
 
     public supported(ns: string, attr: string) {
-        for (let i = this.api + 1; i <= BUILD_ANDROID.LATEST; i++) {
-            const version = (<string[]> (<any> API_ANDROID[i])[ns]);
-            if (version && version.includes(attr)) {
-                return false;
+        if (this.api > 0) {
+            for (let i = this.api + 1; i <= BUILD_ANDROID.LATEST; i++) {
+                const version: ObjectMap<any> = API_ANDROID[i];
+                if (version && version[ns] && version[ns].includes(attr)) {
+                    return false;
+                }
             }
         }
         return true;

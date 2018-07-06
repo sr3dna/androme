@@ -271,3 +271,17 @@ export function convertHextoRGB(value: string) {
     }
     return { r: -1, g: -1, b: -1 };
 }
+
+export function parseHex(value: string) {
+    if (value != null) {
+        value = value.trim();
+        const color = parseRGBA(value);
+        if (color.length > 0) {
+            value = color[0];
+        }
+        if (value.charAt(0) === '#') {
+            return value;
+        }
+    }
+    return '';
+}

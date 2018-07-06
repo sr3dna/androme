@@ -38,7 +38,7 @@ export const VIEW_ANDROID: StringMap = {
     GRID: 'GridLayout',
     SCROLL_VERTICAL: 'ScrollView',
     SCROLL_HORIZONTAL: 'HorizontalScrollView',
-    SCROLL_NESTED: 'NestedScrollView',
+    SCROLL_NESTED: 'android.support.v4.widget.NestedScrollView',
     RADIO_GROUP: 'RadioGroup',
     TEXT: 'TextView',
     EDIT: 'EditText',

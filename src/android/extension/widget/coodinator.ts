@@ -1,11 +1,11 @@
-import { ExtensionResult } from '../../../lib/types';
+import { ExtensionResult, Null, ObjectMap } from '../../../lib/types';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import Extension from '../../../base/extension';
+import { setDefaultOption } from '../../../lib/util';
+import { VIEW_RESOURCE } from '../../../lib/constants';
 import { VIEW_ANDROID } from '../../constants';
 import { VIEW_SUPPORT } from '../lib/constants';
-import { convertPX } from '../../../lib/util';
-import parseRTL from '../../localization';
 import SETTINGS from '../../../settings';
 
 type T = View;
@@ -22,68 +22,91 @@ export default class Coordinator extends Extension<T, U> {
         const node = (<T> this.node);
         const parent = (<T> this.parent);
         let xml = controller.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
+        node.apply(this.options[node.element.id]);
+        node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
         const nodes = node.children.filter(item => !item.isolated);
         if (nodes.length > 0) {
-            const constraint = new View(application.cache.nextId, SETTINGS.targetAPI, null, { viewId: `${node.viewId}_content` });
-            constraint.parent = node;
-            constraint.inheritBase(node);
+            const toolbar = this.getToolbar(node);
+            let offsetX = 0;
+            let offsetHeight = 0;
+            let collapsingToolbar = null;
+            if (toolbar != null) {
+                const extension = application.findExtension('androme.widget.toolbar');
+                if (extension != null) {
+                    offsetX = toolbar.linear.bottom;
+                    offsetHeight = toolbar.linear.height;
+                    if (Math.floor(toolbar.linear.top) === node.box.top) {
+                        node.bounds.bottom -= offsetHeight;
+                        node.setBounds(true);
+                    }
+                    collapsingToolbar = (extension.options[toolbar.element.id].collapsingToolbar);
+                }
+            }
+            const filename = `${node.viewId}_content`;
+            let include = '';
+            if (this.options.includes == null || this.options.includes) {
+                include = controller.getViewStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
+            }
+            const layout = new View(application.cache.nextId, SETTINGS.targetAPI, null);
+            layout.parent = node;
+            layout.inheritBase(node);
             nodes.forEach(item => {
-                item.parent = constraint;
+                item.parent = layout;
                 item.depth++;
-                constraint.children.push(item);
+                if (offsetHeight > 0 && item.linear.top >= offsetX) {
+                    this.adjustBounds(item, offsetHeight);
+                    item.cascade().forEach((child: T) => this.adjustBounds(child, offsetHeight));
+                }
+                layout.children.push(item);
             });
             node.children = node.children.filter(item => item.isolated);
-            application.cache.list.push(constraint);
-            const content = controller.getViewStatic(VIEW_ANDROID.CONSTRAINT, constraint.depth, {}, 'match_parent', 'wrap_content', constraint, true);
+            application.cache.list.push(layout);
+            const options: ObjectMap<any> = { android: {} };
+            const optionsCollapsingToolbar = Object.assign({}, collapsingToolbar);
+            const [linearX, linearY] = [ViewList.linearX(nodes), ViewList.linearY(nodes)];
+            let viewName = '';
+            if (application.isLinearLayout(linearX, linearY, node, <T[]> nodes)) {
+                viewName = VIEW_ANDROID.LINEAR;
+                options.android.orientation = (linearY ? 'vertical' : 'horizontal');
+            }
+            else {
+                viewName = VIEW_ANDROID.CONSTRAINT;
+            }
+            if (collapsingToolbar != null) {
+                setDefaultOption(optionsCollapsingToolbar, 'app', 'layout_behavior', '@string/appbar_scrolling_view_behavior');
+                node.android('fitsSystemWindows', 'true');
+            }
+            setDefaultOption((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
+            const depth = (include !== '' ? 0 : node.depth + 1);
+            let content = controller.getViewStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true);
+            if (collapsingToolbar != null) {
+                content = controller.getViewStatic(VIEW_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, SETTINGS.targetAPI), true).replace('{:0}', content);
+            }
+            if (include !== '') {
+                application.addInclude(filename, content);
+                content = include;
+            }
             xml = xml.replace(`{:${node.id}}`, `${content}{:${node.id}}`);
         }
-        return [xml, false, false];
+        return { xml };
     }
 
-    public processChild(): ExtensionResult {
+    public afterInsert() {
         const node = (<T> this.node);
-        const parent = (<T> this.parent);
-        node.renderParent = parent;
-        const horizontalBias = node.horizontalBias;
-        const verticalBias = node.verticalBias;
-        const gravity: string[] = [];
-        if (horizontalBias < 0.5) {
-            gravity.push(parseRTL('left'));
+        if (node.depth === 0) {
+            node.android('layout_width', 'match_parent');
+            node.android('layout_height', 'match_parent');
         }
-        else if (horizontalBias > 0.5) {
-            gravity.push(parseRTL('right'));
-        }
-        else {
-            gravity.push('center_horizontal');
-        }
-        if (verticalBias < 0.5) {
-            gravity.push('top');
-            node.app('layout_dodgeInsetEdges', 'top');
-        }
-        else if (verticalBias > 0.5) {
-            gravity.push('bottom');
-        }
-        else {
-            gravity.push('center_vertical');
-        }
-        node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
-        if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
-            if (horizontalBias < 0.5) {
-                node.css('marginLeft', convertPX(Math.floor(node.bounds.left - parent.box.left)));
-            }
-            else {
-                node.css('marginRight', convertPX(Math.floor(parent.box.right - node.bounds.right)));
-            }
-        }
-        if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
-            if (verticalBias < 0.5) {
-                node.css('marginTop', convertPX(Math.floor(node.bounds.top - parent.box.top)));
-            }
-            else {
-                node.css('marginBottom', convertPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
-            }
-        }
-        node.renderParent = false;
-        return ['', false, false];
+    }
+
+    private getToolbar(node: T): Null<T> {
+        const toolbar = (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.toolbar') !== -1));
+        return (toolbar != null ? (<any> toolbar).__node : null);
+    }
+
+    private adjustBounds(node: T, offsetHeight: number) {
+        node.bounds.top -= offsetHeight;
+        node.bounds.bottom -= offsetHeight;
+        node.setBounds(true);
     }
 }

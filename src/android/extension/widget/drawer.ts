@@ -2,8 +2,10 @@ import { ExtensionResult, ObjectMap } from '../../../lib/types';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import Extension from '../../../base/extension';
+import Resource from '../../../base/resource';
 import { setDefaultOption } from '../../../lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../../../lib/xml';
+import { parseHex } from '../../../lib/color';
 import { VIEW_RESOURCE } from '../../../lib/constants';
 import { VIEW_SUPPORT } from '../lib/constants';
 import parseRTL from '../../localization';
@@ -14,7 +16,7 @@ import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 type T = View;
 type U = ViewList<T>;
 
-export default class DrawerAndroid extends Extension<T, U> {
+export default class Drawer extends Extension<T, U> {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
         super(name, tagNames, options);
         this.activityMain = true;
@@ -59,21 +61,21 @@ export default class DrawerAndroid extends Extension<T, U> {
             depth = -1;
         }
         const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, null, { depth: 0 });
-        coordinator.parent = node.parent;
+        coordinator.parent = node;
         coordinator.inheritBase(node);
         coordinator.renderExtension = application.findExtension('androme.widget.coordinator');
         coordinator.ignoreResource = VIEW_RESOURCE.ALL;
+        coordinator.isolated = true;
         application.cache.list.push(coordinator);
-        let content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', coordinator, true);
+        const content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', coordinator, true);
         options = Object.assign({}, this.options.navigationView);
         setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
             this.createResources();
             setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
             setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-            setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:androme.widget.drawer:menu}`);
-            setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:androme.widget.drawer:headerLayout}`);
-            content = content.replace(`{:${coordinator.id}}`, `{${node.id}:androme.widget.drawer:toolbar}`);
+            setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${this.name}:menu}`);
+            setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:${this.name}:headerLayout}`);
             const navigation = controller.getViewStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
             xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
         }
@@ -95,7 +97,7 @@ export default class DrawerAndroid extends Extension<T, U> {
         }
         node.renderParent = true;
         node.applyCustomizations();
-        return [xml, false, false];
+        return { xml };
     }
 
     public finalize() {
@@ -105,7 +107,7 @@ export default class DrawerAndroid extends Extension<T, U> {
             let menu = '';
             let headerLayout = '';
             application.elements.forEach(item => {
-                if (item.parentElement === this.element) {
+                if (item.parentElement === node.element) {
                     switch (item.dataset.ext) {
                         case 'androme.external':
                             headerLayout = (<string> item.dataset.currentId);
@@ -118,8 +120,8 @@ export default class DrawerAndroid extends Extension<T, U> {
             });
             const views = application.viewData.views;
             for (let i = 0; i < views.length; i++) {
-                views[i].content = views[i].content.replace(`{${this.node.id}:androme.widget.drawer:menu}`, menu);
-                views[i].content = views[i].content.replace(`{${this.node.id}:androme.widget.drawer:headerLayout}`, headerLayout);
+                views[i].content = views[i].content.replace(`{${node.id}:${this.name}:menu}`, menu);
+                views[i].content = views[i].content.replace(`{${node.id}:${this.name}:headerLayout}`, headerLayout);
             }
         }
     }
@@ -135,19 +137,24 @@ export default class DrawerAndroid extends Extension<T, U> {
         const template: ObjectMap<string> = parseTemplate(EXTENSION_DRAWER_TMPL);
         const data: ObjectMap<any> = {
             '0': [{
-                'appTheme': this.options.resource.appTheme,
-                'parentTheme': this.options.resource.parentTheme,
+                'appTheme': options.resource.appTheme,
+                'parentTheme': options.resource.parentTheme,
                 '1': []
             }]
         };
         if (options.item != null) {
             const root = getTemplateLevel(data, '0');
             for (const name in options.item) {
-                root['1'].push({ name, value: options.item[name] });
+                let value = options.item[name];
+                const hex = parseHex(value);
+                if (hex !== '') {
+                    value = `@color/${Resource.addColor(hex)}`;
+                }
+                root['1'].push({ name, value });
             }
         }
         setDefaultOption(options, 'output', 'path', 'res/values-v21');
-        setDefaultOption(options, 'output', 'file', 'androme.widget.drawer.xml');
+        setDefaultOption(options, 'output', 'file', `${this.name}.xml`);
         const xml = insertTemplateData(template, data);
         this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
     }

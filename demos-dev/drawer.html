@@ -69,7 +69,7 @@
                 var views = androme.writeLayoutAllXml();
                 var output = '';
                 for (var i in views) {
-                    output += views[i] + '\n';
+                    output += views[i] + '\n\n';
                 }
                 document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
                 var resource = androme.writeResourceStringXml() + '\n\n' +
@@ -102,10 +102,10 @@
                     content content content content content content content content content content
                     content content content content content content content content content content
                 </div>
-                <input id="fab_menu" type="button" style="position: static; background-image: url(../demos/images/icons8-squared-menu-24.png); float: right;" data-ext="androme.widget.button" />
+                <input id="fab_menu" type="button" style="position: static; background-image: url(../demos/images/icons8-squared-menu-24.png); float: right;" data-ext="androme.widget.floatingactionbutton" />
                 <br /><br /><br /><br /><br /><br /><br />
             </div>
-            <button id="fab_left" style="bottom: 0px; left: 0px; background-image: url(../demos/images/icons8-left-24.png);" data-ext="androme.widget.button"></button>
+            <button id="fab_left" style="bottom: 0px; left: 0px; background-image: url(../demos/images/icons8-left-24.png);" data-ext="androme.widget.floatingactionbutton"></button>
             <aside id="drawer_aside">
                 <div>
                     <img src="../demos/images/icons8-chrome.png" />

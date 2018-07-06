@@ -233,7 +233,7 @@ export default class Grid extends Extension<T, U> {
                 }
             }
         }
-        return [xml, false, false];
+        return { xml };
     }
 
     public processChild(): ExtensionResult {
@@ -258,8 +258,8 @@ export default class Grid extends Extension<T, U> {
             else {
                 xml = this.application.writeDefaultLayout(viewGroup, parent);
             }
-            return [xml, true, false];
+            return { xml, restart: true };
         }
-        return ['', false, false];
+        return { xml: '' };
     }
 }

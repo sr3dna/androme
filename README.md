@@ -87,7 +87,7 @@ androme.settings = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.widget' // androme.widget.menu | androme.widget.button | androme.widget.coordinator | androme.widget.toolbar | androme.widget.drawer
+        'androme.widget' // androme.widget.menu | androme.widget.floatingactionbutton | androme.widget.coordinator | androme.widget.toolbar | androme.widget.drawer
     ],
     targetAPI: androme.build.OREO,
     density: androme.build.MDPI,
@@ -126,8 +126,6 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/flexbox.png" alt="flexbox: horizontal" />
 
-<img src="demos/android/flexbox_vertical.png" alt="flexbox: vertical" />
-
 <img src="demos/android/flexbox_wrap.png" alt="flexbox: wrap" />
 
 <img src="demos/android/float.png" alt="float: left | right | clear" />
@@ -153,13 +151,13 @@ Most of the Android support library extensions can be configured using the same 
     androme.configureExtension('androme.widget.drawer', { android: { layout_width: 'wrap_content', fitsSystemWindows: 'true' } });
 </script>
 ```
-<img src="demos/android/drawer.png" alt="extension: drawer - floating action button" />
+<img src="demos/android/drawer.png" alt="drawer: floating action button" />
 
-<img src="demos/android/drawer.navigationview.png" alt="extension: drawer - actionbar" />
+<img src="demos/android/drawer.navigationview.png" alt="drawer: actionbar" />
 
-<img src="demos/android/coordinator.png" alt="extension: coordinator" />
+<img src="demos/android/coordinator.scrolling.png" alt="coordinator: scrolling" />
 
-<img src="demos/android/menu.png" alt="extension: menu" />
+<img src="demos/android/menu.png" alt="toolbar: menu" />
 
 ### Auto-generated Layout
 
@@ -169,7 +167,6 @@ Most of the Android support library extensions can be configured using the same 
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
 	android:id="@+id/androme_ui"
-	android:gravity="top"
 	android:layout_height="wrap_content"
 	android:layout_width="wrap_content"
 	android:orientation="vertical">

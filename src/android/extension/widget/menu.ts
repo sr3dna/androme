@@ -43,7 +43,7 @@ const VALIDATE_GROUP = {
 
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
-export default class MenuAndroid<T extends View> extends Nav {
+export default class Menu<T extends View> extends Nav {
     constructor(name: string, tagNames: string[], options?: {}) {
         super(name, tagNames, options);
     }
@@ -54,7 +54,7 @@ export default class MenuAndroid<T extends View> extends Nav {
         node.renderParent = true;
         node.cascade().forEach(item => item.renderExtension = this);
         node.ignoreResource = VIEW_RESOURCE.ALL;
-        return [xml, false, false];
+        return { xml };
     }
 
     public processChild(): ExtensionResult {
@@ -62,7 +62,7 @@ export default class MenuAndroid<T extends View> extends Nav {
         const element = node.element;
         if (element.nodeName === '#text') {
             node.hide();
-            return ['', false, false];
+            return { xml: '' };
         }
         const parent = (<T> this.parent);
         node.ignoreResource = VIEW_RESOURCE.ALL;
@@ -159,7 +159,7 @@ export default class MenuAndroid<T extends View> extends Nav {
             node.viewName = viewName;
         }
         const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, options, '', '', node, layout);
-        return [xml, false, false];
+        return { xml };
     }
 
     public afterRender() {

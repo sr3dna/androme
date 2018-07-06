@@ -3,7 +3,7 @@ import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import { capitalize, formatString, hasValue, repeat } from '../lib/util';
-import { getTemplateLevel, indentLines, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
+import { getTemplateLevel, placeIndent, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { VIEW_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTWEIGHT_ANDROID } from './constants';
@@ -586,12 +586,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 [node, node.parent].some(item => {
                     if (item.renderExtension != null) {
                         const attr = `${item.renderExtension.name}:insert`;
-                        let output = (<string> item.options(attr));
+                        let output = (<string> item.data(attr));
                         if (output) {
                             const pattern = `{&${id}}`;
                             if (output.indexOf(pattern) !== -1) {
-                                output = output.replace(`{&${id}}`, indentLines(append));
-                                item.options(attr, output);
+                                output = output.replace(`{&${id}}`, placeIndent(append));
+                                item.data(attr, output);
                                 replaced = true;
                                 return true;
                             }

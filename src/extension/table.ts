@@ -62,6 +62,6 @@ export default class Table extends Extension<T, U> {
             }
         }
         const xml = this.application.writeGridLayout(this.node, (<T> this.parent), columnCount, rowCount);
-        return [xml, false, false];
+        return { xml };
     }
 }

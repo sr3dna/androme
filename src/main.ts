@@ -30,7 +30,7 @@ const EXTENSIONS: any = {
     'androme.list': new List('androme.list', ['UL', 'OL']),
     'androme.table': new Table('androme.table', ['TABLE']),
     'androme.grid': new Grid('androme.grid', ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET']),
-    'androme.widget.button': new Button('androme.widget.button', ['BUTTON', 'INPUT', 'IMG']),
+    'androme.widget.floatingactionbutton': new Button('androme.widget.floatingactionbutton', ['BUTTON', 'INPUT', 'IMG']),
     'androme.widget.menu': new Menu('androme.widget.menu', ['NAV'], { appCompat: true }),
     'androme.widget.coordinator': new Coordinator('androme.widget.coordinator'),
     'androme.widget.toolbar': new Toolbar('androme.widget.toolbar'),

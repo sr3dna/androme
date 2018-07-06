@@ -24,6 +24,8 @@ export interface IExtension {
     processNode(mapX?: ObjectIndex<ObjectIndex<NodeList<Node>>>, mapY?: ObjectIndex<ObjectIndex<NodeList<Node>>>): ExtensionResult;
     processChild(mapX?: ObjectIndex<ObjectIndex<NodeList<Node>>>, mapY?: ObjectIndex<ObjectIndex<NodeList<Node>>>): ExtensionResult;
     afterRender(): void;
+    insert(): void;
+    afterInsert(): void;
     finalize(): void;
 }
 
@@ -32,7 +34,12 @@ export interface ExtensionDependency {
     init: boolean;
 }
 
-export type ExtensionResult = [string, boolean, boolean];
+export interface ExtensionResult {
+    xml: string;
+    restart?: boolean;
+    proceed?: boolean;
+    parent?: Node;
+}
 
 export interface BoxModel {
     marginTop?: number;

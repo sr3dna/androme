@@ -47,7 +47,7 @@ export default abstract class Node implements BoxModel {
     private _parentOriginal: T;
     private _renderParent: T | boolean;
     private _tagName: string;
-    private _options: ObjectMap<any> = {};
+    private _data: ObjectMap<any> = {};
 
     constructor(
         public id: number,
@@ -140,7 +140,7 @@ export default abstract class Node implements BoxModel {
 
     public render(parent: T) {
         this.renderParent = parent;
-        this.renderDepth = (parent.id === 0 ? 0 : parent.renderDepth + 1);
+        this.renderDepth = (parent === this ? this.depth : (parent.id === 0 ? 0 : parent.renderDepth + 1));
     }
 
     public hide() {
@@ -148,14 +148,11 @@ export default abstract class Node implements BoxModel {
         this.visible = false;
     }
 
-    public options(attr: string, value?: any, overwrite = true) {
-        if (hasValue(value)) {
-            if (!overwrite && this._options[attr] != null) {
-                return {};
-            }
-            this._options[attr] = value;
+    public data(attr: string, value?: any, overwrite = true) {
+        if (hasValue(value) && (overwrite || this._data[attr] == null)) {
+            this._data[attr] = value;
         }
-        return this._options[attr];
+        return this._data[attr];
     }
 
     public ascend() {
@@ -241,7 +238,7 @@ export default abstract class Node implements BoxModel {
         return this.styleMap[attr] || (this.style && (<any> this.style)[attr]) || '';
     }
 
-    public setBounds(calibrate: boolean = false, element?: HTMLElement) {
+    public setBounds(calibrate = false, element?: HTMLElement) {
         if (!calibrate) {
             const bounds = (element != null ? getRangeBounds(element) : (this.hasElement ? assignBounds(<ClientRect> this.element.getBoundingClientRect()) : null));
             if (bounds != null) {
@@ -330,7 +327,7 @@ export default abstract class Node implements BoxModel {
     }
 
     set parent(value) {
-        if (value === this._parent) {
+        if (value == null || value === this._parent) {
             return;
         }
         if (this._parent && this._parentOriginal == null) {
@@ -424,10 +421,10 @@ export default abstract class Node implements BoxModel {
         if (this._overflow == null) {
             let value = OVERFLOW_CHROME.NONE;
             if (this.hasElement) {
-                if (this.css('overflow') === 'scroll' || (this.css('overflowX') === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+                if (this.css('overflow') === 'scroll' || this.css('overflowX') === 'scroll' || (this.css('overflowX') === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
                     value |= OVERFLOW_CHROME.HORIZONTAL;
                 }
-                if (this.css('overflow') === 'scroll' || (this.css('overflowY') === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+                if (this.css('overflow') === 'scroll' || this.css('overflowY') === 'scroll' || (this.css('overflowY') === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
                     value |= OVERFLOW_CHROME.VERTICAL;
                 }
             }

@@ -859,8 +859,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         node.apply(options);
         node.applyCustomizations();
         node.render(renderParent);
-        node.setGravity();
-        this.setGridSpace(node);
+        if (node.depth > 0) {
+            node.setGravity();
+            this.setGridSpace(node);
+        }
         return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
 
@@ -994,6 +996,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             node = (<T> new View(0, SETTINGS.targetAPI));
             minimal = true;
         }
+        const renderDepth = Math.max(0, depth);
         const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
         tagName = (node != null && node.hasElement ? node.tagName : viewName);
         node.setViewId(viewName);
@@ -1009,11 +1012,11 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             }
             node.android('layout_height', height);
         }
-        node.renderDepth = depth;
+        node.renderDepth = renderDepth;
         node.apply(options);
         let output = this.getEnclosingTag((depth === 0 && minimal ? -1 : depth), viewName, node.id, (children ? `{:${node.id}}` : ''));
         if (SETTINGS.showAttributes && node.id === 0) {
-            const indent = repeat(depth + 1);
+            const indent = repeat(renderDepth + 1);
             const attributes = node.combine().map(value => `\n${indent + value}`).join('');
             output = output.replace(`{@${node.id}}`, attributes);
         }
@@ -1022,11 +1025,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     public setAttributes(data: ViewData<T>) {
-        const cache: any = data.cache.filter(node => node.visible).map(node => {
-            return { pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) };
-        });
+        const cache: StringMap[] = data.cache.filter(node => node.visible).map(node => ({ pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) }));
         [...data.views, ...data.includes].forEach(view => {
-            cache.forEach((item: StringMap) => view.content = view.content.replace(item.pattern, item.attributes));
+            cache.forEach(item => view.content = view.content.replace(item.pattern, item.attributes));
             view.content = view.content.replace(`{#0}`, this.getRootNamespace(view.content));
         });
     }

@@ -1,11 +1,11 @@
-import { Null, ObjectIndex, PlainFile, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, Null, ObjectIndex, PlainFile, StringMap, ViewData } from '../lib/types';
 import Controller from './controller';
 import Extension from './extension';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
 import { hasValue, hyphenToCamelCase, resetId, sortAsc, trim } from '../lib/util';
-import { indentLines, removePlaceholders, replaceDP } from '../lib/xml';
+import { placeIndent, removePlaceholders, replaceDP } from '../lib/xml';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
@@ -17,7 +17,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public controllerHandler: Controller<T, U>;
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
-    public insert: ObjectIndex<string> = {};
+    public insert: ArrayIndex<string> = [];
 
     private views: PlainFile[] = [];
     private includes: PlainFile[] = [];
@@ -59,13 +59,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public finalize() {
         this.controllerHandler.setDimensions(this.viewData);
-        this.setAuxillaryViews();
+        this.insertAuxillaryViews();
         this.resourceHandler.finalize(this.viewData);
         if (SETTINGS.showAttributes) {
             this.setAttributes();
         }
         this.layouts.forEach(layout => {
-            layout.content = removePlaceholders(layout.content);
+            layout.content = removePlaceholders(layout.content).replace(/\n\n/g, '\n');
             if (SETTINGS.dimensResourceValue) {
                 layout.content = this.controllerHandler.parseDimensions(layout.content);
             }
@@ -412,25 +412,26 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
                 for (let k = 0; k < axisY.length; k++) {
                     const nodeY = axisY[k];
-                    const parent = (<T> nodeY.parent);
+                    let parent = (<T> nodeY.parent);
                     if (!nodeY.renderParent) {
                         let xml = '';
-                        let append = '';
-                        let restart = false;
                         let proceed = false;
                         const renderExtension = (<Extension<T, U>> parent.renderExtension);
                         if (renderExtension != null) {
                             renderExtension.node = nodeY;
                             renderExtension.parent = parent;
                             renderExtension.element = nodeY.element;
-                            [append, restart, proceed] = renderExtension.processChild();
-                            if (append !== '') {
-                                xml += append;
-                                if (restart) {
+                            const result = renderExtension.processChild();
+                            if (result.xml !== '') {
+                                xml += result.xml;
+                                if (result.parent != null) {
+                                    parent = (<T> result.parent);
+                                }
+                                if (result.restart) {
                                     k--;
                                 }
                             }
-                            if (proceed) {
+                            if (result.proceed) {
                                 continue;
                             }
                         }
@@ -440,12 +441,18 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 item.node = nodeY;
                                 item.element = nodeY.element;
                                 if (item.condition()) {
-                                    [append, restart, proceed] = item.processNode(mapX, mapY);
-                                    if (append !== '') {
-                                        xml += append;
-                                        if (restart && nodeY === axisY[k]) {
+                                    const result =  item.processNode(mapX, mapY);
+                                    if (result.xml !== '') {
+                                        xml += result.xml;
+                                        if (result.parent != null) {
+                                            parent = (<T> result.parent);
+                                        }
+                                        if (result.restart && nodeY === axisY[k]) {
                                             k--;
                                         }
+                                    }
+                                    if (result.proceed != null) {
+                                        proceed = result.proceed;
                                     }
                                     nodeY.renderExtension = item;
                                     return true;
@@ -460,9 +467,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             let tagName = nodeY.viewName;
                             if (tagName === '') {
                                 if (nodeY.children.length > 0 && nodeY.cascade().some(node => MAPPING_CHROME[node.tagName] != null || !INLINE_CHROME.includes(node.tagName))) {
-                                    const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                     if (!nodeY.renderParent) {
-                                        if (nodeY.children.length === 1 && linearX && linearY) {
+                                        if (nodeY.children.length === 1) {
                                             if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
                                                 nodeY.children[0].parent = parent;
                                                 nodeY.cascade().forEach(item => item.renderDepth--);
@@ -473,11 +479,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                                 xml += this.writeFrameLayout(nodeY, parent);
                                             }
                                         }
-                                        else if ((linearX || linearY) && (!nodeY.flex.enabled || (linearX && nodeY.children.every(node => node.flex.enabled))) && (!nodeY.children.some(node => node.floating && node.css('clear') !== 'none') && (nodeY.children.every(node => node.css('float') !== 'right') || nodeY.children.every(node => node.css('float') === 'right')))) {
-                                            xml += this.writeLinearLayout(nodeY, parent, linearY);
-                                        }
                                         else {
-                                            xml += this.writeDefaultLayout(nodeY, parent);
+                                            const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
+                                            if (this.isLinearLayout(linearX, linearY, nodeY, <T[]> nodeY.children)) {
+                                                xml += this.writeLinearLayout(nodeY, parent, linearY);
+                                            }
+                                            else {
+                                                xml += this.writeDefaultLayout(nodeY, parent);
+                                            }
                                         }
                                     }
                                 }
@@ -504,18 +513,18 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             for (const [id, views] of partial.entries()) {
                 const placeholder = `{:${id}}`;
                 if (output.indexOf(placeholder) !== -1) {
-                    output = output.replace(placeholder, views.join(''));
+                    output = output.replace(placeholder, views.join('') + placeholder);
                     empty = false;
                 }
                 else {
-                    this.insert[id] = views.join('');
+                    this.addInsertQueue(id, views);
                 }
             }
         }
         let pathname = '';
         const root = (<T> this.cache.parent);
         const extension = (<Extension<T, U>> root.renderExtension);
-        if (extension == null || root.options(`${extension.name}:insert`) == null) {
+        if (extension == null || root.data(`${extension.name}:insert`) == null) {
             if (root.element.dataset != null) {
                 pathname = trim((root.element.dataset.pathname || '').trim(), '/');
             }
@@ -532,7 +541,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 item.afterRender();
             });
         }
-        else {
+        else if (extension == null) {
             root.visible = false;
         }
         this.cacheInternal.list.push(...this.cache.list);
@@ -571,41 +580,65 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public setAttributes() {
-        this.controllerHandler.setAttributes(this.viewData);
+    public addInsertQueue(id: number, views: string[]) {
+        if (this.insert[id] == null) {
+            this.insert[id] = [];
+        }
+        this.insert[id].push(...views);
     }
 
-    public setAuxillaryViews() {
-        const viewIds = Object.keys(this.insert);
-        viewIds.push(...viewIds.slice().reverse());
-        [...this.views, ...this.includes].forEach(view => {
-            viewIds.forEach(id => view.content = view.content.replace(`{:${id}}`, this.insert[parseInt(id)]));
-            view.content = this.controllerHandler.insertAuxillaryViews(view.content);
-        });
+    public insertAuxillaryViews() {
         this.cacheInternal.list.forEach(node => {
-            if (!node.visible && node.renderExtension != null) {
-                const insert = `${node.renderExtension.name}:insert`;
-                let output = (<string> node.options(insert));
+            const extension = node.renderExtension;
+            if (extension != null) {
+                const insert = `${extension.name}:insert`;
+                let output = (<string> node.data(insert));
                 if (output) {
                     output = this.controllerHandler.insertAuxillaryViews(output);
                     const children = this.insert[node.id];
                     if (children != null) {
-                        output = output.replace(`{:${node.id}}`, children);
+                        output = output.replace(`{:${node.id}}`, children.join(''));
                     }
-                    output = this.controllerHandler.insertAttributes(output, node);
-                    output = indentLines(output.trim());
-                    node.children.forEach(item => output = this.controllerHandler.insertAttributes(output, <T> item));
-                    node.options(insert, output);
+                    output = placeIndent(output.trim());
+                    node.data(insert, output);
+                    extension.parent = null;
+                    extension.node = node;
+                    extension.element = null;
+                    extension.insert();
                 }
             }
-            this.extensions.forEach(item => {
-                item.parent = null;
-                item.node = node;
-                item.element = node.element;
-                if (item.condition()) {
-                    item.finalize();
+        });
+        const viewIds = Object.keys(this.insert);
+        viewIds.push(...viewIds.slice().reverse());
+        [...this.views, ...this.includes].forEach(view => {
+            viewIds.forEach(id => {
+                if (this.insert[parseInt(id)] != null) {
+                    view.content = view.content.replace(`{:${id}}`, this.insert[parseInt(id)].join('\n'));
                 }
             });
+            view.content = this.controllerHandler.insertAuxillaryViews(view.content);
+        });
+        this.cacheInternal.list.forEach(node => {
+            const extension = node.renderExtension;
+            if (extension != null) {
+                extension.parent = null;
+                extension.node = node;
+                extension.element = null;
+                extension.afterInsert();
+            }
+        });
+    }
+
+    public setAttributes() {
+        this.controllerHandler.setAttributes(this.viewData);
+        this.cacheInternal.list.forEach(node => {
+            const extension = node.renderExtension;
+            if (extension != null) {
+                extension.parent = null;
+                extension.node = node;
+                extension.element = null;
+                extension.finalize();
+            }
         });
     }
 
@@ -634,6 +667,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             view.pathname = pathname;
             view.content = content;
         }
+    }
+
+    public isLinearLayout(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
+        return (linearX || linearY) && (!parent.flex.enabled || (linearX && children.every(node => node.flex.enabled))) && (!children.some(node => node.floating && node.css('clear') !== 'none') && (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')));
     }
 
     public addInclude(filename: string, content: string) {
