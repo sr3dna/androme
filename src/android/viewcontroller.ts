@@ -793,7 +793,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
     }
 
-    public renderGroup(node: T, parent: T, viewName: number | string, options: ObjectMap<any> = {}) {
+    public renderGroup(node: T, parent: T, viewName: number | string, options?: ObjectMap<any>) {
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
@@ -980,14 +980,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     public createGroup(node: T, parent: T, children: T[]) {
-        const viewGroup = (<View> new ViewGroup(this.cache.nextId, node, parent, children) as T);
+        const viewGroup = new ViewGroup(this.cache.nextId, node, parent, children);
         children.forEach(item => {
             item.parent = viewGroup;
             viewGroup.inheritGrid(item);
         });
         viewGroup.setBounds();
-        this.cache.list.push(viewGroup);
-        return viewGroup;
+        this.cache.list.push((<View> viewGroup as T));
+        return (<View> viewGroup as T);
     }
 
     public getViewStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = '', height = '', node: Null<T> = null, children = false) {
@@ -1049,7 +1049,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 for (const key of Object.keys(BOX_STANDARD)) {
                     const result = node.boxValue(parseInt(key));
                     if (result[0] !== '' && result[1] !== '0px') {
-                        const name = `${(<any> BOX_STANDARD)[key].toLowerCase()}-${result[0]}-${result[1]}`;
+                        const name = `${BOX_STANDARD[key].toLowerCase()}-${result[0]}-${result[1]}`;
                         this.addDimenGroup(group, node, name);
                     }
                 }
@@ -1212,7 +1212,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private deleteConstraints(node: T, orientation = '') {
-        const map: any = LAYOUT_MAP.constraint;
+        const map = LAYOUT_MAP.constraint;
         if (orientation === '' || orientation === 'horizontal') {
             node.delete('app', map['leftRight'], map['rightLeft']);
             node.constraint.horizontal = false;

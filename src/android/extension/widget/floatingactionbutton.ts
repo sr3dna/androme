@@ -7,7 +7,7 @@ import { restoreIndent } from '../../../lib/xml';
 import { parseRGBA } from '../../../lib/color';
 import { positionLayoutGravity } from '../lib/util';
 import { VIEW_RESOURCE } from '../../../lib/constants';
-import { DRAWABLE_PREFIX, VIEW_SUPPORT } from '../lib/constants';
+import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 export default class FloatingActionButton<T extends View> extends Button {
     constructor(name: string, tagNames: string[], options?: {}) {
@@ -62,7 +62,7 @@ export default class FloatingActionButton<T extends View> extends Button {
                 node.app('layout_anchor', parent.stringId);
                 node.app('layout_anchorGravity', <string> node.android('layout_gravity'));
                 node.delete('android', 'layout_gravity');
-                node.data(`${this.name}:insert`, xml);
+                node.data(`${WIDGET_NAME.FAB}:insert`, xml);
                 node.render(node);
                 xml = '';
                 proceed = true;
@@ -86,7 +86,7 @@ export default class FloatingActionButton<T extends View> extends Button {
             const application = this.application;
             const parent = application.findByDomId(extFor);
             if (parent != null && parent.viewName === VIEW_SUPPORT.COORDINATOR) {
-                let xml = (<string> node.data(`${this.name}:insert`)) || '';
+                let xml = (<string> node.data(`${WIDGET_NAME.FAB}:insert`)) || '';
                 if (xml !== '') {
                     node.renderDepth = parent.renderDepth + 1;
                     xml = restoreIndent(xml, node.renderDepth);

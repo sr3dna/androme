@@ -4,6 +4,7 @@ import List from '../../extension/list';
 import { formatDimen } from '../../lib/xml';
 import parseRTL from '../localization';
 import { VIEW_STANDARD } from '../../lib/constants';
+import { EXT_NAME } from '../../extension/lib/constants';
 
 export default class ListAndroid<T extends View> extends List {
     constructor(name: string, tagNames: string[], options?: {}) {
@@ -13,7 +14,7 @@ export default class ListAndroid<T extends View> extends List {
     public processChild(): ExtensionResult {
         const node = (<T> this.node);
         const controllerHandler = this.application.controllerHandler;
-        const listStyle = node.data(`${this.name}:listStyle`);
+        const listStyle = node.data(`${EXT_NAME.LIST}:listStyle`);
         if (listStyle != null) {
             controllerHandler.prependBefore(
                 node.id,
@@ -33,5 +34,12 @@ export default class ListAndroid<T extends View> extends List {
             node.android('layout_columnWeight', '1');
         }
         return { xml: '' };
+    }
+
+    public afterInsert() {
+        const node = (<T> this.node);
+        if (node.is(VIEW_STANDARD.GRID)) {
+            node.android('layout_width', 'match_parent');
+        }
     }
 }

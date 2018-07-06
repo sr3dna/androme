@@ -124,7 +124,7 @@ export default class Menu<T extends View> extends Nav {
             case VIEW_STATIC.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') == null) {
-                    let src = Resource.addImageURL((<any> element.style).backgroundImage, DRAWABLE_PREFIX.MENU);
+                    let src = Resource.addImageURL(<string> element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
                     if (src !== '') {
                         options.android.icon = `@drawable/${src}`;
                     }

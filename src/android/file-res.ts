@@ -138,7 +138,7 @@ export default class FileRes<T extends View> extends File<T> {
         if (this.stored.FONTS.size > 0) {
             const template = parseTemplate(FONT_TMPL);
             for (const [name, font] of this.stored.FONTS.entries()) {
-                const data: ObjectMap<any> = {
+                const data = {
                     '#include': {},
                     '#exclude': {},
                     '0': [{
@@ -260,11 +260,11 @@ export default class FileRes<T extends View> extends File<T> {
             for (const [name, images] of this.stored.IMAGES.entries()) {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
-                        root.push({ name: `res/drawable-${dpi}/${name}.${lastIndexOf((<any> images)[dpi], '.')}`, value: `<!-- image: ${(<any> images)[dpi]} -->` });
+                        root.push({ name: `res/drawable-${dpi}/${name}.${lastIndexOf(images[dpi], '.')}`, value: `<!-- image: ${images[dpi]} -->` });
                     }
                 }
-                else if ((<any> images)['mdpi'] != null) {
-                    root.push({ name: `res/drawable/${name}.${lastIndexOf((<any> images)['mdpi'], '.')}`, value: `<!-- image: ${(<any> images)['mdpi']} -->` });
+                else if (images['mdpi'] != null) {
+                    root.push({ name: `res/drawable/${name}.${lastIndexOf(images['mdpi'], '.')}`, value: `<!-- image: ${images['mdpi']} -->` });
                 }
             }
             xml = insertTemplateData(template, data);

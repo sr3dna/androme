@@ -9,7 +9,7 @@ import { INLINE_CHROME, MAPPING_CHROME, VIEW_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
-    public static STORED: ObjectMap<any> = {
+    public static STORED = {
         STRINGS: new Map(),
         COLORS: new Map(),
         DIMENS: new Map(),
@@ -197,7 +197,7 @@ export default abstract class Resource<T extends Node> {
         this.cache.elements.forEach(node => {
             if ((node.ignoreResource & VIEW_RESOURCE.BOX_SPACING) !== VIEW_RESOURCE.BOX_SPACING) {
                 const element = node.element;
-                const object = (<any> element);
+                const object: any = element;
                 if (!hasValue(object.__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
                     const result: any = getBoxSpacing(element);
                     for (const i in result) {
@@ -213,9 +213,9 @@ export default abstract class Resource<T extends Node> {
         this.cache.elements.forEach(node => {
             if ((node.ignoreResource & VIEW_RESOURCE.BOX_STYLE) !== VIEW_RESOURCE.BOX_STYLE) {
                 const element = node.element;
-                const object = (<any> element);
+                const object: any = element;
                 if (!hasValue(object.__boxStyle) || SETTINGS.alwaysReevaluateResources) {
-                    const result: any = {
+                    const result: ObjectMap<any> = {
                         borderTop: this.parseBorderStyle,
                         borderRight: this.parseBorderStyle,
                         borderBottom: this.parseBorderStyle,
@@ -250,7 +250,7 @@ export default abstract class Resource<T extends Node> {
         this.cache.list.forEach(node => {
             if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.FONT_STYLE) !== VIEW_RESOURCE.FONT_STYLE) {
                 const element = node.element;
-                const object = (<any> element);
+                const object: any = element;
                 if (!hasValue(object.__fontStyle) || SETTINGS.alwaysReevaluateResources) {
                     if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
                         return;
@@ -292,7 +292,7 @@ export default abstract class Resource<T extends Node> {
     public setImageSource() {
         this.cache.list.filter(node => (node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image'))).forEach(node => {
             const element = (<HTMLImageElement> node.element);
-            const object = (<any> element);
+            const object: any = element;
             if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE) {
                 if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
                     const result = (node.tagName === 'IMG' ? Resource.addImageSrcSet(element) : Resource.addImage({ 'mdpi': element.src }));
@@ -306,7 +306,7 @@ export default abstract class Resource<T extends Node> {
         this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
             if ((node.ignoreResource & VIEW_RESOURCE.OPTION_ARRAY) !== VIEW_RESOURCE.OPTION_ARRAY) {
                 const element = (<HTMLSelectElement> node.element);
-                const object = (<any> element);
+                const object: any = element;
                 if (!hasValue(object.__optionArray) || SETTINGS.alwaysReevaluateResources) {
                     const stringArray: string[] = [];
                     let numberArray: Null<string[]> = [];
@@ -340,7 +340,7 @@ export default abstract class Resource<T extends Node> {
         this.cache.list.forEach(node => {
             if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.VALUE_STRING) !== VIEW_RESOURCE.VALUE_STRING) {
                 const element = (<HTMLInputElement> node.element);
-                const object = (<any> element);
+                const object: any = element;
                 if ((!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources)) {
                     let name = '';
                     let value = '';

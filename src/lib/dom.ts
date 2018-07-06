@@ -28,7 +28,7 @@ export function assignBounds(bounds: ClientRect): ClientRect {
 }
 
 export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaration {
-    const object = (<any> element);
+    const object: any = element;
     if (cache) {
         if (object.__style != null) {
             return object.__style;
@@ -47,15 +47,15 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
 
 export function sameAsParent(element: HTMLElement, attr: string) {
     if (element && element.parentElement != null) {
-        const style: any = getStyle(element);
-        return (style && style[attr] === (<any> getStyle(element.parentElement))[attr]);
+        const style = getStyle(element);
+        return (style && style[attr] === getStyle(element.parentElement)[attr]);
     }
     return false;
 }
 
 export function getBoxSpacing(element: HTMLElement, complete = false) {
     const result: BoxModel = {};
-    const style: any = getStyle(element);
+    const style = getStyle(element);
     const node = (<any> element).__node;
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
@@ -98,8 +98,9 @@ export function isVisible(element: HTMLElement) {
             }
             if (valid && element.children.length > 0) {
                 return Array.from(element.children).some((item: HTMLElement) => {
-                    const style: any = getComputedStyle(item);
-                    return (style.position !== 'static' || style.float === 'left' || style.float === 'right');
+                    const style = getComputedStyle(item);
+                    const float = (<any> style).float;
+                    return (style.position !== 'static' || float === 'left' || float === 'right');
                 });
             }
         }

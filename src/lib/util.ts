@@ -161,11 +161,11 @@ export function convertRoman(value: number) {
     return 'M'.repeat(parseInt(digits.join(''))) + result;
 }
 
-export function convertEnum(base: {}, derived: {}, value: number) {
+export function convertEnum(base: {}, derived: {}, value: number): string {
     for (const key of Object.keys(base)) {
-        const index: number = (<any> base)[key];
+        const index: number = base[key];
         if (value === index) {
-            return (<string> (<any> derived)[key]);
+            return derived[key];
         }
     }
     return '';

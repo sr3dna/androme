@@ -8,7 +8,7 @@
     "lib": ["es2015", "es2016", "dom"],
     "noUnusedLocals": true,
     "strictNullChecks": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "suppressImplicitAnyIndexErrors": false,
     "downlevelIteration": true
   },

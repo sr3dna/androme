@@ -60,7 +60,7 @@ export default class View extends Node {
         }
     }
 
-    public apply(options: ObjectMap<any>) {
+    public apply(options: ObjectMap<any> = {}) {
         const excluded = (<ObjectMap<any>> super.apply(options));
         for (const obj in excluded) {
             this.attr(`${obj}="${excluded[obj]}"`);
@@ -120,7 +120,7 @@ export default class View extends Node {
     public supported(ns: string, attr: string) {
         if (this.api > 0) {
             for (let i = this.api + 1; i <= BUILD_ANDROID.LATEST; i++) {
-                const version: ObjectMap<any> = API_ANDROID[i];
+                const version = API_ANDROID[i];
                 if (version && version[ns] && version[ns].includes(attr)) {
                     return false;
                 }
@@ -132,7 +132,7 @@ export default class View extends Node {
     public combine() {
         const result: string[] = [];
         this.namespaces.forEach(value => {
-            const ns: StringMap = (<any> this)[`_${value}`];
+            const ns: StringMap = this[`_${value}`];
             for (const attr in ns) {
                 if (value !== '_') {
                     result.push(`${value}:${attr}="${ns[attr]}"`);
@@ -185,7 +185,7 @@ export default class View extends Node {
         this.android('id', this.stringId);
     }
 
-    public setViewLayout(options?: any) {
+    public setViewLayout(options?: ObjectMap<any>) {
         const styleMap = this.styleMap;
         let parent: T;
         let width: number;

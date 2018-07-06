@@ -1,4 +1,4 @@
-import { ArrayMap, BorderAttribute, Null, ObjectIndex, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
+import { ArrayMap, BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -110,17 +110,17 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setBoxStyle();
         this.cache.elements.forEach(node => {
             const element = node.element;
-            const object = (<any> element);
+            const object: any = element;
             const stored = object.__boxStyle;
             if (stored != null) {
                 const method = METHOD_ANDROID['boxStyle'];
-                const label = (<any> node.label);
+                const label = node.label;
                 if (label && !sameAsParent(label.element, 'backgroundColor')) {
-                    stored.backgroundColor = label.element.__boxStyle.backgroundColor;
+                    stored.backgroundColor = (<any> label.element).__boxStyle.backgroundColor;
                 }
                 if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
                     let template: ObjectMap<string>;
-                    let data: ObjectMap<any>;
+                    let data;
                     let resourceName = '';
                     if (stored.border != null && stored.backgroundImage === '') {
                         template = parseTemplate(SHAPERECTANGLE_TMPL);
@@ -315,7 +315,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setImageSource() {
         super.setImageSource();
         this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
-            const object = (<any> node.element);
+            const object: any = node.element;
             const stored = object.__imageSource;
             if (stored != null) {
                 const method = METHOD_ANDROID['imageSource'];
@@ -385,7 +385,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
-            let sorted = (<any[]> this.tagStyle[tag]).filter((item: {}) => Object.keys(item).length > 0).sort((a, b) => {
+            let sorted = this.tagStyle[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
                 let maxA = 0;
                 let maxB = 0;
                 let countA = 0;
@@ -540,7 +540,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             resource[tagName] = tagData;
         }
         const inherit = new Set();
-        const map: ObjectIndex<any> = {};
+        const map = {};
         for (const tagName in resource) {
             for (const item of (<TagStyle[]> resource[tagName])) {
                 for (const id of item.ids) {
@@ -614,7 +614,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         }
         for (const styles of inherit) {
             let parent = '';
-            styles.split('.').forEach((value: string) => {
+            (<string> styles).split('.').forEach(value => {
                 const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                 if (match != null) {
                     const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];
@@ -626,7 +626,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     private deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {
-        attributes.split(';').forEach((value: string) => {
+        attributes.split(';').forEach(value => {
             for (let i = 0; i < sorted.length; i++) {
                 if (sorted[i] != null) {
                     let index = -1;

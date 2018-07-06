@@ -1,6 +1,7 @@
-import { Color, ObjectMap } from './types';
 
-const X11_CSS3: ObjectMap<any> = {
+import { Color } from './types';
+
+const X11_CSS3 = {
     'Pink':                 { 'hex': '#FFC0CB' },
     'LightPink':            { 'hex': '#FFB6C1' },
     'HotPink':              { 'hex': '#FF69B4' },

@@ -34,8 +34,8 @@ export function formatDimen(tagName: string, attr: string, size: string) {
     return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()}-${attr}-${size}}` : size);
 }
 
-export function getTemplateLevel(data: {}, ...levels: string[]): ObjectMap<any> {
-    let current: any = data;
+export function getTemplateLevel(data: {}, ...levels: string[]) {
+    let current = data;
     for (const level of levels) {
         const [index, array = '0'] = level.split('-');
         current = current[index][array];

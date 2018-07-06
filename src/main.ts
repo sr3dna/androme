@@ -27,7 +27,7 @@ type U = ViewList<T>;
 
 let LOADING = false;
 const ROOT_CACHE: Set<HTMLElement> = new Set();
-const EXTENSIONS: any = {
+const EXTENSIONS = {
     [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
     [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL']),
     [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
@@ -55,7 +55,7 @@ main.registerResource(Resource);
         name = name.toLowerCase().trim();
         for (const ext in EXTENSIONS) {
             if (name === ext || ext.startsWith(`${name}.`)) {
-                load.add(EXTENSIONS[ext]);
+                load.add(<Extension<T, U>> EXTENSIONS[ext]);
             }
         }
     }

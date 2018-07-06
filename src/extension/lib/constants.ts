@@ -1,6 +1,4 @@
-import { StringMap } from '../../lib/types';
-
-export const EXT_NAME: StringMap = {
+export const EXT_NAME = {
     EXTERNAL: 'androme.external',
     GRID: 'androme.grid',
     LIST: 'androme.list',

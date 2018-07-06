@@ -198,7 +198,7 @@ export default class Toolbar extends Extension<T, U> {
         setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
         setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const template: ObjectMap<string> = parseTemplate(EXTENSION_COLLAPSINGTOOLBAR_TMPL);
-        const data: ObjectMap<any> = {
+        const data = {
             '0': [{
                 'appTheme': options.resource.appTheme,
                 'parentTheme': options.resource.parentTheme,

@@ -1,4 +1,4 @@
-import { ArrayIndex, Null, ObjectIndex, PlainFile, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import Controller from './controller';
 import Extension from './extension';
 import Resource from './resource';
@@ -26,7 +26,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     private _closed = false;
 
     constructor(
-        private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: any): T },
+        private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: ObjectMap<any>): T },
         private TypeU: { new (nodes?: T[], parent?: T): U })
     {
         this.cache = new this.TypeU();
@@ -138,7 +138,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     const elements = document.querySelectorAll(cssRule.selectorText);
                     if (this.appName !== '') {
                         Array.from(elements).forEach((element: HTMLElement) => {
-                            const object = (<any> element);
+                            const object: any = element;
                             delete object.__style;
                             delete object.__styleMap;
                         });
@@ -147,23 +147,23 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         for (const attr of Array.from(element.style)) {
                             attributes.add(hyphenToCamelCase(attr));
                         }
-                        const style: any = getComputedStyle(element);
+                        const style = getComputedStyle(element);
                         const styleMap: StringMap = {};
                         for (const name of attributes) {
                             if (name.toLowerCase().indexOf('color') !== -1) {
-                                const color = getByColorName((<any> cssRule.style)[name]);
+                                const color = getByColorName(cssRule.style[name]);
                                 if (color !== '') {
-                                    (<any> cssRule.style)[name] = convertRGB(color);
+                                    cssRule.style[name] = convertRGB(color);
                                 }
                             }
-                            if (hasValue((<any> element.style)[name])) {
-                                styleMap[name] = (<any> element.style)[name];
+                            if (hasValue(element.style[name])) {
+                                styleMap[name] = element.style[name];
                             }
-                            else if (style[name] === (<any> cssRule.style)[name]) {
+                            else if (style[name] === cssRule.style[name]) {
                                 styleMap[name] = style[name];
                             }
                         }
-                        const object = (<any> element);
+                        const object: any = element;
                         if (object.__styleMap != null) {
                             Object.assign(object.__styleMap, styleMap);
                         }
@@ -252,7 +252,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         if (this.cache.list.length > 0) {
-            const preAlignment: ObjectIndex<any> = {};
+            const preAlignment = {};
             this.cache.list.forEach(node => {
                 const element = node.element;
                 preAlignment[node.id] = {};
@@ -333,7 +333,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     const style = preAlignment[node.id];
                     if (style != null) {
                         for (const attr in style) {
-                            (<any> node.element).style[attr] = style[attr];
+                            node.element.style[attr] = style[attr];
                         }
                     }
                 }

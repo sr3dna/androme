@@ -14,7 +14,7 @@ export default class External extends Extension<T, U> {
     public beforeInit(init = false) {
         if (init || this.included()) {
             if (this.element != null) {
-                const object = (<any> this.element);
+                const object: any = this.element;
                 if (object.__andromeExternalDisplay == null) {
                     const display: string[] = [];
                     let current = this.element;
@@ -40,7 +40,7 @@ export default class External extends Extension<T, U> {
     public afterInit(init = false) {
         if (init || this.included()) {
             if (this.element != null) {
-                const object = (<any> this.element);
+                const object: any = this.element;
                 if (object.__andromeExternalDisplay != null) {
                     const display: string[] = object.__andromeExternalDisplay;
                     let current = this.element;

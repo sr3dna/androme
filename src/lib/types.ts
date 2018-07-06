@@ -54,7 +54,6 @@ export interface BoxModel {
     borderRightWidth?: number;
     borderBottomWidth?: number;
     borderLeftWidth?: number;
-    [attr: string]: number | undefined;
 }
 
 export interface BoxRect {

@@ -6,7 +6,6 @@ import { OVERFLOW_CHROME } from '../lib/constants';
 type T = Node;
 
 export default abstract class Node implements BoxModel {
-    [key: string]: any;
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
     public viewId: string;
@@ -72,7 +71,7 @@ export default abstract class Node implements BoxModel {
 
     public abstract is(...views: number[]): boolean;
     public abstract setViewId(viewName: string): void;
-    public abstract setViewLayout(options?: any): void;
+    public abstract setViewLayout(options?: ObjectMap<any>): void;
     public abstract applyCustomizations(): void;
     public abstract modifyBox(area: number, offset: number): void;
     public abstract boxValue(area: number): string[];
@@ -191,7 +190,7 @@ export default abstract class Node implements BoxModel {
         for (const attr in node.style) {
             if (attr.startsWith('font') || attr.startsWith('color')) {
                 const key = hyphenToCamelCase(attr);
-                style[key] = (<any> node.style)[key];
+                style[key] = node.style[key];
             }
         }
         Object.assign(this.styleMap, style);

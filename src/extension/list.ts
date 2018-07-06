@@ -3,6 +3,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { convertAlpha, convertRoman } from '../lib/util';
+import { EXT_NAME } from '../extension/lib/constants';
 
 type T = Node;
 type U = NodeList<T>;
@@ -23,7 +24,6 @@ export default abstract class List extends Extension<T, U> {
         let xml = '';
         if (NodeList.linearY(this.node.children)) {
             xml = this.application.writeGridLayout(this.node, (<T> this.parent), 2);
-            this.node.android('layout_width', 'match_parent');
         }
         else {
             xml = this.application.writeLinearLayout(this.node, (<T> this.parent), NodeList.linearY(this.node.children));
@@ -64,8 +64,8 @@ export default abstract class List extends Extension<T, U> {
                 }
                 j++;
             }
-            node.data(`${this.name}:listStyle`, ordinal);
+            node.data(`${EXT_NAME.LIST}:listStyle`, ordinal);
         }
-        return  { xml };
+        return { xml };
     }
 }

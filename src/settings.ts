@@ -1,7 +1,6 @@
-import { ObjectMap } from './lib/types';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 
-const SETTINGS: ObjectMap<any> = {
+const SETTINGS = {
     builtInExtensions: [
         'androme.external',
         'androme.list',

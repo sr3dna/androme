@@ -1,5 +1,3 @@
-import { ObjectMap, StringMap } from '../lib/types';
-
 export enum BUILD_ANDROID {
     P = 28,
     OREO_1 = 27,
@@ -29,7 +27,7 @@ export enum DENSITY_ANDROID {
     XXXHDPI = 640
 }
 
-export const VIEW_ANDROID: StringMap = {
+export const VIEW_ANDROID = {
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
@@ -52,7 +50,7 @@ export const VIEW_ANDROID: StringMap = {
     SPACE: 'Space'
 };
 
-export const BOX_ANDROID: StringMap = {
+export const BOX_ANDROID = {
     MARGIN: 'layout_margin',
     MARGIN_VERTICAL: 'layout_marginVertical',
     MARGIN_HORIZONTAL: 'layout_marginHorizontal',
@@ -78,12 +76,12 @@ export const FIXED_ANDROID = [
     VIEW_ANDROID.IMAGE
 ];
 
-export const XMLNS_ANDROID: StringMap = {
+export const XMLNS_ANDROID = {
     'android': 'xmlns:android="http://schemas.android.com/apk/res/android"',
     'app': 'xmlns:app="http://schemas.android.com/apk/res-auto"'
 };
 
-export const FONT_ANDROID: ObjectMap<number> = {
+export const FONT_ANDROID = {
     'sans-serif': BUILD_ANDROID.ICE_CREAM_SANDWICH,
     'sans-serif-thin': BUILD_ANDROID.JELLYBEAN,
     'sans-serif-light': BUILD_ANDROID.JELLYBEAN,
@@ -100,7 +98,7 @@ export const FONT_ANDROID: ObjectMap<number> = {
     'sans-serif-condensed-medium': BUILD_ANDROID.OREO
 };
 
-export const FONTALIAS_ANDROID: StringMap = {
+export const FONTALIAS_ANDROID = {
     'arial': 'sans-serif',
     'helvetica': 'sans-serif',
     'tahoma': 'sans-serif',
@@ -119,7 +117,7 @@ export const FONTALIAS_ANDROID: StringMap = {
     'courier new': 'serif-monospace'
 };
 
-export const FONTWEIGHT_ANDROID: StringMap = {
+export const FONTWEIGHT_ANDROID = {
     '100': 'thin',
     '200': 'extra_light',
     '300': 'light',

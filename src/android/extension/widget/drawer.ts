@@ -136,7 +136,7 @@ export default class Drawer extends Extension<T, U> {
         setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
         setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const template: ObjectMap<string> = parseTemplate(EXTENSION_DRAWER_TMPL);
-        const data: ObjectMap<any> = {
+        const data = {
             '0': [{
                 'appTheme': options.resource.appTheme,
                 'parentTheme': options.resource.parentTheme,
