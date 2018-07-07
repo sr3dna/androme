@@ -3,7 +3,6 @@ import View from '../../view';
 import ViewList from '../../viewlist';
 import Extension from '../../../base/extension';
 import Resource from '../../../base/resource';
-import { setDefaultOption } from '../../../lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../../../lib/xml';
 import { parseHex } from '../../../lib/color';
 import { VIEW_RESOURCE } from '../../../lib/constants';
@@ -11,7 +10,7 @@ import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import parseRTL from '../../localization';
 import SETTINGS from '../../../settings';
-
+import { getMenu, setDefaultOption } from '../lib/util';
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
 type T = View;
@@ -50,7 +49,7 @@ export default class Drawer extends Extension<T, U> {
         node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
         let depth = node.depth + node.renderDepth;
         let options = Object.assign({}, this.options.drawerLayout);
-        let menu = this.getMenu(node);
+        let menu = getMenu(node);
         if (menu != null) {
             setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
         }
@@ -84,7 +83,7 @@ export default class Drawer extends Extension<T, U> {
             const navView = node.children[node.children.length - 1];
             navView.android('layout_gravity', options.android.layout_gravity);
             navView.isolated = true;
-            application.controllerHandler.prependBefore(navView.id, (include !== '' ? include : content));
+            controller.prependBefore(navView.id, (include !== '' ? include : content));
             menu = navView.element;
         }
         node.children.forEach(item => {
@@ -102,12 +101,11 @@ export default class Drawer extends Extension<T, U> {
     }
 
     public finalize() {
-        const application = this.application;
         const node = (<T> this.node);
-        if (this.getMenu(node) != null) {
+        if (getMenu(node) != null) {
             let menu = '';
             let headerLayout = '';
-            application.elements.forEach(item => {
+            this.application.elements.forEach(item => {
                 if (item.parentElement === node.element) {
                     switch (item.dataset.ext) {
                         case EXT_NAME.EXTERNAL:
@@ -119,16 +117,11 @@ export default class Drawer extends Extension<T, U> {
                     }
                 }
             });
-            const views = application.viewData.views;
-            for (let i = 0; i < views.length; i++) {
-                views[i].content = views[i].content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu);
-                views[i].content = views[i].content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`, headerLayout);
-            }
+            this.application.layouts.forEach(view => {
+                view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu);
+                view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`, headerLayout);
+            });
         }
-    }
-
-    private getMenu(node: T) {
-        return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1));
     }
 
     private createResources() {

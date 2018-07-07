@@ -3,8 +3,8 @@ import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
 import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber, resolvePath, lastIndexOf } from '../lib/util';
-import { findNearestColor, parseRGBA } from '../lib/color';
 import { getBoxSpacing, sameAsParent } from '../lib/dom';
+import { findNearestColor, parseRGBA } from '../lib/color';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
 

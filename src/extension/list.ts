@@ -3,7 +3,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { convertAlpha, convertRoman } from '../lib/util';
-import { EXT_NAME } from '../extension/lib/constants';
+import { EXT_NAME } from './lib/constants';
 
 type T = Node;
 type U = NodeList<T>;

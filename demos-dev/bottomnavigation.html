@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <link rel="stylesheet" type="text/css" href="common/dev.css">
+    <style>
+        #androme_ui {
+            position: relative;
+            background-color: #fff;
+        }
+        #bottomnavigation_demo {
+            position: absolute;
+            width: 100%;
+            left: 0px;
+            bottom: 0px;
+            margin: 0px;
+            background-color: #fff;
+            border-top: solid 1px #aaa;
+        }
+        #bottomnavigation_demo nav {
+            display: flex;
+        }
+        #bottomnavigation_demo div {
+            font-size: 10px;
+            text-align: center;
+            padding: 8px;
+            flex: 1;
+        }
+        #bottomnavigation_demo div:hover {
+            background-color: azure;
+            cursor: pointer;
+        }
+        #bottomnavigation_demo div img {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+    <script src="/node_modules/systemjs/dist/system.js"></script>
+    <script src="common/dev.js"></script>
+    <script>
+        System.import('/build/main.js').then(function(result) {
+            androme = result;
+            androme.configureExtension('androme.widget.bottomnavigation', { // optional: default configuration is provided
+                bottomnavigation_demo: {
+                    android: {
+                        background: '?android:attr/windowBackground'
+                    }
+                }
+            });
+            androme.parseDocument('androme_ui').then(function() {
+                androme.close();
+
+                var views = androme.writeLayoutAllXml();
+                var output = '';
+                for (var i in views) {
+                    output += views[i] + '\n\n';
+                }
+                document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
+                var resource = androme.writeResourceStringXml() + '\n\n' +
+                               androme.writeResourceDimenXml() + '\n\n' +
+                               androme.writeResourceStyleXml() + '\n\n' +
+                               androme.writeResourceColorXml() + '\n\n' +
+                               androme.writeResourceDrawableXml();
+                document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- START: DEMO -->
+    <div id="androme_ui">
+        <div style="width: 300px; font-size: 12px; padding: 20px;">
+            <h3>title</h2>
+            <div style="color: #fff; background-color: #aaa; padding: 8px;">
+                content content content content content content content content content content
+                content content content content content content content content content content
+                content content content content content content content content content content
+            </div>
+        </div>
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <div id="bottomnavigation_demo" data-ext="androme.widget.bottomnavigation">
+            <nav data-ext="androme.widget.menu">
+                <div>
+                    <img src="../demos/images/icons8-chrome.png" /><br />
+                    <label>Chrome</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-docs.png" /><br />
+                    <label>Docs</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-news.png" /><br />
+                    <label>News</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-play.png" /><br />
+                    <label>Play</label>
+                </div>
+                <div>
+                    <img src="../demos/images/icons8-google-plus.png" /><br />
+                    <label>Plus</label>
+                </div>
+            </nav>
+        </div>
+    </div>
+    <!-- END: DEMO -->
+    
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
+                <button onclick="androme.saveAllToDisk();">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

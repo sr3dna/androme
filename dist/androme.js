@@ -1,4 +1,4 @@
-/* androme 1.7.23
+/* androme 1.7.24
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -293,14 +293,6 @@
     }
     function hasValue(value) {
         return (typeof value !== 'undefined' && value !== null && value.toString() !== '');
-    }
-    function setDefaultOption(options, namespace, attr, value) {
-        if (options[namespace] == null) {
-            options[namespace] = {};
-        }
-        if (options[namespace][attr] == null) {
-            options[namespace][attr] = value;
-        }
     }
     function withinRange(a, b, n = 1) {
         return (b >= (a - n) && b <= (a + n));
@@ -685,6 +677,106 @@
         return output.replace(/\s+[\w:]+="{@\w+}"/g, '');
     }
 
+    function getRangeBounds(element) {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const domRect = range.getClientRects();
+        const bounds = assignBounds(domRect[domRect.length - 1]);
+        if (domRect.length > 1) {
+            bounds.x = Math.min.apply(null, Array.from(domRect).map((item) => item.x));
+            bounds.left = bounds.x;
+            bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
+        }
+        return bounds;
+    }
+    function assignBounds(bounds) {
+        return {
+            x: bounds.x,
+            y: bounds.y,
+            top: bounds.top,
+            right: bounds.right,
+            bottom: bounds.bottom,
+            left: bounds.left,
+            width: bounds.width,
+            height: bounds.height
+        };
+    }
+    function getStyle(element, cache = true) {
+        const object = element;
+        if (cache) {
+            if (object.__style != null) {
+                return object.__style;
+            }
+            else if (object.__node != null && object.__node.style != null) {
+                return object.__node.style;
+            }
+        }
+        else if (element.nodeName !== '#text') {
+            const style = getComputedStyle(element);
+            object.__style = style;
+            return style;
+        }
+        return {};
+    }
+    function sameAsParent(element, attr) {
+        if (element && element.parentElement != null) {
+            const style = getStyle(element);
+            return (style && style[attr] === getStyle(element.parentElement)[attr]);
+        }
+        return false;
+    }
+    function getBoxSpacing(element, complete = false) {
+        const result = {};
+        const style = getStyle(element);
+        const node = element.__node;
+        ['padding', 'margin'].forEach(border => {
+            ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
+                const attr = border + side;
+                const value = convertInt((node != null ? node[attr] : style[attr]));
+                if (complete || value !== 0) {
+                    result[attr] = value;
+                }
+            });
+        });
+        return result;
+    }
+    function hasFreeFormText(element) {
+        return Array.from(element.childNodes).some((item) => item.nodeName === '#text' && item.textContent != null && item.textContent.trim() !== '');
+    }
+    function isVisible(element) {
+        switch (element.tagName) {
+            case 'BR':
+            case 'OPTION':
+            case 'AREA':
+                return false;
+        }
+        if (typeof element.getBoundingClientRect === 'function') {
+            const bounds = element.getBoundingClientRect();
+            if (bounds.width !== 0 && bounds.height !== 0) {
+                return true;
+            }
+            else {
+                let current = element.parentElement;
+                let valid = true;
+                while (current != null) {
+                    if (getStyle(current).display === 'none') {
+                        valid = false;
+                        break;
+                    }
+                    current = current.parentElement;
+                }
+                if (valid && element.children.length > 0) {
+                    return Array.from(element.children).some((item) => {
+                        const style = getStyle(item);
+                        const float = style.float;
+                        return (style.position !== 'static' || float === 'left' || float === 'right');
+                    });
+                }
+            }
+        }
+        return false;
+    }
+
     const X11_CSS3 = {
         'Pink': { 'hex': '#FFC0CB' },
         'LightPink': { 'hex': '#FFB6C1' },
@@ -960,106 +1052,6 @@
         return '';
     }
 
-    function getRangeBounds(element) {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        const domRect = range.getClientRects();
-        const bounds = assignBounds(domRect[domRect.length - 1]);
-        if (domRect.length > 1) {
-            bounds.x = Math.min.apply(null, Array.from(domRect).map((item) => item.x));
-            bounds.left = bounds.x;
-            bounds.width = Array.from(domRect).reduce((a, b) => a + b.width, 0);
-        }
-        return bounds;
-    }
-    function assignBounds(bounds) {
-        return {
-            x: bounds.x,
-            y: bounds.y,
-            top: bounds.top,
-            right: bounds.right,
-            bottom: bounds.bottom,
-            left: bounds.left,
-            width: bounds.width,
-            height: bounds.height
-        };
-    }
-    function getStyle(element, cache = true) {
-        const object = element;
-        if (cache) {
-            if (object.__style != null) {
-                return object.__style;
-            }
-            else if (object.__node != null && object.__node.style != null) {
-                return object.__node.style;
-            }
-        }
-        else if (element.nodeName !== '#text') {
-            const style = getComputedStyle(element);
-            object.__style = style;
-            return style;
-        }
-        return {};
-    }
-    function sameAsParent(element, attr) {
-        if (element && element.parentElement != null) {
-            const style = getStyle(element);
-            return (style && style[attr] === getStyle(element.parentElement)[attr]);
-        }
-        return false;
-    }
-    function getBoxSpacing(element, complete = false) {
-        const result = {};
-        const style = getStyle(element);
-        const node = element.__node;
-        ['padding', 'margin'].forEach(border => {
-            ['Top', 'Left', 'Right', 'Bottom'].forEach(side => {
-                const attr = border + side;
-                const value = convertInt((node != null ? node[attr] : style[attr]));
-                if (complete || value !== 0) {
-                    result[attr] = value;
-                }
-            });
-        });
-        return result;
-    }
-    function hasFreeFormText(element) {
-        return Array.from(element.childNodes).some((item) => item.nodeName === '#text' && item.textContent != null && item.textContent.trim() !== '');
-    }
-    function isVisible(element) {
-        switch (element.tagName) {
-            case 'BR':
-            case 'OPTION':
-            case 'AREA':
-                return false;
-        }
-        if (typeof element.getBoundingClientRect === 'function') {
-            const bounds = element.getBoundingClientRect();
-            if (bounds.width !== 0 && bounds.height !== 0) {
-                return true;
-            }
-            else {
-                let current = element.parentElement;
-                let valid = true;
-                while (current != null) {
-                    const style = getStyle(current);
-                    if (style.display === 'none') {
-                        valid = false;
-                        break;
-                    }
-                    current = current.parentElement;
-                }
-                if (valid && element.children.length > 0) {
-                    return Array.from(element.children).some((item) => {
-                        const style = getComputedStyle(item);
-                        return (style.position !== 'static' || style.float === 'left' || style.float === 'right');
-                    });
-                }
-            }
-        }
-        return false;
-    }
-
     var VIEW_STANDARD;
     (function (VIEW_STANDARD) {
         VIEW_STANDARD[VIEW_STANDARD["FRAME"] = 1] = "FRAME";
@@ -1091,6 +1083,7 @@
         VIEW_RESOURCE[VIEW_RESOURCE["VALUE_STRING"] = 16] = "VALUE_STRING";
         VIEW_RESOURCE[VIEW_RESOURCE["OPTION_ARRAY"] = 32] = "OPTION_ARRAY";
         VIEW_RESOURCE[VIEW_RESOURCE["IMAGE_SOURCE"] = 64] = "IMAGE_SOURCE";
+        VIEW_RESOURCE[VIEW_RESOURCE["ASSET"] = 120] = "ASSET";
         VIEW_RESOURCE[VIEW_RESOURCE["ALL"] = 126] = "ALL";
     })(VIEW_RESOURCE || (VIEW_RESOURCE = {}));
     var BOX_STANDARD;
@@ -1197,7 +1190,7 @@
             this.TypeT = TypeT;
             this.TypeU = TypeU;
             this.elements = new Set();
-            this.insert = [];
+            this.insert = {};
             this.views = [];
             this.includes = [];
             this.currentIndex = -1;
@@ -1642,7 +1635,7 @@
                                             }
                                             else {
                                                 const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
-                                                if (this.isLinearLayout(linearX, linearY, nodeY, nodeY.children)) {
+                                                if (this.isLinearXY(linearX, linearY, nodeY, nodeY.children)) {
                                                     xml += this.writeLinearLayout(nodeY, parent, linearY);
                                                 }
                                                 else {
@@ -1760,14 +1753,22 @@
                     }
                 }
             });
-            const viewIds = Object.keys(this.insert);
-            viewIds.push(...viewIds.slice().reverse());
-            [...this.views, ...this.includes].forEach(view => {
-                viewIds.forEach(id => {
-                    if (this.insert[parseInt(id)] != null) {
-                        view.content = view.content.replace(`{:${id}}`, this.insert[parseInt(id)].join('\n'));
+            const template = {};
+            for (const id in this.insert) {
+                template[id] = this.insert[id].join('\n');
+            }
+            for (const inner in template) {
+                for (const outer in template) {
+                    if (inner !== outer) {
+                        template[inner] = template[inner].replace(`{:${outer}}`, template[inner]);
+                        template[outer] = template[outer].replace(`{:${inner}}`, template[inner]);
                     }
-                });
+                }
+            }
+            this.layouts.forEach(view => {
+                for (const id in template) {
+                    view.content = view.content.replace(`{:${id}}`, template[id]);
+                }
                 view.content = this.controllerHandler.insertAuxillaryViews(view.content);
             });
             this.cacheInternal.list.forEach(node => {
@@ -1817,8 +1818,12 @@
                 view.content = content;
             }
         }
-        isLinearLayout(linearX, linearY, parent, children) {
-            return (linearX || linearY) && (!parent.flex.enabled || (linearX && children.every(node => node.flex.enabled))) && (!children.some(node => node.floating && node.css('clear') !== 'none') && (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')));
+        isLinearXY(linearX, linearY, parent, children) {
+            return (linearX || linearY) &&
+                (!parent.flex.enabled || (linearX && children.every(node => node.flex.enabled))) &&
+                (!children.some(node => node.floating && node.css('clear') !== 'none') &&
+                    (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')) &&
+                    children.every(node => node.css('position') === 'static' || node.tagName === 'PLAINTEXT' || (node.css('position') === 'relative') && node.styleMap.top == null && node.styleMap.right == null && node.styleMap.bottom == null && node.styleMap.left == null));
         }
         addInclude(filename, content) {
             this.includes.push({
@@ -2895,7 +2900,7 @@
                     this.add('app', attr, value, overwrite);
             }
         }
-        apply(options) {
+        apply(options = {}) {
             const excluded = super.apply(options);
             for (const obj in excluded) {
                 this.attr(`${obj}="${excluded[obj]}"`);
@@ -3034,7 +3039,11 @@
             }
             const parentWidth = (parent.hasElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
             const parentHeight = (parent.hasElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
-            if (this.overflow !== 0 /* NONE */ && !this.is(VIEW_STANDARD.TEXT)) {
+            if (this.depth === 0 && this.viewWidth === 0 && this.viewHeight === 0 && this.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE, VIEW_STANDARD.FRAME)) {
+                this.android('layout_width', 'match_parent');
+                this.android('layout_height', 'match_parent');
+            }
+            else if (this.overflow !== 0 /* NONE */ && !this.is(VIEW_STANDARD.TEXT)) {
                 this.android('layout_width', (this.horizontal ? 'wrap_content' : 'match_parent'));
                 this.android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
             }
@@ -3897,7 +3906,7 @@
                                                     this.setAlignParent(chain, orientationInverse);
                                                 }
                                                 const nextLevel = chainNodes[level + 1];
-                                                if (nextLevel != null && nextLevel.constraint[value] != null && nextLevel.constraint[value].list[i] != null) {
+                                                if (nextLevel && nextLevel.constraint[value] && nextLevel.constraint[value].list[i] != null) {
                                                     const nextChain = nextLevel.constraint[value].list[i];
                                                     if (chain.withinY(nextChain.linear) && !mapParent(chain, 'top')) {
                                                         chain.app(LAYOUT['bottomTop'], nextChain.stringId);
@@ -4038,8 +4047,14 @@
                                             }
                                         }
                                         else {
-                                            if (flex.enabled && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
-                                                firstNode.app(chainStyle, 'spread_inside');
+                                            if ((orientation === 'horizontal' && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) || (orientation === 'vertical' && withinFraction(node.box.top, firstNode.linear.top) && withinFraction(lastNode.linear.bottom, node.box.bottom))) {
+                                                if (chainDirection.length > 2 || flex.enabled) {
+                                                    firstNode.app(chainStyle, 'spread_inside');
+                                                }
+                                                else {
+                                                    mapDelete(firstNode, CHAIN_MAP['rightLeftBottomTop'][index]);
+                                                    mapDelete(lastNode, CHAIN_MAP['leftRightTopBottom'][index]);
+                                                }
                                             }
                                             else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === 'horizontal' && (firstNode.linear.left === node.box.left || lastNode.linear.right === node.box.right))) {
                                                 firstNode.app(chainStyle, 'packed');
@@ -4256,7 +4271,7 @@
                 }
             });
         }
-        renderGroup(node, parent, viewName, options = {}) {
+        renderGroup(node, parent, viewName, options) {
             let preXml = '';
             let postXml = '';
             let renderParent = parent;
@@ -4822,7 +4837,7 @@
                 if (stored != null) {
                     const method = METHOD_ANDROID['boxSpacing'];
                     for (const i in stored) {
-                        node.attr(formatString(parseRTL(method[i]), stored[i]));
+                        node.attr(formatString(parseRTL(method[i]), stored[i]), (node.renderExtension == null));
                     }
                 }
             });
@@ -4933,10 +4948,10 @@
                             resourceName = `${node.tagName.toLowerCase()}_${node.viewId}`;
                             STORED.DRAWABLES.set(resourceName, xml);
                         }
-                        node.attr(formatString(method['background'], resourceName));
+                        node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
                     }
                     else if (object.__fontStyle == null && stored.backgroundColor.length > 0) {
-                        node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
+                        node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]), (node.renderExtension == null));
                     }
                 }
             });
@@ -5038,7 +5053,7 @@
                 const stored = object.__imageSource;
                 if (stored != null) {
                     const method = METHOD_ANDROID['imageSource'];
-                    node.attr(formatString(method['src'], stored));
+                    node.attr(formatString(method['src'], stored), (node.renderExtension == null));
                 }
             });
         }
@@ -5066,7 +5081,7 @@
                     arrayName = `${node.viewId}_array`;
                     STORED.ARRAYS.set(arrayName, result);
                 }
-                node.attr(formatString(method['entries'], arrayName));
+                node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
             });
         }
         setValueString() {
@@ -5091,7 +5106,7 @@
                             STORED.STRINGS.set(stored, value);
                         }
                     }
-                    node.attr(formatString(method['text'], ((parseInt(stored) || '').toString() !== stored ? `@string/${stored}` : stored)));
+                    node.attr(formatString(method['text'], ((parseInt(stored) || '').toString() !== stored ? `@string/${stored}` : stored)), (node.renderExtension == null));
                 }
             });
         }
@@ -5101,7 +5116,7 @@
             for (const tag in this.tagStyle) {
                 style[tag] = {};
                 layout[tag] = {};
-                let sorted = this.tagStyle[tag].filter((item) => Object.keys(item).length > 0).sort((a, b) => {
+                let sorted = this.tagStyle[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
                     let maxA = 0;
                     let maxB = 0;
                     let countA = 0;
@@ -5329,7 +5344,7 @@
             }
             for (const styles of inherit) {
                 let parent = '';
-                styles.split('.').forEach((value) => {
+                styles.split('.').forEach(value => {
                     const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                     if (match != null) {
                         const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];
@@ -5340,7 +5355,7 @@
             }
         }
         deleteStyleAttribute(sorted, attributes, ids) {
-            attributes.split(';').forEach((value) => {
+            attributes.split(';').forEach(value => {
                 for (let i = 0; i < sorted.length; i++) {
                     if (sorted[i] != null) {
                         let index = -1;
@@ -5923,6 +5938,41 @@
         }
     }
 
+    const EXT_NAME = {
+        EXTERNAL: 'androme.external',
+        GRID: 'androme.grid',
+        LIST: 'androme.list',
+        TABLE: 'androme.table'
+    };
+
+    const WIDGET_NAME = {
+        FAB: 'androme.widget.floatingactionbutton',
+        MENU: 'androme.widget.menu',
+        COORDINATOR: 'androme.widget.coordinator',
+        TOOLBAR: 'androme.widget.toolbar',
+        DRAWER: 'androme.widget.drawer',
+        BOTTOM_NAVIGATION: 'androme.widget.bottomnavigation'
+    };
+    const VIEW_SUPPORT = {
+        DRAWER: 'android.support.v4.widget.DrawerLayout',
+        NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
+        COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
+        APPBAR: 'android.support.design.widget.AppBarLayout',
+        COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
+        TOOLBAR: 'android.support.v7.widget.Toolbar',
+        FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton',
+        BOTTOM_NAVIGATION: 'android.support.design.widget.BottomNavigationView'
+    };
+    const VIEW_NAVIGATION = {
+        MENU: 'menu',
+        ITEM: 'item',
+        GROUP: 'group'
+    };
+    const DRAWABLE_PREFIX = {
+        MENU: 'ic_menu_',
+        DIALOG: 'ic_dialog_'
+    };
+
     class External extends Extension {
         constructor(name, tagNames = [], options) {
             super(name, tagNames, options);
@@ -5983,7 +6033,6 @@
             let xml = '';
             if (NodeList.linearY(this.node.children)) {
                 xml = this.application.writeGridLayout(this.node, this.parent, 2);
-                this.node.android('layout_width', 'match_parent');
             }
             else {
                 xml = this.application.writeLinearLayout(this.node, this.parent, NodeList.linearY(this.node.children));
@@ -6024,7 +6073,7 @@
                     }
                     j++;
                 }
-                node.data(`${this.name}:listStyle`, ordinal);
+                node.data(`${EXT_NAME.LIST}:listStyle`, ordinal);
             }
             return { xml };
         }
@@ -6036,10 +6085,10 @@
         }
         processChild() {
             const node = this.node;
-            const controllerHandler = this.application.controllerHandler;
-            const listStyle = node.data(`${this.name}:listStyle`);
+            const controller = this.application.controllerHandler;
+            const listStyle = node.data(`${EXT_NAME.LIST}:listStyle`);
             if (listStyle != null) {
-                controllerHandler.prependBefore(node.id, controllerHandler.getViewStatic((listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth + node.renderDepth, {
+                controller.prependBefore(node.id, controller.getViewStatic((listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE), node.depth + node.renderDepth, {
                     android: {
                         gravity: parseRTL('right'),
                         layout_gravity: 'fill',
@@ -6051,6 +6100,12 @@
                 node.android('layout_columnWeight', '1');
             }
             return { xml: '' };
+        }
+        afterInsert() {
+            const node = this.node;
+            if (node.is(VIEW_STANDARD.GRID)) {
+                node.android('layout_width', 'match_parent');
+            }
         }
     }
 
@@ -6118,18 +6173,20 @@
             super(name, tagNames, options);
         }
         condition() {
+            const node = this.node;
             return (this.included() ||
-                (this.node.element.dataset != null && this.node.element.dataset.ext == null && !this.node.flex.enabled && this.node.children.length > 1 && BLOCK_CHROME.includes(this.node.children[0].tagName) && this.node.children.every(node => !node.flex.enabled && node.children.length > 1 && this.node.children[0].tagName === node.tagName && !node.children.some(child => child.css('float') === 'right'))));
+                (node.element.dataset != null && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_CHROME.includes(node.children[0].tagName) && node.children.every(item => !item.flex.enabled && item.children.length > 1 && node.children[0].tagName === item.tagName && !item.children.some(child => child.css('float') === 'right'))));
         }
         processNode(mapX, mapY) {
+            const node = this.node;
             let xml = '';
             let columns = [];
             const columnEnd = [];
             const balanceColumns = this.options.balanceColumns;
             if (balanceColumns) {
                 const dimensions = [];
-                for (let l = 0; l < this.node.children.length; l++) {
-                    const children = this.node.children[l].children;
+                for (let l = 0; l < node.children.length; l++) {
+                    const children = node.children[l].children;
                     dimensions[l] = [];
                     for (let m = 0; m < children.length; m++) {
                         dimensions[l].push(children[m].bounds.width);
@@ -6203,7 +6260,7 @@
                 }
             }
             else {
-                const nextMapX = mapX[this.node.depth + 2];
+                const nextMapX = mapX[node.depth + 2];
                 const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
                 if (nextCoordsX.length > 1) {
                     const columnRight = [];
@@ -6212,7 +6269,7 @@
                         columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                         for (let m = 0; m < nextAxisX.length; m++) {
                             const nextX = nextAxisX[m];
-                            if (nextX.parent.parent && this.node.id === nextX.parent.parent.id) {
+                            if (nextX.parent.parent && node.id === nextX.parent.parent.id) {
                                 const [left, right] = [nextX.bounds.left, nextX.bounds.right];
                                 if (l === 0 || left >= columnRight[l - 1]) {
                                     if (columns[l] == null) {
@@ -6273,22 +6330,22 @@
                 }
             }
             if (columns.length > 1) {
-                this.node.gridColumnEnd = columnEnd;
-                this.node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
-                xml = this.application.writeGridLayout(this.node, this.parent, this.node.gridColumnCount);
+                node.gridColumnEnd = columnEnd;
+                node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
+                xml = this.application.writeGridLayout(node, this.parent, node.gridColumnCount);
                 for (let l = 0, count = 0; l < columns.length; l++) {
                     let spacer = 0;
                     for (let m = 0, start = 0; m < columns[l].length; m++) {
-                        const node = columns[l][m];
-                        if (!node.spacer) {
-                            node.parent.hide();
-                            node.parent = this.node;
+                        const item = columns[l][m];
+                        if (!item.spacer) {
+                            item.parent.hide();
+                            item.parent = node;
                             if (balanceColumns) {
-                                node.gridRowStart = (m === 0);
-                                node.gridRowEnd = (m === columns[l].length - 1);
-                                node.gridFirst = (l === 0 && m === 0);
-                                node.gridLast = (l === columns.length - 1 && node.gridRowEnd);
-                                node.gridIndex = m;
+                                item.gridRowStart = (m === 0);
+                                item.gridRowEnd = (m === columns[l].length - 1);
+                                item.gridFirst = (l === 0 && m === 0);
+                                item.gridLast = (l === columns.length - 1 && item.gridRowEnd);
+                                item.gridIndex = m;
                             }
                             else {
                                 let rowSpan = 1;
@@ -6314,20 +6371,20 @@
                                     }
                                 }
                                 if (rowSpan > 1) {
-                                    node.gridRowSpan = rowSpan;
+                                    item.gridRowSpan = rowSpan;
                                 }
                                 if (columnSpan > 1) {
-                                    node.gridColumnSpan = columnSpan;
+                                    item.gridColumnSpan = columnSpan;
                                 }
-                                node.gridRowStart = (start++ === 0);
-                                node.gridRowEnd = (columnSpan + l === columns.length);
-                                node.gridFirst = (count++ === 0);
-                                node.gridLast = (node.gridRowEnd && m === columns[l].length - 1);
-                                node.gridIndex = l;
+                                item.gridRowStart = (start++ === 0);
+                                item.gridRowEnd = (columnSpan + l === columns.length);
+                                item.gridFirst = (count++ === 0);
+                                item.gridLast = (item.gridRowEnd && m === columns[l].length - 1);
+                                item.gridIndex = l;
                                 spacer = 0;
                             }
                         }
-                        else if (node.spacer === 1) {
+                        else if (item.spacer === 1) {
                             spacer++;
                         }
                     }
@@ -6337,19 +6394,20 @@
         }
         processChild() {
             const parent = this.parent;
+            const node = this.node;
             let siblings;
             let xml = '';
             if (this.options.balanceColumns) {
-                siblings = this.node.gridSiblings;
+                siblings = node.gridSiblings;
             }
             else {
-                const columnEnd = parent.gridColumnEnd[this.node.gridIndex + this.node.gridColumnSpan];
-                siblings = this.node.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= this.node.bounds.right && item.bounds.right <= columnEnd);
+                const columnEnd = parent.gridColumnEnd[node.gridIndex + node.gridColumnSpan];
+                siblings = node.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= node.bounds.right && item.bounds.right <= columnEnd);
             }
             if (siblings != null && siblings.length > 0) {
-                siblings.unshift(this.node);
+                siblings.unshift(node);
                 sortAsc(siblings, 'bounds.x');
-                const viewGroup = this.application.controllerHandler.createGroup(this.node, parent, siblings);
+                const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 if (linearX || linearY) {
                     xml = this.application.writeLinearLayout(viewGroup, parent, linearY);
@@ -6381,6 +6439,17 @@
         }
     }
 
+    function setDefaultOption(options, namespace, attr, value) {
+        if (options[namespace] == null) {
+            options[namespace] = {};
+        }
+        if (options[namespace][attr] == null) {
+            options[namespace][attr] = value;
+        }
+    }
+    function getMenu(node, requireExt = true) {
+        return Array.from(node.element.children).find((element) => element.tagName === 'NAV' && (!requireExt || (element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1)));
+    }
     function positionLayoutGravity(node) {
         const renderParent = node.renderParent;
         const parent = node.parentOriginal;
@@ -6427,20 +6496,6 @@
         node.renderParent = renderParent;
     }
 
-    const VIEW_SUPPORT = {
-        DRAWER: 'android.support.v4.widget.DrawerLayout',
-        NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
-        COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
-        APPBAR: 'android.support.design.widget.AppBarLayout',
-        COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
-        TOOLBAR: 'android.support.v7.widget.Toolbar',
-        FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton'
-    };
-    const DRAWABLE_PREFIX = {
-        MENU: 'ic_menu_',
-        DIALOG: 'ic_dialog_'
-    };
-
     class FloatingActionButton extends Button {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
@@ -6485,7 +6540,7 @@
             }
             node.depth = (insert ? 0 : node.parent.renderDepth + 1);
             let xml = this.application.controllerHandler.getViewStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.parent.renderDepth + 1), options, 'wrap_content', 'wrap_content', node);
-            node.ignoreResource = VIEW_RESOURCE.BOX_STYLE | VIEW_RESOURCE.FONT_STYLE | VIEW_RESOURCE.IMAGE_SOURCE;
+            node.ignoreResource = VIEW_RESOURCE.BOX_STYLE | VIEW_RESOURCE.ASSET;
             let proceed = false;
             if (node.isolated) {
                 positionLayoutGravity(node);
@@ -6493,7 +6548,7 @@
                     node.app('layout_anchor', parent.stringId);
                     node.app('layout_anchorGravity', node.android('layout_gravity'));
                     node.delete('android', 'layout_gravity');
-                    node.data(`${this.name}:insert`, xml);
+                    node.data(`${WIDGET_NAME.FAB}:insert`, xml);
                     node.render(node);
                     xml = '';
                     proceed = true;
@@ -6510,18 +6565,17 @@
             return { xml, proceed };
         }
         insert() {
-            const application = this.application;
             const node = this.node;
             const extFor = node.parent.element.dataset.extFor;
             if (extFor != null) {
-                const parent = application.findByDomId(extFor);
+                const parent = this.application.findByDomId(extFor);
                 if (parent != null && parent.viewName === VIEW_SUPPORT.COORDINATOR) {
-                    let xml = node.data(`${this.name}:insert`) || '';
+                    let xml = node.data(`${WIDGET_NAME.FAB}:insert`) || '';
                     if (xml !== '') {
                         node.renderDepth = parent.renderDepth + 1;
                         xml = restoreIndent(xml, node.renderDepth);
                     }
-                    application.addInsertQueue(parent.id, [xml]);
+                    this.application.addInsertQueue(parent.id, [xml]);
                 }
             }
         }
@@ -6535,14 +6589,14 @@
     class Menu extends Extension {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
-            this.require('androme.external', true);
+            this.require(EXT_NAME.EXTERNAL, true);
         }
         init(element) {
             if (this.included(element) && !this.application.elements.has(element)) {
                 let valid = false;
                 if (element.children.length > 0) {
                     const tagName = element.children[0].tagName;
-                    valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every((item) => item.tagName === tagName && !(item.style.display === 'inline' || item.style.float === 'left' || item.style.float === 'right')));
+                    valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every(item => item.tagName === tagName));
                     let current = element.parentElement;
                     while (current != null) {
                         if (current.tagName === 'NAV' && this.application.elements.has(current)) {
@@ -6578,12 +6632,6 @@
         }
     }
 
-    var VIEW_STATIC;
-    (function (VIEW_STATIC) {
-        VIEW_STATIC["MENU"] = "menu";
-        VIEW_STATIC["ITEM"] = "item";
-        VIEW_STATIC["GROUP"] = "group";
-    })(VIEW_STATIC || (VIEW_STATIC = {}));
     const VALIDATE_ITEM = {
         id: /^@\+id\/\w+$/,
         title: /^.+$/,
@@ -6619,7 +6667,7 @@
         }
         processNode() {
             const node = this.node;
-            const xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, 0, {}, '', '', node, true);
+            const xml = this.application.controllerHandler.getViewStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
             node.renderParent = true;
             node.cascade().forEach(item => item.renderExtension = this);
             node.ignoreResource = VIEW_RESOURCE.ALL;
@@ -6637,7 +6685,7 @@
             node.renderDepth = parent.renderDepth + 1;
             node.renderParent = true;
             const options = { android: {}, app: {} };
-            let viewName = VIEW_STATIC.ITEM;
+            let viewName = VIEW_NAVIGATION.ITEM;
             let layout = false;
             let title = '';
             const children = Array.from(node.element.children);
@@ -6665,10 +6713,10 @@
                     node.children.forEach(item => item.tagName !== 'NAV' && item.hide());
                 }
                 else if (node.tagName === 'NAV') {
-                    viewName = VIEW_STATIC.MENU;
+                    viewName = VIEW_NAVIGATION.MENU;
                 }
                 else {
-                    viewName = VIEW_STATIC.GROUP;
+                    viewName = VIEW_NAVIGATION.GROUP;
                     let checkable = '';
                     if (node.children.every((item) => this.hasInputType(item, 'radio'))) {
                         checkable = 'single';
@@ -6689,7 +6737,7 @@
                 title = (element.title !== '' ? element.title : element.innerText).trim();
             }
             switch (viewName) {
-                case VIEW_STATIC.ITEM:
+                case VIEW_NAVIGATION.ITEM:
                     this.parseDataSet(VALIDATE_ITEM, element, options);
                     if (node.android('icon') == null) {
                         let src = Resource.addImageURL(element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
@@ -6707,7 +6755,7 @@
                         }
                     }
                     break;
-                case VIEW_STATIC.GROUP:
+                case VIEW_NAVIGATION.GROUP:
                     this.parseDataSet(VALIDATE_GROUP, element, options);
                     break;
             }
@@ -6772,7 +6820,7 @@
                 let offsetHeight = 0;
                 let collapsingToolbar = null;
                 if (toolbar != null) {
-                    const extension = application.findExtension('androme.widget.toolbar');
+                    const extension = this.application.findExtension(WIDGET_NAME.TOOLBAR);
                     if (extension != null) {
                         offsetX = toolbar.linear.bottom;
                         offsetHeight = toolbar.linear.height;
@@ -6806,7 +6854,7 @@
                 const optionsCollapsingToolbar = Object.assign({}, collapsingToolbar);
                 const [linearX, linearY] = [ViewList.linearX(nodes), ViewList.linearY(nodes)];
                 let viewName = '';
-                if (application.isLinearLayout(linearX, linearY, node, nodes)) {
+                if (application.isLinearXY(linearX, linearY, node, nodes)) {
                     viewName = VIEW_ANDROID.LINEAR;
                     options.android.orientation = (linearY ? 'vertical' : 'horizontal');
                 }
@@ -6839,7 +6887,7 @@
             }
         }
         getToolbar(node) {
-            const toolbar = Array.from(node.element.children).find((element) => element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.toolbar') !== -1);
+            const toolbar = Array.from(node.element.children).find((element) => element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.TOOLBAR) !== -1);
             return (toolbar != null ? toolbar.__node : null);
         }
         adjustBounds(node, offsetHeight) {
@@ -6872,22 +6920,23 @@
     class Toolbar extends Extension {
         constructor(name, tagNames = [], options) {
             super(name, tagNames, options);
+            this.require(WIDGET_NAME.MENU);
         }
         init(element) {
             if (this.included(element)) {
                 Array.from(element.children).forEach((item) => {
                     if (item.tagName === 'NAV' && item.dataset.ext == null) {
-                        item.dataset.ext = 'androme.external';
+                        item.dataset.ext = EXT_NAME.EXTERNAL;
                     }
                 });
                 if (element.dataset.extFor != null) {
                     const extFor = document.getElementById(element.dataset.extFor);
-                    if (extFor && element.parentElement !== extFor && extFor.dataset.ext && extFor.dataset.ext.indexOf('androme.widget.coordinator') === -1) {
+                    if (extFor && element.parentElement !== extFor && extFor.dataset.ext && extFor.dataset.ext.indexOf(WIDGET_NAME.COORDINATOR) === -1) {
                         this.application.elements.add(element);
                         return true;
                     }
                 }
-                if (element.parentElement && element.parentElement.dataset.ext && element.parentElement.dataset.ext.indexOf('androme.widget.coordinator') !== -1) {
+                if (element.parentElement && element.parentElement.dataset.ext && element.parentElement.dataset.ext.indexOf(WIDGET_NAME.COORDINATOR) !== -1) {
                     element.__nodeIsolated = true;
                 }
             }
@@ -6947,8 +6996,8 @@
             else {
                 setDefaultOption(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             }
-            if (this.getMenu(node) != null) {
-                setDefaultOption(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${this.name}:menu}`);
+            if (getMenu(node) != null) {
+                setDefaultOption(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
             }
             node.depth = depth + (appBar ? 1 : 0) + (options.collapsingToolbar ? 1 : 0);
             let xml = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, node.depth, { android: optionsToolbar.android, app: optionsToolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
@@ -6983,7 +7032,7 @@
             }
             let proceed = false;
             if (extFor) {
-                node.data(`${this.name}:insert`, xml);
+                node.data(`${WIDGET_NAME.TOOLBAR}:insert`, xml);
                 node.render(node);
                 xml = '';
                 proceed = true;
@@ -6998,28 +7047,23 @@
         }
         processChild() {
             const element = this.element;
-            if (element != null) {
-                if (element.tagName === 'IMG') {
-                    if (element.dataset.navigationIcon != null || element.dataset.collapseIcon != null) {
-                        this.node.hide();
-                    }
-                }
+            if (element && element.tagName === 'IMG' && (element.dataset.navigationIcon != null || element.dataset.collapseIcon != null)) {
+                this.node.hide();
             }
             return { xml: '' };
         }
         insert() {
-            const application = this.application;
             const node = this.node;
             const extFor = node.element.dataset.extFor;
             if (extFor != null) {
-                const parent = application.findByDomId(extFor);
-                const coordinator = application.cacheInternal.list.find(item => (item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR));
+                const parent = this.application.findByDomId(extFor);
+                const coordinator = this.application.cacheInternal.list.find(item => (item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR));
                 if (coordinator != null) {
-                    let xml = node.data(`${this.name}:insert`) || '';
+                    let xml = node.data(`${WIDGET_NAME.TOOLBAR}:insert`) || '';
                     if (xml !== '') {
                         xml = restoreIndent(xml, node.renderDepth);
                         node.renderDepth = node.depth + 1;
-                        application.addInsertQueue(coordinator.id, [xml]);
+                        this.application.addInsertQueue(coordinator.id, [xml]);
                     }
                 }
             }
@@ -7030,16 +7074,13 @@
         }
         finalize() {
             const node = this.node;
-            const menu = this.getMenu(node);
+            const menu = getMenu(node);
             if (menu != null) {
                 const layouts = this.application.layouts;
                 for (let i = 0; i < layouts.length; i++) {
-                    layouts[i].content = layouts[i].content.replace(`{${node.id}:${this.name}:menu}`, menu.dataset.currentId);
+                    layouts[i].content = layouts[i].content.replace(`{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`, menu.dataset.currentId);
                 }
             }
-        }
-        getMenu(node) {
-            return Array.from(node.element.children).find((element) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.menu') !== -1);
         }
         createResources(appBarOverlay, popupOverlay) {
             const options = Object.assign({}, this.options.resource);
@@ -7067,9 +7108,49 @@
                 }
             }
             setDefaultOption(options, 'output', 'path', 'res/values');
-            setDefaultOption(options, 'output', 'file', `${this.name}.xml`);
+            setDefaultOption(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
             const xml = insertTemplateData(template, data);
             this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
+        }
+    }
+
+    class BottomNavigation extends Extension {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+            this.require(WIDGET_NAME.MENU);
+        }
+        processNode() {
+            const node = this.node;
+            const parent = this.parent;
+            const options = Object.assign({}, this.options[node.element.id]);
+            setDefaultOption(options, 'android', 'background', `?android:attr/windowBackground`);
+            setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`);
+            const xml = this.application.controllerHandler.getViewStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(VIEW_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
+            for (let i = 5; i < node.children.length; i++) {
+                node.children[i].hide();
+                node.children[i].cascade().forEach(item => item.hide());
+            }
+            node.cascade().forEach(item => item.renderExtension = this);
+            node.ignoreResource = VIEW_RESOURCE.ASSET;
+            node.applyCustomizations();
+            node.render(parent);
+            return { xml };
+        }
+        finalize() {
+            const node = this.node;
+            if (getMenu(node) != null) {
+                let menu = '';
+                this.application.elements.forEach(item => {
+                    if (item.parentElement === node.element) {
+                        switch (item.dataset.ext) {
+                            case WIDGET_NAME.MENU:
+                                menu = item.dataset.currentId;
+                                break;
+                        }
+                    }
+                });
+                this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`, menu));
+            }
         }
     }
 
@@ -7094,15 +7175,15 @@
         constructor(name, tagNames = [], options) {
             super(name, tagNames, options);
             this.activityMain = true;
-            this.require('androme.external', true);
-            this.require('androme.widget.menu');
-            this.require('androme.widget.coordinator');
+            this.require(EXT_NAME.EXTERNAL, true);
+            this.require(WIDGET_NAME.MENU);
+            this.require(WIDGET_NAME.COORDINATOR);
         }
         init(element) {
             if (this.included(element) && element.children.length > 0) {
                 Array.from(element.children).forEach((item) => {
                     if (item.tagName === 'NAV' && item.dataset.ext == null) {
-                        item.dataset.ext = 'androme.external';
+                        item.dataset.ext = EXT_NAME.EXTERNAL;
                     }
                 });
                 this.application.elements.add(element);
@@ -7120,7 +7201,7 @@
             node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
             let depth = node.depth + node.renderDepth;
             let options = Object.assign({}, this.options.drawerLayout);
-            let menu = this.getMenu(node);
+            let menu = getMenu(node);
             if (menu != null) {
                 setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
             }
@@ -7134,7 +7215,7 @@
             const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, null, { depth: 0 });
             coordinator.parent = node;
             coordinator.inheritBase(node);
-            coordinator.renderExtension = application.findExtension('androme.widget.coordinator');
+            coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
             coordinator.ignoreResource = VIEW_RESOURCE.ALL;
             coordinator.isolated = true;
             application.cache.list.push(coordinator);
@@ -7145,8 +7226,8 @@
                 this.createResources();
                 setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
                 setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-                setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${this.name}:menu}`);
-                setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:${this.name}:headerLayout}`);
+                setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
+                setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
                 const navigation = controller.getViewStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
                 xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
             }
@@ -7154,7 +7235,7 @@
                 const navView = node.children[node.children.length - 1];
                 navView.android('layout_gravity', options.android.layout_gravity);
                 navView.isolated = true;
-                application.controllerHandler.prependBefore(navView.id, (include !== '' ? include : content));
+                controller.prependBefore(navView.id, (include !== '' ? include : content));
                 menu = navView.element;
             }
             node.children.forEach(item => {
@@ -7171,32 +7252,27 @@
             return { xml };
         }
         finalize() {
-            const application = this.application;
             const node = this.node;
-            if (this.getMenu(node) != null) {
+            if (getMenu(node) != null) {
                 let menu = '';
                 let headerLayout = '';
-                application.elements.forEach(item => {
+                this.application.elements.forEach(item => {
                     if (item.parentElement === node.element) {
                         switch (item.dataset.ext) {
-                            case 'androme.external':
+                            case EXT_NAME.EXTERNAL:
                                 headerLayout = item.dataset.currentId;
                                 break;
-                            case 'androme.widget.menu':
+                            case WIDGET_NAME.MENU:
                                 menu = item.dataset.currentId;
                                 break;
                         }
                     }
                 });
-                const views = application.viewData.views;
-                for (let i = 0; i < views.length; i++) {
-                    views[i].content = views[i].content.replace(`{${node.id}:${this.name}:menu}`, menu);
-                    views[i].content = views[i].content.replace(`{${node.id}:${this.name}:headerLayout}`, headerLayout);
-                }
+                this.application.layouts.forEach(view => {
+                    view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu);
+                    view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`, headerLayout);
+                });
             }
-        }
-        getMenu(node) {
-            return Array.from(node.element.children).find((element) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf('androme.widget.menu') !== -1);
         }
         createResources() {
             const options = Object.assign({}, this.options.resource);
@@ -7222,7 +7298,7 @@
                 }
             }
             setDefaultOption(options, 'output', 'path', 'res/values-v21');
-            setDefaultOption(options, 'output', 'file', `${this.name}.xml`);
+            setDefaultOption(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
             const xml = insertTemplateData(template, data);
             this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
         }
@@ -7231,15 +7307,16 @@
     let LOADING = false;
     const ROOT_CACHE = new Set();
     const EXTENSIONS = {
-        'androme.external': new External('androme.external'),
-        'androme.list': new ListAndroid('androme.list', ['UL', 'OL']),
-        'androme.table': new Table('androme.table', ['TABLE']),
-        'androme.grid': new Grid('androme.grid', ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET']),
-        'androme.widget.floatingactionbutton': new FloatingActionButton('androme.widget.floatingactionbutton', ['BUTTON', 'INPUT', 'IMG']),
-        'androme.widget.menu': new Menu$1('androme.widget.menu', ['NAV'], { appCompat: true }),
-        'androme.widget.coordinator': new Coordinator('androme.widget.coordinator'),
-        'androme.widget.toolbar': new Toolbar('androme.widget.toolbar'),
-        'androme.widget.drawer': new Drawer('androme.widget.drawer')
+        [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
+        [EXT_NAME.LIST]: new ListAndroid(EXT_NAME.LIST, ['UL', 'OL']),
+        [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
+        [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET']),
+        [WIDGET_NAME.FAB]: new FloatingActionButton(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
+        [WIDGET_NAME.MENU]: new Menu$1(WIDGET_NAME.MENU, ['NAV'], { appCompat: true }),
+        [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
+        [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR),
+        [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, []),
+        [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
     };
     const Node$1 = View;
     const NodeList$1 = ViewList;
@@ -7359,7 +7436,7 @@
         }
     }
     function reset() {
-        ROOT_CACHE.forEach((element) => {
+        ROOT_CACHE.forEach(element => {
             delete element.dataset.views;
             delete element.dataset.currentId;
         });

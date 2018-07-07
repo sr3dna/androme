@@ -19,7 +19,7 @@ export default abstract class Menu extends Extension<T, U> {
             let valid = false;
             if (element.children.length > 0) {
                 const tagName = element.children[0].tagName;
-                valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every((item: HTMLElement) => item.tagName === tagName && !(item.style.display === 'inline' || (<any> item.style).float === 'left' || (<any> item.style).float === 'right')));
+                valid = (BLOCK_CHROME.includes(tagName) && Array.from(element.children).every(item => item.tagName === tagName));
                 let current = element.parentElement;
                 while (current != null) {
                     if (current.tagName === 'NAV' && this.application.elements.has(current)) {

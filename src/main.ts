@@ -20,6 +20,7 @@ import Button from './android/extension/widget/floatingactionbutton';
 import Menu from './android/extension/widget/menu';
 import Coordinator from './android/extension/widget/coodinator';
 import Toolbar from './android/extension/widget/toolbar';
+import BottomNavigation from './android/extension/widget/bottomnavigation';
 import Drawer from './android/extension/widget/drawer';
 
 type T = View;
@@ -36,6 +37,7 @@ const EXTENSIONS = {
     [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, ['NAV'], { appCompat: true }),
     [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
     [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR),
+    [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, []),
     [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
 };
 
@@ -166,7 +168,7 @@ export function close() {
 }
 
 export function reset() {
-    ROOT_CACHE.forEach((element: HTMLElement) => {
+    ROOT_CACHE.forEach(element => {
         delete element.dataset.views;
         delete element.dataset.currentId;
     });

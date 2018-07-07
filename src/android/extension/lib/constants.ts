@@ -3,7 +3,8 @@ export const WIDGET_NAME = {
     MENU: 'androme.widget.menu',
     COORDINATOR: 'androme.widget.coordinator',
     TOOLBAR: 'androme.widget.toolbar',
-    DRAWER: 'androme.widget.drawer'
+    DRAWER: 'androme.widget.drawer',
+    BOTTOM_NAVIGATION: 'androme.widget.bottomnavigation'
 };
 
 export const VIEW_SUPPORT = {
@@ -13,7 +14,14 @@ export const VIEW_SUPPORT = {
     APPBAR: 'android.support.design.widget.AppBarLayout',
     COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
     TOOLBAR: 'android.support.v7.widget.Toolbar',
-    FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton'
+    FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton',
+    BOTTOM_NAVIGATION: 'android.support.design.widget.BottomNavigationView'
+};
+
+export const VIEW_NAVIGATION = {
+    MENU: 'menu',
+    ITEM: 'item',
+    GROUP: 'group'
 };
 
 export const DRAWABLE_PREFIX = {

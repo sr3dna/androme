@@ -1,4 +1,4 @@
-import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import Controller from './controller';
 import Extension from './extension';
 import Resource from './resource';
@@ -6,8 +6,8 @@ import Node from './node';
 import NodeList from './nodelist';
 import { hasValue, hyphenToCamelCase, resetId, sortAsc, trim } from '../lib/util';
 import { placeIndent, removePlaceholders, replaceDP } from '../lib/xml';
-import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { hasFreeFormText, isVisible } from '../lib/dom';
+import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import SETTINGS from '../settings';
 
@@ -17,7 +17,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public controllerHandler: Controller<T, U>;
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
-    public insert: ArrayIndex<string> = [];
+    public insert: ObjectIndex<string[]> = {};
 
     private views: PlainFile[] = [];
     private includes: PlainFile[] = [];
@@ -481,7 +481,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         }
                                         else {
                                             const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
-                                            if (this.isLinearLayout(linearX, linearY, nodeY, <T[]> nodeY.children)) {
+                                            if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
                                                 xml += this.writeLinearLayout(nodeY, parent, linearY);
                                             }
                                             else {
@@ -608,14 +608,22 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         });
-        const viewIds = Object.keys(this.insert);
-        viewIds.push(...viewIds.slice().reverse());
-        [...this.views, ...this.includes].forEach(view => {
-            viewIds.forEach(id => {
-                if (this.insert[parseInt(id)] != null) {
-                    view.content = view.content.replace(`{:${id}}`, this.insert[parseInt(id)].join('\n'));
+        const template = {};
+        for (const id in this.insert) {
+            template[id] = this.insert[id].join('\n');
+        }
+        for (const inner in template) {
+            for (const outer in template) {
+                if (inner !== outer) {
+                    template[inner] = template[inner].replace(`{:${outer}}`, template[inner]);
+                    template[outer] = template[outer].replace(`{:${inner}}`, template[inner]);
                 }
-            });
+            }
+        }
+        this.layouts.forEach(view => {
+            for (const id in template) {
+                view.content = view.content.replace(`{:${id}}`, template[id]);
+            }
             view.content = this.controllerHandler.insertAuxillaryViews(view.content);
         });
         this.cacheInternal.list.forEach(node => {
@@ -669,8 +677,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public isLinearLayout(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
-        return (linearX || linearY) && (!parent.flex.enabled || (linearX && children.every(node => node.flex.enabled))) && (!children.some(node => node.floating && node.css('clear') !== 'none') && (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')));
+    public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
+        return (linearX || linearY) &&
+               (!parent.flex.enabled || (linearX && children.every(node => node.flex.enabled))) &&
+               (!children.some(node => node.floating && node.css('clear') !== 'none') &&
+               (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')) &&
+               children.every(node => node.css('position') === 'static' || node.tagName === 'PLAINTEXT' || (node.css('position') === 'relative') && node.styleMap.top == null && node.styleMap.right == null && node.styleMap.bottom == null && node.styleMap.left == null));
     }
 
     public addInclude(filename: string, content: string) {

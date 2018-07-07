@@ -89,8 +89,7 @@ export function isVisible(element: HTMLElement) {
             let current = (<HTMLElement> element.parentElement);
             let valid = true;
             while (current != null) {
-                const style = getStyle(current);
-                if (style.display === 'none') {
+                if (getStyle(current).display === 'none') {
                     valid = false;
                     break;
                 }
@@ -98,7 +97,7 @@ export function isVisible(element: HTMLElement) {
             }
             if (valid && element.children.length > 0) {
                 return Array.from(element.children).some((item: HTMLElement) => {
-                    const style = getComputedStyle(item);
+                    const style = getStyle(item);
                     const float = (<any> style).float;
                     return (style.position !== 'static' || float === 'left' || float === 'right');
                 });

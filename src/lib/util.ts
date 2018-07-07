@@ -312,17 +312,8 @@ export function calculateBias(start: number, end: number) {
     return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(2));
 }
 
-export function hasValue<T>(value: T) {
+export function hasValue(value: any) {
     return (typeof value !== 'undefined' && value !== null && value.toString() !== '');
-}
-
-export function setDefaultOption(options: ObjectMap<any>, namespace: string, attr: string, value: string) {
-    if (options[namespace] == null) {
-        options[namespace] = {};
-    }
-    if (options[namespace][attr] == null) {
-        options[namespace][attr] = value;
-    }
 }
 
 export function withinRange(a: number, b: number, n = 1) {

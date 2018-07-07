@@ -3,7 +3,8 @@ import View from '../../view';
 import ViewList from '../../viewlist';
 import Extension from '../../../base/extension';
 import Resource from '../../../base/resource';
-import { setDefaultOption, convertPX } from '../../../lib/util';
+import { convertPX } from '../../../lib/util';
+import { getMenu, setDefaultOption } from '../lib/util';
 import { formatDimen, getTemplateLevel, insertTemplateData, parseTemplate, restoreIndent } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
 import { parseHex } from '../../../lib/color';
@@ -19,6 +20,7 @@ type U = ViewList<T>;
 export default class Toolbar extends Extension<T, U> {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
         super(name, tagNames, options);
+        this.require(WIDGET_NAME.MENU);
     }
 
     public init(element: HTMLElement) {
@@ -97,7 +99,7 @@ export default class Toolbar extends Extension<T, U> {
         else {
             setDefaultOption(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
         }
-        if (this.getMenu(node) != null) {
+        if (getMenu(node) != null) {
             setDefaultOption(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
         }
         node.depth = depth + (appBar ? 1 : 0) + (options.collapsingToolbar ? 1 : 0);
@@ -156,18 +158,17 @@ export default class Toolbar extends Extension<T, U> {
     }
 
     public insert() {
-        const application = this.application;
         const node = (<T> this.node);
         const extFor = node.element.dataset.extFor;
         if (extFor != null) {
-            const parent = (<T> application.findByDomId(extFor));
-            const coordinator = application.cacheInternal.list.find(item => (item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR));
+            const parent = (<T> this.application.findByDomId(extFor));
+            const coordinator = this.application.cacheInternal.list.find(item => (item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR));
             if (coordinator != null) {
                 let xml = (<string> node.data(`${WIDGET_NAME.TOOLBAR}:insert`)) || '';
                 if (xml !== '') {
                     xml = restoreIndent(xml, node.renderDepth);
                     node.renderDepth = node.depth + 1;
-                    application.addInsertQueue(coordinator.id, [xml]);
+                    this.application.addInsertQueue(coordinator.id, [xml]);
                 }
             }
         }
@@ -180,17 +181,13 @@ export default class Toolbar extends Extension<T, U> {
 
     public finalize() {
         const node = (<T> this.node);
-        const menu = this.getMenu(node);
+        const menu = getMenu(node);
         if (menu != null) {
             const layouts = this.application.layouts;
             for (let i = 0; i < layouts.length; i++) {
                 layouts[i].content = layouts[i].content.replace(`{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`, <string> menu.dataset.currentId);
             }
         }
-    }
-
-    private getMenu(node: T) {
-        return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1));
     }
 
     private createResources(appBarOverlay: string, popupOverlay: string) {

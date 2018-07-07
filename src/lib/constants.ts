@@ -28,6 +28,7 @@ export enum VIEW_RESOURCE {
     VALUE_STRING = 16,
     OPTION_ARRAY = 32,
     IMAGE_SOURCE = 64,
+    ASSET = 8 | 16 | 32 | 64,
     ALL = 126
 }
 

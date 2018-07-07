@@ -100,7 +100,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (stored != null) {
                 const method: StringMap = METHOD_ANDROID['boxSpacing'];
                 for (const i in stored) {
-                    node.attr(formatString(parseRTL(method[i]), stored[i]));
+                    node.attr(formatString(parseRTL(method[i]), stored[i]), (node.renderExtension == null));
                 }
             }
         });
@@ -212,10 +212,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         resourceName = `${node.tagName.toLowerCase()}_${node.viewId}`;
                         STORED.DRAWABLES.set(resourceName, xml);
                     }
-                    node.attr(formatString(method['background'], resourceName));
+                    node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
                 }
                 else if (object.__fontStyle == null && stored.backgroundColor.length > 0) {
-                    node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]));
+                    node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]), (node.renderExtension == null));
                 }
             }
         });
@@ -319,7 +319,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const stored = object.__imageSource;
             if (stored != null) {
                 const method = METHOD_ANDROID['imageSource'];
-                node.attr(formatString(method['src'], stored));
+                node.attr(formatString(method['src'], stored), (node.renderExtension == null));
             }
         });
     }
@@ -348,7 +348,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 arrayName = `${node.viewId}_array`;
                 STORED.ARRAYS.set(arrayName, result);
             }
-            node.attr(formatString(method['entries'], arrayName));
+            node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
         });
     }
 
@@ -374,7 +374,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         STORED.STRINGS.set(stored, value);
                     }
                 }
-                node.attr(formatString(method['text'], ((parseInt(stored) || '').toString() !== stored ? `@string/${stored}` : stored)));
+                node.attr(formatString(method['text'], ((parseInt(stored) || '').toString() !== stored ? `@string/${stored}` : stored)), (node.renderExtension == null));
             }
         });
     }

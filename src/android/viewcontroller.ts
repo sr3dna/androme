@@ -431,7 +431,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 this.setAlignParent(chain, orientationInverse);
                                             }
                                             const nextLevel = chainNodes[level + 1];
-                                            if (nextLevel != null && nextLevel.constraint[value] != null && nextLevel.constraint[value].list[i] != null) {
+                                            if (nextLevel && nextLevel.constraint[value] && nextLevel.constraint[value].list[i] != null) {
                                                 const nextChain = nextLevel.constraint[value].list[i];
                                                 if (chain.withinY(nextChain.linear) && !mapParent(chain, 'top')) {
                                                     chain.app(LAYOUT['bottomTop'], nextChain.stringId);
@@ -572,8 +572,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                     }
                                     else {
-                                        if (flex.enabled && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) {
-                                            firstNode.app(chainStyle, 'spread_inside');
+                                        if ((orientation === 'horizontal' && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) || (orientation === 'vertical' && withinFraction(node.box.top, firstNode.linear.top) && withinFraction(lastNode.linear.bottom, node.box.bottom))) {
+                                            if (chainDirection.length > 2 || flex.enabled) {
+                                                firstNode.app(chainStyle, 'spread_inside');
+                                            }
+                                            else {
+                                                mapDelete(firstNode, CHAIN_MAP['rightLeftBottomTop'][index]);
+                                                mapDelete(lastNode, CHAIN_MAP['leftRightTopBottom'][index]);
+                                            }
                                         }
                                         else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === 'horizontal' && (firstNode.linear.left === node.box.left || lastNode.linear.right === node.box.right))) {
                                             firstNode.app(chainStyle, 'packed');

@@ -87,7 +87,7 @@ androme.settings = {
         'androme.list',
         'androme.table',
         'androme.grid',
-        'androme.widget' // androme.widget.menu | androme.widget.floatingactionbutton | androme.widget.coordinator | androme.widget.toolbar | androme.widget.drawer
+        'androme.widget' // androme.widget.floatingactionbutton | androme.widget.menu | androme.widget.bottomnavigation | androme.widget.coordinator | androme.widget.toolbar | androme.widget.drawer
     ],
     targetAPI: androme.build.OREO,
     density: androme.build.MDPI,
@@ -156,6 +156,8 @@ Most of the Android support library extensions can be configured using the same 
 <img src="demos/android/drawer.navigationview.png" alt="drawer: actionbar" />
 
 <img src="demos/android/coordinator.scrolling.png" alt="coordinator: scrolling" />
+
+<img src="demos/android/bottomnavigation.png" alt="bottom navigation" />
 
 <img src="demos/android/menu.png" alt="toolbar: menu" />
 

@@ -3,13 +3,7 @@ import View from '../../view';
 import Nav from '../../../extension/nav';
 import Resource from '../../../base/resource';
 import { BLOCK_CHROME, VIEW_RESOURCE } from '../../../lib/constants';
-import { DRAWABLE_PREFIX } from '../lib/constants';
-
-enum VIEW_STATIC {
-    MENU = 'menu',
-    ITEM = 'item',
-    GROUP = 'group'
-}
+import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
 const VALIDATE_ITEM = {
     id: /^@\+id\/\w+$/,
@@ -50,7 +44,7 @@ export default class Menu<T extends View> extends Nav {
 
     public processNode(): ExtensionResult {
         const node = (<T> this.node);
-        const xml = this.application.controllerHandler.getViewStatic(VIEW_STATIC.MENU, 0, {}, '', '', node, true);
+        const xml = this.application.controllerHandler.getViewStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.renderParent = true;
         node.cascade().forEach(item => item.renderExtension = this);
         node.ignoreResource = VIEW_RESOURCE.ALL;
@@ -69,7 +63,7 @@ export default class Menu<T extends View> extends Nav {
         node.renderDepth = parent.renderDepth + 1;
         node.renderParent = true;
         const options: ObjectMap<any> = { android: {}, app: {} };
-        let viewName = VIEW_STATIC.ITEM;
+        let viewName = VIEW_NAVIGATION.ITEM;
         let layout = false;
         let title = '';
         const children = (<HTMLElement[]> Array.from(node.element.children));
@@ -97,10 +91,10 @@ export default class Menu<T extends View> extends Nav {
                 node.children.forEach(item => item.tagName !== 'NAV' && item.hide());
             }
             else if (node.tagName === 'NAV') {
-                viewName = VIEW_STATIC.MENU;
+                viewName = VIEW_NAVIGATION.MENU;
             }
             else {
-                viewName = VIEW_STATIC.GROUP;
+                viewName = VIEW_NAVIGATION.GROUP;
                 let checkable = '';
                 if (node.children.every((item: T) => this.hasInputType(item, 'radio'))) {
                     checkable = 'single';
@@ -121,7 +115,7 @@ export default class Menu<T extends View> extends Nav {
             title = (element.title !== '' ? element.title : element.innerText).trim();
         }
         switch (viewName) {
-            case VIEW_STATIC.ITEM:
+            case VIEW_NAVIGATION.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') == null) {
                     let src = Resource.addImageURL(<string> element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
@@ -139,7 +133,7 @@ export default class Menu<T extends View> extends Nav {
                     }
                 }
                 break;
-            case VIEW_STATIC.GROUP:
+            case VIEW_NAVIGATION.GROUP:
                 this.parseDataSet(VALIDATE_GROUP, element, options);
                 break;
         }

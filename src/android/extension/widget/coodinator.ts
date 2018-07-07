@@ -2,7 +2,7 @@ import { ExtensionResult, Null, ObjectMap } from '../../../lib/types';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import Extension from '../../../base/extension';
-import { setDefaultOption } from '../../../lib/util';
+import { setDefaultOption } from '../lib/util';
 import { VIEW_RESOURCE } from '../../../lib/constants';
 import { VIEW_ANDROID } from '../../constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -31,7 +31,7 @@ export default class Coordinator extends Extension<T, U> {
             let offsetHeight = 0;
             let collapsingToolbar = null;
             if (toolbar != null) {
-                const extension = application.findExtension(WIDGET_NAME.TOOLBAR);
+                const extension = this.application.findExtension(WIDGET_NAME.TOOLBAR);
                 if (extension != null) {
                     offsetX = toolbar.linear.bottom;
                     offsetHeight = toolbar.linear.height;
@@ -65,7 +65,7 @@ export default class Coordinator extends Extension<T, U> {
             const optionsCollapsingToolbar = Object.assign({}, collapsingToolbar);
             const [linearX, linearY] = [ViewList.linearX(nodes), ViewList.linearY(nodes)];
             let viewName = '';
-            if (application.isLinearLayout(linearX, linearY, node, <T[]> nodes)) {
+            if (application.isLinearXY(linearX, linearY, node, <T[]> nodes)) {
                 viewName = VIEW_ANDROID.LINEAR;
                 options.android.orientation = (linearY ? 'vertical' : 'horizontal');
             }

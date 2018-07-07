@@ -13,12 +13,12 @@ export default class ListAndroid<T extends View> extends List {
 
     public processChild(): ExtensionResult {
         const node = (<T> this.node);
-        const controllerHandler = this.application.controllerHandler;
+        const controller = this.application.controllerHandler;
         const listStyle = node.data(`${EXT_NAME.LIST}:listStyle`);
         if (listStyle != null) {
-            controllerHandler.prependBefore(
+            controller.prependBefore(
                 node.id,
-                controllerHandler.getViewStatic(
+                controller.getViewStatic(
                     (listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE),
                     node.depth + node.renderDepth, {
                         android: {
