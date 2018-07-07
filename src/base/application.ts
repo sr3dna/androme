@@ -365,7 +365,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const mapY: any = [];
         const extensions = this.extensions;
         this.cache.list.forEach(node => {
-            const x = Math.floor(<number> node.bounds.x);
+            const x = Math.floor(node.bounds.left);
             const y = node.parent.id;
             if (mapX[node.depth] == null) {
                 mapX[node.depth] = {};
@@ -374,13 +374,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 mapY[node.depth] = {};
             }
             if (mapX[node.depth][x] == null) {
-                mapX[node.depth][x] = new this.TypeU();
+                mapX[node.depth][x] = [];
             }
             if (mapY[node.depth][y] == null) {
-                mapY[node.depth][y] = new this.TypeU();
+                mapY[node.depth][y] = [];
             }
-            mapX[node.depth][x].list.push(node);
-            mapY[node.depth][y].list.push(node);
+            mapX[node.depth][x].push(node);
+            mapY[node.depth][y].push(node);
         });
         for (let i = 0; i < mapY.length; i++) {
             const coordsY = Object.keys(mapY[i]);
@@ -388,7 +388,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             for (let j = 0; j < coordsY.length; j++) {
                 const axisY: T[] = [];
                 const layers: T[] = [];
-                for (const node of (<T[]> mapY[i][coordsY[j]].list)) {
+                for (const node of (<T[]> mapY[i][coordsY[j]])) {
                     switch (node.css('position')) {
                         case 'absolute':
                         case 'relative':

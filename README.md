@@ -1,6 +1,6 @@
 # androme
 
-This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS will also be supported once the Android version has stabilized. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
+This program using Chrome can convert moderately complex HTML pages into the standard XML layouts for Android. iOS will also be supported once the Android version has stabilized. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
 Multiple views per page are supported with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser similiar to iOS Storyboards.
 
@@ -10,7 +10,7 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 ## Installation (global js variable: androme)
 
-*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). Chrome is the preferred browser when generating the production version of your program. ***
+*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). The latest version of Chrome is the preferred browser to generate the production version of your program. ***
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
 
@@ -146,7 +146,15 @@ Most of the Android support library extensions can be configured using the same 
 
 ```javascript
 <script>
-    androme.configureExtension('androme.widget.drawer', { android: { layout_width: 'wrap_content', fitsSystemWindows: 'true' } });
+	androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided for every extension
+		'elementId': { // HTML DOM
+			appBar: {
+				android: {
+					theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
+				}
+			}
+		}
+	});
 </script>
 ```
 <img src="demos/android/drawer.png" alt="drawer: floating action button" />

@@ -1,5 +1,4 @@
 import Node from '../base/node';
-import NodeList from '../base/nodelist';
 
 export type Null<T> = T | null | undefined;
 
@@ -22,8 +21,8 @@ export interface IExtension {
     init(element: HTMLElement): boolean;
     afterInit(internal: boolean): void;
     condition(): void;
-    processNode(mapX?: ObjectIndex<ObjectIndex<NodeList<Node>>>, mapY?: ObjectIndex<ObjectIndex<NodeList<Node>>>): ExtensionResult;
-    processChild(mapX?: ObjectIndex<ObjectIndex<NodeList<Node>>>, mapY?: ObjectIndex<ObjectIndex<NodeList<Node>>>): ExtensionResult;
+    processNode(mapX?: ObjectIndex<ObjectIndex<Node[]>>, mapY?: ObjectIndex<ObjectIndex<Node[]>>): ExtensionResult;
+    processChild(mapX?: ObjectIndex<ObjectIndex<Node[]>>, mapY?: ObjectIndex<ObjectIndex<Node[]>>): ExtensionResult;
     afterRender(): void;
     insert(): void;
     afterInsert(): void;

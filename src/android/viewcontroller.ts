@@ -381,14 +381,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 horizontalChain = nodes.filter((item: T) => same(current, item, 'linear.bottom'));
                             }
                             if (horizontalChain.list.length > 0) {
-                                horizontalChain.sortAsc('linear.x');
+                                horizontalChain.sortAsc('linear.left');
                             }
                             let verticalChain = nodes.filter((item: T) => same(current, item, 'linear.left'));
                             if (verticalChain.list.length === 0) {
                                 verticalChain = nodes.filter((item: T) => same(current, item, 'linear.right'));
                             }
                             if (verticalChain.list.length > 0) {
-                                verticalChain.sortAsc('linear.y');
+                                verticalChain.sortAsc('linear.top');
                             }
                             current.constraint.horizontalChain = horizontalChain;
                             current.constraint.verticalChain = verticalChain;
@@ -624,7 +624,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     const anchors = nodes.anchors;
                     if (constraint) {
                         if (anchors.length === 0) {
-                            const unbound = nodes.sortAsc('bounds.x', 'bounds.y')[0];
+                            const unbound = nodes.sortAsc('bounds.left', 'bounds.top')[0];
                             if (SETTINGS.useConstraintGuideline) {
                                 this.addGuideline(node, unbound);
                             }

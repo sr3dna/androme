@@ -21,7 +21,7 @@ export default class Grid extends Extension<T, U> {
         );
     }
 
-    public processNode(mapX: ObjectIndex<ObjectIndex<U>>, mapY: ObjectIndex<ObjectIndex<U>>): ExtensionResult {
+    public processNode(mapX: ObjectIndex<ObjectIndex<T[]>>, mapY: ObjectIndex<ObjectIndex<T[]>>): ExtensionResult {
         const node = (<T> this.node);
         let xml = '';
         let columns: any[][] = [];
@@ -105,12 +105,12 @@ export default class Grid extends Extension<T, U> {
             }
         }
         else {
-            const nextMapX: ObjectIndex<U> = mapX[node.depth + 2];
+            const nextMapX: ObjectIndex<T[]> = mapX[node.depth + 2];
             const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
             if (nextCoordsX.length > 1) {
                 const columnRight: number[] = [];
                 for (let l = 0; l < nextCoordsX.length; l++) {
-                    const nextAxisX = (<U> nextMapX[parseInt(nextCoordsX[l])]).sortAsc('bounds.top');
+                    const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])], 'bounds.top');
                     columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                     for (let m = 0; m < nextAxisX.length; m++) {
                         const nextX = nextAxisX[m];
@@ -235,6 +235,9 @@ export default class Grid extends Extension<T, U> {
                 }
             }
         }
+        if (xml === '') {
+            node.renderExtension = null;
+        }
         return { xml };
     }
 
@@ -252,7 +255,7 @@ export default class Grid extends Extension<T, U> {
         }
         if (siblings != null && siblings.length > 0) {
             siblings.unshift(node);
-            sortAsc(siblings, 'bounds.x');
+            sortAsc(siblings, 'bounds.left');
             const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
             const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
             if (linearX || linearY) {

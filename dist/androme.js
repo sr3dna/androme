@@ -1,4 +1,4 @@
-/* androme 1.7.24
+/* androme 1.7.25
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -1361,9 +1361,7 @@
             this.cache.clear();
             const extensions = this.extensions;
             extensions.forEach(item => {
-                item.parent = null;
-                item.node = {};
-                item.element = root;
+                item.setTarget({}, null, root);
                 item.beforeInit();
             });
             if (root != null) {
@@ -1373,7 +1371,7 @@
                     this.cache.parent = node;
                 }
             }
-            extensions.forEach(item => item.node = this.cache.parent);
+            extensions.forEach(item => item.setTarget(this.cache.parent));
             for (const element of Array.from(elements)) {
                 if (!this.elements.has(element)) {
                     let handled = false;
@@ -1494,9 +1492,7 @@
                     }
                 });
                 extensions.forEach(item => {
-                    item.parent = null;
-                    item.node = this.cache.parent;
-                    item.element = root;
+                    item.setTarget(this.cache.parent, null, root);
                     item.afterInit();
                 });
                 this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
@@ -1523,7 +1519,7 @@
             const mapY = [];
             const extensions = this.extensions;
             this.cache.list.forEach(node => {
-                const x = Math.floor(node.bounds.x);
+                const x = Math.floor(node.bounds.left);
                 const y = node.parent.id;
                 if (mapX[node.depth] == null) {
                     mapX[node.depth] = {};
@@ -1532,13 +1528,13 @@
                     mapY[node.depth] = {};
                 }
                 if (mapX[node.depth][x] == null) {
-                    mapX[node.depth][x] = new this.TypeU();
+                    mapX[node.depth][x] = [];
                 }
                 if (mapY[node.depth][y] == null) {
-                    mapY[node.depth][y] = new this.TypeU();
+                    mapY[node.depth][y] = [];
                 }
-                mapX[node.depth][x].list.push(node);
-                mapY[node.depth][y].list.push(node);
+                mapX[node.depth][x].push(node);
+                mapY[node.depth][y].push(node);
             });
             for (let i = 0; i < mapY.length; i++) {
                 const coordsY = Object.keys(mapY[i]);
@@ -1546,7 +1542,7 @@
                 for (let j = 0; j < coordsY.length; j++) {
                     const axisY = [];
                     const layers = [];
-                    for (const node of mapY[i][coordsY[j]].list) {
+                    for (const node of mapY[i][coordsY[j]]) {
                         switch (node.css('position')) {
                             case 'absolute':
                             case 'relative':
@@ -1572,9 +1568,7 @@
                             let proceed = false;
                             const renderExtension = parent.renderExtension;
                             if (renderExtension != null) {
-                                renderExtension.node = nodeY;
-                                renderExtension.parent = parent;
-                                renderExtension.element = nodeY.element;
+                                renderExtension.setTarget(nodeY, parent);
                                 const result = renderExtension.processChild();
                                 if (result.xml !== '') {
                                     xml += result.xml;
@@ -1591,9 +1585,7 @@
                             }
                             extensions.some(item => {
                                 if (nodeY.renderExtension == null && item.is(nodeY)) {
-                                    item.parent = parent;
-                                    item.node = nodeY;
-                                    item.element = nodeY.element;
+                                    item.setTarget(nodeY, parent);
                                     if (item.condition()) {
                                         const result = item.processNode(mapX, mapY);
                                         if (result.xml !== '') {
@@ -1689,9 +1681,7 @@
             }
             if (!empty) {
                 extensions.forEach(item => {
-                    item.parent = null;
-                    item.node = root;
-                    item.element = null;
+                    item.setTarget(root);
                     item.afterRender();
                 });
             }
@@ -1746,9 +1736,7 @@
                         }
                         output = placeIndent(output.trim());
                         node.data(insert, output);
-                        extension.parent = null;
-                        extension.node = node;
-                        extension.element = null;
+                        extension.setTarget(node);
                         extension.insert();
                     }
                 }
@@ -1774,9 +1762,7 @@
             this.cacheInternal.list.forEach(node => {
                 const extension = node.renderExtension;
                 if (extension != null) {
-                    extension.parent = null;
-                    extension.node = node;
-                    extension.element = null;
+                    extension.setTarget(node);
                     extension.afterInsert();
                 }
             });
@@ -1786,9 +1772,7 @@
             this.cacheInternal.list.forEach(node => {
                 const extension = node.renderExtension;
                 if (extension != null) {
-                    extension.parent = null;
-                    extension.node = node;
-                    extension.element = null;
+                    extension.setTarget(node);
                     extension.finalize();
                 }
             });
@@ -2152,11 +2136,13 @@
                             borderLeft: this.parseBorderStyle,
                             borderRadius: this.parseBorderRadius,
                             backgroundColor: parseRGBA,
-                            backgroundImage: this.parseBackgroundImage,
+                            backgroundImage: ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE ? this.parseBackgroundImage : ''),
                             backgroundSize: this.parseBoxDimensions
                         };
                         for (const i in result) {
-                            result[i] = result[i](node.css(i), node, i);
+                            if (typeof result[i] === 'function') {
+                                result[i] = result[i](node.css(i), node, i);
+                            }
                         }
                         if (result.backgroundColor.length > 0) {
                             if ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
@@ -3856,14 +3842,14 @@
                                     horizontalChain = nodes.filter((item) => same(current, item, 'linear.bottom'));
                                 }
                                 if (horizontalChain.list.length > 0) {
-                                    horizontalChain.sortAsc('linear.x');
+                                    horizontalChain.sortAsc('linear.left');
                                 }
                                 let verticalChain = nodes.filter((item) => same(current, item, 'linear.left'));
                                 if (verticalChain.list.length === 0) {
                                     verticalChain = nodes.filter((item) => same(current, item, 'linear.right'));
                                 }
                                 if (verticalChain.list.length > 0) {
-                                    verticalChain.sortAsc('linear.y');
+                                    verticalChain.sortAsc('linear.top');
                                 }
                                 current.constraint.horizontalChain = horizontalChain;
                                 current.constraint.verticalChain = verticalChain;
@@ -4099,7 +4085,7 @@
                         const anchors = nodes.anchors;
                         if (constraint) {
                             if (anchors.length === 0) {
-                                const unbound = nodes.sortAsc('bounds.x', 'bounds.y')[0];
+                                const unbound = nodes.sortAsc('bounds.left', 'bounds.top')[0];
                                 if (SETTINGS.useConstraintGuideline) {
                                     this.addGuideline(node, unbound);
                                 }
@@ -4855,44 +4841,49 @@
                         stored.backgroundColor = label.element.__boxStyle.backgroundColor;
                     }
                     if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
-                        let template;
+                        let template = null;
                         let data;
                         let resourceName = '';
-                        if (stored.border != null && stored.backgroundImage === '') {
-                            template = parseTemplate(SHAPERECTANGLE_TMPL);
-                            data = {
-                                '0': [{
-                                        '1': this.getShapeAttribute(stored, 'stroke'),
-                                        '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
-                                                '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                                '4': this.getShapeAttribute(stored, 'radius'),
-                                                '5': this.getShapeAttribute(stored, 'radiusInit')
-                                            }] : false)
-                                    }]
-                            };
-                            if (stored.borderRadius.length > 1) {
-                                const shape = getTemplateLevel(data, '0', '2');
-                                const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                shape['5'].push(borderRadius);
+                        if (stored.border != null) {
+                            if (stored.backgroundImage === '') {
+                                template = parseTemplate(SHAPERECTANGLE_TMPL);
+                                data = {
+                                    '0': [{
+                                            '1': this.getShapeAttribute(stored, 'stroke'),
+                                            '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
+                                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                                    '4': this.getShapeAttribute(stored, 'radius'),
+                                                    '5': this.getShapeAttribute(stored, 'radiusInit')
+                                                }] : false)
+                                        }]
+                                };
+                                if (stored.borderRadius.length > 1) {
+                                    const shape = getTemplateLevel(data, '0', '2');
+                                    const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                                    shape['5'].push(borderRadius);
+                                }
                             }
-                        }
-                        else if (stored.border != null) {
-                            template = parseTemplate(LAYERLIST_TMPL);
-                            data = {
-                                '0': [{
-                                        '1': [{
-                                                '2': this.getShapeAttribute(stored, 'stroke'),
-                                                '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                                '4': this.getShapeAttribute(stored, 'radius'),
-                                                '5': this.getShapeAttribute(stored, 'radiusInit')
-                                            }],
-                                        '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
-                                    }]
-                            };
-                            if (stored.borderRadius.length > 1) {
-                                const shape = getTemplateLevel(data, '0', '1');
-                                const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                shape['5'].push(borderRadius);
+                            else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.size === '0px')) {
+                                resourceName = stored.backgroundImage;
+                            }
+                            else {
+                                template = parseTemplate(LAYERLIST_TMPL);
+                                data = {
+                                    '0': [{
+                                            '1': [{
+                                                    '2': this.getShapeAttribute(stored, 'stroke'),
+                                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                                    '4': this.getShapeAttribute(stored, 'radius'),
+                                                    '5': this.getShapeAttribute(stored, 'radiusInit')
+                                                }],
+                                            '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
+                                        }]
+                                };
+                                if (stored.borderRadius.length > 1) {
+                                    const shape = getTemplateLevel(data, '0', '1');
+                                    const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                                    shape['5'].push(borderRadius);
+                                }
                             }
                         }
                         else {
@@ -4937,16 +4928,18 @@
                                 root['1'] = false;
                             }
                         }
-                        const xml = insertTemplateData(template, data);
-                        for (const [name, value] of STORED.DRAWABLES.entries()) {
-                            if (value === xml) {
-                                resourceName = name;
-                                break;
+                        if (template != null) {
+                            const xml = insertTemplateData(template, data);
+                            for (const [name, value] of STORED.DRAWABLES.entries()) {
+                                if (value === xml) {
+                                    resourceName = name;
+                                    break;
+                                }
                             }
-                        }
-                        if (resourceName === '') {
-                            resourceName = `${node.tagName.toLowerCase()}_${node.viewId}`;
-                            STORED.DRAWABLES.set(resourceName, xml);
+                            if (resourceName === '') {
+                                resourceName = `${node.tagName.toLowerCase()}_${node.viewId}`;
+                                STORED.DRAWABLES.set(resourceName, xml);
+                            }
                         }
                         node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
                     }
@@ -5109,6 +5102,22 @@
                     node.attr(formatString(method['text'], ((parseInt(stored) || '').toString() !== stored ? `@string/${stored}` : stored)), (node.renderExtension == null));
                 }
             });
+        }
+        addResourceTheme(template, data, options) {
+            const map = parseTemplate(template);
+            if (options.item != null) {
+                const root = getTemplateLevel(data, '0');
+                for (const name in options.item) {
+                    let value = options.item[name];
+                    const hex = parseHex(value);
+                    if (hex !== '') {
+                        value = `@color/${Resource.addColor(hex)}`;
+                    }
+                    root['1'].push({ name, value });
+                }
+            }
+            const xml = insertTemplateData(map, data);
+            this.addFile(options.output.path, options.output.file, xml);
         }
         processFontStyle(viewData) {
             const style = {};
@@ -5410,7 +5419,14 @@
         }
         addFile(pathname, filename, content, uri) {
             if (content !== '' || uri !== '') {
-                this.queue.push({ pathname, filename, content, uri });
+                const index = this.queue.findIndex(item => item.pathname === pathname && item.filename === filename);
+                if (index !== -1) {
+                    this.queue[index].content = content || '';
+                    this.queue[index].uri = uri || '';
+                }
+                else {
+                    this.queue.push({ pathname, filename, content, uri });
+                }
             }
         }
         reset() {
@@ -5865,6 +5881,11 @@
                 Object.assign(this.options, options);
             }
         }
+        setTarget(node, parent, element) {
+            this.node = node;
+            this.parent = parent;
+            this.element = (element == null && this.node != null ? this.node.element : element);
+        }
         is(node) {
             return (node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.element.tagName)));
         }
@@ -5882,9 +5903,7 @@
                 this.dependencies.filter(item => item.init).forEach(item => {
                     const extension = this.application.findExtension(item.name);
                     if (extension != null) {
-                        extension.parent = this.parent;
-                        extension.node = this.node;
-                        extension.element = this.element;
+                        extension.setTarget(this.node, this.parent, this.element);
                         extension.beforeInit(true);
                     }
                 });
@@ -5898,9 +5917,7 @@
                 this.dependencies.filter(item => item.init).forEach(item => {
                     const extension = this.application.findExtension(item.name);
                     if (extension != null) {
-                        extension.parent = this.parent;
-                        extension.node = this.node;
-                        extension.element = this.element;
+                        extension.setTarget(this.node, this.parent, this.element);
                         extension.afterInit(true);
                     }
                 });
@@ -6265,7 +6282,7 @@
                 if (nextCoordsX.length > 1) {
                     const columnRight = [];
                     for (let l = 0; l < nextCoordsX.length; l++) {
-                        const nextAxisX = nextMapX[parseInt(nextCoordsX[l])].sortAsc('bounds.top');
+                        const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])], 'bounds.top');
                         columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                         for (let m = 0; m < nextAxisX.length; m++) {
                             const nextX = nextAxisX[m];
@@ -6390,6 +6407,9 @@
                     }
                 }
             }
+            if (xml === '') {
+                node.renderExtension = null;
+            }
             return { xml };
         }
         processChild() {
@@ -6406,7 +6426,7 @@
             }
             if (siblings != null && siblings.length > 0) {
                 siblings.unshift(node);
-                sortAsc(siblings, 'bounds.x');
+                sortAsc(siblings, 'bounds.left');
                 const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 if (linearX || linearY) {
@@ -6439,18 +6459,25 @@
         }
     }
 
-    function setDefaultOption(options, namespace, attr, value) {
-        if (options[namespace] == null) {
-            options[namespace] = {};
-        }
-        if (options[namespace][attr] == null) {
-            options[namespace][attr] = value;
-        }
-    }
-    function getMenu(node, requireExt = true) {
+    function findNestedMenu(node, requireExt = true) {
         return Array.from(node.element.children).find((element) => element.tagName === 'NAV' && (!requireExt || (element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1)));
     }
-    function positionLayoutGravity(node) {
+    function overwriteDefault(options, namespace, attr, value) {
+        if (namespace !== '') {
+            if (options[namespace] == null) {
+                options[namespace] = {};
+            }
+            if (options[namespace][attr] == null) {
+                options[namespace][attr] = value;
+            }
+        }
+        else {
+            if (options[attr] == null) {
+                options[attr] = value;
+            }
+        }
+    }
+    function positionIsolated(node) {
         const renderParent = node.renderParent;
         const parent = node.parentOriginal;
         node.renderParent = parent;
@@ -6506,8 +6533,8 @@
             const element = node.element;
             const options = Object.assign({}, this.options[element.id]);
             const backgroundColor = node.css('backgroundColor');
-            setDefaultOption(options, 'android', 'backgroundTint', (backgroundColor ? `@color/${Resource.addColor(parseRGBA(backgroundColor)[0])}` : '?attr/colorAccent'));
-            setDefaultOption(options, 'android', 'focusable', 'true');
+            overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor ? `@color/${Resource.addColor(parseRGBA(backgroundColor)[0])}` : '?attr/colorAccent'));
+            overwriteDefault(options, 'android', 'focusable', 'true');
             let src = '';
             switch (element.tagName) {
                 case 'IMG':
@@ -6526,7 +6553,7 @@
                     break;
             }
             if (src !== '') {
-                setDefaultOption(options, 'app', 'srcCompat', `@drawable/${src}`);
+                overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
             }
             let insert = false;
             if (node.isolated) {
@@ -6543,7 +6570,7 @@
             node.ignoreResource = VIEW_RESOURCE.BOX_STYLE | VIEW_RESOURCE.ASSET;
             let proceed = false;
             if (node.isolated) {
-                positionLayoutGravity(node);
+                positionIsolated(node);
                 if (insert) {
                     node.app('layout_anchor', parent.stringId);
                     node.app('layout_anchorGravity', node.android('layout_gravity'));
@@ -6790,7 +6817,7 @@
                 if (value != null && validator[attr] != null) {
                     const match = value.match(validator[attr]);
                     if (match != null) {
-                        const namespace = (this.options.appCompat && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
+                        const namespace = ((this.options.appCompat == null || this.options.appCompat) && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
                         options[namespace][attr] = Array.from(new Set(match)).join('|');
                     }
                 }
@@ -6862,10 +6889,10 @@
                     viewName = VIEW_ANDROID.CONSTRAINT;
                 }
                 if (collapsingToolbar != null) {
-                    setDefaultOption(optionsCollapsingToolbar, 'app', 'layout_behavior', '@string/appbar_scrolling_view_behavior');
+                    overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_behavior', '@string/appbar_scrolling_view_behavior');
                     node.android('fitsSystemWindows', 'true');
                 }
-                setDefaultOption((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
+                overwriteDefault((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
                 const depth = (include !== '' ? 0 : node.depth + 1);
                 let content = controller.getViewStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true);
                 if (collapsingToolbar != null) {
@@ -6948,7 +6975,6 @@
         processNode() {
             const controller = this.application.controllerHandler;
             const node = this.node;
-            node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
             const extFor = (node.element.dataset.extFor != null && document.getElementById(node.element.dataset.extFor) !== node.parent.element);
             const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
             const optionsToolbar = Object.assign({}, options.toolbar);
@@ -6963,7 +6989,7 @@
                     if (element.dataset.navigationIcon != null) {
                         const result = Resource.addImageSrcSet(element, DRAWABLE_PREFIX.MENU);
                         if (result !== '') {
-                            setDefaultOption(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
+                            overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                             if (getStyle(element).display !== 'none') {
                                 children++;
                             }
@@ -6972,7 +6998,7 @@
                     if (element.dataset.collapseIcon != null) {
                         const result = Resource.addImageSrcSet(element, DRAWABLE_PREFIX.MENU);
                         if (result !== '') {
-                            setDefaultOption(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
+                            overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                             if (getStyle(element).display !== 'none') {
                                 children++;
                             }
@@ -6983,47 +7009,74 @@
             let appBarOverlay = '';
             let popupOverlay = '';
             if (extFor) {
-                setDefaultOption(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
-                setDefaultOption(optionsToolbar, 'android', 'background', '?attr/colorPrimary');
+                overwriteDefault(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
+                overwriteDefault(optionsToolbar, 'android', 'background', '?attr/colorPrimary');
             }
             if (collapsingToolbar) {
-                setDefaultOption(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
+                overwriteDefault(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
                 if (optionsToolbar.app.popupTheme != null) {
                     popupOverlay = optionsToolbar.app.popupTheme;
                 }
                 optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
             }
             else {
-                setDefaultOption(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
+                overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             }
-            if (getMenu(node) != null) {
-                setDefaultOption(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
+            if (findNestedMenu(node) != null) {
+                overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
             }
             node.depth = depth + (appBar ? 1 : 0) + (options.collapsingToolbar ? 1 : 0);
             let xml = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, node.depth, { android: optionsToolbar.android, app: optionsToolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
+            if (collapsingToolbar) {
+                const style = node.element.style;
+                if (style.backgroundImage) {
+                    const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
+                    let scaleType = 'matrix';
+                    switch (style.backgroundSize) {
+                        case 'contain':
+                        case '100% auto':
+                            scaleType = 'centerInside';
+                            break;
+                        case 'cover':
+                        case 'auto 100%':
+                            scaleType = 'centerCrop';
+                            break;
+                        case '100% 100%':
+                            scaleType = 'center';
+                            break;
+                    }
+                    overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
+                    overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${Resource.addImageURL(style.backgroundImage)}`);
+                    overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
+                    overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
+                    overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
+                    xml += controller.getViewStatic(VIEW_ANDROID.IMAGE, node.depth, { android: optionsBackgroundImage.android, app: optionsBackgroundImage.app }, 'match_parent', 'match_parent');
+                    node.ignoreResource |= VIEW_RESOURCE.IMAGE_SOURCE;
+                }
+            }
             let outer = '';
             if (appBar) {
-                setDefaultOption(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-                setDefaultOption(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? formatDimen('appbar', 'height', convertPX(node.viewHeight)) : 'wrap_content'));
+                overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
+                overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? formatDimen('appbar', 'height', convertPX(node.viewHeight)) : 'wrap_content'));
                 if (collapsingToolbar) {
-                    setDefaultOption(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
+                    overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
                     if (optionsAppBar.android.theme != null) {
                         appBarOverlay = optionsAppBar.android.theme;
                     }
                     optionsAppBar.android.theme = '@style/AppTheme.AppBarOverlay';
                 }
                 else {
-                    setDefaultOption(optionsAppBar, 'app', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
+                    overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
                 }
                 outer = controller.getViewStatic(VIEW_SUPPORT.APPBAR, (extFor ? -1 : depth), { android: optionsAppBar.android, app: optionsAppBar.app }, 'match_parent', 'wrap_content', null, true);
                 if (collapsingToolbar) {
-                    setDefaultOption(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsing`);
-                    setDefaultOption(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
-                    setDefaultOption(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
-                    setDefaultOption(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
-                    setDefaultOption(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
+                    overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsing`);
+                    overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
+                    overwriteDefault(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
+                    overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
+                    overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
                     outer = outer.replace('{:0}', controller.getViewStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, ++depth, { android: optionsCollapsingToolbar.android, app: optionsCollapsingToolbar.app }, 'match_parent', 'match_parent', null, true));
-                    this.createResources(appBarOverlay, popupOverlay);
+                    this.createResourceTheme(appBarOverlay, popupOverlay);
                 }
                 node.viewId = optionsAppBar.android.id.replace('@+id/', '');
             }
@@ -7043,6 +7096,7 @@
                 node.renderDepth = node.depth;
                 node.setGravity();
             }
+            node.ignoreResource |= VIEW_RESOURCE.FONT_STYLE;
             return { xml, proceed };
         }
         processChild() {
@@ -7074,7 +7128,7 @@
         }
         finalize() {
             const node = this.node;
-            const menu = getMenu(node);
+            const menu = findNestedMenu(node);
             if (menu != null) {
                 const layouts = this.application.layouts;
                 for (let i = 0; i < layouts.length; i++) {
@@ -7082,37 +7136,38 @@
                 }
             }
         }
-        createResources(appBarOverlay, popupOverlay) {
+        createResourceTheme(appBarOverlay, popupOverlay) {
             const options = Object.assign({}, this.options.resource);
-            setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
-            setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
-            const template = parseTemplate(EXTENSION_COLLAPSINGTOOLBAR_TMPL);
+            overwriteDefault(options, '', 'appTheme', 'AppTheme');
+            overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
             const data = {
                 '0': [{
-                        'appTheme': options.resource.appTheme,
-                        'parentTheme': options.resource.parentTheme,
+                        'appTheme': options.appTheme,
+                        'parentTheme': options.parentTheme,
                         'appBarOverlay': appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
                         'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
                         '1': []
                     }]
             };
-            if (options.item != null) {
-                const root = getTemplateLevel(data, '0');
-                for (const name in options.item) {
-                    let value = options.item[name];
-                    const hex = parseHex(value);
-                    if (hex !== '') {
-                        value = `@color/${Resource.addColor(hex)}`;
-                    }
-                    root['1'].push({ name, value });
-                }
-            }
-            setDefaultOption(options, 'output', 'path', 'res/values');
-            setDefaultOption(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
-            const xml = insertTemplateData(template, data);
-            this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
+            overwriteDefault(options, 'output', 'path', 'res/values');
+            overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
+            this.application.resourceHandler.addResourceTheme(EXTENSION_COLLAPSINGTOOLBAR_TMPL, data, options);
         }
     }
+
+    const template$a = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<resources>',
+        '	<style name="{@appTheme}" parent="{@parentTheme}">',
+        '!1',
+        '		<item name="{name}">{value}</item>',
+        '!1',
+        '	</style>',
+        '</resources>',
+        '!0'
+    ];
+    var EXTENSION_GENERIC_TMPL = template$a.join('\n');
 
     class BottomNavigation extends Extension {
         constructor(name, tagNames, options) {
@@ -7123,8 +7178,8 @@
             const node = this.node;
             const parent = this.parent;
             const options = Object.assign({}, this.options[node.element.id]);
-            setDefaultOption(options, 'android', 'background', `?android:attr/windowBackground`);
-            setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`);
+            overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
+            overwriteDefault(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`);
             const xml = this.application.controllerHandler.getViewStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(VIEW_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
             for (let i = 5; i < node.children.length; i++) {
                 node.children[i].hide();
@@ -7134,11 +7189,12 @@
             node.ignoreResource = VIEW_RESOURCE.ASSET;
             node.applyCustomizations();
             node.render(parent);
+            this.createResourceTheme();
             return { xml };
         }
         finalize() {
             const node = this.node;
-            if (getMenu(node) != null) {
+            if (findNestedMenu(node) != null) {
                 let menu = '';
                 this.application.elements.forEach(item => {
                     if (item.parentElement === node.element) {
@@ -7152,9 +7208,24 @@
                 this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`, menu));
             }
         }
+        createResourceTheme() {
+            const options = Object.assign({}, this.options.resource);
+            overwriteDefault(options, '', 'appTheme', 'AppTheme');
+            overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+            const data = {
+                '0': [{
+                        'appTheme': options.appTheme,
+                        'parentTheme': options.parentTheme,
+                        '1': []
+                    }]
+            };
+            overwriteDefault(options, 'output', 'path', 'res/values');
+            overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
+            this.application.resourceHandler.addResourceTheme(EXTENSION_GENERIC_TMPL, data, options);
+        }
     }
 
-    const template$a = [
+    const template$b = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
@@ -7165,11 +7236,11 @@
         '!1',
         '		<item name="{name}">{value}</item>',
         '!1',
-        '   </style>',
+        '	</style>',
         '</resources>',
         '!0'
     ];
-    var EXTENSION_DRAWER_TMPL = template$a.join('\n');
+    var EXTENSION_DRAWER_TMPL = template$b.join('\n');
 
     class Drawer extends Extension {
         constructor(name, tagNames = [], options) {
@@ -7198,12 +7269,11 @@
             const application = this.application;
             const controller = application.controllerHandler;
             const node = this.node;
-            node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
             let depth = node.depth + node.renderDepth;
             let options = Object.assign({}, this.options.drawerLayout);
-            let menu = getMenu(node);
+            let menu = findNestedMenu(node);
             if (menu != null) {
-                setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
+                overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             }
             let xml = controller.getViewStatic(VIEW_SUPPORT.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node, true);
             const filename = `${node.viewId}_content`;
@@ -7221,13 +7291,13 @@
             application.cache.list.push(coordinator);
             const content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', coordinator, true);
             options = Object.assign({}, this.options.navigationView);
-            setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
+            overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
             if (menu != null) {
-                this.createResources();
-                setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
-                setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-                setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
-                setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
+                this.createResourceTheme();
+                overwriteDefault(options, 'android', 'id', `${node.stringId}_view`);
+                overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+                overwriteDefault(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
+                overwriteDefault(options, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
                 const navigation = controller.getViewStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
                 xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
             }
@@ -7248,12 +7318,13 @@
                 application.addInclude(filename, content);
             }
             node.renderParent = true;
+            node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
             node.applyCustomizations();
             return { xml };
         }
         finalize() {
             const node = this.node;
-            if (getMenu(node) != null) {
+            if (findNestedMenu(node) != null) {
                 let menu = '';
                 let headerLayout = '';
                 this.application.elements.forEach(item => {
@@ -7274,33 +7345,20 @@
                 });
             }
         }
-        createResources() {
+        createResourceTheme() {
             const options = Object.assign({}, this.options.resource);
-            setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
-            setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
-            const template = parseTemplate(EXTENSION_DRAWER_TMPL);
+            overwriteDefault(options, '', 'appTheme', 'AppTheme');
+            overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
             const data = {
                 '0': [{
-                        'appTheme': options.resource.appTheme,
-                        'parentTheme': options.resource.parentTheme,
+                        'appTheme': options.appTheme,
+                        'parentTheme': options.parentTheme,
                         '1': []
                     }]
             };
-            if (options.item != null) {
-                const root = getTemplateLevel(data, '0');
-                for (const name in options.item) {
-                    let value = options.item[name];
-                    const hex = parseHex(value);
-                    if (hex !== '') {
-                        value = `@color/${Resource.addColor(hex)}`;
-                    }
-                    root['1'].push({ name, value });
-                }
-            }
-            setDefaultOption(options, 'output', 'path', 'res/values-v21');
-            setDefaultOption(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-            const xml = insertTemplateData(template, data);
-            this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
+            overwriteDefault(options, 'output', 'path', 'res/values-v21');
+            overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
+            this.application.resourceHandler.addResourceTheme(EXTENSION_DRAWER_TMPL, data, options);
         }
     }
 
@@ -7312,10 +7370,10 @@
         [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
         [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET']),
         [WIDGET_NAME.FAB]: new FloatingActionButton(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
-        [WIDGET_NAME.MENU]: new Menu$1(WIDGET_NAME.MENU, ['NAV'], { appCompat: true }),
+        [WIDGET_NAME.MENU]: new Menu$1(WIDGET_NAME.MENU, ['NAV']),
         [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
         [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR),
-        [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, []),
+        [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION),
         [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
     };
     const Node$1 = View;
