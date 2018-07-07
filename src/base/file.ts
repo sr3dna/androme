@@ -33,7 +33,14 @@ export default abstract class File<T extends Node> {
 
     public addFile(pathname: string, filename: string, content: string, uri: string) {
         if (content !== '' || uri !== '') {
-            this.queue.push({ pathname, filename, content, uri });
+            const index = this.queue.findIndex(item => item.pathname === pathname && item.filename === filename);
+            if (index !== -1) {
+                this.queue[index].content = content || '';
+                this.queue[index].uri = uri || '';
+            }
+            else {
+                this.queue.push({ pathname, filename, content, uri });
+            }
         }
     }
 

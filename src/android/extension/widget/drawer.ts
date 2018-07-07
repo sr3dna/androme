@@ -124,12 +124,12 @@ export default class Drawer extends Extension<T, U> {
 
     private createResourceTheme() {
         const options = Object.assign({}, this.options.resource);
-        overwriteDefault(options, 'resource', 'appTheme', 'AppTheme');
-        overwriteDefault(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
+        overwriteDefault(options, '', 'appTheme', 'AppTheme');
+        overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const data = {
             '0': [{
-                'appTheme': options.resource.appTheme,
-                'parentTheme': options.resource.parentTheme,
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
                 '1': []
             }]
         };

@@ -6,6 +6,8 @@ import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { VIEW_RESOURCE, VIEW_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
+import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
+
 type T = View;
 type U = ViewList<T>;
 
@@ -30,6 +32,7 @@ export default class BottomNavigation extends Extension<T, U> {
         node.ignoreResource = VIEW_RESOURCE.ASSET;
         node.applyCustomizations();
         node.render(parent);
+        this.createResourceTheme();
         return { xml };
     }
 
@@ -48,5 +51,21 @@ export default class BottomNavigation extends Extension<T, U> {
             });
             this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`, menu));
         }
+    }
+
+    private createResourceTheme() {
+        const options = Object.assign({}, this.options.resource);
+        overwriteDefault(options, '', 'appTheme', 'AppTheme');
+        overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+        const data = {
+            '0': [{
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
+                '1': []
+            }]
+        };
+        overwriteDefault(options, 'output', 'path', 'res/values');
+        overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
+        this.application.resourceHandler.addResourceTheme(EXTENSION_GENERIC_TMPL, data, options);
     }
 }

@@ -11,11 +11,18 @@ export function findNestedMenu(node: T, requireExt = true) {
 }
 
 export function overwriteDefault(options: ObjectMap<any>, namespace: string, attr: string, value: string) {
-    if (options[namespace] == null) {
-        options[namespace] = {};
+    if (namespace !== '') {
+        if (options[namespace] == null) {
+            options[namespace] = {};
+        }
+        if (options[namespace][attr] == null) {
+            options[namespace][attr] = value;
+        }
     }
-    if (options[namespace][attr] == null) {
-        options[namespace][attr] = value;
+    else {
+        if (options[attr] == null) {
+            options[attr] = value;
+        }
     }
 }
 

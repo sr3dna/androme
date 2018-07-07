@@ -47,6 +47,14 @@
                     android: {
                         background: '?android:attr/windowBackground'
                     }
+                },
+                resource: {
+                    output: {
+                        path: 'res/values',
+                        file: 'androme.widget.bottomnavigation.xml'
+                    },
+                    appTheme: 'AppTheme',
+                    parentTheme: 'Theme.AppCompat.Light.DarkActionBar'
                 }
             });
             androme.parseDocument('androme_ui').then(function() {

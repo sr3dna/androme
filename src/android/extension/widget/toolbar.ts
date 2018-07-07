@@ -8,11 +8,11 @@ import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { formatDimen, restoreIndent } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
 import { VIEW_RESOURCE } from '../../../lib/constants';
+import { VIEW_ANDROID } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 import EXTENSION_COLLAPSINGTOOLBAR_TMPL from '../../template/extension/collapsingtoolbar';
-import { VIEW_ANDROID } from '../../constants';
 
 type T = View;
 type U = ViewList<T>;
@@ -219,12 +219,12 @@ export default class Toolbar extends Extension<T, U> {
 
     private createResourceTheme(appBarOverlay: string, popupOverlay: string) {
         const options = Object.assign({}, this.options.resource);
-        overwriteDefault(options, 'resource', 'appTheme', 'AppTheme');
-        overwriteDefault(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+        overwriteDefault(options, '', 'appTheme', 'AppTheme');
+        overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             '0': [{
-                'appTheme': options.resource.appTheme,
-                'parentTheme': options.resource.parentTheme,
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
                 'appBarOverlay': appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
                 'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
                 '1': []
