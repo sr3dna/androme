@@ -180,6 +180,7 @@ export default abstract class Resource<T extends Node> {
     constructor(public file: File<T>) {
     }
 
+    public abstract addResourceTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>): void;
     public abstract finalize(viewData: {}): void;
 
     public addFile(pathname: string, filename: string, content = '', uri = '') {
@@ -222,11 +223,13 @@ export default abstract class Resource<T extends Node> {
                         borderLeft: this.parseBorderStyle,
                         borderRadius: this.parseBorderRadius,
                         backgroundColor: parseRGBA,
-                        backgroundImage: this.parseBackgroundImage,
+                        backgroundImage: ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE ? this.parseBackgroundImage : ''),
                         backgroundSize: this.parseBoxDimensions
                     };
                     for (const i in result) {
-                        result[i] = result[i](node.css(i), node, i);
+                        if (typeof result[i] === 'function') {
+                            result[i] = result[i](node.css(i), node, i);
+                        }
                     }
                     if (result.backgroundColor.length > 0) {
                         if ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {

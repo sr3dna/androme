@@ -1,18 +1,18 @@
-import { ExtensionResult, ObjectMap } from '../../../lib/types';
-import View from '../../view';
-import ViewList from '../../viewlist';
+import { ExtensionResult } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import Resource from '../../../base/resource';
+import View from '../../view';
+import ViewList from '../../viewlist';
 import { convertPX } from '../../../lib/util';
-import { getMenu, setDefaultOption } from '../lib/util';
-import { formatDimen, getTemplateLevel, insertTemplateData, parseTemplate, restoreIndent } from '../../../lib/xml';
+import { findNestedMenu, overwriteDefault } from '../lib/util';
+import { formatDimen, restoreIndent } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
-import { parseHex } from '../../../lib/color';
+import { VIEW_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
-import { VIEW_RESOURCE } from '../../../lib/constants';
 
 import EXTENSION_COLLAPSINGTOOLBAR_TMPL from '../../template/extension/collapsingtoolbar';
+import { VIEW_ANDROID } from '../../constants';
 
 type T = View;
 type U = ViewList<T>;
@@ -51,7 +51,6 @@ export default class Toolbar extends Extension<T, U> {
     public processNode(): ExtensionResult {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
-        node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
         const extFor = (node.element.dataset.extFor != null && document.getElementById(node.element.dataset.extFor) !== node.parent.element);
         const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
         const optionsToolbar = Object.assign({}, options.toolbar);
@@ -66,7 +65,7 @@ export default class Toolbar extends Extension<T, U> {
                 if (element.dataset.navigationIcon != null) {
                     const result = Resource.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
-                        setDefaultOption(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
+                        overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
                             children++;
                         }
@@ -75,7 +74,7 @@ export default class Toolbar extends Extension<T, U> {
                 if (element.dataset.collapseIcon != null) {
                     const result = Resource.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
-                        setDefaultOption(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
+                        overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
                             children++;
                         }
@@ -86,47 +85,74 @@ export default class Toolbar extends Extension<T, U> {
         let appBarOverlay = '';
         let popupOverlay = '';
         if (extFor) {
-            setDefaultOption(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
-            setDefaultOption(optionsToolbar, 'android', 'background', '?attr/colorPrimary');
+            overwriteDefault(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
+            overwriteDefault(optionsToolbar, 'android', 'background', '?attr/colorPrimary');
         }
         if (collapsingToolbar) {
-            setDefaultOption(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
+            overwriteDefault(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
             if (optionsToolbar.app.popupTheme != null) {
                 popupOverlay = optionsToolbar.app.popupTheme;
             }
             optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
         }
         else {
-            setDefaultOption(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
+            overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
         }
-        if (getMenu(node) != null) {
-            setDefaultOption(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
+        if (findNestedMenu(node) != null) {
+            overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
         }
         node.depth = depth + (appBar ? 1 : 0) + (options.collapsingToolbar ? 1 : 0);
-        let xml  = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, node.depth, { android: optionsToolbar.android, app: optionsToolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
+        let xml = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, node.depth, { android: optionsToolbar.android, app: optionsToolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
+        if (collapsingToolbar) {
+            const style = node.element.style;
+            if (style.backgroundImage) {
+                const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
+                let scaleType = 'matrix';
+                switch (style.backgroundSize) {
+                    case 'contain':
+                    case '100% auto':
+                        scaleType = 'centerInside';
+                        break;
+                    case 'cover':
+                    case 'auto 100%':
+                        scaleType = 'centerCrop';
+                        break;
+                    case '100% 100%':
+                        scaleType = 'center';
+                        break;
+                }
+                overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
+                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${Resource.addImageURL(<string> style.backgroundImage)}`);
+                overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
+                overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
+                overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
+                xml += controller.getViewStatic(VIEW_ANDROID.IMAGE, node.depth, { android: optionsBackgroundImage.android, app: optionsBackgroundImage.app }, 'match_parent', 'match_parent');
+                node.ignoreResource |= VIEW_RESOURCE.IMAGE_SOURCE;
+            }
+        }
         let outer = '';
         if (appBar) {
-            setDefaultOption(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            setDefaultOption(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? formatDimen('appbar', 'height', convertPX(node.viewHeight)) : 'wrap_content'));
+            overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
+            overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? formatDimen('appbar', 'height', convertPX(node.viewHeight)) : 'wrap_content'));
             if (collapsingToolbar) {
-                setDefaultOption(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
+                overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
                 if (optionsAppBar.android.theme != null) {
                     appBarOverlay = optionsAppBar.android.theme;
                 }
                 optionsAppBar.android.theme = '@style/AppTheme.AppBarOverlay';
             }
             else {
-                setDefaultOption(optionsAppBar, 'app', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
+                overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
             outer = controller.getViewStatic(VIEW_SUPPORT.APPBAR, (extFor ? -1 : depth), { android: optionsAppBar.android, app: optionsAppBar.app }, 'match_parent', 'wrap_content', null, true);
             if (collapsingToolbar) {
-                setDefaultOption(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsing`);
-                setDefaultOption(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
-                setDefaultOption(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
-                setDefaultOption(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
-                setDefaultOption(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
+                overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsing`);
+                overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
+                overwriteDefault(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
+                overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
+                overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
                 outer = outer.replace('{:0}', controller.getViewStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, ++depth, { android: optionsCollapsingToolbar.android, app: optionsCollapsingToolbar.app }, 'match_parent', 'match_parent', null, true));
-                this.createResources(appBarOverlay, popupOverlay);
+                this.createResourceTheme(appBarOverlay, popupOverlay);
             }
             node.viewId = optionsAppBar.android.id.replace('@+id/', '');
         }
@@ -146,6 +172,7 @@ export default class Toolbar extends Extension<T, U> {
             node.renderDepth = node.depth;
             node.setGravity();
         }
+        node.ignoreResource |= VIEW_RESOURCE.FONT_STYLE;
         return { xml, proceed };
     }
 
@@ -181,7 +208,7 @@ export default class Toolbar extends Extension<T, U> {
 
     public finalize() {
         const node = (<T> this.node);
-        const menu = getMenu(node);
+        const menu = findNestedMenu(node);
         if (menu != null) {
             const layouts = this.application.layouts;
             for (let i = 0; i < layouts.length; i++) {
@@ -190,11 +217,10 @@ export default class Toolbar extends Extension<T, U> {
         }
     }
 
-    private createResources(appBarOverlay: string, popupOverlay: string) {
+    private createResourceTheme(appBarOverlay: string, popupOverlay: string) {
         const options = Object.assign({}, this.options.resource);
-        setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
-        setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
-        const template: ObjectMap<string> = parseTemplate(EXTENSION_COLLAPSINGTOOLBAR_TMPL);
+        overwriteDefault(options, 'resource', 'appTheme', 'AppTheme');
+        overwriteDefault(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             '0': [{
                 'appTheme': options.resource.appTheme,
@@ -204,20 +230,8 @@ export default class Toolbar extends Extension<T, U> {
                 '1': []
             }]
         };
-        if (options.item != null) {
-            const root = getTemplateLevel(data, '0');
-            for (const name in options.item) {
-                let value = options.item[name];
-                const hex = parseHex(value);
-                if (hex !== '') {
-                    value = `@color/${Resource.addColor(hex)}`;
-                }
-                root['1'].push({ name, value });
-            }
-        }
-        setDefaultOption(options, 'output', 'path', 'res/values');
-        setDefaultOption(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
-        const xml = insertTemplateData(template, data);
-        this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
+        overwriteDefault(options, 'output', 'path', 'res/values');
+        overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
+        this.application.resourceHandler.addResourceTheme(EXTENSION_COLLAPSINGTOOLBAR_TMPL, data, options);
     }
 }

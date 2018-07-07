@@ -2,9 +2,9 @@ import { ExtensionResult } from '../../lib/types';
 import View from '../view';
 import List from '../../extension/list';
 import { formatDimen } from '../../lib/xml';
-import parseRTL from '../localization';
 import { VIEW_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
+import parseRTL from '../localization';
 
 export default class ListAndroid<T extends View> extends List {
     constructor(name: string, tagNames: string[], options?: {}) {

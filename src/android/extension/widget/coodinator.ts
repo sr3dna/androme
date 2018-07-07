@@ -1,8 +1,8 @@
 import { ExtensionResult, Null, ObjectMap } from '../../../lib/types';
+import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import Extension from '../../../base/extension';
-import { setDefaultOption } from '../lib/util';
+import { overwriteDefault } from '../lib/util';
 import { VIEW_RESOURCE } from '../../../lib/constants';
 import { VIEW_ANDROID } from '../../constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -73,10 +73,10 @@ export default class Coordinator extends Extension<T, U> {
                 viewName = VIEW_ANDROID.CONSTRAINT;
             }
             if (collapsingToolbar != null) {
-                setDefaultOption(optionsCollapsingToolbar, 'app', 'layout_behavior', '@string/appbar_scrolling_view_behavior');
+                overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_behavior', '@string/appbar_scrolling_view_behavior');
                 node.android('fitsSystemWindows', 'true');
             }
-            setDefaultOption((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
+            overwriteDefault((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
             const depth = (include !== '' ? 0 : node.depth + 1);
             let content = controller.getViewStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true);
             if (collapsingToolbar != null) {

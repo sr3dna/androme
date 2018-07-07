@@ -6,7 +6,11 @@ import parseRTL from '../../localization';
 
 type T = View;
 
-export function setDefaultOption(options: ObjectMap<any>, namespace: string, attr: string, value: string) {
+export function findNestedMenu(node: T, requireExt = true) {
+    return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && (!requireExt || (element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1))));
+}
+
+export function overwriteDefault(options: ObjectMap<any>, namespace: string, attr: string, value: string) {
     if (options[namespace] == null) {
         options[namespace] = {};
     }
@@ -15,11 +19,7 @@ export function setDefaultOption(options: ObjectMap<any>, namespace: string, att
     }
 }
 
-export function getMenu(node: T, requireExt = true) {
-    return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && (!requireExt || (element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1))));
-}
-
-export function positionLayoutGravity(node: T) {
+export function positionIsolated(node: T) {
     const renderParent = node.renderParent;
     const parent = node.parentOriginal;
     node.renderParent = parent;

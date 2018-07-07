@@ -5,6 +5,7 @@ import View from './view';
 import { capitalize, formatString, hasValue, repeat } from '../lib/util';
 import { getTemplateLevel, placeIndent, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
+import { parseHex } from '../lib/color';
 import { VIEW_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -119,44 +120,49 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     stored.backgroundColor = (<any> label.element).__boxStyle.backgroundColor;
                 }
                 if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
-                    let template: ObjectMap<string>;
+                    let template: Null<ObjectMap<string>> = null;
                     let data;
                     let resourceName = '';
-                    if (stored.border != null && stored.backgroundImage === '') {
-                        template = parseTemplate(SHAPERECTANGLE_TMPL);
-                        data = {
-                            '0': [{
-                                '1': this.getShapeAttribute(stored, 'stroke'),
-                                '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
-                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                    '4': this.getShapeAttribute(stored, 'radius'),
-                                    '5': this.getShapeAttribute(stored, 'radiusInit')
-                                }] : false)
-                            }]
-                        };
-                        if (stored.borderRadius.length > 1) {
-                            const shape = getTemplateLevel(data, '0', '2');
-                            const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                            shape['5'].push(borderRadius);
+                    if (stored.border != null) {
+                        if (stored.backgroundImage === '') {
+                            template = parseTemplate(SHAPERECTANGLE_TMPL);
+                            data = {
+                                '0': [{
+                                    '1': this.getShapeAttribute(stored, 'stroke'),
+                                    '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
+                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                        '4': this.getShapeAttribute(stored, 'radius'),
+                                        '5': this.getShapeAttribute(stored, 'radiusInit')
+                                    }] : false)
+                                }]
+                            };
+                            if (stored.borderRadius.length > 1) {
+                                const shape = getTemplateLevel(data, '0', '2');
+                                const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                                shape['5'].push(borderRadius);
+                            }
                         }
-                    }
-                    else if (stored.border != null) {
-                        template = parseTemplate(LAYERLIST_TMPL);
-                        data = {
-                            '0': [{
-                                '1': [{
-                                    '2': this.getShapeAttribute(stored, 'stroke'),
-                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                    '4': this.getShapeAttribute(stored, 'radius'),
-                                    '5': this.getShapeAttribute(stored, 'radiusInit')
-                                }],
-                                '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
-                            }]
-                        };
-                        if (stored.borderRadius.length > 1) {
-                            const shape = getTemplateLevel(data, '0', '1');
-                            const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                            shape['5'].push(borderRadius);
+                        else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.size === '0px')) {
+                            resourceName = stored.backgroundImage;
+                        }
+                        else {
+                            template = parseTemplate(LAYERLIST_TMPL);
+                            data = {
+                                '0': [{
+                                    '1': [{
+                                        '2': this.getShapeAttribute(stored, 'stroke'),
+                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                        '4': this.getShapeAttribute(stored, 'radius'),
+                                        '5': this.getShapeAttribute(stored, 'radiusInit')
+                                    }],
+                                    '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
+                                }]
+                            };
+                            if (stored.borderRadius.length > 1) {
+                                const shape = getTemplateLevel(data, '0', '1');
+                                const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                                shape['5'].push(borderRadius);
+                            }
                         }
                     }
                     else {
@@ -201,16 +207,18 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             root['1'] = false;
                         }
                     }
-                    const xml = insertTemplateData(template, data);
-                    for (const [name, value] of STORED.DRAWABLES.entries()) {
-                        if (value === xml) {
-                            resourceName = name;
-                            break;
+                    if (template != null) {
+                        const xml = insertTemplateData(template, data);
+                        for (const [name, value] of STORED.DRAWABLES.entries()) {
+                            if (value === xml) {
+                                resourceName = name;
+                                break;
+                            }
                         }
-                    }
-                    if (resourceName === '') {
-                        resourceName = `${node.tagName.toLowerCase()}_${node.viewId}`;
-                        STORED.DRAWABLES.set(resourceName, xml);
+                        if (resourceName === '') {
+                            resourceName = `${node.tagName.toLowerCase()}_${node.viewId}`;
+                            STORED.DRAWABLES.set(resourceName, xml);
+                        }
                     }
                     node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
                 }
@@ -377,6 +385,23 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 node.attr(formatString(method['text'], ((parseInt(stored) || '').toString() !== stored ? `@string/${stored}` : stored)), (node.renderExtension == null));
             }
         });
+    }
+
+    public addResourceTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>) {
+        const map: ObjectMap<string> = parseTemplate(template);
+        if (options.item != null) {
+            const root = getTemplateLevel(data, '0');
+            for (const name in options.item) {
+                let value = options.item[name];
+                const hex = parseHex(value);
+                if (hex !== '') {
+                    value = `@color/${Resource.addColor(hex)}`;
+                }
+                root['1'].push({ name, value });
+            }
+        }
+        const xml = insertTemplateData(map, data);
+        this.addFile(options.output.path, options.output.file, xml);
     }
 
     private processFontStyle(viewData: ViewData<T>) {

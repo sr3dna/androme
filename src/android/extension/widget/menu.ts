@@ -1,7 +1,7 @@
 import { ExtensionResult, ObjectMap } from '../../../lib/types';
-import View from '../../view';
-import Nav from '../../../extension/nav';
 import Resource from '../../../base/resource';
+import Nav from '../../../extension/nav';
+import View from '../../view';
 import { BLOCK_CHROME, VIEW_RESOURCE } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 

@@ -1,8 +1,8 @@
 import { ExtensionResult } from '../../../lib/types';
+import Resource from '../../../base/resource';
 import View from '../../view';
 import Button from '../../../extension/button';
-import Resource from '../../../base/resource';
-import { positionLayoutGravity, setDefaultOption } from '../lib/util';
+import { positionIsolated, overwriteDefault } from '../lib/util';
 import { restoreIndent } from '../../../lib/xml';
 import { parseRGBA } from '../../../lib/color';
 import { VIEW_RESOURCE } from '../../../lib/constants';
@@ -19,8 +19,8 @@ export default class FloatingActionButton<T extends View> extends Button {
         const element = node.element;
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = node.css('backgroundColor');
-        setDefaultOption(options, 'android', 'backgroundTint', (backgroundColor ? `@color/${Resource.addColor(parseRGBA(backgroundColor)[0])}` : '?attr/colorAccent'));
-        setDefaultOption(options, 'android', 'focusable', 'true');
+        overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor ? `@color/${Resource.addColor(parseRGBA(backgroundColor)[0])}` : '?attr/colorAccent'));
+        overwriteDefault(options, 'android', 'focusable', 'true');
         let src = '';
         switch (element.tagName) {
             case 'IMG':
@@ -39,7 +39,7 @@ export default class FloatingActionButton<T extends View> extends Button {
                 break;
         }
         if (src !== '') {
-            setDefaultOption(options, 'app', 'srcCompat', `@drawable/${src}`);
+            overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         let insert = false;
         if (node.isolated) {
@@ -56,7 +56,7 @@ export default class FloatingActionButton<T extends View> extends Button {
         node.ignoreResource = VIEW_RESOURCE.BOX_STYLE | VIEW_RESOURCE.ASSET;
         let proceed = false;
         if (node.isolated) {
-            positionLayoutGravity(node);
+            positionIsolated(node);
             if (insert) {
                 node.app('layout_anchor', parent.stringId);
                 node.app('layout_anchorGravity', <string> node.android('layout_gravity'));

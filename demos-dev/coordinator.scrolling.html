@@ -22,7 +22,6 @@
         #coordinator_toolbar {
             position: relative;
             height: 180px;
-            background-color: #343434;
         }
         #coordinator_toolbar button {
             position: absolute;
@@ -70,6 +69,11 @@
                         app: {
                             popupTheme: 'ThemeOverlay.AppCompat.Light'
                         }
+                    },
+                    backgroundImage: {
+                        app: {
+                            layout_collapseMode: 'parallax'
+                        }
                     }
                 },
                 resource: {
@@ -106,7 +110,7 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div id="coordinator_toolbar" data-ext="androme.widget.toolbar" data-ext-for="androme_ui">
+        <div id="coordinator_toolbar" data-ext="androme.widget.toolbar" data-ext-for="androme_ui" style="background-image: url(../demos/images/android_background.jpg); background-size: 100% 100%;">
             <nav id="toolbar_menu" data-ext="androme.widget.menu">
                 <div
                     data-show-as-action="always"

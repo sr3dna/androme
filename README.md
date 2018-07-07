@@ -31,7 +31,7 @@ Express server through Node.js is available with a provided default configuratio
 * Load web server:
   1. node app.js
 
-* Open Chrome: http://localhost:3000/demos/index.html
+* Open Browser: http://localhost:3000/demos/index.html
 
 If you install via NPM then it is recommended you put androme into its own separate folder rather than hosting it inside "node_modules".
 
@@ -118,8 +118,6 @@ You can preview the library with the provided /demos/*.html which for the the ti
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using HTML tables is recommended for most applications as it will generate a very efficient GridLayout. Performance is probably faster than ConstraintLayout and also more accurate.
 
-<img src="demos/android/form.png" alt="form" />
-
 ### Standard
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for most of the common floating techniques.
@@ -153,15 +151,17 @@ Most of the Android support library extensions can be configured using the same 
 ```
 <img src="demos/android/drawer.png" alt="drawer: floating action button" />
 
-<img src="demos/android/drawer.navigationview.png" alt="drawer: actionbar" />
-
 <img src="demos/android/coordinator.scrolling.png" alt="coordinator: scrolling" />
 
 <img src="demos/android/bottomnavigation.png" alt="bottom navigation" />
 
+<img src="demos/android/drawer.navigationview.png" alt="drawer: actionbar" />
+
 <img src="demos/android/menu.png" alt="toolbar: menu" />
 
-### Auto-generated Layout
+### Generated from HTML and CSS
+
+<img src="demos/android/form.png" alt="form" />
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>

@@ -1,16 +1,14 @@
-import { ExtensionResult, ObjectMap } from '../../../lib/types';
+import { ExtensionResult } from '../../../lib/types';
+import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import Extension from '../../../base/extension';
-import Resource from '../../../base/resource';
-import { getTemplateLevel, insertTemplateData, parseTemplate } from '../../../lib/xml';
-import { parseHex } from '../../../lib/color';
+import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { VIEW_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import parseRTL from '../../localization';
 import SETTINGS from '../../../settings';
-import { getMenu, setDefaultOption } from '../lib/util';
+
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
 type T = View;
@@ -46,12 +44,11 @@ export default class Drawer extends Extension<T, U> {
         const application = this.application;
         const controller = application.controllerHandler;
         const node = (<T> this.node);
-        node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
         let depth = node.depth + node.renderDepth;
         let options = Object.assign({}, this.options.drawerLayout);
-        let menu = getMenu(node);
+        let menu = findNestedMenu(node);
         if (menu != null) {
-            setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
+            overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
         }
         let xml = controller.getViewStatic(VIEW_SUPPORT.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node, true);
         const filename = `${node.viewId}_content`;
@@ -69,13 +66,13 @@ export default class Drawer extends Extension<T, U> {
         application.cache.list.push(coordinator);
         const content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', coordinator, true);
         options = Object.assign({}, this.options.navigationView);
-        setDefaultOption(options, 'android', 'layout_gravity', parseRTL('left'));
+        overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
-            this.createResources();
-            setDefaultOption(options, 'android', 'id', `${node.stringId}_view`);
-            setDefaultOption(options, 'android', 'fitsSystemWindows', 'true');
-            setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
-            setDefaultOption(options, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
+            this.createResourceTheme();
+            overwriteDefault(options, 'android', 'id', `${node.stringId}_view`);
+            overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+            overwriteDefault(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
+            overwriteDefault(options, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
             const navigation = controller.getViewStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
             xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
         }
@@ -96,13 +93,14 @@ export default class Drawer extends Extension<T, U> {
             application.addInclude(filename, content);
         }
         node.renderParent = true;
+        node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
         node.applyCustomizations();
         return { xml };
     }
 
     public finalize() {
         const node = (<T> this.node);
-        if (getMenu(node) != null) {
+        if (findNestedMenu(node) != null) {
             let menu = '';
             let headerLayout = '';
             this.application.elements.forEach(item => {
@@ -124,11 +122,10 @@ export default class Drawer extends Extension<T, U> {
         }
     }
 
-    private createResources() {
+    private createResourceTheme() {
         const options = Object.assign({}, this.options.resource);
-        setDefaultOption(options, 'resource', 'appTheme', 'AppTheme');
-        setDefaultOption(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
-        const template: ObjectMap<string> = parseTemplate(EXTENSION_DRAWER_TMPL);
+        overwriteDefault(options, 'resource', 'appTheme', 'AppTheme');
+        overwriteDefault(options, 'resource', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const data = {
             '0': [{
                 'appTheme': options.resource.appTheme,
@@ -136,20 +133,8 @@ export default class Drawer extends Extension<T, U> {
                 '1': []
             }]
         };
-        if (options.item != null) {
-            const root = getTemplateLevel(data, '0');
-            for (const name in options.item) {
-                let value = options.item[name];
-                const hex = parseHex(value);
-                if (hex !== '') {
-                    value = `@color/${Resource.addColor(hex)}`;
-                }
-                root['1'].push({ name, value });
-            }
-        }
-        setDefaultOption(options, 'output', 'path', 'res/values-v21');
-        setDefaultOption(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-        const xml = insertTemplateData(template, data);
-        this.application.resourceHandler.addFile(options.output.path, options.output.file, xml);
+        overwriteDefault(options, 'output', 'path', 'res/values-v21');
+        overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
+        this.application.resourceHandler.addResourceTheme(EXTENSION_DRAWER_TMPL, data, options);
     }
 }

@@ -1,8 +1,8 @@
 import { ExtensionResult } from '../../../lib/types';
+import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import Extension from '../../../base/extension';
-import { getMenu, setDefaultOption } from '../lib/util';
+import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { VIEW_RESOURCE, VIEW_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
@@ -19,8 +19,8 @@ export default class BottomNavigation extends Extension<T, U> {
         const node = (<T> this.node);
         const parent = (<T> this.parent);
         const options = Object.assign({}, this.options[node.element.id]);
-        setDefaultOption(options, 'android', 'background', `?android:attr/windowBackground`);
-        setDefaultOption(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`);
+        overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
+        overwriteDefault(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`);
         const xml = this.application.controllerHandler.getViewStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(VIEW_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
         for (let i = 5; i < node.children.length; i++) {
             node.children[i].hide();
@@ -35,7 +35,7 @@ export default class BottomNavigation extends Extension<T, U> {
 
     public finalize() {
         const node = (<T> this.node);
-        if (getMenu(node) != null) {
+        if (findNestedMenu(node) != null) {
             let menu = '';
             this.application.elements.forEach(item => {
                 if (item.parentElement === node.element) {
