@@ -27,6 +27,12 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         }
     }
 
+    public setTarget(node: T, parent?: Null<T>, element?: Null<HTMLElement>) {
+        this.node = (<T> node);
+        this.parent = parent;
+        this.element = (element == null && this.node != null ? this.node.element : element);
+    }
+
     public is(node: T) {
         return (node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.element.tagName)));
     }
@@ -47,9 +53,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
             this.dependencies.filter(item => item.init).forEach(item => {
                 const extension = this.application.findExtension(item.name);
                 if (extension != null) {
-                    extension.parent = this.parent;
-                    extension.node = this.node;
-                    extension.element = this.element;
+                    extension.setTarget(this.node, this.parent, this.element);
                     extension.beforeInit(true);
                 }
             });
@@ -65,9 +69,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
             this.dependencies.filter(item => item.init).forEach(item => {
                 const extension = this.application.findExtension(item.name);
                 if (extension != null) {
-                    extension.parent = this.parent;
-                    extension.node = this.node;
-                    extension.element = this.element;
+                    extension.setTarget(this.node, this.parent, this.element);
                     extension.afterInit(true);
                 }
             });

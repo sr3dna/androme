@@ -14,6 +14,7 @@ export interface IExtension {
     options: ObjectMap<any>;
     dependencies: ExtensionDependency[];
     activityMain: boolean;
+    setTarget(node: Node, parent?: Null<Node>, element?: Null<HTMLElement>): void;
     is(node: Node): void;
     require(value: string): void;
     included(element?: HTMLElement): boolean;

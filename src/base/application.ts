@@ -206,9 +206,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cache.clear();
         const extensions = this.extensions;
         extensions.forEach(item => {
-            item.parent = null;
-            item.node = (<T> {});
-            item.element = root;
+            item.setTarget((<T> {}), null, root);
             item.beforeInit();
         });
         if (root != null) {
@@ -218,7 +216,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 this.cache.parent = node;
             }
         }
-        extensions.forEach(item => item.node = (<T> this.cache.parent));
+        extensions.forEach(item => item.setTarget((<T> this.cache.parent)));
         for (const element of (<HTMLElement[]> Array.from(elements))) {
             if (!this.elements.has(element)) {
                 let handled = false;
@@ -339,9 +337,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             });
             extensions.forEach(item => {
-                item.parent = null;
-                item.node = (<T> this.cache.parent);
-                item.element = root;
+                item.setTarget((<T> this.cache.parent), null, root);
                 item.afterInit();
             });
             this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
@@ -418,9 +414,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         let proceed = false;
                         const renderExtension = (<Extension<T, U>> parent.renderExtension);
                         if (renderExtension != null) {
-                            renderExtension.node = nodeY;
-                            renderExtension.parent = parent;
-                            renderExtension.element = nodeY.element;
+                            renderExtension.setTarget(nodeY, parent);
                             const result = renderExtension.processChild();
                             if (result.xml !== '') {
                                 xml += result.xml;
@@ -437,9 +431,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                         extensions.some(item => {
                             if (nodeY.renderExtension == null && item.is(nodeY)) {
-                                item.parent = parent;
-                                item.node = nodeY;
-                                item.element = nodeY.element;
+                                item.setTarget(nodeY, parent);
                                 if (item.condition()) {
                                     const result =  item.processNode(mapX, mapY);
                                     if (result.xml !== '') {
@@ -535,9 +527,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         if (!empty) {
             extensions.forEach(item => {
-                item.parent = null;
-                item.node = root;
-                item.element = null;
+                item.setTarget(root);
                 item.afterRender();
             });
         }
@@ -601,9 +591,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                     output = placeIndent(output.trim());
                     node.data(insert, output);
-                    extension.parent = null;
-                    extension.node = node;
-                    extension.element = null;
+                    extension.setTarget(node);
                     extension.insert();
                 }
             }
@@ -629,9 +617,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cacheInternal.list.forEach(node => {
             const extension = node.renderExtension;
             if (extension != null) {
-                extension.parent = null;
-                extension.node = node;
-                extension.element = null;
+                extension.setTarget(node);
                 extension.afterInsert();
             }
         });
@@ -642,9 +628,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cacheInternal.list.forEach(node => {
             const extension = node.renderExtension;
             if (extension != null) {
-                extension.parent = null;
-                extension.node = node;
-                extension.element = null;
+                extension.setTarget(node);
                 extension.finalize();
             }
         });

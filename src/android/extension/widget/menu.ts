@@ -170,7 +170,7 @@ export default class Menu<T extends View> extends Nav {
             if (value != null && validator[attr] != null) {
                 const match = value.match(validator[attr]);
                 if (match != null) {
-                    const namespace = (this.options.appCompat && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
+                    const namespace = ((this.options.appCompat == null || this.options.appCompat) && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
                     options[namespace][attr] = Array.from(new Set(match)).join('|');
                 }
             }
