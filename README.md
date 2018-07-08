@@ -93,6 +93,7 @@ androme.settings = {
     density: androme.build.MDPI,
     useConstraintLayout: true,
     useConstraintGuideline: true,
+    useConstraintChain: true,
     useUnitDP: true,
     useFontAlias: true,
     supportRTL: true,
@@ -115,6 +116,8 @@ androme.settings = {
 };
 ```
 You can preview the library with the provided /demos/*.html which for the the time being is the only form of documentation. Using the latest Chrome will always generate the most accurate layout.
+
+Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. To use Constraint circle for placement you have to disable "useConstraintChain" and "useConstraintGuideline".
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using HTML tables is recommended for most applications as it will generate a very efficient GridLayout. Performance is probably faster than ConstraintLayout and also more accurate.
 

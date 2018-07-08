@@ -241,9 +241,9 @@ export default class View extends Node {
                     this.android('maxWidth', convertPX(styleMap.maxWidth), false);
                 }
             }
-            if ((!this.flex.enabled || constraint.expand) && constraint.layoutWidth != null) {
+            if (constraint.layoutWidth && (!this.flex.enabled || constraint.expand)) {
                 if (constraint.layoutWidth) {
-                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || convertInt(this.bounds.minWidth) >= parentWidth ? 'match_parent' : this.bounds.minWidth));
+                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= parentWidth ? 'match_parent' : formatPX(this.bounds.width)));
                 }
                 else {
                     this.android('layout_width', 'wrap_content', false);
@@ -280,8 +280,8 @@ export default class View extends Node {
                     this.android('maxHeight', convertPX(styleMap.maxHeight), false);
                 }
             }
-            if ((!this.flex.enabled || constraint.expand) && constraint.layoutHeight != null) {
-                this.android('layout_height', (constraint.layoutHeight ? this.bounds.minHeight : 'wrap_content'), constraint.layoutHeight);
+            if (constraint.layoutHeight && (!this.flex.enabled || constraint.expand)) {
+                this.android('layout_height', (constraint.layoutHeight ? formatPX(this.bounds.height) : 'wrap_content'), constraint.layoutHeight);
             }
             else if (this.android('layout_height') == null) {
                 let layoutHeight = 'wrap_content';

@@ -70,11 +70,7 @@ export interface ClientRect {
     left: number;
     width: number;
     height: number;
-    x?: number;
-    y?: number;
-    minWidth?: string;
-    minHeight?: string;
-    [attr: string]: number | string | undefined;
+    [key: string]: number;
 }
 
 export interface Point {

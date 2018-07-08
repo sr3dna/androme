@@ -26,6 +26,7 @@
         System.import('/build/main.js').then(function(result) {
             androme = result;
             androme.settings.useConstraintGuideline = false;
+            androme.settings.useConstraintChain = false;
             androme.settings.alwaysReevaluateResources = true;
             addView();
             closeDocument();

@@ -12,6 +12,7 @@ const SETTINGS = {
     density: DENSITY_ANDROID.MDPI,
     useConstraintLayout: true,
     useConstraintGuideline: true,
+    useConstraintChain: true,
     useUnitDP: true,
     useFontAlias: true,
     supportRTL: true,

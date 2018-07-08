@@ -321,7 +321,7 @@ export function withinRange(a: number, b: number, n = 1) {
 }
 
 export function withinFraction(lower: number, upper: number) {
-    return (lower === upper || Math.ceil(lower) === Math.floor(upper));
+    return (lower === upper || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper));
 }
 
 export function caseInsensitve(a: string | string[], b: string | string[]) {

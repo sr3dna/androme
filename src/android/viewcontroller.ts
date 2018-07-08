@@ -64,7 +64,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             const relative = node.is(VIEW_STANDARD.RELATIVE);
             const flex = node.flex;
             if (nodes.list.length > 0 && (constraint || relative || flex.enabled)) {
-                node.expandDimensions();
+                node.setBoundsMin();
                 if (node.is(VIEW_STANDARD.LINEAR)) {
                     if (node.renderChildren.some(item => item.flex.direction.indexOf('row') !== -1)) {
                         node.constraint.layoutWidth = true;
@@ -83,7 +83,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 function mapDelete(item: T, ...direction: string[]) {
                     for (const attr of direction) {
-                        item.delete('app', LAYOUT[attr]);
+                        item.delete((constraint ? 'app' : 'android'), LAYOUT[attr]);
                     }
                 }
                 if (relative || nodes.list.length === 1) {
@@ -113,6 +113,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         else if (constraint) {
                             let linear1: ClientRect = current.linear;
                             let linear2: ClientRect = adjacent.linear;
+                            const alignedX = (linear1.left === linear2.left || linear1.right === linear2.right);
                             let parent = false;
                             if (current === node || adjacent === node) {
                                 if (current === node) {
@@ -128,10 +129,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                             else {
                                 if (parent) {
-                                    if (Math.floor(linear1.left) === linear2.left) {
+                                    if (withinFraction(linear1.left, linear2.left) || linear1.left < linear2.left) {
                                         current.anchor(LAYOUT['left'], adjacent, 'horizontal');
                                     }
-                                    if (withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                    if (withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset) || linear1.right > linear2.right) {
                                         current.anchor(LAYOUT['right'], adjacent, 'horizontal');
                                     }
                                 }
@@ -164,10 +165,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                             }
                             if (parent) {
-                                if (Math.floor(linear1.top) === linear2.top) {
+                                if (withinFraction(linear1.top, linear2.top) || linear1.top < linear2.top) {
                                     current.anchor(LAYOUT['top'], adjacent, 'vertical');
                                 }
-                                if (withinRange(Math.ceil(linear1.bottom), linear2.bottom, (current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap') ? SETTINGS.whitespaceHorizontalOffset : 0))) {
+                                if (withinFraction(linear1.bottom, linear2.bottom) || linear1.bottom > linear2.bottom || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset))) {
                                     current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
                                 }
                             }
@@ -176,7 +177,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                     if (current.withinY(linear2)) {
                                         if (!parentBottom || adjacent.constraint.vertical) {
-                                            current.anchor(LAYOUT['topBottom'], adjacent, adjacentY, (linear1.left === linear2.left || linear2.right === linear2.right));
+                                            current.anchor(LAYOUT['topBottom'], adjacent, adjacentY, alignedX);
                                         }
                                         if (adjacent.constraint.vertical) {
                                             if (!mapParent(current, 'top')) {
@@ -188,7 +189,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                                 else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
                                     if (!parentBottom && current.withinY(linear2)) {
-                                        current.anchor(LAYOUT['bottomTop'], adjacent, adjacentY, (linear1.left === linear2.left || linear2.right === linear2.right));
+                                        current.anchor(LAYOUT['bottomTop'], adjacent, adjacentY, alignedX);
                                         if (!mapParent(current, 'top')) {
                                             mapDelete(current, 'top');
                                         }
@@ -227,22 +228,23 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                             else if (adjacent === node) {
                                 adjacent = { stringId: 'true' };
-                                if (Math.floor(current.linear.left) === node.box.left) {
+                                if (withinFraction(current.linear.left, node.box.left)) {
                                     current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
                                 }
-                                else if (current.linear.right === node.box.right) {
+                                else if (withinFraction(current.linear.right, node.box.right)) {
                                     current.anchor(parseRTL('layout_alignParentRight'), adjacent, 'horizontal');
                                 }
-                                if (Math.floor(current.linear.top) === node.box.top) {
+                                if (withinFraction(current.linear.top, node.box.top)) {
                                     current.anchor('layout_alignParentTop', adjacent, 'vertical');
                                 }
-                                else if (withinRange(Math.ceil(current.linear.bottom), node.box.bottom, (current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap') ? SETTINGS.whitespaceHorizontalOffset : 0))) {
+                                else if (withinFraction(current.linear.bottom, node.box.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset))) {
                                     current.anchor('layout_alignParentBottom', adjacent, 'vertical');
                                 }
                             }
                             else {
                                 const linear1: ClientRect = current.linear;
                                 const linear2: ClientRect = adjacent.linear;
+                                const alignedX = (linear1.left === linear2.left || linear1.right === linear2.right);
                                 if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
                                     current.android('layout_centerHorizontal', 'true');
                                     current.constraint.horizontal = true;
@@ -261,14 +263,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     }
                                 }
                                 if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                    current.anchor(LAYOUT['topBottom'], adjacent, adjacentY);
+                                    current.anchor(LAYOUT['topBottom'], adjacent, adjacentY, alignedX);
                                     if (adjacent.constraint.vertical) {
                                         current.delete('android', 'layout_alignParentBottom');
                                     }
                                 }
                                 else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
-                                    if (current.android('layout_alignParentBottom') !== 'true') {
-                                        current.anchor(LAYOUT['bottomTop'], adjacent, adjacentY);
+                                    if (current.android('layout_alignParentTop') !== 'true') {
+                                        current.anchor(LAYOUT['bottomTop'], adjacent, adjacentY, alignedX);
                                     }
                                 }
                                 if (adjacent.constraint.horizontal) {
@@ -320,8 +322,42 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             current.android('layout_width', 'match_parent');
                         }
                     }
+                    else {
+                        if (current.android(LAYOUT['topBottom']) != null) {
+                            mapDelete(current, 'bottomTop');
+                        }
+                    }
                 });
-                if (flex.enabled || (constraint && !nodes.intersect() && !nodes.list.some(item => item.floating))) {
+                const anchors = nodes.anchors;
+                do {
+                    let restart = false;
+                    nodes.list.forEach(current => {
+                        if (!current.anchored) {
+                            const result = (constraint ? search(<ObjectMap<string>> current.app(), '*constraint*') : search(<ObjectMap<string>> current.android(), LAYOUT));
+                            for (const [key, value] of result) {
+                                if (value !== 'parent') {
+                                    if (anchors.find(item => item.stringId === value) != null) {
+                                        if (!current.constraint.horizontal && indexOf(key, parseRTL('Left'), parseRTL('Right')) !== -1) {
+                                            current.constraint.horizontal = true;
+                                        }
+                                        if (!current.constraint.vertical && indexOf(key, 'Top', 'Bottom', 'Baseline', 'above', 'below') !== -1) {
+                                            current.constraint.vertical = true;
+                                        }
+                                    }
+                                }
+                            }
+                            if (current.anchored) {
+                                anchors.push(current);
+                                restart = true;
+                            }
+                        }
+                    });
+                    if (!restart) {
+                        break;
+                    }
+                }
+                while (true);
+                if (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect() && !nodes.list.some(item => item.floating))) {
                     let flexNodes: Null<any[]> = null;
                     if (flex.enabled) {
                         const directionNodes = nodes.list.slice();
@@ -621,104 +657,80 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     });
                 }
                 if (!flex.enabled) {
-                    const anchors = nodes.anchors;
+                    function deleteConstraints(item: T) {
+                        const namespace = (constraint ? 'app' : 'android');
+                        item.delete(namespace, LAYOUT['leftRight'], LAYOUT['rightLeft']);
+                        item.delete(namespace, LAYOUT['bottomTop'], LAYOUT['topBottom'], LAYOUT['baseline']);
+                    }
                     if (constraint) {
-                        if (anchors.length === 0) {
-                            const unbound = nodes.sortAsc('bounds.left', 'bounds.top')[0];
+                        const unbound = nodes.list.filter(current => !current.anchored && (mapParent(current, 'top') || mapParent(current, 'right') || mapParent(current, 'bottom') || mapParent(current, 'left')));
+                        if (anchors.length === 0 && unbound.length === 0) {
+                            unbound.push(nodes.sortAsc('bounds.left', 'bounds.top')[0]);
+                        }
+                        unbound.forEach(current => {
                             if (SETTINGS.useConstraintGuideline) {
-                                this.addGuideline(node, unbound);
+                                this.addGuideline(node, current);
                             }
                             else {
-                                this.setAlignParent(unbound, '', true);
-                            }
-                            anchors.push(unbound);
-                        }
-                    }
-                    do {
-                        let restart = false;
-                        nodes.list.forEach(current => {
-                            if (!current.anchored) {
-                                const result = (constraint ? search(<ObjectMap<string>> current.app(), '*constraint*') : search(<ObjectMap<string>> current.android(), LAYOUT));
-                                for (const [key, value] of result) {
-                                    if (value !== 'parent') {
-                                        if (anchors.find(item => item.stringId === value) != null) {
-                                            if (!current.constraint.horizontal && indexOf(key, parseRTL('Left'), parseRTL('Right')) !== -1) {
-                                                current.constraint.horizontal = true;
-                                            }
-                                            if (!current.constraint.vertical && indexOf(key, 'Top', 'Bottom', 'Baseline', 'above', 'below') !== -1) {
-                                                current.constraint.vertical = true;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (current.anchored) {
-                                    anchors.push(current);
-                                    restart = true;
-                                }
+                                this.setAlignParent(current, '', true);
                             }
                         });
-                        if (!restart) {
-                            break;
-                        }
-                    }
-                    while (true);
-                    if (constraint) {
-                        nodes.list.forEach(opposite => {
-                            if (!opposite.anchored) {
-                                this.deleteConstraints(node);
-                                if (SETTINGS.useConstraintGuideline) {
-                                    this.addGuideline(node, opposite);
-                                }
-                                else {
-                                    const adjacent = nodes.anchors[0];
-                                    const center1: Point = opposite.center;
-                                    const center2: Point = adjacent.center;
-                                    const x = Math.abs(center1.x - center2.x);
-                                    const y = Math.abs(center1.y - center2.y);
-                                    let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
-                                    const radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
-                                    if (center1.y > center2.y) {
-                                        if (center1.x > center2.x) {
-                                            if (x > y) {
-                                                degrees += 90;
-                                            }
-                                            else {
-                                                degrees = 180 - degrees;
-                                            }
+                        const adjacent = nodes.anchors[0];
+                        nodes.list.filter(current => !current.anchored).forEach(opposite => {
+                            deleteConstraints(opposite);
+                            opposite.constraint.horizontal = mapParent(opposite, 'left') || mapParent(opposite, 'right');
+                            opposite.constraint.vertical = mapParent(opposite, 'top') || mapParent(opposite, 'bottom');
+                            if (SETTINGS.useConstraintGuideline) {
+                                this.addGuideline(node, opposite);
+                            }
+                            else {
+                                const center1: Point = opposite.center;
+                                const center2: Point = adjacent.center;
+                                const x = Math.abs(center1.x - center2.x);
+                                const y = Math.abs(center1.y - center2.y);
+                                let degrees = Math.round(Math.atan(Math.min(x, y) / Math.max(x, y)) * (180 / Math.PI));
+                                const radius = Math.round(Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
+                                if (center1.y > center2.y) {
+                                    if (center1.x > center2.x) {
+                                        if (x > y) {
+                                            degrees += 90;
                                         }
                                         else {
-                                            if (x > y) {
-                                                degrees = 270 - degrees;
-                                            }
-                                            else {
-                                                degrees += 180;
-                                            }
-                                        }
-                                    }
-                                    else if (center1.y < center2.y) {
-                                        if (center2.x > center1.x) {
-                                            if (x > y) {
-                                                degrees += 270;
-                                            }
-                                            else {
-                                                degrees = 360 - degrees;
-                                            }
-                                        }
-                                        else {
-                                            if (x > y) {
-                                                degrees = 90 - degrees;
-                                            }
+                                            degrees = 180 - degrees;
                                         }
                                     }
                                     else {
-                                        degrees = (center1.x > center2.x ? 90 : 270);
+                                        if (x > y) {
+                                            degrees = 270 - degrees;
+                                        }
+                                        else {
+                                            degrees += 180;
+                                        }
                                     }
-                                    opposite.app('layout_constraintCircle', adjacent.stringId);
-                                    opposite.app('layout_constraintCircleRadius', formatDimen(`${opposite.tagName}`, 'constraintcircleradius', formatPX(radius)));
-                                    opposite.app('layout_constraintCircleAngle', degrees.toString());
-                                    opposite.constraint.horizontal = true;
-                                    opposite.constraint.vertical = true;
                                 }
+                                else if (center1.y < center2.y) {
+                                    if (center2.x > center1.x) {
+                                        if (x > y) {
+                                            degrees += 270;
+                                        }
+                                        else {
+                                            degrees = 360 - degrees;
+                                        }
+                                    }
+                                    else {
+                                        if (x > y) {
+                                            degrees = 90 - degrees;
+                                        }
+                                    }
+                                }
+                                else {
+                                    degrees = (center1.x > center2.x ? 90 : 270);
+                                }
+                                opposite.app('layout_constraintCircle', adjacent.stringId);
+                                opposite.app('layout_constraintCircleRadius', formatDimen(`${opposite.tagName}`, 'constraintcircleradius', formatPX(radius)));
+                                opposite.app('layout_constraintCircleAngle', degrees.toString());
+                                opposite.constraint.horizontal = true;
+                                opposite.constraint.vertical = true;
                             }
                         });
                         nodes.list.forEach(current => {
@@ -732,33 +744,40 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                     else {
                         nodes.list.forEach(current => {
-                            const parentRight = current.android(parseRTL('layout_alignParentRight'));
-                            const parentBottom = current.android('layout_alignParentBottom');
+                            const parentTop = (current.android('layout_alignParentTop') === 'true');
+                            const parentRight = (current.android(parseRTL('layout_alignParentRight')) === 'true');
+                            const parentBottom = (current.android('layout_alignParentBottom') === 'true');
+                            const parentLeft = (current.android(parseRTL('layout_alignParentLeft')) === 'true');
                             if (!anchors.includes(current)) {
-                                const parentLeft = parseRTL('layout_alignParentLeft');
-                                current.delete('android', LAYOUT);
-                                if (current.android(parentLeft) !== 'true') {
-                                    const left = formatPX(Math.max(0, current.bounds.left - node.box.left));
-                                    current.css(parseRTL('marginLeft'), left);
-                                    current.android(parentLeft, 'true');
-                                    current.android(parseRTL('layout_marginLeft'), left);
+                                deleteConstraints(current);
+                                current.constraint.horizontal = (parentLeft || parentRight);
+                                current.constraint.vertical = (parentTop || parentBottom);
+                                if (!current.constraint.horizontal) {
+                                    const left = formatPX(Math.max(0, current.linear.left - node.box.left));
+                                    if (left !== '0px') {
+                                        current.css(parseRTL('marginLeft'), left);
+                                        current.android(parseRTL('layout_marginLeft'), left);
+                                    }
+                                    current.android(parseRTL('layout_alignParentLeft'), 'true');
+                                    current.constraint.horizontal = true;
                                 }
-                                if (parentBottom !== 'true') {
-                                    const top = formatPX(Math.max(0, current.bounds.top - node.box.top));
-                                    current.css('marginTop', top);
+                                if (!current.constraint.vertical) {
+                                    const top = formatPX(Math.max(0, current.linear.top - node.box.top));
+                                    if (top !== '0px') {
+                                        current.css('marginTop', top);
+                                        current.android('layout_marginTop', top);
+                                    }
                                     current.android('layout_alignParentTop', 'true');
-                                    current.android('layout_marginTop', top);
+                                    current.constraint.vertical = true;
                                 }
-                                current.constraint.horizontal = true;
-                                current.constraint.vertical = true;
                             }
                             else {
                                 this.adjustMargins([current]);
                             }
-                            if (parentRight === 'true' && current.android(LAYOUT['leftRight']) == null) {
+                            if (parentRight && current.android(LAYOUT['leftRight']) == null) {
                                 node.constraint.layoutWidth = true;
                             }
-                            if (parentBottom === 'true' && current.android(LAYOUT['topBottom']) == null) {
+                            if (parentBottom && current.android(LAYOUT['topBottom']) == null) {
                                 node.constraint.layoutHeight = true;
                             }
                         });
@@ -1181,7 +1200,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     private setAlignParent(node: T, orientation = '', bias = false) {
         const map: StringMap = LAYOUT_MAP.constraint;
         ['horizontal', 'vertical'].forEach((value, index) => {
-            if (orientation === '' || value === orientation) {
+            if (!node.constraint[value] && (orientation === '' || value === orientation)) {
                 node.app(map[(index === 0 ? 'left' : 'top')], 'parent');
                 node.app(map[(index === 0 ? 'right' : 'bottom')], 'parent');
                 node.constraint[value] = true;
@@ -1196,7 +1215,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         const map: StringMap = LAYOUT_MAP.constraint;
         const beginPercent = `layout_constraintGuide_${(percent !== -1 ? 'percent' : 'begin')}`;
         ['horizontal', 'vertical'].forEach((value, index) => {
-            if ((orientation === '' && !node.constraint[value]) || orientation === value) {
+            if (!node.constraint[value] && (orientation === '' || value === orientation)) {
                 const position = (index === 0 ? 'left' : 'top');
                 const options: ObjectMap<any> = {
                     android: {
@@ -1215,18 +1234,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 node.constraint[value] = true;
             }
         });
-    }
-
-    private deleteConstraints(node: T, orientation = '') {
-        const map = LAYOUT_MAP.constraint;
-        if (orientation === '' || orientation === 'horizontal') {
-            node.delete('app', map['leftRight'], map['rightLeft']);
-            node.constraint.horizontal = false;
-        }
-        if (orientation === '' || orientation === 'vertical') {
-            node.delete('app', map['bottomTop'], map['topBottom'], map['baseline']);
-            node.constraint.vertical = false;
-        }
     }
 
     private findByAndroidId(id: string) {

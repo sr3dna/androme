@@ -17,7 +17,8 @@ export default abstract class Button extends Extension<T, U> {
 
     public init(element: HTMLElement) {
         if (this.included(element)) {
-            (<any> element).__nodeIsolated = (getStyle(element).position !== 'static');
+            const position = getStyle(element).position;
+            (<any> element).__nodeIsolated = (position !== 'static' && position !== 'initial');
         }
         return false;
     }

@@ -460,24 +460,29 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             if (tagName === '') {
                                 if (nodeY.children.length > 0 && nodeY.cascade().some(node => MAPPING_CHROME[node.tagName] != null || !INLINE_CHROME.includes(node.tagName))) {
                                     if (!nodeY.renderParent) {
-                                        if (nodeY.children.length === 1) {
-                                            if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
-                                                nodeY.children[0].parent = parent;
-                                                nodeY.cascade().forEach(item => item.renderDepth--);
-                                                nodeY.hide();
-                                                continue;
-                                            }
-                                            else {
-                                                xml += this.writeFrameLayout(nodeY, parent);
-                                            }
+                                        if (nodeY.children.some(node => !node.pageflow)) {
+                                            xml += this.writeDefaultLayout(nodeY, parent);
                                         }
                                         else {
-                                            const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
-                                            if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
-                                                xml += this.writeLinearLayout(nodeY, parent, linearY);
+                                            if (nodeY.children.length === 1) {
+                                                if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
+                                                    nodeY.children[0].parent = parent;
+                                                    nodeY.cascade().forEach(item => item.renderDepth--);
+                                                    nodeY.hide();
+                                                    continue;
+                                                }
+                                                else {
+                                                    xml += this.writeFrameLayout(nodeY, parent);
+                                                }
                                             }
                                             else {
-                                                xml += this.writeDefaultLayout(nodeY, parent);
+                                                const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
+                                                if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
+                                                    xml += this.writeLinearLayout(nodeY, parent, linearY);
+                                                }
+                                                else {
+                                                    xml += this.writeDefaultLayout(nodeY, parent);
+                                                }
                                             }
                                         }
                                     }
@@ -666,7 +671,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                (!parent.flex.enabled || (linearX && children.every(node => node.flex.enabled))) &&
                (!children.some(node => node.floating && node.css('clear') !== 'none') &&
                (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')) &&
-               children.every(node => node.css('position') === 'static' || node.tagName === 'PLAINTEXT' || (node.css('position') === 'relative') && node.styleMap.top == null && node.styleMap.right == null && node.styleMap.bottom == null && node.styleMap.left == null));
+               children.every(node => node.pageflow));
     }
 
     public addInclude(filename: string, content: string) {

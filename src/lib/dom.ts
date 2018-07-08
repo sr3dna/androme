@@ -7,8 +7,7 @@ export function getRangeBounds(element: HTMLElement) {
     const domRect = range.getClientRects();
     const bounds = assignBounds(<ClientRect> domRect[domRect.length - 1]);
     if (domRect.length > 1) {
-        bounds.x = Math.min.apply(null, Array.from(domRect).map((item: ClientRect) => item.x));
-        bounds.left = (<number> bounds.x);
+        bounds.left = Math.min.apply(null, Array.from(domRect).map((item: ClientRect) => item.left));
         bounds.width = Array.from(domRect).reduce((a: number, b: ClientRect) => a + b.width, 0);
     }
     return bounds;
@@ -16,8 +15,6 @@ export function getRangeBounds(element: HTMLElement) {
 
 export function assignBounds(bounds: ClientRect): ClientRect {
     return {
-        x: bounds.x,
-        y: bounds.y,
         top: bounds.top,
         right: bounds.right,
         bottom: bounds.bottom,
@@ -99,7 +96,7 @@ export function isVisible(element: HTMLElement) {
                 return Array.from(element.children).some((item: HTMLElement) => {
                     const style = getStyle(item);
                     const float = (<any> style).float;
-                    return (style.position !== 'static' || float === 'left' || float === 'right');
+                    return ((style.position !== 'static' && style.position !== 'initial') || float === 'left' || float === 'right');
                 });
             }
         }

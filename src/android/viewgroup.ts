@@ -37,8 +37,6 @@ export default class ViewGroup extends View {
         const nodes = this.outerRegion;
         if (!calibrate) {
             this.bounds = {
-                x: nodes.left[0].bounds.x,
-                y: nodes.top[0].bounds.y,
                 top: nodes.top[0].bounds.top,
                 right: nodes.right[0].bounds.right,
                 bottom: nodes.bottom[0].bounds.bottom,

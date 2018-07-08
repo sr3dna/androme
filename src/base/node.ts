@@ -1,5 +1,5 @@
 import { BoxModel, BoxRect, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
-import { convertInt, formatPX, hasValue, hyphenToCamelCase, search } from '../lib/util';
+import { convertInt, hasValue, hyphenToCamelCase, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
 
@@ -96,24 +96,17 @@ export default abstract class Node implements BoxModel {
         return (this[name] && this[name][attr] != null ? this[name][attr] : '');
     }
 
-    public delete(ns: string, ...attrs: any[]) {
+    public delete(ns: string, ...attrs: string[]) {
         const name = `_${ns || '_'}`;
         if (this[name] != null) {
-            if (typeof attrs[0] === 'object') {
-                for (const key in attrs[0]) {
-                    delete this[name][attrs[0][key]];
+            for (const attr of attrs) {
+                if (attr.indexOf('*') !== -1) {
+                    for (const [key] of search(this[name], attr)) {
+                        delete this[name][key];
+                    }
                 }
-            }
-            else {
-                for (const attr of attrs) {
-                    if (attr.indexOf('*') !== -1) {
-                        for (const [key] of search(this[name], attr)) {
-                            delete this[name][key];
-                        }
-                    }
-                    else {
-                        delete this[name][attr];
-                    }
+                else {
+                    delete this[name][attr];
                 }
             }
         }
@@ -277,42 +270,26 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public expandDimensions() {
-        let [width, height] = [Math.max.apply(null, this.children.map(node => node.linear.right)), Math.max.apply(null, this.children.map(node => node.linear.bottom))];
-        switch (this.style.position) {
-            case 'static':
-            case 'relative':
-                width -= this.linear.left;
-                height -= this.linear.top;
-                break;
-        }
-        width += this.paddingRight + this.borderRightWidth;
-        height += this.paddingBottom + this.borderBottomWidth;
-        let calibrate = false;
-        if (this.viewWidth < width) {
-            if (this.bounds.width < width) {
-                this.bounds.width = width;
-                this.bounds.right = this.bounds.left + this.bounds.width;
-                calibrate = true;
+    public setBoundsMin() {
+        const nodes = this.children.filter(node => !node.pageflow);
+        if (nodes.length > 0) {
+            const [right, bottom] = [Math.max.apply(null, this.children.map(node => node.linear.right)), Math.max.apply(null, this.children.map(node => node.linear.bottom))];
+            if (nodes.some(node => node.linear.right === right || node.linear.bottom === bottom)) {
+                let calibrate = false;
+                if (right > this.box.right) {
+                    this.bounds.right = right + (this.paddingRight + this.borderRightWidth);
+                    this.bounds.width = this.bounds.right - this.bounds.left;
+                    calibrate = true;
+                }
+                if (bottom > this.box.bottom) {
+                    this.bounds.bottom = bottom + (this.paddingBottom + this.borderBottomWidth);
+                    this.bounds.height = this.bounds.bottom - this.bounds.top;
+                    calibrate = true;
+                }
+                if (calibrate) {
+                    this.setBounds(true);
+                }
             }
-            else {
-                width = this.bounds.width;
-            }
-            this.bounds.minWidth = formatPX(width);
-        }
-        if (this.viewHeight < height) {
-            if (this.bounds.height < height) {
-                this.bounds.height = height;
-                this.bounds.bottom = this.bounds.top + this.bounds.height;
-                calibrate = true;
-            }
-            else {
-                height = this.bounds.height;
-            }
-            this.bounds.minHeight = formatPX(height);
-        }
-        if (calibrate) {
-            this.setBounds(true);
         }
     }
 
@@ -482,6 +459,11 @@ export default abstract class Node implements BoxModel {
     }
     get paddingLeft() {
         return convertInt(this.css('paddingLeft'));
+    }
+
+    get pageflow() {
+        const position = this.css('position');
+        return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && convertInt(this.css('top')) === 0 && convertInt(this.css('right')) === 0 && convertInt(this.css('bottom')) === 0 && convertInt(this.css('left')) === 0));
     }
 
     get center(): Point {
