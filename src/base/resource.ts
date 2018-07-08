@@ -353,7 +353,7 @@ export default abstract class Resource<T extends Node> {
                         }
                     }
                     else if (element.nodeName === '#text') {
-                        value = optional(element, 'textContent', 'string').trim();
+                        value = optional(element, 'textContent').trim();
                     }
                     else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName)))))) {
                         name = element.innerText.trim();

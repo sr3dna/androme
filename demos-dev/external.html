@@ -26,15 +26,10 @@
             androme.close();
 
             var views = androme.writeLayoutAllXml();
-            var output = '';
-            for (var i in views) {
-                output += views[i] + '\n\n';
-            }
-            document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
-            var resource = androme.writeResourceDimenXml() + '\n\n' +
-                           androme.writeResourceStyleXml() + '\n\n' +
-                           androme.writeResourceColorXml();
-            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+            document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+
+            var resource = androme.writeResourceAllXml();
+            document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
         });
         function showHidden() {
             document.querySelectorAll('#androme_ui > div').forEach(function(element) {

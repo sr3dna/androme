@@ -89,23 +89,17 @@
         }
     </style>
     <script src="../dist/androme.min.js"></script>
+    <script src="common/prod.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
                 var views = androme.writeLayoutAllXml();
-                var output = '';
-                for (var i in views) {
-                    output += views[i] + '\n\n';
-                }
-                document.getElementById('output').innerHTML = output.replace(/</g, '&lt;');
-                var resource = androme.writeResourceStringXml() + '\n\n' +
-                               androme.writeResourceDimenXml() + '\n\n' +
-                               androme.writeResourceStyleXml() + '\n\n' +
-                               androme.writeResourceColorXml() + '\n\n' +
-                               androme.writeResourceDrawableXml();
-                document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
+                document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+
+                var resource = androme.writeResourceAllXml();
+                document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
             });
         });
         function toggleAside() {
@@ -177,17 +171,5 @@
             </div>
         </div>
     </div>
-    <script>
-        function copy(id) {
-            var element = document.getElementById(id);
-            var range = document.createRange();
-            range.selectNode(element);
-            window.getSelection().addRange(range);
-            document.execCommand('copy');
-            setTimeout(function() {
-                window.getSelection().removeAllRanges();
-            }, 100);
-        }
-    </script>
 </body>
 </html>

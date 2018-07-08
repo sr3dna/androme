@@ -46,7 +46,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public registerExtension(extension: Extension<T, U>) {
         const found = this.findExtension(extension.name);
         if (found != null) {
-            found.tagNames = extension.tagNames;
+            if (Array.isArray(extension.tagNames)) {
+                found.tagNames = extension.tagNames;
+            }
             Object.assign(found.options, extension.options);
         }
         else {
@@ -189,7 +191,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         if (root === document.body) {
             Array.from(document.body.childNodes).forEach((item: HTMLElement) => {
                 if (item.nodeName === '#text') {
-                    if (optional(item, 'textContent', 'string').trim() !== '') {
+                    if (optional(item, 'textContent').trim() !== '') {
                         nodeTotal++;
                     }
                 }
@@ -319,7 +321,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
                 if (node.element && node.element.children.length > 0 && !node.children.every((current: T) => INLINE_CHROME.includes(current.tagName))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
-                        if (element.nodeName === '#text' && optional(element, 'textContent', 'string').trim() !== '') {
+                        if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
                         }
                     });
@@ -520,7 +522,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const root = (<T> this.cache.parent);
         const extension = (<Extension<T, U>> root.renderExtension);
         if (extension == null || root.data(`${extension.name}:insert`) == null) {
-            const pathname = trim(optional(root, 'element.dataset.pathname', 'string').trim(), '/');
+            const pathname = trim(optional(root, 'element.dataset.pathname').trim(), '/');
             this.setLayout(pathname, (!empty ? output : ''), (root.renderExtension != null && root.renderExtension.activityMain));
         }
         else {

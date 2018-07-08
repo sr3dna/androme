@@ -64,6 +64,11 @@ export default class FileRes<T extends View> extends File<T> {
             dimen: this.resourceDimenToXml(),
             drawable: this.resourceDrawableToXml()
         };
+        for (const resource in result) {
+            if (result[resource] === '') {
+                delete result[resource];
+            }
+        }
         if (saveToDisk) {
             const files: PlainFile[] = [];
             for (const resource in result) {

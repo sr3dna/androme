@@ -11,7 +11,6 @@ import FileRes from './android/file-res';
 import View from './android/view';
 import ViewList from './android/viewlist';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
-import { WIDGET_NAME } from './android/extension/lib/constants';
 import API_ANDROID from './android/customizations';
 
 import External from './extension/external';
@@ -25,6 +24,7 @@ import Coordinator from './android/extension/widget/coodinator';
 import Toolbar from './android/extension/widget/toolbar';
 import BottomNavigation from './android/extension/widget/bottomnavigation';
 import Drawer from './android/extension/widget/drawer';
+import { WIDGET_NAME } from './android/extension/lib/constants';
 
 type T = View;
 type U = ViewList<T>;

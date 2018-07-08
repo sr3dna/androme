@@ -45,7 +45,7 @@ export default class Drawer extends Extension<T, U> {
         const controller = application.controllerHandler;
         const node = (<T> this.node);
         let depth = node.depth + node.renderDepth;
-        let options = Object.assign({}, this.options.drawerLayout);
+        let options = Object.assign({}, this.options.drawer);
         let menu = findNestedMenu(node);
         if (menu != null) {
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
@@ -65,7 +65,7 @@ export default class Drawer extends Extension<T, U> {
         coordinator.isolated = true;
         application.cache.list.push(coordinator);
         const content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', coordinator, true);
-        options = Object.assign({}, this.options.navigationView);
+        options = Object.assign({}, this.options.navigation);
         overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
             this.createResourceTheme();

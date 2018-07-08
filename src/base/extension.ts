@@ -46,7 +46,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         if (element == null) {
             element = (<HTMLElement> this.element);
         }
-        return optional(element, 'dataset.ext', 'string').split(',').map(value => value.trim()).includes(this.name);
+        return optional(element, 'dataset.ext').split(',').map(value => value.trim()).includes(this.name);
     }
 
     public beforeInit(internal = false) {
@@ -79,7 +79,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
 
     public condition() {
         if (this.node && this.node.hasElement) {
-            const ext = optional(this.node.element, 'dataset.ext', 'string');
+            const ext = optional(this.node.element, 'dataset.ext');
             if (ext === '') {
                 return (this.tagNames.length > 0);
             }

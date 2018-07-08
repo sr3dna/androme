@@ -185,26 +185,27 @@ export function isPercent(value: string) {
 }
 
 export function optional(obj: any, value: string, type?: string) {
-    if (obj == null) {
-        return '';
+    let valid = false;
+    let result: any = null;
+    if (obj != null) {
+        const attrs = value.split('.');
+        result = obj;
+        let i = 0;
+        do {
+            result = (result[attrs[i]] != null ? result[attrs[i]] : null);
+        }
+        while (result != null && ++i < attrs.length && typeof result !== 'string' && typeof result !== 'number' && typeof result !== 'boolean');
+        valid = (result != null && i === attrs.length);
     }
-    const attrs = value.split('.');
-    let result = obj;
-    let i = 0;
-    do {
-        result = (result[attrs[i]] != null ? result[attrs[i]] : null);
-    }
-    while (result != null && ++i < attrs.length && typeof result !== 'string' && typeof result !== 'number' && typeof result !== 'boolean');
-    const valid = (result != null && i === attrs.length);
     switch (type) {
-        case 'string':
-            return (valid ? result.toString() : '');
+        case 'object':
+            return (valid ? result : null);
         case 'number':
             return (valid && !isNaN(parseInt(result)) ? parseInt(result) : 0);
         case 'boolean':
             return (valid && result);
         default:
-            return (valid ? result : null);
+            return (valid ? result.toString() : '');
     }
 }
 

@@ -67,7 +67,7 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
 }
 
 export function hasFreeFormText(element: HTMLElement) {
-    return Array.from(element.childNodes).some((item: HTMLElement) => item.nodeName === '#text' && optional(item, 'textContent', 'string').trim() !== '');
+    return Array.from(element.childNodes).some((item: HTMLElement) => item.nodeName === '#text' && optional(item, 'textContent').trim() !== '');
 }
 
 export function isVisible(element: HTMLElement) {

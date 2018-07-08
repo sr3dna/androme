@@ -187,7 +187,7 @@ export default class Toolbar extends Extension<T, U> {
     public insert() {
         const application = this.application;
         const node = (<T> this.node);
-        const id = optional(node, 'element.dataset.extFor', 'string');
+        const id = optional(node, 'element.dataset.extFor');
         if (id !== '') {
             const parent = (<T> application.findByDomId(id));
             const coordinator = application.cacheInternal.list.find(item => item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR);
