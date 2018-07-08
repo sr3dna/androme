@@ -1,5 +1,5 @@
 import { BoxModel, ClientRect } from './types';
-import { convertInt } from './util';
+import { convertInt, optional } from './util';
 
 export function getRangeBounds(element: HTMLElement) {
     const range = document.createRange();
@@ -67,7 +67,7 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
 }
 
 export function hasFreeFormText(element: HTMLElement) {
-    return Array.from(element.childNodes).some((item: HTMLElement) => item.nodeName === '#text' && item.textContent != null && item.textContent.trim() !== '');
+    return Array.from(element.childNodes).some((item: HTMLElement) => item.nodeName === '#text' && optional(item, 'textContent', 'string').trim() !== '');
 }
 
 export function isVisible(element: HTMLElement) {

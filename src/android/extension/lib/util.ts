@@ -1,13 +1,13 @@
 import { ObjectMap } from '../../../lib/types';
 import View from '../../view';
-import { convertPX } from '../../../lib/util';
+import { convertPX, optional } from '../../../lib/util';
 import { WIDGET_NAME } from '../lib/constants';
 import parseRTL from '../../localization';
 
 type T = View;
 
 export function findNestedMenu(node: T, requireExt = true) {
-    return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && (!requireExt || (element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.MENU) !== -1))));
+    return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && (!requireExt || optional(element, 'dataset.ext', 'string').indexOf(WIDGET_NAME.MENU) !== -1)));
 }
 
 export function overwriteDefault(options: ObjectMap<any>, namespace: string, attr: string, value: string) {

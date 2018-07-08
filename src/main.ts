@@ -1,21 +1,24 @@
 import { Null, StringMap } from './lib/types';
 import Application from './base/application';
+import Extension from './base/extension';
+import { optional } from './lib/util';
+import { EXT_NAME } from './extension/lib/constants';
+import SETTINGS from './settings';
+
 import ViewController from './android/viewcontroller';
 import ResourceView from './android/resource-view';
 import FileRes from './android/file-res';
-import Extension from './base/extension';
 import View from './android/view';
 import ViewList from './android/viewlist';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
-import { EXT_NAME } from './extension/lib/constants';
 import { WIDGET_NAME } from './android/extension/lib/constants';
 import API_ANDROID from './android/customizations';
-import SETTINGS from './settings';
 
 import External from './extension/external';
-import List from './android/extension/list';
 import Table from './extension/table';
 import Grid from './extension/grid';
+
+import List from './android/extension/list';
 import Button from './android/extension/widget/floatingactionbutton';
 import Menu from './android/extension/widget/menu';
 import Coordinator from './android/extension/widget/coodinator';
@@ -32,7 +35,7 @@ const EXTENSIONS = {
     [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
     [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL']),
     [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
-    [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET']),
+    [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
     [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
     [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, ['NAV']),
     [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
@@ -98,7 +101,7 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
                     element.id = `view_${main.size}`;
                 }
             }
-            element.dataset.views = (element.dataset.views != null ? parseInt(element.dataset.views) + 1 : 1).toString();
+            element.dataset.views = (optional(element, 'dataset.views', 'number') + 1).toString();
             element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
             if (main.createNodeCache(element)) {
                 main.createLayoutXml();

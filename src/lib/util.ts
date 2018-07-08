@@ -184,6 +184,30 @@ export function isPercent(value: string) {
     return /^[0-9]+%$/.test(value);
 }
 
+export function optional(obj: any, value: string, type?: string) {
+    if (obj == null) {
+        return '';
+    }
+    const attrs = value.split('.');
+    let result = obj;
+    let i = 0;
+    do {
+        result = (result[attrs[i]] != null ? result[attrs[i]] : null);
+    }
+    while (result != null && ++i < attrs.length && typeof result !== 'string' && typeof result !== 'number' && typeof result !== 'boolean');
+    const valid = (result != null && i === attrs.length);
+    switch (type) {
+        case 'string':
+            return (valid ? result.toString() : '');
+        case 'number':
+            return (valid && !isNaN(parseInt(result)) ? parseInt(result) : 0);
+        case 'boolean':
+            return (valid && result);
+        default:
+            return (valid ? result : null);
+    }
+}
+
 export function resolvePath(value: string) {
     if (!/^\w+:\/\//.test(value)) {
         let pathname = location.pathname.split('/');

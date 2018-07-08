@@ -1,6 +1,7 @@
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import { optional } from '../lib/util';
 import { getStyle } from '../lib/dom';
 
 type T = Node;
@@ -30,7 +31,7 @@ export default class External extends Extension<T, U> {
     }
 
     public init(element: HTMLElement) {
-        if (this.included(element) && element.dataset.ext != null && element.dataset.ext.split(',').length <= 1) {
+        if (this.included(element) && optional(element, 'dataset.ext', 'string').split(',').length <= 1) {
             this.application.elements.add(element);
             return true;
         }

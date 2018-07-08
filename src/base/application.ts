@@ -4,8 +4,8 @@ import Extension from './extension';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { hasValue, hyphenToCamelCase, resetId, sortAsc, trim } from '../lib/util';
-import { placeIndent, removePlaceholders, replaceDP } from '../lib/xml';
+import { hasValue, hyphenToCamelCase, optional, resetId, sortAsc, trim } from '../lib/util';
+import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
 import { hasFreeFormText, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
@@ -69,9 +69,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (SETTINGS.dimensResourceValue) {
                 layout.content = this.controllerHandler.parseDimensions(layout.content);
             }
-            if (SETTINGS.useUnitDP) {
-                layout.content = replaceDP(layout.content, SETTINGS.density);
-            }
+            layout.content = replaceDP(layout.content);
+            layout.content = replaceTab(layout.content);
         });
         this._closed = true;
     }
@@ -190,7 +189,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         if (root === document.body) {
             Array.from(document.body.childNodes).forEach((item: HTMLElement) => {
                 if (item.nodeName === '#text') {
-                    if (item.textContent && item.textContent.trim() !== '') {
+                    if (optional(item, 'textContent', 'string').trim() !== '') {
                         nodeTotal++;
                     }
                 }
@@ -320,7 +319,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
                 if (node.element && node.element.children.length > 0 && !node.children.every((current: T) => INLINE_CHROME.includes(current.tagName))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
-                        if (element.nodeName === '#text' && element.textContent && element.textContent.trim() !== '') {
+                        if (element.nodeName === '#text' && optional(element, 'textContent', 'string').trim() !== '') {
                             this.insertNode(element, node);
                         }
                     });
@@ -518,13 +517,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         }
-        let pathname = '';
         const root = (<T> this.cache.parent);
         const extension = (<Extension<T, U>> root.renderExtension);
         if (extension == null || root.data(`${extension.name}:insert`) == null) {
-            if (root.element.dataset != null) {
-                pathname = trim((root.element.dataset.pathname || '').trim(), '/');
-            }
+            const pathname = trim(optional(root, 'element.dataset.pathname', 'string').trim(), '/');
             this.setLayout(pathname, (!empty ? output : ''), (root.renderExtension != null && root.renderExtension.activityMain));
         }
         else {
@@ -701,7 +697,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     private insertNode(element: HTMLElement, parent?: T) {
         let node: Null<T> = null;
         if (element.nodeName === '#text') {
-            if (element.textContent && element.textContent.trim() !== '') {
+            if (optional(element, 'textContent', 'string').trim() !== '') {
                 node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element, { parent, tagName: 'PLAINTEXT' });
                 node.setBounds(false, element);
                 if (parent != null) {

@@ -2,7 +2,7 @@ import { Null, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import File from '../base/file';
 import View from './view';
 import { caseInsensitve, hasValue, lastIndexOf } from '../lib/util';
-import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
+import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP, replaceTab } from '../lib/xml';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 import SETTINGS from '../settings';
 
@@ -95,6 +95,7 @@ export default class FileRes<T extends View> extends File<T> {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
+            xml = replaceTab(xml, true);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -125,6 +126,7 @@ export default class FileRes<T extends View> extends File<T> {
                 root['1'].push(arrayItem);
             }
             xml = insertTemplateData(template, data);
+            xml = replaceTab(xml, true);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -158,6 +160,7 @@ export default class FileRes<T extends View> extends File<T> {
                 }
                 xml += '\n\n' + insertTemplateData(template, data);
             }
+            xml = replaceTab(xml);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -180,6 +183,7 @@ export default class FileRes<T extends View> extends File<T> {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
+            xml = replaceTab(xml);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -211,9 +215,8 @@ export default class FileRes<T extends View> extends File<T> {
                 root['1'].push(styleItem);
             }
             xml = insertTemplateData(template, data);
-            if (SETTINGS.useUnitDP) {
-                xml = replaceDP(xml, SETTINGS.density, true);
-            }
+            xml = replaceDP(xml, true);
+            xml = replaceTab(xml);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -236,9 +239,8 @@ export default class FileRes<T extends View> extends File<T> {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
-            if (SETTINGS.useUnitDP) {
-                xml = replaceDP(xml, SETTINGS.density);
-            }
+            xml = replaceDP(xml);
+            xml = replaceTab(xml);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -268,9 +270,8 @@ export default class FileRes<T extends View> extends File<T> {
                 }
             }
             xml = insertTemplateData(template, data);
-            if (SETTINGS.useUnitDP) {
-                xml = replaceDP(xml, SETTINGS.density);
-            }
+            xml = replaceDP(xml);
+            xml = replaceTab(xml);
             if (saveToDisk) {
                 this.saveToDisk([...this.parseImageDetails(xml), ...this.parseFileDetails(xml)]);
             }

@@ -2,6 +2,7 @@ import { ExtensionResult, Null, ObjectMap } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
+import { optional } from '../../../lib/util';
 import { overwriteDefault } from '../lib/util';
 import { VIEW_RESOURCE } from '../../../lib/constants';
 import { VIEW_ANDROID } from '../../constants';
@@ -100,7 +101,7 @@ export default class Coordinator extends Extension<T, U> {
     }
 
     private getToolbar(node: T): Null<T> {
-        const toolbar = (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.dataset.ext != null && element.dataset.ext.indexOf(WIDGET_NAME.TOOLBAR) !== -1));
+        const toolbar = (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => optional(element, 'dataset.ext', 'string').indexOf(WIDGET_NAME.TOOLBAR) !== -1));
         return (toolbar != null ? (<any> toolbar).__node : null);
     }
 

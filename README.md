@@ -109,6 +109,7 @@ androme.settings = {
     chainPackedVerticalOffset: 14,
     showAttributes: true,
     autoCloseOnWrite: true,
+    insertSpaces: 4, // tabs: 0
     outputDirectory: 'app/src/main',
     outputActivityMainFileName: 'activity_main.xml',
     outputArchiveFileType: 'zip', // zip | tar

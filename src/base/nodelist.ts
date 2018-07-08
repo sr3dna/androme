@@ -4,7 +4,7 @@ import { sortAsc, sortDesc } from '../lib/util';
 export default abstract class NodeList<T extends Node> {
     public static intersect<T extends Node>(list: T[], dimension = 'linear') {
         list.forEach(node => {
-            if (list.some(item => (item !== node && node.intersect(item[dimension])))) {
+            if (list.some(item => item !== node && node.intersect(item[dimension]))) {
                 return true;
             }
         });

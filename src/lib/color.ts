@@ -1,5 +1,18 @@
-
-import { Color } from './types';
+interface Color {
+    name: string;
+    hex: string;
+    rgb: {
+        r: number;
+        g: number;
+        b: number;
+    };
+    hsl: {
+        h: number;
+        s: number;
+        l: number;
+    };
+    [key: string]: string | {};
+}
 
 const X11_CSS3 = {
     'Pink':                 { 'hex': '#FFC0CB' },

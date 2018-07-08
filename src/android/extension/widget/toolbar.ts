@@ -3,7 +3,7 @@ import Extension from '../../../base/extension';
 import Resource from '../../../base/resource';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import { convertPX } from '../../../lib/util';
+import { convertPX, optional } from '../../../lib/util';
 import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { formatDimen, restoreIndent } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
@@ -185,17 +185,18 @@ export default class Toolbar extends Extension<T, U> {
     }
 
     public insert() {
+        const application = this.application;
         const node = (<T> this.node);
-        const extFor = node.element.dataset.extFor;
-        if (extFor != null) {
-            const parent = (<T> this.application.findByDomId(extFor));
-            const coordinator = this.application.cacheInternal.list.find(item => (item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR));
+        const id = optional(node, 'element.dataset.extFor', 'string');
+        if (id !== '') {
+            const parent = (<T> application.findByDomId(id));
+            const coordinator = application.cacheInternal.list.find(item => item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR);
             if (coordinator != null) {
                 let xml = (<string> node.data(`${WIDGET_NAME.TOOLBAR}:insert`)) || '';
                 if (xml !== '') {
                     xml = restoreIndent(xml, node.renderDepth);
                     node.renderDepth = node.depth + 1;
-                    this.application.addInsertQueue(coordinator.id, [xml]);
+                    application.addInsertQueue(coordinator.id, [xml]);
                 }
             }
         }

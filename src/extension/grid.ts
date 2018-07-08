@@ -61,7 +61,7 @@ export default class Grid extends Extension<T, U> {
                                 found.push(l);
                             }
                             else {
-                                const result = columns[m].findIndex((item: T, index) => (index >= l && Math.floor(item.bounds.width) === Math.floor(bounds.width) && index < columns[m].length - 1));
+                                const result = columns[m].findIndex((item: T, index) => index >= l && Math.floor(item.bounds.width) === Math.floor(bounds.width) && index < columns[m].length - 1);
                                 if (result !== -1) {
                                     found.push(result);
                                 }

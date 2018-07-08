@@ -173,6 +173,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                             }
                             else {
+                                const parentTop = mapParent(current, 'top');
                                 const parentBottom = mapParent(current, 'bottom');
                                 if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
                                     if (current.withinY(linear2)) {
@@ -184,10 +185,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         current.anchor(LAYOUT['bottomTop'], adjacent, adjacentY, alignedX);
                                     }
                                 }
-                                if (linear1.top === linear2.top && !mapParent(current, 'top')) {
+                                if (linear1.top === linear2.top && !parentTop && !parentBottom) {
                                     current.anchor(LAYOUT['top'], adjacent, adjacentY);
                                 }
-                                if (linear1.bottom === linear2.bottom && !parentBottom) {
+                                if (linear1.bottom === linear2.bottom && !parentTop && !parentBottom) {
                                     current.anchor(LAYOUT['bottom'], adjacent, adjacentY);
                                 }
                             }
@@ -292,10 +293,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                             current.android('layout_width', 'match_parent');
                         }
-                        if (mapParent(current, 'bottom')) {
-                            mapDelete(current, 'top');
-                        }
-                        if (current.anchor(LAYOUT['bottomTop']) != null) {
+                        if (current.app(LAYOUT['bottomTop']) != null) {
                             mapDelete(current, 'bottom');
                         }
                     }
@@ -335,10 +333,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 while (true);
                 if (nodes.length > 1 && (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect()))) {
-                    let flexNodes: Null<any[]> = null;
+                    let flexbox: Null<any[]> = null;
                     if (flex.enabled) {
-                        const directionNodes = nodes.list.slice();
-                        if (flex.wrap === 'nowrap') {
+                         if (flex.wrap === 'nowrap') {
                             let horizontalChain = nodes.list.slice();
                             let verticalChain = nodes.list.slice();
                             switch (flex.direction) {
@@ -353,17 +350,18 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     horizontalChain = [];
                                     break;
                             }
-                            flexNodes = [{ constraint: { horizontalChain: new ViewList(horizontalChain), verticalChain: new ViewList(verticalChain) } }];
+                            flexbox = [{ constraint: { horizontalChain: new ViewList(horizontalChain), verticalChain: new ViewList(verticalChain) } }];
                         }
                         else {
+                            const sorted = nodes.list.slice();
                             switch (flex.direction) {
                                 case 'row-reverse':
                                 case 'column-reverse':
-                                    directionNodes.reverse();
+                                sorted.reverse();
                             }
                             const map: ArrayIndex<T> = {};
                             const levels: number[] = [];
-                            directionNodes.forEach(item => {
+                            sorted.forEach(item => {
                                 const y = item.linear.top;
                                 if (map[y] == null) {
                                     map[y] = [];
@@ -381,9 +379,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     levels.reverse();
                                 }
                             }
-                            flexNodes = [];
+                            flexbox = [];
                             for (const n of levels) {
-                                flexNodes.push({ constraint: { horizontalChain: new ViewList(map[n]), verticalChain: new ViewList() } });
+                                flexbox.push({ constraint: { horizontalChain: new ViewList(map[n]), verticalChain: new ViewList() } });
                             }
                         }
                     }
@@ -400,18 +398,18 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         direction.reverse();
                     }
                     direction.forEach((value, index) => {
-                        const chainNodes = (flex.enabled ? flexNodes : nodes.slice().list.sort((a, b) => (a.constraint[value].length >= b.constraint[value].length ? -1 : 1)));
-                        if (chainNodes != null) {
+                        const connected = (flex.enabled ? flexbox : nodes.slice().list.sort((a, b) => a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
+                        if (connected != null) {
                             if (!SETTINGS.horizontalPerspective) {
                                 index = (index === 0 ? 1 : 0);
                             }
                             const inverse = (index === 0 ? 1 : 0);
-                            chainNodes.forEach((current, level) => {
-                                const chainDirection: U = current.constraint[value];
-                                if (chainDirection != null && chainDirection.length > 1) {
-                                    chainDirection.parent = node;
-                                    if (flex.enabled && chainDirection.list.some(item => item.flex.order > 0)) {
-                                        chainDirection[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
+                            connected.forEach((current, level) => {
+                                const chainable: U = current.constraint[value];
+                                if (chainable != null && chainable.length > 1) {
+                                    chainable.parent = node;
+                                    if (flex.enabled && chainable.list.some(item => item.flex.order > 0)) {
+                                        chainable[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
                                     }
                                     const [HV, VH] = [CHAIN_MAP['horizontalVertical'][index], CHAIN_MAP['horizontalVertical'][inverse]];
                                     const [LT, TL] = [CHAIN_MAP['leftTop'][index], CHAIN_MAP['leftTop'][inverse]];
@@ -420,18 +418,18 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     const orientation = HV.toLowerCase();
                                     const orientationInverse = VH.toLowerCase();
                                     const dimension = WH.toLowerCase();
-                                    const firstNode = chainDirection.first;
-                                    const lastNode = chainDirection.last;
+                                    const first = chainable.first;
+                                    const last = chainable.last;
                                     let maxOffset = -1;
-                                    for (let i = 0; i < chainDirection.list.length; i++) {
-                                        const chain = chainDirection.list[i];
-                                        const next = chainDirection.list[i + 1];
-                                        const previous = chainDirection.list[i - 1];
+                                    for (let i = 0; i < chainable.list.length; i++) {
+                                        const chain = chainable.list[i];
+                                        const next = chainable.list[i + 1];
+                                        const previous = chainable.list[i - 1];
                                         if (flex.enabled) {
                                             if (chain.linear[TL] === node.box[TL] && chain.linear[BR] === node.box[BR]) {
                                                 this.setAlignParent(chain, orientationInverse);
                                             }
-                                            const nextLevel = chainNodes[level + 1];
+                                            const nextLevel = connected[level + 1];
                                             if (nextLevel && nextLevel.constraint[value] && nextLevel.constraint[value].list[i] != null) {
                                                 const nextChain = nextLevel.constraint[value].list[i];
                                                 if (chain.withinY(nextChain.linear) && !mapParent(chain, 'top')) {
@@ -494,7 +492,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 case 'baseline':
                                                     chain.app(map['baseline'], 'parent');
                                                     mapDelete(chain, 'top', 'bottom');
-                                                    chainDirection.list.forEach(item => {
+                                                    chainable.list.forEach(item => {
                                                         if (item.app(map['top']) === chain.stringId) {
                                                             mapDelete(item, 'top');
                                                         }
@@ -526,28 +524,28 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             }
                                         }
                                     }
-                                    firstNode.app(LAYOUT[LT], 'parent');
-                                    firstNode.constraint[orientation] = true;
-                                    lastNode.app(LAYOUT[RB], 'parent');
-                                    lastNode.constraint[orientation] = true;
+                                    first.app(LAYOUT[LT], 'parent');
+                                    first.constraint[orientation] = true;
+                                    last.app(LAYOUT[RB], 'parent');
+                                    last.constraint[orientation] = true;
                                     const chainStyle = `layout_constraint${HV}_chainStyle`;
-                                    if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainDirection.list.map(item => item.flex.grow)) === 0) {
+                                    if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainable.list.map(item => item.flex.grow)) === 0) {
                                         switch (flex.justifyContent) {
                                             case 'space-between':
-                                                firstNode.app(chainStyle, 'spread_inside');
+                                                first.app(chainStyle, 'spread_inside');
                                                 break;
                                             case 'space-evenly':
-                                                firstNode.app(chainStyle, 'spread');
-                                                chainDirection.list.forEach(item => item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString()));
+                                                first.app(chainStyle, 'spread');
+                                                chainable.list.forEach(item => item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString()));
                                                 break;
                                             case 'space-around':
                                                 const leftTop = (index === 0 ? 'left' : 'top');
-                                                const percent = (firstNode.bounds[leftTop] - node.box[leftTop]) / (<number> node.box[dimension]);
-                                                firstNode.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
-                                                firstNode.constraint[orientation] = false;
-                                                lastNode.constraint[orientation] = false;
-                                                this.addGuideline(node, firstNode, orientation, false, parseFloat(percent.toFixed(2)));
-                                                this.addGuideline(node, lastNode, orientation, true, parseFloat((1 - percent).toFixed(2)));
+                                                const percent = (first.bounds[leftTop] - node.box[leftTop]) / (<number> node.box[dimension]);
+                                                first.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
+                                                first.constraint[orientation] = false;
+                                                last.constraint[orientation] = false;
+                                                this.addGuideline(node, first, orientation, false, parseFloat(percent.toFixed(2)));
+                                                this.addGuideline(node, last, orientation, true, parseFloat((1 - percent).toFixed(2)));
                                                 break;
                                             default:
                                                 let justifyContent = flex.justifyContent;
@@ -570,40 +568,40 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                         bias = '1';
                                                         break;
                                                 }
-                                                firstNode.app(chainStyle, 'packed');
-                                                firstNode.app(`layout_constraint${HV}_bias`, bias);
+                                                first.app(chainStyle, 'packed');
+                                                first.app(`layout_constraint${HV}_bias`, bias);
                                         }
                                     }
                                     else {
-                                        if ((orientation === 'horizontal' && withinFraction(node.box.left, firstNode.linear.left) && withinFraction(lastNode.linear.right, node.box.right)) || (orientation === 'vertical' && withinFraction(node.box.top, firstNode.linear.top) && withinFraction(lastNode.linear.bottom, node.box.bottom))) {
-                                            if (chainDirection.length > 2 || flex.enabled) {
-                                                firstNode.app(chainStyle, 'spread_inside');
+                                        if ((orientation === 'horizontal' && withinFraction(node.box.left, first.linear.left) && withinFraction(last.linear.right, node.box.right)) || (orientation === 'vertical' && withinFraction(node.box.top, first.linear.top) && withinFraction(last.linear.bottom, node.box.bottom))) {
+                                            if (chainable.length > 2 || flex.enabled) {
+                                                first.app(chainStyle, 'spread_inside');
                                             }
                                             else {
-                                                mapDelete(firstNode, CHAIN_MAP['rightLeftBottomTop'][index]);
-                                                mapDelete(lastNode, CHAIN_MAP['leftRightTopBottom'][index]);
+                                                mapDelete(first, CHAIN_MAP['rightLeftBottomTop'][index]);
+                                                mapDelete(last, CHAIN_MAP['leftRightTopBottom'][index]);
                                             }
                                         }
-                                        else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === 'horizontal' && (firstNode.linear.left === node.box.left || lastNode.linear.right === node.box.right))) {
-                                            firstNode.app(chainStyle, 'packed');
+                                        else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === 'horizontal' && (first.linear.left === node.box.left || last.linear.right === node.box.right))) {
+                                            first.app(chainStyle, 'packed');
                                             let bias = '';
-                                            if (withinFraction(node.box.left, firstNode.linear.left)) {
+                                            if (withinFraction(node.box.left, first.linear.left)) {
                                                 bias = '0';
                                             }
-                                            else if (withinFraction(lastNode.linear.right, node.box.right)) {
+                                            else if (withinFraction(last.linear.right, node.box.right)) {
                                                 bias = '1';
                                             }
                                             else {
-                                                bias = firstNode[`${orientation}Bias`];
+                                                bias = first[`${orientation}Bias`];
                                             }
-                                            firstNode.app(`layout_constraint${HV}_bias`, bias);
-                                            this.adjustMargins(chainDirection.list);
+                                            first.app(`layout_constraint${HV}_bias`, bias);
+                                            this.adjustMargins(chainable.list);
                                         }
                                         else {
-                                            firstNode.app(chainStyle, 'spread');
+                                            first.app(chainStyle, 'spread');
                                         }
                                         if (!flex.enabled) {
-                                            chainDirection.list.forEach(inner => {
+                                            chainable.list.forEach(inner => {
                                                 nodes.list.forEach(outer => {
                                                     const horizontal: U = outer.constraint.horizontalChain;
                                                     const vertical: U = outer.constraint.verticalChain;
@@ -618,13 +616,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                     }
                                 }
-                                else if (chainDirection.length > 0) {
-                                    const firstNode = chainDirection.first;
-                                    if (mapParent(firstNode, 'left')) {
-                                        mapDelete(firstNode, 'rightLeft');
+                                else if (chainable.length > 0) {
+                                    const first = chainable.first;
+                                    if (mapParent(first, 'left')) {
+                                        mapDelete(first, 'rightLeft');
                                     }
-                                    if (mapParent(firstNode, 'right')) {
-                                        mapDelete(firstNode, 'leftRight');
+                                    if (mapParent(first, 'right')) {
+                                        mapDelete(first, 'leftRight');
                                     }
                                 }
                             });
@@ -926,7 +924,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
-                            const result = (<T[]> node.parentOriginal.children.filter(item => ((<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name)));
+                            const result = (<T[]> node.parentOriginal.children.filter(item => (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name));
                             let xml = '';
                             if (result.length > 1) {
                                 const viewGroup = new ViewGroup(this.cache.nextId, node, parent, result);
@@ -1225,7 +1223,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             }
             while (valid);
             return Array.from(chained);
-        }).reduce((a, b) => (a.length >= b.length ? a : b));
+        }).reduce((a, b) => a.length >= b.length ? a : b);
         return result;
     }
 

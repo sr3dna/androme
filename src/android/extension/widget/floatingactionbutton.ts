@@ -2,6 +2,7 @@ import { ExtensionResult } from '../../../lib/types';
 import Resource from '../../../base/resource';
 import View from '../../view';
 import Button from '../../../extension/button';
+import { optional } from '../../../lib/util';
 import { positionIsolated, overwriteDefault } from '../lib/util';
 import { restoreIndent } from '../../../lib/xml';
 import { parseRGBA } from '../../../lib/color';
@@ -43,9 +44,9 @@ export default class FloatingActionButton<T extends View> extends Button {
         }
         let insert = false;
         if (node.isolated) {
-            const extFor = (node.parent.hasElement ? node.parent.element.dataset.extFor : null);
-            if (extFor != null && node.parent.viewName !== VIEW_SUPPORT.COORDINATOR) {
-                const coordinator = document.getElementById(extFor);
+            const id = optional(node, 'parent.element.dataset.extFor', 'string');
+            if (id !== '' && node.parent.viewName !== VIEW_SUPPORT.COORDINATOR) {
+                const coordinator = document.getElementById(id);
                 if (coordinator != null) {
                     insert = true;
                 }
@@ -80,9 +81,9 @@ export default class FloatingActionButton<T extends View> extends Button {
 
     public insert() {
         const node = (<T> this.node);
-        const extFor = node.parent.element.dataset.extFor;
-        if (extFor != null) {
-            const parent = this.application.findByDomId(extFor);
+        const id = optional(node, 'parent.element.dataset.extFor', 'string');
+        if (id !== '') {
+            const parent = this.application.findByDomId(id);
             if (parent != null && parent.viewName === VIEW_SUPPORT.COORDINATOR) {
                 let xml = (<string> node.data(`${WIDGET_NAME.FAB}:insert`)) || '';
                 if (xml !== '') {

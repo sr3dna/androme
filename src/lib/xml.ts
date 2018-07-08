@@ -26,8 +26,26 @@ export function restoreIndent(value: string, depth: number) {
     return value.replace(/>>>>/g, repeat(depth)).replace(/\s*$/, '');
 }
 
-export function replaceDP(xml: string, dpi = 160, font = false) {
-    return xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], dpi, font) + capture[2]);
+export function replaceDP(xml: string, font = false) {
+    return (SETTINGS.useUnitDP ? xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], SETTINGS.density, font) + capture[2]) : xml);
+}
+
+export function replaceTab(xml: string, preserve = false) {
+    if (SETTINGS.insertSpaces > 0) {
+        if (preserve) {
+            xml = xml.split('\n').map(value => {
+                const match = value.match(/^(\t+)(.*)$/);
+                if (match != null) {
+                    return ' '.repeat(SETTINGS.insertSpaces * match[1].length) + match[2];
+                }
+                return value;
+            }).join('\n');
+        }
+        else {
+            xml = xml.replace(/\t/g, ' '.repeat(SETTINGS.insertSpaces));
+        }
+    }
+    return xml;
 }
 
 export function formatDimen(tagName: string, attr: string, size: string) {

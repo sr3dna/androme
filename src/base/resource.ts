@@ -2,7 +2,7 @@ import { BorderAttribute, Null, ObjectMap, StringMap } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber, resolvePath, lastIndexOf } from '../lib/util';
+import { cameltoLowerCase, convertPX, generateId, hasValue, isNumber, optional, resolvePath, lastIndexOf } from '../lib/util';
 import { getBoxSpacing, sameAsParent } from '../lib/dom';
 import { findNearestColor, parseRGBA } from '../lib/color';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_RESOURCE } from '../lib/constants';
@@ -293,7 +293,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setImageSource() {
-        this.cache.list.filter(node => (node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image'))).forEach(node => {
+        this.cache.list.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')).forEach(node => {
             const element = (<HTMLImageElement> node.element);
             const object: any = element;
             if ((node.ignoreResource & VIEW_RESOURCE.IMAGE_SOURCE) !== VIEW_RESOURCE.IMAGE_SOURCE) {
@@ -353,9 +353,9 @@ export default abstract class Resource<T extends Node> {
                         }
                     }
                     else if (element.nodeName === '#text') {
-                        value = (element.textContent ? element.textContent.trim() : '');
+                        value = optional(element, 'textContent', 'string').trim();
                     }
-                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => (MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName))))))) {
+                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAPPING_CHROME[element.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName)))))) {
                         name = element.innerText.trim();
                         value = element.innerHTML.trim();
                     }

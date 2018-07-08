@@ -605,7 +605,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     append += `\n${indent}style="@style/${styles.pop()}"`;
                 }
                 if (attributes.length > 0) {
-                    attributes.sort().forEach((value: string) => append += `\n${indent}${replaceDP(value, SETTINGS.density, true)}`);
+                    attributes.sort().forEach((value: string) => append += `\n${indent}${replaceDP(value, true)}`);
                 }
                 let replaced = false;
                 [node, node.parent].some(item => {

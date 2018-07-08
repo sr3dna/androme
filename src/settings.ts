@@ -28,6 +28,7 @@ const SETTINGS = {
     chainPackedVerticalOffset: 14,
     showAttributes: true,
     autoCloseOnWrite: true,
+    insertSpaces: 4,
     outputDirectory: 'app/src/main',
     outputActivityMainFileName: 'activity_main.xml',
     outputArchiveFileType: 'zip',

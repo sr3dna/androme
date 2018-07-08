@@ -2,6 +2,7 @@ import { ExtensionDependency, ExtensionResult, IExtension, Null, ObjectIndex, Ob
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
+import { optional } from '../lib/util';
 
 export default abstract class Extension<T extends Node, U extends NodeList<T>> implements IExtension {
     public application: Application<T, U>;
@@ -45,7 +46,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         if (element == null) {
             element = (<HTMLElement> this.element);
         }
-        return (element != null && element.dataset && element.dataset.ext != null ? element.dataset.ext.split(',').map(value => value.trim()).includes(this.name) : false);
+        return optional(element, 'dataset.ext', 'string').split(',').map(value => value.trim()).includes(this.name);
     }
 
     public beforeInit(internal = false) {
@@ -77,13 +78,13 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     }
 
     public condition() {
-        if (this.node && this.node.hasElement && this.node.element.dataset != null) {
-            if (!this.node.element.dataset.ext) {
+        if (this.node && this.node.hasElement) {
+            const ext = optional(this.node.element, 'dataset.ext', 'string');
+            if (ext === '') {
                 return (this.tagNames.length > 0);
             }
             else {
-                const extensions = this.node.element.dataset.ext.split(',');
-                return (this.tagNames.length === 0 && extensions.length > 1 ? false : this.included());
+                return (this.tagNames.length === 0 && ext.split(',').length > 1 ? false : this.included());
             }
         }
         return false;
