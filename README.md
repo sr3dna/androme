@@ -149,15 +149,15 @@ Most of the Android support library extensions can be configured using the same 
 
 ```javascript
 <script>
-	androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided for every extension
-		'elementId': { // HTML DOM
-			appBar: {
-				android: {
-					theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
-				}
-			}
-		}
-	});
+    androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided for every extension
+        'elementId': { // HTML DOM
+            appBar: {
+                android: {
+                    theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
+                }
+            }
+        }
+    });
 </script>
 ```
 <img src="demos/android/drawer.png" alt="drawer: floating action button" />
@@ -177,831 +177,834 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res-auto"
-	android:id="@+id/androme_ui"
-	android:layout_height="wrap_content"
-	android:layout_width="wrap_content"
-	android:orientation="vertical">
-	<TextView
-		android:id="@+id/textview_1"
-		android:background="@drawable/h2_textview_1"
-		android:layout_height="wrap_content"
-		android:layout_width="match_parent"
-		android:padding="@dimen/h2_padding"
-		android:text="@string/entry"
-		style="@style/H2" />
-	<LinearLayout
-		android:id="@+id/entry"
-		android:background="@drawable/form_entry"
-		android:layout_height="wrap_content"
-		android:layout_width="match_parent"
-		android:orientation="vertical"
-		android:paddingHorizontal="@dimen/form_padding_horizontal"
-		android:paddingVertical="@dimen/form_padding_vertical">
-		<GridLayout
-			android:id="@+id/gridlayout_1"
-			android:columnCount="2"
-			android:layout_height="wrap_content"
-			android:layout_width="match_parent"
-			android:paddingBottom="@dimen/ul_padding_bottom"
-			android:paddingHorizontal="@dimen/ul_padding_horizontal"
-			android:paddingTop="@dimen/ul_padding_top">
-			<TextView
-				android:id="@+id/textview_2"
-				android:labelFor="@+id/order"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/order"
-				style="@style/Label_1" />
-			<EditText
-				android:id="@+id/order"
-				android:background="@drawable/text_order"
-				android:focusable="true"
-				android:inputType="text"
-				android:layout_height="wrap_content"
-				android:layout_width="@dimen/text_width"
-				android:paddingVertical="@dimen/text_padding_vertical"
-				style="@style/Text" />
-			<Space
-				android:id="@+id/space_1"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_3"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/date_add"
-				style="@style/Label" />
-			<android.support.constraint.ConstraintLayout
-				android:id="@+id/constraintlayout_1"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content">
-				<Spinner
-					android:id="@+id/month0"
-					android:background="@drawable/select_hour"
-					android:entries="@array/month0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintBottom_toTopOf="@+id/month1"
-					app:layout_constraintEnd_toStartOf="@+id/day0"
-					app:layout_constraintHorizontal_bias="0"
-					app:layout_constraintHorizontal_chainStyle="packed"
-					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/day0"
-					android:background="@drawable/select_hour"
-					android:entries="@array/day0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintBottom_toTopOf="@+id/day1"
-					app:layout_constraintEnd_toStartOf="@+id/year0"
-					app:layout_constraintStart_toEndOf="@+id/month0"
-					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/year0"
-					android:background="@drawable/select_hour"
-					android:entries="@array/year0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintBottom_toTopOf="@+id/year1"
-					app:layout_constraintEnd_toEndOf="parent"
-					app:layout_constraintStart_toEndOf="@+id/day0"
-					app:layout_constraintTop_toTopOf="parent"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/month1"
-					android:background="@drawable/select_hour"
-					android:entries="@array/month0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginTop="@dimen/select_margin_top"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintBottom_toTopOf="@+id/month2"
-					app:layout_constraintEnd_toStartOf="@+id/day1"
-					app:layout_constraintHorizontal_bias="0"
-					app:layout_constraintHorizontal_chainStyle="packed"
-					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/month0"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/day1"
-					android:background="@drawable/select_hour"
-					android:entries="@array/day0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_marginTop="@dimen/select_margin_top"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintBottom_toTopOf="@+id/day2"
-					app:layout_constraintEnd_toStartOf="@+id/year1"
-					app:layout_constraintStart_toEndOf="@+id/month1"
-					app:layout_constraintTop_toBottomOf="@+id/day0"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/year1"
-					android:background="@drawable/select_hour"
-					android:entries="@array/year0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_marginTop="@dimen/select_margin_top"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintBottom_toTopOf="@+id/year2"
-					app:layout_constraintEnd_toEndOf="parent"
-					app:layout_constraintStart_toEndOf="@+id/day1"
-					app:layout_constraintTop_toBottomOf="@+id/year0"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/month2"
-					android:background="@drawable/select_hour"
-					android:entries="@array/month0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginTop="@dimen/select_margin_top"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintEnd_toStartOf="@+id/day2"
-					app:layout_constraintHorizontal_bias="0"
-					app:layout_constraintHorizontal_chainStyle="packed"
-					app:layout_constraintStart_toStartOf="parent"
-					app:layout_constraintTop_toBottomOf="@+id/month1"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/day2"
-					android:background="@drawable/select_hour"
-					android:entries="@array/day0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_marginTop="@dimen/select_margin_top"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintEnd_toStartOf="@+id/year2"
-					app:layout_constraintStart_toEndOf="@+id/month2"
-					app:layout_constraintTop_toBottomOf="@+id/day1"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/year2"
-					android:background="@drawable/select_hour"
-					android:entries="@array/year0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_marginTop="@dimen/select_margin_top"
-					android:layout_width="wrap_content"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					app:layout_constraintEnd_toEndOf="parent"
-					app:layout_constraintStart_toEndOf="@+id/day2"
-					app:layout_constraintTop_toBottomOf="@+id/year1"
-					app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-					style="@style/Select" />
-			</android.support.constraint.ConstraintLayout>
-			<Space
-				android:id="@+id/space_2"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_4"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/time"
-				style="@style/Label" />
-			<LinearLayout
-				android:id="@+id/linearlayout_1"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:orientation="horizontal">
-				<Spinner
-					android:id="@+id/hour"
-					android:background="@drawable/select_hour"
-					android:entries="@array/hour_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/minute"
-					android:background="@drawable/select_hour"
-					android:entries="@array/minute_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-			</LinearLayout>
-			<Space
-				android:id="@+id/space_3"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_5"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/type"
-				style="@style/Label" />
-			<Spinner
-				android:id="@+id/typeofentry"
-				android:background="@drawable/select_hour"
-				android:entries="@array/typeofentry_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="@dimen/select_width"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-			<Space
-				android:id="@+id/space_4"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_6"
-				android:labelFor="@+id/topic0"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/topic_add"
-				style="@style/Label" />
-			<LinearLayout
-				android:id="@+id/linearlayout_2"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:orientation="horizontal">
-				<EditText
-					android:id="@+id/topic0"
-					android:background="@drawable/text_order"
-					android:focusable="true"
-					android:inputType="text"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="@dimen/text_margin_end"
-					android:layout_width="@dimen/text_width_1"
-					android:paddingVertical="@dimen/text_padding_vertical"
-					style="@style/Text" />
-				<Spinner
-					android:id="@+id/prominence0"
-					android:background="@drawable/select_hour"
-					android:entries="@array/typeofentry_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-			</LinearLayout>
-			<Space
-				android:id="@+id/space_5"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_7"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/series"
-				style="@style/Label" />
-			<Spinner
-				android:id="@+id/series"
-				android:background="@drawable/select_hour"
-				android:entries="@array/series_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="@dimen/select_width_1"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-			<Space
-				android:id="@+id/space_6"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_8"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/subset"
-				style="@style/Label" />
-			<Spinner
-				android:id="@+id/subset"
-				android:background="@drawable/select_hour"
-				android:entries="@array/typeofentry_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-			<Space
-				android:id="@+id/space_7"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_9"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/active"
-				style="@style/Label" />
-			<Spinner
-				android:id="@+id/entryactive"
-				android:background="@drawable/select_hour"
-				android:entries="@array/entryactive_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-		</GridLayout>
-		<View
-			android:id="@+id/view_1"
-			android:background="@color/light_gray_1"
-			android:layout_height="@dimen/hr_height"
-			android:layout_margin="@dimen/hr_margin"
-			android:layout_width="match_parent" />
-		<GridLayout
-			android:id="@+id/gridlayout_2"
-			android:columnCount="2"
-			android:layout_height="wrap_content"
-			android:layout_width="match_parent"
-			android:paddingBottom="@dimen/ul_padding_bottom"
-			android:paddingHorizontal="@dimen/ul_padding_horizontal"
-			android:paddingTop="@dimen/ul_padding_top">
-			<TextView
-				android:id="@+id/textview_10"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/series"
-				style="@style/Label_1" />
-			<Spinner
-				android:id="@+id/series_1"
-				android:background="@drawable/select_hour"
-				android:entries="@array/series_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="@dimen/select_width_1"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-			<Space
-				android:id="@+id/space_8"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_11"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/subset"
-				style="@style/Label" />
-			<Spinner
-				android:id="@+id/subset_1"
-				android:background="@drawable/select_hour"
-				android:entries="@array/typeofentry_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-			<Space
-				android:id="@+id/space_9"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_12"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/entries"
-				style="@style/Label" />
-			<LinearLayout
-				android:id="@+id/linearlayout_3"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:orientation="horizontal">
-				<Spinner
-					android:id="@+id/entry_1"
-					android:background="@drawable/select_hour"
-					android:entries="@array/typeofentry_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="@dimen/select_width_1"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-				<Button
-					android:id="@+id/button_1"
-					android:background="@drawable/button_button_1"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/button_margin_start"
-					android:layout_width="wrap_content"
-					android:minHeight="@dimen/button_minheight"
-					android:minWidth="@dimen/button_minwidth"
-					android:paddingHorizontal="@dimen/button_padding_horizontal"
-					android:paddingVertical="@dimen/button_padding_vertical"
-					android:text="@string/open"
-					android:textAllCaps="false"
-					style="@style/Button_1" />
-				<Button
-					android:id="@+id/button_2"
-					android:background="@drawable/button_button_1"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/button_margin_start"
-					android:layout_width="wrap_content"
-					android:minHeight="@dimen/button_minheight"
-					android:minWidth="@dimen/button_minwidth"
-					android:paddingHorizontal="@dimen/button_padding_horizontal"
-					android:paddingVertical="@dimen/button_padding_vertical"
-					android:text="@string/all"
-					android:textAllCaps="false"
-					style="@style/Button_1" />
-			</LinearLayout>
-			<Space
-				android:id="@+id/space_10"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_13"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/mode"
-				style="@style/Label" />
-			<Spinner
-				android:id="@+id/mode"
-				android:background="@drawable/select_hour"
-				android:entries="@array/mode_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-			<Space
-				android:id="@+id/space_11"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_14"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/style"
-				style="@style/Label" />
-			<Spinner
-				android:id="@+id/style1"
-				android:background="@drawable/select_hour"
-				android:entries="@array/typeofentry_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-			<Space
-				android:id="@+id/space_12"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_15"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/calendar"
-				style="@style/Label" />
-			<Spinner
-				android:id="@+id/calendar"
-				android:background="@drawable/select_hour"
-				android:entries="@array/calendar_array"
-				android:focusable="true"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:minWidth="@dimen/select_minwidth"
-				android:paddingVertical="@dimen/select_padding_vertical"
-				style="@style/Select" />
-			<Space
-				android:id="@+id/space_13"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_16"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/version"
-				style="@style/Label" />
-			<LinearLayout
-				android:id="@+id/linearlayout_4"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:orientation="horizontal">
-				<Spinner
-					android:id="@+id/version"
-					android:background="@drawable/select_hour"
-					android:entries="@array/version_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/version_update"
-					android:background="@drawable/select_hour"
-					android:entries="@array/version_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-				<Button
-					android:id="@+id/button_3"
-					android:background="@drawable/button_button_1"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/button_margin_start_1"
-					android:layout_width="wrap_content"
-					android:minHeight="@dimen/button_minheight"
-					android:minWidth="@dimen/button_minwidth"
-					android:paddingHorizontal="@dimen/button_padding_horizontal"
-					android:paddingVertical="@dimen/button_padding_vertical"
-					android:text="@string/update"
-					android:textAllCaps="false"
-					style="@style/Button" />
-			</LinearLayout>
-			<Space
-				android:id="@+id/space_14"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_17"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/branch"
-				style="@style/Label" />
-			<LinearLayout
-				android:id="@+id/linearlayout_5"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:orientation="horizontal">
-				<Spinner
-					android:id="@+id/branch"
-					android:background="@drawable/select_hour"
-					android:entries="@array/branch_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/branch_update"
-					android:background="@drawable/select_hour"
-					android:entries="@array/branch_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-				<Button
-					android:id="@+id/button_4"
-					android:background="@drawable/button_button_1"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/button_margin_start_1"
-					android:layout_width="wrap_content"
-					android:minHeight="@dimen/button_minheight"
-					android:minWidth="@dimen/button_minwidth"
-					android:paddingHorizontal="@dimen/button_padding_horizontal"
-					android:paddingVertical="@dimen/button_padding_vertical"
-					android:text="@string/update"
-					android:textAllCaps="false"
-					style="@style/Button" />
-				<Button
-					android:id="@+id/button_5"
-					android:background="@drawable/button_button_1"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/button_margin_start"
-					android:layout_width="wrap_content"
-					android:minHeight="@dimen/button_minheight"
-					android:minWidth="@dimen/button_minwidth"
-					android:paddingHorizontal="@dimen/button_padding_horizontal"
-					android:paddingVertical="@dimen/button_padding_vertical"
-					android:text="@string/clone"
-					android:textAllCaps="false"
-					style="@style/Button" />
-			</LinearLayout>
-			<Space
-				android:id="@+id/space_15"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_18"
-				android:labelFor="@+id/customname0"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/custom_add"
-				style="@style/Label" />
-			<LinearLayout
-				android:id="@+id/linearlayout_6"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:orientation="horizontal">
-				<EditText
-					android:id="@+id/customname0"
-					android:background="@drawable/text_order"
-					android:focusable="true"
-					android:inputType="text"
-					android:layout_height="wrap_content"
-					android:layout_marginEnd="@dimen/text_margin_end"
-					android:layout_width="@dimen/text_width_1"
-					android:paddingVertical="@dimen/text_padding_vertical"
-					style="@style/Text" />
-				<Spinner
-					android:id="@+id/custommonth0"
-					android:background="@drawable/select_hour"
-					android:entries="@array/month0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-				<Spinner
-					android:id="@+id/customday0"
-					android:background="@drawable/select_hour"
-					android:entries="@array/day0_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/select_margin_start"
-					android:layout_width="wrap_content"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-			</LinearLayout>
-			<Space
-				android:id="@+id/space_16"
-				android:layout_columnSpan="2"
-				android:layout_height="@dimen/space_height"
-				android:layout_width="match_parent" />
-			<TextView
-				android:id="@+id/textview_19"
-				android:layout_height="wrap_content"
-				android:layout_marginEnd="@dimen/label_margin_end"
-				android:layout_width="@dimen/label_width"
-				android:paddingTop="@dimen/label_padding_top"
-				android:text="@string/conclusion"
-				style="@style/Label" />
-			<LinearLayout
-				android:id="@+id/linearlayout_7"
-				android:layout_height="wrap_content"
-				android:layout_width="wrap_content"
-				android:orientation="horizontal">
-				<Spinner
-					android:id="@+id/person"
-					android:background="@drawable/select_hour"
-					android:entries="@array/typeofentry_array"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_width="@dimen/select_width_2"
-					android:minWidth="@dimen/select_minwidth"
-					android:paddingVertical="@dimen/select_padding_vertical"
-					style="@style/Select" />
-				<LinearLayout
-					android:id="@+id/linearlayout_8"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/div_margin_start"
-					android:layout_width="wrap_content"
-					android:orientation="horizontal">
-					<RadioGroup
-						android:id="@+id/radiogroup_1"
-						android:checkedButton="@+id/c2"
-						android:layout_height="wrap_content"
-						android:layout_width="wrap_content"
-						android:orientation="horizontal">
-						<RadioButton
-							android:id="@+id/c2"
-							android:focusable="true"
-							android:layout_height="wrap_content"
-							android:layout_marginEnd="@dimen/radio_margin_end"
-							android:layout_marginStart="@dimen/radio_margin_start"
-							android:layout_marginTop="@dimen/radio_margin_top"
-							android:layout_width="wrap_content"
-							android:text="@string/birth"
-							style="@style/Radio" />
-						<RadioButton
-							android:id="@+id/c3"
-							android:focusable="true"
-							android:layout_height="wrap_content"
-							android:layout_marginEnd="@dimen/radio_margin_end"
-							android:layout_marginStart="@dimen/radio_margin_start_1"
-							android:layout_marginTop="@dimen/radio_margin_top"
-							android:layout_width="wrap_content"
-							android:text="@string/death"
-							style="@style/Radio" />
-					</RadioGroup>
-					<CheckBox
-						android:id="@+id/c4"
-						android:focusable="true"
-						android:layout_height="wrap_content"
-						android:layout_marginEnd="@dimen/checkbox_margin_end"
-						android:layout_marginStart="@dimen/checkbox_margin_start"
-						android:layout_marginVertical="@dimen/checkbox_margin_vertical"
-						android:layout_width="wrap_content"
-						android:text="@string/none"
-						style="@style/Checkbox" />
-				</LinearLayout>
-				<Button
-					android:id="@+id/button_6"
-					android:background="@drawable/button_button_1"
-					android:focusable="true"
-					android:layout_height="wrap_content"
-					android:layout_marginStart="@dimen/button_margin_start"
-					android:layout_width="wrap_content"
-					android:minHeight="@dimen/button_minheight"
-					android:minWidth="@dimen/button_minwidth"
-					android:paddingHorizontal="@dimen/button_padding_horizontal"
-					android:paddingVertical="@dimen/button_padding_vertical"
-					android:text="@string/update"
-					android:textAllCaps="false"
-					style="@style/Button" />
-			</LinearLayout>
-		</GridLayout>
-	</LinearLayout>
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/androme_ui"
+    android:layout_height="wrap_content"
+    android:layout_width="wrap_content"
+    android:orientation="vertical">
+    <TextView
+        android:id="@+id/textview_1"
+        android:background="@drawable/h2_textview_1"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:padding="@dimen/h2_padding"
+        android:text="@string/entry"
+        style="@style/H2" />
+    <LinearLayout
+        android:id="@+id/entry"
+        android:background="@drawable/form_entry"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/form_padding_horizontal"
+        android:paddingVertical="@dimen/form_padding_vertical">
+        <GridLayout
+            android:id="@+id/gridlayout_1"
+            android:columnCount="2"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:paddingBottom="@dimen/ul_padding_bottom"
+            android:paddingHorizontal="@dimen/ul_padding_horizontal"
+            android:paddingTop="@dimen/ul_padding_top">
+            <TextView
+                android:id="@+id/textview_2"
+                android:labelFor="@+id/order"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/order"
+                style="@style/Label_1" />
+            <EditText
+                android:id="@+id/order"
+                android:background="@drawable/text_order"
+                android:focusable="true"
+                android:inputType="text"
+                android:layout_height="wrap_content"
+                android:layout_width="@dimen/text_width"
+                android:paddingVertical="@dimen/text_padding_vertical"
+                style="@style/Text" />
+            <Space
+                android:id="@+id/space_1"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_3"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/date_add"
+                style="@style/Label" />
+            <android.support.constraint.ConstraintLayout
+                android:id="@+id/constraintlayout_1"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content">
+                <Spinner
+                    android:id="@+id/month0"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/month0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toTopOf="@+id/month1"
+                    app:layout_constraintEnd_toStartOf="@+id/day0"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/day0"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/day0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toTopOf="@+id/day1"
+                    app:layout_constraintEnd_toStartOf="@+id/year0"
+                    app:layout_constraintStart_toEndOf="@+id/month0"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/year0"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/year0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toTopOf="@+id/year1"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/day0"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/month1"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/month0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/select_margin_top"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toTopOf="@+id/month2"
+                    app:layout_constraintEnd_toStartOf="@+id/day1"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/month0"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/day1"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/day0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_marginTop="@dimen/select_margin_top"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toTopOf="@+id/day2"
+                    app:layout_constraintEnd_toStartOf="@+id/year1"
+                    app:layout_constraintStart_toEndOf="@+id/month1"
+                    app:layout_constraintTop_toBottomOf="@+id/day0"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/year1"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/year0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_marginTop="@dimen/select_margin_top"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toTopOf="@+id/year2"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/day1"
+                    app:layout_constraintTop_toBottomOf="@+id/year0"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/month2"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/month0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/select_margin_top"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/day2"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/month1"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/day2"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/day0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_marginTop="@dimen/select_margin_top"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/year2"
+                    app:layout_constraintStart_toEndOf="@+id/month2"
+                    app:layout_constraintTop_toBottomOf="@+id/day1"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/year2"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/year0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_marginTop="@dimen/select_margin_top"
+                    android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/day2"
+                    app:layout_constraintTop_toBottomOf="@+id/year1"
+                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
+                    style="@style/Select" />
+            </android.support.constraint.ConstraintLayout>
+            <Space
+                android:id="@+id/space_2"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_4"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/time"
+                style="@style/Label" />
+            <LinearLayout
+                android:id="@+id/linearlayout_1"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal">
+                <Spinner
+                    android:id="@+id/hour"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/hour_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/minute"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/minute_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+            </LinearLayout>
+            <Space
+                android:id="@+id/space_3"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_5"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/type"
+                style="@style/Label" />
+            <Spinner
+                android:id="@+id/typeofentry"
+                android:background="@drawable/select_hour"
+                android:entries="@array/typeofentry_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="@dimen/select_width"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+            <Space
+                android:id="@+id/space_4"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_6"
+                android:labelFor="@+id/topic0"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/topic_add"
+                style="@style/Label" />
+            <LinearLayout
+                android:id="@+id/linearlayout_2"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal">
+                <EditText
+                    android:id="@+id/topic0"
+                    android:background="@drawable/text_order"
+                    android:focusable="true"
+                    android:inputType="text"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/text_margin_end"
+                    android:layout_width="@dimen/text_width_1"
+                    android:paddingVertical="@dimen/text_padding_vertical"
+                    style="@style/Text" />
+                <Spinner
+                    android:id="@+id/prominence0"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/typeofentry_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+            </LinearLayout>
+            <Space
+                android:id="@+id/space_5"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_7"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/series"
+                style="@style/Label" />
+            <Spinner
+                android:id="@+id/series"
+                android:background="@drawable/select_hour"
+                android:entries="@array/series_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="@dimen/select_width_1"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+            <Space
+                android:id="@+id/space_6"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_8"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/subset"
+                style="@style/Label" />
+            <Spinner
+                android:id="@+id/subset"
+                android:background="@drawable/select_hour"
+                android:entries="@array/typeofentry_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+            <Space
+                android:id="@+id/space_7"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_9"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/active"
+                style="@style/Label" />
+            <Spinner
+                android:id="@+id/entryactive"
+                android:background="@drawable/select_hour"
+                android:entries="@array/entryactive_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+        </GridLayout>
+        <View
+            android:id="@+id/view_1"
+            android:background="@color/light_gray_1"
+            android:layout_height="@dimen/hr_height"
+            android:layout_margin="@dimen/hr_margin"
+            android:layout_width="match_parent" />
+        <GridLayout
+            android:id="@+id/gridlayout_2"
+            android:columnCount="2"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:paddingBottom="@dimen/ul_padding_bottom"
+            android:paddingHorizontal="@dimen/ul_padding_horizontal"
+            android:paddingTop="@dimen/ul_padding_top">
+            <TextView
+                android:id="@+id/textview_10"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/series"
+                style="@style/Label_1" />
+            <Spinner
+                android:id="@+id/series_1"
+                android:background="@drawable/select_hour"
+                android:entries="@array/series_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="@dimen/select_width_1"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+            <Space
+                android:id="@+id/space_8"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_11"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/subset"
+                style="@style/Label" />
+            <Spinner
+                android:id="@+id/subset_1"
+                android:background="@drawable/select_hour"
+                android:entries="@array/typeofentry_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+            <Space
+                android:id="@+id/space_9"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_12"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/entries"
+                style="@style/Label" />
+            <LinearLayout
+                android:id="@+id/linearlayout_3"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal">
+                <Spinner
+                    android:id="@+id/entry_1"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/typeofentry_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/select_width_1"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+                <Button
+                    android:id="@+id/button_1"
+                    android:background="@drawable/button_button_1"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/button_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minHeight="@dimen/button_minheight"
+                    android:minWidth="@dimen/button_minwidth"
+                    android:paddingHorizontal="@dimen/button_padding_horizontal"
+                    android:paddingVertical="@dimen/button_padding_vertical"
+                    android:text="@string/open"
+                    android:textAllCaps="false"
+                    style="@style/Button_1" />
+                <Button
+                    android:id="@+id/button_2"
+                    android:background="@drawable/button_button_1"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/button_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minHeight="@dimen/button_minheight"
+                    android:minWidth="@dimen/button_minwidth"
+                    android:paddingHorizontal="@dimen/button_padding_horizontal"
+                    android:paddingVertical="@dimen/button_padding_vertical"
+                    android:text="@string/all"
+                    android:textAllCaps="false"
+                    style="@style/Button_1" />
+            </LinearLayout>
+            <Space
+                android:id="@+id/space_10"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_13"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/mode"
+                style="@style/Label" />
+            <Spinner
+                android:id="@+id/mode"
+                android:background="@drawable/select_hour"
+                android:entries="@array/mode_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+            <Space
+                android:id="@+id/space_11"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_14"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/style"
+                style="@style/Label" />
+            <Spinner
+                android:id="@+id/style1"
+                android:background="@drawable/select_hour"
+                android:entries="@array/typeofentry_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+            <Space
+                android:id="@+id/space_12"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_15"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/calendar"
+                style="@style/Label" />
+            <Spinner
+                android:id="@+id/calendar"
+                android:background="@drawable/select_hour"
+                android:entries="@array/calendar_array"
+                android:focusable="true"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:minWidth="@dimen/select_minwidth"
+                android:paddingVertical="@dimen/select_padding_vertical"
+                style="@style/Select" />
+            <Space
+                android:id="@+id/space_13"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_16"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/version"
+                style="@style/Label" />
+            <LinearLayout
+                android:id="@+id/linearlayout_4"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal">
+                <Spinner
+                    android:id="@+id/version"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/version_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/version_update"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/version_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+                <Button
+                    android:id="@+id/button_3"
+                    android:background="@drawable/button_button_1"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/button_margin_start_1"
+                    android:layout_width="wrap_content"
+                    android:minHeight="@dimen/button_minheight"
+                    android:minWidth="@dimen/button_minwidth"
+                    android:paddingHorizontal="@dimen/button_padding_horizontal"
+                    android:paddingVertical="@dimen/button_padding_vertical"
+                    android:text="@string/update"
+                    android:textAllCaps="false"
+                    style="@style/Button" />
+            </LinearLayout>
+            <Space
+                android:id="@+id/space_14"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_17"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/branch"
+                style="@style/Label" />
+            <LinearLayout
+                android:id="@+id/linearlayout_5"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal">
+                <Spinner
+                    android:id="@+id/branch"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/branch_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/branch_update"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/branch_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+                <Button
+                    android:id="@+id/button_4"
+                    android:background="@drawable/button_button_1"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/button_margin_start_1"
+                    android:layout_width="wrap_content"
+                    android:minHeight="@dimen/button_minheight"
+                    android:minWidth="@dimen/button_minwidth"
+                    android:paddingHorizontal="@dimen/button_padding_horizontal"
+                    android:paddingVertical="@dimen/button_padding_vertical"
+                    android:text="@string/update"
+                    android:textAllCaps="false"
+                    style="@style/Button" />
+                <Button
+                    android:id="@+id/button_5"
+                    android:background="@drawable/button_button_1"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/button_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minHeight="@dimen/button_minheight"
+                    android:minWidth="@dimen/button_minwidth"
+                    android:paddingHorizontal="@dimen/button_padding_horizontal"
+                    android:paddingVertical="@dimen/button_padding_vertical"
+                    android:text="@string/clone"
+                    android:textAllCaps="false"
+                    style="@style/Button" />
+            </LinearLayout>
+            <Space
+                android:id="@+id/space_15"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_18"
+                android:labelFor="@+id/customname0"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/custom_add"
+                style="@style/Label" />
+            <LinearLayout
+                android:id="@+id/linearlayout_6"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal">
+                <EditText
+                    android:id="@+id/customname0"
+                    android:background="@drawable/text_order"
+                    android:focusable="true"
+                    android:inputType="text"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/text_margin_end"
+                    android:layout_width="@dimen/text_width_1"
+                    android:paddingVertical="@dimen/text_padding_vertical"
+                    style="@style/Text" />
+                <Spinner
+                    android:id="@+id/custommonth0"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/month0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+                <Spinner
+                    android:id="@+id/customday0"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/day0_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/select_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+            </LinearLayout>
+            <Space
+                android:id="@+id/space_16"
+                android:layout_columnSpan="2"
+                android:layout_height="@dimen/space_height"
+                android:layout_width="match_parent" />
+            <TextView
+                android:id="@+id/textview_19"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/label_margin_end"
+                android:layout_width="@dimen/label_width"
+                android:paddingTop="@dimen/label_padding_top"
+                android:text="@string/conclusion"
+                style="@style/Label" />
+            <LinearLayout
+                android:id="@+id/linearlayout_7"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal">
+                <Spinner
+                    android:id="@+id/person"
+                    android:background="@drawable/select_hour"
+                    android:entries="@array/typeofentry_array"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/select_width_2"
+                    android:minWidth="@dimen/select_minwidth"
+                    android:paddingVertical="@dimen/select_padding_vertical"
+                    style="@style/Select" />
+                <LinearLayout
+                    android:id="@+id/linearlayout_8"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/div_margin_start"
+                    android:layout_width="wrap_content"
+                    android:orientation="horizontal">
+                    <RadioGroup
+                        android:id="@+id/radiogroup_1"
+                        android:checkedButton="@+id/c2"
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:orientation="horizontal">
+                        <RadioButton
+                            android:id="@+id/c2"
+                            android:focusable="true"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/radio_margin_end"
+                            android:layout_marginStart="@dimen/radio_margin_start"
+                            android:layout_marginTop="@dimen/radio_margin_top"
+                            android:layout_width="wrap_content"
+                            android:text="@string/birth"
+                            style="@style/Radio" />
+                        <RadioButton
+                            android:id="@+id/c3"
+                            android:focusable="true"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/radio_margin_end"
+                            android:layout_marginStart="@dimen/radio_margin_start_1"
+                            android:layout_marginTop="@dimen/radio_margin_top"
+                            android:layout_width="wrap_content"
+                            android:text="@string/death"
+                            style="@style/Radio" />
+                    </RadioGroup>
+                    <CheckBox
+                        android:id="@+id/c4"
+                        android:focusable="true"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="@dimen/checkbox_margin_end"
+                        android:layout_marginStart="@dimen/checkbox_margin_start"
+                        android:layout_marginVertical="@dimen/checkbox_margin_vertical"
+                        android:layout_width="wrap_content"
+                        android:text="@string/none"
+                        style="@style/Checkbox" />
+                </LinearLayout>
+                <Button
+                    android:id="@+id/button_6"
+                    android:background="@drawable/button_button_1"
+                    android:focusable="true"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/button_margin_start"
+                    android:layout_width="wrap_content"
+                    android:minHeight="@dimen/button_minheight"
+                    android:minWidth="@dimen/button_minwidth"
+                    android:paddingHorizontal="@dimen/button_padding_horizontal"
+                    android:paddingVertical="@dimen/button_padding_vertical"
+                    android:text="@string/update"
+                    android:textAllCaps="false"
+                    style="@style/Button" />
+            </LinearLayout>
+        </GridLayout>
+    </LinearLayout>
 </LinearLayout>
 ```
 ### String Resources
@@ -1009,180 +1012,180 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name">androme_ui</string>
-	<string name="__00_inactive">00 - Inactive</string>
-	<string name="__01_active">01 - Active</string>
-	<string name="active">Active:</string>
-	<string name="all">All</string>
-	<string name="birth">Birth</string>
-	<string name="branch">Branch:</string>
-	<string name="calendar">Calendar:</string>
-	<string name="clone">Clone</string>
-	<string name="conclusion">Conclusion:</string>
-	<string name="custom_add">Custom (<a href="#">Add</a>):</string>
-	<string name="date_add">Date (<a href="#">Add</a>):</string>
-	<string name="death">Death</string>
-	<string name="entries">Entries:</string>
-	<string name="entry">Entry</string>
-	<string name="mode">Mode:</string>
-	<string name="no">No</string>
-	<string name="none">None</string>
-	<string name="open">Open</string>
-	<string name="order">Order:</string>
-	<string name="predefined">Predefined</string>
-	<string name="series">Series:</string>
-	<string name="style">Style:</string>
-	<string name="subset">Subset:</string>
-	<string name="time">Time:</string>
-	<string name="topic_add">Topic (<a href="#">Add</a>):</string>
-	<string name="type">Type:</string>
-	<string name="update">Update</string>
-	<string name="variant">Variant</string>
-	<string name="version">Version:</string>
-	<string name="yes">Yes</string>
+    <string name="app_name">androme_ui</string>
+    <string name="__00_inactive">00 - Inactive</string>
+    <string name="__01_active">01 - Active</string>
+    <string name="active">Active:</string>
+    <string name="all">All</string>
+    <string name="birth">Birth</string>
+    <string name="branch">Branch:</string>
+    <string name="calendar">Calendar:</string>
+    <string name="clone">Clone</string>
+    <string name="conclusion">Conclusion:</string>
+    <string name="custom_add">Custom (<a href="#">Add</a>):</string>
+    <string name="date_add">Date (<a href="#">Add</a>):</string>
+    <string name="death">Death</string>
+    <string name="entries">Entries:</string>
+    <string name="entry">Entry</string>
+    <string name="mode">Mode:</string>
+    <string name="no">No</string>
+    <string name="none">None</string>
+    <string name="open">Open</string>
+    <string name="order">Order:</string>
+    <string name="predefined">Predefined</string>
+    <string name="series">Series:</string>
+    <string name="style">Style:</string>
+    <string name="subset">Subset:</string>
+    <string name="time">Time:</string>
+    <string name="topic_add">Topic (<a href="#">Add</a>):</string>
+    <string name="type">Type:</string>
+    <string name="update">Update</string>
+    <string name="variant">Variant</string>
+    <string name="version">Version:</string>
+    <string name="yes">Yes</string>
 </resources>
 <!-- filename: res/values/strings.xml -->
 ```
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string-array name="branch_array">
-		<item>0</item>
-		<item>1</item>
-		<item>2</item>
-		<item>3</item>
-		<item>4</item>
-		<item>5</item>
-		<item>6</item>
-		<item>7</item>
-		<item>8</item>
-		<item>9</item>
-		<item>10</item>
-	</string-array>
-	<string-array name="calendar_array">
-		<item>@string/birth</item>
-		<item>@string/death</item>
-	</string-array>
-	<string-array name="day0_array">
-		<item>01</item>
-		<item>02</item>
-		<item>03</item>
-		<item>04</item>
-		<item>05</item>
-		<item>06</item>
-		<item>07</item>
-		<item>08</item>
-		<item>09</item>
-		<item>10</item>
-		<item>11</item>
-		<item>12</item>
-		<item>13</item>
-		<item>14</item>
-		<item>15</item>
-		<item>16</item>
-		<item>17</item>
-		<item>18</item>
-		<item>19</item>
-		<item>20</item>
-		<item>21</item>
-		<item>22</item>
-		<item>23</item>
-		<item>24</item>
-		<item>25</item>
-		<item>26</item>
-		<item>27</item>
-		<item>28</item>
-		<item>29</item>
-		<item>30</item>
-		<item>31</item>
-	</string-array>
-	<string-array name="entryactive_array">
-		<item>@string/yes</item>
-		<item>@string/no</item>
-	</string-array>
-	<string-array name="hour_array">
-		<item>00</item>
-		<item>01</item>
-		<item>02</item>
-		<item>03</item>
-		<item>04</item>
-		<item>05</item>
-		<item>06</item>
-		<item>07</item>
-		<item>08</item>
-		<item>09</item>
-		<item>10</item>
-		<item>11</item>
-		<item>12</item>
-		<item>13</item>
-		<item>14</item>
-		<item>15</item>
-		<item>16</item>
-		<item>17</item>
-		<item>18</item>
-		<item>19</item>
-		<item>20</item>
-		<item>21</item>
-		<item>22</item>
-		<item>23</item>
-	</string-array>
-	<string-array name="minute_array">
-		<item>00</item>
-		<item>15</item>
-		<item>30</item>
-		<item>45</item>
-	</string-array>
-	<string-array name="mode_array">
-		<item>@string/variant</item>
-		<item>@string/predefined</item>
-	</string-array>
-	<string-array name="month0_array">
-		<item>01</item>
-		<item>02</item>
-		<item>03</item>
-		<item>04</item>
-		<item>05</item>
-		<item>06</item>
-		<item>07</item>
-		<item>08</item>
-		<item>09</item>
-		<item>10</item>
-		<item>11</item>
-		<item>12</item>
-	</string-array>
-	<string-array name="series_array">
-		<item>@string/__00_inactive</item>
-		<item>@string/__01_active</item>
-	</string-array>
-	<string-array name="typeofentry_array">
-		<item>0</item>
-		<item>1</item>
-	</string-array>
-	<string-array name="version_array">
-		<item>0</item>
-		<item>1</item>
-		<item>2</item>
-	</string-array>
-	<string-array name="year0_array">
-		<item>2001</item>
-		<item>2002</item>
-		<item>2003</item>
-		<item>2004</item>
-		<item>2005</item>
-		<item>2006</item>
-		<item>2007</item>
-		<item>2008</item>
-		<item>2009</item>
-		<item>2010</item>
-		<item>2011</item>
-		<item>2012</item>
-		<item>2013</item>
-		<item>2014</item>
-		<item>2015</item>
-		<item>2016</item>
-		<item>2017</item>
-		<item>2018</item>
-	</string-array>
+    <string-array name="branch_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+    </string-array>
+    <string-array name="calendar_array">
+        <item>@string/birth</item>
+        <item>@string/death</item>
+    </string-array>
+    <string-array name="day0_array">
+        <item>01</item>
+        <item>02</item>
+        <item>03</item>
+        <item>04</item>
+        <item>05</item>
+        <item>06</item>
+        <item>07</item>
+        <item>08</item>
+        <item>09</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>18</item>
+        <item>19</item>
+        <item>20</item>
+        <item>21</item>
+        <item>22</item>
+        <item>23</item>
+        <item>24</item>
+        <item>25</item>
+        <item>26</item>
+        <item>27</item>
+        <item>28</item>
+        <item>29</item>
+        <item>30</item>
+        <item>31</item>
+    </string-array>
+    <string-array name="entryactive_array">
+        <item>@string/yes</item>
+        <item>@string/no</item>
+    </string-array>
+    <string-array name="hour_array">
+        <item>00</item>
+        <item>01</item>
+        <item>02</item>
+        <item>03</item>
+        <item>04</item>
+        <item>05</item>
+        <item>06</item>
+        <item>07</item>
+        <item>08</item>
+        <item>09</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>18</item>
+        <item>19</item>
+        <item>20</item>
+        <item>21</item>
+        <item>22</item>
+        <item>23</item>
+    </string-array>
+    <string-array name="minute_array">
+        <item>00</item>
+        <item>15</item>
+        <item>30</item>
+        <item>45</item>
+    </string-array>
+    <string-array name="mode_array">
+        <item>@string/variant</item>
+        <item>@string/predefined</item>
+    </string-array>
+    <string-array name="month0_array">
+        <item>01</item>
+        <item>02</item>
+        <item>03</item>
+        <item>04</item>
+        <item>05</item>
+        <item>06</item>
+        <item>07</item>
+        <item>08</item>
+        <item>09</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+    </string-array>
+    <string-array name="series_array">
+        <item>@string/__00_inactive</item>
+        <item>@string/__01_active</item>
+    </string-array>
+    <string-array name="typeofentry_array">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+    <string-array name="version_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="year0_array">
+        <item>2001</item>
+        <item>2002</item>
+        <item>2003</item>
+        <item>2004</item>
+        <item>2005</item>
+        <item>2006</item>
+        <item>2007</item>
+        <item>2008</item>
+        <item>2009</item>
+        <item>2010</item>
+        <item>2011</item>
+        <item>2012</item>
+        <item>2013</item>
+        <item>2014</item>
+        <item>2015</item>
+        <item>2016</item>
+        <item>2017</item>
+        <item>2018</item>
+    </string-array>
 </resources>
 <!-- filename: res/values/string_arrays.xml -->
 ```
@@ -1191,44 +1194,44 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<style name="Button">
-		<item name="android:background">@color/white_smoke_1</item>
-		<item name="android:fontFamily">arial</item>
-		<item name="android:textSize">10sp</item>
-	</style>
-	<style name="Button_1" parent="Button">
-		<item name="android:textColor">@color/gray</item>
-	</style>
-	<style name="Checkbox">
-		<item name="android:fontFamily">sans-serif</item>
-		<item name="android:textSize">11sp</item>
-	</style>
-	<style name="H2">
-		<item name="android:background">@color/dark_blue</item>
-		<item name="android:fontFamily">tahoma</item>
-		<item name="android:fontWeight">700</item>
-		<item name="android:textColor">@color/white</item>
-		<item name="android:textSize">12sp</item>
-	</style>
-	<style name="Label">
-		<item name="android:fontFamily">arial</item>
-		<item name="android:textSize">11sp</item>
-	</style>
-	<style name="Label_1" parent="Label">
-		<item name="android:textStyle">italic</item>
-	</style>
-	<style name="Radio">
-		<item name="android:fontFamily">sans-serif</item>
-		<item name="android:textSize">11sp</item>
-	</style>
-	<style name="Select">
-		<item name="android:fontFamily">arial</item>
-		<item name="android:textSize">11sp</item>
-	</style>
-	<style name="Text">
-		<item name="android:fontFamily">arial</item>
-		<item name="android:textSize">13sp</item>
-	</style>
+    <style name="Button">
+        <item name="android:background">@color/white_smoke_1</item>
+        <item name="android:fontFamily">arial</item>
+        <item name="android:textSize">10sp</item>
+    </style>
+    <style name="Button_1" parent="Button">
+        <item name="android:textColor">@color/gray</item>
+    </style>
+    <style name="Checkbox">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+    <style name="H2">
+        <item name="android:background">@color/dark_blue</item>
+        <item name="android:fontFamily">tahoma</item>
+        <item name="android:fontWeight">700</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+    <style name="Label">
+        <item name="android:fontFamily">arial</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+    <style name="Label_1" parent="Label">
+        <item name="android:textStyle">italic</item>
+    </style>
+    <style name="Radio">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+    <style name="Select">
+        <item name="android:fontFamily">arial</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+    <style name="Text">
+        <item name="android:fontFamily">arial</item>
+        <item name="android:textSize">13sp</item>
+    </style>
 </resources>
 <!-- filename: res/values/styles.xml -->
 ```
@@ -1237,14 +1240,14 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <font-family xmlns:android="http://schemas.android.com/apk/res/android">
-	<font android:fontStyle="italic" android:fontWeight="400" android:font="@font/arial_italic" />
-	<font android:fontStyle="normal" android:fontWeight="400" android:font="@font/arial_normal" />
+    <font android:fontStyle="italic" android:fontWeight="400" android:font="@font/arial_italic" />
+    <font android:fontStyle="normal" android:fontWeight="400" android:font="@font/arial_normal" />
 </font-family>
 <!-- filename: res/font/arial.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
 <font-family xmlns:android="http://schemas.android.com/apk/res/android">
-	<font android:fontStyle="normal" android:fontWeight="700" android:font="@font/tahoma_bold" />
+    <font android:fontStyle="normal" android:fontWeight="700" android:font="@font/tahoma_bold" />
 </font-family>
 <!-- filename: res/font/tahoma.xml -->
 ```
@@ -1253,14 +1256,14 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<color name="black">#000000</color>
-	<color name="dark_blue">#00008B</color>
-	<color name="gray">#808080</color>
-	<color name="yellow_green">#9ACD32</color>
-	<color name="dark_gray">#A9A9A9</color>
-	<color name="light_gray_1">#CCCCCC</color>
-	<color name="white_smoke_1">#DDDDDD</color>
-	<color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="dark_blue">#00008B</color>
+    <color name="gray">#808080</color>
+    <color name="yellow_green">#9ACD32</color>
+    <color name="dark_gray">#A9A9A9</color>
+    <color name="light_gray_1">#CCCCCC</color>
+    <color name="white_smoke_1">#DDDDDD</color>
+    <color name="white">#FFFFFF</color>
 </resources>
 <!-- filename: res/values/colors.xml -->
 ```
@@ -1269,44 +1272,44 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<dimen name="button_margin_start">4dp</dimen>
-	<dimen name="button_margin_start_1">8dp</dimen>
-	<dimen name="button_minheight">0dp</dimen>
-	<dimen name="button_minwidth">0dp</dimen>
-	<dimen name="button_padding_horizontal">6dp</dimen>
-	<dimen name="button_padding_vertical">1dp</dimen>
-	<dimen name="checkbox_margin_end">1dp</dimen>
-	<dimen name="checkbox_margin_start">8dp</dimen>
-	<dimen name="checkbox_margin_vertical">3dp</dimen>
-	<dimen name="div_margin_start">4dp</dimen>
-	<dimen name="form_padding_horizontal">10dp</dimen>
-	<dimen name="form_padding_vertical">5dp</dimen>
-	<dimen name="h2_padding">8dp</dimen>
-	<dimen name="hr_height">1dp</dimen>
-	<dimen name="hr_margin">10dp</dimen>
-	<dimen name="label_margin_end">5dp</dimen>
-	<dimen name="label_padding_top">3dp</dimen>
-	<dimen name="label_width">70dp</dimen>
-	<dimen name="radio_margin_end">1dp</dimen>
-	<dimen name="radio_margin_start">5dp</dimen>
-	<dimen name="radio_margin_start_1">9dp</dimen>
-	<dimen name="radio_margin_top">3dp</dimen>
-	<dimen name="select_constraintwidth_min">37dp</dimen>
-	<dimen name="select_margin_start">4dp</dimen>
-	<dimen name="select_margin_top">13dp</dimen>
-	<dimen name="select_minwidth">37dp</dimen>
-	<dimen name="select_padding_vertical">2dp</dimen>
-	<dimen name="select_width">160dp</dimen>
-	<dimen name="select_width_1">200dp</dimen>
-	<dimen name="select_width_2">100dp</dimen>
-	<dimen name="space_height">6dp</dimen>
-	<dimen name="text_margin_end">5dp</dimen>
-	<dimen name="text_padding_vertical">1dp</dimen>
-	<dimen name="text_width">40dp</dimen>
-	<dimen name="text_width_1">130dp</dimen>
-	<dimen name="ul_padding_bottom">11dp</dimen>
-	<dimen name="ul_padding_horizontal">5dp</dimen>
-	<dimen name="ul_padding_top">5dp</dimen>
+    <dimen name="button_margin_start">4dp</dimen>
+    <dimen name="button_margin_start_1">8dp</dimen>
+    <dimen name="button_minheight">0dp</dimen>
+    <dimen name="button_minwidth">0dp</dimen>
+    <dimen name="button_padding_horizontal">6dp</dimen>
+    <dimen name="button_padding_vertical">1dp</dimen>
+    <dimen name="checkbox_margin_end">1dp</dimen>
+    <dimen name="checkbox_margin_start">8dp</dimen>
+    <dimen name="checkbox_margin_vertical">3dp</dimen>
+    <dimen name="div_margin_start">4dp</dimen>
+    <dimen name="form_padding_horizontal">10dp</dimen>
+    <dimen name="form_padding_vertical">5dp</dimen>
+    <dimen name="h2_padding">8dp</dimen>
+    <dimen name="hr_height">1dp</dimen>
+    <dimen name="hr_margin">10dp</dimen>
+    <dimen name="label_margin_end">5dp</dimen>
+    <dimen name="label_padding_top">3dp</dimen>
+    <dimen name="label_width">70dp</dimen>
+    <dimen name="radio_margin_end">1dp</dimen>
+    <dimen name="radio_margin_start">5dp</dimen>
+    <dimen name="radio_margin_start_1">9dp</dimen>
+    <dimen name="radio_margin_top">3dp</dimen>
+    <dimen name="select_constraintwidth_min">37dp</dimen>
+    <dimen name="select_margin_start">4dp</dimen>
+    <dimen name="select_margin_top">13dp</dimen>
+    <dimen name="select_minwidth">37dp</dimen>
+    <dimen name="select_padding_vertical">2dp</dimen>
+    <dimen name="select_width">160dp</dimen>
+    <dimen name="select_width_1">200dp</dimen>
+    <dimen name="select_width_2">100dp</dimen>
+    <dimen name="space_height">6dp</dimen>
+    <dimen name="text_margin_end">5dp</dimen>
+    <dimen name="text_padding_vertical">1dp</dimen>
+    <dimen name="text_width">40dp</dimen>
+    <dimen name="text_width_1">130dp</dimen>
+    <dimen name="ul_padding_bottom">11dp</dimen>
+    <dimen name="ul_padding_horizontal">5dp</dimen>
+    <dimen name="ul_padding_top">5dp</dimen>
 </resources>
 <!-- filename: res/values/dimens.xml -->
 ```
@@ -1315,34 +1318,34 @@ Most of the Android support library extensions can be configured using the same 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="1dp" android:color="@color/yellow_green" />
-	<solid android:color="@color/dark_blue" />
+    <stroke android:width="1dp" android:color="@color/yellow_green" />
+    <solid android:color="@color/dark_blue" />
 </shape>
 <!-- filename: res/drawable/h2_textview_1.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="1dp" android:color="@color/light_gray_1" />
-	<solid android:color="@color/white" />
+    <stroke android:width="1dp" android:color="@color/light_gray_1" />
+    <solid android:color="@color/white" />
 </shape>
 <!-- filename: res/drawable/form_entry.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="2dp" android:color="@color/black" />
+    <stroke android:width="2dp" android:color="@color/black" />
 </shape>
 <!-- filename: res/drawable/text_order.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="1dp" android:color="@color/dark_gray" />
+    <stroke android:width="1dp" android:color="@color/dark_gray" />
 </shape>
 <!-- filename: res/drawable/select_hour.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<stroke android:width="2dp" android:color="@color/white_smoke_1" />
-	<solid android:color="@color/white_smoke_1" />
+    <stroke android:width="2dp" android:color="@color/white_smoke_1" />
+    <solid android:color="@color/white_smoke_1" />
 </shape>
 <!-- filename: res/drawable/button_button_1.xml -->
 ```
@@ -1357,17 +1360,17 @@ If you plan on using this library it adheres to strict HTML validation rules reg
 RECOMMENDED
 ```xml
 <div>
-	<span>abcde</span>
-	<span>fghij</span>
-	<span>klmno</span>
+    <span>abcde</span>
+    <span>fghij</span>
+    <span>klmno</span>
 </div>
 ```
 NOT RECOMMENDED
 ```xml
 <span>
-	abcde
-	<div>fghij</div>
-	klmno
+    abcde
+    <div>fghij</div>
+    klmno
 </span>
 ```
 You can use the /demos/*.html files provided to preview some features of this library.
