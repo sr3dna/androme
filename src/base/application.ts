@@ -1,6 +1,5 @@
-import { Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { IExtension, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import Controller from './controller';
-import Extension from './extension';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
@@ -22,7 +21,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     private views: PlainFile[] = [];
     private includes: PlainFile[] = [];
     private currentIndex = -1;
-    private _extensions: Extension<T, U>[] = [];
+    private _extensions: IExtension[] = [];
     private _closed = false;
 
     constructor(
@@ -43,7 +42,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.resourceHandler = resource;
     }
 
-    public registerExtension(extension: Extension<T, U>) {
+    public registerExtension(extension: IExtension) {
         const found = this.findExtension(extension.name);
         if (found != null) {
             if (Array.isArray(extension.tagNames)) {
@@ -413,7 +412,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     if (!nodeY.renderParent) {
                         let xml = '';
                         let proceed = false;
-                        const renderExtension = (<Extension<T, U>> parent.renderExtension);
+                        const renderExtension = (<IExtension> parent.renderExtension);
                         if (renderExtension != null) {
                             renderExtension.setTarget(nodeY, parent);
                             const result = renderExtension.processChild();
@@ -520,7 +519,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         const root = (<T> this.cache.parent);
-        const extension = (<Extension<T, U>> root.renderExtension);
+        const extension = (<IExtension> root.renderExtension);
         if (extension == null || root.data(`${extension.name}:insert`) == null) {
             const pathname = trim(optional(root, 'element.dataset.pathname').trim(), '/');
             this.setLayout(pathname, (!empty ? output : ''), (root.renderExtension != null && root.renderExtension.activityMain));

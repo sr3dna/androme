@@ -17,9 +17,9 @@ export interface IExtension {
     is(node: Node): void;
     require(value: string): void;
     included(element?: HTMLElement): boolean;
-    beforeInit(internal: boolean): void;
+    beforeInit(internal?: boolean): void;
     init(element: HTMLElement): boolean;
-    afterInit(internal: boolean): void;
+    afterInit(internal?: boolean): void;
     condition(): void;
     processNode(mapX?: ObjectIndex<ObjectIndex<Node[]>>, mapY?: ObjectIndex<ObjectIndex<Node[]>>): ExtensionResult;
     processChild(mapX?: ObjectIndex<ObjectIndex<Node[]>>, mapY?: ObjectIndex<ObjectIndex<Node[]>>): ExtensionResult;

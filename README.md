@@ -142,25 +142,10 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/list.png" alt="extension: list" />
 
-Extension "external": used for elements which are meant to be in a separate activity layout XML such as navigation menus.
-
 ### Extensions: Widgets
 
 Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
 
-```javascript
-<script>
-    androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided for every extension
-        'elementId': { // HTML DOM
-            appBar: {
-                android: {
-                    theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
-                }
-            }
-        }
-    });
-</script>
-```
 <img src="demos/android/drawer.png" alt="drawer: floating action button" />
 
 <img src="demos/android/coordinator.scrolling.png" alt="coordinator: scrolling" />
@@ -171,6 +156,71 @@ Most of the Android support library extensions can be configured using the same 
 
 <img src="demos/android/menu.png" alt="toolbar: menu" />
 
+### Extensions: Configuration
+
+```javascript
+<script>
+    // configure an extension (built-in)
+    androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided
+        'elementId': { // HTML DOM
+            appBar: {
+                android: {
+                    theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
+                }
+            }
+        }
+    });
+
+    // create an extension (third-party)
+    class Sample extends androme.Extension {
+        constructor(name, tagNames = [], options = {}) {
+            super(name, tagNames, options);
+        }
+    }
+
+    // register an extension (third-party)
+    var sample = new Sample('your.namespace.sample', ['DIV'], { /* same as configure */ });
+    androme.registerExtension(sample);
+
+    // configure an extension (third-party) - same as built-in
+</script>
+```
+
+### API: Public properties and methods (androme)
+
+There is no official documentation for the time being since this project is still in early development. The entire source code is available on Github if you need further clarification.
+
+```javascript
+.build // android versions: 14 to 28
+.density // dpi
+.settings // see user preferences section
+
+customize(build: number, widget: string, options: {}) // global xml attributes applied to specific views
+
+parseDocument() // see installation section
+
+ready() // boolean indicating if parseDocument can be called
+close() // close current session preceding write to disk or local output
+reset() // clear cached layouts and reopen session
+
+saveAllToDisk() // download entire project as zip archive - requires http://localhost through Node and Express
+
+writeLayoutAllXml(saveToDisk: boolean) // output generated xml
+writeResourceAllXml(saveToDisk: boolean)
+writeResourceArrayXml(saveToDisk: boolean)
+writeResourceColorXml(saveToDisk: boolean)
+writeResourceDimenXml(saveToDisk: boolean)
+writeResourceDrawableXml(saveToDisk: boolean)
+writeResourceFontXml(saveToDisk: boolean)
+writeResourceStringXml(saveToDisk: boolean)
+writeResourceStyleXml(saveToDisk: boolean)
+toString() // activity_main.xml
+
+configureExtension(name: string, options: {}) // see extension configuration section
+getExtension(name: string) // retrieve an extension by namespace and control
+registerExtension(extension: androme.Extension) // see extension configuration section
+addXmlNamespace(name: string, uri: string) // add global namespaces for android third-party controls
+```
 ### Generated from HTML and CSS
 
 <img src="demos/android/form.png" alt="form" />

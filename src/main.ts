@@ -1,4 +1,4 @@
-import { Null, StringMap } from './lib/types';
+import { IExtension, Null, StringMap } from './lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
 import { optional } from './lib/util';
@@ -55,12 +55,12 @@ main.registerController(Controller);
 main.registerResource(Resource);
 
 (() => {
-    const load = new Set<Extension<T, U>>();
+    const load = new Set<IExtension>();
     for (let name of SETTINGS.builtInExtensions) {
         name = name.toLowerCase().trim();
         for (const ext in EXTENSIONS) {
             if (name === ext || ext.startsWith(`${name}.`)) {
-                load.add(<Extension<T, U>> EXTENSIONS[ext]);
+                load.add(<IExtension> EXTENSIONS[ext]);
             }
         }
     }
@@ -141,8 +141,8 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
     };
 }
 
-export function registerExtension(extension: Extension<T, U>) {
-    if (extension instanceof Extension) {
+export function registerExtension(extension: IExtension) {
+    if (extension instanceof Extension && extension.name && Array.isArray(extension.tagNames)) {
         main.registerExtension(extension);
     }
 }
@@ -283,4 +283,4 @@ function autoClose() {
     }
 }
 
-export { BUILD_ANDROID as build, DENSITY_ANDROID as density, SETTINGS as settings };
+export { BUILD_ANDROID as build, DENSITY_ANDROID as density, SETTINGS as settings, Extension };
