@@ -1,7 +1,7 @@
 import { IExtension, Null, StringMap } from './lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
-import { optional } from './lib/util';
+import { convertWord, optional } from './lib/util';
 import { EXT_NAME } from './extension/lib/constants';
 import SETTINGS from './settings';
 
@@ -102,7 +102,7 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
                 }
             }
             element.dataset.views = (optional(element, 'dataset.views', 'number') + 1).toString();
-            element.dataset.currentId = (element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id).replace(/[^\w]/g, '_');
+            element.dataset.currentId = convertWord((element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id));
             if (main.createNodeCache(element)) {
                 main.createLayoutXml();
                 main.setResources();

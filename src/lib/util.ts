@@ -176,6 +176,10 @@ export function formatPX(value: any) {
     return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
 }
 
+export function convertWord(value: string) {
+    return (value != null ? value.replace(/[^\w]/g, '_').trim() : '');
+}
+
 export function isNumber(value: string) {
     return /^[0-9]+\.?[0-9]*$/.test(value.toString().trim());
 }

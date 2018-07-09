@@ -1,6 +1,6 @@
 import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { averageInt, calculateBias, convertEnum, convertInt, convertPX, formatPX, generateId, hasValue, isPercent, lastIndexOf } from '../lib/util';
+import { averageInt, calculateBias, convertEnum, convertInt, convertPX, convertWord, formatPX, generateId, hasValue, isPercent, lastIndexOf } from '../lib/util';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BLOCK_CHROME, BOX_STANDARD, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
@@ -180,7 +180,7 @@ export default class View extends Node {
         super.viewName = viewName || this.viewName;
         if (this.viewId == null) {
             const element = (<HTMLInputElement> this.element);
-            this.viewId = generateId('android', (element.id || element.name || `${lastIndexOf(this.viewName, '.').toLowerCase()}_1`).replace(/[^\w]/g, '_'));
+            this.viewId = convertWord(generateId('android', (element.id || element.name || `${lastIndexOf(this.viewName, '.').toLowerCase()}_1`)));
         }
         this.android('id', this.stringId);
     }

@@ -117,6 +117,11 @@ export const FONTALIAS_ANDROID = {
     'courier new': 'serif-monospace'
 };
 
+export const FONTREPLACE_ANDROID = {
+    'ms shell dlg \\32': 'sans-serif',
+    'system-ui': 'sans-serif'
+};
+
 export const FONTWEIGHT_ANDROID = {
     '100': 'thin',
     '200': 'extra_light',

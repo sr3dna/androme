@@ -2,12 +2,12 @@ import { ArrayMap, BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, Vie
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { capitalize, formatString, hasValue, repeat } from '../lib/util';
+import { capitalize, convertWord, formatString, hasValue, repeat } from '../lib/util';
 import { getTemplateLevel, placeIndent, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { parseHex } from '../lib/color';
 import { VIEW_STANDARD } from '../lib/constants';
-import { FONT_ANDROID, FONTALIAS_ANDROID, FONTWEIGHT_ANDROID } from './constants';
+import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
 
@@ -257,9 +257,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const nodeId = (labelFor || node).id;
                 const stored = Object.assign({}, (<any> element).__fontStyle);
                 if (stored.fontFamily != null) {
-                    const fontFamily: string = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                    let fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
                     let fontStyle = '';
                     let fontWeight = '';
+                    if (SETTINGS.useFontAlias && FONTREPLACE_ANDROID[fontFamily] != null) {
+                        fontFamily = FONTREPLACE_ANDROID[fontFamily];
+                    }
                     if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
                         system = true;
                         stored.fontFamily = fontFamily;
@@ -271,7 +274,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     else {
-                        stored.fontFamily = `@font/${fontFamily.replace(/ /g, '_') + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                        stored.fontFamily = `@font/${convertWord(fontFamily) + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
                         fontStyle = stored.fontStyle;
                         fontWeight = stored.fontWeight;
                         delete stored.fontStyle;
