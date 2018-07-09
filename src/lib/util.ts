@@ -184,6 +184,10 @@ export function isPercent(value: string) {
     return /^[0-9]+%$/.test(value);
 }
 
+export function includes(source: string, value: string, delimiter = ',') {
+    return source.split(delimiter).map(segment => segment.trim()).includes(value);
+}
+
 export function optional(obj: any, value: string, type?: string) {
     let valid = false;
     let result: any = null;

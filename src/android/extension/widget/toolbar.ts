@@ -51,7 +51,7 @@ export default class Toolbar extends Extension<T, U> {
     public processNode(): ExtensionResult {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
-        const target = (node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
+        const target = (node.hasElement && node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
         const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
         const optionsToolbar = Object.assign({}, options.toolbar);
         const optionsAppBar = Object.assign({}, options.appBar);

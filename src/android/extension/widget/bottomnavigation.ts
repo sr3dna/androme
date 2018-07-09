@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import { optional } from '../../../lib/util';
+import { includes, optional } from '../../../lib/util';
 import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { VIEW_RESOURCE, VIEW_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -42,7 +42,7 @@ export default class BottomNavigation extends Extension<T, U> {
         if (findNestedMenu(node) != null) {
             let menu = '';
             Array.from(this.application.elements).some(item => {
-                if (item.parentElement === node.element && optional(item, 'dataset.ext').indexOf(WIDGET_NAME.MENU) !== -1) {
+                if (item.parentElement === node.element && includes(optional(item, 'dataset.ext'), WIDGET_NAME.MENU)) {
                     menu = (<string> item.dataset.currentId);
                     return true;
                 }

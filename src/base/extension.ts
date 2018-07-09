@@ -2,7 +2,7 @@ import { ExtensionDependency, ExtensionResult, IExtension, Null, ObjectIndex, Ob
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
-import { optional } from '../lib/util';
+import { includes, optional } from '../lib/util';
 
 export default abstract class Extension<T extends Node, U extends NodeList<T>> implements IExtension {
     public application: Application<T, U>;
@@ -46,7 +46,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         if (element == null) {
             element = (<HTMLElement> this.element);
         }
-        return optional(element, 'dataset.ext').split(',').map(value => value.trim()).includes(this.name);
+        return includes(optional(element, 'dataset.ext'), this.name);
     }
 
     public beforeInit(internal = false) {

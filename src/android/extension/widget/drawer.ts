@@ -2,6 +2,7 @@ import { ExtensionResult } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
+import { includes } from '../../../lib/util';
 import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { VIEW_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
@@ -105,13 +106,11 @@ export default class Drawer extends Extension<T, U> {
             let headerLayout = '';
             this.application.elements.forEach(item => {
                 if (item.parentElement === node.element) {
-                    switch (item.dataset.ext) {
-                        case EXT_NAME.EXTERNAL:
-                            headerLayout = (<string> item.dataset.currentId);
-                            break;
-                        case WIDGET_NAME.MENU:
-                            menu = (<string> item.dataset.currentId);
-                            break;
+                    if (includes(<string> item.dataset.ext, EXT_NAME.EXTERNAL)) {
+                        headerLayout = (<string> item.dataset.currentId);
+                    }
+                    else if (includes(<string> item.dataset.ext, WIDGET_NAME.MENU)) {
+                        menu = (<string> item.dataset.currentId);
                     }
                 }
             });
