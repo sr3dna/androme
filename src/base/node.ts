@@ -353,7 +353,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get hasElement() {
-        return (this._element != null && this._element.id != null);
+        return (this._element instanceof HTMLElement);
     }
 
     get parentElement() {
@@ -362,6 +362,10 @@ export default abstract class Node implements BoxModel {
 
     get namespaces() {
         return Array.from(this._namespaces);
+    }
+
+    get extension() {
+        return (this.hasElement && this.element.dataset.ext != null ? this.element.dataset.ext.split(',')[0].trim() : '');
     }
 
     get flex() {

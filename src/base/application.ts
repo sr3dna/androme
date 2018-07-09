@@ -224,7 +224,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         for (const element of (<HTMLElement[]> Array.from(elements))) {
             if (!this.elements.has(element)) {
                 let handled = false;
-                extensions.some(item => {
+                this.orderExt(extensions, element).some(item => {
                     if (item.init(element)) {
                         handled = true;
                         return true;
@@ -389,6 +389,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         for (let i = 0; i < mapY.length; i++) {
             const coordsY = Object.keys(mapY[i]);
             const partial = new Map();
+            function renderXml(id, xml: string) {
+                if (xml !== '') {
+                    if (!partial.has(id)) {
+                        partial.set(id, []);
+                    }
+                    partial.get(id).push(xml);
+                }
+            }
             for (let j = 0; j < coordsY.length; j++) {
                 const axisY: T[] = [];
                 const layers: T[] = [];
@@ -414,53 +422,48 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                     let parent = (<T> nodeY.parent);
                     if (!nodeY.renderParent) {
-                        let xml = '';
-                        let proceed = false;
                         const renderExtension = (<IExtension> parent.renderExtension);
                         if (renderExtension != null) {
                             renderExtension.setTarget(nodeY, parent);
                             const result = renderExtension.processChild();
-                            if (result.xml !== '') {
-                                xml += result.xml;
-                                if (result.parent) {
-                                    parent = (<T> result.parent);
-                                }
-                                if (result.restart) {
-                                    k--;
-                                }
+                            renderXml(parent.id, result.xml);
+                            if (result.parent) {
+                                parent = (<T> result.parent);
                             }
                             if (result.proceed) {
                                 continue;
                             }
                         }
-                        extensions.some(item => {
-                            if (nodeY.renderExtension == null && item.is(nodeY)) {
+                        const rendered: IExtension[] = [];
+                        let proceed = false;
+                        this.orderExt(extensions, nodeY.element).some(item => {
+                            if (item.is(nodeY)) {
                                 item.setTarget(nodeY, parent);
                                 if (item.condition()) {
                                     const result =  item.processNode(mapX, mapY);
-                                    if (result.xml !== '') {
-                                        xml += result.xml;
-                                        if (result.parent) {
-                                            parent = (<T> result.parent);
-                                        }
-                                        if (result.restart && nodeY === axisY[k]) {
-                                            k--;
-                                        }
-                                        nodeY.renderExtension = item;
+                                    if (result.xml || nodeY.renderParent) {
+                                        rendered.push(item);
+                                    }
+                                    renderXml(parent.id, result.xml);
+                                    if (result.parent) {
+                                        parent = (<T> result.parent);
                                     }
                                     if (result.proceed) {
-                                        proceed = result.proceed;
-                                        nodeY.renderExtension = item;
+                                        proceed = true;
+                                        return true;
                                     }
-                                    return true;
                                 }
                             }
                             return false;
                         });
+                        if (nodeY.renderExtension == null && rendered.length > 0) {
+                            nodeY.renderExtension = rendered[0];
+                        }
                         if (proceed) {
                             continue;
                         }
-                        if (!nodeY.renderParent && nodeY === axisY[k]) {
+                        let xml = '';
+                        if (!nodeY.renderParent) {
                             let tagName = nodeY.viewName;
                             if (tagName === '') {
                                 if (nodeY.children.length > 0 && nodeY.cascade().some(node => MAPPING_CHROME[node.tagName] != null || !INLINE_CHROME.includes(node.tagName))) {
@@ -470,13 +473,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         }
                                         else {
                                             if (nodeY.children.length === 1) {
-                                                if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
+                                                if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
                                                     const child = nodeY.children[0];
                                                     child.documentRoot = nodeY.documentRoot;
                                                     child.parent = parent;
                                                     nodeY.cascade().forEach(item => item.renderDepth--);
                                                     nodeY.hide();
-                                                    continue;
+                                                    axisY[k] = (<T> child);
+                                                    k--;
                                                 }
                                                 else {
                                                     xml += this.writeFrameLayout(nodeY, parent);
@@ -505,12 +509,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 xml += this.writeView(nodeY, parent, tagName);
                             }
                         }
-                        if (xml !== '') {
-                            if (!partial.has(parent.id)) {
-                                partial.set(parent.id, []);
-                            }
-                            partial.get(parent.id).push(xml);
-                        }
+                        renderXml(parent.id, xml);
                     }
                 }
             }
@@ -724,6 +723,33 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             this.cache.list.push(node);
         }
         return node;
+    }
+
+    private orderExt(available: IExtension[], element: HTMLElement) {
+        let extensions: string[] = [];
+        let current: Null<HTMLElement> = element;
+        while (current != null) {
+            extensions = [...extensions, ...optional(current, 'dataset.ext').split(',').map(value => value.trim())];
+            current = current.parentElement;
+        }
+        extensions = extensions.filter(value => value);
+        if (extensions.length > 0) {
+            const tagged: IExtension[] = [];
+            const untagged: IExtension[] = [];
+            available.forEach(item => {
+                const index = extensions.indexOf(item.name);
+                if (index !== -1) {
+                    tagged[index] = item;
+                }
+                else {
+                    untagged.push(item);
+                }
+            });
+            return [...tagged.filter(item => item), ...untagged];
+        }
+        else {
+            return available;
+        }
     }
 
     public set appName(value) {

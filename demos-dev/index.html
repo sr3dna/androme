@@ -31,11 +31,6 @@
             border: 1px solid #ccc;
             overflow: hidden;
         }
-        form > ul:first-child {
-            border-bottom: solid 1px #ccc;
-            padding-bottom: 12px;
-            margin-bottom: 12px;
-        }
         select {
             min-width: 37px;
             font-size: 11px;
@@ -93,6 +88,15 @@
         }
         input[value='Update'] {
             margin-left: 4px;
+        }
+        hr {
+            width: 350px;
+            height: 1px;
+            text-align: center;
+            margin: 10px auto;
+            padding: 0px;
+            border: none;
+            background-color: #ccc;
         }
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
@@ -410,6 +414,7 @@
                     </select>
                 </li>
             </ul>
+            <hr />
             <ul>
                 <li>
                     <label style="font-style: italic;">Series:</label>

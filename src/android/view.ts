@@ -298,9 +298,6 @@ export default class View extends Node {
                 this.android('layout_height', layoutHeight);
             }
         }
-        if (this.is(VIEW_STANDARD.LINEAR) && this.renderChildren.length > 0 && this.renderChildren.every(node => node.css('float') === 'right')) {
-            this.android('gravity', parseRTL('right'));
-        }
         if (this.gridRowSpan > 1) {
             this.android('layout_rowSpan', this.gridRowSpan.toString());
         }
@@ -345,9 +342,11 @@ export default class View extends Node {
                 }
             });
         }
+        this.setGravity();
     }
 
     public setGravity() {
+        const renderParent = this.renderParent;
         const verticalAlign = this.styleMap.verticalAlign;
         let textAlign = '';
         let node: T = this;
@@ -361,6 +360,9 @@ export default class View extends Node {
         }
         if (textAlign === '' && this.tagName === 'TH') {
             textAlign = 'center';
+        }
+        if (this.renderChildren.length > 0 && this.floating) {
+            textAlign = this.css('float');
         }
         if (hasValue(verticalAlign) || hasValue(textAlign)) {
             let horizontal = '';
@@ -391,23 +393,25 @@ export default class View extends Node {
                     vertical = 'bottom';
                     break;
                 default:
-                    if (this.style.height === this.style.lineHeight || convertInt(this.style.lineHeight) === (this.box.bottom - this.box.top)) {
+                    if (this.hasElement && (this.style.height === this.style.lineHeight || convertInt(this.style.lineHeight) === (this.box.bottom - this.box.top))) {
                         vertical = 'center_vertical';
                     }
             }
-            switch (this.renderParent.viewName) {
+            switch (renderParent.viewName) {
                 case VIEW_ANDROID.GRID:
-                    const fillX = (horizontal !== '' && horizontal !== parseRTL('left') && horizontal !== 'start');
-                    const fillY = (vertical !== '' && vertical !== 'top');
-                    if ((fillX && fillY) || this.renderParent.tagName === 'TABLE') {
+                    if (renderParent.tagName === 'TABLE') {
                         this.android('layout_gravity', 'fill');
                     }
                     else {
-                        if (fillX) {
-                            this.android('layout_gravity', 'fill_horizontal');
-                        }
-                        else if (fillY) {
-                            this.android('layout_gravity', 'fill_vertical');
+                        if (this.viewName !== VIEW_ANDROID.TEXT && (!this.floating || parseRTL(this.css('float')) === horizontal)) {
+                            if (horizontal !== '') {
+                                this.android('layout_gravity', horizontal);
+                                horizontal = '';
+                            }
+                            if (vertical !== '') {
+                                this.android('layout_gravity', vertical);
+                                vertical = '';
+                            }
                         }
                     }
                     break;
@@ -415,6 +419,14 @@ export default class View extends Node {
             const gravity = [horizontal, vertical].filter(value => value !== '');
             if (gravity.length > 0) {
                 this.android('gravity', (gravity.length === 2 ? 'center' : gravity[0]));
+            }
+            if (this.renderChildren.length > 0 && !this.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE)) {
+                if (this.renderChildren.every(item => item.css('float') === 'right')) {
+                    this.android('gravity', parseRTL('right'));
+                }
+                else if (horizontal !== '' && horizontal !== 'start') {
+                    this.android('gravity', horizontal);
+                }
             }
         }
     }

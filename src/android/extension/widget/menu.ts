@@ -63,10 +63,11 @@ export default class Menu<T extends View> extends Nav {
         node.renderDepth = parent.renderDepth + 1;
         node.renderParent = true;
         const options: ObjectMap<any> = { android: {}, app: {} };
-        let viewName = VIEW_NAVIGATION.ITEM;
-        let layout = false;
-        let title = '';
         const children = (<HTMLElement[]> Array.from(node.element.children));
+        let viewName = VIEW_NAVIGATION.ITEM;
+        let title = '';
+        let layout = false;
+        let proceed = false;
         if (children.some(item => BLOCK_CHROME.includes(item.tagName) && item.children.length > 0)) {
             if (children.some(item => item.tagName === 'NAV')) {
                 if (element.title !== '') {
@@ -92,6 +93,7 @@ export default class Menu<T extends View> extends Nav {
             }
             else if (node.tagName === 'NAV') {
                 viewName = VIEW_NAVIGATION.MENU;
+                proceed = true;
             }
             else {
                 viewName = VIEW_NAVIGATION.GROUP;
@@ -153,7 +155,7 @@ export default class Menu<T extends View> extends Nav {
             node.viewName = viewName;
         }
         const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, options, '', '', node, layout);
-        return { xml };
+        return { xml, proceed };
     }
 
     public afterRender() {

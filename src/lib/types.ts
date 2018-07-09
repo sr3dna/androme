@@ -36,7 +36,6 @@ export interface ExtensionDependency {
 
 export interface ExtensionResult {
     xml: string;
-    restart?: boolean;
     proceed?: boolean;
     parent?: Node;
 }

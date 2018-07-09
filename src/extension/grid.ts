@@ -17,7 +17,7 @@ export default class Grid extends Extension<T, U> {
         const node = (<T> this.node);
         return (
             this.included() ||
-            (node.element.dataset != null && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_CHROME.includes(node.children[0].tagName) && node.children.every(item => !item.flex.enabled && item.children.length > 1 && node.children[0].tagName === item.tagName && NodeList.linearX(item.children) && !item.children.some(child => child.css('float') === 'right')))
+            (node.hasElement && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_CHROME.includes(node.children[0].tagName) && node.children.every(item => !item.flex.enabled && item.children.length > 1 && node.children[0].tagName === item.tagName && NodeList.linearX(item.children)))
         );
     }
 
@@ -116,14 +116,32 @@ export default class Grid extends Extension<T, U> {
                     for (let m = 0; m < nextAxisX.length; m++) {
                         const nextX = nextAxisX[m];
                         if (nextX.parent.parent && node.id === nextX.parent.parent.id) {
-                            const [left, right] = [nextX.bounds.left, nextX.bounds.right];
-                            if (l === 0 || left >= columnRight[l - 1]) {
-                                if (columns[l] == null) {
-                                    columns[l] = [];
+                            let [left, right] = [nextX.bounds.left, nextX.bounds.right];
+                            let index = l;
+                            if (nextX.css('float') === 'right') {
+                                const style: any = nextX.element.style;
+                                style.float = 'left';
+                                const bounds = nextX.element.getBoundingClientRect();
+                                if (left !== bounds.left) {
+                                    for (let n = 0; n < columnRight.length; n++) {
+                                        if (left < columnRight[n]) {
+                                            index = n;
+                                            break;
+                                        }
+                                    }
+                                    [left, right] = [bounds.left, bounds.right];
                                 }
-                                columns[l].push(nextX);
+                                style.float = 'right';
                             }
-                            columnRight[l] = Math.max(right, columnRight[l]);
+                            if (index === 0 || left >= columnRight[index - 1]) {
+                                if (columns[index] == null) {
+                                    columns[index] = [];
+                                }
+                                columns[index].push(nextX);
+                            }
+                            if (l === index) {
+                                columnRight[index] = Math.max(right, columnRight[index]);
+                            }
                         }
                     }
                 }
@@ -148,6 +166,7 @@ export default class Grid extends Extension<T, U> {
                     }
                 }
                 columns = columns.filter(item => item);
+                columns.forEach((item: T[]) => sortAsc(item, 'bounds.top'));
                 const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                 for (let l = 0; l < columnLength; l++) {
                     let top: Null<number> = null;
@@ -253,7 +272,7 @@ export default class Grid extends Extension<T, U> {
         }
         if (siblings != null && siblings.length > 0) {
             siblings.unshift(node);
-            sortAsc(siblings, 'bounds.left');
+            sortAsc(siblings, 'linear.left');
             const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
             const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
             if (linearX || linearY) {
@@ -262,7 +281,7 @@ export default class Grid extends Extension<T, U> {
             else {
                 xml = this.application.writeDefaultLayout(viewGroup, parent);
             }
-            return { xml, restart: true };
+            return { xml, parent: viewGroup };
         }
         return { xml };
     }

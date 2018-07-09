@@ -875,7 +875,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         node.apply(options);
         node.applyCustomizations();
         node.render(renderParent);
-        node.setGravity();
         this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
@@ -986,7 +985,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         }
         node.applyCustomizations();
         node.render(parent);
-        node.setGravity();
         node.setAccessibility();
         node.cascade().forEach(item => item.hide());
         this.setGridSpace(node);

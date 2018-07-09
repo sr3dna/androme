@@ -30,14 +30,14 @@ export default class Toolbar extends Extension<T, U> {
                     item.dataset.ext = EXT_NAME.EXTERNAL;
                 }
             });
-            if (element.dataset.extFor != null) {
-                const extFor = document.getElementById(element.dataset.extFor);
-                if (extFor && element.parentElement !== extFor && extFor.dataset.ext && extFor.dataset.ext.indexOf(WIDGET_NAME.COORDINATOR) === -1) {
+            if (element.dataset.target != null) {
+                const target = document.getElementById(element.dataset.target);
+                if (target != null && element.parentElement !== target && optional(target, 'dataset.ext').indexOf(WIDGET_NAME.COORDINATOR) === -1) {
                     this.application.elements.add(element);
                     return true;
                 }
             }
-            if (element.parentElement && element.parentElement.dataset.ext && element.parentElement.dataset.ext.indexOf(WIDGET_NAME.COORDINATOR) !== -1) {
+            if (optional(element, 'parentElement.dataset.ext').indexOf(WIDGET_NAME.COORDINATOR) !== -1) {
                 (<any> element).__nodeIsolated = true;
             }
         }
@@ -51,14 +51,14 @@ export default class Toolbar extends Extension<T, U> {
     public processNode(): ExtensionResult {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
-        const extFor = (node.element.dataset.extFor != null && document.getElementById(node.element.dataset.extFor) !== node.parent.element);
+        const target = (node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
         const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
         const optionsToolbar = Object.assign({}, options.toolbar);
         const optionsAppBar = Object.assign({}, options.appBar);
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
         const collapsingToolbar = (options.collapsingToolbar != null);
-        const appBar = (extFor || options.appBar != null);
-        let depth = (extFor ? 0 : node.depth + node.renderDepth);
+        const appBar = (target || options.appBar != null);
+        let depth = (target ? 0 : node.depth + node.renderDepth);
         let children = node.children.filter(item => item.isolated).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
@@ -84,7 +84,7 @@ export default class Toolbar extends Extension<T, U> {
         });
         let appBarOverlay = '';
         let popupOverlay = '';
-        if (extFor) {
+        if (target) {
             overwriteDefault(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
             overwriteDefault(optionsToolbar, 'android', 'background', '?attr/colorPrimary');
         }
@@ -144,7 +144,7 @@ export default class Toolbar extends Extension<T, U> {
             else {
                 overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
-            outer = controller.getViewStatic(VIEW_SUPPORT.APPBAR, (extFor ? -1 : depth), { android: optionsAppBar.android, app: optionsAppBar.app }, 'match_parent', 'wrap_content', null, true);
+            outer = controller.getViewStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), { android: optionsAppBar.android, app: optionsAppBar.app }, 'match_parent', 'wrap_content', null, true);
             if (collapsingToolbar) {
                 overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsing`);
                 overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
@@ -160,7 +160,7 @@ export default class Toolbar extends Extension<T, U> {
             xml = outer.replace('{:0}', xml);
         }
         let proceed = false;
-        if (extFor) {
+        if (target) {
             node.data(`${WIDGET_NAME.TOOLBAR}:insert`, xml);
             node.render(node);
             xml = '';
@@ -170,7 +170,6 @@ export default class Toolbar extends Extension<T, U> {
             node.applyCustomizations();
             node.render(<T> this.parent);
             node.renderDepth = node.depth;
-            node.setGravity();
         }
         node.ignoreResource |= VIEW_RESOURCE.FONT_STYLE;
         return { xml, proceed };
@@ -188,7 +187,7 @@ export default class Toolbar extends Extension<T, U> {
     public insert() {
         const application = this.application;
         const node = (<T> this.node);
-        const id = optional(node, 'element.dataset.extFor');
+        const id = optional(node, 'element.dataset.target');
         if (id !== '') {
             const parent = (<T> application.findByDomId(id));
             const coordinator = application.cacheInternal.list.find(item => item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR);

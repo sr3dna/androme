@@ -44,7 +44,7 @@ export default class FloatingActionButton<T extends View> extends Button {
         }
         let insert = false;
         if (node.isolated) {
-            const id = optional(node, 'parent.element.dataset.extFor');
+            const id = optional(node, 'parent.element.dataset.target');
             if (id !== '' && node.parent.viewName !== VIEW_SUPPORT.COORDINATOR) {
                 const coordinator = document.getElementById(id);
                 if (coordinator != null) {
@@ -73,7 +73,6 @@ export default class FloatingActionButton<T extends View> extends Button {
         }
         else {
             node.render(parent);
-            node.setGravity();
         }
         node.applyCustomizations();
         return { xml, proceed };
@@ -81,7 +80,7 @@ export default class FloatingActionButton<T extends View> extends Button {
 
     public insert() {
         const node = (<T> this.node);
-        const id = optional(node, 'parent.element.dataset.extFor');
+        const id = optional(node, 'parent.element.dataset.target');
         if (id !== '') {
             const parent = this.application.findByDomId(id);
             if (parent != null && parent.viewName === VIEW_SUPPORT.COORDINATOR) {
