@@ -344,7 +344,7 @@ export default abstract class Resource<T extends Node> {
             if ((node.visible || node.companion) && (node.ignoreResource & VIEW_RESOURCE.VALUE_STRING) !== VIEW_RESOURCE.VALUE_STRING) {
                 const element = (<HTMLInputElement> node.element);
                 const object: any = element;
-                if ((!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources)) {
+                if (!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources) {
                     let name = '';
                     let value = '';
                     if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {

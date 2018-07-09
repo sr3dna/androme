@@ -213,7 +213,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             const node = this.insertNode(root);
             if (node != null) {
                 node.parent = new this.TypeT(0, 0);
+                node.documentRoot = true;
                 this.cache.parent = node;
+            }
+            else {
+                return false;
             }
         }
         extensions.forEach(item => item.setTarget((<T> this.cache.parent)));
@@ -283,7 +287,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             this.cache.list.forEach(parent => {
                 this.cache.list.forEach(child => {
                     if (parent !== child) {
-                        if (child.element && child.element.parentElement === parent.element) {
+                        if (child.element.parentElement === parent.element) {
                             child.parent = parent;
                             parent.children.push(child);
                         }
@@ -318,7 +322,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         node.parent = closest;
                     }
                 }
-                if (node.element && node.element.children.length > 0 && !node.children.every((current: T) => INLINE_CHROME.includes(current.tagName))) {
+                if (node.element.children.length > 0 && !node.children.every((current: T) => INLINE_CHROME.includes(current.tagName))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
@@ -389,14 +393,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 const axisY: T[] = [];
                 const layers: T[] = [];
                 for (const node of (<T[]> mapY[i][coordsY[j]])) {
-                    switch (node.css('position')) {
-                        case 'absolute':
-                        case 'relative':
-                        case 'fixed':
-                            layers.push(node);
-                            break;
-                        default:
-                            axisY.push(node);
+                    if (node.pageflow) {
+                        axisY.push(node);
+                    }
+                    else {
+                        layers.push(node);
                     }
                 }
                 axisY.sort((a, b) => {
@@ -408,6 +409,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
                 for (let k = 0; k < axisY.length; k++) {
                     const nodeY = axisY[k];
+                    if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
+                        continue;
+                    }
                     let parent = (<T> nodeY.parent);
                     if (!nodeY.renderParent) {
                         let xml = '';
@@ -418,7 +422,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             const result = renderExtension.processChild();
                             if (result.xml !== '') {
                                 xml += result.xml;
-                                if (result.parent != null) {
+                                if (result.parent) {
                                     parent = (<T> result.parent);
                                 }
                                 if (result.restart) {
@@ -436,17 +440,18 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     const result =  item.processNode(mapX, mapY);
                                     if (result.xml !== '') {
                                         xml += result.xml;
-                                        if (result.parent != null) {
+                                        if (result.parent) {
                                             parent = (<T> result.parent);
                                         }
                                         if (result.restart && nodeY === axisY[k]) {
                                             k--;
                                         }
+                                        nodeY.renderExtension = item;
                                     }
-                                    if (result.proceed != null) {
+                                    if (result.proceed) {
                                         proceed = result.proceed;
+                                        nodeY.renderExtension = item;
                                     }
-                                    nodeY.renderExtension = item;
                                     return true;
                                 }
                             }
@@ -455,7 +460,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (proceed) {
                             continue;
                         }
-                        if (xml === '') {
+                        if (!nodeY.renderParent && nodeY === axisY[k]) {
                             let tagName = nodeY.viewName;
                             if (tagName === '') {
                                 if (nodeY.children.length > 0 && nodeY.cascade().some(node => MAPPING_CHROME[node.tagName] != null || !INLINE_CHROME.includes(node.tagName))) {
@@ -466,7 +471,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         else {
                                             if (nodeY.children.length === 1) {
                                                 if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
-                                                    nodeY.children[0].parent = parent;
+                                                    const child = nodeY.children[0];
+                                                    child.documentRoot = nodeY.documentRoot;
+                                                    child.parent = parent;
                                                     nodeY.cascade().forEach(item => item.renderDepth--);
                                                     nodeY.hide();
                                                     continue;
@@ -488,7 +495,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                 }
                                 else {
-                                    if (nodeY.children.length === 0 && nodeY.element && !hasFreeFormText(nodeY.element)) {
+                                    if (nodeY.children.length === 0 && nodeY.viewHeight === 0 && !hasFreeFormText(nodeY.element)) {
                                         continue;
                                     }
                                     tagName = this.controllerHandler.getViewName(VIEW_STANDARD.TEXT);

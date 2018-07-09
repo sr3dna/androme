@@ -21,18 +21,20 @@ export default abstract class List extends Extension<T, U> {
     }
 
     public processNode(): ExtensionResult {
+        const node = (<T> this.node);
+        const parent = (<T> this.parent);
         let xml = '';
-        if (NodeList.linearY(this.node.children)) {
-            xml = this.application.writeGridLayout(this.node, (<T> this.parent), 2);
+        if (NodeList.linearY(node.children)) {
+            xml = this.application.writeGridLayout(node, parent, 2);
         }
         else {
-            xml = this.application.writeLinearLayout(this.node, (<T> this.parent), NodeList.linearY(this.node.children));
+            xml = this.application.writeLinearLayout(node, parent, NodeList.linearY(node.children));
         }
-        for (let i = 0, j = 0; i < this.node.children.length; i++) {
-            const node = this.node.children[i];
+        for (let i = 0, j = 0; i < node.children.length; i++) {
+            const item = node.children[i];
             let ordinal = '0';
-            if (node.css('display') === 'list-item') {
-                const listStyle = node.css('listStyleType');
+            if (item.css('display') === 'list-item') {
+                const listStyle = item.css('listStyleType');
                 switch (listStyle) {
                     case 'disc':
                         ordinal = '●';
@@ -55,7 +57,7 @@ export default abstract class List extends Extension<T, U> {
                         ordinal = `${convertRoman(j + 1)}.`;
                         break;
                     default:
-                        if (this.node.tagName === 'OL') {
+                        if (node.tagName === 'OL') {
                             ordinal = `${(listStyle === 'decimal-leading-zero' && j < 9 ? '0' : '') && (j + 1).toString()}.`;
                         }
                         else {
@@ -64,7 +66,7 @@ export default abstract class List extends Extension<T, U> {
                 }
                 j++;
             }
-            node.data(`${EXT_NAME.LIST}:listStyle`, ordinal);
+            item.data(`${EXT_NAME.LIST}:listStyle`, ordinal);
         }
         return { xml };
     }

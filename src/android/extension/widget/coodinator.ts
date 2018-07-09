@@ -94,7 +94,7 @@ export default class Coordinator extends Extension<T, U> {
 
     public afterInsert() {
         const node = (<T> this.node);
-        if (node.depth === 0) {
+        if (node.documentRoot) {
             node.android('layout_width', 'match_parent');
             node.android('layout_height', 'match_parent');
         }

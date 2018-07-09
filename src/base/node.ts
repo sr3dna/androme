@@ -17,6 +17,7 @@ export default abstract class Node implements BoxModel {
     public box: ClientRect;
     public renderExtension: Null<IExtension>;
     public ignoreResource = 0;
+    public documentRoot = false;
     public visible = true;
     public companion = false;
     public isolated = false;
@@ -132,7 +133,7 @@ export default abstract class Node implements BoxModel {
 
     public render(parent: T) {
         this.renderParent = parent;
-        this.renderDepth = (parent === this ? this.depth : (parent.id === 0 ? 0 : parent.renderDepth + 1));
+        this.renderDepth = (parent === this ? this.depth : (this.documentRoot ? 0 : parent.renderDepth + 1));
     }
 
     public hide() {
@@ -197,11 +198,11 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public intersect(rect: ClientRect, dimension = 'bounds') {
-        const top = (rect.top >= this[dimension].top && rect.top < this[dimension].bottom);
-        const right = (rect.right > this[dimension].left && rect.right <= this[dimension].right);
-        const bottom = (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom);
-        const left = (rect.left >= this[dimension].left && rect.left < this[dimension].right);
+    public intersect(rect: ClientRect, dimension = 'linear') {
+        const top = (rect.top > this[dimension].top && rect.top < this[dimension].bottom);
+        const right = (rect.right > this[dimension].left && rect.right < this[dimension].right);
+        const bottom = (rect.bottom > this[dimension].top && rect.bottom < this[dimension].bottom);
+        const left = (rect.left > this[dimension].left && rect.left < this[dimension].right);
         return (top && (left || right)) || (bottom && (left || right));
     }
 

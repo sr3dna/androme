@@ -185,7 +185,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute, index) => {
                             if (this.borderVisible(item)) {
-                                const hideWidth = `-${item.width}`;
+                                const hideWidth = `-${parseInt(item.width) * 2}px`;
                                 const layerList: ObjectMap<any> = {
                                     'top': hideWidth,
                                     'right': hideWidth,

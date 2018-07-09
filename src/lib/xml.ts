@@ -27,7 +27,7 @@ export function restoreIndent(value: string, depth: number) {
 }
 
 export function replaceDP(xml: string, font = false) {
-    return (SETTINGS.useUnitDP ? xml.replace(/("|>)([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + convertDP(capture[1], SETTINGS.density, font) + capture[2]) : xml);
+    return (SETTINGS.useUnitDP ? xml.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]) : xml);
 }
 
 export function replaceTab(xml: string, preserve = false) {

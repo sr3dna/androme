@@ -90,7 +90,7 @@ androme.settings = {
     supportRTL: true,
     dimensResourceValue: true,
     numberResourceValue: false,
-    alwaysReevaluateResources: false,
+    alwaysReevaluateResources: true,
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     horizontalPerspective: true,
@@ -244,8 +244,10 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
         android:paddingVertical="@dimen/form_padding_vertical">
         <GridLayout
             android:id="@+id/gridlayout_1"
+            android:background="@drawable/ul_gridlayout_1"
             android:columnCount="2"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/ul_margin_bottom"
             android:layout_width="match_parent"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
@@ -604,18 +606,12 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
         </GridLayout>
-        <View
-            android:id="@+id/view_1"
-            android:background="@color/light_gray_1"
-            android:layout_height="@dimen/hr_height"
-            android:layout_margin="@dimen/hr_margin"
-            android:layout_width="match_parent" />
         <GridLayout
             android:id="@+id/gridlayout_2"
             android:columnCount="2"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:paddingBottom="@dimen/ul_padding_bottom"
+            android:paddingBottom="@dimen/ul_padding_bottom_1"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
             android:paddingTop="@dimen/ul_padding_top">
             <TextView
@@ -1328,8 +1324,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
     <dimen name="form_padding_horizontal">10dp</dimen>
     <dimen name="form_padding_vertical">5dp</dimen>
     <dimen name="h2_padding">8dp</dimen>
-    <dimen name="hr_height">1dp</dimen>
-    <dimen name="hr_margin">10dp</dimen>
     <dimen name="label_margin_end">5dp</dimen>
     <dimen name="label_padding_top">3dp</dimen>
     <dimen name="label_width">80dp</dimen>
@@ -1350,7 +1344,9 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
     <dimen name="text_padding_vertical">1dp</dimen>
     <dimen name="text_width">40dp</dimen>
     <dimen name="text_width_1">130dp</dimen>
-    <dimen name="ul_padding_bottom">11dp</dimen>
+    <dimen name="ul_margin_bottom">12dp</dimen>
+    <dimen name="ul_padding_bottom">18dp</dimen>
+    <dimen name="ul_padding_bottom_1">11dp</dimen>
     <dimen name="ul_padding_horizontal">5dp</dimen>
     <dimen name="ul_padding_top">5dp</dimen>
 </resources>
@@ -1372,6 +1368,16 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
     <solid android:color="@color/white" />
 </shape>
 <!-- filename: res/drawable/form_entry.xml -->
+
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:top="-2dp" android:right="-2dp" android:bottom="1dp" android:left="-2dp">
+        <shape android:shape="rectangle">
+            <stroke android:width="1dp" android:color="@color/light_gray_1" />
+        </shape>
+    </item>
+</layer-list>
+<!-- filename: res/drawable/ul_gridlayout_1.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">

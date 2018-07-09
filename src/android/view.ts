@@ -207,9 +207,9 @@ export default class View extends Node {
             height = (this.hasElement ? this.element.clientHeight + this.marginTop + this.marginBottom + this.borderTopWidth + this.borderBottomWidth : 0);
             wrapContent = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID);
         }
-        const parentWidth = (parent.hasElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + convertInt(parent.style.borderLeftWidth) + convertInt(parent.style.borderRightWidth)) : Number.MAX_VALUE);
-        const parentHeight = (parent.hasElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + convertInt(parent.style.borderTopWidth) + convertInt(parent.style.borderBottomWidth)) : Number.MAX_VALUE);
-        if (this.depth === 0 && this.viewWidth === 0 && this.viewHeight === 0 && this.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE, VIEW_STANDARD.FRAME)) {
+        const parentWidth = (!this.documentRoot ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : Number.MAX_VALUE);
+        const parentHeight = (!this.documentRoot ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : Number.MAX_VALUE);
+        if (this.documentRoot && this.viewWidth === 0 && this.viewHeight === 0 && this.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE, VIEW_STANDARD.FRAME)) {
             this.android('layout_width', 'match_parent');
             this.android('layout_height', 'match_parent');
         }
@@ -497,7 +497,7 @@ export default class View extends Node {
 
     get horizontalBias() {
         const parent = this.renderParent;
-        if (parent && parent.visible) {
+        if (parent instanceof View && parent.visible) {
             const left = this.linear.left - parent.box.left;
             const right = parent.box.right - this.linear.right;
             return calculateBias(left, right);
@@ -506,7 +506,7 @@ export default class View extends Node {
     }
     get verticalBias() {
         const parent = this.renderParent;
-        if (parent && parent.visible) {
+        if (parent instanceof View && parent.visible) {
             const top = this.linear.top - parent.box.top;
             const bottom = parent.box.bottom - this.linear.bottom;
             return calculateBias(top, bottom);

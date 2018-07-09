@@ -36,6 +36,9 @@
         .output div {
             text-align: right;
         }
+        #androme_ui {
+            position: relative;
+        }
         span {
             position: absolute;
             width: 80px;
@@ -67,6 +70,7 @@
                     var span = elements[i];
                     span.style.top = `${320 * Math.random()}px`;
                     span.style.left = `${320 * Math.random()}px`;
+                    console.log(span.style.top, span.style.left);
                 }
                 androme.parseDocument('androme_ui');
             }

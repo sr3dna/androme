@@ -43,7 +43,7 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {
-    if (element && element.parentElement != null) {
+    if (element.parentElement != null) {
         const style = getStyle(element);
         return (style && style[attr] === getStyle(element.parentElement)[attr]);
     }
@@ -67,7 +67,7 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
 }
 
 export function hasFreeFormText(element: HTMLElement) {
-    return Array.from(element.childNodes).some((item: HTMLElement) => item.nodeName === '#text' && optional(item, 'textContent').trim() !== '');
+    return (element && element.childNodes && Array.from(element.childNodes).some((item: HTMLElement) => item.nodeName === '#text' && optional(item, 'textContent').trim() !== ''));
 }
 
 export function isVisible(element: HTMLElement) {

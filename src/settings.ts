@@ -18,7 +18,7 @@ const SETTINGS = {
     supportRTL: true,
     dimensResourceValue: true,
     numberResourceValue: false,
-    alwaysReevaluateResources: false,
+    alwaysReevaluateResources: true,
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     horizontalPerspective: true,

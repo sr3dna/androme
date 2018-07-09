@@ -17,12 +17,13 @@ export default class Grid extends Extension<T, U> {
         const node = (<T> this.node);
         return (
             this.included() ||
-            (node.element.dataset != null && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_CHROME.includes(node.children[0].tagName) && node.children.every(item => !item.flex.enabled && item.children.length > 1 && node.children[0].tagName === item.tagName && !item.children.some(child => child.css('float') === 'right')))
+            (node.element.dataset != null && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_CHROME.includes(node.children[0].tagName) && node.children.every(item => !item.flex.enabled && item.children.length > 1 && node.children[0].tagName === item.tagName && NodeList.linearX(item.children) && !item.children.some(child => child.css('float') === 'right')))
         );
     }
 
     public processNode(mapX: ObjectIndex<ObjectIndex<T[]>>, mapY: ObjectIndex<ObjectIndex<T[]>>): ExtensionResult {
         const node = (<T> this.node);
+        const parent = (<T> this.parent);
         let xml = '';
         let columns: any[][] = [];
         const balanceColumns = this.options.balanceColumns;
@@ -233,16 +234,14 @@ export default class Grid extends Extension<T, U> {
                     }
                 }
             }
-        }
-        if (xml === '') {
-            node.renderExtension = null;
+            node.render(parent);
         }
         return { xml };
     }
 
     public processChild(): ExtensionResult {
-        const parent = (<T> this.parent);
         const node = (<T> this.node);
+        const parent = (<T> this.parent);
         let siblings: T[];
         let xml = '';
         if (this.options.balanceColumns) {
@@ -265,6 +264,6 @@ export default class Grid extends Extension<T, U> {
             }
             return { xml, restart: true };
         }
-        return { xml: '' };
+        return { xml };
     }
 }

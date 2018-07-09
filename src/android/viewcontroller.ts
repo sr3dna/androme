@@ -107,7 +107,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     nodes.list.forEach((adjacent: any) => {
                         const adjacentX = (adjacent.constraint.horizontal ? 'horizontal' : '');
                         const adjacentY = (adjacent.constraint.vertical ? 'vertical' : '');
-                        if (current === adjacent) {
+                        if (current === adjacent || current.intersect(adjacent.linear)) {
                             return;
                         }
                         else if (constraint) {
