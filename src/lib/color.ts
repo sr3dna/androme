@@ -11,7 +11,6 @@ interface Color {
         s: number;
         l: number;
     };
-    [key: string]: string | {};
 }
 
 const X11_CSS3 = {

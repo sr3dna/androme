@@ -25,7 +25,6 @@ export default class Grid extends Extension<T, U> {
         const node = (<T> this.node);
         let xml = '';
         let columns: any[][] = [];
-        const columnEnd: number[] = [];
         const balanceColumns = this.options.balanceColumns;
         if (balanceColumns) {
             const dimensions: number[][] = [];
@@ -107,6 +106,7 @@ export default class Grid extends Extension<T, U> {
         else {
             const nextMapX: ObjectIndex<T[]> = mapX[node.depth + 2];
             const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
+            const columnEnd: number[] = [];
             if (nextCoordsX.length > 1) {
                 const columnRight: number[] = [];
                 for (let l = 0; l < nextCoordsX.length; l++) {
@@ -173,9 +173,12 @@ export default class Grid extends Extension<T, U> {
                     }
                 }
             }
+            if (columnEnd.length > 0) {
+                node.gridColumnEnd = columnEnd;
+                node.gridColumnEnd[node.gridColumnEnd.length - 1] = node.box.right;
+            }
         }
         if (columns.length > 1) {
-            node.gridColumnEnd = columnEnd;
             node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
             xml = this.application.writeGridLayout(node, (<T> this.parent), node.gridColumnCount);
             for (let l = 0, count = 0; l < columns.length; l++) {
@@ -215,12 +218,8 @@ export default class Grid extends Extension<T, U> {
                                     }
                                 }
                             }
-                            if (rowSpan > 1) {
-                                item.gridRowSpan = rowSpan;
-                            }
-                            if (columnSpan > 1) {
-                                item.gridColumnSpan = columnSpan;
-                            }
+                            item.gridRowSpan = rowSpan;
+                            item.gridColumnSpan = columnSpan;
                             item.gridRowStart = (start++ === 0);
                             item.gridRowEnd = (columnSpan + l === columns.length);
                             item.gridFirst = (count++ === 0);
@@ -250,7 +249,7 @@ export default class Grid extends Extension<T, U> {
             siblings = node.gridSiblings;
         }
         else {
-            const columnEnd = parent.gridColumnEnd[node.gridIndex + node.gridColumnSpan];
+            const columnEnd = parent.gridColumnEnd[Math.min(node.gridIndex + (node.gridColumnSpan - 1), parent.gridColumnEnd.length - 1)];
             siblings = node.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= node.bounds.right && item.bounds.right <= columnEnd);
         }
         if (siblings != null && siblings.length > 0) {

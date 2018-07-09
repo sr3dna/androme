@@ -10,7 +10,7 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 ## Installation (global js variable: androme)
 
-*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (FireFox/Safari/Edge). The latest version of Chrome is the preferred browser to generate the production version of your program. ***
+*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (Safari/FireFox/Edge). The latest version of Chrome is the preferred browser to generate the production version of your program. ***
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
 
@@ -54,18 +54,9 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
         androme.saveAllToDisk(); /* Express required */
 
         // optional
-        androme.writeLayoutAllXml(true); /* true: save to disk, false: string xml */
-        androme.writeResourceAllXml(true);
-        androme.configureExtension('androme.grid', { balanceColumns: false });
-
-        // individual
-        androme.writeResourceStringXml(true);
-        androme.writeResourceArrayXml(true);
-        androme.writeResourceFontXml(true);
-        androme.writeResourceColorXml(true);
-        androme.writeResourceStyleXml(true);
-        androme.writeResourceDimenXml(true);
-        androme.writeResourceDrawableXml(true);
+        androme.writeLayoutAllXml(); /* true: save to disk, false | null: string xml */
+        androme.writeResourceAllXml();
+        androme.configureExtension('androme.grid', { balanceColumns: false }); 
 
         // start new "parseDocument" session
         androme.reset();
@@ -118,7 +109,7 @@ androme.settings = {
 ```
 You can preview the library with the provided /demos/*.html which for the the time being is the only form of documentation. Using the latest Chrome will always generate the most accurate layout.
 
-Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for disabling GridLayout in favor of LinearLayout when the generated UI is not accurate. To use Constraint circle for placement you have to disable "useConstraintChain" and "useConstraintGuideline".
+Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for removing the built-in extension "androme.grid" when the generated UI is not accurate which it will instead default to LinearLayout for placement. To use Constraint circle for placement you have to disable "useConstraintChain" and "useConstraintGuideline".
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using HTML tables is recommended for most applications as it will generate a very efficient GridLayout. Performance is probably faster than ConstraintLayout and also more accurate.
 
@@ -231,6 +222,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/androme_ui"
+    android:gravity="top"
     android:layout_height="wrap_content"
     android:layout_width="wrap_content"
     android:orientation="vertical">
@@ -1340,7 +1332,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
     <dimen name="hr_margin">10dp</dimen>
     <dimen name="label_margin_end">5dp</dimen>
     <dimen name="label_padding_top">3dp</dimen>
-    <dimen name="label_width">70dp</dimen>
+    <dimen name="label_width">80dp</dimen>
     <dimen name="radio_margin_end">1dp</dimen>
     <dimen name="radio_margin_start">5dp</dimen>
     <dimen name="radio_margin_start_1">9dp</dimen>

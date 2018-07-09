@@ -5,7 +5,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { hasValue, hyphenToCamelCase, optional, resetId, sortAsc, trim } from '../lib/util';
 import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
-import { hasFreeFormText, isVisible } from '../lib/dom';
+import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -147,7 +147,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         for (const attr of Array.from(element.style)) {
                             attributes.add(hyphenToCamelCase(attr));
                         }
-                        const style = getComputedStyle(element);
+                        const style = getStyle(element);
                         const styleMap: StringMap = {};
                         for (const name of attributes) {
                             if (name.toLowerCase().indexOf('color') !== -1) {

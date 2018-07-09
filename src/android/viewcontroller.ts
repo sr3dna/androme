@@ -129,10 +129,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                             else {
                                 if (parent) {
-                                    if (withinFraction(linear1.left, linear2.left) || linear1.left < linear2.left) {
+                                    if (linear1.left <= linear2.left || withinFraction(linear1.left, linear2.left)) {
                                         current.anchor(LAYOUT['left'], adjacent, 'horizontal');
                                     }
-                                    if (withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset) || linear1.right > linear2.right) {
+                                    if (linear1.right >= linear2.right || withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
                                         current.anchor(LAYOUT['right'], adjacent, 'horizontal');
                                     }
                                 }
@@ -165,10 +165,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                             }
                             if (parent) {
-                                if (withinFraction(linear1.top, linear2.top) || linear1.top < linear2.top) {
+                                if (linear1.top <= linear2.top || withinFraction(linear1.top, linear2.top)) {
                                     current.anchor(LAYOUT['top'], adjacent, 'vertical');
                                 }
-                                if (withinFraction(linear1.bottom, linear2.bottom) || linear1.bottom > linear2.bottom || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset))) {
+                                if (linear1.bottom >= linear2.bottom || withinFraction(linear1.bottom, linear2.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset))) {
                                     current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
                                 }
                             }
@@ -199,16 +199,16 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                             else if (adjacent === node) {
                                 adjacent = { stringId: 'true' };
-                                if (withinFraction(current.linear.left, node.box.left)) {
+                                if (current.linear.left <= node.box.left || withinFraction(current.linear.left, node.box.left)) {
                                     current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
                                 }
-                                else if (withinFraction(current.linear.right, node.box.right)) {
+                                else if (current.linear.right >= node.box.right || withinFraction(current.linear.right, node.box.right)) {
                                     current.anchor(parseRTL('layout_alignParentRight'), adjacent, 'horizontal');
                                 }
-                                if (withinFraction(current.linear.top, node.box.top)) {
+                                if (current.linear.top <= node.box.top || withinFraction(current.linear.top, node.box.top)) {
                                     current.anchor('layout_alignParentTop', adjacent, 'vertical');
                                 }
-                                else if (withinFraction(current.linear.bottom, node.box.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset))) {
+                                else if (current.linear.bottom >= node.box.bottom || withinFraction(current.linear.bottom, node.box.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset))) {
                                     current.anchor('layout_alignParentBottom', adjacent, 'vertical');
                                 }
                             }
@@ -875,10 +875,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         node.apply(options);
         node.applyCustomizations();
         node.render(renderParent);
-        if (node.depth > 0) {
-            node.setGravity();
-            this.setGridSpace(node);
-        }
+        node.setGravity();
+        this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
 

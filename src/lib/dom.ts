@@ -34,7 +34,7 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
             return object.__node.style;
         }
     }
-    else if (element.nodeName !== '#text') {
+    if (element.nodeName !== '#text') {
         const style = getComputedStyle(element);
         object.__style = style;
         return style;
