@@ -37,6 +37,13 @@ export default class BottomNavigation extends Extension<T, U> {
         return { xml };
     }
 
+    public afterInsert() {
+        const node = (<T> this.node);
+        if (node.renderParent.viewHeight === 0) {
+            node.renderParent.android('layout_height', 'match_parent');
+        }
+    }
+
     public finalize() {
         const node = (<T> this.node);
         if (findNestedMenu(node) != null) {

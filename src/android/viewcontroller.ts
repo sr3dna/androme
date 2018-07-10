@@ -529,7 +529,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 break;
                                             case 'space-around':
                                                 const leftTop = (index === 0 ? 'left' : 'top');
-                                                const percent = (first.bounds[leftTop] - node.box[leftTop]) / (<number> node.box[dimension]);
+                                                const percent = (first.linear[leftTop] - node.box[leftTop]) / (<number> node.box[dimension]);
                                                 first.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
                                                 first.constraint[orientation] = false;
                                                 last.constraint[orientation] = false;
@@ -651,7 +651,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         });
                         const unbound = nodes.list.filter(current => !current.anchored && (mapParent(current, 'top') || mapParent(current, 'right') || mapParent(current, 'bottom') || mapParent(current, 'left')));
                         if (anchors.length === 0 && unbound.length === 0) {
-                            unbound.push(nodes.sortAsc('bounds.left', 'bounds.top')[0]);
+                            unbound.push(nodes.sortAsc('linear.left', 'linear.top')[0]);
                         }
                         unbound.forEach(current => {
                             if (SETTINGS.useConstraintGuideline) {
@@ -1228,7 +1228,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         orientation: (index === 0 ? 'vertical' : 'horizontal')
                     },
                     app: {
-                        [beginPercent]: (percent !== -1 ? percent : formatDimen(node.tagName, 'constraintguide_begin', formatPX(Math.max(node.bounds[position] - parent.box[position], 0))))
+                        [beginPercent]: (percent !== -1 ? percent : formatDimen(node.tagName, 'constraintguide_begin', formatPX(Math.max(node.linear[position] - parent.box[position], 0))))
                     }
                 };
                 const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));

@@ -201,12 +201,13 @@ export default class View extends Node {
         const parentHeight = (!this.documentRoot ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : Number.MAX_VALUE);
         const wrapContent = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID) || (parent.is(VIEW_STANDARD.LINEAR) && parent.horizontal) || this.is(VIEW_STANDARD.IMAGE);
         const styleMap = this.styleMap;
+        const constraint = this.constraint;
         if (this.documentRoot && this.is(VIEW_STANDARD.FRAME, VIEW_STANDARD.LINEAR, VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE)) {
-            if (this.viewWidth === 0) {
-                this.android('layout_width', 'match_parent');
+            if (this.viewWidth === 0 && !constraint.layoutWidth) {
+                this.android('layout_width', 'match_parent', false);
             }
-            if (this.viewHeight === 0) {
-                this.android('layout_height', 'match_parent');
+            if (this.viewHeight === 0 && !constraint.layoutHeight) {
+                this.android('layout_height', 'match_parent', false);
             }
         }
         if (this.overflow !== OVERFLOW_CHROME.NONE && !this.is(VIEW_STANDARD.TEXT)) {
@@ -214,7 +215,6 @@ export default class View extends Node {
             this.android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
         }
         else {
-            const constraint = this.constraint;
             if (this.android('layout_width') !== '0px') {
                 if (hasValue(styleMap.width)) {
                     if (isPercent(styleMap.width)) {
@@ -239,7 +239,7 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutWidth) {
-                this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= parentWidth ? 'match_parent' : formatPX(this.bounds.width)), !this.documentRoot);
+                this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= parentWidth ? 'match_parent' : formatPX(this.bounds.width)));
             }
             else if (this.android('layout_width') == null) {
                 let maxRight = 0;
@@ -282,7 +282,7 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutHeight) {
-                this.android('layout_height', (constraint.layoutHeight ? formatPX(this.bounds.height) : 'wrap_content'), !this.documentRoot);
+                this.android('layout_height', (this.bounds.height >= parentHeight ? 'match_parent' : formatPX(this.bounds.height)));
             }
             else if (this.android('layout_height') == null) {
                 let layoutHeight = 'wrap_content';
@@ -391,7 +391,7 @@ export default class View extends Node {
                 vertical = 'bottom';
                 break;
             default:
-                if (this.hasElement && (this.style.height === this.style.lineHeight || convertInt(this.style.lineHeight) === (this.box.bottom - this.box.top))) {
+                if (this.hasElement && this.styleMap.lineHeight != null && (this.style.height === this.styleMap.lineHeight || convertInt(this.styleMap.lineHeight) === (this.box.bottom - this.box.top))) {
                     vertical = 'center_vertical';
                 }
         }

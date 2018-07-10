@@ -369,7 +369,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const mapY: any = [];
         const extensions = this.extensions;
         this.cache.list.forEach(node => {
-            const x = Math.floor(node.bounds.left);
+            const x = Math.floor(node.linear.left);
             const y = node.parent.id;
             if (mapX[node.depth] == null) {
                 mapX[node.depth] = {};

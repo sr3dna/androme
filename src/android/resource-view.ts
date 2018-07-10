@@ -308,7 +308,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     else {
-                        stored.fontFamily = `@font/${convertWord(fontFamily) + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                        fontFamily = convertWord(fontFamily);
+                        stored.fontFamily = `@font/${fontFamily + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
                         fontStyle = stored.fontStyle;
                         fontWeight = stored.fontWeight;
                         delete stored.fontStyle;

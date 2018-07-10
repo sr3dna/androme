@@ -35,7 +35,7 @@ export default class Coordinator extends Extension<T, U> {
                 const extension = this.application.findExtension(WIDGET_NAME.TOOLBAR);
                 if (extension != null) {
                     offsetX = toolbar.linear.bottom;
-                    offsetHeight = toolbar.linear.height;
+                    offsetHeight = toolbar.bounds.height;
                     if (Math.floor(toolbar.linear.top) === node.box.top) {
                         node.bounds.bottom -= offsetHeight;
                         node.setBounds(true);

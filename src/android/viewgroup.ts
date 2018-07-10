@@ -109,28 +109,28 @@ export default class ViewGroup extends View {
         for (let i = 1; i < children.length; i++) {
             const node = children[i];
             const nodeRight = node.label || node;
-            if (top[0].bounds.top === node.bounds.top) {
+            if (top[0].linear.top === node.linear.top) {
                 top.push(node);
             }
-            else if (node.bounds.top < top[0].bounds.top) {
+            else if (node.linear.top < top[0].linear.top) {
                 top = [node];
             }
-            if (right[0].bounds.right === nodeRight.bounds.right) {
+            if (right[0].linear.right === nodeRight.linear.right) {
                 right.push(nodeRight);
             }
-            else if (nodeRight.bounds.right > right[0].bounds.right) {
+            else if (nodeRight.linear.right > right[0].linear.right) {
                 right = [nodeRight];
             }
-            if (bottom[0].bounds.bottom === node.bounds.bottom) {
+            if (bottom[0].linear.bottom === node.linear.bottom) {
                 bottom.push(node);
             }
-            else if (node.bounds.bottom > bottom[0].bounds.bottom) {
+            else if (node.linear.bottom > bottom[0].linear.bottom) {
                 bottom = [node];
             }
-            if (left[0].bounds.left === node.bounds.left) {
+            if (left[0].linear.left === node.linear.left) {
                 left.push(node);
             }
-            else if (node.bounds.left < left[0].bounds.left) {
+            else if (node.linear.left < left[0].linear.left) {
                 left = [node];
             }
         }

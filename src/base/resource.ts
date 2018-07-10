@@ -109,7 +109,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public static addImageURL(value: string, prefix: string = '') {
-        const match = value.match(/^url\("(.*?)"\)$/);
+        const match = value.match(/^url\("?(.*?)"?\)$/);
         if (match != null) {
             return Resource.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
         }
@@ -277,11 +277,27 @@ export default abstract class Resource<T extends Node> {
                                 backgroundColor[0] = Resource.addColor(backgroundColor[0]);
                             }
                         }
+                        let fontWeight = (<string> node.css('fontWeight'));
+                        if (!isNumber(fontWeight)) {
+                            switch (fontWeight) {
+                                case 'lighter':
+                                    fontWeight = '200';
+                                    break;
+                                case 'bold':
+                                    fontWeight = '700';
+                                    break;
+                                case 'bolder':
+                                    fontWeight = '900';
+                                    break;
+                                default:
+                                    fontWeight = '400';
+                            }
+                        }
                         const result = {
                             fontFamily: node.css('fontFamily'),
                             fontStyle: node.css('fontStyle'),
                             fontSize: node.css('fontSize'),
-                            fontWeight: node.css('fontWeight'),
+                            fontWeight,
                             color: (color.length > 0 ? `@color/${color[0]}` : ''),
                             backgroundColor: (backgroundColor.length > 0 ? `@color/${backgroundColor[0]}` : '')
                         };

@@ -1,4 +1,4 @@
-/* androme 1.7.31
+/* androme 1.7.32
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -540,7 +540,8 @@
     };
     const FONTREPLACE_ANDROID = {
         'ms shell dlg \\32': 'sans-serif',
-        'system-ui': 'sans-serif'
+        'system-ui': 'sans-serif',
+        '-apple-system': 'sans-serif'
     };
     const FONTWEIGHT_ANDROID = {
         '100': 'thin',
@@ -1573,7 +1574,7 @@
             const mapY = [];
             const extensions = this.extensions;
             this.cache.list.forEach(node => {
-                const x = Math.floor(node.bounds.left);
+                const x = Math.floor(node.linear.left);
                 const y = node.parent.id;
                 if (mapX[node.depth] == null) {
                     mapX[node.depth] = {};
@@ -2217,7 +2218,7 @@
             return src;
         }
         static addImageURL(value, prefix = '') {
-            const match = value.match(/^url\("(.*?)"\)$/);
+            const match = value.match(/^url\("?(.*?)"?\)$/);
             if (match != null) {
                 return Resource.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
             }
@@ -2369,11 +2370,27 @@
                                     backgroundColor[0] = Resource.addColor(backgroundColor[0]);
                                 }
                             }
+                            let fontWeight = node.css('fontWeight');
+                            if (!isNumber(fontWeight)) {
+                                switch (fontWeight) {
+                                    case 'lighter':
+                                        fontWeight = '200';
+                                        break;
+                                    case 'bold':
+                                        fontWeight = '700';
+                                        break;
+                                    case 'bolder':
+                                        fontWeight = '900';
+                                        break;
+                                    default:
+                                        fontWeight = '400';
+                                }
+                            }
                             const result = {
                                 fontFamily: node.css('fontFamily'),
                                 fontStyle: node.css('fontStyle'),
                                 fontSize: node.css('fontSize'),
-                                fontWeight: node.css('fontWeight'),
+                                fontWeight,
                                 color: (color.length > 0 ? `@color/${color[0]}` : ''),
                                 backgroundColor: (backgroundColor.length > 0 ? `@color/${backgroundColor[0]}` : '')
                             };
@@ -3182,12 +3199,13 @@
             const parentHeight = (!this.documentRoot ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : Number.MAX_VALUE);
             const wrapContent = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID) || (parent.is(VIEW_STANDARD.LINEAR) && parent.horizontal) || this.is(VIEW_STANDARD.IMAGE);
             const styleMap = this.styleMap;
+            const constraint = this.constraint;
             if (this.documentRoot && this.is(VIEW_STANDARD.FRAME, VIEW_STANDARD.LINEAR, VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE)) {
-                if (this.viewWidth === 0) {
-                    this.android('layout_width', 'match_parent');
+                if (this.viewWidth === 0 && !constraint.layoutWidth) {
+                    this.android('layout_width', 'match_parent', false);
                 }
-                if (this.viewHeight === 0) {
-                    this.android('layout_height', 'match_parent');
+                if (this.viewHeight === 0 && !constraint.layoutHeight) {
+                    this.android('layout_height', 'match_parent', false);
                 }
             }
             if (this.overflow !== 0 /* NONE */ && !this.is(VIEW_STANDARD.TEXT)) {
@@ -3195,7 +3213,6 @@
                 this.android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
             }
             else {
-                const constraint = this.constraint;
                 if (this.android('layout_width') !== '0px') {
                     if (hasValue(styleMap.width)) {
                         if (isPercent(styleMap.width)) {
@@ -3220,7 +3237,7 @@
                     }
                 }
                 if (constraint.layoutWidth) {
-                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= parentWidth ? 'match_parent' : formatPX(this.bounds.width)), !this.documentRoot);
+                    this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= parentWidth ? 'match_parent' : formatPX(this.bounds.width)));
                 }
                 else if (this.android('layout_width') == null) {
                     let maxRight = 0;
@@ -3263,7 +3280,7 @@
                     }
                 }
                 if (constraint.layoutHeight) {
-                    this.android('layout_height', (constraint.layoutHeight ? formatPX(this.bounds.height) : 'wrap_content'), !this.documentRoot);
+                    this.android('layout_height', (this.bounds.height >= parentHeight ? 'match_parent' : formatPX(this.bounds.height)));
                 }
                 else if (this.android('layout_height') == null) {
                     let layoutHeight = 'wrap_content';
@@ -3371,7 +3388,7 @@
                     vertical = 'bottom';
                     break;
                 default:
-                    if (this.hasElement && (this.style.height === this.style.lineHeight || convertInt(this.style.lineHeight) === (this.box.bottom - this.box.top))) {
+                    if (this.hasElement && this.styleMap.lineHeight != null && (this.style.height === this.styleMap.lineHeight || convertInt(this.styleMap.lineHeight) === (this.box.bottom - this.box.top))) {
                         vertical = 'center_vertical';
                     }
             }
@@ -3600,28 +3617,28 @@
             for (let i = 1; i < children.length; i++) {
                 const node = children[i];
                 const nodeRight = node.label || node;
-                if (top[0].bounds.top === node.bounds.top) {
+                if (top[0].linear.top === node.linear.top) {
                     top.push(node);
                 }
-                else if (node.bounds.top < top[0].bounds.top) {
+                else if (node.linear.top < top[0].linear.top) {
                     top = [node];
                 }
-                if (right[0].bounds.right === nodeRight.bounds.right) {
+                if (right[0].linear.right === nodeRight.linear.right) {
                     right.push(nodeRight);
                 }
-                else if (nodeRight.bounds.right > right[0].bounds.right) {
+                else if (nodeRight.linear.right > right[0].linear.right) {
                     right = [nodeRight];
                 }
-                if (bottom[0].bounds.bottom === node.bounds.bottom) {
+                if (bottom[0].linear.bottom === node.linear.bottom) {
                     bottom.push(node);
                 }
-                else if (node.bounds.bottom > bottom[0].bounds.bottom) {
+                else if (node.linear.bottom > bottom[0].linear.bottom) {
                     bottom = [node];
                 }
-                if (left[0].bounds.left === node.bounds.left) {
+                if (left[0].linear.left === node.linear.left) {
                     left.push(node);
                 }
-                else if (node.bounds.left < left[0].bounds.left) {
+                else if (node.linear.left < left[0].linear.left) {
                     left = [node];
                 }
             }
@@ -4172,7 +4189,7 @@
                                                     break;
                                                 case 'space-around':
                                                     const leftTop = (index === 0 ? 'left' : 'top');
-                                                    const percent = (first.bounds[leftTop] - node.box[leftTop]) / node.box[dimension];
+                                                    const percent = (first.linear[leftTop] - node.box[leftTop]) / node.box[dimension];
                                                     first.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
                                                     first.constraint[orientation] = false;
                                                     last.constraint[orientation] = false;
@@ -4294,7 +4311,7 @@
                             });
                             const unbound = nodes.list.filter(current => !current.anchored && (mapParent(current, 'top') || mapParent(current, 'right') || mapParent(current, 'bottom') || mapParent(current, 'left')));
                             if (anchors.length === 0 && unbound.length === 0) {
-                                unbound.push(nodes.sortAsc('bounds.left', 'bounds.top')[0]);
+                                unbound.push(nodes.sortAsc('linear.left', 'linear.top')[0]);
                             }
                             unbound.forEach(current => {
                                 if (SETTINGS.useConstraintGuideline) {
@@ -4851,7 +4868,7 @@
                             orientation: (index === 0 ? 'vertical' : 'horizontal')
                         },
                         app: {
-                            [beginPercent]: (percent !== -1 ? percent : formatDimen(node.tagName, 'constraintguide_begin', formatPX(Math.max(node.bounds[position] - parent.box[position], 0))))
+                            [beginPercent]: (percent !== -1 ? percent : formatDimen(node.tagName, 'constraintguide_begin', formatPX(Math.max(node.linear[position] - parent.box[position], 0))))
                         }
                     };
                     const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
@@ -5223,7 +5240,8 @@
                             }
                         }
                         else {
-                            stored.fontFamily = `@font/${convertWord(fontFamily) + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                            fontFamily = convertWord(fontFamily);
+                            stored.fontFamily = `@font/${fontFamily + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
                             fontStyle = stored.fontStyle;
                             fontWeight = stored.fontWeight;
                             delete stored.fontStyle;
@@ -6311,18 +6329,18 @@
                 if (nextCoordsX.length > 1) {
                     const columnRight = [];
                     for (let l = 0; l < nextCoordsX.length; l++) {
-                        const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])].filter(item => item.parent.parent && item.parent.parent.id === node.id), 'bounds.top');
+                        const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])].filter(item => item.parent.parent && item.parent.parent.id === node.id), 'linear.top');
                         columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                         for (let m = 0; m < nextAxisX.length; m++) {
                             const nextX = nextAxisX[m];
-                            let [left, right] = [nextX.bounds.left, nextX.bounds.right];
+                            let [left, right] = [nextX.linear.left, nextX.linear.right];
                             let index = l;
                             if (index > 0 && nextX.css('float') === 'right') {
                                 const style = nextX.element.style;
                                 style.float = 'left';
                                 const bounds = nextX.element.getBoundingClientRect();
-                                if (left !== bounds.left) {
-                                    [left, right] = [bounds.left, bounds.right];
+                                if (left !== (bounds.left - node.marginLeft)) {
+                                    [left, right] = [bounds.left - node.marginLeft, bounds.right + node.marginRight];
                                     for (let n = 1; n < columnRight.length; n++) {
                                         index = n;
                                         if (left > columnRight[n - 1]) {
@@ -6332,6 +6350,9 @@
                                 }
                                 style.float = 'right';
                             }
+                            function findRowIndex() {
+                                return columns[0].findIndex(item => withinFraction(item.linear.top, nextX.linear.top) || (nextX.linear.top >= item.linear.top && nextX.linear.bottom <= item.linear.bottom));
+                            }
                             if (index === 0 || left >= columnRight[index - 1]) {
                                 if (columns[index] == null) {
                                     columns[index] = [];
@@ -6340,7 +6361,7 @@
                                     columns[index][m] = nextX;
                                 }
                                 else {
-                                    const row = columns[0].findIndex(item => withinFraction(item.bounds.top, nextX.bounds.top) || (nextX.bounds.top >= item.bounds.top && nextX.bounds.bottom <= item.bounds.bottom));
+                                    const row = findRowIndex();
                                     if (row !== -1) {
                                         columns[index][row] = nextX;
                                     }
@@ -6348,16 +6369,17 @@
                             }
                             else {
                                 const current = columns.length - 1;
-                                const minLeft = columns[current].reduce((a, b) => Math.min(a, b.bounds.left), Number.MAX_VALUE);
-                                const maxRight = columns[current].reduce((a, b) => Math.max(a, b.bounds.right), 0);
+                                const minLeft = columns[current].reduce((a, b) => Math.min(a, b.linear.left), Number.MAX_VALUE);
+                                const maxRight = columns[current].reduce((a, b) => Math.max(a, b.linear.right), 0);
                                 if (left > minLeft && right > maxRight) {
                                     const filtered = columns.filter(item => item);
-                                    if (filtered[filtered.length - 1][index] == null) {
+                                    const row = findRowIndex();
+                                    if (row !== -1 && filtered[filtered.length - 1][row] == null) {
                                         columns[current] = null;
                                     }
                                 }
                             }
-                            columnRight[l] = Math.max(nextX.bounds.right, columnRight[l]);
+                            columnRight[l] = Math.max(nextX.linear.right, columnRight[l]);
                         }
                     }
                     for (let l = 0, m = -1; l < columnRight.length; l++) {
@@ -6464,7 +6486,7 @@
             }
             else {
                 const columnEnd = parent.gridColumnEnd[Math.min(node.gridIndex + (node.gridColumnSpan - 1), parent.gridColumnEnd.length - 1)];
-                siblings = node.parentOriginal.children.filter(item => !item.renderParent && item.bounds.left >= node.bounds.right && item.bounds.right <= columnEnd);
+                siblings = node.parentOriginal.children.filter(item => !item.renderParent && item.linear.left >= node.linear.right && item.linear.right <= columnEnd);
             }
             if (siblings != null && siblings.length > 0) {
                 siblings.unshift(node);
@@ -7015,7 +7037,7 @@
                     const extension = this.application.findExtension(WIDGET_NAME.TOOLBAR);
                     if (extension != null) {
                         offsetX = toolbar.linear.bottom;
-                        offsetHeight = toolbar.linear.height;
+                        offsetHeight = toolbar.bounds.height;
                         if (Math.floor(toolbar.linear.top) === node.box.top) {
                             node.bounds.bottom -= offsetHeight;
                             node.setBounds(true);
@@ -7207,7 +7229,7 @@
                             scaleType = 'centerCrop';
                             break;
                         case '100% 100%':
-                            scaleType = 'center';
+                            scaleType = 'fitXY';
                             break;
                     }
                     overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
@@ -7357,6 +7379,12 @@
             node.render(parent);
             this.createResourceTheme();
             return { xml };
+        }
+        afterInsert() {
+            const node = this.node;
+            if (node.renderParent.viewHeight === 0) {
+                node.renderParent.android('layout_height', 'match_parent');
+            }
         }
         finalize() {
             const node = this.node;

@@ -118,7 +118,7 @@ export default class Toolbar extends Extension<T, U> {
                         scaleType = 'centerCrop';
                         break;
                     case '100% 100%':
-                        scaleType = 'center';
+                        scaleType = 'fitXY';
                         break;
                 }
                 overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);

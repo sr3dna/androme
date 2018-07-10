@@ -119,7 +119,8 @@ export const FONTALIAS_ANDROID = {
 
 export const FONTREPLACE_ANDROID = {
     'ms shell dlg \\32': 'sans-serif',
-    'system-ui': 'sans-serif'
+    'system-ui': 'sans-serif',
+    '-apple-system': 'sans-serif'
 };
 
 export const FONTWEIGHT_ANDROID = {
