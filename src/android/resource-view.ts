@@ -2,7 +2,7 @@ import { ArrayMap, BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, Vie
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { capitalize, convertWord, formatString, hasValue, repeat } from '../lib/util';
+import { capitalize, convertWord, formatPX, formatString, hasValue, repeat } from '../lib/util';
 import { getTemplateLevel, placeIndent, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { parseHex } from '../lib/color';
@@ -174,6 +174,21 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }]
                         };
                         const root = getTemplateLevel(data, '0');
+                        const borders = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
+                        let valid = true;
+                        let width = '';
+                        let borderStyle = '';
+                        let radius = '';
+                        borders.some((item: BorderAttribute, index) => {
+                            if (this.borderVisible(item)) {
+                                if (width !== '' && width !== item.width && borderStyle !== '' && borderStyle !== this.getBorderStyle(item) && radius !== '' && radius !== stored.borderRadius[index]) {
+                                    valid = false;
+                                    return false;
+                                }
+                                [width, borderStyle, radius] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
+                            }
+                            return true;
+                        });
                         const borderRadius = {};
                         if (stored.borderRadius.length > 1) {
                             Object.assign(borderRadius, {
@@ -183,26 +198,45 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 bottomLeftRadius: stored.borderRadius[3]
                             });
                         }
-                        [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute, index) => {
-                            if (this.borderVisible(item)) {
-                                const hideWidth = `-${parseInt(item.width) * 2}px`;
-                                const layerList: ObjectMap<any> = {
-                                    'top': hideWidth,
-                                    'right': hideWidth,
-                                    'bottom': hideWidth,
-                                    'left': hideWidth,
-                                    '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
-                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                    '4': this.getShapeAttribute(stored, 'radius'),
-                                    '5': this.getShapeAttribute(stored, 'radiusInit')
-                                };
-                                layerList[['top', 'right', 'bottom', 'left'][index]] = item.width;
-                                if (stored.borderRadius.length > 1) {
-                                    layerList['5'].push(borderRadius);
-                                }
-                                root['1'].push(layerList);
+                        if (valid) {
+                            const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
+                            const layerList: ObjectMap<any> = {
+                                'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
+                                'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
+                                'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
+                                'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
+                                '2': [{ width, borderStyle }],
+                                '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                '4': this.getShapeAttribute(stored, 'radius'),
+                                '5': this.getShapeAttribute(stored, 'radiusInit')
+                            };
+                            if (stored.borderRadius.length > 1) {
+                                layerList['5'].push(borderRadius);
                             }
-                        });
+                            root['1'].push(layerList);
+                        }
+                        else {
+                            borders.forEach((item: BorderAttribute, index) => {
+                                if (this.borderVisible(item)) {
+                                    const hideWidth = `-${item.width}`;
+                                    const layerList: ObjectMap<any> = {
+                                        'top': hideWidth,
+                                        'right': hideWidth,
+                                        'bottom': hideWidth,
+                                        'left': hideWidth,
+                                        '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
+                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                        '4': this.getShapeAttribute(stored, 'radius'),
+                                        '5': this.getShapeAttribute(stored, 'radiusInit')
+                                    };
+                                    layerList[['top', 'right', 'bottom', 'left'][index]] = item.width;
+                                    if (stored.borderRadius.length > 1) {
+                                        layerList['5'].push(borderRadius);
+                                    }
+                                    root['1'].push(layerList);
+                                }
+                            });
+                        }
                         if (root['1'].length === 0) {
                             root['1'] = false;
                         }
@@ -423,8 +457,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     countA += a[attr].length;
                 }
                 for (const attr in b) {
-                    maxB = Math.max(b[attr].length, maxB);
-                    countB += b[attr].length;
+                    if (b[attr] != null) {
+                        maxB = Math.max(b[attr].length, maxB);
+                        countB += b[attr].length;
+                    }
                 }
                 if (maxA !== maxB) {
                     return (maxA > maxB ? -1 : 1);

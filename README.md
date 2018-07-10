@@ -113,6 +113,8 @@ Constraint chain is available as a setting since flexbox does not always support
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using HTML tables is recommended for most applications as it will generate a very efficient GridLayout. Performance is probably faster than ConstraintLayout and also more accurate.
 
+Android defaults their controls to vertical align "top" whereas HTML defaults to "baseline" which can cause the vertical alignment to be skewed. If you want them to be look similar vertically then you might have to explicity set the CSS property "vertical-align" to the nearest position "middle" as the "baseline" setting is only partially available in Android.
+
 ### Standard
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for most of the common floating techniques.
@@ -222,9 +224,8 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/androme_ui"
-    android:gravity="top"
-    android:layout_height="wrap_content"
-    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
     android:orientation="vertical">
     <TextView
         android:id="@+id/textview_1"
@@ -238,7 +239,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
         android:id="@+id/entry"
         android:background="@drawable/form_entry"
         android:layout_height="wrap_content"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="@dimen/form_padding_horizontal"
         android:paddingVertical="@dimen/form_padding_vertical">
@@ -607,7 +608,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
         <View
             android:id="@+id/view_1"
             android:background="@color/light_gray_1"
-            android:gravity="center_horizontal"
+            android:layout_gravity="center_horizontal"
             android:layout_height="@dimen/hr_height"
             android:layout_marginHorizontal="@dimen/hr_margin_horizontal"
             android:layout_marginVertical="@dimen/hr_margin_vertical"
@@ -616,7 +617,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
             android:id="@+id/gridlayout_2"
             android:columnCount="2"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
             android:paddingTop="@dimen/ul_padding_top">
@@ -968,6 +969,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_19"
+                android:layout_gravity="center_vertical"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -984,6 +986,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:background="@drawable/select_hour"
                     android:entries="@array/typeofentry_array"
                     android:focusable="true"
+                    android:layout_gravity="center_vertical"
                     android:layout_height="wrap_content"
                     android:layout_width="@dimen/select_width_2"
                     android:minWidth="@dimen/select_minwidth"
@@ -991,6 +994,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     style="@style/Select" />
                 <LinearLayout
                     android:id="@+id/linearlayout_8"
+                    android:layout_gravity="center_vertical"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/div_margin_start"
                     android:layout_width="wrap_content"
@@ -1037,6 +1041,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/button_6"
                     android:background="@drawable/button_button_1"
                     android:focusable="true"
+                    android:layout_gravity="center_vertical"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"
                     android:layout_width="wrap_content"
@@ -1319,8 +1324,8 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
 <resources>
     <dimen name="button_margin_start">4dp</dimen>
     <dimen name="button_margin_start_1">8dp</dimen>
-    <dimen name="button_minheight">0dp</dimen>
-    <dimen name="button_minwidth">0dp</dimen>
+    <dimen name="button_minheight">25dp</dimen>
+    <dimen name="button_minwidth">30dp</dimen>
     <dimen name="button_padding_horizontal">6dp</dimen>
     <dimen name="button_padding_vertical">1dp</dimen>
     <dimen name="checkbox_margin_end">1dp</dimen>

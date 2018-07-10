@@ -1,6 +1,5 @@
 import { Null } from '../lib/types';
 import View from './view';
-import { VIEW_STANDARD } from '../lib/constants';
 
 type T = View;
 
@@ -23,14 +22,7 @@ export default class ViewGroup extends View {
     }
 
     public setViewLayout() {
-        const [width, height] = this.childrenBox;
-        const options = {
-            parent: this.parentOriginal,
-            width,
-            height,
-            wrapContent: this.parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID)
-        };
-        super.setViewLayout(options);
+        super.setViewLayout.apply(this, this.childrenBox);
     }
 
     public setBounds(calibrate = false) {
@@ -69,15 +61,26 @@ export default class ViewGroup extends View {
     public inheritGrid(node: T) {
         for (const attr in node) {
             if (attr.startsWith('grid')) {
-                if (typeof node[attr] === 'number') {
-                    this[attr] += node[attr];
-                    node[attr] = 0;
-                }
-                else {
-                    if (node[attr] !== false) {
+                switch (typeof node[attr]) {
+                    case 'number':
+                        this[attr] += node[attr];
+                        node[attr] = 0;
+                        break;
+                    case 'boolean':
+                        if (node[attr] !== false) {
+                            this[attr] = node[attr];
+                            node[attr] = false;
+                        }
+                        break;
+                    case 'object':
                         this[attr] = node[attr];
-                        node[attr] = false;
-                    }
+                        if (Array.isArray(node[attr])) {
+                            node[attr] = [];
+                        }
+                        else {
+                            node[attr] = null;
+                        }
+                        break;
                 }
             }
         }

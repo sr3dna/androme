@@ -1,9 +1,9 @@
-import { ExtensionResult, Null, ObjectIndex } from '../lib/types';
+import { ExtensionResult, ObjectIndex } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import { sortAsc, withinFraction } from '../lib/util';
 import { BLOCK_CHROME } from '../lib/constants';
-import { sortAsc } from '../lib/util';
 
 type T = Node;
 type U = NodeList<T>;
@@ -17,7 +17,7 @@ export default class Grid extends Extension<T, U> {
         const node = (<T> this.node);
         return (
             this.included() ||
-            (node.hasElement && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_CHROME.includes(node.children[0].tagName) && node.children.every(item => !item.flex.enabled && item.children.length > 1 && node.children[0].tagName === item.tagName && NodeList.linearX(item.children)))
+            (node.hasElement && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_CHROME.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].tagName === item.tagName && NodeList.linearX(item.children)))
         );
     }
 
@@ -25,7 +25,7 @@ export default class Grid extends Extension<T, U> {
         const node = (<T> this.node);
         const parent = (<T> this.parent);
         let xml = '';
-        let columns: any[][] = [];
+        let columns: any[] = [];
         const balanceColumns = this.options.balanceColumns;
         if (balanceColumns) {
             const dimensions: number[][] = [];
@@ -111,38 +111,53 @@ export default class Grid extends Extension<T, U> {
             if (nextCoordsX.length > 1) {
                 const columnRight: number[] = [];
                 for (let l = 0; l < nextCoordsX.length; l++) {
-                    const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])], 'bounds.top');
+                    const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])].filter(item => item.parent.parent && item.parent.parent.id === node.id), 'bounds.top');
                     columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                     for (let m = 0; m < nextAxisX.length; m++) {
                         const nextX = nextAxisX[m];
-                        if (nextX.parent.parent && node.id === nextX.parent.parent.id) {
-                            let [left, right] = [nextX.bounds.left, nextX.bounds.right];
-                            let index = l;
-                            if (nextX.css('float') === 'right') {
-                                const style: any = nextX.element.style;
-                                style.float = 'left';
-                                const bounds = nextX.element.getBoundingClientRect();
-                                if (left !== bounds.left) {
-                                    for (let n = 0; n < columnRight.length; n++) {
-                                        if (left < columnRight[n]) {
-                                            index = n;
-                                            break;
-                                        }
+                        let [left, right] = [nextX.bounds.left, nextX.bounds.right];
+                        let index = l;
+                        if (index > 0 && nextX.css('float') === 'right') {
+                            const style: any = nextX.element.style;
+                            style.float = 'left';
+                            const bounds = nextX.element.getBoundingClientRect();
+                            if (left !== bounds.left) {
+                                [left, right] = [bounds.left, bounds.right];
+                                for (let n = 1; n < columnRight.length; n++) {
+                                    index = n;
+                                    if (left > columnRight[n - 1]) {
+                                        break;
                                     }
-                                    [left, right] = [bounds.left, bounds.right];
                                 }
-                                style.float = 'right';
                             }
-                            if (index === 0 || left >= columnRight[index - 1]) {
-                                if (columns[index] == null) {
-                                    columns[index] = [];
+                            style.float = 'right';
+                        }
+                        if (index === 0 || left >= columnRight[index - 1]) {
+                            if (columns[index] == null) {
+                                columns[index] = [];
+                            }
+                            if (index === 0 || columns[0].length === nextAxisX.length) {
+                                columns[index][m] = nextX;
+                            }
+                            else {
+                                const row = columns[0].findIndex(item => withinFraction(item.bounds.top, nextX.bounds.top) || (nextX.bounds.top >= item.bounds.top && nextX.bounds.bottom <= item.bounds.bottom));
+                                if (row !== -1) {
+                                    columns[index][row] = nextX;
                                 }
-                                columns[index].push(nextX);
-                            }
-                            if (l === index) {
-                                columnRight[index] = Math.max(right, columnRight[index]);
                             }
                         }
+                        else {
+                            const current = columns.length - 1;
+                            const minLeft = columns[current].reduce((a: number, b: T) => Math.min(a, b.bounds.left), Number.MAX_VALUE);
+                            const maxRight = columns[current].reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0);
+                            if (left > minLeft && right > maxRight) {
+                                const filtered = columns.filter(item => item);
+                                if (filtered[filtered.length - 1][index] == null) {
+                                    columns[current] = null;
+                                }
+                            }
+                        }
+                        columnRight[l] = Math.max(nextX.bounds.right, columnRight[l]);
                     }
                 }
                 for (let l = 0, m = -1; l < columnRight.length; l++) {
@@ -166,29 +181,11 @@ export default class Grid extends Extension<T, U> {
                     }
                 }
                 columns = columns.filter(item => item);
-                columns.forEach((item: T[]) => sortAsc(item, 'bounds.top'));
                 const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                 for (let l = 0; l < columnLength; l++) {
-                    let top: Null<number> = null;
                     for (let m = 0; m < columns.length; m++) {
-                        const nodeX = columns[m][l];
-                        if (nodeX != null) {
-                            if (top == null) {
-                                top = nodeX.linear.top;
-                            }
-                            else if (nodeX.linear.top !== top) {
-                                const nextRowX = columns[m - 1][l + 1];
-                                if (columns[m][l - 1] == null || (nextRowX && nextRowX.linear.top === nodeX.linear.top)) {
-                                    columns[m].splice(l, 0, { spacer: 1 });
-                                }
-                                else if (columns[m][l + 1] == null) {
-                                    columns[m][l + 1] = nodeX;
-                                    columns[m][l] = { spacer: 1 };
-                                }
-                            }
-                        }
-                        else {
-                            columns[m].splice(l, 0, { spacer: 1 });
+                        if (columns[m][l] == null) {
+                            columns[m][l] = { spacer: 1 };
                         }
                     }
                 }
@@ -200,7 +197,7 @@ export default class Grid extends Extension<T, U> {
         }
         if (columns.length > 1) {
             node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
-            xml = this.application.writeGridLayout(node, (<T> this.parent), node.gridColumnCount);
+            xml = this.application.writeGridLayout(node, parent, node.gridColumnCount);
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
                 for (let m = 0, start = 0; m < columns[l].length; m++) {

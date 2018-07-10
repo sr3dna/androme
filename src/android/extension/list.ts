@@ -28,7 +28,9 @@ export default class ListAndroid<T extends View> extends List {
                             [parseRTL('layout_marginRight')]: formatDimen(node.tagName, parseRTL('margin_right'), '8px'),
                             text: (listStyle !== '0' ? listStyle : '')
                         }
-                    }
+                    },
+                    'wrap_content',
+                    'wrap_content'
                 )
             );
             node.android('layout_columnWeight', '1');

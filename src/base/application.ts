@@ -468,7 +468,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             if (tagName === '') {
                                 if (nodeY.children.length > 0 && nodeY.cascade().some(node => MAPPING_CHROME[node.tagName] != null || !INLINE_CHROME.includes(node.tagName))) {
                                     if (!nodeY.renderParent) {
-                                        if (nodeY.children.some(node => !node.pageflow)) {
+                                        if (nodeY.flex.enabled || nodeY.children.some(node => !node.pageflow)) {
                                             xml += this.writeDefaultLayout(nodeY, parent);
                                         }
                                         else {

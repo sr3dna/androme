@@ -2,8 +2,8 @@ import { ExtensionResult } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import { includes } from '../../../lib/util';
-import { findNestedMenu, overwriteDefault } from '../lib/util';
+import { optional } from '../../../lib/util';
+import { findNestedExtension, findNestedMenu, overwriteDefault } from '../lib/util';
 import { VIEW_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -80,6 +80,7 @@ export default class Drawer extends Extension<T, U> {
         else {
             const navView = node.children[node.children.length - 1];
             navView.android('layout_gravity', options.android.layout_gravity);
+            navView.android('layout_height', 'match_parent');
             navView.isolated = true;
             controller.prependBefore(navView.id, (include !== '' ? include : content));
             menu = navView.element;
@@ -99,25 +100,25 @@ export default class Drawer extends Extension<T, U> {
         return { xml };
     }
 
+    public afterInsert() {
+        const headerLayout = findNestedExtension(this.node, EXT_NAME.EXTERNAL);
+        if (headerLayout != null) {
+            const node = (<T> (<any> headerLayout).__node);
+            if (node.viewHeight === 0) {
+                node.android('layout_height', 'wrap_content');
+            }
+        }
+    }
+
     public finalize() {
         const node = (<T> this.node);
-        if (findNestedMenu(node) != null) {
-            let menu = '';
-            let headerLayout = '';
-            this.application.elements.forEach(item => {
-                if (item.parentElement === node.element) {
-                    if (includes(<string> item.dataset.ext, EXT_NAME.EXTERNAL)) {
-                        headerLayout = (<string> item.dataset.currentId);
-                    }
-                    else if (includes(<string> item.dataset.ext, WIDGET_NAME.MENU)) {
-                        menu = (<string> item.dataset.currentId);
-                    }
-                }
-            });
-            this.application.layouts.forEach(view => {
-                view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu);
-                view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`, headerLayout);
-            });
+        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.currentId');
+        const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.currentId');
+        if (menu !== '') {
+            this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu));
+        }
+        if (headerLayout !== '') {
+            this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`, headerLayout));
         }
     }
 

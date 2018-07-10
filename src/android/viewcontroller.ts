@@ -65,17 +65,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             const flex = node.flex;
             if (nodes.list.length > 0 && (constraint || relative || flex.enabled)) {
                 node.setBoundsMin();
-                if (node.is(VIEW_STANDARD.LINEAR)) {
-                    if (node.renderChildren.some(item => item.flex.direction.indexOf('row') !== -1)) {
-                        node.constraint.layoutWidth = true;
-                        node.constraint.expand = true;
-                    }
-                    if (node.renderChildren.some(item => item.flex.direction.indexOf('column') !== -1)) {
-                        node.constraint.layoutHeight = true;
-                        node.constraint.expand = true;
-                    }
-                    return;
-                }
                 const LAYOUT: StringMap = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                 const linearX = nodes.linearX;
                 function mapParent(item: T, direction: string) {
@@ -124,7 +113,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 linear2 = node.box;
                                 parent = true;
                             }
-                            if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
+                            if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
                                 this.setAlignParent(current, 'horizontal');
                             }
                             else {
@@ -216,7 +205,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 const linear1: ClientRect = current.linear;
                                 const linear2: ClientRect = adjacent.linear;
                                 const alignedX = (linear1.left === linear2.left || linear1.right === linear2.right);
-                                if (current.css('width') != null && current.styleMap.marginTop === '0px' && current.styleMap.marginRight === 'auto' && current.styleMap.marginBottom === '0px' && current.styleMap.marginLeft === 'auto') {
+                                if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
                                     current.android('layout_centerHorizontal', 'true');
                                     current.constraint.horizontal = true;
                                 }
@@ -332,7 +321,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                 }
                 while (true);
-                if (nodes.length > 1 && (flex.enabled || (constraint && SETTINGS.useConstraintChain && !nodes.intersect()))) {
+                if (flex.enabled || (SETTINGS.useConstraintChain && constraint && nodes.length > 1 && !nodes.intersect())) {
                     let flexbox: Null<any[]> = null;
                     if (flex.enabled) {
                          if (flex.wrap === 'nowrap') {
@@ -406,7 +395,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             const inverse = (index === 0 ? 1 : 0);
                             connected.forEach((current, level) => {
                                 const chainable: U = current.constraint[value];
-                                if (chainable != null && chainable.length > 1) {
+                                if (chainable != null && chainable.length > (flex.enabled ? 0 : 1)) {
                                     chainable.parent = node;
                                     if (flex.enabled && chainable.list.some(item => item.flex.order > 0)) {
                                         chainable[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
@@ -475,7 +464,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 chain.android(`layout_${dimension}`, 'wrap_content');
                                             }
                                             else if (chain.flex.grow > 0) {
-                                                chain.android(`layout_${dimension}`, (node.renderParent.is(VIEW_STANDARD.LINEAR) && node.renderParent.constraint.expand && node.flex.direction.indexOf('row') !== -1 ? 'wrap_content' : '0px'));
+                                                chain.android(`layout_${dimension}`, '0px');
                                             }
                                             if (chain.flex.shrink === 0) {
                                                 chain.app(`layout_constrained${WH}`, 'true');
@@ -595,11 +584,11 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 bias = first[`${orientation}Bias`];
                                             }
                                             first.app(`layout_constraint${HV}_bias`, bias);
-                                            this.adjustMargins(chainable.list);
                                         }
                                         else {
                                             first.app(chainStyle, 'spread');
                                         }
+                                        this.adjustMargins(chainable.list);
                                         if (!flex.enabled) {
                                             chainable.list.forEach(inner => {
                                                 nodes.list.forEach(outer => {
@@ -630,10 +619,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     });
                 }
                 if (!flex.enabled) {
-                    function deleteConstraints(item: T) {
+                    function deleteConstraints(item: T, stringId = '') {
                         const namespace = (constraint ? 'app' : 'android');
-                        item.delete(namespace, LAYOUT['leftRight'], LAYOUT['rightLeft']);
-                        item.delete(namespace, LAYOUT['bottomTop'], LAYOUT['topBottom'], LAYOUT['baseline']);
+                        for (const attr in LAYOUT) {
+                            const value = item[namespace](LAYOUT[attr]);
+                            if (value !== 'parent' && (stringId === '' || value === stringId)) {
+                                item.delete(namespace, LAYOUT[attr]);
+                            }
+                        }
                     }
                     if (constraint) {
                         nodes.list.forEach(current => {
@@ -671,6 +664,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         const adjacent = nodes.anchors[0];
                         nodes.list.filter(current => !current.anchored).forEach(opposite => {
                             deleteConstraints(opposite);
+                            nodes.anchors.forEach(item => deleteConstraints(item, opposite.stringId));
                             opposite.constraint.horizontal = mapParent(opposite, 'left') || mapParent(opposite, 'right');
                             opposite.constraint.vertical = mapParent(opposite, 'top') || mapParent(opposite, 'bottom');
                             if (SETTINGS.useConstraintGuideline) {

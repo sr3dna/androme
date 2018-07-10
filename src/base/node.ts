@@ -72,7 +72,7 @@ export default abstract class Node implements BoxModel {
 
     public abstract is(...views: number[]): boolean;
     public abstract setViewId(viewName: string): void;
-    public abstract setViewLayout(options?: ObjectMap<any>): void;
+    public abstract setViewLayout(width?: number, height?: number): void;
     public abstract applyCustomizations(): void;
     public abstract modifyBox(area: number, offset: number): void;
     public abstract boxValue(area: number): string[];

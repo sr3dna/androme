@@ -49,7 +49,6 @@
 
             var resource = androme.writeResourceAllXml();
             document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
-            document.getElementById('resource').innerHTML = resource.replace(/</g, '&lt;');
         }
         function resetDocument() {
             count = 0;
