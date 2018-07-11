@@ -1,4 +1,4 @@
-import { ArrayIndex, ClientRect, Null, ObjectMap, Point, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, Null, ObjectMap, Point, StringMap, ViewData } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
@@ -93,152 +93,147 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 nodes.list.unshift(node);
                 nodes.list.forEach(current => {
-                    nodes.list.forEach((adjacent: any) => {
-                        const adjacentX = (adjacent.constraint.horizontal ? 'horizontal' : '');
-                        const adjacentY = (adjacent.constraint.vertical ? 'vertical' : '');
+                    nodes.list.forEach(adjacent => {
                         if (current === adjacent || current.intersect(adjacent.linear)) {
                             return;
                         }
-                        else if (constraint) {
-                            let linear1: ClientRect = current.linear;
-                            let linear2: ClientRect = adjacent.linear;
-                            const alignedX = (linear1.left === linear2.left || linear1.right === linear2.right);
-                            let parent = false;
-                            if (current === node || adjacent === node) {
-                                if (current === node) {
-                                    current = adjacent;
-                                }
-                                adjacent = { stringId: 'parent' };
-                                linear1 = current.linear;
-                                linear2 = node.box;
-                                parent = true;
-                            }
-                            if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
-                                this.setAlignParent(current, 'horizontal');
-                            }
-                            else {
-                                if (parent) {
-                                    if (linear1.left <= linear2.left || withinFraction(linear1.left, linear2.left)) {
-                                        current.anchor(LAYOUT['left'], adjacent, 'horizontal');
+                        else {
+                            let linear1 = current.linear;
+                            let linear2 = adjacent.linear;
+                            let stringId = adjacent.stringId;
+                            const horizontal = (adjacent.constraint.horizontal ? 'horizontal' : '');
+                            const vertical = (adjacent.constraint.vertical ? 'vertical' : '');
+                            const withinY = current.withinY(adjacent.linear);
+                            if (constraint) {
+                                if (current === node || adjacent === node) {
+                                    if (current === node) {
+                                        current = adjacent;
                                     }
-                                    if (linear1.right >= linear2.right || withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                        current.anchor(LAYOUT['right'], adjacent, 'horizontal');
-                                    }
+                                    linear1 = current.linear;
+                                    linear2 = node.box;
+                                    stringId = 'parent';
                                 }
-                                else {
-                                    if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
-                                        current.anchor(LAYOUT['left'], adjacent);
-                                        current.anchor(LAYOUT['right'], adjacent);
-                                    }
-                                    else if (!SETTINGS.horizontalPerspective) {
-                                        if (linear1.left === linear2.left) {
-                                            current.anchor(LAYOUT['left'], adjacent);
-                                        }
-                                        else if (linear1.right === linear2.right) {
-                                            current.anchor(LAYOUT['right'], adjacent);
-                                        }
-                                    }
-                                    if (withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                        if (current.css('float') !== 'right') {
-                                            current.anchor(LAYOUT['leftRight'], adjacent, adjacentX, current.withinX(linear2));
-                                        }
-                                        else {
-                                            current.constraint.marginHorizontal = adjacent.stringId;
-                                        }
-                                    }
-                                    if (withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
-                                        if (current.css('float') !== 'left') {
-                                            current.anchor(LAYOUT['rightLeft'], adjacent, adjacentX, current.withinX(linear2));
-                                        }
-                                    }
-                                }
-                            }
-                            if (parent) {
-                                if (linear1.top <= linear2.top || withinFraction(linear1.top, linear2.top)) {
-                                    current.anchor(LAYOUT['top'], adjacent, 'vertical');
-                                }
-                                if (linear1.bottom >= linear2.bottom || withinFraction(linear1.bottom, linear2.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset))) {
-                                    current.anchor(LAYOUT['bottom'], adjacent, 'vertical');
-                                }
-                            }
-                            else {
-                                const parentTop = mapParent(current, 'top');
-                                const parentBottom = mapParent(current, 'bottom');
-                                if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                    if (current.withinY(linear2)) {
-                                        current.anchor(LAYOUT['topBottom'], adjacent, adjacentY, alignedX);
-                                    }
-                                }
-                                else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
-                                    if (!parentBottom && current.withinY(linear2)) {
-                                        current.anchor(LAYOUT['bottomTop'], adjacent, adjacentY, alignedX);
-                                    }
-                                }
-                                if (linear1.top === linear2.top && !parentTop && !parentBottom) {
-                                    current.anchor(LAYOUT['top'], adjacent, adjacentY);
-                                }
-                                if (linear1.bottom === linear2.bottom && !parentTop && !parentBottom) {
-                                    current.anchor(LAYOUT['bottom'], adjacent, adjacentY);
-                                }
-                            }
-                        }
-                        else if (relative) {
-                            if (current === node) {
-                                return;
-                            }
-                            else if (adjacent === node) {
-                                adjacent = { stringId: 'true' };
-                                if (current.linear.left <= node.box.left || withinFraction(current.linear.left, node.box.left)) {
-                                    current.anchor(parseRTL('layout_alignParentLeft'), adjacent, 'horizontal');
-                                }
-                                else if (current.linear.right >= node.box.right || withinFraction(current.linear.right, node.box.right)) {
-                                    current.anchor(parseRTL('layout_alignParentRight'), adjacent, 'horizontal');
-                                }
-                                if (current.linear.top <= node.box.top || withinFraction(current.linear.top, node.box.top)) {
-                                    current.anchor('layout_alignParentTop', adjacent, 'vertical');
-                                }
-                                else if (current.linear.bottom >= node.box.bottom || withinFraction(current.linear.bottom, node.box.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset))) {
-                                    current.anchor('layout_alignParentBottom', adjacent, 'vertical');
-                                }
-                            }
-                            else {
-                                const linear1: ClientRect = current.linear;
-                                const linear2: ClientRect = adjacent.linear;
-                                const alignedX = (linear1.left === linear2.left || linear1.right === linear2.right);
                                 if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
-                                    current.android('layout_centerHorizontal', 'true');
-                                    current.constraint.horizontal = true;
+                                    this.setAlignParent(current, 'horizontal');
                                 }
                                 else {
-                                    if ((linear1.top === linear2.top || linear1.bottom === linear2.bottom) && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                        if (current.css('float') === 'right') {
-                                            adjacent.anchor(LAYOUT['rightLeft'], current, adjacentX);
+                                    if (stringId === 'parent') {
+                                        if (linear1.left <= linear2.left || withinFraction(linear1.left, linear2.left)) {
+                                            current.anchor(LAYOUT['left'], 'parent', 'horizontal');
                                         }
-                                        else {
-                                            current.anchor(LAYOUT['leftRight'], adjacent, adjacentX);
-                                            if (adjacent.constraint.horizontal) {
-                                                current.delete('android', parseRTL('layout_alignParentRight'));
+                                        if (linear1.right >= linear2.right || withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                            current.anchor(LAYOUT['right'], 'parent', 'horizontal');
+                                        }
+                                    }
+                                    else {
+                                        if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
+                                            current.anchor(LAYOUT['left'], stringId);
+                                            current.anchor(LAYOUT['right'], stringId);
+                                        }
+                                        else if (!SETTINGS.horizontalPerspective) {
+                                            if (linear1.left === linear2.left) {
+                                                current.anchor(LAYOUT['left'], stringId);
+                                            }
+                                            else if (linear1.right === linear2.right) {
+                                                current.anchor(LAYOUT['right'], stringId);
+                                            }
+                                        }
+                                        if (withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (current.css('float') !== 'right') {
+                                                current.anchor(LAYOUT['leftRight'], stringId, horizontal, current.withinX(linear2));
+                                            }
+                                            else {
+                                                current.constraint.marginHorizontal = adjacent.stringId;
+                                            }
+                                        }
+                                        if (withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (current.css('float') !== 'left') {
+                                                current.anchor(LAYOUT['rightLeft'], stringId, horizontal, current.withinX(linear2));
                                             }
                                         }
                                     }
                                 }
-                                if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                    current.anchor(LAYOUT['topBottom'], adjacent, adjacentY, alignedX);
-                                    if (adjacent.constraint.vertical) {
-                                        current.delete('android', 'layout_alignParentBottom');
+                                if (stringId === 'parent') {
+                                    if (linear1.top <= linear2.top || withinFraction(linear1.top, linear2.top)) {
+                                        current.anchor(LAYOUT['top'], 'parent', 'vertical');
+                                    }
+                                    if (linear1.bottom >= linear2.bottom || withinFraction(linear1.bottom, linear2.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset))) {
+                                        current.anchor(LAYOUT['bottom'], 'parent', 'vertical');
                                     }
                                 }
-                                else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
-                                    if (current.android('layout_alignParentTop') !== 'true') {
-                                        current.anchor(LAYOUT['bottomTop'], adjacent, adjacentY, alignedX);
+                                else {
+                                    const parentTop = mapParent(current, 'top');
+                                    const parentBottom = mapParent(current, 'bottom');
+                                    if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        current.anchor(LAYOUT['topBottom'], stringId, vertical, withinY);
+                                    }
+                                    else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
+                                        if (!parentBottom) {
+                                            current.anchor(LAYOUT['bottomTop'], stringId, vertical, withinY);
+                                        }
+                                    }
+                                    if (linear1.top === linear2.top && !parentTop && !parentBottom) {
+                                        current.anchor(LAYOUT['top'], stringId, vertical);
+                                    }
+                                    if (linear1.bottom === linear2.bottom && !parentTop && !parentBottom) {
+                                        current.anchor(LAYOUT['bottom'], stringId, vertical);
                                     }
                                 }
-                                if (adjacent.constraint.horizontal) {
-                                    if (linear1.bottom === linear2.bottom) {
-                                        if (!linearX && (!current.floating || !current.constraint.vertical)) {
-                                            current.anchor(LAYOUT['bottom'], adjacent, adjacentY);
-                                            if (adjacent.constraint.vertical) {
-                                                current.delete('android', 'layout_alignParentBottom');
+                            }
+                            else if (relative) {
+                                if (current === node) {
+                                    return;
+                                }
+                                else if (adjacent === node) {
+                                    if (current.linear.left <= node.box.left || withinFraction(current.linear.left, node.box.left)) {
+                                        current.anchor(parseRTL('layout_alignParentLeft'), 'true', 'horizontal');
+                                    }
+                                    else if (current.linear.right >= node.box.right || withinFraction(current.linear.right, node.box.right)) {
+                                        current.anchor(parseRTL('layout_alignParentRight'), 'true', 'horizontal');
+                                    }
+                                    if (current.linear.top <= node.box.top || withinFraction(current.linear.top, node.box.top)) {
+                                        current.anchor('layout_alignParentTop', 'true', 'vertical');
+                                    }
+                                    else if (current.linear.bottom >= node.box.bottom || withinFraction(current.linear.bottom, node.box.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset))) {
+                                        current.anchor('layout_alignParentBottom', 'true', 'vertical');
+                                    }
+                                }
+                                else {
+                                    if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
+                                        current.android('layout_centerHorizontal', 'true');
+                                        current.constraint.horizontal = true;
+                                    }
+                                    else {
+                                        if ((linear1.top === linear2.top || linear1.bottom === linear2.bottom) && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (current.css('float') === 'right') {
+                                                adjacent.anchor(LAYOUT['rightLeft'], current.stringId, horizontal);
+                                            }
+                                            else {
+                                                current.anchor(LAYOUT['leftRight'], stringId, horizontal);
+                                                if (adjacent.constraint.horizontal) {
+                                                    current.delete('android', parseRTL('layout_alignParentRight'));
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        current.anchor(LAYOUT['topBottom'], stringId, vertical, withinY);
+                                        if (adjacent.constraint.vertical) {
+                                            current.delete('android', 'layout_alignParentBottom');
+                                        }
+                                    }
+                                    else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
+                                        if (current.android('layout_alignParentTop') !== 'true') {
+                                            current.anchor(LAYOUT['bottomTop'], stringId, vertical, withinY);
+                                        }
+                                    }
+                                    if (adjacent.constraint.horizontal) {
+                                        if (linear1.bottom === linear2.bottom) {
+                                            if (!linearX && (!current.floating || !current.constraint.vertical)) {
+                                                current.anchor(LAYOUT['bottom'], stringId, vertical);
+                                                if (adjacent.constraint.vertical) {
+                                                    current.delete('android', 'layout_alignParentBottom');
+                                                }
                                             }
                                         }
                                     }

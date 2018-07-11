@@ -3,7 +3,7 @@ import Extension from '../../../base/extension';
 import Resource from '../../../base/resource';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import { convertPX, optional } from '../../../lib/util';
+import { convertPX, includes, optional } from '../../../lib/util';
 import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { formatDimen, restoreIndent } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
@@ -32,12 +32,11 @@ export default class Toolbar extends Extension<T, U> {
             });
             if (element.dataset.target != null) {
                 const target = document.getElementById(element.dataset.target);
-                if (target != null && element.parentElement !== target && optional(target, 'dataset.ext').indexOf(WIDGET_NAME.COORDINATOR) === -1) {
+                if (target != null && element.parentElement !== target && !includes(optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR)) {
                     this.application.elements.add(element);
-                    return true;
                 }
             }
-            if (optional(element, 'parentElement.dataset.ext').indexOf(WIDGET_NAME.COORDINATOR) !== -1) {
+            if (includes(optional(element, 'parentElement.dataset.ext'), WIDGET_NAME.COORDINATOR)) {
                 (<any> element).__nodeIsolated = true;
             }
         }

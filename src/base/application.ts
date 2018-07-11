@@ -223,15 +223,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         extensions.forEach(item => item.setTarget((<T> this.cache.parent)));
         for (const element of (<HTMLElement[]> Array.from(elements))) {
             if (!this.elements.has(element)) {
-                let handled = false;
-                this.orderExt(extensions, element).some(item => {
-                    if (item.init(element)) {
-                        handled = true;
-                        return true;
-                    }
-                    return false;
-                });
-                if (!handled) {
+                this.orderExt(extensions, element).some(item => item.init(element));
+                if (!this.elements.has(element)) {
                     if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
                         continue;
                     }
@@ -462,54 +455,58 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (proceed) {
                             continue;
                         }
-                        let xml = '';
                         if (!nodeY.renderParent) {
-                            let tagName = nodeY.viewName;
-                            if (tagName === '') {
-                                if (nodeY.children.length > 0 && nodeY.cascade().some(node => MAPPING_CHROME[node.tagName] != null || !INLINE_CHROME.includes(node.tagName))) {
-                                    if (!nodeY.renderParent) {
-                                        if (nodeY.flex.enabled || nodeY.children.some(node => !node.pageflow)) {
-                                            xml += this.writeDefaultLayout(nodeY, parent);
+                            let xml = '';
+                            if (nodeY.viewName === '') {
+                                if (nodeY.children.length === 0 || nodeY.cascade().every(node => INLINE_CHROME.includes(node.element.tagName))) {
+                                    if (hasFreeFormText(nodeY.element)) {
+                                        xml += this.writeView(nodeY, parent, VIEW_STANDARD.TEXT);
+                                    }
+                                    else {
+                                        if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
+                                            continue;
                                         }
-                                        else {
-                                            if (nodeY.children.length === 1) {
-                                                if (nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
-                                                    const child = nodeY.children[0];
-                                                    child.documentRoot = nodeY.documentRoot;
-                                                    child.parent = parent;
-                                                    nodeY.cascade().forEach(item => item.renderDepth--);
-                                                    nodeY.hide();
-                                                    axisY[k] = (<T> child);
-                                                    k--;
-                                                }
-                                                else {
-                                                    xml += this.writeFrameLayout(nodeY, parent);
-                                                }
-                                            }
-                                            else {
-                                                const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
-                                                if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
-                                                    xml += this.writeLinearLayout(nodeY, parent, linearY);
-                                                }
-                                                else {
-                                                    xml += this.writeDefaultLayout(nodeY, parent);
-                                                }
-                                            }
+                                        else if (!nodeY.documentRoot) {
+                                            xml += this.writeFrameLayout(nodeY, parent);
                                         }
                                     }
                                 }
                                 else {
-                                    if (nodeY.children.length === 0 && nodeY.viewHeight === 0 && !hasFreeFormText(nodeY.element)) {
-                                        continue;
+                                    if (nodeY.flex.enabled || nodeY.children.some(node => !node.pageflow)) {
+                                        xml += this.writeDefaultLayout(nodeY, parent);
                                     }
-                                    tagName = this.controllerHandler.getViewName(VIEW_STANDARD.TEXT);
+                                    else {
+                                        if (nodeY.children.length === 1) {
+                                            if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
+                                                const child = nodeY.children[0];
+                                                child.documentRoot = nodeY.documentRoot;
+                                                child.parent = parent;
+                                                nodeY.cascade().forEach(item => item.renderDepth--);
+                                                nodeY.hide();
+                                                axisY[k] = (<T> child);
+                                                k--;
+                                            }
+                                            else {
+                                                xml += this.writeFrameLayout(nodeY, parent);
+                                            }
+                                        }
+                                        else {
+                                            const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
+                                            if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
+                                                xml += this.writeLinearLayout(nodeY, parent, linearY);
+                                            }
+                                            else {
+                                                xml += this.writeDefaultLayout(nodeY, parent);
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                            if (!nodeY.renderParent) {
-                                xml += this.writeView(nodeY, parent, tagName);
+                            else {
+                                xml += this.writeView(nodeY, parent, nodeY.viewName);
                             }
+                            renderXml(parent.id, xml);
                         }
-                        renderXml(parent.id, xml);
                     }
                 }
             }
@@ -546,7 +543,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public writeFrameLayout(node: T, parent: T) {
-        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.FRAME);
+        if (node.children.length === 0) {
+            return this.controllerHandler.renderView(node, parent, VIEW_STANDARD.FRAME);
+        }
+        else {
+            return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.FRAME);
+        }
     }
 
     public writeLinearLayout(node: T, parent: T, vertical: boolean) {
@@ -705,12 +707,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         let node: Null<T> = null;
         if (element.nodeName === '#text') {
             if (optional(element, 'textContent', 'string').trim() !== '') {
-                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element, { parent, tagName: 'PLAINTEXT' });
-                node.setBounds(false, element);
+                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
+                node.tagName = 'PLAINTEXT';
                 if (parent != null) {
+                    node.parent = parent;
                     node.inheritStyle(parent);
                     parent.children.push(node);
                 }
+                node.setBounds(false, element);
             }
         }
         else if (isVisible(element)) {

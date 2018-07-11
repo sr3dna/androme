@@ -15,7 +15,7 @@ export default abstract class Menu extends Extension<T, U> {
     }
 
     public init(element: HTMLElement) {
-        if (this.included(element) && !this.application.elements.has(element)) {
+        if (this.included(element)) {
             let valid = false;
             if (element.children.length > 0) {
                 const tagName = element.children[0].tagName;
@@ -38,7 +38,6 @@ export default abstract class Menu extends Extension<T, U> {
                     }
                 });
                 this.application.elements.add(element);
-                return true;
             }
         }
         return false;

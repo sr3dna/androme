@@ -74,26 +74,26 @@ export default class View extends Node {
         }
     }
 
-    public anchor(position: string, adjacent: StringMap = {}, orientation = '', overwrite?: boolean) {
+    public anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean) {
         if (overwrite == null) {
-            overwrite = (adjacent.stringId === 'parent');
+            overwrite = (adjacent === 'parent' || adjacent === 'true');
         }
         switch (this.renderParent.viewName) {
             case VIEW_ANDROID.CONSTRAINT:
                 if (arguments.length === 1) {
                     return this.app(position);
                 }
-                this.app(position, adjacent.stringId, overwrite);
+                this.app(position, adjacent, overwrite);
                 break;
             case VIEW_ANDROID.RELATIVE:
                 if (arguments.length === 1) {
                     return this.android(position);
                 }
-                this.android(position, adjacent.stringId, overwrite);
+                this.android(position, adjacent, overwrite);
                 break;
         }
-        if (orientation !== '') {
-            this.constraint[orientation] = true;
+        if (hasValue(orientation)) {
+            this.constraint[<string> orientation] = true;
         }
     }
 

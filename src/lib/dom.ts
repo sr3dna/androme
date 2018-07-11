@@ -1,5 +1,6 @@
 import { BoxModel, ClientRect } from './types';
 import { convertInt, optional } from './util';
+import { BLOCK_CHROME } from './constants';
 
 export function getRangeBounds(element: HTMLElement) {
     const range = document.createRange();
@@ -79,7 +80,7 @@ export function isVisible(element: HTMLElement) {
     }
     if (typeof element.getBoundingClientRect === 'function') {
         const bounds = element.getBoundingClientRect();
-        if (bounds.width !== 0 && bounds.height !== 0) {
+        if (bounds.width !== 0 && bounds.height !== 0 || (getStyle(element).display !== 'none' && BLOCK_CHROME.includes(element.tagName))) {
             return true;
         }
         else {

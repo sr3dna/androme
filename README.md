@@ -96,11 +96,12 @@ androme.settings = {
     alwaysReevaluateResources: true,
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
+    collapseUnattributedElements: false,
     horizontalPerspective: true,
-    whitespaceHorizontalOffset: 4,
-    whitespaceVerticalOffset: 14,
+    whitespaceHorizontalOffset: 4, // Chrome/Safari: 3.5 | Edge:  3.5 | Firefox:  3
+    whitespaceVerticalOffset: 13,  //                 13 |       13.3 |          15
     chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 14,
+    chainPackedVerticalOffset: 13,
     showAttributes: true,
     autoCloseOnWrite: true,
     insertSpaces: 4, // tabs: 0
@@ -266,7 +267,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
             <EditText
                 android:id="@+id/order"
                 android:background="@drawable/text_order"
-                android:focusable="true"
                 android:inputType="text"
                 android:layout_height="wrap_content"
                 android:layout_width="@dimen/text_width"
@@ -293,7 +293,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/month0"
                     android:background="@drawable/select_hour"
                     android:entries="@array/month0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:paddingVertical="@dimen/select_padding_vertical"
@@ -309,7 +308,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/day0"
                     android:background="@drawable/select_hour"
                     android:entries="@array/day0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
@@ -324,7 +322,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/year0"
                     android:background="@drawable/select_hour"
                     android:entries="@array/year0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
@@ -339,7 +336,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/month1"
                     android:background="@drawable/select_hour"
                     android:entries="@array/month0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/select_margin_top"
                     android:layout_width="wrap_content"
@@ -356,7 +352,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/day1"
                     android:background="@drawable/select_hour"
                     android:entries="@array/day0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_marginTop="@dimen/select_margin_top"
@@ -372,7 +367,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/year1"
                     android:background="@drawable/select_hour"
                     android:entries="@array/year0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_marginTop="@dimen/select_margin_top"
@@ -388,7 +382,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/month2"
                     android:background="@drawable/select_hour"
                     android:entries="@array/month0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/select_margin_top"
                     android:layout_width="wrap_content"
@@ -405,7 +398,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/day2"
                     android:background="@drawable/select_hour"
                     android:entries="@array/day0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_marginTop="@dimen/select_margin_top"
@@ -421,7 +413,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/year2"
                     android:background="@drawable/select_hour"
                     android:entries="@array/year0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_marginTop="@dimen/select_margin_top"
@@ -456,7 +447,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/hour"
                     android:background="@drawable/select_hour"
                     android:entries="@array/hour_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_minwidth"
@@ -466,7 +456,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/minute"
                     android:background="@drawable/select_hour"
                     android:entries="@array/minute_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
@@ -491,7 +480,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/typeofentry"
                 android:background="@drawable/select_hour"
                 android:entries="@array/typeofentry_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="@dimen/select_width"
                 android:minWidth="@dimen/select_minwidth"
@@ -519,7 +507,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 <EditText
                     android:id="@+id/topic0"
                     android:background="@drawable/text_order"
-                    android:focusable="true"
                     android:inputType="text"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="@dimen/text_margin_end"
@@ -530,7 +517,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/prominence0"
                     android:background="@drawable/select_hour"
                     android:entries="@array/typeofentry_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
@@ -555,7 +541,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/series"
                 android:background="@drawable/select_hour"
                 android:entries="@array/series_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="@dimen/select_width_1"
                 android:minWidth="@dimen/select_minwidth"
@@ -578,7 +563,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/subset"
                 android:background="@drawable/select_hour"
                 android:entries="@array/typeofentry_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_minwidth"
@@ -601,7 +585,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/entryactive"
                 android:background="@drawable/select_hour"
                 android:entries="@array/entryactive_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_minwidth"
@@ -636,7 +619,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/series_1"
                 android:background="@drawable/select_hour"
                 android:entries="@array/series_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="@dimen/select_width_1"
                 android:minWidth="@dimen/select_minwidth"
@@ -659,7 +641,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/subset_1"
                 android:background="@drawable/select_hour"
                 android:entries="@array/typeofentry_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_minwidth"
@@ -687,7 +668,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/entry_1"
                     android:background="@drawable/select_hour"
                     android:entries="@array/typeofentry_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_width="@dimen/select_width_1"
                     android:minWidth="@dimen/select_minwidth"
@@ -696,7 +676,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 <Button
                     android:id="@+id/button_1"
                     android:background="@drawable/button_button_1"
-                    android:focusable="true"
+                    android:focusable="false"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"
                     android:layout_width="wrap_content"
@@ -710,7 +690,7 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 <Button
                     android:id="@+id/button_2"
                     android:background="@drawable/button_button_1"
-                    android:focusable="true"
+                    android:focusable="false"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"
                     android:layout_width="wrap_content"
@@ -739,7 +719,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/mode"
                 android:background="@drawable/select_hour"
                 android:entries="@array/mode_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_minwidth"
@@ -762,7 +741,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/style1"
                 android:background="@drawable/select_hour"
                 android:entries="@array/typeofentry_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_minwidth"
@@ -785,7 +763,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 android:id="@+id/calendar"
                 android:background="@drawable/select_hour"
                 android:entries="@array/calendar_array"
-                android:focusable="true"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_minwidth"
@@ -813,7 +790,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/version"
                     android:background="@drawable/select_hour"
                     android:entries="@array/version_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_minwidth"
@@ -823,7 +799,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/version_update"
                     android:background="@drawable/select_hour"
                     android:entries="@array/version_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
@@ -833,7 +808,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 <Button
                     android:id="@+id/button_3"
                     android:background="@drawable/button_button_1"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start_1"
                     android:layout_width="wrap_content"
@@ -867,7 +841,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/branch"
                     android:background="@drawable/select_hour"
                     android:entries="@array/branch_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_minwidth"
@@ -877,7 +850,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/branch_update"
                     android:background="@drawable/select_hour"
                     android:entries="@array/branch_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
@@ -887,7 +859,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 <Button
                     android:id="@+id/button_4"
                     android:background="@drawable/button_button_1"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start_1"
                     android:layout_width="wrap_content"
@@ -901,7 +872,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 <Button
                     android:id="@+id/button_5"
                     android:background="@drawable/button_button_1"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"
                     android:layout_width="wrap_content"
@@ -935,7 +905,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 <EditText
                     android:id="@+id/customname0"
                     android:background="@drawable/text_order"
-                    android:focusable="true"
                     android:inputType="text"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="@dimen/text_margin_end"
@@ -946,7 +915,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/custommonth0"
                     android:background="@drawable/select_hour"
                     android:entries="@array/month0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
@@ -957,7 +925,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/customday0"
                     android:background="@drawable/select_hour"
                     android:entries="@array/day0_array"
-                    android:focusable="true"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
@@ -988,7 +955,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     android:id="@+id/person"
                     android:background="@drawable/select_hour"
                     android:entries="@array/typeofentry_array"
-                    android:focusable="true"
                     android:layout_gravity="center_vertical"
                     android:layout_height="wrap_content"
                     android:layout_width="@dimen/select_width_2"
@@ -1010,7 +976,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                         android:orientation="horizontal">
                         <RadioButton
                             android:id="@+id/c2"
-                            android:focusable="true"
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="@dimen/radio_margin_end"
                             android:layout_marginStart="@dimen/radio_margin_start"
@@ -1020,7 +985,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                             style="@style/Radio" />
                         <RadioButton
                             android:id="@+id/c3"
-                            android:focusable="true"
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="@dimen/radio_margin_end"
                             android:layout_marginStart="@dimen/radio_margin_start_1"
@@ -1031,7 +995,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                     </RadioGroup>
                     <CheckBox
                         android:id="@+id/c4"
-                        android:focusable="true"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/checkbox_margin_end"
                         android:layout_marginStart="@dimen/checkbox_margin_start"
@@ -1043,7 +1006,6 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
                 <Button
                     android:id="@+id/button_6"
                     android:background="@drawable/button_button_1"
-                    android:focusable="true"
                     android:layout_gravity="center_vertical"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"

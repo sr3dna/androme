@@ -1,5 +1,6 @@
 export enum VIEW_STANDARD {
-    FRAME = 1,
+    NONE = 0,
+    FRAME,
     LINEAR,
     CONSTRAINT,
     GUIDELINE,
@@ -50,6 +51,7 @@ export enum BOX_STANDARD {
 }
 
 export const MAPPING_CHROME = {
+    'INPUT': VIEW_STANDARD.NONE,
     'PLAINTEXT': VIEW_STANDARD.TEXT,
     'HR': VIEW_STANDARD.VIEW,
     'IMG': VIEW_STANDARD.IMAGE,
