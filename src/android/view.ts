@@ -195,11 +195,11 @@ export default class View extends Node {
         if (height == null) {
             height = (this.hasElement ? this.element.clientHeight + this.marginTop + this.marginBottom + this.borderTopWidth + this.borderBottomWidth : 0);
         }
-        const parent = (<T> this.parentOriginal);
+        const parent = (<T> this.documentParent);
         const renderParent = (<T> this.renderParent);
         const parentWidth = (!this.documentRoot ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : Number.MAX_VALUE);
         const parentHeight = (!this.documentRoot ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : Number.MAX_VALUE);
-        const wrapContent = parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID) || (parent.is(VIEW_STANDARD.LINEAR) && parent.horizontal) || this.is(VIEW_STANDARD.IMAGE);
+        const wrapContent = parent.flex.enabled || parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID) || (parent.is(VIEW_STANDARD.LINEAR) && parent.horizontal) || this.is(VIEW_STANDARD.IMAGE);
         const styleMap = this.styleMap;
         const constraint = this.constraint;
         if (this.documentRoot && this.is(VIEW_STANDARD.FRAME, VIEW_STANDARD.LINEAR, VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE)) {
@@ -359,7 +359,7 @@ export default class View extends Node {
                 if (float === 'left' || float === 'right' || hasValue(textAlign)) {
                     break;
                 }
-                node = (<T> node.parentOriginal);
+                node = (<T> node.documentParent);
             }
         }
         if (textAlign === '' && this.tagName === 'TH') {

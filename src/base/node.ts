@@ -40,11 +40,9 @@ export default abstract class Node implements BoxModel {
     protected _viewName: string;
 
     private _element: HTMLElement;
-    private _flex: Flexbox;
     private _namespaces = new Set<string>();
-    private _overflow: OVERFLOW_CHROME;
     private _parent: T;
-    private _parentOriginal: T;
+    private _documentParent: T;
     private _renderParent: T | boolean;
     private _tagName: string;
     private _data: ObjectMap<any> = {};
@@ -307,8 +305,8 @@ export default abstract class Node implements BoxModel {
         if (value == null || value === this._parent) {
             return;
         }
-        if (this._parent && this._parentOriginal == null) {
-            this._parentOriginal = this._parent;
+        if (this._parent && this._documentParent == null) {
+            this._documentParent = this._parent;
         }
         this._parent = value;
         this.depth = value.depth + 1;
@@ -317,11 +315,8 @@ export default abstract class Node implements BoxModel {
         return this._parent;
     }
 
-    set parentOriginal(value) {
-        this._parentOriginal = value;
-    }
-    get parentOriginal() {
-        return this._parentOriginal || this._parent;
+    get documentParent() {
+        return this._documentParent || this._parent;
     }
 
     set tagName(value) {
@@ -368,25 +363,23 @@ export default abstract class Node implements BoxModel {
         return (this.hasElement && this.element.dataset.ext != null ? this.element.dataset.ext.split(',')[0].trim() : '');
     }
 
-    get flex() {
-        if (this._flex == null) {
-            const style = this.style;
-            if (style != null) {
-                const parent = this.parentOriginal;
-                this._flex = {
-                    enabled: ((<string> style.display).indexOf('flex') !== -1),
-                    direction: (<string> style.flexDirection),
-                    basis: (<string> style.flexBasis),
-                    grow: convertInt(style.flexGrow),
-                    shrink: convertInt(style.flexShrink),
-                    wrap: (<string> style.flexWrap),
-                    alignSelf: (<string> (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
-                    justifyContent: (<string> style.justifyContent),
-                    order: convertInt(style.order)
-                };
-            }
+    get flex(): Flexbox {
+        const style = this.style;
+        if (style != null) {
+            const parent = this.documentParent;
+            return {
+                enabled: ((<string> style.display).indexOf('flex') !== -1),
+                direction: (<string> style.flexDirection),
+                basis: (<string> style.flexBasis),
+                grow: convertInt(style.flexGrow),
+                shrink: convertInt(style.flexShrink),
+                wrap: (<string> style.flexWrap),
+                alignSelf: (<string> (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
+                justifyContent: (<string> style.justifyContent),
+                order: convertInt(style.order)
+            };
         }
-        return this._flex || {};
+        return (<Flexbox> {});
     }
 
     get floating() {
@@ -395,29 +388,26 @@ export default abstract class Node implements BoxModel {
     }
 
     get fixed() {
-        return (this.style.display === 'fixed');
+        return (this.style && this.style.display === 'fixed');
     }
 
     get overflow() {
-        if (this._overflow == null) {
-            let value = OVERFLOW_CHROME.NONE;
-            if (this.hasElement) {
-                if (this.css('overflow') === 'scroll' || this.css('overflowX') === 'scroll' || (this.css('overflowX') === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
-                    value |= OVERFLOW_CHROME.HORIZONTAL;
-                }
-                if (this.css('overflow') === 'scroll' || this.css('overflowY') === 'scroll' || (this.css('overflowY') === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
-                    value |= OVERFLOW_CHROME.VERTICAL;
-                }
+        let value = OVERFLOW_CHROME.NONE;
+        if (this.hasElement) {
+            if (this.css('overflow') === 'scroll' || this.css('overflowX') === 'scroll' || (this.css('overflowX') === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+                value |= OVERFLOW_CHROME.HORIZONTAL;
             }
-            this._overflow = value;
+            if (this.css('overflow') === 'scroll' || this.css('overflowY') === 'scroll' || (this.css('overflowY') === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+                value |= OVERFLOW_CHROME.VERTICAL;
+            }
         }
-        return this._overflow;
+        return value;
     }
     get overflowX() {
-        return ((this._overflow & OVERFLOW_CHROME.HORIZONTAL) === OVERFLOW_CHROME.HORIZONTAL);
+        return ((this.overflow & OVERFLOW_CHROME.HORIZONTAL) === OVERFLOW_CHROME.HORIZONTAL);
     }
     get overflowY() {
-        return ((this._overflow & OVERFLOW_CHROME.VERTICAL) === OVERFLOW_CHROME.VERTICAL);
+        return ((this.overflow & OVERFLOW_CHROME.VERTICAL) === OVERFLOW_CHROME.VERTICAL);
     }
 
     get viewWidth() {

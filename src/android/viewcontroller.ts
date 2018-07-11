@@ -910,7 +910,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
-                            const result = (<T[]> node.parentOriginal.children.filter(item => (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name));
+                            const result = (<T[]> node.documentParent.children.filter(item => (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name));
                             let xml = '';
                             if (result.length > 1) {
                                 const viewGroup = new ViewGroup(this.cache.nextId, node, parent, result);
@@ -1137,7 +1137,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     private setGridSpace(node: T) {
         if (node.parent.is(VIEW_STANDARD.GRID)) {
-            const dimensions: any = getBoxSpacing((<HTMLElement> node.parentOriginal.element), true);
+            const dimensions: any = getBoxSpacing((<HTMLElement> node.documentParent.element), true);
             const options = {
                 android: {
                     layout_columnSpan: node.renderParent.gridColumnCount

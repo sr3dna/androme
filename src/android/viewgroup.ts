@@ -10,15 +10,15 @@ export default class ViewGroup extends View {
         parent: Null<T>,
         children: T[])
     {
-        const options = {
-            parent,
-            depth: node.depth,
-            parentOriginal: node.parentOriginal
-        };
-        super(id, node.api, null, options);
+        super(id, node.api);
+        this.parent = node.documentParent;
+        if (parent != null) {
+            this.parent = parent;
+        }
         if (children != null) {
             this.children = children;
         }
+        this.depth = node.depth;
     }
 
     public setViewLayout() {

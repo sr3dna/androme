@@ -32,7 +32,7 @@ export function overwriteDefault(options: ObjectMap<any>, namespace: string, att
 
 export function positionIsolated(node: T) {
     const renderParent = node.renderParent;
-    const parent = node.parentOriginal;
+    const parent = node.documentParent;
     node.renderParent = parent;
     const horizontalBias = node.horizontalBias;
     const verticalBias = node.verticalBias;
