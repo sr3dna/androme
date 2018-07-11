@@ -171,6 +171,10 @@ export function convertEnum(base: {}, derived: {}, value: number): string {
     return '';
 }
 
+export function includesEnum(value: number, type: number) {
+    return ((value & type) === type);
+}
+
 export function formatPX(value: any) {
     value = parseFloat(value);
     return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;

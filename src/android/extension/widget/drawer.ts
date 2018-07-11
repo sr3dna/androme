@@ -58,14 +58,14 @@ export default class Drawer extends Extension<T, U> {
             include = controller.getViewStatic('include', depth + 1, { layout: `@layout/${filename}` });
             depth = -1;
         }
-        const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, null, { depth: 0 });
+        const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
         coordinator.parent = node;
         coordinator.inheritBase(node);
         coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
         coordinator.ignoreResource = VIEW_RESOURCE.ALL;
         coordinator.isolated = true;
         application.cache.list.push(coordinator);
-        const content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: (include === '' ? `${node.stringId}_content` : '') } }, 'match_parent', 'match_parent', coordinator, true);
+        const content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
         options = Object.assign({}, this.options.navigation);
         overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {

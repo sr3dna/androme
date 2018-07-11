@@ -48,9 +48,10 @@ export default class Coordinator extends Extension<T, U> {
             if (this.options.includes == null || this.options.includes) {
                 include = controller.getViewStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
             }
-            const layout = new View(application.cache.nextId, SETTINGS.targetAPI, null);
+            const layout = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
             layout.parent = node;
             layout.inheritBase(node);
+            layout.ignoreResource = VIEW_RESOURCE.ALL;
             nodes.forEach(item => {
                 item.parent = layout;
                 item.depth++;

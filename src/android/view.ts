@@ -25,10 +25,9 @@ export default class View extends Node {
     constructor(
         public id: number,
         public api: number,
-        element?: Null<HTMLElement>,
-        options?: ObjectMap<any>)
+        element?: Null<HTMLElement>)
     {
-        super(id, element, options);
+        super(id, element);
     }
 
     public add(ns: string, attr: string, value = '', overwrite = true) {

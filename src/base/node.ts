@@ -1,5 +1,5 @@
 import { BoxModel, BoxRect, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
-import { convertInt, hasValue, hyphenToCamelCase, search } from '../lib/util';
+import { convertInt, hasValue, hyphenToCamelCase, includesEnum, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
 
@@ -49,10 +49,8 @@ export default abstract class Node implements BoxModel {
 
     constructor(
         public id: number,
-        element?: Null<HTMLElement>,
-        options?: {})
+        element?: Null<HTMLElement>)
     {
-        Object.assign(this, options);
         if (element != null) {
             const object: any = element;
             if (element instanceof HTMLElement) {
@@ -404,10 +402,10 @@ export default abstract class Node implements BoxModel {
         return value;
     }
     get overflowX() {
-        return ((this.overflow & OVERFLOW_CHROME.HORIZONTAL) === OVERFLOW_CHROME.HORIZONTAL);
+        return includesEnum(this.overflow, OVERFLOW_CHROME.HORIZONTAL);
     }
     get overflowY() {
-        return ((this.overflow & OVERFLOW_CHROME.VERTICAL) === OVERFLOW_CHROME.VERTICAL);
+        return includesEnum(this.overflow, OVERFLOW_CHROME.VERTICAL);
     }
 
     get viewWidth() {
