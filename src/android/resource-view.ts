@@ -329,11 +329,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                     const value = stored[keys[i]];
                     if (hasValue(value)) {
-                        const attr = formatString(method[keys[i]], value);
-                        if (sorted[i][attr] == null) {
-                            sorted[i][attr] = [];
+                        if (node.supported('android', keys[i])) {
+                            const attr = formatString(method[keys[i]], value);
+                            if (sorted[i][attr] == null) {
+                                sorted[i][attr] = [];
+                            }
+                            sorted[i][attr].push(nodeId);
                         }
-                        sorted[i][attr].push(nodeId);
                     }
                 }
             });

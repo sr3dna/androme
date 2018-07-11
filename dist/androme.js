@@ -1,4 +1,4 @@
-/* androme 1.7.32
+/* androme 1.8.0
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -327,7 +327,7 @@
         return (b >= (a - n) && b <= (a + n));
     }
     function withinFraction(lower, upper) {
-        return (lower === upper || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper));
+        return (lower === upper || Math.floor(lower) === Math.floor(upper) || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper));
     }
     function caseInsensitve(a, b) {
         return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
@@ -3417,9 +3417,9 @@
                 }
             }
             else {
-                const gravity = [horizontal, vertical].filter(value => value).join('|');
-                if (gravity !== '') {
-                    this.android('gravity', gravity);
+                const gravity = [horizontal, vertical].filter(value => value);
+                if (gravity.length > 0) {
+                    this.android('gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
                 }
             }
             if (this.android('layout_gravity') == null) {
@@ -3468,7 +3468,9 @@
                 case VIEW_ANDROID.CHECKBOX:
                 case VIEW_ANDROID.RADIO:
                 case VIEW_ANDROID.BUTTON:
-                    this.android('focusable', 'true');
+                    if (this.element.disabled) {
+                        this.android('focusable', 'false');
+                    }
                     break;
             }
         }
@@ -5261,11 +5263,13 @@
                         }
                         const value = stored[keys[i]];
                         if (hasValue(value)) {
-                            const attr = formatString(method[keys[i]], value);
-                            if (sorted[i][attr] == null) {
-                                sorted[i][attr] = [];
+                            if (node.supported('android', keys[i])) {
+                                const attr = formatString(method[keys[i]], value);
+                                if (sorted[i][attr] == null) {
+                                    sorted[i][attr] = [];
+                                }
+                                sorted[i][attr].push(nodeId);
                             }
-                            sorted[i][attr].push(nodeId);
                         }
                     }
                 });
@@ -7218,18 +7222,19 @@
                 const style = node.element.style;
                 if (style.backgroundImage) {
                     const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
-                    let scaleType = 'matrix';
+                    let scaleType = 'center';
                     switch (style.backgroundSize) {
-                        case 'contain':
-                        case '100% auto':
-                            scaleType = 'centerInside';
-                            break;
                         case 'cover':
+                        case '100% auto':
                         case 'auto 100%':
                             scaleType = 'centerCrop';
                             break;
+                        case 'contain':
                         case '100% 100%':
                             scaleType = 'fitXY';
+                            break;
+                        case 'auto':
+                            scaleType = 'matrix';
                             break;
                     }
                     overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);

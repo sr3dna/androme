@@ -107,18 +107,19 @@ export default class Toolbar extends Extension<T, U> {
             const style = node.element.style;
             if (style.backgroundImage) {
                 const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
-                let scaleType = 'matrix';
+                let scaleType = 'center';
                 switch (style.backgroundSize) {
-                    case 'contain':
-                    case '100% auto':
-                        scaleType = 'centerInside';
-                        break;
                     case 'cover':
+                    case '100% auto':
                     case 'auto 100%':
                         scaleType = 'centerCrop';
                         break;
+                    case 'contain':
                     case '100% 100%':
                         scaleType = 'fitXY';
+                        break;
+                    case 'auto':
+                        scaleType = 'matrix';
                         break;
                 }
                 overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);

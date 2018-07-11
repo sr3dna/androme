@@ -1,16 +1,16 @@
 # androme
 
-This program using Chrome can convert moderately complex HTML pages into the standard XML layouts for Android. iOS will also be supported once the Android version has stabilized. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
+This program can convert moderately complex HTML pages into the standard XML layouts for Android. iOS will also be supported once the Android version has stabilized. HTML is the most popular and versatile way to design user interfaces and can be used to generate the UI for any platform based on XML. Currently the generated XML can be imported into your Android projects as a foundation for your layout design.
 
-Multiple views per page are supported with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser similiar to iOS Storyboards.
+Multiple views per page are supported with their resources and styles merged into one package to simplify maintenance. Conceptually creating a snapshot history in XML of what is displayed in the browser.
 
 Layout rendering can also be customized using extensions as the program was built to be nearly completely modular. Some of the common layouts already have built-in extensions which you can load or unload based on your preference.
 
-The ratio is about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application. The real time saver is probably having the resources auto-generated for the entire project.
+The ratio is about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application. The real time saver is having the resources auto-generated for the entire project.
 
 ## Installation (global js variable: androme)
 
-*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML document from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also try using a different browser (Safari/FireFox/Edge). The latest version of Chrome is the preferred browser to generate the production version of your program. ***
+*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/FireFox/Edge. The latest version of Chrome is the ideally what you should use to generate the production version of your program. ***
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
 
@@ -40,14 +40,18 @@ Library files are in the /dist folder. There is a babel minified for production 
 NOTE: Calling "save" or "write" methods before the images have completely loaded can sometimes cause them to be excluded from the generated layout. In these cases you should use the "parseDocument" chain method "then" to set a callback for your commands.
 
 ```javascript
-<script src="/dist/androme.js"></script>
+<script src="/dist/androme.min.js"></script>
 <script>
+    // optional  
     androme.settings.targetAPI = 19; // androme.build.KITKAT
     androme.settings.density = 160; // androme.density.MDPI
 
     // without Express: use either console.log() or element.innerHTML to display using "write" commands
 
     document.addEventListener('DOMContentLoaded', function() {
+                
+        androme.configureExtension('androme.grid', { balanceColumns: true }); 
+
         // required: zero or more
         androme.parseDocument(/* document.getElementById('mainview') */, /* 'subview' */, /* etc... */);
         androme.close();
@@ -56,7 +60,6 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
         // optional
         androme.writeLayoutAllXml(); /* true: save to disk, false | null: string xml */
         androme.writeResourceAllXml();
-        androme.configureExtension('androme.grid', { balanceColumns: false }); 
 
         // start new "parseDocument" session
         androme.reset();
@@ -107,9 +110,9 @@ androme.settings = {
     outputMaxProcessingTime: 30
 };
 ```
-You can preview the library with the provided /demos/*.html which for the the time being is the only form of documentation. Using the latest Chrome will always generate the most accurate layout.
+You can preview the library with the provided /demos/*.html which for the the time being is the only form of documentation.
 
-Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for removing the built-in extension "androme.grid" when the generated UI is not accurate which it will instead default to LinearLayout for placement. To use Constraint circle for placement you have to disable "useConstraintChain" and "useConstraintGuideline".
+Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for removing the built-in extension "androme.grid" when the generated UI is not accurate which it will instead use LinearLayout for placement. To use Constraint circle for placement you have to disable "useConstraintChain" and "useConstraintGuideline".
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using HTML tables is recommended for most applications as it will generate a very efficient GridLayout. Performance is probably faster than ConstraintLayout and also more accurate.
 
@@ -1403,11 +1406,11 @@ addXmlNamespace(name: string, uri: string) // add global namespaces for android 
 ```
 ## User Written HTML
 
-Using excessive DIV and FORM tags are not required for mobile devices which can cause additional LinearLayouts to be auto-generated. Block level elements are always rendered in order to preserve any CSS which is applied to the tag.
+Using excessive DIV and FORM tags are not required for mobile devices which can cause additional LinearLayouts to be auto-generated. Block level elements are almost always rendered in order to preserve any CSS styles which are applied to the tag.
 
 https://www.w3.org/TR/html401/struct/global.html#h-7.5.3
 
-If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text might be collapsed into a TextView rather than a LinearLayout. Try to enclose everything inside an HTML container otherwise the text might be discarded.
+If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text might be collapsed into a TextView rather than a LinearLayout. Try to enclose everything inside an HTML container otherwise the text might be discarded. You can basically code the HTML any way you want although using reasonable techniques for mobile devices will lead you to a more accurate layout.
 
 RECOMMENDED
 ```xml
@@ -1425,4 +1428,4 @@ NOT RECOMMENDED
     klmno
 </span>
 ```
-You can use the /demos/*.html files provided to preview some features of this library.
+You can use the examples in /demos/*.html to preview some features of this library.

@@ -420,9 +420,9 @@ export default class View extends Node {
             }
         }
         else {
-            const gravity = [horizontal, vertical].filter(value => value).join('|');
-            if (gravity !== '') {
-                this.android('gravity', gravity);
+            const gravity = [horizontal, vertical].filter(value => value);
+            if (gravity.length > 0) {
+                this.android('gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
             }
         }
         if (this.android('layout_gravity') == null) {
@@ -472,7 +472,9 @@ export default class View extends Node {
             case VIEW_ANDROID.CHECKBOX:
             case VIEW_ANDROID.RADIO:
             case VIEW_ANDROID.BUTTON:
-                this.android('focusable', 'true');
+                if ((<HTMLInputElement> this.element).disabled) {
+                    this.android('focusable', 'false');
+                }
                 break;
         }
     }
