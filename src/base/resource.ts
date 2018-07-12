@@ -5,7 +5,7 @@ import NodeList from './nodelist';
 import { cameltoLowerCase, convertPX, generateId, hasValue, includesEnum, isNumber, optional, resolvePath, lastIndexOf } from '../lib/util';
 import { getBoxSpacing, sameAsParent } from '../lib/dom';
 import { findNearestColor, parseRGBA } from '../lib/color';
-import { INLINE_CHROME, MAPPING_CHROME, VIEW_RESOURCE } from '../lib/constants';
+import { INLINE_ELEMENT, MAP_ELEMENT, NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
@@ -196,7 +196,7 @@ export default abstract class Resource<T extends Node> {
 
     public setBoxSpacing() {
         this.cache.elements.forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.BOX_SPACING)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
                 const element = node.element;
                 const object: any = element;
                 if (!hasValue(object.__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
@@ -212,7 +212,7 @@ export default abstract class Resource<T extends Node> {
 
     public setBoxStyle() {
         this.cache.visible.forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.BOX_STYLE)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
                 const element = node.element;
                 const object: any = element;
                 if (!hasValue(object.__boxStyle) || SETTINGS.alwaysReevaluateResources) {
@@ -223,7 +223,7 @@ export default abstract class Resource<T extends Node> {
                         borderLeft: this.parseBorderStyle,
                         borderRadius: this.parseBorderRadius,
                         backgroundColor: parseRGBA,
-                        backgroundImage: (!includesEnum(node.ignoreResource, VIEW_RESOURCE.IMAGE_SOURCE) ? this.parseBackgroundImage : ''),
+                        backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? this.parseBackgroundImage : ''),
                         backgroundSize: this.parseBoxDimensions
                     };
                     for (const i in result) {
@@ -251,7 +251,7 @@ export default abstract class Resource<T extends Node> {
 
     public setFontStyle() {
         this.cache.visible.forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.FONT_STYLE)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
                 const element = node.element;
                 const object: any = element;
                 if (!hasValue(object.__fontStyle) || SETTINGS.alwaysReevaluateResources) {
@@ -312,7 +312,7 @@ export default abstract class Resource<T extends Node> {
         this.cache.elements.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')).forEach(node => {
             const element = (<HTMLImageElement> node.element);
             const object: any = element;
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.IMAGE_SOURCE)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
                 if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
                     const result = (node.tagName === 'IMG' ? Resource.addImageSrcSet(element) : Resource.addImage({ 'mdpi': element.src }));
                     object.__imageSource = result;
@@ -323,7 +323,7 @@ export default abstract class Resource<T extends Node> {
 
     public setOptionArray() {
         this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.OPTION_ARRAY)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
                 const element = (<HTMLSelectElement> node.element);
                 const object: any = element;
                 if (!hasValue(object.__optionArray) || SETTINGS.alwaysReevaluateResources) {
@@ -357,7 +357,7 @@ export default abstract class Resource<T extends Node> {
 
     public setValueString() {
         this.cache.visible.forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.VALUE_STRING)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const element = (<HTMLInputElement> node.element);
                 const object: any = element;
                 if (!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources) {
@@ -371,7 +371,7 @@ export default abstract class Resource<T extends Node> {
                     else if (element.nodeName === '#text') {
                         value = optional(element, 'textContent').trim();
                     }
-                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAPPING_CHROME[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAPPING_CHROME[child.tagName] == null && INLINE_CHROME.includes(child.tagName)))))) {
+                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && INLINE_ELEMENT.includes(child.tagName)))))) {
                         name = element.innerText.trim();
                         value = element.innerHTML.trim();
                     }

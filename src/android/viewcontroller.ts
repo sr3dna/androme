@@ -5,11 +5,11 @@ import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
 import ViewList from './viewlist';
-import { convertPX, formatPX, generateId, hasValue, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
+import { convertPX, formatPX, generateId, hasValue, includesEnum, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { formatDimen } from '../lib/xml';
 import { getBoxSpacing } from '../lib/dom';
-import { BOX_STANDARD, OVERFLOW_CHROME, VIEW_STANDARD } from '../lib/constants';
-import { VIEW_ANDROID, XMLNS_ANDROID } from './constants';
+import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD } from '../lib/constants';
+import { VIEW_STANDARD, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
 
@@ -60,8 +60,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
         this.cache.visible.forEach(node => {
             const nodes = (<U> new ViewList(node.renderChildren.filter(item => !item.isolated), node));
-            const constraint = node.is(VIEW_STANDARD.CONSTRAINT);
-            const relative = node.is(VIEW_STANDARD.RELATIVE);
+            const constraint = node.is(NODE_STANDARD.CONSTRAINT);
+            const relative = node.is(NODE_STANDARD.RELATIVE);
             const flex = node.flex;
             if (nodes.list.length > 0 && (constraint || relative || flex.enabled)) {
                 node.setBoundsMin();
@@ -769,7 +769,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     public setMarginPadding() {
         this.cache.list.forEach(node => {
-            if (node.is(VIEW_STANDARD.LINEAR, VIEW_STANDARD.RADIO_GROUP)) {
+            if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
                 switch (node.android('orientation')) {
                     case 'horizontal':
                         let left = node.box.left;
@@ -806,13 +806,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             viewName = View.getViewName(viewName);
         }
         node.setViewId(viewName);
-        if (node.overflow !== OVERFLOW_CHROME.NONE) {
+        if (node.overflow !== OVERFLOW_ELEMENT.NONE) {
             const scrollView: string[] = [];
             if (node.overflowX) {
-                scrollView.push(VIEW_ANDROID.SCROLL_HORIZONTAL);
+                scrollView.push(VIEW_STANDARD.SCROLL_HORIZONTAL);
             }
             if (node.overflowY) {
-                scrollView.push((node.ascend().some(item => item.overflow !== OVERFLOW_CHROME.NONE) ? VIEW_ANDROID.SCROLL_NESTED : VIEW_ANDROID.SCROLL_VERTICAL));
+                scrollView.push((node.ascend().some(item => item.overflow !== OVERFLOW_ELEMENT.NONE) ? VIEW_STANDARD.SCROLL_NESTED : VIEW_STANDARD.SCROLL_VERTICAL));
             }
             let current = node;
             let scrollDepth = parent.renderDepth + scrollView.length;
@@ -826,7 +826,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     viewGroup.android('fadeScrollbars', 'false');
                     this.cache.list.push(view);
                     switch (scrollName) {
-                        case VIEW_ANDROID.SCROLL_HORIZONTAL:
+                        case VIEW_STANDARD.SCROLL_HORIZONTAL:
                             viewGroup.css('width', node.styleMap.width);
                             viewGroup.css('minWidth', node.styleMap.minWidth);
                             viewGroup.css('overflowX', node.styleMap.overflowX);
@@ -862,7 +862,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 });
         }
         node.apply(options);
-        node.applyCustomizations();
         node.render(renderParent);
         this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
@@ -917,7 +916,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 const view = (<View> viewGroup) as T;
                                 let checked: string = '';
                                 this.cache.list.push(view);
-                                viewGroup.setViewId(VIEW_ANDROID.RADIO_GROUP);
+                                viewGroup.setViewId(VIEW_STANDARD.RADIO_GROUP);
                                 viewGroup.render(parent);
                                 result.forEach(item => {
                                     viewGroup.inheritGrid(item);
@@ -926,7 +925,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     }
                                     item.parent = viewGroup;
                                     item.render(viewGroup);
-                                    xml += this.renderView(item, view, VIEW_STANDARD.RADIO, true);
+                                    xml += this.renderView(item, view, NODE_STANDARD.RADIO, true);
                                 });
                                 viewGroup.android('orientation', NodeList.linearX(viewGroup.children) ? 'horizontal' : 'vertical');
                                 if (checked !== '') {
@@ -934,7 +933,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                                 viewGroup.setBounds();
                                 this.setGridSpace(view);
-                                return this.getEnclosingTag(viewGroup.renderDepth, VIEW_ANDROID.RADIO_GROUP, viewGroup.id, xml);
+                                return this.getEnclosingTag(viewGroup.renderDepth, VIEW_STANDARD.RADIO_GROUP, viewGroup.id, xml);
                             }
                         }
                         break;
@@ -959,8 +958,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 break;
         }
         switch (node.viewName) {
-            case VIEW_ANDROID.TEXT:
-                if (node.overflow !== OVERFLOW_CHROME.NONE) {
+            case VIEW_STANDARD.TEXT:
+                if (node.overflow !== OVERFLOW_ELEMENT.NONE) {
                     const scrollbars: string[] = [];
                     if (node.overflowX) {
                         scrollbars.push('horizontal');
@@ -972,9 +971,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 break;
         }
-        node.applyCustomizations();
         node.render(parent);
-        node.setAccessibility();
+        if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+            node.setAccessibility();
+        }
         node.cascade().forEach(item => item.hide());
         this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, node.viewName, node.id);
@@ -1039,9 +1039,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     public setDimensions(data: ViewData<T>) {
         const groups: ObjectMap<any> = {};
-        data.cache.forEach(node => {
-            node.setViewLayout();
-            if (SETTINGS.dimensResourceValue && node.visible) {
+        data.cache.filter(node => node.visible).forEach(node => {
+            node.setGridSpan();
+            node.setBoxSpacing();
+            if (SETTINGS.dimensResourceValue) {
                 const tagName = node.tagName.toLowerCase();
                 if (groups[tagName] == null) {
                     groups[tagName] = {};
@@ -1095,10 +1096,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private parseAttributes(node: T) {
-        let output = '';
         const attributes = node.combine();
         const indent = repeat(node.renderDepth + 1);
-        output = attributes.map((value: string) => `\n${indent + value}`).join('');
+        const output = attributes.map((value: string) => `\n${indent + value}`).join('');
         return output;
     }
 
@@ -1136,7 +1136,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private setGridSpace(node: T) {
-        if (node.parent.is(VIEW_STANDARD.GRID)) {
+        if (node.parent.is(NODE_STANDARD.GRID)) {
             const dimensions: any = getBoxSpacing((<HTMLElement> node.documentParent.element), true);
             const options = {
                 android: {
@@ -1162,7 +1162,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         node.parent.gridPadding.bottom = heightBottom;
                     }
                     else {
-                        this.appendAfter(node.id, this.getViewStatic(VIEW_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom)));
+                        this.appendAfter(node.id, this.getViewStatic(NODE_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom)));
                     }
                 }
                 const marginRight = dimensions.marginRight + dimensions.paddingRight;

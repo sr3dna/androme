@@ -3,14 +3,14 @@ import Node from '../base/node';
 import { averageInt, calculateBias, convertEnum, convertInt, convertPX, convertWord, formatPX, generateId, hasValue, isPercent, lastIndexOf, optional } from '../lib/util';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
-import { BLOCK_CHROME, BOX_STANDARD, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
-import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_ANDROID } from './constants';
+import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_STANDARD } from './constants';
 
 type T = View;
 
 export default class View extends Node {
     public static getViewName(tagName: number): string {
-        return VIEW_ANDROID[VIEW_STANDARD[tagName]];
+        return VIEW_STANDARD[NODE_STANDARD[tagName]];
     }
 
     public constraint: ObjectMap<any> = {};
@@ -78,13 +78,13 @@ export default class View extends Node {
             overwrite = (adjacent === 'parent' || adjacent === 'true');
         }
         switch (this.renderParent.viewName) {
-            case VIEW_ANDROID.CONSTRAINT:
+            case VIEW_STANDARD.CONSTRAINT:
                 if (arguments.length === 1) {
                     return this.app(position);
                 }
                 this.app(position, adjacent, overwrite);
                 break;
-            case VIEW_ANDROID.RELATIVE:
+            case VIEW_STANDARD.RELATIVE:
                 if (arguments.length === 1) {
                     return this.android(position);
                 }
@@ -145,6 +145,9 @@ export default class View extends Node {
             if (a.startsWith('android:id=')) {
                 return -1;
             }
+            else if (b.startsWith('android:id=')) {
+                return 1;
+            }
             else {
                 return (a > b ? 1 : -1);
             }
@@ -176,6 +179,12 @@ export default class View extends Node {
     }
 
     public setViewId(viewName: string) {
+        for (const type in VIEW_STANDARD) {
+            if (VIEW_STANDARD[type] === viewName && NODE_STANDARD[type] != null) {
+                this.viewType = NODE_STANDARD[type];
+                break;
+            }
+        }
         super.viewName = viewName || this.viewName;
         if (this.viewId == null) {
             const element = (<HTMLInputElement> this.element);
@@ -184,7 +193,7 @@ export default class View extends Node {
         this.android('id', this.stringId);
     }
 
-    public setViewLayout(width?: number, height?: number) {
+    public setLayout(width?: number, height?: number) {
         if (!(this.renderParent instanceof View)) {
             return;
         }
@@ -198,10 +207,10 @@ export default class View extends Node {
         const renderParent = (<T> this.renderParent);
         const parentWidth = (!this.documentRoot ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : Number.MAX_VALUE);
         const parentHeight = (!this.documentRoot ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : Number.MAX_VALUE);
-        const wrapContent = parent.flex.enabled || parent.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.GRID) || (parent.is(VIEW_STANDARD.LINEAR) && parent.horizontal) || this.is(VIEW_STANDARD.IMAGE);
+        const wrapContent = parent.flex.enabled || parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID) || (parent.is(NODE_STANDARD.LINEAR) && parent.horizontal) || this.is(NODE_STANDARD.IMAGE);
         const styleMap = this.styleMap;
         const constraint = this.constraint;
-        if (this.documentRoot && this.is(VIEW_STANDARD.FRAME, VIEW_STANDARD.LINEAR, VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE)) {
+        if (this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.LINEAR, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
             if (this.viewWidth === 0 && !constraint.layoutWidth) {
                 this.android('layout_width', 'match_parent', false);
             }
@@ -209,7 +218,7 @@ export default class View extends Node {
                 this.android('layout_height', 'match_parent', false);
             }
         }
-        if (this.overflow !== OVERFLOW_CHROME.NONE && !this.is(VIEW_STANDARD.TEXT)) {
+        if (this.overflow !== OVERFLOW_ELEMENT.NONE && !this.is(NODE_STANDARD.TEXT)) {
             this.android('layout_width', (this.horizontal ? 'wrap_content' : 'match_parent'));
             this.android('layout_height', (this.horizontal ? 'match_parent' : 'wrap_content'));
         }
@@ -243,14 +252,14 @@ export default class View extends Node {
             else if (this.android('layout_width') == null) {
                 let maxRight = 0;
                 let parentMaxRight = 0;
-                if (parent.is(VIEW_STANDARD.LINEAR) && !parent.horizontal) {
+                if (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal) {
                     maxRight = this.cascade().reduce((a: number, b: T) => Math.max(0, b.linear.right), 0);
                     parentMaxRight = parent.cascade().reduce((a: number, b: T) => Math.max(0, b.linear.right), 0);
                 }
                 if (convertInt(this.android('layout_columnWeight')) > 0) {
                     this.android('layout_width', '0px');
                 }
-                else if (!wrapContent && (parent.overflow === OVERFLOW_CHROME.NONE && parent.viewWidth > 0 && width >= parentWidth) || ((this.renderChildren.length === 0 || maxRight < parentMaxRight) && !this.floating && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_CHROME.includes(this.tagName)) {
+                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewWidth > 0 && width >= parentWidth) || ((this.renderChildren.length === 0 || maxRight < parentMaxRight) && !this.floating && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
                     this.android('layout_width', 'match_parent');
                 }
                 else {
@@ -286,66 +295,21 @@ export default class View extends Node {
             else if (this.android('layout_height') == null) {
                 let layoutHeight = 'wrap_content';
                 if (height >= parentHeight) {
-                    if (this.documentRoot || (parent.overflow === OVERFLOW_CHROME.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.viewName) && (!renderParent.is(VIEW_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content'))) {
+                    if (this.documentRoot || (parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.viewName) && (!renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content'))) {
                         layoutHeight = 'match_parent';
                     }
                 }
                 this.android('layout_height', layoutHeight);
             }
         }
-        if (this.gridRowSpan > 1) {
-            this.android('layout_rowSpan', this.gridRowSpan.toString());
-        }
-        if (this.gridColumnSpan > 1) {
-            this.android('layout_columnSpan', this.gridColumnSpan.toString());
-        }
-        if (this.gridPadding) {
-            if (this.gridPadding.top > 0) {
-                this.modifyBox(BOX_STANDARD.PADDING_TOP, this.gridPadding.top);
-            }
-            if (this.gridPadding.right.length > 0) {
-                this.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(this.gridPadding.right));
-            }
-            if (this.gridPadding.bottom > 0) {
-                this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.gridPadding.bottom);
-            }
-            if (this.gridPadding.left.length > 0) {
-                this.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(this.gridPadding.left));
-            }
-        }
-        if (this.api >= BUILD_ANDROID.OREO) {
-            ['layout_margin', 'padding'].forEach(value => {
-                const leftRtl = parseRTL(`${value}Left`);
-                const rightRtl = parseRTL(`${value}Right`);
-                const top = convertInt(this.android(`${value}Top`));
-                const right = convertInt(this.android(rightRtl));
-                const bottom = convertInt(this.android(`${value}Bottom`));
-                const left = convertInt(this.android(leftRtl));
-                if (top !== 0 && top === bottom && bottom === left && left === right) {
-                    this.delete('android', `${value}*`);
-                    this.android(value, formatPX(top));
-                }
-                else {
-                    if (top !== 0 && top === bottom) {
-                        this.delete('android', `${value}Top`, `${value}Bottom`);
-                        this.android(`${value}Vertical`, formatPX(top));
-                    }
-                    if (left !== 0 && left === right) {
-                        this.delete('android', leftRtl, rightRtl);
-                        this.android(`${value}Horizontal`, formatPX(left));
-                    }
-                }
-            });
-        }
-        this.setGravity();
     }
 
-    public setGravity() {
+    public setAlignment() {
         if (!(this.renderParent instanceof View)) {
             return;
         }
         const renderParent = (<T> this.renderParent);
-        const textView = this.is(VIEW_STANDARD.TEXT);
+        const textView = this.is(NODE_STANDARD.TEXT);
         let textAlign = '';
         const verticalAlign = this.styleMap.verticalAlign;
         let horizontal = '';
@@ -404,7 +368,7 @@ export default class View extends Node {
                 horizontalFloat = horizontal;
                 horizontal = '';
             }
-            if (vertical !== '' && renderParent.is(VIEW_STANDARD.LINEAR, VIEW_STANDARD.GRID, VIEW_STANDARD.FRAME)) {
+            if (vertical !== '' && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
                 verticalFloat = vertical;
                 vertical = '';
             }
@@ -414,7 +378,7 @@ export default class View extends Node {
             }
         }
         if (this.renderChildren.length > 0) {
-            if (!this.is(VIEW_STANDARD.CONSTRAINT, VIEW_STANDARD.RELATIVE) && this.renderChildren.every(item => item.css('float') === 'right')) {
+            if (!this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && this.renderChildren.every(item => item.css('float') === 'right')) {
                 this.android('gravity', parseRTL('right'));
             }
         }
@@ -434,13 +398,63 @@ export default class View extends Node {
         }
     }
 
+    public setBoxSpacing() {
+        if (this.api >= BUILD_ANDROID.OREO) {
+            ['layout_margin', 'padding'].forEach(value => {
+                const leftRtl = parseRTL(`${value}Left`);
+                const rightRtl = parseRTL(`${value}Right`);
+                const top = convertInt(this.android(`${value}Top`));
+                const right = convertInt(this.android(rightRtl));
+                const bottom = convertInt(this.android(`${value}Bottom`));
+                const left = convertInt(this.android(leftRtl));
+                if (top !== 0 && top === bottom && bottom === left && left === right) {
+                    this.delete('android', `${value}*`);
+                    this.android(value, formatPX(top));
+                }
+                else {
+                    if (top !== 0 && top === bottom) {
+                        this.delete('android', `${value}Top`, `${value}Bottom`);
+                        this.android(`${value}Vertical`, formatPX(top));
+                    }
+                    if (left !== 0 && left === right) {
+                        this.delete('android', leftRtl, rightRtl);
+                        this.android(`${value}Horizontal`, formatPX(left));
+                    }
+                }
+            });
+        }
+    }
+
+    public setGridSpan() {
+        if (this.gridRowSpan > 1) {
+            this.android('layout_rowSpan', this.gridRowSpan.toString());
+        }
+        if (this.gridColumnSpan > 1) {
+            this.android('layout_columnSpan', this.gridColumnSpan.toString());
+        }
+        if (this.gridPadding) {
+            if (this.gridPadding.top > 0) {
+                this.modifyBox(BOX_STANDARD.PADDING_TOP, this.gridPadding.top);
+            }
+            if (this.gridPadding.right.length > 0) {
+                this.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(this.gridPadding.right));
+            }
+            if (this.gridPadding.bottom > 0) {
+                this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.gridPadding.bottom);
+            }
+            if (this.gridPadding.left.length > 0) {
+                this.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(this.gridPadding.left));
+            }
+        }
+    }
+
     public setAccessibility() {
         const element = this.element;
         const nextElement = (<HTMLLabelElement> element.nextElementSibling);
         let labeled = false;
         if (nextElement && nextElement.htmlFor === element.id && element.tagName === 'INPUT') {
             const node = (<any> nextElement).__node;
-            node.setViewId(VIEW_ANDROID.TEXT);
+            node.setViewId(VIEW_STANDARD.TEXT);
             this.css('marginRight', node.style.marginRight);
             this.css('paddingRight', node.style.paddingRight);
             this.label = node;
@@ -449,7 +463,7 @@ export default class View extends Node {
             labeled = true;
         }
         switch (this.viewName) {
-            case VIEW_ANDROID.EDIT:
+            case VIEW_STANDARD.EDIT:
                 if (!labeled) {
                     let parent: T = this.renderParent;
                     let current: T = this;
@@ -463,14 +477,14 @@ export default class View extends Node {
                         current = parent;
                         parent = parent.renderParent;
                     }
-                    if (label && label.is(VIEW_STANDARD.TEXT)) {
+                    if (label && label.is(NODE_STANDARD.TEXT)) {
                         label.android('labelFor', this.stringId);
                     }
                 }
-            case VIEW_ANDROID.SELECT:
-            case VIEW_ANDROID.CHECKBOX:
-            case VIEW_ANDROID.RADIO:
-            case VIEW_ANDROID.BUTTON:
+            case VIEW_STANDARD.SELECT:
+            case VIEW_STANDARD.CHECKBOX:
+            case VIEW_STANDARD.RADIO:
+            case VIEW_STANDARD.BUTTON:
                 if ((<HTMLInputElement> this.element).disabled) {
                     this.android('focusable', 'false');
                 }
@@ -499,7 +513,7 @@ export default class View extends Node {
             return super.viewName;
         }
         else {
-            const value: number = MAPPING_CHROME[this.tagName];
+            const value: number = MAP_ELEMENT[this.tagName];
             return (value != null ? View.getViewName(value) : '');
         }
     }

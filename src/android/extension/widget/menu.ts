@@ -2,7 +2,7 @@ import { ExtensionResult, IExtension, ObjectMap } from '../../../lib/types';
 import Resource from '../../../base/resource';
 import Nav from '../../../extension/nav';
 import View from '../../view';
-import { BLOCK_CHROME, VIEW_RESOURCE } from '../../../lib/constants';
+import { BLOCK_ELEMENT, NODE_RESOURCE } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
 const VALIDATE_ITEM = {
@@ -47,7 +47,7 @@ export default class Menu<T extends View> extends Nav {
         const xml = this.application.controllerHandler.getViewStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.renderParent = true;
         node.cascade().forEach(item => item.renderExtension = (<IExtension> this));
-        node.ignoreResource = VIEW_RESOURCE.ALL;
+        node.excludeResource = NODE_RESOURCE.ALL;
         return { xml };
     }
 
@@ -59,7 +59,7 @@ export default class Menu<T extends View> extends Nav {
             return { xml: '', proceed: true };
         }
         const parent = (<T> this.parent);
-        node.ignoreResource = VIEW_RESOURCE.ALL;
+        node.excludeResource = NODE_RESOURCE.ALL;
         node.renderDepth = parent.renderDepth + 1;
         node.renderParent = true;
         const options: ObjectMap<any> = { android: {}, app: {} };
@@ -68,7 +68,7 @@ export default class Menu<T extends View> extends Nav {
         let title = '';
         let layout = false;
         let proceed = false;
-        if (children.some(item => BLOCK_CHROME.includes(item.tagName) && item.children.length > 0)) {
+        if (children.some(item => BLOCK_ELEMENT.includes(item.tagName) && item.children.length > 0)) {
             if (children.some(item => item.tagName === 'NAV')) {
                 if (element.title !== '') {
                     title = element.title.trim();

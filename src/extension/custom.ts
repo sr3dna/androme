@@ -14,7 +14,7 @@ export default class Custom extends Extension<T, U> {
     }
 
     public processNode(): ExtensionResult {
-        const node = (<T> this.node);
+        const node = this.node;
         const parent = (<T> this.parent);
         const controller = this.application.controllerHandler;
         const data = this.getData();
@@ -27,12 +27,11 @@ export default class Custom extends Extension<T, U> {
                 xml = controller.renderView(node, parent, data.tag);
             }
         }
-        node.ignoreResource = this.getIgnoreResource();
         return { xml };
     }
 
     public afterInsert() {
-        const node = (<T> this.node);
+        const node = this.node;
         const options = Object.assign({}, this.options[node.element.id]);
         node.apply(options);
     }

@@ -6,7 +6,7 @@ import { capitalize, convertWord, formatPX, formatString, hasValue, includesEnum
 import { getTemplateLevel, placeIndent, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { parseHex } from '../lib/color';
-import { VIEW_RESOURCE, VIEW_STANDARD } from '../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
@@ -97,7 +97,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setBoxSpacing() {
         super.setBoxSpacing();
         this.cache.elements.forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.BOX_SPACING)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
                 const stored = (<any> node.element).__boxSpacing;
                 if (stored != null) {
                     const method: StringMap = METHOD_ANDROID['boxSpacing'];
@@ -112,7 +112,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setBoxStyle() {
         super.setBoxStyle();
         this.cache.elements.forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.BOX_STYLE)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
                 const element = node.element;
                 const object: any = element;
                 const stored = object.__boxStyle;
@@ -271,7 +271,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setFontStyle();
         const tagName: ObjectMap<T[]> = {};
         this.cache.list.forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.FONT_STYLE)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
                 if ((<any> node.element).__fontStyle != null) {
                     if (tagName[node.tagName] == null) {
                         tagName[node.tagName] = [];
@@ -369,7 +369,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setImageSource() {
         super.setImageSource();
         this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.IMAGE_SOURCE)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
                 const object: any = node.element;
                 const stored = object.__imageSource;
                 if (stored != null) {
@@ -383,7 +383,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setOptionArray() {
         super.setOptionArray();
         this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.OPTION_ARRAY)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
                 const stored: ArrayMap<string> = (<any> node.element).__optionArray;
                 const method = METHOD_ANDROID['optionArray'];
                 let result: string[] = [];
@@ -413,13 +413,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setValueString() {
         super.setValueString();
         this.cache.list.forEach(node => {
-            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.VALUE_STRING)) {
+            if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const element = (node.label != null ? node.label.element : node.element);
                 const stored = (<any> element).__valueString;
                 if (stored != null) {
                     const method = METHOD_ANDROID['valueString'];
                     let value = (<string> STORED.STRINGS.get(stored));
-                    if (node.is(VIEW_STANDARD.TEXT) && node.style != null) {
+                    if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
                         const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
                         if (match != null) {
                             switch (match[0]) {
@@ -635,7 +635,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     for (const id of (<number[]> tagData[attr])) {
                         if (attr.startsWith('android:background=')) {
                             const node: Null<T> = viewData.cache.find(item => item.id === id);
-                            if (node && node.android('backround') != null) {
+                            if (node && node.android('background') != null) {
                                 continue;
                             }
                         }
@@ -656,7 +656,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let append = '';
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
-                    append += `\n${indent}style="@style/${styles.pop()}"`;
+                    append += `\n${indent + (node.viewType >= 11 ? 'android:theme="' : 'style="')}@style/${styles.pop()}"`;
                 }
                 if (attributes.length > 0) {
                     attributes.sort().forEach((value: string) => append += `\n${indent}${replaceDP(value, true)}`);

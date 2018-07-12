@@ -6,7 +6,7 @@ import { optional } from '../../../lib/util';
 import { positionIsolated, overwriteDefault } from '../lib/util';
 import { restoreIndent } from '../../../lib/xml';
 import { parseRGBA } from '../../../lib/color';
-import { VIEW_RESOURCE } from '../../../lib/constants';
+import { NODE_RESOURCE } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 export default class FloatingActionButton<T extends View> extends Button {
@@ -54,7 +54,7 @@ export default class FloatingActionButton<T extends View> extends Button {
         }
         node.depth = (insert ? 0 : node.parent.renderDepth + 1);
         let xml = this.application.controllerHandler.getViewStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.parent.renderDepth + 1), options, 'wrap_content', 'wrap_content', node);
-        node.ignoreResource = VIEW_RESOURCE.BOX_STYLE | VIEW_RESOURCE.ASSET;
+        node.excludeResource = NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
         let proceed = false;
         if (node.isolated) {
             positionIsolated(node);
@@ -74,7 +74,6 @@ export default class FloatingActionButton<T extends View> extends Button {
         else {
             node.render(parent);
         }
-        node.applyCustomizations();
         return { xml, proceed };
     }
 

@@ -3,7 +3,6 @@ import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
 import { capitalize, convertCamelCase, includes, optional } from '../lib/util';
-import { VIEW_RESOURCE } from '../lib/constants';
 
 export default abstract class Extension<T extends Node, U extends NodeList<T>> implements IExtension {
     public application: Application<T, U>;
@@ -14,7 +13,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     public tagNames: string[] = [];
     public enabled = true;
     public dependencies: ExtensionDependency[] = [];
-    public activityMain = false;
+    public documentRoot = false;
 
     constructor(
         public name: string,
@@ -125,19 +124,6 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
                     result[capitalize(attr.substring(prefix.length), false)] = element.dataset[attr];
                 }
             }
-        }
-        return result;
-    }
-
-    public getIgnoreResource() {
-        const element = this.element;
-        let result = 0;
-        if (element != null && element.dataset.ignoreResource != null) {
-            element.dataset.ignoreResource.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
-                if (VIEW_RESOURCE[value] != null) {
-                    result |= VIEW_RESOURCE[value];
-                }
-            });
         }
         return result;
     }

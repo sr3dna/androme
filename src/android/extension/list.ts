@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../lib/types';
 import View from '../view';
 import List from '../../extension/list';
 import { formatDimen } from '../../lib/xml';
-import { VIEW_STANDARD } from '../../lib/constants';
+import { NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
 
@@ -19,7 +19,7 @@ export default class ListAndroid<T extends View> extends List {
             controller.prependBefore(
                 node.id,
                 controller.getViewStatic(
-                    (listStyle !== '0' ? VIEW_STANDARD.TEXT : VIEW_STANDARD.SPACE),
+                    (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE),
                     node.depth + node.renderDepth, {
                         android: {
                             gravity: parseRTL('right'),
@@ -40,7 +40,7 @@ export default class ListAndroid<T extends View> extends List {
 
     public afterInsert() {
         const node = (<T> this.node);
-        if (node.is(VIEW_STANDARD.GRID)) {
+        if (node.is(NODE_STANDARD.GRID)) {
             node.android('layout_width', 'match_parent');
         }
     }

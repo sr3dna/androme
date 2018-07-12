@@ -3,11 +3,11 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { hasValue, convertCamelCase, optional, resetId, sortAsc, trim } from '../lib/util';
+import { hasValue, convertCamelCase, includesEnum, optional, resetId, sortAsc, trim } from '../lib/util';
 import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
 import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
-import { INLINE_CHROME, MAPPING_CHROME, VIEW_STANDARD, OVERFLOW_CHROME } from '../lib/constants';
+import { BLOCK_ELEMENT, INLINE_ELEMENT, MAP_ELEMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
@@ -59,6 +59,16 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public finalize() {
+        this.cacheInternal.visible.forEach(node => {
+            if (!node.companion) {
+                if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.LAYOUT)) {
+                    node.setLayout();
+                }
+                if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ALIGNMENT)) {
+                    node.setAlignment();
+                }
+            }
+        });
         this.controllerHandler.setDimensions(this.viewData);
         this.insertAuxillaryViews();
         this.resourceHandler.finalize(this.viewData);
@@ -225,7 +235,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (!this.elements.has(element)) {
                 this.orderExt(extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
-                    if (INLINE_CHROME.includes(element.tagName) && element.parentElement && (MAPPING_CHROME[element.parentElement.tagName] != null || INLINE_CHROME.includes(element.parentElement.tagName))) {
+                    if (INLINE_ELEMENT.includes(element.tagName) && element.parentElement && (MAP_ELEMENT[element.parentElement.tagName] != null || INLINE_ELEMENT.includes(element.parentElement.tagName))) {
                         continue;
                     }
                     let valid = true;
@@ -262,7 +272,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
                 style.verticalAlign = node.styleMap.verticalAlign || '';
                 element.style.verticalAlign = 'top';
-                if (node.overflow !== OVERFLOW_CHROME.NONE) {
+                if (node.overflow !== OVERFLOW_ELEMENT.NONE) {
                     if (hasValue(node.styleMap.width)) {
                         style.width = node.styleMap.width;
                         element.style.width = '';
@@ -315,7 +325,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         node.parent = closest;
                     }
                 }
-                if (node.element.children.length > 0 && !node.children.every((current: T) => INLINE_CHROME.includes(current.tagName))) {
+                if (node.element.children.length > 0 && !node.children.every((current: T) => INLINE_ELEMENT.includes(current.tagName))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
@@ -415,6 +425,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                     let parent = (<T> nodeY.parent);
                     if (!nodeY.renderParent) {
+                        if (!includesEnum(nodeY.excludeProcedure, NODE_PROCEDURE.CUSTOMIZATION)) {
+                            nodeY.applyCustomizations();
+                        }
                         const renderExtension = (<IExtension> parent.renderExtension);
                         if (renderExtension != null) {
                             renderExtension.setTarget(nodeY, parent);
@@ -460,9 +473,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (!nodeY.renderParent) {
                             let xml = '';
                             if (nodeY.viewName === '') {
-                                if (nodeY.children.length === 0 || nodeY.cascade().every(node => INLINE_CHROME.includes(node.element.tagName))) {
-                                    if (hasFreeFormText(nodeY.element)) {
-                                        xml += this.writeView(nodeY, parent, VIEW_STANDARD.TEXT);
+                                if (nodeY.children.length === 0 || nodeY.cascade().every(node => INLINE_ELEMENT.includes(node.element.tagName))) {
+                                    if (hasFreeFormText(nodeY.element) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
+                                        xml += this.writeView(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
                                     else {
                                         if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
@@ -527,7 +540,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const extension = (<IExtension> root.renderExtension);
         if (extension == null || root.data(`${extension.name}:insert`) == null) {
             const pathname = trim(optional(root, 'element.dataset.pathname').trim(), '/');
-            this.setLayout(pathname, (!empty ? output : ''), (root.renderExtension != null && root.renderExtension.activityMain));
+            this.setLayout(pathname, (!empty ? output : ''), (extension != null && extension.documentRoot));
         }
         else {
             this.views.pop();
@@ -546,27 +559,27 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public writeFrameLayout(node: T, parent: T) {
         if (node.children.length === 0) {
-            return this.controllerHandler.renderView(node, parent, VIEW_STANDARD.FRAME);
+            return this.controllerHandler.renderView(node, parent, NODE_STANDARD.FRAME);
         }
         else {
-            return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.FRAME);
+            return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.FRAME);
         }
     }
 
     public writeLinearLayout(node: T, parent: T, vertical: boolean) {
-        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
+        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
     }
 
     public writeGridLayout(node: T, parent: T, columnCount: number, rowCount: number = 0) {
-        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
+        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
     }
 
     public writeRelativeLayout(node: T, parent: T) {
-        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.RELATIVE);
+        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.RELATIVE);
     }
 
     public writeConstraintLayout(node: T, parent: T) {
-        return this.controllerHandler.renderGroup(node, parent, VIEW_STANDARD.CONSTRAINT);
+        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.CONSTRAINT);
     }
 
     public writeView(node: T, parent: T, viewName: number | string) {
@@ -656,9 +669,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.views.push(layout);
     }
 
-    public setLayout(pathname = '', content: string, activityMain = false) {
+    public setLayout(pathname = '', content: string, documentRoot = false) {
         pathname = pathname || 'res/layout';
-        if (activityMain && this.views.length > 0 && this.views[0].content === '') {
+        if (documentRoot && this.views.length > 0 && this.views[0].content === '') {
             const view = this.views[0];
             const current = (<PlainFile> this.views.pop());
             view.pathname = pathname;
@@ -724,6 +737,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if ((<any> element).__nodeIsolated) {
                 node.isolated = true;
             }
+            node.setExcludeProcedure();
+            node.setExcludeResource();
         }
         if (node != null) {
             this.cache.list.push(node);

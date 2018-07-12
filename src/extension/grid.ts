@@ -3,7 +3,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { sortAsc, withinFraction } from '../lib/util';
-import { BLOCK_CHROME } from '../lib/constants';
+import { BLOCK_ELEMENT } from '../lib/constants';
 
 type T = Node;
 type U = NodeList<T>;
@@ -14,15 +14,15 @@ export default class Grid extends Extension<T, U> {
     }
 
     public condition() {
-        const node = (<T> this.node);
+        const node = this.node;
         return (
             this.included() ||
-            (node.hasElement && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_CHROME.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].tagName === item.tagName && NodeList.linearX(item.children)))
+            (node.hasElement && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_ELEMENT.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].tagName === item.tagName && NodeList.linearX(item.children)))
         );
     }
 
     public processNode(mapX: ObjectIndex<ObjectIndex<T[]>>, mapY: ObjectIndex<ObjectIndex<T[]>>): ExtensionResult {
-        const node = (<T> this.node);
+        const node = this.node;
         const parent = (<T> this.parent);
         let xml = '';
         let columns: any[] = [];

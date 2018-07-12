@@ -27,11 +27,10 @@ export enum DENSITY_ANDROID {
     XXXHDPI = 640
 }
 
-export const VIEW_ANDROID = {
+export const VIEW_STANDARD = {
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
-    GUIDELINE: 'android.support.constraint.Guideline',
     RELATIVE: 'RelativeLayout',
     GRID: 'GridLayout',
     SCROLL_VERTICAL: 'ScrollView',
@@ -46,8 +45,9 @@ export const VIEW_ANDROID = {
     CHECKBOX: 'CheckBox',
     RADIO: 'RadioButton',
     BUTTON: 'Button',
-    VIEW: 'View',
-    SPACE: 'Space'
+    LINE: 'View',
+    SPACE: 'Space',
+    GUIDELINE: 'android.support.constraint.Guideline'
 };
 
 export const BOX_ANDROID = {
@@ -68,12 +68,12 @@ export const BOX_ANDROID = {
 };
 
 export const FIXED_ANDROID = [
-    VIEW_ANDROID.EDIT,
-    VIEW_ANDROID.SELECT,
-    VIEW_ANDROID.CHECKBOX,
-    VIEW_ANDROID.RADIO,
-    VIEW_ANDROID.BUTTON,
-    VIEW_ANDROID.IMAGE
+    VIEW_STANDARD.EDIT,
+    VIEW_STANDARD.SELECT,
+    VIEW_STANDARD.CHECKBOX,
+    VIEW_STANDARD.RADIO,
+    VIEW_STANDARD.BUTTON,
+    VIEW_STANDARD.IMAGE
 ];
 
 export const XMLNS_ANDROID = {

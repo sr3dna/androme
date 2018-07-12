@@ -21,7 +21,7 @@ export default abstract class List extends Extension<T, U> {
     }
 
     public processNode(): ExtensionResult {
-        const node = (<T> this.node);
+        const node = this.node;
         const parent = (<T> this.parent);
         let xml = '';
         if (NodeList.linearY(node.children)) {

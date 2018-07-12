@@ -12,12 +12,13 @@ export default class Table extends Extension<T, U> {
     }
 
     public processNode(): ExtensionResult {
+        const node = this.node;
         const tableRows: T[] = [];
-        const thead = this.node.children.find(node => node.tagName === 'THEAD');
-        const tbody = this.node.children.find(node => node.tagName === 'TBODY');
-        const tfoot = this.node.children.find(node => node.tagName === 'TFOOT');
+        const thead = node.children.find(item => item.tagName === 'THEAD');
+        const tbody = node.children.find(item => item.tagName === 'TBODY');
+        const tfoot = node.children.find(item => item.tagName === 'TFOOT');
         if (thead != null) {
-            thead.cascade().filter(node => node.tagName === 'TH' || node.tagName === 'TD').forEach(node => node.inheritStyleMap(thead));
+            thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(thead));
             tableRows.push(...(<T[]> thead.children));
             thead.hide();
         }
@@ -26,7 +27,7 @@ export default class Table extends Extension<T, U> {
             tbody.hide();
         }
         if (tfoot != null) {
-            tfoot.cascade().filter(node => node.tagName === 'TH' || node.tagName === 'TD').forEach(node => node.inheritStyleMap(tfoot));
+            tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(tfoot));
             tableRows.push(...(<T[]> tfoot.children));
             tfoot.hide();
         }
@@ -35,7 +36,7 @@ export default class Table extends Extension<T, U> {
         for (let i = 0; i < tableRows.length; i++) {
             const tr = tableRows[i];
             tr.hide();
-            columnCount = Math.max(tr.children.map(node => node.element).reduce((a, b: HTMLTableDataCellElement) => a + b.colSpan, 0), columnCount);
+            columnCount = Math.max(tr.children.map(item => item.element).reduce((a, b: HTMLTableDataCellElement) => a + b.colSpan, 0), columnCount);
             for (let j = 0; j < tr.children.length; j++) {
                 const td = tr.children[j];
                 const style = td.element.style;
@@ -52,16 +53,16 @@ export default class Table extends Extension<T, U> {
                 if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
                     td.styleMap.verticalAlign = 'middle';
                 }
-                const [width, height] = (this.node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : (<string> this.node.style.borderSpacing).split(' '));
+                const [width, height] = (node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : (<string> node.style.borderSpacing).split(' '));
                 delete td.styleMap.margin;
                 td.styleMap.marginTop = height;
                 td.styleMap.marginRight = width;
                 td.styleMap.marginBottom = height;
                 td.styleMap.marginLeft = width;
-                td.parent = this.node;
+                td.parent = node;
             }
         }
-        const xml = this.application.writeGridLayout(this.node, (<T> this.parent), columnCount, rowCount);
+        const xml = this.application.writeGridLayout(node, (<T> this.parent), columnCount, rowCount);
         return { xml };
     }
 }

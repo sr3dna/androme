@@ -4,7 +4,7 @@ import View from '../../view';
 import ViewList from '../../viewlist';
 import { optional } from '../../../lib/util';
 import { findNestedExtension, findNestedMenu, overwriteDefault } from '../lib/util';
-import { VIEW_RESOURCE } from '../../../lib/constants';
+import { NODE_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import parseRTL from '../../localization';
@@ -18,7 +18,7 @@ type U = ViewList<T>;
 export default class Drawer extends Extension<T, U> {
     constructor(name: string, tagNames: string[] = [], options?: {}) {
         super(name, tagNames, options);
-        this.activityMain = true;
+        this.documentRoot = true;
         this.require(EXT_NAME.EXTERNAL, true);
         this.require(WIDGET_NAME.MENU);
         this.require(WIDGET_NAME.COORDINATOR);
@@ -62,7 +62,7 @@ export default class Drawer extends Extension<T, U> {
         coordinator.parent = node;
         coordinator.inheritBase(node);
         coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
-        coordinator.ignoreResource = VIEW_RESOURCE.ALL;
+        coordinator.excludeResource = NODE_RESOURCE.ALL;
         coordinator.isolated = true;
         application.cache.list.push(coordinator);
         const content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
@@ -95,8 +95,7 @@ export default class Drawer extends Extension<T, U> {
             application.addInclude(filename, content);
         }
         node.renderParent = true;
-        node.ignoreResource = VIEW_RESOURCE.FONT_STYLE;
-        node.applyCustomizations();
+        node.excludeResource = NODE_RESOURCE.FONT_STYLE;
         return { xml };
     }
 

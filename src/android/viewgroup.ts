@@ -21,8 +21,8 @@ export default class ViewGroup extends View {
         this.depth = node.depth;
     }
 
-    public setViewLayout() {
-        super.setViewLayout.apply(this, this.childrenBox);
+    public setLayout() {
+        super.setLayout.apply(this, this.childrenBox);
     }
 
     public setBounds(calibrate = false) {

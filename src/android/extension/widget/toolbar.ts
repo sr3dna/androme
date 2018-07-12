@@ -7,8 +7,8 @@ import { convertPX, includes, optional } from '../../../lib/util';
 import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { formatDimen, restoreIndent } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
-import { VIEW_RESOURCE } from '../../../lib/constants';
-import { VIEW_ANDROID } from '../../constants';
+import { NODE_RESOURCE } from '../../../lib/constants';
+import { VIEW_STANDARD } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
@@ -126,8 +126,8 @@ export default class Toolbar extends Extension<T, U> {
                 overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                xml += controller.getViewStatic(VIEW_ANDROID.IMAGE, node.depth, { android: optionsBackgroundImage.android, app: optionsBackgroundImage.app }, 'match_parent', 'match_parent');
-                node.ignoreResource |= VIEW_RESOURCE.IMAGE_SOURCE;
+                xml += controller.getViewStatic(VIEW_STANDARD.IMAGE, node.depth, { android: optionsBackgroundImage.android, app: optionsBackgroundImage.app }, 'match_parent', 'match_parent');
+                node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
         }
         let outer = '';
@@ -167,11 +167,10 @@ export default class Toolbar extends Extension<T, U> {
             proceed = true;
         }
         else {
-            node.applyCustomizations();
             node.render(<T> this.parent);
             node.renderDepth = node.depth;
         }
-        node.ignoreResource |= VIEW_RESOURCE.FONT_STYLE;
+        node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
         return { xml, proceed };
     }
 

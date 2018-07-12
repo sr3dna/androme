@@ -1,7 +1,7 @@
 import { BoxModel, BoxRect, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { convertInt, hasValue, convertCamelCase, includesEnum, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
-import { OVERFLOW_CHROME } from '../lib/constants';
+import { NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_PROCEDURE } from '../lib/constants';
 
 type T = Node;
 
@@ -9,6 +9,7 @@ export default abstract class Node implements BoxModel {
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
     public viewId: string;
+    public viewType = 0;
     public depth = -1;
     public renderDepth = 0;
     public parentIndex = Number.MAX_VALUE;
@@ -16,7 +17,8 @@ export default abstract class Node implements BoxModel {
     public linear: ClientRect;
     public box: ClientRect;
     public renderExtension: Null<IExtension>;
-    public ignoreResource = 0;
+    public excludeProcedure = 0;
+    public excludeResource = 0;
     public documentRoot = false;
     public visible = true;
     public companion = false;
@@ -68,7 +70,9 @@ export default abstract class Node implements BoxModel {
 
     public abstract is(...views: number[]): boolean;
     public abstract setViewId(viewName: string): void;
-    public abstract setViewLayout(width?: number, height?: number): void;
+    public abstract setLayout(width?: number, height?: number): void;
+    public abstract setAlignment(): void;
+    public abstract setAccessibility(): void;
     public abstract applyCustomizations(): void;
     public abstract modifyBox(area: number, offset: number): void;
     public abstract boxValue(area: number): string[];
@@ -225,6 +229,26 @@ export default abstract class Node implements BoxModel {
             this.styleMap[attr] = (hasValue(value) ? value : '');
         }
         return this.styleMap[attr] || (this.style && (<any> this.style)[attr]) || '';
+    }
+
+    public setExcludeProcedure() {
+        if (this.hasElement && this.element.dataset.excludeProcedure != null) {
+            this.element.dataset.excludeProcedure.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
+                if (NODE_PROCEDURE[value] != null) {
+                    this.excludeProcedure |= NODE_PROCEDURE[value];
+                }
+            });
+        }
+    }
+
+    public setExcludeResource() {
+        if (this.hasElement && this.element.dataset.excludeResource != null) {
+            this.element.dataset.excludeResource.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
+                if (NODE_RESOURCE[value] != null) {
+                    this.excludeResource |= NODE_RESOURCE[value];
+                }
+            });
+        }
     }
 
     public setBounds(calibrate = false, element?: HTMLElement) {
@@ -390,22 +414,22 @@ export default abstract class Node implements BoxModel {
     }
 
     get overflow() {
-        let value = OVERFLOW_CHROME.NONE;
+        let value = OVERFLOW_ELEMENT.NONE;
         if (this.hasElement) {
             if (this.css('overflow') === 'scroll' || this.css('overflowX') === 'scroll' || (this.css('overflowX') === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
-                value |= OVERFLOW_CHROME.HORIZONTAL;
+                value |= OVERFLOW_ELEMENT.HORIZONTAL;
             }
             if (this.css('overflow') === 'scroll' || this.css('overflowY') === 'scroll' || (this.css('overflowY') === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
-                value |= OVERFLOW_CHROME.VERTICAL;
+                value |= OVERFLOW_ELEMENT.VERTICAL;
             }
         }
         return value;
     }
     get overflowX() {
-        return includesEnum(this.overflow, OVERFLOW_CHROME.HORIZONTAL);
+        return includesEnum(this.overflow, OVERFLOW_ELEMENT.HORIZONTAL);
     }
     get overflowY() {
-        return includesEnum(this.overflow, OVERFLOW_CHROME.VERTICAL);
+        return includesEnum(this.overflow, OVERFLOW_ELEMENT.VERTICAL);
     }
 
     get viewWidth() {
