@@ -14,6 +14,8 @@ export interface IExtension {
     dependencies: ExtensionDependency[];
     activityMain: boolean;
     setTarget(node: Node, parent?: Null<Node>, element?: Null<HTMLElement>): void;
+    getData(): void;
+    getIgnoreResource(): void;
     is(node: Node): void;
     require(value: string): void;
     included(element?: HTMLElement): boolean;

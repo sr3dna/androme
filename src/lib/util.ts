@@ -68,9 +68,9 @@ export function cameltoLowerCase(value: string) {
     return value;
 }
 
-export function hyphenToCamelCase(value: string) {
-    value = value.replace(/$-+/, '');
-    const result = value.match(/(-{1}[a-z]{1})/g);
+export function convertCamelCase(value: string, character = '-') {
+    value = value.replace(new RegExp(`^${character}+`), '');
+    const result = value.match(new RegExp(`(${character}{1}[a-z]{1})`, 'g'));
     if (result != null) {
         for (const match of result) {
             value = value.replace(match, match[1].toUpperCase());
@@ -79,8 +79,8 @@ export function hyphenToCamelCase(value: string) {
     return value;
 }
 
-export function capitalize(value: string) {
-    return value.charAt(0).toUpperCase() + value.substring(1).toLowerCase();
+export function capitalize(value: string, upper = true) {
+    return value.charAt(0)[(upper ? 'toUpperCase' : 'toLowerCase')]() + value.substring(1)[(upper ? 'toLowerCase' : 'toString')]();
 }
 
 export function averageInt(values: number[]) {

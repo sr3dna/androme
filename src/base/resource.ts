@@ -211,7 +211,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxStyle() {
-        this.cache.elements.forEach(node => {
+        this.cache.visible.forEach(node => {
             if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.BOX_STYLE)) {
                 const element = node.element;
                 const object: any = element;
@@ -232,7 +232,7 @@ export default abstract class Resource<T extends Node> {
                         }
                     }
                     if (result.backgroundColor.length > 0) {
-                        if ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                        if ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(element, 'backgroundColor'))) {
                             result.backgroundColor = [];
                         }
                         else {
@@ -250,8 +250,8 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setFontStyle() {
-        this.cache.list.forEach(node => {
-            if ((node.visible || node.companion) && !includesEnum(node.ignoreResource, VIEW_RESOURCE.FONT_STYLE)) {
+        this.cache.visible.forEach(node => {
+            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.FONT_STYLE)) {
                 const element = node.element;
                 const object: any = element;
                 if (!hasValue(object.__fontStyle) || SETTINGS.alwaysReevaluateResources) {
@@ -309,7 +309,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setImageSource() {
-        this.cache.list.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')).forEach(node => {
+        this.cache.elements.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')).forEach(node => {
             const element = (<HTMLImageElement> node.element);
             const object: any = element;
             if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.IMAGE_SOURCE)) {
@@ -322,7 +322,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setOptionArray() {
-        this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
+        this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
             if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.OPTION_ARRAY)) {
                 const element = (<HTMLSelectElement> node.element);
                 const object: any = element;
@@ -356,8 +356,8 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setValueString() {
-        this.cache.list.forEach(node => {
-            if ((node.visible || node.companion) && !includesEnum(node.ignoreResource, VIEW_RESOURCE.VALUE_STRING)) {
+        this.cache.visible.forEach(node => {
+            if (!includesEnum(node.ignoreResource, VIEW_RESOURCE.VALUE_STRING)) {
                 const element = (<HTMLInputElement> node.element);
                 const object: any = element;
                 if (!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources) {

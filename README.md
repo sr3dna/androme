@@ -10,7 +10,7 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 ## Installation (global js variable: androme)
 
-*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/FireFox/Edge. The latest version of Chrome is the ideally what you should use to generate the production version of your program. ***
+*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/Edge/FireFox. The latest version of Chrome is ideally what you should use to generate the production version of your program. ***
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
 
@@ -78,6 +78,7 @@ These settings are available in the global variable "androme" to customize your 
 androme.settings = {
     builtInExtensions: [
         'androme.external',
+        'androme.custom',
         'androme.list',
         'androme.table',
         'androme.grid',

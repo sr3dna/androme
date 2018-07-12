@@ -1,7 +1,7 @@
 import { ObjectMap } from '../../../lib/types';
 import View from '../../view';
 import { convertPX, includes, optional } from '../../../lib/util';
-import { WIDGET_NAME } from '../lib/constants';
+import { WIDGET_NAME } from './constants';
 import parseRTL from '../../localization';
 
 type T = View;

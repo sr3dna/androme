@@ -1,4 +1,4 @@
-import { ExtensionResult, ObjectMap } from '../../../lib/types';
+import { ExtensionResult, IExtension, ObjectMap } from '../../../lib/types';
 import Resource from '../../../base/resource';
 import Nav from '../../../extension/nav';
 import View from '../../view';
@@ -46,7 +46,7 @@ export default class Menu<T extends View> extends Nav {
         const node = (<T> this.node);
         const xml = this.application.controllerHandler.getViewStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.renderParent = true;
-        node.cascade().forEach(item => item.renderExtension = this);
+        node.cascade().forEach(item => item.renderExtension = (<IExtension> this));
         node.ignoreResource = VIEW_RESOURCE.ALL;
         return { xml };
     }

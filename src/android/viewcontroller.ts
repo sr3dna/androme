@@ -1106,7 +1106,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         let output = '';
         for (const namespace in XMLNS_ANDROID) {
             if (new RegExp(`\\s+${namespace}:`).test(content)) {
-                output += `\n\t${XMLNS_ANDROID[namespace]}`;
+                output += `\n\txmlns:${namespace}="${XMLNS_ANDROID[namespace]}"`;
             }
         }
         return output;

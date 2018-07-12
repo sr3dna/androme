@@ -1,5 +1,5 @@
 import { BoxModel, BoxRect, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
-import { convertInt, hasValue, hyphenToCamelCase, includesEnum, search } from '../lib/util';
+import { convertInt, hasValue, convertCamelCase, includesEnum, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { OVERFLOW_CHROME } from '../lib/constants';
 
@@ -56,7 +56,7 @@ export default abstract class Node implements BoxModel {
             if (element instanceof HTMLElement) {
                 const styleMap = object.__styleMap || {};
                 for (const inline of Array.from(element.style)) {
-                    styleMap[hyphenToCamelCase(inline)] = (<any> element.style)[inline];
+                    styleMap[convertCamelCase(inline)] = (<any> element.style)[inline];
                 }
                 this.style = object.__style || getComputedStyle(element);
                 this.styleMap = styleMap;
@@ -179,7 +179,7 @@ export default abstract class Node implements BoxModel {
         const style: StringMap = {};
         for (const attr in node.style) {
             if (attr.startsWith('font') || attr.startsWith('color')) {
-                const key = hyphenToCamelCase(attr);
+                const key = convertCamelCase(attr);
                 style[key] = node.style[key];
             }
         }

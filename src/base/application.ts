@@ -3,7 +3,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { hasValue, hyphenToCamelCase, optional, resetId, sortAsc, trim } from '../lib/util';
+import { hasValue, convertCamelCase, optional, resetId, sortAsc, trim } from '../lib/util';
 import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
 import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
@@ -133,7 +133,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
                     const attributes: Set<string> = new Set();
                     for (const attr of Array.from(cssRule.style)) {
-                        attributes.add(hyphenToCamelCase(attr));
+                        attributes.add(convertCamelCase(attr));
                     }
                     const elements = document.querySelectorAll(cssRule.selectorText);
                     if (this.appName !== '') {
@@ -145,7 +145,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                     Array.from(elements).forEach((element: HTMLElement) => {
                         for (const attr of Array.from(element.style)) {
-                            attributes.add(hyphenToCamelCase(attr));
+                            attributes.add(convertCamelCase(attr));
                         }
                         const style = getStyle(element);
                         const styleMap: StringMap = {};
@@ -434,12 +434,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 item.setTarget(nodeY, parent);
                                 if (item.condition()) {
                                     const result =  item.processNode(mapX, mapY);
-                                    if (result.xml || nodeY.renderParent) {
-                                        rendered.push(item);
+                                    if (result.xml !== '') {
+                                        renderXml(parent.id, result.xml);
                                     }
-                                    renderXml(parent.id, result.xml);
                                     if (result.parent) {
                                         parent = (<T> result.parent);
+                                    }
+                                    if (result.xml !== '' || result.proceed) {
+                                        rendered.push(item);
                                     }
                                     if (result.proceed) {
                                         proceed = true;

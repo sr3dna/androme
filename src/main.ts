@@ -14,6 +14,7 @@ import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
 
 import External from './extension/external';
+import Custom from './extension/custom';
 import Table from './extension/table';
 import Grid from './extension/grid';
 
@@ -33,6 +34,7 @@ let LOADING = false;
 const ROOT_CACHE: Set<HTMLElement> = new Set();
 const EXTENSIONS = {
     [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
+    [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
     [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL']),
     [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
     [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
