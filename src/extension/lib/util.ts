@@ -19,32 +19,26 @@ export function formatResource(options: {}) {
                                         value = Resource.addString(value);
                                         if (value !== '') {
                                             object[attr] = `@string/${value}`;
+                                            continue;
                                         }
                                     }
                                 }
                                 break;
-                            case 'background':
-                                const hex = parseHex(value);
-                                if (hex !== '') {
-                                    object[attr] = `@color/${Resource.addColor(hex)}`;
-                                    break;
-                                }
                             case 'src':
                                 if (/^\w+:\/\//.test(value)) {
                                     value = Resource.addImage({ 'mdpi': value });
                                     if (value !== '') {
                                         object[attr] = `@drawable/${value}`;
+                                        continue;
                                     }
                                 }
                                 break;
                         }
                         break;
                 }
-                if (attr.toLowerCase().indexOf('color') !== -1) {
-                    const hex = parseHex(value);
-                    if (hex !== '') {
-                        object[attr] = `@color/${Resource.addColor(hex)}`;
-                    }
+                const hex = parseHex(value);
+                if (hex !== '') {
+                    object[attr] = `@color/${Resource.addColor(hex)}`;
                 }
             }
         }

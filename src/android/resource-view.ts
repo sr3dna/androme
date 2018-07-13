@@ -1,4 +1,4 @@
-import { ArrayMap, BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
+import { BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -384,7 +384,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setOptionArray();
         this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
-                const stored: ArrayMap<string> = (<any> node.element).__optionArray;
+                const stored: ObjectMap<string[]> = (<any> node.element).__optionArray;
                 const method = METHOD_ANDROID['optionArray'];
                 let result: string[] = [];
                 if (stored.stringArray != null) {

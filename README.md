@@ -193,7 +193,7 @@ There is no official documentation for the time being since this project is stil
 .density // dpi
 .settings // see user preferences section
 
-customize(build: number, widget: string, options: {}) // global xml attributes applied to specific views
+customize(build: number, widget: string, options: { android: {}, app: {} }) // global attributes applied to specific views (widget: 'Button' / 'Spinner' / 'namespace.thirdparty.control')
 
 parseDocument() // see installation section
 

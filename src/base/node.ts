@@ -228,7 +228,7 @@ export default abstract class Node implements BoxModel {
         if (arguments.length === 2) {
             this.styleMap[attr] = (hasValue(value) ? value : '');
         }
-        return this.styleMap[attr] || (this.style && (<any> this.style)[attr]) || '';
+        return this.styleMap[attr] || (this.style && this.style[attr]) || '';
     }
 
     public setExcludeProcedure() {

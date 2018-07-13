@@ -1,4 +1,4 @@
-import { IExtension, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, IExtension, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
@@ -258,7 +258,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
         }
         if (this.cache.list.length > 0) {
-            const preAlignment = {};
+            const preAlignment: ObjectIndex<ObjectMap<Null<string>>> = {};
             this.cache.list.forEach(node => {
                 const element = node.element;
                 preAlignment[node.id] = {};
@@ -336,12 +336,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             });
             this.cache.list.forEach(node => {
-                if (node.hasElement) {
-                    const style = preAlignment[node.id];
-                    if (style != null) {
-                        for (const attr in style) {
-                            node.element.style[attr] = style[attr];
-                        }
+                const style = preAlignment[node.id];
+                if (style != null) {
+                    for (const attr in style) {
+                        node.element.style[attr] = style[attr];
                     }
                 }
             });
@@ -353,9 +351,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             this.cache.list.forEach(node => {
                 if (node.hasElement) {
                     let i = 0;
-                    Array.from(node.element.childNodes).forEach((element: any) => {
-                        if (element.__node != null && (element.__node.parent.element === node.element)) {
-                            element.__node.parentIndex = i++;
+                    Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
+                        const child = (<T> (<any> element).__node);
+                        if (child && child.parent.element === node.element) {
+                            child.parentIndex = i++;
                         }
                     });
                     sortAsc(node.children, 'parentIndex');
@@ -370,8 +369,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public createLayoutXml() {
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
         let empty = true;
-        const mapX: any = [];
-        const mapY: any = [];
+        const mapX: ArrayIndex<ObjectIndex<T[]>> = [];
+        const mapY: ArrayIndex<ObjectIndex<T[]>> = [];
         const extensions = this.extensions;
         this.cache.list.forEach(node => {
             const x = Math.floor(node.linear.left);
@@ -624,7 +623,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         });
-        const template = {};
+        const template: StringMap = {};
         for (const id in this.insert) {
             template[id] = this.insert[id].join('\n');
         }

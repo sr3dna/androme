@@ -1,4 +1,4 @@
-import { PlainFile, ResourceMap, ViewData } from '../lib/types';
+import { PlainFile, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Node from './node';
 import { lastIndexOf, hasValue, trim } from '../lib/util';
 
@@ -21,8 +21,8 @@ export default abstract class File<T extends Node> {
     }
 
     public abstract saveAllToDisk(data: ViewData<T>): void;
-    public abstract layoutAllToXml(data: ViewData<T>, saveToDisk?: boolean): {};
-    public abstract resourceAllToXml(saveToDisk?: boolean): {};
+    public abstract layoutAllToXml(data: ViewData<T>, saveToDisk?: boolean): StringMap;
+    public abstract resourceAllToXml(saveToDisk?: boolean): StringMap;
     public abstract resourceStringToXml(saveToDisk?: boolean): string;
     public abstract resourceStringArrayToXml(saveToDisk?: boolean): string;
     public abstract resourceFontToXml(saveToDisk?: boolean): string;

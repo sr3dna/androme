@@ -1,4 +1,4 @@
-import { ExtensionResult, ObjectIndex } from '../lib/types';
+import { ArrayIndex, ExtensionResult, ObjectIndex } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
@@ -21,7 +21,7 @@ export default class Grid extends Extension<T, U> {
         );
     }
 
-    public processNode(mapX: ObjectIndex<ObjectIndex<T[]>>, mapY: ObjectIndex<ObjectIndex<T[]>>): ExtensionResult {
+    public processNode(mapX: ArrayIndex<ObjectIndex<T[]>>, mapY: ArrayIndex<ObjectIndex<T[]>>): ExtensionResult {
         const node = this.node;
         const parent = (<T> this.parent);
         let xml = '';

@@ -1,4 +1,4 @@
-import { ExtensionResult, IExtension, ObjectMap } from '../../../lib/types';
+import { ExtensionResult, IExtension, ObjectMap, StringMap } from '../../../lib/types';
 import Resource from '../../../base/resource';
 import Nav from '../../../extension/nav';
 import View from '../../view';
@@ -62,7 +62,7 @@ export default class Menu<T extends View> extends Nav {
         node.renderDepth = parent.renderDepth + 1;
         node.renderParent = true;
         node.excludeResource |= NODE_RESOURCE.ALL;
-        const options: ObjectMap<any> = { android: {}, app: {} };
+        const options: ObjectMap<StringMap> = { android: {}, app: {} };
         const children = (<HTMLElement[]> Array.from(node.element.children));
         let nodeName = VIEW_NAVIGATION.ITEM;
         let title = '';

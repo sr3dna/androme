@@ -22,8 +22,8 @@ export interface IExtension {
     init(element: HTMLElement): boolean;
     afterInit(internal?: boolean): void;
     condition(): void;
-    processNode(mapX?: ObjectIndex<ObjectIndex<Node[]>>, mapY?: ObjectIndex<ObjectIndex<Node[]>>): ExtensionResult;
-    processChild(mapX?: ObjectIndex<ObjectIndex<Node[]>>, mapY?: ObjectIndex<ObjectIndex<Node[]>>): ExtensionResult;
+    processNode(mapX?: ArrayIndex<ObjectIndex<Node[]>>, mapY?: ArrayIndex<ObjectIndex<Node[]>>): ExtensionResult;
+    processChild(mapX?: ArrayIndex<ObjectIndex<Node[]>>, mapY?: ArrayIndex<ObjectIndex<Node[]>>): ExtensionResult;
     afterRender(): void;
     insert(): void;
     afterInsert(): void;
@@ -113,16 +113,11 @@ export interface ObjectMap<T> {
 
 export interface ObjectIndex<T> {
     [key: number]: T;
-    length?: number;
-}
-
-export interface ArrayMap<T> {
-    [key: string]: T[];
 }
 
 export interface ArrayIndex<T> {
-    [key: number]: T[];
-    length?: number;
+    [key: number]: T;
+    length: number;
 }
 
 export interface ViewData<T> {

@@ -1,4 +1,4 @@
-import { ExtensionDependency, ExtensionResult, IExtension, Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
+import { ArrayIndex, ExtensionDependency, ExtensionResult, IExtension, Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
@@ -90,11 +90,11 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         return false;
     }
 
-    public processNode(mapX?: ObjectIndex<ObjectIndex<T[]>>, mapY?: ObjectIndex<ObjectIndex<T[]>>): ExtensionResult {
+    public processNode(mapX?: ArrayIndex<ObjectIndex<T[]>>, mapY?: ArrayIndex<ObjectIndex<T[]>>): ExtensionResult {
         return { xml: '' };
     }
 
-    public processChild(mapX?: ObjectIndex<ObjectIndex<T[]>>, mapY?: ObjectIndex<ObjectIndex<T[]>>): ExtensionResult {
+    public processChild(mapX?: ArrayIndex<ObjectIndex<T[]>>, mapY?: ArrayIndex<ObjectIndex<T[]>>): ExtensionResult {
         return { xml: '' };
     }
 
@@ -114,14 +114,14 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         return;
     }
 
-    public getData(): StringMap {
+    public getData() {
         const element = this.element;
-        const result = {};
+        const result: StringMap = {};
         if (element != null) {
             const prefix = convertCamelCase(this.name, '\\.');
             for (const attr in element.dataset) {
                 if (attr.length > prefix.length && attr.startsWith(prefix)) {
-                    result[capitalize(attr.substring(prefix.length), false)] = element.dataset[attr];
+                    result[capitalize(attr.substring(prefix.length), false)] = (<string> element.dataset[attr]);
                 }
             }
         }

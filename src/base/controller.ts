@@ -1,17 +1,13 @@
-import { Null, ViewData } from '../lib/types';
+import { Null, ObjectIndex, ViewData } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import { hasValue, repeat } from '../lib/util';
 
-interface ViewAppend {
-    [id: number]: string[];
-}
-
 export default abstract class Controller<T extends Node, U extends NodeList<T>> {
     public cache: U;
 
-    private before: ViewAppend = {};
-    private after: ViewAppend = {};
+    private before: ObjectIndex<string[]> = {};
+    private after: ObjectIndex<string[]> = {};
 
     constructor() {
     }

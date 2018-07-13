@@ -1,4 +1,4 @@
-import { ArrayIndex, Null, ObjectMap, Point, StringMap, ViewData } from '../lib/types';
+import { Null, ObjectIndex, ObjectMap, Point, StringMap, ViewData } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
@@ -346,7 +346,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 case 'column-reverse':
                                 sorted.reverse();
                             }
-                            const map: ArrayIndex<T> = {};
+                            const map: ObjectIndex<T[]> = {};
                             const levels: number[] = [];
                             sorted.forEach(item => {
                                 const y = item.linear.top;

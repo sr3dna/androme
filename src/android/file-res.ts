@@ -54,7 +54,7 @@ export default class FileRes<T extends View> extends File<T> {
         return result;
     }
 
-    public resourceAllToXml(saveToDisk = false): {} {
+    public resourceAllToXml(saveToDisk = false) {
         const result: StringMap = {
             string: this.resourceStringToXml(),
             stringArray: this.resourceStringArrayToXml(),

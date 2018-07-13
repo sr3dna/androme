@@ -1,6 +1,6 @@
-import { ArrayMap, ObjectMap, StringMap } from './types';
+import { ObjectMap, StringMap } from './types';
 
-let ID: ArrayMap<string>;
+let ID: ObjectMap<string[]>;
 resetId();
 
 function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
