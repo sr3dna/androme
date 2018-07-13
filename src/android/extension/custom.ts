@@ -2,7 +2,7 @@ import View from '../view';
 import Custom from '../../extension/custom';
 import { formatResource } from './lib/util';
 
-export default class ListAndroid<T extends View> extends Custom {
+export default class CustomAndroid<T extends View> extends Custom {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }

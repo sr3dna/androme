@@ -15,10 +15,10 @@ import API_ANDROID from './android/customizations';
 
 import External from './extension/external';
 import Table from './extension/table';
-import Grid from './extension/grid';
 
 import Custom from './android/extension/custom';
 import List from './android/extension/list';
+import Grid from './android/extension/grid';
 import Button from './android/extension/widget/floatingactionbutton';
 import Menu from './android/extension/widget/menu';
 import Coordinator from './android/extension/widget/coodinator';

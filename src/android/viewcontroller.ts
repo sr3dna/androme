@@ -1087,7 +1087,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     public setDimensions(data: ViewData<T>) {
         const groups: ObjectMap<any> = {};
         data.cache.filter(node => node.visible).forEach(node => {
-            node.setGridSpan();
             node.setBoxSpacing();
             if (SETTINGS.dimensResourceValue) {
                 const tagName = node.tagName.toLowerCase();

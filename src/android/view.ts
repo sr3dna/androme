@@ -1,6 +1,6 @@
 import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { averageInt, calculateBias, convertEnum, convertInt, convertPX, convertWord, formatPX, generateId, hasValue, isPercent, lastIndexOf, optional } from '../lib/util';
+import { calculateBias, convertEnum, convertInt, convertPX, convertWord, formatPX, generateId, hasValue, isPercent, lastIndexOf, optional } from '../lib/util';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
@@ -425,29 +425,6 @@ export default class View extends Node {
                     }
                 }
             });
-        }
-    }
-
-    public setGridSpan() {
-        if (this.gridRowSpan > 1) {
-            this.android('layout_rowSpan', this.gridRowSpan.toString());
-        }
-        if (this.gridColumnSpan > 1) {
-            this.android('layout_columnSpan', this.gridColumnSpan.toString());
-        }
-        if (this.gridPadding) {
-            if (this.gridPadding.top > 0) {
-                this.modifyBox(BOX_STANDARD.PADDING_TOP, this.gridPadding.top);
-            }
-            if (this.gridPadding.right.length > 0) {
-                this.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(this.gridPadding.right));
-            }
-            if (this.gridPadding.bottom > 0) {
-                this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.gridPadding.bottom);
-            }
-            if (this.gridPadding.left.length > 0) {
-                this.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(this.gridPadding.left));
-            }
         }
     }
 
