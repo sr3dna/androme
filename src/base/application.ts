@@ -7,7 +7,7 @@ import { hasValue, convertCamelCase, includesEnum, optional, resetId, sortAsc, t
 import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
 import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
-import { BLOCK_ELEMENT, INLINE_ELEMENT, MAP_ELEMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BLOCK_ELEMENT, MAP_ELEMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
@@ -129,7 +129,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.resourceHandler.setFontStyle();
         this.resourceHandler.setBoxSpacing();
         this.resourceHandler.setBoxStyle();
-        this.resourceHandler.setValueString();
+        this.resourceHandler.setValueString(this.controllerHandler.inlineExclude);
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
     }
@@ -235,7 +235,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (!this.elements.has(element)) {
                 this.orderExt(extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
-                    if (INLINE_ELEMENT.includes(element.tagName) && element.parentElement && (MAP_ELEMENT[element.parentElement.tagName] != null || INLINE_ELEMENT.includes(element.parentElement.tagName))) {
+                    const inlineExclude = this.controllerHandler.inlineExclude;
+                    if (element.parentElement != null && inlineExclude.includes(element.tagName) && (MAP_ELEMENT[element.parentElement.tagName] != null || inlineExclude.includes(element.parentElement.tagName))) {
                         continue;
                     }
                     let valid = true;
@@ -325,7 +326,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         node.parent = closest;
                     }
                 }
-                if (node.element.children.length > 0 && !node.children.every((current: T) => INLINE_ELEMENT.includes(current.tagName))) {
+                const inlineExclude = this.controllerHandler.inlineExclude;
+                if (node.element.children.length > 0 && (inlineExclude.length === 0 || node.children.some(current => !inlineExclude.includes(current.tagName)))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
@@ -472,10 +474,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                         if (!nodeY.renderParent) {
                             let xml = '';
-                            if (nodeY.viewName === '') {
-                                if (nodeY.children.length === 0 || nodeY.cascade().every(node => INLINE_ELEMENT.includes(node.element.tagName))) {
+                            if (nodeY.nodeName === '') {
+                                const inlineExclude = this.controllerHandler.inlineExclude;
+                                if (nodeY.children.length === 0 || (!nodeY.documentRoot && inlineExclude.length > 0 && nodeY.cascade().every(node => inlineExclude.includes(node.element.tagName)))) {
                                     if (hasFreeFormText(nodeY.element) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
-                                        xml += this.writeView(nodeY, parent, NODE_STANDARD.TEXT);
+                                        xml += this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
                                     else {
                                         if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
@@ -518,7 +521,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 }
                             }
                             else {
-                                xml += this.writeView(nodeY, parent, nodeY.viewName);
+                                xml += this.writeNode(nodeY, parent, nodeY.nodeName);
                             }
                             renderXml(parent.id, xml);
                         }
@@ -559,7 +562,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public writeFrameLayout(node: T, parent: T) {
         if (node.children.length === 0) {
-            return this.controllerHandler.renderView(node, parent, NODE_STANDARD.FRAME);
+            return this.controllerHandler.renderNode(node, parent, NODE_STANDARD.FRAME);
         }
         else {
             return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.FRAME);
@@ -582,8 +585,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.CONSTRAINT);
     }
 
-    public writeView(node: T, parent: T, viewName: number | string) {
-        return this.controllerHandler.renderView(node, parent, viewName);
+    public writeNode(node: T, parent: T, nodeName: number | string) {
+        return this.controllerHandler.renderNode(node, parent, nodeName);
     }
 
     public writeDefaultLayout(node: T, parent: T) {
@@ -773,19 +776,19 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public set appName(value) {
+    set appName(value) {
         if (this.resourceHandler != null) {
             this.resourceHandler.file.appName = value;
         }
     }
-    public get appName() {
+    get appName() {
         return (this.resourceHandler != null ? this.resourceHandler.file.appName : '');
     }
 
-    public set current(value) {
+    set current(value) {
         this.views[this.currentIndex] = value;
     }
-    public get current() {
+    get current() {
         return this.views[this.currentIndex];
     }
 
@@ -801,11 +804,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         return this._extensions.filter(item => item.enabled);
     }
 
-    public get viewData(): ViewData<T> {
+    get viewData(): ViewData<T> {
         return { cache: this.cacheInternal.list, views: this.views, includes: this.includes };
     }
 
-    public get size() {
+    get size() {
         return this.views.length + this.includes.length;
     }
 }

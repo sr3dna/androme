@@ -44,10 +44,10 @@ export default class Menu<T extends View> extends Nav {
 
     public processNode(): ExtensionResult {
         const node = (<T> this.node);
-        const xml = this.application.controllerHandler.getViewStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
+        const xml = this.application.controllerHandler.getNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.renderParent = true;
         node.cascade().forEach(item => item.renderExtension = (<IExtension> this));
-        node.excludeResource = NODE_RESOURCE.ALL;
+        node.excludeResource |= NODE_RESOURCE.ALL;
         return { xml };
     }
 
@@ -59,12 +59,12 @@ export default class Menu<T extends View> extends Nav {
             return { xml: '', proceed: true };
         }
         const parent = (<T> this.parent);
-        node.excludeResource = NODE_RESOURCE.ALL;
         node.renderDepth = parent.renderDepth + 1;
         node.renderParent = true;
+        node.excludeResource |= NODE_RESOURCE.ALL;
         const options: ObjectMap<any> = { android: {}, app: {} };
         const children = (<HTMLElement[]> Array.from(node.element.children));
-        let viewName = VIEW_NAVIGATION.ITEM;
+        let nodeName = VIEW_NAVIGATION.ITEM;
         let title = '';
         let layout = false;
         let proceed = false;
@@ -92,11 +92,11 @@ export default class Menu<T extends View> extends Nav {
                 node.children.forEach(item => item.tagName !== 'NAV' && item.hide());
             }
             else if (node.tagName === 'NAV') {
-                viewName = VIEW_NAVIGATION.MENU;
+                nodeName = VIEW_NAVIGATION.MENU;
                 proceed = true;
             }
             else {
-                viewName = VIEW_NAVIGATION.GROUP;
+                nodeName = VIEW_NAVIGATION.GROUP;
                 let checkable = '';
                 if (node.children.every((item: T) => this.hasInputType(item, 'radio'))) {
                     checkable = 'single';
@@ -116,7 +116,7 @@ export default class Menu<T extends View> extends Nav {
             }
             title = (element.title !== '' ? element.title : element.innerText).trim();
         }
-        switch (viewName) {
+        switch (nodeName) {
             case VIEW_NAVIGATION.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') == null) {
@@ -149,12 +149,12 @@ export default class Menu<T extends View> extends Nav {
             }
         }
         if (options.android.id == null) {
-            node.setViewId(viewName);
+            node.setNodeId(nodeName);
         }
         else {
-            node.viewName = viewName;
+            node.nodeName = nodeName;
         }
-        const xml = this.application.controllerHandler.getViewStatic(viewName, node.depth, options, '', '', node, layout);
+        const xml = this.application.controllerHandler.getNodeStatic(nodeName, node.depth, options, '', '', node, layout);
         return { xml, proceed };
     }
 

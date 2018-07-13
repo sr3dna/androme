@@ -5,7 +5,7 @@ import NodeList from './nodelist';
 import { cameltoLowerCase, convertPX, generateId, hasValue, includesEnum, isNumber, optional, resolvePath, lastIndexOf } from '../lib/util';
 import { getBoxSpacing, sameAsParent } from '../lib/dom';
 import { findNearestColor, parseRGBA } from '../lib/color';
-import { INLINE_ELEMENT, MAP_ELEMENT, NODE_RESOURCE } from '../lib/constants';
+import { MAP_ELEMENT, NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
@@ -202,7 +202,12 @@ export default abstract class Resource<T extends Node> {
                 if (!hasValue(object.__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
                     const result: any = getBoxSpacing(element);
                     for (const i in result) {
-                        result[i] += 'px';
+                        if (node.inline && (i === 'marginTop' || i === 'marginBottom')) {
+                            result[i] = '0px';
+                        }
+                        else {
+                            result[i] += 'px';
+                        }
                     }
                     object.__boxSpacing = result;
                 }
@@ -355,7 +360,7 @@ export default abstract class Resource<T extends Node> {
         });
     }
 
-    public setValueString() {
+    public setValueString(inlineExclude: string[]) {
         this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const element = (<HTMLInputElement> node.element);
@@ -371,7 +376,7 @@ export default abstract class Resource<T extends Node> {
                     else if (element.nodeName === '#text') {
                         value = optional(element, 'textContent').trim();
                     }
-                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && INLINE_ELEMENT.includes(child.tagName)))))) {
+                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && inlineExclude.includes(child.tagName)))))) {
                         name = element.innerText.trim();
                         value = element.innerHTML.trim();
                     }

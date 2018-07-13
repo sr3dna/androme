@@ -292,8 +292,8 @@ export function parseHex(value: string) {
         if (color.length > 0) {
             value = color[0];
         }
-        if (value.charAt(0) === '#') {
-            return value;
+        if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
+            return (value.length === 4 ? parseRGBA(convertRGB(<Color> { rgb: convertHextoRGB(value) }))[0] : value);
         }
     }
     return '';

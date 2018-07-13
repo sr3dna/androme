@@ -46,40 +46,40 @@ export default class Drawer extends Extension<T, U> {
         const controller = application.controllerHandler;
         const node = (<T> this.node);
         let depth = node.depth + node.renderDepth;
-        let options = Object.assign({}, this.options.drawer);
+        const optionsDrawer = Object.assign({}, this.options.drawer);
         let menu = findNestedMenu(node);
         if (menu != null) {
-            overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+            overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
         }
-        let xml = controller.getViewStatic(VIEW_SUPPORT.DRAWER, depth, { android: options.android, app: options.app }, 'match_parent', 'match_parent', node, true);
-        const filename = `${node.viewId}_content`;
+        let xml = controller.getNodeStatic(VIEW_SUPPORT.DRAWER, depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
+        const filename = `${node.nodeId}_content`;
         let include = '';
         if (this.options.includes == null || this.options.includes) {
-            include = controller.getViewStatic('include', depth + 1, { layout: `@layout/${filename}` });
+            include = controller.getNodeStatic('include', depth + 1, { layout: `@layout/${filename}` });
             depth = -1;
         }
         const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
         coordinator.parent = node;
         coordinator.inheritBase(node);
         coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
-        coordinator.excludeResource = NODE_RESOURCE.ALL;
         coordinator.isolated = true;
+        coordinator.excludeResource |= NODE_RESOURCE.ALL;
         application.cache.list.push(coordinator);
-        const content = controller.getViewStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
-        options = Object.assign({}, this.options.navigation);
-        overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
+        const content = controller.getNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
+        const optionsNavigation = Object.assign({}, this.options.navigation);
+        overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
             this.createResourceTheme();
-            overwriteDefault(options, 'android', 'id', `${node.stringId}_view`);
-            overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-            overwriteDefault(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
-            overwriteDefault(options, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
-            const navigation = controller.getViewStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, { android: options.android, app: options.app }, 'wrap_content', 'match_parent');
+            overwriteDefault(optionsNavigation, 'android', 'id', `${node.stringId}_view`);
+            overwriteDefault(optionsNavigation, 'android', 'fitsSystemWindows', 'true');
+            overwriteDefault(optionsNavigation, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
+            overwriteDefault(optionsNavigation, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
+            const navigation = controller.getNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, optionsNavigation, 'wrap_content', 'match_parent');
             xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
         }
         else {
             const navView = node.children[node.children.length - 1];
-            navView.android('layout_gravity', options.android.layout_gravity);
+            navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
             navView.isolated = true;
             controller.prependBefore(navView.id, (include !== '' ? include : content));
@@ -95,7 +95,7 @@ export default class Drawer extends Extension<T, U> {
             application.addInclude(filename, content);
         }
         node.renderParent = true;
-        node.excludeResource = NODE_RESOURCE.FONT_STYLE;
+        node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
         return { xml };
     }
 

@@ -49,7 +49,7 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
     // without Express: use either console.log() or element.innerHTML to display using "write" commands
 
     document.addEventListener('DOMContentLoaded', function() {
-                
+        // optional
         androme.configureExtension('androme.grid', { balanceColumns: true }); 
 
         // required: zero or more
@@ -116,7 +116,7 @@ You can preview the library with the provided /demos/*.html which for the the ti
 
 Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for removing the built-in extension "androme.grid" when the generated UI is not accurate which it will instead use LinearLayout for placement. To use Constraint circle for placement you have to disable "useConstraintChain" and "useConstraintGuideline".
 
-Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using HTML tables is recommended for most applications as it will generate a very efficient GridLayout. Performance is probably faster than ConstraintLayout and also more accurate.
+Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using a table to create your layouts is recommended if you are not experienced with HTML.
 
 Android defaults their controls to vertical align "top" whereas HTML defaults to "baseline" which can cause the vertical alignment to be skewed. If you want them to be look similar vertically then you might have to explicity set the CSS property "vertical-align" to the nearest position "middle" as the "baseline" setting is only partially available in Android.
 
@@ -1217,6 +1217,22 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </resources>
 <!-- filename: res/values/string_arrays.xml -->
 ```
+### Color Resources
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#000000</color>
+    <color name="dark_blue">#00008B</color>
+    <color name="gray">#808080</color>
+    <color name="yellow_green">#9ACD32</color>
+    <color name="dark_gray">#A9A9A9</color>
+    <color name="light_gray_1">#CCCCCC</color>
+    <color name="white_smoke_1">#DDDDDD</color>
+    <color name="white">#FFFFFF</color>
+</resources>
+<!-- filename: res/values/colors.xml -->
+```
 ### Styles and Themes
 
 ```xml
@@ -1278,22 +1294,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
     <font android:fontStyle="normal" android:fontWeight="700" android:font="@font/tahoma_bold" />
 </font-family>
 <!-- filename: res/font/tahoma.xml -->
-```
-### Color Resources
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="black">#000000</color>
-    <color name="dark_blue">#00008B</color>
-    <color name="gray">#808080</color>
-    <color name="yellow_green">#9ACD32</color>
-    <color name="dark_gray">#A9A9A9</color>
-    <color name="light_gray_1">#CCCCCC</color>
-    <color name="white_smoke_1">#DDDDDD</color>
-    <color name="white">#FFFFFF</color>
-</resources>
-<!-- filename: res/values/colors.xml -->
 ```
 ### Dimension Resources
 

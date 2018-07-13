@@ -52,6 +52,10 @@ export default abstract class NodeList<T extends Node> {
         return this._list.find(node => node.id === id) || null;
     }
 
+    public findByNodeId(id: string) {
+        return this._list.find(node => node.nodeId === id) || null;
+    }
+
     public reset() {
         NodeList.currentId = 0;
         this.clear();

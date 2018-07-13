@@ -4,13 +4,13 @@ import { averageInt, calculateBias, convertEnum, convertInt, convertPX, convertW
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
-import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, VIEW_STANDARD } from './constants';
+import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './constants';
 
 type T = View;
 
 export default class View extends Node {
     public static getViewName(tagName: number): string {
-        return VIEW_STANDARD[NODE_STANDARD[tagName]];
+        return NODE_ANDROID[NODE_STANDARD[tagName]];
     }
 
     public constraint: ObjectMap<any> = {};
@@ -77,14 +77,14 @@ export default class View extends Node {
         if (overwrite == null) {
             overwrite = (adjacent === 'parent' || adjacent === 'true');
         }
-        switch (this.renderParent.viewName) {
-            case VIEW_STANDARD.CONSTRAINT:
+        switch (this.renderParent.nodeName) {
+            case NODE_ANDROID.CONSTRAINT:
                 if (arguments.length === 1) {
                     return this.app(position);
                 }
                 this.app(position, adjacent, overwrite);
                 break;
-            case VIEW_STANDARD.RELATIVE:
+            case NODE_ANDROID.RELATIVE:
                 if (arguments.length === 1) {
                     return this.android(position);
                 }
@@ -157,7 +157,7 @@ export default class View extends Node {
     public applyCustomizations() {
         [API_ANDROID[this.api], API_ANDROID[0]].forEach(item => {
             if (item && item.customizations != null) {
-                const customizations = item.customizations[this.viewName];
+                const customizations = item.customizations[this.nodeName];
                 if (customizations != null) {
                     for (const ns in customizations) {
                         for (const attr in customizations[ns]) {
@@ -171,24 +171,24 @@ export default class View extends Node {
 
     public is(...views: number[]) {
         for (const value of views) {
-            if (this.viewName === View.getViewName(value)) {
+            if (this.nodeName === View.getViewName(value)) {
                 return true;
             }
         }
         return false;
     }
 
-    public setViewId(viewName: string) {
-        for (const type in VIEW_STANDARD) {
-            if (VIEW_STANDARD[type] === viewName && NODE_STANDARD[type] != null) {
-                this.viewType = NODE_STANDARD[type];
+    public setNodeId(nodeName: string) {
+        for (const type in NODE_ANDROID) {
+            if (NODE_ANDROID[type] === nodeName && NODE_STANDARD[type] != null) {
+                this.nodeType = NODE_STANDARD[type];
                 break;
             }
         }
-        super.viewName = viewName || this.viewName;
-        if (this.viewId == null) {
+        super.nodeName = nodeName || this.nodeName;
+        if (this.nodeId == null) {
             const element = (<HTMLInputElement> this.element);
-            this.viewId = convertWord(generateId('android', (element.id || element.name || `${lastIndexOf(this.viewName, '.').toLowerCase()}_1`)));
+            this.nodeId = convertWord(generateId('android', (element.id || element.name || `${lastIndexOf(this.nodeName, '.').toLowerCase()}_1`)));
         }
         this.android('id', this.stringId);
     }
@@ -295,7 +295,7 @@ export default class View extends Node {
             else if (this.android('layout_height') == null) {
                 let layoutHeight = 'wrap_content';
                 if (height >= parentHeight) {
-                    if (this.documentRoot || (parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.viewName) && (!renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content'))) {
+                    if (this.documentRoot || (parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.nodeName) && (!renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content'))) {
                         layoutHeight = 'match_parent';
                     }
                 }
@@ -314,6 +314,7 @@ export default class View extends Node {
         const verticalAlign = this.styleMap.verticalAlign;
         let horizontal = '';
         let vertical = '';
+        const right = parseRTL('right');
         if (!this.floating || textView) {
             let node: T = this;
             while (node != null) {
@@ -333,7 +334,7 @@ export default class View extends Node {
                 horizontal = 'start';
                 break;
             case 'right':
-                horizontal = parseRTL('right');
+                horizontal = right;
                 break;
             case 'end':
                 horizontal = 'end';
@@ -362,13 +363,13 @@ export default class View extends Node {
             this.android('layout_gravity', 'fill');
         }
         else {
-            let horizontalFloat = (this.css('float') === 'right' ? parseRTL('right') : '');
+            let horizontalFloat = (this.css('float') === 'right' && this.renderParent.android('gravity') !== right ? right : '');
             let verticalFloat = '';
             if (horizontalFloat === '' && horizontal !== '' && !hasValue(this.styleMap.textAlign) && !textView) {
                 horizontalFloat = horizontal;
                 horizontal = '';
             }
-            if (vertical !== '' && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
+            if (vertical !== '' && renderParent instanceof View && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
                 verticalFloat = vertical;
                 vertical = '';
             }
@@ -379,7 +380,7 @@ export default class View extends Node {
         }
         if (this.renderChildren.length > 0) {
             if (!this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && this.renderChildren.every(item => item.css('float') === 'right')) {
-                this.android('gravity', parseRTL('right'));
+                this.android('gravity', right);
             }
         }
         else {
@@ -400,25 +401,27 @@ export default class View extends Node {
 
     public setBoxSpacing() {
         if (this.api >= BUILD_ANDROID.OREO) {
-            ['layout_margin', 'padding'].forEach(value => {
+            ['layout_margin', 'padding'].forEach((value, index) => {
                 const leftRtl = parseRTL(`${value}Left`);
                 const rightRtl = parseRTL(`${value}Right`);
-                const top = convertInt(this.android(`${value}Top`));
+                const top = (index === 0 && this.inline ? 0 : convertInt(this.android(`${value}Top`)));
                 const right = convertInt(this.android(rightRtl));
-                const bottom = convertInt(this.android(`${value}Bottom`));
+                const bottom = (index === 0 && this.inline ? 0 : convertInt(this.android(`${value}Bottom`)));
                 const left = convertInt(this.android(leftRtl));
                 if (top !== 0 && top === bottom && bottom === left && left === right) {
                     this.delete('android', `${value}*`);
                     this.android(value, formatPX(top));
                 }
                 else {
-                    if (top !== 0 && top === bottom) {
-                        this.delete('android', `${value}Top`, `${value}Bottom`);
-                        this.android(`${value}Vertical`, formatPX(top));
-                    }
-                    if (left !== 0 && left === right) {
-                        this.delete('android', leftRtl, rightRtl);
-                        this.android(`${value}Horizontal`, formatPX(left));
+                    if (index !== 0 || (this.renderParent instanceof View && !this.renderParent.is(NODE_STANDARD.GRID))) {
+                        if (top !== 0 && top === bottom) {
+                            this.delete('android', `${value}Top`, `${value}Bottom`);
+                            this.android(`${value}Vertical`, formatPX(top));
+                        }
+                        if (left !== 0 && left === right) {
+                            this.delete('android', leftRtl, rightRtl);
+                            this.android(`${value}Horizontal`, formatPX(left));
+                        }
                     }
                 }
             });
@@ -454,16 +457,18 @@ export default class View extends Node {
         let labeled = false;
         if (nextElement && nextElement.htmlFor === element.id && element.tagName === 'INPUT') {
             const node = (<any> nextElement).__node;
-            node.setViewId(VIEW_STANDARD.TEXT);
-            this.css('marginRight', node.style.marginRight);
-            this.css('paddingRight', node.style.paddingRight);
-            this.label = node;
-            node.hide();
-            node.labelFor = this;
-            labeled = true;
+            if (node.children.length === 0) {
+                node.setNodeId(NODE_ANDROID.TEXT);
+                this.css('marginRight', node.style.marginRight);
+                this.css('paddingRight', node.style.paddingRight);
+                this.label = node;
+                node.hide();
+                node.labelFor = this;
+                labeled = true;
+            }
         }
-        switch (this.viewName) {
-            case VIEW_STANDARD.EDIT:
+        switch (this.nodeName) {
+            case NODE_ANDROID.EDIT:
                 if (!labeled) {
                     let parent: T = this.renderParent;
                     let current: T = this;
@@ -481,10 +486,10 @@ export default class View extends Node {
                         label.android('labelFor', this.stringId);
                     }
                 }
-            case VIEW_STANDARD.SELECT:
-            case VIEW_STANDARD.CHECKBOX:
-            case VIEW_STANDARD.RADIO:
-            case VIEW_STANDARD.BUTTON:
+            case NODE_ANDROID.SELECT:
+            case NODE_ANDROID.CHECKBOX:
+            case NODE_ANDROID.RADIO:
+            case NODE_ANDROID.BUTTON:
                 if ((<HTMLInputElement> this.element).disabled) {
                     this.android('focusable', 'false');
                 }
@@ -502,15 +507,15 @@ export default class View extends Node {
     }
 
     get stringId() {
-        return (hasValue(this.viewId) ? `@+id/${this.viewId}` : '');
+        return (hasValue(this.nodeId) ? `@+id/${this.nodeId}` : '');
     }
 
-    set viewName(value) {
-        this._viewName = value;
+    set nodeName(value) {
+        this._nodeName = value;
     }
-    get viewName() {
-        if (this._viewName != null) {
-            return super.viewName;
+    get nodeName() {
+        if (this._nodeName != null) {
+            return super.nodeName;
         }
         else {
             const value: number = MAP_ELEMENT[this.tagName];

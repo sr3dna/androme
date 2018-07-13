@@ -27,7 +27,7 @@ export enum DENSITY_ANDROID {
     XXXHDPI = 640
 }
 
-export const VIEW_STANDARD = {
+export const NODE_ANDROID = {
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
@@ -68,12 +68,12 @@ export const BOX_ANDROID = {
 };
 
 export const FIXED_ANDROID = [
-    VIEW_STANDARD.EDIT,
-    VIEW_STANDARD.SELECT,
-    VIEW_STANDARD.CHECKBOX,
-    VIEW_STANDARD.RADIO,
-    VIEW_STANDARD.BUTTON,
-    VIEW_STANDARD.IMAGE
+    NODE_ANDROID.EDIT,
+    NODE_ANDROID.SELECT,
+    NODE_ANDROID.CHECKBOX,
+    NODE_ANDROID.RADIO,
+    NODE_ANDROID.BUTTON,
+    NODE_ANDROID.IMAGE
 ];
 
 export const XMLNS_ANDROID = {
@@ -134,3 +134,31 @@ export const FONTWEIGHT_ANDROID = {
     '800': 'extra_bold',
     '900': 'black'
 };
+
+export const WEBVIEW_ANDROID = [
+    'STRONG',
+    'B',
+    'EM',
+    'CITE',
+    'DFN',
+    'I',
+    'BIG',
+    'SMALL',
+    'FONT',
+    'BLOCKQUOTE',
+    'TT',
+    'A',
+    'U',
+    'SUP',
+    'SUB',
+    'STRIKE',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'DEL',
+    'LABEL',
+    'PLAINTEXT'
+];

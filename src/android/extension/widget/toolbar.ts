@@ -8,7 +8,7 @@ import { findNestedMenu, overwriteDefault } from '../lib/util';
 import { formatDimen, restoreIndent } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
 import { NODE_RESOURCE } from '../../../lib/constants';
-import { VIEW_STANDARD } from '../../constants';
+import { NODE_ANDROID } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
@@ -51,14 +51,15 @@ export default class Toolbar extends Extension<T, U> {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
         const target = (node.hasElement && node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
-        const options = Object.assign({}, (this.element != null ? this.options[this.element.id] : {}));
-        const optionsToolbar = Object.assign({}, options.toolbar);
+        const backgroundImage = node.css('backgroundImage');
+        const options = Object.assign({}, this.options[node.element.id]);
         const optionsAppBar = Object.assign({}, options.appBar);
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
-        const collapsingToolbar = (options.collapsingToolbar != null);
+        const optionsToolbar = Object.assign({}, options.toolbar);
         const appBar = (target || options.appBar != null);
+        const collapsingToolbar = (options.collapsingToolbar != null);
         let depth = (target ? 0 : node.depth + node.renderDepth);
-        let children = node.children.filter(item => item.isolated).length;
+        let children = node.children.filter(item => !item.isolated).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
                 if (element.dataset.navigationIcon != null) {
@@ -66,7 +67,7 @@ export default class Toolbar extends Extension<T, U> {
                     if (result !== '') {
                         overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
-                            children++;
+                            children--;
                         }
                     }
                 }
@@ -75,7 +76,7 @@ export default class Toolbar extends Extension<T, U> {
                     if (result !== '') {
                         overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
-                            children++;
+                            children--;
                         }
                     }
                 }
@@ -85,7 +86,9 @@ export default class Toolbar extends Extension<T, U> {
         let popupOverlay = '';
         if (target) {
             overwriteDefault(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
-            overwriteDefault(optionsToolbar, 'android', 'background', '?attr/colorPrimary');
+            if (backgroundImage === 'none') {
+                overwriteDefault(optionsToolbar, 'android', 'background', '?attr/colorPrimary');
+            }
         }
         if (collapsingToolbar) {
             overwriteDefault(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
@@ -96,18 +99,23 @@ export default class Toolbar extends Extension<T, U> {
         }
         else {
             overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
+            if (children === 0) {
+                overwriteDefault(optionsAppBar, 'android', 'layout_height', '?attr/actionBarSize');
+            }
+            if (backgroundImage !== 'none') {
+                overwriteDefault(optionsAppBar, 'android', 'src', `@drawable/${Resource.addImageURL(backgroundImage)}`);
+            }
         }
         if (findNestedMenu(node) != null) {
             overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
         }
         node.depth = depth + (appBar ? 1 : 0) + (options.collapsingToolbar ? 1 : 0);
-        let xml = controller.getViewStatic(VIEW_SUPPORT.TOOLBAR, node.depth, { android: optionsToolbar.android, app: optionsToolbar.app }, 'match_parent', 'wrap_content', node, (node.children.length - children > 0));
+        let xml = controller.getNodeStatic(VIEW_SUPPORT.TOOLBAR, node.depth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
         if (collapsingToolbar) {
-            const style = node.element.style;
-            if (style.backgroundImage) {
+            if (backgroundImage !== 'none') {
                 const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
                 let scaleType = 'center';
-                switch (style.backgroundSize) {
+                switch (node.css('backgroundSize')) {
                     case 'cover':
                     case '100% auto':
                     case 'auto 100%':
@@ -122,11 +130,11 @@ export default class Toolbar extends Extension<T, U> {
                         break;
                 }
                 overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
-                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${Resource.addImageURL(<string> style.backgroundImage)}`);
+                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${Resource.addImageURL(backgroundImage)}`);
                 overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                xml += controller.getViewStatic(VIEW_STANDARD.IMAGE, node.depth, { android: optionsBackgroundImage.android, app: optionsBackgroundImage.app }, 'match_parent', 'match_parent');
+                xml += controller.getNodeStatic(NODE_ANDROID.IMAGE, node.depth, optionsBackgroundImage, 'match_parent', 'match_parent');
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
         }
@@ -144,17 +152,19 @@ export default class Toolbar extends Extension<T, U> {
             else {
                 overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
-            outer = controller.getViewStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), { android: optionsAppBar.android, app: optionsAppBar.app }, 'match_parent', 'wrap_content', null, true);
+            outer = controller.getNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', null, true);
             if (collapsingToolbar) {
                 overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsing`);
                 overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
-                overwriteDefault(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
+                if (backgroundImage === 'none') {
+                    overwriteDefault(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
+                }
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                outer = outer.replace('{:0}', controller.getViewStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, ++depth, { android: optionsCollapsingToolbar.android, app: optionsCollapsingToolbar.app }, 'match_parent', 'match_parent', null, true));
+                outer = outer.replace('{:0}', controller.getNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, ++depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', null, true));
                 this.createResourceTheme(appBarOverlay, popupOverlay);
             }
-            node.viewId = optionsAppBar.android.id.replace('@+id/', '');
+            node.nodeId = optionsAppBar.android.id.replace('@+id/', '');
         }
         if (outer !== '') {
             xml = outer.replace('{:0}', xml);
@@ -189,7 +199,7 @@ export default class Toolbar extends Extension<T, U> {
         const id = optional(node, 'element.dataset.target');
         if (id !== '') {
             const parent = (<T> application.findByDomId(id));
-            const coordinator = application.cacheInternal.list.find(item => item.isolated && item.parent === parent && item.viewName === VIEW_SUPPORT.COORDINATOR);
+            const coordinator = application.cacheInternal.list.find(item => item.isolated && item.parent === parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
             if (coordinator != null) {
                 let xml = (<string> node.data(`${WIDGET_NAME.TOOLBAR}:insert`)) || '';
                 if (xml !== '') {

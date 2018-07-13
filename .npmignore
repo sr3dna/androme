@@ -1,5 +1,6 @@
 .vscode/
 build/
+demos/android/
 demos-dev/
 node_modules/
 src/

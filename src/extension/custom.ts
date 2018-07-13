@@ -2,6 +2,7 @@ import { ExtensionResult } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import { formatResource } from './lib/util';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;
@@ -24,7 +25,7 @@ export default class Custom extends Extension<T, U> {
                 xml = controller.renderGroup(node, parent, data.tag);
             }
             else {
-                xml = controller.renderView(node, parent, data.tag);
+                xml = controller.renderNode(node, parent, data.tag);
             }
         }
         return { xml };
@@ -33,6 +34,6 @@ export default class Custom extends Extension<T, U> {
     public afterInsert() {
         const node = this.node;
         const options = Object.assign({}, this.options[node.element.id]);
-        node.apply(options);
+        node.apply(formatResource(options));
     }
 }

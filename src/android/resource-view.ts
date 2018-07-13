@@ -253,7 +253,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 }
                             }
                             if (resourceName === '') {
-                                resourceName = `${node.tagName.toLowerCase()}_${node.viewId}`;
+                                resourceName = `${node.tagName.toLowerCase()}_${node.nodeId}`;
                                 STORED.DRAWABLES.set(resourceName, xml);
                             }
                         }
@@ -402,7 +402,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                 }
                 if (arrayName === '') {
-                    arrayName = `${node.viewId}_array`;
+                    arrayName = `${node.nodeId}_array`;
                     STORED.ARRAYS.set(arrayName, result);
                 }
                 node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
@@ -410,8 +410,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    public setValueString() {
-        super.setValueString();
+    public setValueString(inlineExclude: string[]) {
+        super.setValueString(inlineExclude);
         this.cache.list.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const element = (node.label != null ? node.label.element : node.element);
@@ -656,7 +656,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let append = '';
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
-                    append += `\n${indent + (node.viewType >= 11 ? 'android:theme="' : 'style="')}@style/${styles.pop()}"`;
+                    append += `\n${indent + (node.nodeType >= 11 ? 'android:theme="' : 'style="')}@style/${styles.pop()}"`;
                 }
                 if (attributes.length > 0) {
                     attributes.sort().forEach((value: string) => append += `\n${indent}${replaceDP(value, true)}`);

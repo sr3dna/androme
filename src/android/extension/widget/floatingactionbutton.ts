@@ -45,7 +45,7 @@ export default class FloatingActionButton<T extends View> extends Button {
         let insert = false;
         if (node.isolated) {
             const id = optional(node, 'parent.element.dataset.target');
-            if (id !== '' && node.parent.viewName !== VIEW_SUPPORT.COORDINATOR) {
+            if (id !== '' && node.parent.nodeName !== VIEW_SUPPORT.COORDINATOR) {
                 const coordinator = document.getElementById(id);
                 if (coordinator != null) {
                     insert = true;
@@ -53,8 +53,8 @@ export default class FloatingActionButton<T extends View> extends Button {
             }
         }
         node.depth = (insert ? 0 : node.parent.renderDepth + 1);
-        let xml = this.application.controllerHandler.getViewStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.parent.renderDepth + 1), options, 'wrap_content', 'wrap_content', node);
-        node.excludeResource = NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
+        let xml = this.application.controllerHandler.getNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
+        node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
         let proceed = false;
         if (node.isolated) {
             positionIsolated(node);
@@ -82,7 +82,7 @@ export default class FloatingActionButton<T extends View> extends Button {
         const id = optional(node, 'parent.element.dataset.target');
         if (id !== '') {
             const parent = this.application.findByDomId(id);
-            if (parent != null && parent.viewName === VIEW_SUPPORT.COORDINATOR) {
+            if (parent != null && parent.nodeName === VIEW_SUPPORT.COORDINATOR) {
                 let xml = (<string> node.data(`${WIDGET_NAME.FAB}:insert`)) || '';
                 if (xml !== '') {
                     node.renderDepth = parent.renderDepth + 1;

@@ -16,18 +16,20 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     constructor() {
     }
 
+    public abstract addXmlNamespace(name: string, uri: string): void;
     public abstract setConstraints(): void;
     public abstract setMarginPadding(): void;
     public abstract setDimensions(data: ViewData<T>): void;
     public abstract parseDimensions(content: string): string;
     public abstract setAttributes(data: ViewData<T>): void;
     public abstract insertAttributes(output: string, node: T): string;
-    public abstract renderGroup(node: T, parent: T, viewName: number | string, options?: {}): string;
-    public abstract renderView(node: T, parent: T, viewName: number | string): string;
+    public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
+    public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
     public abstract createGroup(node: T, parent: T, children: T[]): T;
-    public abstract getViewStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
-    public abstract getViewName(value: number): string;
-    public abstract addXmlNamespace(name: string, uri: string): void;
+    public abstract getNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
+    public abstract getNodeName(value: number): string;
+
+    public abstract get inlineExclude(): string[];
 
     public reset() {
         this.before = {};

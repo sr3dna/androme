@@ -5,7 +5,7 @@ import ViewList from '../../viewlist';
 import { includes, optional } from '../../../lib/util';
 import { overwriteDefault } from '../lib/util';
 import { NODE_RESOURCE } from '../../../lib/constants';
-import { VIEW_STANDARD } from '../../constants';
+import { NODE_ANDROID } from '../../constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import SETTINGS from '../../../settings';
 
@@ -24,7 +24,7 @@ export default class Coordinator extends Extension<T, U> {
         const parent = (<T> this.parent);
         let xml = controller.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
         node.apply(this.options[node.element.id]);
-        node.excludeResource = NODE_RESOURCE.FONT_STYLE;
+        node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
         const nodes = node.children.filter(item => !item.isolated);
         if (nodes.length > 0) {
             const toolbar = this.getToolbar(node);
@@ -43,15 +43,15 @@ export default class Coordinator extends Extension<T, U> {
                     collapsingToolbar = (extension.options[toolbar.element.id].collapsingToolbar);
                 }
             }
-            const filename = `${node.viewId}_content`;
+            const filename = `${node.nodeId}_content`;
             let include = '';
             if (this.options.includes == null || this.options.includes) {
-                include = controller.getViewStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
+                include = controller.getNodeStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
             }
             const layout = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
             layout.parent = node;
             layout.inheritBase(node);
-            layout.excludeResource = NODE_RESOURCE.ALL;
+            layout.excludeResource |= NODE_RESOURCE.ALL;
             nodes.forEach(item => {
                 item.parent = layout;
                 item.depth++;
@@ -68,11 +68,11 @@ export default class Coordinator extends Extension<T, U> {
             const [linearX, linearY] = [ViewList.linearX(nodes), ViewList.linearY(nodes)];
             let viewName = '';
             if (application.isLinearXY(linearX, linearY, node, <T[]> nodes)) {
-                viewName = VIEW_STANDARD.LINEAR;
+                viewName = NODE_ANDROID.LINEAR;
                 options.android.orientation = (linearY ? 'vertical' : 'horizontal');
             }
             else {
-                viewName = VIEW_STANDARD.CONSTRAINT;
+                viewName = NODE_ANDROID.CONSTRAINT;
             }
             if (collapsingToolbar != null) {
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_behavior', '@string/appbar_scrolling_view_behavior');
@@ -80,9 +80,9 @@ export default class Coordinator extends Extension<T, U> {
             }
             overwriteDefault((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
             const depth = (include !== '' ? 0 : node.depth + 1);
-            let content = controller.getViewStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true);
+            let content = controller.getNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true);
             if (collapsingToolbar != null) {
-                content = controller.getViewStatic(VIEW_STANDARD.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, SETTINGS.targetAPI), true).replace('{:0}', content);
+                content = controller.getNodeStatic(NODE_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, SETTINGS.targetAPI), true).replace('{:0}', content);
             }
             if (include !== '') {
                 application.addInclude(filename, content);

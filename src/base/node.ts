@@ -1,15 +1,15 @@
 import { BoxModel, BoxRect, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { convertInt, hasValue, convertCamelCase, includesEnum, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
-import { NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_PROCEDURE } from '../lib/constants';
+import { INLINE_ELEMENT, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_PROCEDURE } from '../lib/constants';
 
 type T = Node;
 
 export default abstract class Node implements BoxModel {
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
-    public viewId: string;
-    public viewType = 0;
+    public nodeId: string;
+    public nodeType = 0;
     public depth = -1;
     public renderDepth = 0;
     public parentIndex = Number.MAX_VALUE;
@@ -39,7 +39,7 @@ export default abstract class Node implements BoxModel {
     public abstract children: T[];
     public abstract renderChildren: T[];
 
-    protected _viewName: string;
+    protected _nodeName: string;
 
     private _element: HTMLElement;
     private _namespaces = new Set<string>();
@@ -69,7 +69,7 @@ export default abstract class Node implements BoxModel {
     }
 
     public abstract is(...views: number[]): boolean;
-    public abstract setViewId(viewName: string): void;
+    public abstract setNodeId(viewName: string): void;
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
     public abstract setAccessibility(): void;
@@ -348,11 +348,11 @@ export default abstract class Node implements BoxModel {
         return this._tagName || (this.hasElement ? (this.element.tagName === 'INPUT' ? (<HTMLInputElement> this.element).type.toUpperCase() : this.element.tagName) : '');
     }
 
-    set viewName(value) {
-        this._viewName = value;
+    set nodeName(value) {
+        this._nodeName = value;
     }
-    get viewName() {
-        return this._viewName;
+    get nodeName() {
+        return this._nodeName;
     }
 
     set renderParent(value: any) {
@@ -440,13 +440,13 @@ export default abstract class Node implements BoxModel {
     }
 
     get marginTop() {
-        return convertInt(this.css('marginTop'));
+        return (this.inline ? 0 : convertInt(this.css('marginTop')));
     }
     get marginRight() {
         return convertInt(this.css('marginRight'));
     }
     get marginBottom() {
-        return convertInt(this.css('marginBottom'));
+        return (this.inline ? 0 : convertInt(this.css('marginBottom')));
     }
     get marginLeft() {
         return convertInt(this.css('marginLeft'));
@@ -481,6 +481,10 @@ export default abstract class Node implements BoxModel {
     get pageflow() {
         const position = this.css('position');
         return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && convertInt(this.css('top')) === 0 && convertInt(this.css('right')) === 0 && convertInt(this.css('bottom')) === 0 && convertInt(this.css('left')) === 0));
+    }
+
+    get inline() {
+        return (!this.floating && (this.css('display') === 'inline' || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName))));
     }
 
     get center(): Point {
