@@ -18,7 +18,7 @@ type T = View;
 type U = ViewList<T>;
 
 export default class Toolbar extends Extension<T, U> {
-    constructor(name: string, tagNames: string[] = [], options?: {}) {
+    constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
         this.require(WIDGET_NAME.MENU);
     }

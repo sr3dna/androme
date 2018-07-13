@@ -14,10 +14,10 @@ import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
 
 import External from './extension/external';
-import Custom from './extension/custom';
 import Table from './extension/table';
 import Grid from './extension/grid';
 
+import Custom from './android/extension/custom';
 import List from './android/extension/list';
 import Button from './android/extension/widget/floatingactionbutton';
 import Menu from './android/extension/widget/menu';

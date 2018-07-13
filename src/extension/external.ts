@@ -7,7 +7,7 @@ type T = Node;
 type U = NodeList<T>;
 
 export default class External extends Extension<T, U> {
-    constructor(name: string, tagNames: string[] = [], options?: {}) {
+    constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
 

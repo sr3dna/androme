@@ -6,7 +6,7 @@ import View from './view';
 import ViewGroup from './viewgroup';
 import ViewList from './viewlist';
 import { convertPX, formatPX, generateId, hasValue, includesEnum, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
-import { formatResource } from '../extension/lib/util';
+import { formatResource } from './extension/lib/util';
 import { formatDimen } from '../lib/xml';
 import { getBoxSpacing } from '../lib/dom';
 import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD } from '../lib/constants';

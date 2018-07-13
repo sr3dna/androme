@@ -38,7 +38,7 @@ const VALIDATE_GROUP = {
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
 export default class Menu<T extends View> extends Nav {
-    constructor(name: string, tagNames: string[], options?: {}) {
+    constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
 

@@ -10,7 +10,7 @@ import { NODE_RESOURCE } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 export default class FloatingActionButton<T extends View> extends Button {
-    constructor(name: string, tagNames: string[], options?: {}) {
+    constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
 

@@ -7,7 +7,7 @@ import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
 
 export default class ListAndroid<T extends View> extends List {
-    constructor(name: string, tagNames: string[], options?: {}) {
+    constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
 

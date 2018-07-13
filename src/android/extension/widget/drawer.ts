@@ -16,7 +16,7 @@ type T = View;
 type U = ViewList<T>;
 
 export default class Drawer extends Extension<T, U> {
-    constructor(name: string, tagNames: string[] = [], options?: {}) {
+    constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
         this.documentRoot = true;
         this.require(EXT_NAME.EXTERNAL, true);
