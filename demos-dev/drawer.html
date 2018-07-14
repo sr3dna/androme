@@ -11,6 +11,7 @@
             width: 300px;
             background-color: #fff;
             border: 1px solid #ccc;
+            overflow: hidden;
         }
         #drawer_demo button, #drawer_demo input[type=button] {
             position: absolute;
@@ -38,6 +39,7 @@
         #drawer_aside div {
             font-size: 11px;
             padding: 8px;
+            overflow: hidden;
         }
         #drawer_aside div:hover {
             background-color: azure;
@@ -49,13 +51,15 @@
             margin-right: 10px;
             float: left;
         }
-        div {
-            font-size: 12px;
-            overflow: hidden;
-        }
-        label {
+        #drawer_aside label {
             margin-top: 4px;
             float: left;
+        }
+        .content {
+            font-size: 12px;
+            color: #fff;
+            background-color: #aaa;
+            padding: 8px;
         }
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
@@ -84,8 +88,8 @@
     <div id="androme_ui">
         <div id="drawer_demo" data-ext="androme.widget.drawer" onclick="toggleAside();">
             <div style="padding: 20px;">
-                <h2>title</h2>
-                <div style="color: #fff; background-color: #aaa; padding: 8px;">
+                <h3>title</h3>
+                <div class="content">
                     content content content content content content content content content content
                     content content content content content content content content content content
                     content content content content content content content content content content
@@ -96,7 +100,7 @@
                     content content content content content content content content content content
                 </div>
                 <input id="fab_menu" type="button" style="position: static; background-image: url(../demos/images/icons8-squared-menu-24.png); float: right;" data-ext="androme.widget.floatingactionbutton" />
-                <br /><br /><br /><br /><br /><br /><br />
+                <br /><br /><br /><br /><br /><br />
             </div>
             <button id="fab_left" style="bottom: 0px; left: 0px; background-image: url(../demos/images/icons8-left-24.png);" data-ext="androme.widget.floatingactionbutton"></button>
             <aside id="drawer_aside">

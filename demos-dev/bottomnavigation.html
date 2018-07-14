@@ -36,6 +36,12 @@
             width: 20px;
             height: 20px;
         }
+        .content {
+            font-size: 12px;
+            color: #fff;
+            background-color: #aaa;
+            padding: 8px;
+        }
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
@@ -53,11 +59,6 @@
                     }
                 },
                 resource: {
-                    output: {
-                        path: 'res/values',
-                        file: 'androme.widget.bottomnavigation.xml'
-                    },
-                    appTheme: 'AppTheme',
                     parentTheme: 'Theme.AppCompat.Light.NoActionBar'
                 }
             });
@@ -76,9 +77,9 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui">
-        <div style="width: 300px; font-size: 12px; padding: 20px;">
-            <h3>title</h2>
-            <div style="color: #fff; background-color: #aaa; padding: 8px;">
+        <div style="width: 300px; padding: 20px;">
+            <h3>title</h3>
+            <div class="content">
                 content content content content content content content content content content
                 content content content content content content content content content content
                 content content content content content content content content content content

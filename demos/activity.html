@@ -37,21 +37,40 @@
             text-align: right;
         }
         body > div:first-child > div {
-            width: 200px;
-            color: #fff;
+            font-size: 20px;
             font-weight: bold;
-            text-align: center;
-            margin: 4px;
-            padding: 10px 0px;
-            background-color: darkblue;
-            border: 1px solid yellowgreen;
+            line-height: 100px;
+            text-align: center; 
+            vertical-align: middle; 
+            margin-bottom: 10px;
         }
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="common/prod.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            androme.parseDocument('androme_ui');
+            addView();
+            addView();
+            addView();
+            addView();
+            addView();
+            closeDocument();
+        });
+        var count = 0;
+        function addView() {
+            if (androme.ready()) {
+                var div = document.createElement('div');
+                div.style.backgroundColor = ['#ddd', '#bbb', '#999', '#777', '#555'][count % 5];
+                if ((count % 2) == 1) {
+                    div.style.fontStyle = 'italic';
+                }
+                div.id = 'activity_' + ++count;
+                div.innerHTML = count + ': androme.parseDocument("activity_' + count + '");';
+                document.getElementById('androme_ui').appendChild(div);
+                androme.parseDocument(div.id);
+            }
+        }
+        function closeDocument() {
             androme.close();
 
             var views = androme.writeLayoutAllXml();
@@ -59,43 +78,31 @@
 
             var resource = androme.writeResourceAllXml();
             document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
-        });
-        function showHidden() {
-            document.querySelectorAll('#androme_ui > div').forEach(function(element) {
-                element.style.display = '';
-            });
         }
-</script>
+        function resetDocument() {
+            count = 0;
+            androme.reset();
+            document.getElementById('androme_ui').innerHTML = '';
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('resource').innerHTML = '';
+        }
+    </script>
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_ui">
-        <div>
-            1
-        </div>
-        <div data-ext="androme.external" style="display: none;">
-            2
-        </div>
-        <div>
-            3
-        </div>
-        <div data-ext="androme.external" style="display: none;">
-            4
-        </div>
-        <div>
-            5
-        </div>
-    </div>
-    <div style="vertical-align: bottom;"><button onclick="showHidden();">Show Hidden</button></div>
+    <div id="androme_ui" style="width: 500px;"></div>
     <!-- END: DEMO -->
 
     <div>
         <div class="output">
             <pre id="output"></pre>
             <div>
+                <button onclick="addView();">Add View (1)</button>
+                <button onclick="closeDocument();">Close (2)</button>
+                <button onclick="closeDocument(); androme.saveAllToDisk();">Save All (3)</button>
+                <button onclick="resetDocument();">Reset (4)</button>
+                &nbsp;&nbsp;
                 <button onclick="copy('output');">Copy</button>
-                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
-                <button onclick="androme.saveAllToDisk();">Save All</button>
             </div>
         </div>
         <div class="output">

@@ -54,10 +54,11 @@
             margin: 8px;
             padding: 0px;
         }
-        #androme_ui > div {
+        .content {
             font-size: 12px;
-            padding: 20px;
-            display: inline-block;
+            color: #fff;
+            background-color: #aaa;
+            padding: 8px;
         }
     </style>
     <script src="../dist/androme.min.js"></script>
@@ -79,18 +80,18 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div>
+        <div style="padding: 0px 20px;">
             <h3>title</h2>
-            <div style="color: #fff; background-color: #aaa; padding: 8px;">
+            <div class="content">
                 content content content content content content content content content content
                 content content content content content content content content content content
             </div>
         </div>
-        <div style="color: #fff; background-color: #aaa; margin: 20px; padding: 8px;">
+        <div class="content" style="margin: 20px;">
             content content content content content content content content content content
             content content content content content content content content content content
         </div>
-        <div style="color: #fff; background-color: #aaa; margin: 20px; padding: 8px;">
+        <div class="content" style="margin: 20px;">
             content content content content content content content content content content
             content content content content content content content content content content
         </div>

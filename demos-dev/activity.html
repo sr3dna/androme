@@ -37,7 +37,7 @@
                 }
                 div.id = 'activity_' + ++count;
                 div.innerHTML = count + ': androme.parseDocument("activity_' + count + '");';
-                document.getElementById('main').appendChild(div);
+                document.getElementById('androme_ui').appendChild(div);
                 androme.parseDocument(div.id);
             }
         }
@@ -53,7 +53,7 @@
         function resetDocument() {
             count = 0;
             androme.reset();
-            document.getElementById('main').innerHTML = '';
+            document.getElementById('androme_ui').innerHTML = '';
             document.getElementById('output').innerHTML = '';
             document.getElementById('resource').innerHTML = '';
         }
@@ -61,7 +61,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="main" style="width: 500px;"></div>
+    <div id="androme_ui" style="width: 500px;"></div>
     <!-- END: DEMO -->
 
     <div>
