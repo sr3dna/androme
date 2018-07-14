@@ -360,7 +360,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     sortAsc(node.children, 'parentIndex');
                 }
             });
-            this.addLayout((<string> root.dataset.currentId));
+            this.addLayout(<string> root.dataset.viewName);
             return true;
         }
         return false;
@@ -541,8 +541,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const root = (<T> this.cache.parent);
         const extension = (<IExtension> root.renderExtension);
         if (extension == null || root.data(`${extension.name}:insert`) == null) {
-            const pathname = trim(optional(root, 'element.dataset.pathname').trim(), '/');
-            this.setLayout(pathname, (!empty ? output : ''), (extension != null && extension.documentRoot));
+            const pathname = trim(optional(root, 'element.dataset.folder').trim(), '/');
+            this.updateLayout(pathname, (!empty ? output : ''), (extension != null && extension.documentRoot));
         }
         else {
             this.views.pop();
@@ -671,7 +671,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.views.push(layout);
     }
 
-    public setLayout(pathname = '', content: string, documentRoot = false) {
+    public updateLayout(pathname = '', content: string, documentRoot = false) {
         pathname = pathname || 'res/layout';
         if (documentRoot && this.views.length > 0 && this.views[0].content === '') {
             const view = this.views[0];

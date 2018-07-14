@@ -35,7 +35,7 @@ export default abstract class NodeList<T extends Node> {
         return false;
     }
 
-    private static currentId: number = 0;
+    private static currentId = 0;
     private _list: T[] = [];
 
     constructor(

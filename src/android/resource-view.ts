@@ -633,12 +633,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (tagData != null) {
                 for (const attr in tagData) {
                     for (const id of (<number[]> tagData[attr])) {
-                        if (attr.startsWith('android:background=')) {
-                            const node: Null<T> = viewData.cache.find(item => item.id === id);
-                            if (node && node.android('background') != null) {
-                                continue;
-                            }
-                        }
                         if (map[id] == null) {
                             map[id] = { styles: [], attributes: [] };
                         }

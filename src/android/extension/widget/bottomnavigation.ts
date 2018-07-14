@@ -49,7 +49,7 @@ export default class BottomNavigation extends Extension<T, U> {
             let menu = '';
             Array.from(this.application.elements).some(item => {
                 if (item.parentElement === node.element && includes(optional(item, 'dataset.ext'), WIDGET_NAME.MENU)) {
-                    menu = (<string> item.dataset.currentId);
+                    menu = (<string> item.dataset.viewName);
                     return true;
                 }
                 return false;

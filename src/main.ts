@@ -103,8 +103,9 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
                     element.id = `view_${main.size}`;
                 }
             }
+            const filename = optional(element, 'dataset.filename').trim().replace(/\.xml$/, '') || element.id;
             element.dataset.views = (optional(element, 'dataset.views', 'number') + 1).toString();
-            element.dataset.currentId = convertWord((element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id));
+            element.dataset.viewName = convertWord((element.dataset.views !== '1' ? `${filename}_${element.dataset.views}` : filename));
             if (main.createNodeCache(element)) {
                 main.createLayoutXml();
                 main.setResources();
@@ -175,7 +176,7 @@ export function close() {
 export function reset() {
     ROOT_CACHE.forEach(element => {
         delete element.dataset.views;
-        delete element.dataset.currentId;
+        delete element.dataset.viewName;
     });
     ROOT_CACHE.clear();
     main.reset();

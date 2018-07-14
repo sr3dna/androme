@@ -222,7 +222,7 @@ export default class Toolbar extends Extension<T, U> {
         if (menu != null) {
             const layouts = this.application.layouts;
             for (let i = 0; i < layouts.length; i++) {
-                layouts[i].content = layouts[i].content.replace(`{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`, <string> menu.dataset.currentId);
+                layouts[i].content = layouts[i].content.replace(`{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`, <string> menu.dataset.viewName);
             }
         }
     }

@@ -111,8 +111,8 @@ export default class Drawer extends Extension<T, U> {
 
     public finalize() {
         const node = (<T> this.node);
-        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.currentId');
-        const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.currentId');
+        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
         if (menu !== '') {
             this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu));
         }
