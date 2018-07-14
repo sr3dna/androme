@@ -1,5 +1,5 @@
-import View from '../view';
 import Custom from '../../extension/custom';
+import View from '../view';
 import { formatResource } from './lib/util';
 
 export default class CustomAndroid<T extends View> extends Custom {

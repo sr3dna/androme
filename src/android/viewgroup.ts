@@ -58,34 +58,6 @@ export default class ViewGroup extends View {
         this.setDimensions();
     }
 
-    public inheritGrid(node: T) {
-        for (const attr in node) {
-            if (attr.startsWith('grid')) {
-                switch (typeof node[attr]) {
-                    case 'number':
-                        this[attr] += node[attr];
-                        node[attr] = 0;
-                        break;
-                    case 'boolean':
-                        if (node[attr] !== false) {
-                            this[attr] = node[attr];
-                            node[attr] = false;
-                        }
-                        break;
-                    case 'object':
-                        this[attr] = node[attr];
-                        if (Array.isArray(node[attr])) {
-                            node[attr] = [];
-                        }
-                        else {
-                            node[attr] = null;
-                        }
-                        break;
-                }
-            }
-        }
-    }
-
     get childrenBox() {
         let minLeft = Number.MAX_VALUE;
         let maxRight = 0;

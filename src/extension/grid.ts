@@ -1,9 +1,11 @@
 import { ArrayIndex, ExtensionResult, ObjectIndex } from '../lib/types';
+import { GridCellData, GridData } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { sortAsc, withinFraction } from '../lib/util';
 import { BLOCK_ELEMENT } from '../lib/constants';
+import { EXT_NAME } from './lib/constants';
 
 type T = Node;
 type U = NodeList<T>;
@@ -24,9 +26,14 @@ export default class Grid extends Extension<T, U> {
     public processNode(mapX: ArrayIndex<ObjectIndex<T[]>>, mapY: ArrayIndex<ObjectIndex<T[]>>): ExtensionResult {
         const node = this.node;
         const parent = (<T> this.parent);
+        const balanceColumns = this.options.balanceColumns;
         let xml = '';
         let columns: any[] = [];
-        const balanceColumns = this.options.balanceColumns;
+        const gridData: GridData = {
+            columnEnd: [],
+            columnCount: 0,
+            padding: { top: 0, right: [], bottom: 0, left: [] }
+        };
         if (balanceColumns) {
             const dimensions: number[][] = [];
             for (let l = 0; l < node.children.length; l++) {
@@ -76,7 +83,7 @@ export default class Grid extends Extension<T, U> {
                         for (let m = 0; m < columns.length; m++) {
                             if (columns[m].length > base.length) {
                                 const removed = columns[m].splice(assigned[m] + (every ? 2 : 1), columns[m].length - base.length);
-                                columns[m][assigned[m] + (every ? 1 : 0)].gridSiblings = [...removed];
+                                columns[m][assigned[m] + (every ? 1 : 0)].data(`${EXT_NAME.GRID}:gridSiblings`, [...removed]);
                             }
                         }
                     }
@@ -87,7 +94,7 @@ export default class Grid extends Extension<T, U> {
                             for (let m = 0; m < columns.length; m++) {
                                 if (found[m] > minIndex) {
                                     const removed = columns[m].splice(minIndex, found[m] - minIndex);
-                                    columns[m][assigned[m]].gridSiblings = [...removed];
+                                    columns[m][assigned[m] + (every ? 1 : 0)].data(`${EXT_NAME.GRID}:gridSiblings`, [...removed]);
                                 }
                             }
                         }
@@ -195,26 +202,36 @@ export default class Grid extends Extension<T, U> {
                 }
             }
             if (columnEnd.length > 0) {
-                node.gridColumnEnd = columnEnd;
-                node.gridColumnEnd[node.gridColumnEnd.length - 1] = node.box.right;
+                gridData.columnEnd = columnEnd;
+                gridData.columnEnd[gridData.columnEnd.length - 1] = node.box.right;
             }
         }
         if (columns.length > 1) {
-            node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
-            xml = this.application.writeGridLayout(node, parent, node.gridColumnCount);
+            gridData.columnCount = (balanceColumns ? columns[0].length : columns.length);
+            xml = this.application.writeGridLayout(node, parent, gridData.columnCount);
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
                 for (let m = 0, start = 0; m < columns[l].length; m++) {
-                    const item = columns[l][m];
-                    if (!item.spacer) {
+                    const item = (<T> columns[l][m]);
+                    if (!(<any> item).spacer) {
                         item.parent.hide();
                         item.parent = node;
+                        const data: GridCellData = {
+                            inherit: true,
+                            rowSpan: 0,
+                            columnSpan: 0,
+                            index: -1,
+                            cellFirst: false,
+                            cellLast: false,
+                            rowEnd: false,
+                            rowStart: false
+                        };
                         if (balanceColumns) {
-                            item.gridRowStart = (m === 0);
-                            item.gridRowEnd = (m === columns[l].length - 1);
-                            item.gridFirst = (l === 0 && m === 0);
-                            item.gridLast = (l === columns.length - 1 && item.gridRowEnd);
-                            item.gridIndex = m;
+                            data.rowStart = (m === 0);
+                            data.rowEnd = (m === columns[l].length - 1);
+                            data.cellFirst = (l === 0 && m === 0);
+                            data.cellLast = (l === columns.length - 1 && data.rowEnd);
+                            data.index = m;
                         }
                         else {
                             let rowSpan = 1;
@@ -239,50 +256,56 @@ export default class Grid extends Extension<T, U> {
                                     }
                                 }
                             }
-                            item.gridRowSpan = rowSpan;
-                            item.gridColumnSpan = columnSpan;
-                            item.gridRowStart = (start++ === 0);
-                            item.gridRowEnd = (columnSpan + l === columns.length);
-                            item.gridFirst = (count++ === 0);
-                            item.gridLast = (item.gridRowEnd && m === columns[l].length - 1);
-                            item.gridIndex = l;
+                            data.rowSpan = rowSpan;
+                            data.columnSpan = columnSpan;
+                            data.rowStart = (start++ === 0);
+                            data.rowEnd = (columnSpan + l === columns.length);
+                            data.cellFirst = (count++ === 0);
+                            data.cellLast = (data.rowEnd && m === columns[l].length - 1);
+                            data.index = l;
                             spacer = 0;
                         }
+                        item.data(`${EXT_NAME.GRID}:gridCellData`, data);
                     }
-                    else if (item.spacer === 1) {
+                    else if ((<any> item).spacer === 1) {
                         spacer++;
                     }
                 }
             }
+            node.data(`${EXT_NAME.GRID}:gridData`, gridData);
             node.render(parent);
         }
         return { xml };
     }
 
     public processChild(): ExtensionResult {
-        const node = (<T> this.node);
+        const node = this.node;
         const parent = (<T> this.parent);
-        let siblings: T[];
         let xml = '';
-        if (this.options.balanceColumns) {
-            siblings = node.gridSiblings;
-        }
-        else {
-            const columnEnd = parent.gridColumnEnd[Math.min(node.gridIndex + (node.gridColumnSpan - 1), parent.gridColumnEnd.length - 1)];
-            siblings = node.documentParent.children.filter(item => !item.renderParent && item.linear.left >= node.linear.right && item.linear.right <= columnEnd);
-        }
-        if (siblings != null && siblings.length > 0) {
-            siblings.unshift(node);
-            sortAsc(siblings, 'linear.left');
-            const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
-            const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
-            if (linearX || linearY) {
-                xml = this.application.writeLinearLayout(viewGroup, parent, linearY);
+        const gridData = (<GridData> parent.data(`${EXT_NAME.GRID}:gridData`));
+        const gridCellData = (<GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`));
+        if (gridData != null && gridCellData != null) {
+            let siblings: T[];
+            if (this.options.balanceColumns) {
+                siblings = node.data(`${EXT_NAME.GRID}:gridSiblings`);
             }
             else {
-                xml = this.application.writeDefaultLayout(viewGroup, parent);
+                const columnEnd = gridData.columnEnd[Math.min(gridCellData.index + (gridCellData.columnSpan - 1), gridData.columnEnd.length - 1)];
+                siblings = node.documentParent.children.filter(item => !item.renderParent && item.linear.left >= node.linear.right && item.linear.right <= columnEnd);
             }
-            return { xml, parent: viewGroup };
+            if (siblings != null && siblings.length > 0) {
+                siblings.unshift(node);
+                sortAsc(siblings, 'linear.left');
+                const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
+                const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
+                if (linearX || linearY) {
+                    xml = this.application.writeLinearLayout(viewGroup, parent, linearY);
+                }
+                else {
+                    xml = this.application.writeDefaultLayout(viewGroup, parent);
+                }
+                return { xml, parent: viewGroup };
+            }
         }
         return { xml };
     }

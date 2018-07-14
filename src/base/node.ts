@@ -1,4 +1,4 @@
-import { BoxModel, BoxRect, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { BoxModel, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { convertInt, hasValue, convertCamelCase, includesEnum, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_PROCEDURE } from '../lib/constants';
@@ -23,18 +23,6 @@ export default abstract class Node implements BoxModel {
     public visible = true;
     public companion = false;
     public isolated = false;
-
-    public gridRowSpan = 0;
-    public gridColumnSpan = 0;
-    public gridColumnEnd: number[];
-    public gridIndex: number;
-    public gridFirst: boolean;
-    public gridLast: boolean;
-    public gridRowEnd: boolean;
-    public gridRowStart: boolean;
-    public gridSiblings: T[];
-    public gridColumnCount: number;
-    public gridPadding: BoxRect = { top: 0, right: [], bottom: 0, left: [] };
 
     public abstract children: T[];
     public abstract renderChildren: T[];
@@ -146,6 +134,33 @@ export default abstract class Node implements BoxModel {
             this._data[attr] = value;
         }
         return this._data[attr];
+    }
+
+    public inherit(node: T) {
+        for (const attr in this._data) {
+            const data = this._data[attr];
+            if (typeof data === 'object' && data.inherit) {
+                const inherit = node.data(attr);
+                if (inherit != null) {
+                    switch (typeof node[attr]) {
+                        case 'number':
+                            inherit[attr] += data[attr];
+                            break;
+                        case 'boolean':
+                            if (data[attr] !== false) {
+                                inherit[attr] = true;
+                            }
+                            break;
+                        default:
+                            inherit[attr] = data[attr];
+                    }
+                }
+                else {
+                    node.data(attr, data);
+                }
+                delete this._data[attr];
+            }
+        }
     }
 
     public ascend() {

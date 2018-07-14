@@ -5,6 +5,8 @@ import { convertWord, optional } from './lib/util';
 import { EXT_NAME } from './extension/lib/constants';
 import SETTINGS from './settings';
 
+import External from './extension/external';
+
 import ViewController from './android/viewcontroller';
 import ResourceView from './android/resource-view';
 import FileRes from './android/file-res';
@@ -13,12 +15,10 @@ import ViewList from './android/viewlist';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
 
-import External from './extension/external';
-import Table from './extension/table';
-
 import Custom from './android/extension/custom';
 import List from './android/extension/list';
 import Grid from './android/extension/grid';
+import Table from './android/extension/table';
 import Button from './android/extension/widget/floatingactionbutton';
 import Menu from './android/extension/widget/menu';
 import Coordinator from './android/extension/widget/coodinator';

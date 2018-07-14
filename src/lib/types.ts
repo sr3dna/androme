@@ -41,6 +41,10 @@ export interface ExtensionResult {
     parent?: Node;
 }
 
+export interface Inheritable {
+    inherit: boolean;
+}
+
 export interface BoxModel {
     marginTop?: number;
     marginRight?: number;

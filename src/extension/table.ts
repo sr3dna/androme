@@ -2,6 +2,7 @@ import { ExtensionResult } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import { EXT_NAME } from './lib/constants';
 
 type T = Node;
 type U = NodeList<T>;
@@ -42,10 +43,10 @@ export default class Table extends Extension<T, U> {
                 const style = td.element.style;
                 const element = (<HTMLTableCellElement> td.element);
                 if (element.rowSpan > 1) {
-                    td.gridRowSpan = element.rowSpan;
+                    td.data(`${EXT_NAME.TABLE}:rowSpan`, element.rowSpan);
                 }
                 if (element.colSpan > 1) {
-                    td.gridColumnSpan = element.colSpan;
+                    td.data(`${EXT_NAME.TABLE}:columnSpan`, element.colSpan);
                 }
                 if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
                     td.styleMap.textAlign = (<string> style.textAlign);

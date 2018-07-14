@@ -8,7 +8,6 @@ import ViewList from './viewlist';
 import { convertPX, formatPX, generateId, hasValue, includesEnum, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { formatResource } from './extension/lib/util';
 import { formatDimen } from '../lib/xml';
-import { getBoxSpacing } from '../lib/dom';
 import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD } from '../lib/constants';
 import { NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -867,7 +866,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     const view = (<View> viewGroup) as T;
                     viewGroup.setNodeId(scrollName);
                     viewGroup.setBounds();
-                    viewGroup.inheritGrid(current);
+                    current.inherit(viewGroup);
                     viewGroup.android('fadeScrollbars', 'false');
                     this.cache.list.push(view);
                     switch (scrollName) {
@@ -908,7 +907,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         }
         node.apply(options);
         node.render(renderParent);
-        this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
 
@@ -964,7 +962,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 viewGroup.setNodeId(NODE_ANDROID.RADIO_GROUP);
                                 viewGroup.render(parent);
                                 result.forEach(item => {
-                                    viewGroup.inheritGrid(item);
+                                    item.inherit(viewGroup);
                                     if ((<HTMLInputElement> item.element).checked) {
                                         checked = item.stringId;
                                     }
@@ -977,7 +975,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     viewGroup.android('checkedButton', checked);
                                 }
                                 viewGroup.setBounds();
-                                this.setGridSpace(view);
                                 return this.getEnclosingTag(viewGroup.renderDepth, NODE_ANDROID.RADIO_GROUP, viewGroup.id, xml);
                             }
                         }
@@ -1021,7 +1018,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             node.setAccessibility();
         }
         node.cascade().forEach(item => item.hide());
-        this.setGridSpace(node);
         return this.getEnclosingTag(node.renderDepth, node.nodeName, node.id);
     }
 
@@ -1029,7 +1025,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         const viewGroup = new ViewGroup(this.cache.nextId, node, parent, children);
         children.forEach(item => {
             item.parent = viewGroup;
-            viewGroup.inheritGrid(item);
+            item.inherit(viewGroup);
         });
         viewGroup.setBounds();
         this.cache.list.push((<View> viewGroup as T));
@@ -1179,44 +1175,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             key = generateId('dimens', `${key}_1`);
         }
         return key;
-    }
-
-    private setGridSpace(node: T) {
-        if (node.parent.is(NODE_STANDARD.GRID)) {
-            const dimensions: any = getBoxSpacing((<HTMLElement> node.documentParent.element), true);
-            const options = {
-                android: {
-                    layout_columnSpan: node.renderParent.gridColumnCount
-                }
-            };
-            if (node.gridFirst) {
-                const heightTop = dimensions.paddingTop + dimensions.marginTop;
-                if (heightTop > 0) {
-                    node.parent.gridPadding.top = heightTop;
-                }
-            }
-            if (node.gridRowStart) {
-                const marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
-                if (marginLeft > 0) {
-                    node.parent.gridPadding.left.push(marginLeft);
-                }
-            }
-            if (node.gridRowEnd) {
-                const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
-                if (heightBottom > 0) {
-                    if (node.gridLast) {
-                        node.parent.gridPadding.bottom = heightBottom;
-                    }
-                    else {
-                        this.appendAfter(node.id, this.getNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom)));
-                    }
-                }
-                const marginRight = dimensions.marginRight + dimensions.paddingRight;
-                if (marginRight > 0) {
-                    node.parent.gridPadding.right.push(marginRight);
-                }
-            }
-        }
     }
 
     private setAlignParent(node: T, orientation = '', bias = false) {

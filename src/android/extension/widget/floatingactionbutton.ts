@@ -1,7 +1,7 @@
 import { ExtensionResult } from '../../../lib/types';
+import Button from '../../../extension/button';
 import Resource from '../../../base/resource';
 import View from '../../view';
-import Button from '../../../extension/button';
 import { optional } from '../../../lib/util';
 import { positionIsolated, overwriteDefault } from '../lib/util';
 import { restoreIndent } from '../../../lib/xml';

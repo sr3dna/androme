@@ -1,6 +1,6 @@
 import { ExtensionResult, IExtension, ObjectMap, StringMap } from '../../../lib/types';
-import Resource from '../../../base/resource';
 import Nav from '../../../extension/nav';
+import Resource from '../../../base/resource';
 import View from '../../view';
 import { BLOCK_ELEMENT, NODE_RESOURCE } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';

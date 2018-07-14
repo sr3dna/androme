@@ -266,7 +266,7 @@ export default abstract class Resource<T extends Node> {
                     else {
                         let color = parseRGBA(node.css('color'));
                         if (color.length > 0) {
-                            if (SETTINGS.excludeTextColor.includes(color[0]) && color[1] !== node.styleMap.color) {
+                            if (SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
                                 color = [];
                             }
                             else {
@@ -275,7 +275,7 @@ export default abstract class Resource<T extends Node> {
                         }
                         let backgroundColor = parseRGBA(node.css('backgroundColor'));
                         if (backgroundColor.length > 0) {
-                            if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                            if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
                                 backgroundColor = [];
                             }
                             else {

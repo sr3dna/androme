@@ -1,6 +1,6 @@
 import { ExtensionResult } from '../../lib/types';
-import View from '../view';
 import List from '../../extension/list';
+import View from '../view';
 import { formatDimen } from '../../lib/xml';
 import { NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
