@@ -2,11 +2,11 @@ import { ExtensionResult } from '../../../lib/types';
 import Button from '../../../extension/button';
 import Resource from '../../../base/resource';
 import View from '../../view';
-import { optional } from '../../../lib/util';
+import { includesEnum, optional } from '../../../lib/util';
 import { positionIsolated, overwriteDefault } from '../lib/util';
 import { restoreIndent } from '../../../lib/xml';
 import { parseRGBA } from '../../../lib/color';
-import { NODE_RESOURCE } from '../../../lib/constants';
+import { NODE_PROCEDURE, NODE_RESOURCE } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 export default class FloatingActionButton<T extends View> extends Button {
@@ -21,7 +21,9 @@ export default class FloatingActionButton<T extends View> extends Button {
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = node.css('backgroundColor');
         overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor ? `@color/${Resource.addColor(parseRGBA(backgroundColor)[0])}` : '?attr/colorAccent'));
-        overwriteDefault(options, 'android', 'focusable', 'true');
+        if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+            overwriteDefault(options, 'android', 'focusable', 'true');
+        }
         let src = '';
         switch (element.tagName) {
             case 'IMG':

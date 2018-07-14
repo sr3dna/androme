@@ -50,7 +50,7 @@ export default class Toolbar extends Extension<T, U> {
     public processNode(): ExtensionResult {
         const controller = this.application.controllerHandler;
         const node = (<T> this.node);
-        const target = (node.hasElement && node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
+        const target = (node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
         const backgroundImage = node.css('backgroundImage');
         const options = Object.assign({}, this.options[node.element.id]);
         const optionsAppBar = Object.assign({}, options.appBar);
@@ -98,6 +98,7 @@ export default class Toolbar extends Extension<T, U> {
             optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
         }
         else {
+            overwriteDefault(optionsToolbar, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
             overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             if (children === 0) {
                 overwriteDefault(optionsAppBar, 'android', 'layout_height', '?attr/actionBarSize');

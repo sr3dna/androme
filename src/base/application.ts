@@ -219,18 +219,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             item.setTarget((<T> {}), null, root);
             item.beforeInit();
         });
-        if (root != null) {
-            const node = this.insertNode(root);
-            if (node != null) {
-                node.parent = new this.TypeT(0, 0);
-                node.documentRoot = true;
-                this.cache.parent = node;
-            }
-            else {
-                return false;
-            }
+        const rootNode = this.insertNode(root);
+        if (rootNode != null) {
+            rootNode.parent = new this.TypeT(0, 0);
+            rootNode.documentRoot = true;
+            this.cache.parent = rootNode;
         }
-        extensions.forEach(item => item.setTarget((<T> this.cache.parent)));
+        else {
+            return false;
+        }
         for (const element of (<HTMLElement[]> Array.from(elements))) {
             if (!this.elements.has(element)) {
                 this.orderExt(extensions, element).some(item => item.init(element));
@@ -344,7 +341,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             });
             extensions.forEach(item => {
-                item.setTarget((<T> this.cache.parent), null, root);
+                item.setTarget(rootNode);
                 item.afterInit();
             });
             this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');

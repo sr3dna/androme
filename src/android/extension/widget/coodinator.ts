@@ -40,29 +40,30 @@ export default class Coordinator extends Extension<T, U> {
                         node.bounds.bottom -= offsetHeight;
                         node.setBounds(true);
                     }
-                    collapsingToolbar = (extension.options[toolbar.element.id].collapsingToolbar);
+                    collapsingToolbar = (extension.options[toolbar.element.id] != null ? extension.options[toolbar.element.id].collapsingToolbar : null);
                 }
             }
             const filename = `${node.nodeId}_content`;
             let include = '';
+            let layout: Null<T> = null;
             if (this.options.includes == null || this.options.includes) {
                 include = controller.renderNodeStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
+                layout = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
+                layout.parent = node;
+                layout.inherit(node, 'base');
+                layout.excludeResource |= NODE_RESOURCE.ALL;
+                nodes.forEach(item => {
+                    item.parent = (<T> layout);
+                    item.depth++;
+                    if (offsetHeight > 0 && item.linear.top >= offsetX) {
+                        this.adjustBounds(item, offsetHeight);
+                        item.cascade().forEach((child: T) => this.adjustBounds(child, offsetHeight));
+                    }
+                    (<T> layout).children.push(item);
+                });
+                node.children = node.children.filter(item => item.isolated);
+                application.cache.list.push(layout);
             }
-            const layout = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
-            layout.parent = node;
-            layout.inherit(node, 'base');
-            layout.excludeResource |= NODE_RESOURCE.ALL;
-            nodes.forEach(item => {
-                item.parent = layout;
-                item.depth++;
-                if (offsetHeight > 0 && item.linear.top >= offsetX) {
-                    this.adjustBounds(item, offsetHeight);
-                    item.cascade().forEach((child: T) => this.adjustBounds(child, offsetHeight));
-                }
-                layout.children.push(item);
-            });
-            node.children = node.children.filter(item => item.isolated);
-            application.cache.list.push(layout);
             const options: ObjectMap<any> = { android: {} };
             const optionsCollapsingToolbar = Object.assign({}, collapsingToolbar);
             const [linearX, linearY] = [ViewList.linearX(nodes), ViewList.linearY(nodes)];
@@ -80,7 +81,7 @@ export default class Coordinator extends Extension<T, U> {
             }
             overwriteDefault((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
             const depth = (include !== '' ? 0 : node.depth + 1);
-            let content = controller.renderNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true);
+            let content = (include !== '' ? controller.renderNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true) : '');
             if (collapsingToolbar != null) {
                 content = controller.renderNodeStatic(NODE_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, SETTINGS.targetAPI), true).replace('{:0}', content);
             }

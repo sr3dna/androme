@@ -88,13 +88,7 @@ const API_ANDROID: DEFAULT = {
     [BUILD.ALL]: {
         android: [],
         app: [],
-        customizations: {
-            'Button': {
-                android: {
-                    textAllCaps: 'false'
-                }
-            }
-        }
+        customizations: {}
     }
 };
 
