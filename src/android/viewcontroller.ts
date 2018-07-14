@@ -80,14 +80,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
                             if (constraint) {
                                 this.setAlignParent(current);
+                                node.constraint.layoutWidth = true;
+                                node.constraint.layoutHeight = true;
                             }
                             else {
                                 current.android('layout_centerInParent', 'true');
                                 current.constraint.horizontal = true;
                                 current.constraint.vertical = true;
                             }
-                            node.constraint.layoutWidth = true;
-                            node.constraint.layoutHeight = true;
                         }
                     });
                 }
@@ -1144,7 +1144,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return content;
     }
 
-    public addXmlNamespace(name: string, uri: string) {
+    public addXmlNs(name: string, uri: string) {
         XMLNS_ANDROID[name] = uri;
     }
 

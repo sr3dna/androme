@@ -62,7 +62,7 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided
+            androme.ext('androme.widget.toolbar', { // optional: default configuration is provided
                 includes: true,
                 coordinator_toolbar: {
                     appBar: {

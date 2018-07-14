@@ -32,7 +32,7 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.configureExtension('androme.grid', { balanceColumns: true });
+            androme.ext('androme.grid', { balanceColumns: true });
             androme.parseDocument('androme_ui');
             androme.close();
 

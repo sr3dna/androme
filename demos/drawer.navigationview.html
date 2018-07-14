@@ -104,7 +104,7 @@
     <script src="common/prod.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            androme.configureExtension('androme.widget.drawer', { // optional: default configuration is provided
+            androme.ext('androme.widget.drawer', { // optional: default configuration is provided
                 includes: true,
                 drawer: {
                     android: {
@@ -128,7 +128,7 @@
                     }
                 }
             });
-            androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided
+            androme.ext('androme.widget.toolbar', { // optional: default configuration is provided
                 toolbar_demo: {
                     appBar: {
                         android: {

@@ -61,7 +61,7 @@
     <script src="common/prod.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            androme.configureExtension('androme.grid', { balanceColumns: true });
+            androme.ext('androme.grid', { balanceColumns: true });
             androme.parseDocument('androme_ui');
             androme.close();
 

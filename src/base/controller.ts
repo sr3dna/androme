@@ -12,7 +12,7 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     constructor() {
     }
 
-    public abstract addXmlNamespace(name: string, uri: string): void;
+    public abstract addXmlNs(name: string, uri: string): void;
     public abstract setConstraints(): void;
     public abstract adjustBoxSpacing(): void;
     public abstract setDimensions(data: ViewData<T>): void;

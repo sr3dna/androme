@@ -41,8 +41,8 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.addXmlNamespace('card_view', 'http://schemas.android.com/apk/res-auto');
-            androme.configureExtension('androme.custom', {
+            androme.addXmlNs('card_view', 'http://schemas.android.com/apk/res-auto');
+            androme.ext('androme.custom', {
                 custom_recyclerview: {
                     android: {
                         clipToPadding: 'false',

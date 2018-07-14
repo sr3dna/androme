@@ -54,13 +54,13 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.configureExtension('androme.widget.coordinator', { includes: false });
-            androme.configureExtension('androme.widget.toolbar', {
+            androme.ext('androme.widget.coordinator', { includes: false });
+            androme.ext('androme.widget.toolbar', {
                 toolbar_demo: {
                     appBar: {}
                 }
             });
-            androme.configureExtension('androme.custom', {
+            androme.ext('androme.custom', {
                 viewpager_demo: {
                     android: {
                         layout_height: 'match_parent'
@@ -85,7 +85,7 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-target="androme_ui" style="background-image: url(../demos/images/android_background.jpg); background-size: 100% 100%;">
+        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-target="androme_ui" style="background-image: url(../demos/images/android_background.jpg);">
             <nav id="toolbar_menu" data-ext="androme.widget.menu">
                 <div
                     data-show-as-action="always"
@@ -103,9 +103,6 @@
             <div style="padding: 20px;" data-ext="androme.external" data-filename="fragment_main.xml">
                 <h3>title</h3>
                 <div class="content">
-                    content content content content content content content content content content
-                    content content content content content content content content content content
-                    content content content content content content content content content content
                     content content content content content content content content content content
                     content content content content content content content content content content
                     content content content content content content content content content content

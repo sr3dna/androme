@@ -60,9 +60,9 @@ main.registerResource(Resource);
     const load = new Set<IExtension>();
     for (let name of SETTINGS.builtInExtensions) {
         name = name.toLowerCase().trim();
-        for (const ext in EXTENSIONS) {
-            if (name === ext || ext.startsWith(`${name}.`)) {
-                load.add(<IExtension> EXTENSIONS[ext]);
+        for (const extension in EXTENSIONS) {
+            if (name === extension || extension.startsWith(`${name}.`)) {
+                load.add(<IExtension> EXTENSIONS[extension]);
             }
         }
     }
@@ -145,7 +145,7 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
 }
 
 export function registerExtension(extension: IExtension) {
-    if (extension instanceof Extension && extension.name && Array.isArray(extension.tagNames)) {
+    if (extension instanceof Extension && extension.name !== '' && Array.isArray(extension.tagNames)) {
         main.registerExtension(extension);
     }
 }
@@ -161,6 +161,18 @@ export function configureExtension(name: string, options: {}) {
 
 export function getExtension(name: string) {
     return main.findExtension(name);
+}
+
+export function ext(name: any, options: {}) {
+    if (typeof name === 'object') {
+        registerExtension(name);
+    }
+    else if (options != null) {
+        configureExtension(name, options);
+    }
+    else if (name !== '') {
+        return getExtension(name);
+    }
 }
 
 export function ready() {
@@ -272,8 +284,8 @@ export function customize(build: number, widget: string, options: StringMap) {
     }
 }
 
-export function addXmlNamespace(name: string, uri: string) {
-    main.addXmlNamespace(name, uri);
+export function addXmlNs(name: string, uri: string) {
+    main.addXmlNs(name, uri);
 }
 
 export function toString() {

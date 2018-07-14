@@ -50,7 +50,7 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
 
     document.addEventListener('DOMContentLoaded', function() {
         // optional
-        androme.configureExtension('androme.grid', { balanceColumns: true }); 
+        androme.configureExtension('androme.grid', { balanceColumns: true });
 
         // required: zero or more
         androme.parseDocument(/* document.getElementById('mainview') */, /* 'subview' */, /* etc... */);
@@ -214,10 +214,11 @@ writeResourceStringXml(saveToDisk: boolean)
 writeResourceStyleXml(saveToDisk: boolean)
 toString() // activity_main.xml
 
-configureExtension(name: string, options: {}) // see extension configuration section
-getExtension(name: string) // retrieve an extension by namespace and control
-registerExtension(extension: androme.Extension) // see extension configuration section
-addXmlNamespace(name: string, uri: string) // add global namespaces for android third-party controls
+configureExtension(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
+registerExtension(extension: androme.Extension) // see extension configuration section | same: ext(extension: object)
+getExtension(name: string) // retrieve an extension by namespace and control | same: ext(name: string)
+
+addXmlNs(name: string, uri: string) // add global namespaces for android third-party controls
 ```
 ### Excluding applied attributes
 
@@ -698,7 +699,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     android:paddingHorizontal="@dimen/button_padding_horizontal"
                     android:paddingVertical="@dimen/button_padding_vertical"
                     android:text="@string/open"
-                    android:textAllCaps="false"
                     style="@style/Button_1" />
                 <Button
                     android:id="@+id/button_2"
@@ -712,7 +712,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     android:paddingHorizontal="@dimen/button_padding_horizontal"
                     android:paddingVertical="@dimen/button_padding_vertical"
                     android:text="@string/all"
-                    android:textAllCaps="false"
                     style="@style/Button_1" />
             </LinearLayout>
             <Space
@@ -829,7 +828,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     android:paddingHorizontal="@dimen/button_padding_horizontal"
                     android:paddingVertical="@dimen/button_padding_vertical"
                     android:text="@string/update"
-                    android:textAllCaps="false"
                     style="@style/Button" />
             </LinearLayout>
             <Space
@@ -880,7 +878,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     android:paddingHorizontal="@dimen/button_padding_horizontal"
                     android:paddingVertical="@dimen/button_padding_vertical"
                     android:text="@string/update"
-                    android:textAllCaps="false"
                     style="@style/Button" />
                 <Button
                     android:id="@+id/button_5"
@@ -893,7 +890,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     android:paddingHorizontal="@dimen/button_padding_horizontal"
                     android:paddingVertical="@dimen/button_padding_vertical"
                     android:text="@string/clone"
-                    android:textAllCaps="false"
                     style="@style/Button" />
             </LinearLayout>
             <Space
@@ -1028,7 +1024,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     android:paddingHorizontal="@dimen/button_padding_horizontal"
                     android:paddingVertical="@dimen/button_padding_vertical"
                     android:text="@string/update"
-                    android:textAllCaps="false"
                     style="@style/Button" />
             </LinearLayout>
         </GridLayout>

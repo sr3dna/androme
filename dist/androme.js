@@ -1,4 +1,4 @@
-/* androme 1.8.3
+/* androme 1.8.4
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -508,7 +508,8 @@
     ];
     const XMLNS_ANDROID = {
         'android': 'http://schemas.android.com/apk/res/android',
-        'app': 'http://schemas.android.com/apk/res-auto'
+        'app': 'http://schemas.android.com/apk/res-auto',
+        'tools': 'http://schemas.android.com/tools'
     };
     const FONT_ANDROID = {
         'sans-serif': exports.build.ICE_CREAM_SANDWICH,
@@ -1384,8 +1385,8 @@
         setConstraints() {
             this.controllerHandler.setConstraints();
         }
-        setMarginPadding() {
-            this.controllerHandler.setMarginPadding();
+        adjustBoxSpacing() {
+            this.controllerHandler.adjustBoxSpacing();
         }
         setResources() {
             this.resourceHandler.setFontStyle();
@@ -1479,18 +1480,15 @@
                 item.setTarget({}, null, root);
                 item.beforeInit();
             });
-            if (root != null) {
-                const node = this.insertNode(root);
-                if (node != null) {
-                    node.parent = new this.TypeT(0, 0);
-                    node.documentRoot = true;
-                    this.cache.parent = node;
-                }
-                else {
-                    return false;
-                }
+            const rootNode = this.insertNode(root);
+            if (rootNode != null) {
+                rootNode.parent = new this.TypeT(0, 0);
+                rootNode.documentRoot = true;
+                this.cache.parent = rootNode;
             }
-            extensions.forEach(item => item.setTarget(this.cache.parent));
+            else {
+                return false;
+            }
             for (const element of Array.from(elements)) {
                 if (!this.elements.has(element)) {
                     this.orderExt(extensions, element).some(item => item.init(element));
@@ -1596,17 +1594,15 @@
                     }
                 });
                 this.cache.list.forEach(node => {
-                    if (node.hasElement) {
-                        const style = preAlignment[node.id];
-                        if (style != null) {
-                            for (const attr in style) {
-                                node.element.style[attr] = style[attr];
-                            }
+                    const style = preAlignment[node.id];
+                    if (style != null) {
+                        for (const attr in style) {
+                            node.element.style[attr] = style[attr];
                         }
                     }
                 });
                 extensions.forEach(item => {
-                    item.setTarget(this.cache.parent, null, root);
+                    item.setTarget(rootNode);
                     item.afterInit();
                 });
                 this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
@@ -1614,14 +1610,15 @@
                     if (node.hasElement) {
                         let i = 0;
                         Array.from(node.element.childNodes).forEach((element) => {
-                            if (element.__node != null && (element.__node.parent.element === node.element)) {
-                                element.__node.parentIndex = i++;
+                            const child = element.__node;
+                            if (child && child.parent.element === node.element) {
+                                child.parentIndex = i++;
                             }
                         });
                         sortAsc(node.children, 'parentIndex');
                     }
                 });
-                this.addLayout(root.dataset.currentId);
+                this.addLayout(root.dataset.viewName);
                 return true;
             }
             return false;
@@ -1801,8 +1798,8 @@
             const root = this.cache.parent;
             const extension = root.renderExtension;
             if (extension == null || root.data(`${extension.name}:insert`) == null) {
-                const pathname = trim(optional(root, 'element.dataset.pathname').trim(), '/');
-                this.setLayout(pathname, (!empty ? output : ''), (extension != null && extension.documentRoot));
+                const pathname = trim(optional(root, 'element.dataset.folder').trim(), '/');
+                this.updateLayout(pathname, (!empty ? output : ''), (extension != null && extension.documentRoot));
             }
             else {
                 this.views.pop();
@@ -1919,7 +1916,7 @@
             this.currentIndex = this.views.length;
             this.views.push(layout);
         }
-        setLayout(pathname = '', content, documentRoot = false) {
+        updateLayout(pathname = '', content, documentRoot = false) {
             pathname = pathname || 'res/layout';
             if (documentRoot && this.views.length > 0 && this.views[0].content === '') {
                 const view = this.views[0];
@@ -1952,8 +1949,8 @@
         findExtension(name) {
             return this._extensions.find(item => item.name === name);
         }
-        addXmlNamespace(name, uri) {
-            this.controllerHandler.addXmlNamespace(name, uri);
+        addXmlNs(name, uri) {
+            this.controllerHandler.addXmlNs(name, uri);
         }
         findByDomId(id) {
             return this.cacheInternal.list.find(node => node.element.id === id);
@@ -1969,7 +1966,7 @@
                     node.tagName = 'PLAINTEXT';
                     if (parent != null) {
                         node.parent = parent;
-                        node.inheritStyle(parent);
+                        node.inherit(parent, 'style');
                         parent.children.push(node);
                     }
                     node.setBounds(false, element);
@@ -2154,6 +2151,59 @@
         LIST: 'androme.list',
         TABLE: 'androme.table'
     };
+
+    class External extends Extension {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+        }
+        beforeInit(init = false) {
+            if (init || this.included()) {
+                if (this.element != null) {
+                    const object = this.element;
+                    if (object.__andromeExternalDisplay == null) {
+                        const display = [];
+                        let current = this.element;
+                        while (current != null) {
+                            display.push(getStyle(current).display);
+                            current.style.display = 'block';
+                            current = current.parentElement;
+                        }
+                        object.__andromeExternalDisplay = display;
+                    }
+                }
+            }
+        }
+        init(element) {
+            if (this.included(element)) {
+                this.application.elements.add(element);
+            }
+            return false;
+        }
+        afterInit(init = false) {
+            if (init || this.included()) {
+                if (this.element != null) {
+                    const object = this.element;
+                    if (object.__andromeExternalDisplay != null) {
+                        const display = object.__andromeExternalDisplay;
+                        let current = this.element;
+                        let i = 0;
+                        while (current != null) {
+                            current.style.display = display[i];
+                            current = current.parentElement;
+                            i++;
+                        }
+                        delete object.__andromeExternalDisplay;
+                    }
+                }
+            }
+        }
+        is() {
+            return false;
+        }
+        condition() {
+            return false;
+        }
+    }
 
     class Controller {
         constructor() {
@@ -2451,7 +2501,7 @@
                         else {
                             let color = parseRGBA(node.css('color'));
                             if (color.length > 0) {
-                                if (SETTINGS.excludeTextColor.includes(color[0]) && color[1] !== node.styleMap.color) {
+                                if (SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
                                     color = [];
                                 }
                                 else {
@@ -2460,7 +2510,7 @@
                             }
                             let backgroundColor = parseRGBA(node.css('backgroundColor'));
                             if (backgroundColor.length > 0) {
-                                if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
+                                if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
                                     backgroundColor = [];
                                 }
                                 else {
@@ -2655,9 +2705,6 @@
             this.visible = true;
             this.companion = false;
             this.isolated = false;
-            this.gridRowSpan = 0;
-            this.gridColumnSpan = 0;
-            this.gridPadding = { top: 0, right: [], bottom: 0, left: [] };
             this._namespaces = new Set();
             this._data = {};
             if (element != null) {
@@ -2760,26 +2807,58 @@
             }
             return cascade(this);
         }
-        inheritBase(node) {
-            this.style = node.style;
-            this.bounds = node.bounds;
-            this.linear = node.linear;
-            this.box = node.box;
-        }
-        inheritStyle(node) {
-            const style = {};
-            for (const attr in node.style) {
-                if (attr.startsWith('font') || attr.startsWith('color')) {
-                    const key = convertCamelCase(attr);
-                    style[key] = node.style[key];
-                }
-            }
-            Object.assign(this.styleMap, style);
-        }
-        inheritStyleMap(node) {
-            for (const attr in node.styleMap) {
-                if (this.styleMap[attr] == null) {
-                    this.styleMap[attr] = node.styleMap[attr];
+        inherit(node, ...props) {
+            for (const type of props) {
+                switch (type) {
+                    case 'base':
+                        this.style = node.style;
+                        this.bounds = node.bounds;
+                        this.linear = node.linear;
+                        this.box = node.box;
+                        break;
+                    case 'data':
+                        for (const attr in this._data) {
+                            const data = this._data[attr];
+                            if (typeof data === 'object' && data.inherit === true) {
+                                const inherit = node.data(attr);
+                                if (inherit != null) {
+                                    switch (typeof node[attr]) {
+                                        case 'number':
+                                            inherit[attr] += data[attr];
+                                            break;
+                                        case 'boolean':
+                                            if (data[attr] !== false) {
+                                                inherit[attr] = true;
+                                            }
+                                            break;
+                                        default:
+                                            inherit[attr] = data[attr];
+                                    }
+                                }
+                                else {
+                                    node.data(attr, data);
+                                }
+                                delete this._data[attr];
+                            }
+                        }
+                        break;
+                    case 'style':
+                        const style = {};
+                        for (const attr in node.style) {
+                            if (attr.startsWith('font') || attr.startsWith('color')) {
+                                const key = convertCamelCase(attr);
+                                style[key] = node.style[key];
+                            }
+                        }
+                        Object.assign(this.styleMap, style);
+                        break;
+                    case 'styleMap':
+                        for (const attr in node.styleMap) {
+                            if (this.styleMap[attr] == null) {
+                                this.styleMap[attr] = node.styleMap[attr];
+                            }
+                        }
+                        break;
                 }
             }
         }
@@ -3123,13 +3202,7 @@
         [exports.build.ALL]: {
             android: [],
             app: [],
-            customizations: {
-                'Button': {
-                    android: {
-                        textAllCaps: 'false'
-                    }
-                }
-            }
+            customizations: {}
         }
     };
 
@@ -3507,7 +3580,7 @@
                 }
             }
         }
-        setBoxSpacing() {
+        mergeBoxSpacing() {
             if (this.api >= exports.build.OREO) {
                 ['layout_margin', 'padding'].forEach((value, index) => {
                     const leftRtl = parseRTL(`${value}Left`);
@@ -3533,28 +3606,6 @@
                         }
                     }
                 });
-            }
-        }
-        setGridSpan() {
-            if (this.gridRowSpan > 1) {
-                this.android('layout_rowSpan', this.gridRowSpan.toString());
-            }
-            if (this.gridColumnSpan > 1) {
-                this.android('layout_columnSpan', this.gridColumnSpan.toString());
-            }
-            if (this.gridPadding) {
-                if (this.gridPadding.top > 0) {
-                    this.modifyBox(BOX_STANDARD.PADDING_TOP, this.gridPadding.top);
-                }
-                if (this.gridPadding.right.length > 0) {
-                    this.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(this.gridPadding.right));
-                }
-                if (this.gridPadding.bottom > 0) {
-                    this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.gridPadding.bottom);
-                }
-                if (this.gridPadding.left.length > 0) {
-                    this.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(this.gridPadding.left));
-                }
             }
         }
         setAccessibility() {
@@ -3698,33 +3749,6 @@
             };
             this.setDimensions();
         }
-        inheritGrid(node) {
-            for (const attr in node) {
-                if (attr.startsWith('grid')) {
-                    switch (typeof node[attr]) {
-                        case 'number':
-                            this[attr] += node[attr];
-                            node[attr] = 0;
-                            break;
-                        case 'boolean':
-                            if (node[attr] !== false) {
-                                this[attr] = node[attr];
-                                node[attr] = false;
-                            }
-                            break;
-                        case 'object':
-                            this[attr] = node[attr];
-                            if (Array.isArray(node[attr])) {
-                                node[attr] = [];
-                            }
-                            else {
-                                node[attr] = null;
-                            }
-                            break;
-                    }
-                }
-            }
-        }
         get childrenBox() {
             let minLeft = Number.MAX_VALUE;
             let maxRight = 0;
@@ -3807,43 +3831,67 @@
         }
     }
 
+    const WIDGET_NAME = {
+        FAB: 'androme.widget.floatingactionbutton',
+        MENU: 'androme.widget.menu',
+        COORDINATOR: 'androme.widget.coordinator',
+        TOOLBAR: 'androme.widget.toolbar',
+        DRAWER: 'androme.widget.drawer',
+        BOTTOM_NAVIGATION: 'androme.widget.bottomnavigation'
+    };
+    const VIEW_SUPPORT = {
+        DRAWER: 'android.support.v4.widget.DrawerLayout',
+        NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
+        COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
+        APPBAR: 'android.support.design.widget.AppBarLayout',
+        COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
+        TOOLBAR: 'android.support.v7.widget.Toolbar',
+        FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton',
+        BOTTOM_NAVIGATION: 'android.support.design.widget.BottomNavigationView'
+    };
+    const VIEW_NAVIGATION = {
+        MENU: 'menu',
+        ITEM: 'item',
+        GROUP: 'group'
+    };
+    const DRAWABLE_PREFIX = {
+        MENU: 'ic_menu_',
+        DIALOG: 'ic_dialog_'
+    };
+
     function formatResource(options) {
         for (const namespace in options) {
             const object = options[namespace];
-            for (const attr in object) {
-                if (hasValue(object[attr])) {
-                    let value = object[attr].toString();
-                    switch (namespace) {
-                        case 'android':
-                            switch (attr) {
-                                case 'text':
-                                    if (!value.startsWith('@string/')) {
-                                        if (SETTINGS.numberResourceValue || !isNumber(value)) {
-                                            value = Resource.addString(value);
-                                            if (value !== '') {
-                                                object[attr] = `@string/${value}`;
+            if (typeof object === 'object') {
+                for (const attr in object) {
+                    if (hasValue(object[attr])) {
+                        let value = object[attr].toString();
+                        switch (namespace) {
+                            case 'android':
+                                switch (attr) {
+                                    case 'text':
+                                        if (!value.startsWith('@string/')) {
+                                            if (SETTINGS.numberResourceValue || !isNumber(value)) {
+                                                value = Resource.addString(value);
+                                                if (value !== '') {
+                                                    object[attr] = `@string/${value}`;
+                                                    continue;
+                                                }
                                             }
                                         }
-                                    }
-                                    break;
-                                case 'background':
-                                    const hex = parseHex(value);
-                                    if (hex !== '') {
-                                        object[attr] = `@color/${Resource.addColor(hex)}`;
                                         break;
-                                    }
-                                case 'src':
-                                    if (/^\w+:\/\//.test(value)) {
-                                        value = Resource.addImage({ 'mdpi': value });
-                                        if (value !== '') {
-                                            object[attr] = `@drawable/${value}`;
+                                    case 'src':
+                                        if (/^\w+:\/\//.test(value)) {
+                                            value = Resource.addImage({ 'mdpi': value });
+                                            if (value !== '') {
+                                                object[attr] = `@drawable/${value}`;
+                                                continue;
+                                            }
                                         }
-                                    }
-                                    break;
-                            }
-                            break;
-                    }
-                    if (attr.toLowerCase().indexOf('color') !== -1) {
+                                        break;
+                                }
+                                break;
+                        }
                         const hex = parseHex(value);
                         if (hex !== '') {
                             object[attr] = `@color/${Resource.addColor(hex)}`;
@@ -3853,6 +3901,72 @@
             }
         }
         return options;
+    }
+    function findNestedMenu(node, requireExt = true) {
+        return Array.from(node.element.children).find((element) => element.tagName === 'NAV' && (!requireExt || includes(optional(element, 'dataset.ext', 'string'), WIDGET_NAME.MENU)));
+    }
+    function findNestedExtension(node, extension) {
+        return Array.from(node.element.children).find((element) => includes(optional(element, 'dataset.ext', 'string'), extension));
+    }
+    function overwriteDefault(options, namespace, attr, value) {
+        if (namespace !== '') {
+            if (options[namespace] == null) {
+                options[namespace] = {};
+            }
+            if (options[namespace][attr] == null) {
+                options[namespace][attr] = value;
+            }
+        }
+        else {
+            if (options[attr] == null) {
+                options[attr] = value;
+            }
+        }
+    }
+    function positionIsolated(node) {
+        const renderParent = node.renderParent;
+        const parent = node.documentParent;
+        node.renderParent = parent;
+        const horizontalBias = node.horizontalBias;
+        const verticalBias = node.verticalBias;
+        const gravity = [];
+        if (horizontalBias < 0.5) {
+            gravity.push(parseRTL('left'));
+        }
+        else if (horizontalBias > 0.5) {
+            gravity.push(parseRTL('right'));
+        }
+        else {
+            gravity.push('center_horizontal');
+        }
+        if (verticalBias < 0.5) {
+            gravity.push('top');
+            node.app('layout_dodgeInsetEdges', 'top');
+        }
+        else if (verticalBias > 0.5) {
+            gravity.push('bottom');
+        }
+        else {
+            gravity.push('center_vertical');
+        }
+        node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
+        if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
+            if (horizontalBias < 0.5) {
+                node.css('marginLeft', convertPX(Math.floor(node.bounds.left - parent.box.left)));
+            }
+            else {
+                node.css('marginRight', convertPX(Math.floor(parent.box.right - node.bounds.right)));
+            }
+        }
+        if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
+            if (verticalBias < 0.5) {
+                node.css('marginTop', convertPX(Math.floor(node.bounds.top - parent.box.top)));
+            }
+            else {
+                node.css('marginBottom', convertPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
+            }
+        }
+        node.renderParent = renderParent;
     }
 
     const LAYOUT_MAP = {
@@ -3919,14 +4033,14 @@
                             if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
                                 if (constraint) {
                                     this.setAlignParent(current);
+                                    node.constraint.layoutWidth = true;
+                                    node.constraint.layoutHeight = true;
                                 }
                                 else {
                                     current.android('layout_centerInParent', 'true');
                                     current.constraint.horizontal = true;
                                     current.constraint.vertical = true;
                                 }
-                                node.constraint.layoutWidth = true;
-                                node.constraint.layoutHeight = true;
                             }
                         });
                     }
@@ -4648,7 +4762,7 @@
                 }
             });
         }
-        setMarginPadding() {
+        adjustBoxSpacing() {
             this.cache.list.forEach(node => {
                 if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
                     switch (node.android('orientation')) {
@@ -4702,7 +4816,7 @@
                     const view = viewGroup;
                     viewGroup.setNodeId(scrollName);
                     viewGroup.setBounds();
-                    viewGroup.inheritGrid(current);
+                    current.inherit(viewGroup, 'data');
                     viewGroup.android('fadeScrollbars', 'false');
                     this.cache.list.push(view);
                     switch (scrollName) {
@@ -4743,7 +4857,6 @@
             }
             node.apply(options);
             node.render(renderParent);
-            this.setGridSpace(node);
             return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
         }
         renderNode(node, parent, nodeName, recursive = false) {
@@ -4798,7 +4911,7 @@
                                     viewGroup.setNodeId(NODE_ANDROID.RADIO_GROUP);
                                     viewGroup.render(parent);
                                     result.forEach(item => {
-                                        viewGroup.inheritGrid(item);
+                                        item.inherit(viewGroup, 'data');
                                         if (item.element.checked) {
                                             checked = item.stringId;
                                         }
@@ -4811,7 +4924,6 @@
                                         viewGroup.android('checkedButton', checked);
                                     }
                                     viewGroup.setBounds();
-                                    this.setGridSpace(view);
                                     return this.getEnclosingTag(viewGroup.renderDepth, NODE_ANDROID.RADIO_GROUP, viewGroup.id, xml);
                                 }
                             }
@@ -4855,20 +4967,9 @@
                 node.setAccessibility();
             }
             node.cascade().forEach(item => item.hide());
-            this.setGridSpace(node);
             return this.getEnclosingTag(node.renderDepth, node.nodeName, node.id);
         }
-        createGroup(node, parent, children) {
-            const viewGroup = new ViewGroup(this.cache.nextId, node, parent, children);
-            children.forEach(item => {
-                item.parent = viewGroup;
-                viewGroup.inheritGrid(item);
-            });
-            viewGroup.setBounds();
-            this.cache.list.push(viewGroup);
-            return viewGroup;
-        }
-        getNodeStatic(tagName, depth, options = {}, width = '', height = '', node = null, children = false) {
+        renderNodeStatic(tagName, depth, options = {}, width = '', height = '', node = null, children = false) {
             let minimal = false;
             if (node == null) {
                 node = new View(0, SETTINGS.targetAPI);
@@ -4903,6 +5004,16 @@
             options.stringId = node.stringId;
             return output;
         }
+        createGroup(node, parent, children) {
+            const group = new ViewGroup(this.cache.nextId, node, parent, children);
+            children.forEach(item => {
+                item.parent = group;
+                item.inherit(group, 'data');
+            });
+            group.setBounds();
+            this.cache.list.push(group);
+            return group;
+        }
         setAttributes(data) {
             const cache = data.cache.filter(node => node.visible).map(node => ({ pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) }));
             [...data.views, ...data.includes].forEach(view => {
@@ -4914,26 +5025,40 @@
             return output.replace(`{@${node.id}}`, this.parseAttributes(node));
         }
         setDimensions(data) {
+            function addToGroup(tagName, node, dimen, attr, value) {
+                const group = groups[tagName];
+                let name = dimen;
+                if (arguments.length === 5) {
+                    if (value && /(px|dp|sp)$/.test(value)) {
+                        name = `${dimen}-${attr}-${value}`;
+                    }
+                    else {
+                        return;
+                    }
+                }
+                if (group[name] == null) {
+                    group[name] = [];
+                }
+                group[name].push(node);
+            }
             const groups = {};
             data.cache.filter(node => node.visible).forEach(node => {
-                node.setGridSpan();
-                node.setBoxSpacing();
+                node.mergeBoxSpacing();
                 if (SETTINGS.dimensResourceValue) {
                     const tagName = node.tagName.toLowerCase();
                     if (groups[tagName] == null) {
                         groups[tagName] = {};
                     }
-                    const group = groups[tagName];
                     for (const key of Object.keys(BOX_STANDARD)) {
                         const result = node.boxValue(parseInt(key));
                         if (result[0] !== '' && result[1] !== '0px') {
                             const name = `${BOX_STANDARD[key].toLowerCase()}-${result[0]}-${result[1]}`;
-                            this.addDimenGroup(group, node, name);
+                            addToGroup(tagName, node, name);
                         }
                     }
                     ['android:layout_width:width', 'android:layout_height:height', 'android:minWidth:minwidth', 'android:minHeight:minheight', 'app:layout_constraintWidth_min:constraintwidth_min', 'app:layout_constraintHeight_min:constraintheight_min'].forEach(value => {
                         const [namespace, attr, dimen] = value.split(':');
-                        this.addDimenGroup(group, node, dimen, attr, node[namespace](attr));
+                        addToGroup(tagName, node, dimen, attr, node[namespace](attr));
                     });
                 }
             });
@@ -4961,11 +5086,8 @@
             }
             return content;
         }
-        addXmlNamespace(name, uri) {
+        addXmlNs(name, uri) {
             XMLNS_ANDROID[name] = uri;
-        }
-        getNodeName(value) {
-            return View.getViewName(value);
         }
         parseAttributes(node) {
             const attributes = node.combine();
@@ -4982,63 +5104,11 @@
             }
             return output;
         }
-        addDimenGroup(group, node, dimen, attr, value) {
-            let name = dimen;
-            if (arguments.length === 5) {
-                if (value && /(px|dp|sp)$/.test(value)) {
-                    name = `${dimen}-${attr}-${value}`;
-                }
-                else {
-                    return;
-                }
-            }
-            if (group[name] == null) {
-                group[name] = [];
-            }
-            group[name].push(node);
-        }
         getDimenResourceKey(resource, key, value) {
             if (resource.has(key) && resource.get(key) !== value) {
                 key = generateId('dimens', `${key}_1`);
             }
             return key;
-        }
-        setGridSpace(node) {
-            if (node.parent.is(NODE_STANDARD.GRID)) {
-                const dimensions = getBoxSpacing(node.documentParent.element, true);
-                const options = {
-                    android: {
-                        layout_columnSpan: node.renderParent.gridColumnCount
-                    }
-                };
-                if (node.gridFirst) {
-                    const heightTop = dimensions.paddingTop + dimensions.marginTop;
-                    if (heightTop > 0) {
-                        node.parent.gridPadding.top = heightTop;
-                    }
-                }
-                if (node.gridRowStart) {
-                    const marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
-                    if (marginLeft > 0) {
-                        node.parent.gridPadding.left.push(marginLeft);
-                    }
-                }
-                if (node.gridRowEnd) {
-                    const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!node.gridLast ? dimensions.marginTop + dimensions.paddingTop : 0);
-                    if (heightBottom > 0) {
-                        if (node.gridLast) {
-                            node.parent.gridPadding.bottom = heightBottom;
-                        }
-                        else {
-                            this.appendAfter(node.id, this.getNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, options, 'match_parent', convertPX(heightBottom)));
-                        }
-                    }
-                    const marginRight = dimensions.marginRight + dimensions.paddingRight;
-                    if (marginRight > 0) {
-                        node.parent.gridPadding.right.push(marginRight);
-                    }
-                }
-            }
         }
         setAlignParent(node, orientation = '', bias = false) {
             const map = LAYOUT_MAP.constraint;
@@ -5092,7 +5162,7 @@
                     };
                     const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
                     const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-                    const xml = this.getNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
+                    const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
                     this.appendAfter(node.id, xml);
                     node.app(map[LRTB], options.stringId);
                     node.delete('app', map[RLBT]);
@@ -5781,12 +5851,6 @@
                 if (tagData != null) {
                     for (const attr in tagData) {
                         for (const id of tagData[attr]) {
-                            if (attr.startsWith('android:background=')) {
-                                const node = viewData.cache.find(item => item.id === id);
-                                if (node && node.android('background') != null) {
-                                    continue;
-                                }
-                            }
                             if (map[id] == null) {
                                 map[id] = { styles: [], attributes: [] };
                             }
@@ -6360,61 +6424,8 @@
         }
     }
 
-    class External extends Extension {
-        constructor(name, tagNames = [], options) {
-            super(name, tagNames, options);
-        }
-        beforeInit(init = false) {
-            if (init || this.included()) {
-                if (this.element != null) {
-                    const object = this.element;
-                    if (object.__andromeExternalDisplay == null) {
-                        const display = [];
-                        let current = this.element;
-                        while (current != null) {
-                            display.push(getStyle(current).display);
-                            current.style.display = 'block';
-                            current = current.parentElement;
-                        }
-                        object.__andromeExternalDisplay = display;
-                    }
-                }
-            }
-        }
-        init(element) {
-            if (this.included(element)) {
-                this.application.elements.add(element);
-            }
-            return false;
-        }
-        afterInit(init = false) {
-            if (init || this.included()) {
-                if (this.element != null) {
-                    const object = this.element;
-                    if (object.__andromeExternalDisplay != null) {
-                        const display = object.__andromeExternalDisplay;
-                        let current = this.element;
-                        let i = 0;
-                        while (current != null) {
-                            current.style.display = display[i];
-                            current = current.parentElement;
-                            i++;
-                        }
-                        delete object.__andromeExternalDisplay;
-                    }
-                }
-            }
-        }
-        is() {
-            return false;
-        }
-        condition() {
-            return false;
-        }
-    }
-
     class Custom extends Extension {
-        constructor(name, tagNames = [], options) {
+        constructor(name, tagNames, options) {
             super(name, tagNames, options);
             this.require(EXT_NAME.EXTERNAL, true);
         }
@@ -6434,6 +6445,12 @@
             }
             return { xml };
         }
+    }
+
+    class CustomAndroid extends Custom {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+        }
         afterInsert() {
             const node = this.node;
             const options = Object.assign({}, this.options[node.element.id]);
@@ -6441,63 +6458,93 @@
         }
     }
 
-    class Table extends Extension {
+    class List extends Extension {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
         }
+        condition() {
+            return (super.condition() &&
+                (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (NodeList.linearX(this.node.children) || NodeList.linearY(this.node.children))));
+        }
         processNode() {
             const node = this.node;
-            const tableRows = [];
-            const thead = node.children.find(item => item.tagName === 'THEAD');
-            const tbody = node.children.find(item => item.tagName === 'TBODY');
-            const tfoot = node.children.find(item => item.tagName === 'TFOOT');
-            if (thead != null) {
-                thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(thead));
-                tableRows.push(...thead.children);
-                thead.hide();
+            const parent = this.parent;
+            let xml = '';
+            if (NodeList.linearY(node.children)) {
+                xml = this.application.writeGridLayout(node, parent, 2);
             }
-            if (tbody != null) {
-                tableRows.push(...tbody.children);
-                tbody.hide();
+            else {
+                xml = this.application.writeLinearLayout(node, parent, NodeList.linearY(node.children));
             }
-            if (tfoot != null) {
-                tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(tfoot));
-                tableRows.push(...tfoot.children);
-                tfoot.hide();
-            }
-            const rowCount = tableRows.length;
-            let columnCount = 0;
-            for (let i = 0; i < tableRows.length; i++) {
-                const tr = tableRows[i];
-                tr.hide();
-                columnCount = Math.max(tr.children.map(item => item.element).reduce((a, b) => a + b.colSpan, 0), columnCount);
-                for (let j = 0; j < tr.children.length; j++) {
-                    const td = tr.children[j];
-                    const style = td.element.style;
-                    const element = td.element;
-                    if (element.rowSpan > 1) {
-                        td.gridRowSpan = element.rowSpan;
+            for (let i = 0, j = 0; i < node.children.length; i++) {
+                const item = node.children[i];
+                let ordinal = '0';
+                if (item.css('display') === 'list-item') {
+                    const listStyle = item.css('listStyleType');
+                    switch (listStyle) {
+                        case 'disc':
+                            ordinal = '●';
+                            break;
+                        case 'square':
+                            ordinal = '■';
+                            break;
+                        case 'lower-alpha':
+                        case 'lower-latin':
+                            ordinal = `${convertAlpha(j).toLowerCase()}.`;
+                            break;
+                        case 'upper-alpha':
+                        case 'upper-latin':
+                            ordinal = `${convertAlpha(j)}.`;
+                            break;
+                        case 'lower-roman':
+                            ordinal = `${convertRoman(j + 1).toLowerCase()}.`;
+                            break;
+                        case 'upper-roman':
+                            ordinal = `${convertRoman(j + 1)}.`;
+                            break;
+                        default:
+                            if (node.tagName === 'OL') {
+                                ordinal = `${(listStyle === 'decimal-leading-zero' && j < 9 ? '0' : '') && (j + 1).toString()}.`;
+                            }
+                            else {
+                                ordinal = '○';
+                            }
                     }
-                    if (element.colSpan > 1) {
-                        td.gridColumnSpan = element.colSpan;
-                    }
-                    if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
-                        td.styleMap.textAlign = style.textAlign;
-                    }
-                    if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
-                        td.styleMap.verticalAlign = 'middle';
-                    }
-                    const [width, height] = (node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : node.style.borderSpacing.split(' '));
-                    delete td.styleMap.margin;
-                    td.styleMap.marginTop = height;
-                    td.styleMap.marginRight = width;
-                    td.styleMap.marginBottom = height;
-                    td.styleMap.marginLeft = width;
-                    td.parent = node;
+                    j++;
                 }
+                item.data(`${EXT_NAME.LIST}:listStyle`, ordinal);
             }
-            const xml = this.application.writeGridLayout(node, this.parent, columnCount, rowCount);
             return { xml };
+        }
+    }
+
+    class ListAndroid extends List {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+        }
+        processChild() {
+            const node = this.node;
+            const controller = this.application.controllerHandler;
+            const listStyle = node.data(`${EXT_NAME.LIST}:listStyle`);
+            if (listStyle != null) {
+                controller.prependBefore(node.id, controller.renderNodeStatic((listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE), node.depth + node.renderDepth, {
+                    android: {
+                        gravity: parseRTL('right'),
+                        layout_gravity: 'fill',
+                        layout_columnWeight: '0',
+                        [parseRTL('layout_marginRight')]: formatDimen(node.tagName, parseRTL('margin_right'), '8px'),
+                        text: (listStyle !== '0' ? listStyle : '')
+                    }
+                }, 'wrap_content', 'wrap_content'));
+                node.android('layout_columnWeight', '1');
+            }
+            return { xml: '' };
+        }
+        afterInsert() {
+            const node = this.node;
+            if (node.is(NODE_STANDARD.GRID)) {
+                node.android('layout_width', 'match_parent');
+            }
         }
     }
 
@@ -6513,9 +6560,14 @@
         processNode(mapX, mapY) {
             const node = this.node;
             const parent = this.parent;
+            const balanceColumns = this.options.balanceColumns;
             let xml = '';
             let columns = [];
-            const balanceColumns = this.options.balanceColumns;
+            const gridData = {
+                columnEnd: [],
+                columnCount: 0,
+                padding: { top: 0, right: [], bottom: 0, left: [] }
+            };
             if (balanceColumns) {
                 const dimensions = [];
                 for (let l = 0; l < node.children.length; l++) {
@@ -6564,7 +6616,7 @@
                             for (let m = 0; m < columns.length; m++) {
                                 if (columns[m].length > base.length) {
                                     const removed = columns[m].splice(assigned[m] + (every ? 2 : 1), columns[m].length - base.length);
-                                    columns[m][assigned[m] + (every ? 1 : 0)].gridSiblings = [...removed];
+                                    columns[m][assigned[m] + (every ? 1 : 0)].data(`${EXT_NAME.GRID}:gridSiblings`, [...removed]);
                                 }
                             }
                         }
@@ -6575,7 +6627,7 @@
                                 for (let m = 0; m < columns.length; m++) {
                                     if (found[m] > minIndex) {
                                         const removed = columns[m].splice(minIndex, found[m] - minIndex);
-                                        columns[m][assigned[m]].gridSiblings = [...removed];
+                                        columns[m][assigned[m] + (every ? 1 : 0)].data(`${EXT_NAME.GRID}:gridSiblings`, [...removed]);
                                     }
                                 }
                             }
@@ -6683,13 +6735,13 @@
                     }
                 }
                 if (columnEnd.length > 0) {
-                    node.gridColumnEnd = columnEnd;
-                    node.gridColumnEnd[node.gridColumnEnd.length - 1] = node.box.right;
+                    gridData.columnEnd = columnEnd;
+                    gridData.columnEnd[gridData.columnEnd.length - 1] = node.box.right;
                 }
             }
             if (columns.length > 1) {
-                node.gridColumnCount = (balanceColumns ? columns[0].length : columns.length);
-                xml = this.application.writeGridLayout(node, parent, node.gridColumnCount);
+                gridData.columnCount = (balanceColumns ? columns[0].length : columns.length);
+                xml = this.application.writeGridLayout(node, parent, gridData.columnCount);
                 for (let l = 0, count = 0; l < columns.length; l++) {
                     let spacer = 0;
                     for (let m = 0, start = 0; m < columns[l].length; m++) {
@@ -6697,12 +6749,22 @@
                         if (!item.spacer) {
                             item.parent.hide();
                             item.parent = node;
+                            const data = {
+                                inherit: true,
+                                rowSpan: 0,
+                                columnSpan: 0,
+                                index: -1,
+                                cellFirst: false,
+                                cellLast: false,
+                                rowEnd: false,
+                                rowStart: false
+                            };
                             if (balanceColumns) {
-                                item.gridRowStart = (m === 0);
-                                item.gridRowEnd = (m === columns[l].length - 1);
-                                item.gridFirst = (l === 0 && m === 0);
-                                item.gridLast = (l === columns.length - 1 && item.gridRowEnd);
-                                item.gridIndex = m;
+                                data.rowStart = (m === 0);
+                                data.rowEnd = (m === columns[l].length - 1);
+                                data.cellFirst = (l === 0 && m === 0);
+                                data.cellLast = (l === columns.length - 1 && data.rowEnd);
+                                data.index = m;
                             }
                             else {
                                 let rowSpan = 1;
@@ -6727,21 +6789,23 @@
                                         }
                                     }
                                 }
-                                item.gridRowSpan = rowSpan;
-                                item.gridColumnSpan = columnSpan;
-                                item.gridRowStart = (start++ === 0);
-                                item.gridRowEnd = (columnSpan + l === columns.length);
-                                item.gridFirst = (count++ === 0);
-                                item.gridLast = (item.gridRowEnd && m === columns[l].length - 1);
-                                item.gridIndex = l;
+                                data.rowSpan = rowSpan;
+                                data.columnSpan = columnSpan;
+                                data.rowStart = (start++ === 0);
+                                data.rowEnd = (columnSpan + l === columns.length);
+                                data.cellFirst = (count++ === 0);
+                                data.cellLast = (data.rowEnd && m === columns[l].length - 1);
+                                data.index = l;
                                 spacer = 0;
                             }
+                            item.data(`${EXT_NAME.GRID}:gridCellData`, data);
                         }
                         else if (item.spacer === 1) {
                             spacer++;
                         }
                     }
                 }
+                node.data(`${EXT_NAME.GRID}:gridData`, gridData);
                 node.render(parent);
             }
             return { xml };
@@ -6749,119 +6813,193 @@
         processChild() {
             const node = this.node;
             const parent = this.parent;
-            let siblings;
             let xml = '';
-            if (this.options.balanceColumns) {
-                siblings = node.gridSiblings;
-            }
-            else {
-                const columnEnd = parent.gridColumnEnd[Math.min(node.gridIndex + (node.gridColumnSpan - 1), parent.gridColumnEnd.length - 1)];
-                siblings = node.documentParent.children.filter(item => !item.renderParent && item.linear.left >= node.linear.right && item.linear.right <= columnEnd);
-            }
-            if (siblings != null && siblings.length > 0) {
-                siblings.unshift(node);
-                sortAsc(siblings, 'linear.left');
-                const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
-                const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
-                if (linearX || linearY) {
-                    xml = this.application.writeLinearLayout(viewGroup, parent, linearY);
+            const gridData = parent.data(`${EXT_NAME.GRID}:gridData`);
+            const gridCellData = node.data(`${EXT_NAME.GRID}:gridCellData`);
+            if (gridData != null && gridCellData != null) {
+                let siblings;
+                if (this.options.balanceColumns) {
+                    siblings = node.data(`${EXT_NAME.GRID}:gridSiblings`);
                 }
                 else {
-                    xml = this.application.writeDefaultLayout(viewGroup, parent);
+                    const columnEnd = gridData.columnEnd[Math.min(gridCellData.index + (gridCellData.columnSpan - 1), gridData.columnEnd.length - 1)];
+                    siblings = node.documentParent.children.filter(item => !item.renderParent && item.linear.left >= node.linear.right && item.linear.right <= columnEnd);
                 }
-                return { xml, parent: viewGroup };
-            }
-            return { xml };
-        }
-    }
-
-    class List extends Extension {
-        constructor(name, tagNames, options) {
-            super(name, tagNames, options);
-        }
-        condition() {
-            return (super.condition() &&
-                (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (NodeList.linearX(this.node.children) || NodeList.linearY(this.node.children))));
-        }
-        processNode() {
-            const node = this.node;
-            const parent = this.parent;
-            let xml = '';
-            if (NodeList.linearY(node.children)) {
-                xml = this.application.writeGridLayout(node, parent, 2);
-            }
-            else {
-                xml = this.application.writeLinearLayout(node, parent, NodeList.linearY(node.children));
-            }
-            for (let i = 0, j = 0; i < node.children.length; i++) {
-                const item = node.children[i];
-                let ordinal = '0';
-                if (item.css('display') === 'list-item') {
-                    const listStyle = item.css('listStyleType');
-                    switch (listStyle) {
-                        case 'disc':
-                            ordinal = '●';
-                            break;
-                        case 'square':
-                            ordinal = '■';
-                            break;
-                        case 'lower-alpha':
-                        case 'lower-latin':
-                            ordinal = `${convertAlpha(j).toLowerCase()}.`;
-                            break;
-                        case 'upper-alpha':
-                        case 'upper-latin':
-                            ordinal = `${convertAlpha(j)}.`;
-                            break;
-                        case 'lower-roman':
-                            ordinal = `${convertRoman(j + 1).toLowerCase()}.`;
-                            break;
-                        case 'upper-roman':
-                            ordinal = `${convertRoman(j + 1)}.`;
-                            break;
-                        default:
-                            if (node.tagName === 'OL') {
-                                ordinal = `${(listStyle === 'decimal-leading-zero' && j < 9 ? '0' : '') && (j + 1).toString()}.`;
-                            }
-                            else {
-                                ordinal = '○';
-                            }
+                if (siblings != null && siblings.length > 0) {
+                    siblings.unshift(node);
+                    sortAsc(siblings, 'linear.left');
+                    const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
+                    const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
+                    if (linearX || linearY) {
+                        xml = this.application.writeLinearLayout(viewGroup, parent, linearY);
                     }
-                    j++;
+                    else {
+                        xml = this.application.writeDefaultLayout(viewGroup, parent);
+                    }
+                    return { xml, parent: viewGroup };
                 }
-                item.data(`${EXT_NAME.LIST}:listStyle`, ordinal);
             }
             return { xml };
         }
     }
 
-    class ListAndroid extends List {
+    class GridAndroid extends Grid {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
         }
         processChild() {
             const node = this.node;
-            const controller = this.application.controllerHandler;
-            const listStyle = node.data(`${EXT_NAME.LIST}:listStyle`);
-            if (listStyle != null) {
-                controller.prependBefore(node.id, controller.getNodeStatic((listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE), node.depth + node.renderDepth, {
-                    android: {
-                        gravity: parseRTL('right'),
-                        layout_gravity: 'fill',
-                        layout_columnWeight: '0',
-                        [parseRTL('layout_marginRight')]: formatDimen(node.tagName, parseRTL('margin_right'), '8px'),
-                        text: (listStyle !== '0' ? listStyle : '')
+            const data = node.data(`${EXT_NAME.GRID}:gridCellData`);
+            if (data != null) {
+                if (data.rowSpan > 1) {
+                    node.android('layout_rowSpan', data.rowSpan.toString());
+                }
+                if (data.columnSpan > 1) {
+                    node.android('layout_columnSpan', data.columnSpan.toString());
+                }
+            }
+            return super.processChild();
+        }
+        afterRender() {
+            const extended = [];
+            this.application.cache.list.forEach((node) => {
+                if (node.renderExtension === this) {
+                    extended.push(node);
+                }
+                else {
+                    const parent = node.renderParent;
+                    if (parent instanceof View && parent.is(NODE_STANDARD.GRID)) {
+                        const gridData = parent.data(`${EXT_NAME.GRID}:gridData`);
+                        const gridCellData = node.data(`${EXT_NAME.GRID}:gridCellData`);
+                        if (gridData != null && gridCellData != null) {
+                            const dimensions = getBoxSpacing(node.documentParent.element, true);
+                            if (gridCellData.cellFirst) {
+                                const heightTop = convertInt(dimensions.paddingTop) + convertInt(dimensions.marginTop);
+                                if (heightTop > 0) {
+                                    gridData.padding.top = heightTop;
+                                }
+                            }
+                            if (gridCellData.rowStart) {
+                                const marginLeft = convertInt(dimensions.marginLeft) + convertInt(dimensions.paddingLeft);
+                                if (marginLeft > 0) {
+                                    gridData.padding.left.push(marginLeft);
+                                }
+                            }
+                            if (gridCellData.rowEnd) {
+                                const heightBottom = convertInt(dimensions.marginBottom) + convertInt(dimensions.paddingBottom) + (!gridCellData.cellLast ? convertInt(dimensions.marginTop) + convertInt(dimensions.paddingTop) : 0);
+                                if (heightBottom > 0) {
+                                    if (gridCellData.cellLast) {
+                                        gridData.padding.bottom = heightBottom;
+                                    }
+                                    else {
+                                        const controller = this.application.controllerHandler;
+                                        controller.appendAfter(node.id, controller.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { android: { layout_columnSpan: gridData.columnCount } }, 'match_parent', convertPX(heightBottom)));
+                                    }
+                                }
+                                const marginRight = convertInt(dimensions.marginRight) + convertInt(dimensions.paddingRight);
+                                if (marginRight > 0) {
+                                    gridData.padding.right.push(marginRight);
+                                }
+                            }
+                        }
                     }
-                }, 'wrap_content', 'wrap_content'));
-                node.android('layout_columnWeight', '1');
+                }
+            });
+            extended.forEach(node => {
+                const data = node.data(`${EXT_NAME.GRID}:gridData`);
+                if (data != null) {
+                    if (data.padding.top > 0) {
+                        node.modifyBox(BOX_STANDARD.PADDING_TOP, data.padding.top);
+                    }
+                    if (data.padding.right.length > 0) {
+                        node.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(data.padding.right));
+                    }
+                    if (data.padding.bottom > 0) {
+                        node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, data.padding.bottom);
+                    }
+                    if (data.padding.left.length > 0) {
+                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(data.padding.left));
+                    }
+                }
+            });
+        }
+    }
+
+    class Table extends Extension {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+        }
+        processNode() {
+            const node = this.node;
+            const tableRows = [];
+            const thead = node.children.find(item => item.tagName === 'THEAD');
+            const tbody = node.children.find(item => item.tagName === 'TBODY');
+            const tfoot = node.children.find(item => item.tagName === 'TFOOT');
+            if (thead != null) {
+                thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead, 'styleMap'));
+                tableRows.push(...thead.children);
+                thead.hide();
+            }
+            if (tbody != null) {
+                tableRows.push(...tbody.children);
+                tbody.hide();
+            }
+            if (tfoot != null) {
+                tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(tfoot, 'styleMap'));
+                tableRows.push(...tfoot.children);
+                tfoot.hide();
+            }
+            const rowCount = tableRows.length;
+            let columnCount = 0;
+            for (let i = 0; i < tableRows.length; i++) {
+                const tr = tableRows[i];
+                tr.hide();
+                columnCount = Math.max(tr.children.map(item => item.element).reduce((a, b) => a + b.colSpan, 0), columnCount);
+                for (let j = 0; j < tr.children.length; j++) {
+                    const td = tr.children[j];
+                    const style = td.element.style;
+                    const element = td.element;
+                    if (element.rowSpan > 1) {
+                        td.data(`${EXT_NAME.TABLE}:rowSpan`, element.rowSpan);
+                    }
+                    if (element.colSpan > 1) {
+                        td.data(`${EXT_NAME.TABLE}:columnSpan`, element.colSpan);
+                    }
+                    if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
+                        td.styleMap.textAlign = style.textAlign;
+                    }
+                    if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
+                        td.styleMap.verticalAlign = 'middle';
+                    }
+                    const [width, height] = (node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : node.style.borderSpacing.split(' '));
+                    delete td.styleMap.margin;
+                    td.styleMap.marginTop = height;
+                    td.styleMap.marginRight = width;
+                    td.styleMap.marginBottom = height;
+                    td.styleMap.marginLeft = width;
+                    td.parent = node;
+                }
+            }
+            const xml = this.application.writeGridLayout(node, this.parent, columnCount, rowCount);
+            return { xml };
+        }
+    }
+
+    class TableAndroid extends Table {
+        constructor(name, tagNames, options) {
+            super(name, tagNames, options);
+        }
+        processChild() {
+            const node = this.node;
+            const rowSpan = node.data(`${EXT_NAME.TABLE}:rowSpan`);
+            const columnSpan = node.data(`${EXT_NAME.TABLE}:columnSpan`);
+            if (rowSpan != null && rowSpan > 1) {
+                node.android('layout_rowSpan', rowSpan.toString());
+            }
+            if (columnSpan != null && columnSpan > 1) {
+                node.android('layout_columnSpan', columnSpan.toString());
             }
             return { xml: '' };
-        }
-        afterInsert() {
-            const node = this.node;
-            if (node.is(NODE_STANDARD.GRID)) {
-                node.android('layout_width', 'match_parent');
-            }
         }
     }
 
@@ -6884,101 +7022,6 @@
         }
     }
 
-    const WIDGET_NAME = {
-        FAB: 'androme.widget.floatingactionbutton',
-        MENU: 'androme.widget.menu',
-        COORDINATOR: 'androme.widget.coordinator',
-        TOOLBAR: 'androme.widget.toolbar',
-        DRAWER: 'androme.widget.drawer',
-        BOTTOM_NAVIGATION: 'androme.widget.bottomnavigation'
-    };
-    const VIEW_SUPPORT = {
-        DRAWER: 'android.support.v4.widget.DrawerLayout',
-        NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
-        COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
-        APPBAR: 'android.support.design.widget.AppBarLayout',
-        COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
-        TOOLBAR: 'android.support.v7.widget.Toolbar',
-        FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton',
-        BOTTOM_NAVIGATION: 'android.support.design.widget.BottomNavigationView'
-    };
-    const VIEW_NAVIGATION = {
-        MENU: 'menu',
-        ITEM: 'item',
-        GROUP: 'group'
-    };
-    const DRAWABLE_PREFIX = {
-        MENU: 'ic_menu_',
-        DIALOG: 'ic_dialog_'
-    };
-
-    function findNestedMenu(node, requireExt = true) {
-        return Array.from(node.element.children).find((element) => element.tagName === 'NAV' && (!requireExt || includes(optional(element, 'dataset.ext', 'string'), WIDGET_NAME.MENU)));
-    }
-    function findNestedExtension(node, extension) {
-        return Array.from(node.element.children).find((element) => includes(optional(element, 'dataset.ext', 'string'), extension));
-    }
-    function overwriteDefault(options, namespace, attr, value) {
-        if (namespace !== '') {
-            if (options[namespace] == null) {
-                options[namespace] = {};
-            }
-            if (options[namespace][attr] == null) {
-                options[namespace][attr] = value;
-            }
-        }
-        else {
-            if (options[attr] == null) {
-                options[attr] = value;
-            }
-        }
-    }
-    function positionIsolated(node) {
-        const renderParent = node.renderParent;
-        const parent = node.documentParent;
-        node.renderParent = parent;
-        const horizontalBias = node.horizontalBias;
-        const verticalBias = node.verticalBias;
-        const gravity = [];
-        if (horizontalBias < 0.5) {
-            gravity.push(parseRTL('left'));
-        }
-        else if (horizontalBias > 0.5) {
-            gravity.push(parseRTL('right'));
-        }
-        else {
-            gravity.push('center_horizontal');
-        }
-        if (verticalBias < 0.5) {
-            gravity.push('top');
-            node.app('layout_dodgeInsetEdges', 'top');
-        }
-        else if (verticalBias > 0.5) {
-            gravity.push('bottom');
-        }
-        else {
-            gravity.push('center_vertical');
-        }
-        node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
-        if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
-            if (horizontalBias < 0.5) {
-                node.css('marginLeft', convertPX(Math.floor(node.bounds.left - parent.box.left)));
-            }
-            else {
-                node.css('marginRight', convertPX(Math.floor(parent.box.right - node.bounds.right)));
-            }
-        }
-        if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
-            if (verticalBias < 0.5) {
-                node.css('marginTop', convertPX(Math.floor(node.bounds.top - parent.box.top)));
-            }
-            else {
-                node.css('marginBottom', convertPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
-            }
-        }
-        node.renderParent = renderParent;
-    }
-
     class FloatingActionButton extends Button {
         constructor(name, tagNames, options) {
             super(name, tagNames, options);
@@ -6990,7 +7033,9 @@
             const options = Object.assign({}, this.options[element.id]);
             const backgroundColor = node.css('backgroundColor');
             overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor ? `@color/${Resource.addColor(parseRGBA(backgroundColor)[0])}` : '?attr/colorAccent'));
-            overwriteDefault(options, 'android', 'focusable', 'true');
+            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+                overwriteDefault(options, 'android', 'focusable', 'true');
+            }
             let src = '';
             switch (element.tagName) {
                 case 'IMG':
@@ -7022,7 +7067,7 @@
                 }
             }
             node.depth = (insert ? 0 : node.parent.renderDepth + 1);
-            let xml = this.application.controllerHandler.getNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
+            let xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
             node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
             let proceed = false;
             if (node.isolated) {
@@ -7147,7 +7192,7 @@
         }
         processNode() {
             const node = this.node;
-            const xml = this.application.controllerHandler.getNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
+            const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
             node.renderParent = true;
             node.cascade().forEach(item => item.renderExtension = this);
             node.excludeResource |= NODE_RESOURCE.ALL;
@@ -7256,7 +7301,7 @@
             else {
                 node.nodeName = nodeName;
             }
-            const xml = this.application.controllerHandler.getNodeStatic(nodeName, node.depth, options, '', '', node, layout);
+            const xml = this.application.controllerHandler.renderNodeStatic(nodeName, node.depth, options, '', '', node, layout);
             return { xml, proceed };
         }
         afterRender() {
@@ -7310,29 +7355,30 @@
                             node.bounds.bottom -= offsetHeight;
                             node.setBounds(true);
                         }
-                        collapsingToolbar = (extension.options[toolbar.element.id].collapsingToolbar);
+                        collapsingToolbar = (extension.options[toolbar.element.id] != null ? extension.options[toolbar.element.id].collapsingToolbar : null);
                     }
                 }
                 const filename = `${node.nodeId}_content`;
                 let include = '';
+                let layout = null;
                 if (this.options.includes == null || this.options.includes) {
-                    include = controller.getNodeStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
+                    include = controller.renderNodeStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
+                    layout = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
+                    layout.parent = node;
+                    layout.inherit(node, 'base');
+                    layout.excludeResource |= NODE_RESOURCE.ALL;
+                    nodes.forEach(item => {
+                        item.parent = layout;
+                        item.depth++;
+                        if (offsetHeight > 0 && item.linear.top >= offsetX) {
+                            this.adjustBounds(item, offsetHeight);
+                            item.cascade().forEach((child) => this.adjustBounds(child, offsetHeight));
+                        }
+                        layout.children.push(item);
+                    });
+                    node.children = node.children.filter(item => item.isolated);
+                    application.cache.list.push(layout);
                 }
-                const layout = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
-                layout.parent = node;
-                layout.inheritBase(node);
-                layout.excludeResource |= NODE_RESOURCE.ALL;
-                nodes.forEach(item => {
-                    item.parent = layout;
-                    item.depth++;
-                    if (offsetHeight > 0 && item.linear.top >= offsetX) {
-                        this.adjustBounds(item, offsetHeight);
-                        item.cascade().forEach((child) => this.adjustBounds(child, offsetHeight));
-                    }
-                    layout.children.push(item);
-                });
-                node.children = node.children.filter(item => item.isolated);
-                application.cache.list.push(layout);
                 const options = { android: {} };
                 const optionsCollapsingToolbar = Object.assign({}, collapsingToolbar);
                 const [linearX, linearY] = [ViewList.linearX(nodes), ViewList.linearY(nodes)];
@@ -7350,9 +7396,9 @@
                 }
                 overwriteDefault((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
                 const depth = (include !== '' ? 0 : node.depth + 1);
-                let content = controller.getNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true);
+                let content = (include !== '' ? controller.renderNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true) : '');
                 if (collapsingToolbar != null) {
-                    content = controller.getNodeStatic(NODE_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, SETTINGS.targetAPI), true).replace('{:0}', content);
+                    content = controller.renderNodeStatic(NODE_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, SETTINGS.targetAPI), true).replace('{:0}', content);
                 }
                 if (include !== '') {
                     application.addInclude(filename, content);
@@ -7401,7 +7447,7 @@
     var EXTENSION_COLLAPSINGTOOLBAR_TMPL = template$9.join('\n');
 
     class Toolbar extends Extension {
-        constructor(name, tagNames = [], options) {
+        constructor(name, tagNames, options) {
             super(name, tagNames, options);
             this.require(WIDGET_NAME.MENU);
         }
@@ -7430,7 +7476,7 @@
         processNode() {
             const controller = this.application.controllerHandler;
             const node = this.node;
-            const target = (node.hasElement && node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
+            const target = (node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
             const backgroundImage = node.css('backgroundImage');
             const options = Object.assign({}, this.options[node.element.id]);
             const optionsAppBar = Object.assign({}, options.appBar);
@@ -7478,6 +7524,7 @@
                 optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
             }
             else {
+                overwriteDefault(optionsToolbar, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
                 overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
                 if (children === 0) {
                     overwriteDefault(optionsAppBar, 'android', 'layout_height', '?attr/actionBarSize');
@@ -7490,7 +7537,7 @@
                 overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
             }
             node.depth = depth + (appBar ? 1 : 0) + (options.collapsingToolbar ? 1 : 0);
-            let xml = controller.getNodeStatic(VIEW_SUPPORT.TOOLBAR, node.depth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
+            let xml = controller.renderNodeStatic(VIEW_SUPPORT.TOOLBAR, node.depth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
             if (collapsingToolbar) {
                 if (backgroundImage !== 'none') {
                     const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
@@ -7514,7 +7561,7 @@
                     overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                     overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                     overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                    xml += controller.getNodeStatic(NODE_ANDROID.IMAGE, node.depth, optionsBackgroundImage, 'match_parent', 'match_parent');
+                    xml += controller.renderNodeStatic(NODE_ANDROID.IMAGE, node.depth, optionsBackgroundImage, 'match_parent', 'match_parent');
                     node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
                 }
             }
@@ -7532,7 +7579,7 @@
                 else {
                     overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
                 }
-                outer = controller.getNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', null, true);
+                outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', null, true);
                 if (collapsingToolbar) {
                     overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsing`);
                     overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
@@ -7541,7 +7588,7 @@
                     }
                     overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                     overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                    outer = outer.replace('{:0}', controller.getNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, ++depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', null, true));
+                    outer = outer.replace('{:0}', controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, ++depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', null, true));
                     this.createResourceTheme(appBarOverlay, popupOverlay);
                 }
                 node.nodeId = optionsAppBar.android.id.replace('@+id/', '');
@@ -7598,7 +7645,7 @@
             if (menu != null) {
                 const layouts = this.application.layouts;
                 for (let i = 0; i < layouts.length; i++) {
-                    layouts[i].content = layouts[i].content.replace(`{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`, menu.dataset.currentId);
+                    layouts[i].content = layouts[i].content.replace(`{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`, menu.dataset.viewName);
                 }
             }
         }
@@ -7646,7 +7693,7 @@
             const options = Object.assign({}, this.options[node.element.id]);
             overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
             overwriteDefault(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`);
-            const xml = this.application.controllerHandler.getNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
+            const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
             for (let i = 5; i < node.children.length; i++) {
                 node.children[i].hide();
                 node.children[i].cascade().forEach(item => item.hide());
@@ -7669,7 +7716,7 @@
                 let menu = '';
                 Array.from(this.application.elements).some(item => {
                     if (item.parentElement === node.element && includes(optional(item, 'dataset.ext'), WIDGET_NAME.MENU)) {
-                        menu = item.dataset.currentId;
+                        menu = item.dataset.viewName;
                         return true;
                     }
                     return false;
@@ -7714,7 +7761,7 @@
     var EXTENSION_DRAWER_TMPL = template$b.join('\n');
 
     class Drawer extends Extension {
-        constructor(name, tagNames = [], options) {
+        constructor(name, tagNames, options) {
             super(name, tagNames, options);
             this.documentRoot = true;
             this.require(EXT_NAME.EXTERNAL, true);
@@ -7746,21 +7793,21 @@
             if (menu != null) {
                 overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
             }
-            let xml = controller.getNodeStatic(VIEW_SUPPORT.DRAWER, depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
+            let xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
             const filename = `${node.nodeId}_content`;
             let include = '';
             if (this.options.includes == null || this.options.includes) {
-                include = controller.getNodeStatic('include', depth + 1, { layout: `@layout/${filename}` });
+                include = controller.renderNodeStatic('include', depth + 1, { layout: `@layout/${filename}` });
                 depth = -1;
             }
             const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
             coordinator.parent = node;
-            coordinator.inheritBase(node);
+            coordinator.inherit(node, 'base');
             coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
             coordinator.isolated = true;
             coordinator.excludeResource |= NODE_RESOURCE.ALL;
             application.cache.list.push(coordinator);
-            const content = controller.getNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
+            const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
             const optionsNavigation = Object.assign({}, this.options.navigation);
             overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
             if (menu != null) {
@@ -7769,7 +7816,7 @@
                 overwriteDefault(optionsNavigation, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsNavigation, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
                 overwriteDefault(optionsNavigation, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
-                const navigation = controller.getNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, optionsNavigation, 'wrap_content', 'match_parent');
+                const navigation = controller.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, optionsNavigation, 'wrap_content', 'match_parent');
                 xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
             }
             else {
@@ -7804,8 +7851,8 @@
         }
         finalize() {
             const node = this.node;
-            const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.currentId');
-            const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.currentId');
+            const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+            const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
             if (menu !== '') {
                 this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu));
             }
@@ -7834,10 +7881,10 @@
     const ROOT_CACHE = new Set();
     const EXTENSIONS = {
         [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
-        [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
+        [EXT_NAME.CUSTOM]: new CustomAndroid(EXT_NAME.CUSTOM),
         [EXT_NAME.LIST]: new ListAndroid(EXT_NAME.LIST, ['UL', 'OL']),
-        [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
-        [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
+        [EXT_NAME.TABLE]: new TableAndroid(EXT_NAME.TABLE, ['TABLE']),
+        [EXT_NAME.GRID]: new GridAndroid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
         [WIDGET_NAME.FAB]: new FloatingActionButton(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
         [WIDGET_NAME.MENU]: new Menu$1(WIDGET_NAME.MENU, ['NAV']),
         [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
@@ -7857,9 +7904,9 @@
         const load = new Set();
         for (let name of SETTINGS.builtInExtensions) {
             name = name.toLowerCase().trim();
-            for (const ext in EXTENSIONS) {
-                if (name === ext || ext.startsWith(`${name}.`)) {
-                    load.add(EXTENSIONS[ext]);
+            for (const extension in EXTENSIONS) {
+                if (name === extension || extension.startsWith(`${name}.`)) {
+                    load.add(EXTENSIONS[extension]);
                 }
             }
         }
@@ -7899,12 +7946,13 @@
                         element.id = `view_${main.size}`;
                     }
                 }
+                const filename = optional(element, 'dataset.filename').trim().replace(/\.xml$/, '') || element.id;
                 element.dataset.views = (optional(element, 'dataset.views', 'number') + 1).toString();
-                element.dataset.currentId = convertWord((element.dataset.views !== '1' ? `${element.id}_${element.dataset.views}` : element.id));
+                element.dataset.viewName = convertWord((element.dataset.views !== '1' ? `${filename}_${element.dataset.views}` : filename));
                 if (main.createNodeCache(element)) {
                     main.createLayoutXml();
                     main.setResources();
-                    main.setMarginPadding();
+                    main.adjustBoxSpacing();
                     main.setConstraints();
                     ROOT_CACHE.add(element);
                 }
@@ -7939,7 +7987,7 @@
         };
     }
     function registerExtension(extension) {
-        if (extension instanceof Extension && extension.name && Array.isArray(extension.tagNames)) {
+        if (extension instanceof Extension && extension.name !== '' && Array.isArray(extension.tagNames)) {
             main.registerExtension(extension);
         }
     }
@@ -7954,6 +8002,17 @@
     function getExtension(name) {
         return main.findExtension(name);
     }
+    function ext(name, options) {
+        if (typeof name === 'object') {
+            registerExtension(name);
+        }
+        else if (options != null) {
+            configureExtension(name, options);
+        }
+        else if (name !== '') {
+            return getExtension(name);
+        }
+    }
     function ready() {
         return (!LOADING && !main.closed);
     }
@@ -7965,7 +8024,7 @@
     function reset() {
         ROOT_CACHE.forEach(element => {
             delete element.dataset.views;
-            delete element.dataset.currentId;
+            delete element.dataset.viewName;
         });
         ROOT_CACHE.clear();
         main.reset();
@@ -8049,8 +8108,8 @@
             Object.assign(customizations[widget], options);
         }
     }
-    function addXmlNamespace(name, uri) {
-        main.addXmlNamespace(name, uri);
+    function addXmlNs(name, uri) {
+        main.addXmlNs(name, uri);
     }
     function toString() {
         return main.toString();
@@ -8065,6 +8124,7 @@
     exports.registerExtension = registerExtension;
     exports.configureExtension = configureExtension;
     exports.getExtension = getExtension;
+    exports.ext = ext;
     exports.ready = ready;
     exports.close = close;
     exports.reset = reset;
@@ -8079,7 +8139,7 @@
     exports.writeResourceDimenXml = writeResourceDimenXml;
     exports.writeResourceDrawableXml = writeResourceDrawableXml;
     exports.customize = customize;
-    exports.addXmlNamespace = addXmlNamespace;
+    exports.addXmlNs = addXmlNs;
     exports.toString = toString;
     exports.settings = SETTINGS;
     exports.Extension = Extension;
