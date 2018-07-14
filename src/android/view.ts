@@ -399,7 +399,7 @@ export default class View extends Node {
         }
     }
 
-    public setBoxSpacing() {
+    public mergeBoxSpacing() {
         if (this.api >= BUILD_ANDROID.OREO) {
             ['layout_margin', 'padding'].forEach((value, index) => {
                 const leftRtl = parseRTL(`${value}Left`);

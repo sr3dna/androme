@@ -811,7 +811,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
     }
 
-    public setMarginPadding() {
+    public adjustBoxSpacing() {
         this.cache.list.forEach(node => {
             if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
                 switch (node.android('orientation')) {
@@ -866,7 +866,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     const view = (<View> viewGroup) as T;
                     viewGroup.setNodeId(scrollName);
                     viewGroup.setBounds();
-                    current.inherit(viewGroup);
+                    current.inherit(viewGroup, 'data');
                     viewGroup.android('fadeScrollbars', 'false');
                     this.cache.list.push(view);
                     switch (scrollName) {
@@ -962,7 +962,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 viewGroup.setNodeId(NODE_ANDROID.RADIO_GROUP);
                                 viewGroup.render(parent);
                                 result.forEach(item => {
-                                    item.inherit(viewGroup);
+                                    item.inherit(viewGroup, 'data');
                                     if ((<HTMLInputElement> item.element).checked) {
                                         checked = item.stringId;
                                     }
@@ -1021,18 +1021,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return this.getEnclosingTag(node.renderDepth, node.nodeName, node.id);
     }
 
-    public createGroup(node: T, parent: T, children: T[]) {
-        const viewGroup = new ViewGroup(this.cache.nextId, node, parent, children);
-        children.forEach(item => {
-            item.parent = viewGroup;
-            item.inherit(viewGroup);
-        });
-        viewGroup.setBounds();
-        this.cache.list.push((<View> viewGroup as T));
-        return (<View> viewGroup as T);
-    }
-
-    public getNodeStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = '', height = '', node: Null<T> = null, children = false) {
+    public renderNodeStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = '', height = '', node: Null<T> = null, children = false) {
         let minimal = false;
         if (node == null) {
             node = (<T> new View(0, SETTINGS.targetAPI));
@@ -1068,6 +1057,17 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return output;
     }
 
+    public createGroup(node: T, parent: T, children: T[]) {
+        const group = new ViewGroup(this.cache.nextId, node, parent, children);
+        children.forEach(item => {
+            item.parent = group;
+            item.inherit(group, 'data');
+        });
+        group.setBounds();
+        this.cache.list.push((<View> group as T));
+        return (<View> group as T);
+    }
+
     public setAttributes(data: ViewData<T>) {
         const cache: StringMap[] = data.cache.filter(node => node.visible).map(node => ({ pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) }));
         [...data.views, ...data.includes].forEach(view => {
@@ -1081,25 +1081,40 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     public setDimensions(data: ViewData<T>) {
+        function addToGroup(tagName: string, node: T, dimen: string, attr?: string, value?: string) {
+            const group: ObjectMap<T[]> = groups[tagName];
+            let name = dimen;
+            if (arguments.length === 5) {
+                if (value && /(px|dp|sp)$/.test(value)) {
+                    name = `${dimen}-${attr}-${value}`;
+                }
+                else {
+                    return;
+                }
+            }
+            if (group[name] == null) {
+                group[name] = [];
+            }
+            group[name].push(node);
+        }
         const groups: ObjectMap<any> = {};
         data.cache.filter(node => node.visible).forEach(node => {
-            node.setBoxSpacing();
+            node.mergeBoxSpacing();
             if (SETTINGS.dimensResourceValue) {
                 const tagName = node.tagName.toLowerCase();
                 if (groups[tagName] == null) {
                     groups[tagName] = {};
                 }
-                const group: ObjectMap<T[]> = groups[tagName];
                 for (const key of Object.keys(BOX_STANDARD)) {
                     const result = node.boxValue(parseInt(key));
                     if (result[0] !== '' && result[1] !== '0px') {
                         const name = `${BOX_STANDARD[key].toLowerCase()}-${result[0]}-${result[1]}`;
-                        this.addDimenGroup(group, node, name);
+                        addToGroup(tagName, node, name);
                     }
                 }
                 ['android:layout_width:width', 'android:layout_height:height', 'android:minWidth:minwidth', 'android:minHeight:minheight', 'app:layout_constraintWidth_min:constraintwidth_min', 'app:layout_constraintHeight_min:constraintheight_min'].forEach(value => {
                     const [namespace, attr, dimen] = value.split(':');
-                    this.addDimenGroup(group, node, dimen, attr, <string> node[namespace](attr));
+                    addToGroup(tagName, node, dimen, attr, <string> node[namespace](attr));
                 });
             }
         });
@@ -1133,10 +1148,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         XMLNS_ANDROID[name] = uri;
     }
 
-    public getNodeName(value: number) {
-        return View.getViewName(value);
-    }
-
     private parseAttributes(node: T) {
         const attributes = node.combine();
         const indent = repeat(node.renderDepth + 1);
@@ -1152,22 +1163,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             }
         }
         return output;
-    }
-
-    private addDimenGroup(group: ObjectMap<T[]>, node: T, dimen: string, attr?: string, value?: string) {
-        let name = dimen;
-        if (arguments.length === 5) {
-            if (value && /(px|dp|sp)$/.test(value)) {
-                name = `${dimen}-${attr}-${value}`;
-            }
-            else {
-                return;
-            }
-        }
-        if (group[name] == null) {
-            group[name] = [];
-        }
-        group[name].push(node);
     }
 
     private getDimenResourceKey(resource: Map<string, string>, key: string, value: string) {
@@ -1232,7 +1227,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 };
                 const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
                 const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-                const xml = this.getNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
+                const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
                 this.appendAfter(node.id, xml);
                 node.app(map[LRTB], options.stringId);
                 node.delete('app', map[RLBT]);

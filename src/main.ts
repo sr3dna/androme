@@ -109,7 +109,7 @@ export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
             if (main.createNodeCache(element)) {
                 main.createLayoutXml();
                 main.setResources();
-                main.setMarginPadding();
+                main.adjustBoxSpacing();
                 main.setConstraints();
                 ROOT_CACHE.add(element);
             }

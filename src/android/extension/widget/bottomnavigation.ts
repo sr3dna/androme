@@ -24,7 +24,7 @@ export default class BottomNavigation extends Extension<T, U> {
         const options = Object.assign({}, this.options[node.element.id]);
         overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         overwriteDefault(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`);
-        const xml = this.application.controllerHandler.getNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
+        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
         for (let i = 5; i < node.children.length; i++) {
             node.children[i].hide();
             node.children[i].cascade().forEach(item => item.hide());

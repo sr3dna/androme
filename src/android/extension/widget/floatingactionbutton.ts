@@ -53,7 +53,7 @@ export default class FloatingActionButton<T extends View> extends Button {
             }
         }
         node.depth = (insert ? 0 : node.parent.renderDepth + 1);
-        let xml = this.application.controllerHandler.getNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
+        let xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
         node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
         let proceed = false;
         if (node.isolated) {

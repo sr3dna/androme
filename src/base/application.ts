@@ -121,8 +121,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.controllerHandler.setConstraints();
     }
 
-    public setMarginPadding() {
-        this.controllerHandler.setMarginPadding();
+    public adjustBoxSpacing() {
+        this.controllerHandler.adjustBoxSpacing();
     }
 
     public setResources() {
@@ -728,7 +728,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 node.tagName = 'PLAINTEXT';
                 if (parent != null) {
                     node.parent = parent;
-                    node.inheritStyle(parent);
+                    node.inherit(parent, 'style');
                     parent.children.push(node);
                 }
                 node.setBounds(false, element);

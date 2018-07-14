@@ -51,21 +51,21 @@ export default class Drawer extends Extension<T, U> {
         if (menu != null) {
             overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
         }
-        let xml = controller.getNodeStatic(VIEW_SUPPORT.DRAWER, depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
+        let xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
         const filename = `${node.nodeId}_content`;
         let include = '';
         if (this.options.includes == null || this.options.includes) {
-            include = controller.getNodeStatic('include', depth + 1, { layout: `@layout/${filename}` });
+            include = controller.renderNodeStatic('include', depth + 1, { layout: `@layout/${filename}` });
             depth = -1;
         }
         const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
         coordinator.parent = node;
-        coordinator.inheritBase(node);
+        coordinator.inherit(node, 'base');
         coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
         coordinator.isolated = true;
         coordinator.excludeResource |= NODE_RESOURCE.ALL;
         application.cache.list.push(coordinator);
-        const content = controller.getNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
+        const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
         const optionsNavigation = Object.assign({}, this.options.navigation);
         overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
@@ -74,7 +74,7 @@ export default class Drawer extends Extension<T, U> {
             overwriteDefault(optionsNavigation, 'android', 'fitsSystemWindows', 'true');
             overwriteDefault(optionsNavigation, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
             overwriteDefault(optionsNavigation, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
-            const navigation = controller.getNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, optionsNavigation, 'wrap_content', 'match_parent');
+            const navigation = controller.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, optionsNavigation, 'wrap_content', 'match_parent');
             xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
         }
         else {

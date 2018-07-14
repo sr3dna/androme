@@ -19,7 +19,7 @@ export default class Table extends Extension<T, U> {
         const tbody = node.children.find(item => item.tagName === 'TBODY');
         const tfoot = node.children.find(item => item.tagName === 'TFOOT');
         if (thead != null) {
-            thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(thead));
+            thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead, 'styleMap'));
             tableRows.push(...(<T[]> thead.children));
             thead.hide();
         }
@@ -28,7 +28,7 @@ export default class Table extends Extension<T, U> {
             tbody.hide();
         }
         if (tfoot != null) {
-            tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inheritStyleMap(tfoot));
+            tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(tfoot, 'styleMap'));
             tableRows.push(...(<T[]> tfoot.children));
             tfoot.hide();
         }

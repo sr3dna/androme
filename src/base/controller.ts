@@ -14,16 +14,15 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
 
     public abstract addXmlNamespace(name: string, uri: string): void;
     public abstract setConstraints(): void;
-    public abstract setMarginPadding(): void;
+    public abstract adjustBoxSpacing(): void;
     public abstract setDimensions(data: ViewData<T>): void;
     public abstract parseDimensions(content: string): string;
     public abstract setAttributes(data: ViewData<T>): void;
     public abstract insertAttributes(output: string, node: T): string;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
+    public abstract renderNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
     public abstract createGroup(node: T, parent: T, children: T[]): T;
-    public abstract getNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
-    public abstract getNodeName(value: number): string;
 
     public abstract get inlineExclude(): string[];
 

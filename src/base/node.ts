@@ -136,33 +136,6 @@ export default abstract class Node implements BoxModel {
         return this._data[attr];
     }
 
-    public inherit(node: T) {
-        for (const attr in this._data) {
-            const data = this._data[attr];
-            if (typeof data === 'object' && data.inherit) {
-                const inherit = node.data(attr);
-                if (inherit != null) {
-                    switch (typeof node[attr]) {
-                        case 'number':
-                            inherit[attr] += data[attr];
-                            break;
-                        case 'boolean':
-                            if (data[attr] !== false) {
-                                inherit[attr] = true;
-                            }
-                            break;
-                        default:
-                            inherit[attr] = data[attr];
-                    }
-                }
-                else {
-                    node.data(attr, data);
-                }
-                delete this._data[attr];
-            }
-        }
-    }
-
     public ascend() {
         const result: T[] = [];
         let current = this.parent;
@@ -187,28 +160,58 @@ export default abstract class Node implements BoxModel {
         return cascade(this);
     }
 
-    public inheritBase(node: T) {
-        this.style = node.style;
-        this.bounds = node.bounds;
-        this.linear = node.linear;
-        this.box = node.box;
-    }
-
-    public inheritStyle(node: T) {
-        const style: StringMap = {};
-        for (const attr in node.style) {
-            if (attr.startsWith('font') || attr.startsWith('color')) {
-                const key = convertCamelCase(attr);
-                style[key] = node.style[key];
-            }
-        }
-        Object.assign(this.styleMap, style);
-    }
-
-    public inheritStyleMap(node: T) {
-        for (const attr in node.styleMap) {
-            if (this.styleMap[attr] == null) {
-                this.styleMap[attr] = node.styleMap[attr];
+    public inherit(node: T, ...props: string[]) {
+        for (const type of props) {
+            switch (type) {
+                case 'base':
+                    this.style = node.style;
+                    this.bounds = node.bounds;
+                    this.linear = node.linear;
+                    this.box = node.box;
+                    break;
+                case 'data':
+                    for (const attr in this._data) {
+                        const data = this._data[attr];
+                        if (typeof data === 'object' && data.inherit === true) {
+                            const inherit = node.data(attr);
+                            if (inherit != null) {
+                                switch (typeof node[attr]) {
+                                    case 'number':
+                                        inherit[attr] += data[attr];
+                                        break;
+                                    case 'boolean':
+                                        if (data[attr] !== false) {
+                                            inherit[attr] = true;
+                                        }
+                                        break;
+                                    default:
+                                        inherit[attr] = data[attr];
+                                }
+                            }
+                            else {
+                                node.data(attr, data);
+                            }
+                            delete this._data[attr];
+                        }
+                    }
+                    break;
+                case 'style':
+                    const style: StringMap = {};
+                    for (const attr in node.style) {
+                        if (attr.startsWith('font') || attr.startsWith('color')) {
+                            const key = convertCamelCase(attr);
+                            style[key] = node.style[key];
+                        }
+                    }
+                    Object.assign(this.styleMap, style);
+                    break;
+                case 'styleMap':
+                    for (const attr in node.styleMap) {
+                        if (this.styleMap[attr] == null) {
+                            this.styleMap[attr] = node.styleMap[attr];
+                        }
+                    }
+                    break;
             }
         }
     }

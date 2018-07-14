@@ -59,7 +59,7 @@ export default class GridAndroid<T extends View> extends Grid {
                                 }
                                 else {
                                     const controller = this.application.controllerHandler;
-                                    controller.appendAfter(node.id, controller.getNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { android: { layout_columnSpan: gridData.columnCount } }, 'match_parent', convertPX(heightBottom)));
+                                    controller.appendAfter(node.id, controller.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { android: { layout_columnSpan: gridData.columnCount } }, 'match_parent', convertPX(heightBottom)));
                                 }
                             }
                             const marginRight = convertInt(dimensions.marginRight) + convertInt(dimensions.paddingRight);

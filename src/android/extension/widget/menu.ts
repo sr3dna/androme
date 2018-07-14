@@ -44,7 +44,7 @@ export default class Menu<T extends View> extends Nav {
 
     public processNode(): ExtensionResult {
         const node = (<T> this.node);
-        const xml = this.application.controllerHandler.getNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
+        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.renderParent = true;
         node.cascade().forEach(item => item.renderExtension = (<IExtension> this));
         node.excludeResource |= NODE_RESOURCE.ALL;
@@ -154,7 +154,7 @@ export default class Menu<T extends View> extends Nav {
         else {
             node.nodeName = nodeName;
         }
-        const xml = this.application.controllerHandler.getNodeStatic(nodeName, node.depth, options, '', '', node, layout);
+        const xml = this.application.controllerHandler.renderNodeStatic(nodeName, node.depth, options, '', '', node, layout);
         return { xml, proceed };
     }
 

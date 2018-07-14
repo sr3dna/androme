@@ -18,7 +18,7 @@ export default class ListAndroid<T extends View> extends List {
         if (listStyle != null) {
             controller.prependBefore(
                 node.id,
-                controller.getNodeStatic(
+                controller.renderNodeStatic(
                     (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE),
                     node.depth + node.renderDepth, {
                         android: {

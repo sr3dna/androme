@@ -1379,7 +1379,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 </shape>
 <!-- filename: res/drawable/button_button_1.xml -->
 ```
-## User Written HTML
+### User Written HTML
 
 Using excessive DIV and FORM tags are not required for mobile devices which can cause additional LinearLayouts to be auto-generated. Block level elements are almost always rendered in order to preserve any CSS styles which are applied to the tag.
 

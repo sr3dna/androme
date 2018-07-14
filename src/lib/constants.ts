@@ -29,7 +29,7 @@ export enum NODE_RESOURCE {
     OPTION_ARRAY = 32,
     IMAGE_SOURCE = 64,
     ASSET = 8 | 16 | 32 | 64,
-    ALL = 126
+    ALL = 2 | 4 | ASSET
 }
 
 export enum NODE_PROCEDURE {
