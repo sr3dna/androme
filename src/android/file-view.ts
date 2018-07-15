@@ -14,7 +14,7 @@ import STYLE_TMPL from './template/resource/style';
 import DIMEN_TMPL from './template/resource/dimen';
 import DRAWABLE_TMPL from './template/resource/drawable';
 
-export default class FileRes<T extends View> extends File<T> {
+export default class FileView<T extends View> extends File<T> {
     constructor() {
         super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
     }

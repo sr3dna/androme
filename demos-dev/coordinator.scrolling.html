@@ -19,11 +19,11 @@
             padding: 20px;
             display: inline-block;
         }
-        #coordinator_toolbar {
+        #toolbar_demo {
             position: relative;
             height: 180px;
         }
-        #coordinator_toolbar button {
+        #toolbar_demo button {
             position: absolute;
             width: 56px;
             height: 56px;
@@ -64,7 +64,7 @@
             androme = result;
             androme.ext('androme.widget.toolbar', { // optional: default configuration is provided
                 includes: true,
-                coordinator_toolbar: {
+                toolbar_demo: {
                     appBar: {
                         android: {
                             theme: 'ThemeOverlay.AppCompat.Dark.ActionBar'
@@ -109,7 +109,7 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div id="coordinator_toolbar" data-ext="androme.widget.toolbar" data-target="androme_ui" style="background-image: url(../demos/images/android_background.jpg); background-size: 100% 100%;">
+        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-target="androme_ui" style="background-image: url(../demos/images/android_background.jpg); background-size: 100% 100%;">
             <nav id="toolbar_menu" data-ext="androme.widget.menu">
                 <div
                     data-show-as-action="always"

@@ -1064,7 +1064,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             item.inherit(group, 'data');
         });
         group.setBounds();
-        this.cache.list.push((<View> group as T));
+        this.cache.list.push(<View> group as T);
         return (<View> group as T);
     }
 

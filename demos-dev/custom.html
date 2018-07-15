@@ -43,13 +43,13 @@
             androme = result;
             androme.addXmlNs('card_view', 'http://schemas.android.com/apk/res-auto');
             androme.ext('androme.custom', {
-                custom_recyclerview: {
+                recyclerview_demo: {
                     android: {
                         clipToPadding: 'false',
                         scrollbars: 'vertical'
                     }
                 },
-                custom_cardview: {
+                cardview_demo: {
                     android: {
                         layout_height: 'wrap_content'
                     },
@@ -75,8 +75,8 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui">
-        <div id="custom_recyclerview" data-ext="androme.custom" data-androme-custom-tag="android.support.v7.widget.RecyclerView" data-exclude-resource="BOX_STYLE | FONT_STYLE">
-            <div id="custom_cardview" data-ext="androme.custom, androme.external" data-androme-custom-tag="android.support.v7.widget.CardView" data-folder="res/layout" data-filename="cardview.xml">
+        <div id="recyclerview_demo" data-ext="androme.custom" data-androme-custom-tag="android.support.v7.widget.RecyclerView" data-exclude-resource="BOX_STYLE | FONT_STYLE">
+            <div id="cardview_demo" data-ext="androme.custom, androme.external" data-androme-custom-tag="android.support.v7.widget.CardView" data-folder="res/layout" data-filename="cardview.xml">
                 <table>
                     <tr>
                         <td>Chrome</td>

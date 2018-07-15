@@ -38,7 +38,7 @@ export default class GridAndroid<T extends View> extends Grid {
                     const gridData = (<GridData> parent.data(`${EXT_NAME.GRID}:gridData`));
                     const gridCellData = (<GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`));
                     if (gridData != null && gridCellData != null) {
-                        const dimensions = getBoxSpacing((<HTMLElement> node.documentParent.element), true);
+                        const dimensions = getBoxSpacing(<HTMLElement> node.documentParent.element, true);
                         if (gridCellData.cellFirst) {
                             const heightTop = convertInt(dimensions.paddingTop) + convertInt(dimensions.marginTop);
                             if (heightTop > 0) {

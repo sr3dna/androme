@@ -216,7 +216,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cache.clear();
         const extensions = this.extensions;
         extensions.forEach(item => {
-            item.setTarget((<T> {}), null, root);
+            item.setTarget(<T> {}, null, root);
             item.beforeInit();
         });
         const rootNode = this.insertNode(root);
@@ -304,7 +304,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             this.cache.list.forEach(node => {
                 const nodes: T[] = parents[node.id];
                 if (nodes != null) {
-                    nodes.push((<T> node.parent));
+                    nodes.push(<T> node.parent);
                     let minArea = Number.MAX_VALUE;
                     let closest: Null<T> = null;
                     nodes.forEach(current => {

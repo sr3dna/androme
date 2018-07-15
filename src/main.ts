@@ -9,7 +9,7 @@ import External from './extension/external';
 
 import ViewController from './android/viewcontroller';
 import ResourceView from './android/resource-view';
-import FileRes from './android/file-res';
+import FileView from './android/file-view';
 import View from './android/view';
 import ViewList from './android/viewlist';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
@@ -49,7 +49,7 @@ const EXTENSIONS = {
 const Node = View;
 const NodeList = ViewList;
 const Controller = new ViewController();
-const File = new FileRes();
+const File = new FileView();
 const Resource = new ResourceView(File);
 
 const main = new Application<T, U>(Node, NodeList);
