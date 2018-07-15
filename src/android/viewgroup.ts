@@ -11,7 +11,7 @@ export default class ViewGroup extends View {
         children: T[])
     {
         super(id, node.api);
-        this.parent = node.documentParent;
+        this.documentParent = node.documentParent;
         if (parent != null) {
             this.parent = parent;
         }

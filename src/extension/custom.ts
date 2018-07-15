@@ -27,6 +27,13 @@ export default class Custom extends Extension<T, U> {
                 xml = controller.renderNode(node, parent, data.tag);
             }
         }
+        if (data.tagChild) {
+            node.children.forEach(item => {
+                const element = item.element;
+                element.dataset.ext = this.name;
+                element.dataset.andromeCustomTag = data.tagChild;
+            });
+        }
         return { xml };
     }
 }

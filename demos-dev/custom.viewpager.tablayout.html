@@ -48,6 +48,33 @@
             background-color: #aaa;
             padding: 8px;
         }
+        ul {
+            font-size: 0px;
+            text-align: justify;
+            margin: 0px;
+            padding: 0px;
+            background-color: slateblue;
+            opacity: 0.7;
+            clear: right;
+        }
+        ul:after {
+            content: '';
+            display: inline-block;
+            width: 100%;
+        }
+        li:first-child {
+            padding-left: 40px;
+        }
+        li:last-child {
+            padding-right: 40px;
+        }
+        li {
+            font-size: 11px;
+            color: white;
+            margin: 0px;
+            padding: 8px;
+            display: inline-block;
+        }
     </style>
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
@@ -85,7 +112,7 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-target="androme_ui" style="background-image: url(../demos/images/android_header.jpg); background-size: 100% 100%">
+        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-target="androme_ui" style="background-image: url(../demos/images/android_background.jpg); background-size: 100% 100%;">
             <nav id="toolbar_menu" data-ext="androme.widget.menu">
                 <div
                     data-show-as-action="always"
@@ -98,6 +125,16 @@
                     <img src="../demos/images/icons8-browse-page-24.png" />
                 </div>
             </nav>
+            <ul data-ext="androme.custom"
+                data-androme-custom-tag="android.support.design.widget.TabLayout"
+                data-androme-custom-tag-child="android.support.design.widget.TabItem"
+                data-target="toolbar_demo"
+                data-target-module="appBar"
+                data-exclude-resource-child="BOX_STYLE | BOX_SPACING | FONT_STYLE">
+                <li>TAB 1</li>
+                <li>TAB 2</li>
+                <li>TAB 3</li>
+            </ul>
         </div>
         <div id="viewpager_demo" data-ext="androme.custom" data-androme-custom-tag="android.support.v4.view.ViewPager" data-exclude-resource="BOX_STYLE | FONT_STYLE">
             <div style="padding: 20px;" data-ext="androme.external" data-filename="fragment_main.xml">

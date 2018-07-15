@@ -250,7 +250,7 @@ export function convertRGB({ rgb }: Color) {
     return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 }
 
-export function parseRGBA(value: string): string[] {
+export function parseRGBA(value: string, opacity = '1'): string[] {
     if (value != null) {
         const color = getByColorName(value);
         if (color !== '') {
@@ -258,7 +258,10 @@ export function parseRGBA(value: string): string[] {
         }
         const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
         if (match && match.length >= 4 && match[4] !== '0') {
-            return [`#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[0], match[4] || '1'];
+            if (match[4] == null) {
+                match[4] = opacity;
+            }
+            return [`#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[0], (parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1')];
         }
     }
     return [];

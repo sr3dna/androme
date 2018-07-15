@@ -36,14 +36,13 @@
         .output div {
             text-align: right;
         }
-        #drawer_demo {
+        #androme_ui {
             position: relative;
             width: 300px;
             background-color: #fff;
             border: 1px solid #ccc;
-            overflow: hidden;
         }
-        #drawer_demo button, #drawer_demo input[type=button] {
+        #androme_ui button {
             position: absolute;
             width: 56px;
             height: 56px;
@@ -55,35 +54,23 @@
             margin: 8px;
             padding: 0px;
         }
-        #drawer_aside {
-            position: absolute;
-            top: 0px;
-            left: 0px;
-            width: 200px;
-            height: 100%;
-            margin: 0px;
-            padding: 4px;
-            background-color: #fff;
-            border-right: solid 1px #aaa;
-        }
-        #drawer_aside div {
-            font-size: 11px;
-            padding: 8px;
+        #toolbar_demo {
             overflow: hidden;
         }
-        #drawer_aside div:hover {
-            background-color: azure;
-            cursor: pointer;
+        #toolbar_menu img {
+            margin-left: 0px;
         }
-        #drawer_aside div img {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
+        #toolbar_menu {
+            margin: 8px;
+            border: none;
+            float: right;
+        }
+        #toolbar_menu div {
+            margin-left: 8px;
             float: left;
         }
-        #drawer_aside label {
-            margin-top: 4px;
-            float: left;
+        h3 {
+            margin-top: 0px;
         }
         .content {
             font-size: 12px;
@@ -91,11 +78,54 @@
             background-color: #aaa;
             padding: 8px;
         }
+        ul {
+            font-size: 0px;
+            text-align: justify;
+            margin: 0px;
+            padding: 0px;
+            background-color: slateblue;
+            opacity: 0.7;
+            clear: right;
+        }
+        ul:after {
+            content: '';
+            display: inline-block;
+            width: 100%;
+        }
+        li:first-child {
+            padding-left: 40px;
+        }
+        li:last-child {
+            padding-right: 40px;
+        }
+        li {
+            font-size: 11px;
+            color: white;
+            margin: 0px;
+            padding: 8px;
+            display: inline-block;
+        }
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="common/prod.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            androme.ext('androme.widget.coordinator', { includes: false });
+            androme.ext('androme.widget.toolbar', {
+                toolbar_demo: {
+                    appBar: {}
+                }
+            });
+            androme.ext('androme.custom', {
+                viewpager_demo: {
+                    android: {
+                        layout_height: 'match_parent'
+                    },
+                    app: {
+                        layout_behavior: '@string/appbar_scrolling_view_behavior'
+                    }
+                }
+            });
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
@@ -106,17 +136,37 @@
                 document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
             });
         });
-        function toggleAside() {
-            var element = document.getElementById('drawer_aside');
-            element.style.display = (element.style.display == 'block' ? 'none' : 'block');
-        }
     </script>
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_ui">
-        <div id="drawer_demo" data-ext="androme.widget.drawer" onclick="toggleAside();">
-            <div style="padding: 20px;">
+    <div id="androme_ui" data-ext="androme.widget.coordinator">
+        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-target="androme_ui" style="background-image: url(images/android_background.jpg); background-size: 100% 100%;">
+            <nav id="toolbar_menu" data-ext="androme.widget.menu">
+                <div
+                    data-show-as-action="always"
+                    title="Web">
+                    <img src="images/icons8-web-24.png" />
+                </div>
+                <div
+                    data-show-as-action="always"
+                    title="Browse Page">
+                    <img src="images/icons8-browse-page-24.png" />
+                </div>
+            </nav>
+            <ul data-ext="androme.custom"
+                data-androme-custom-tag="android.support.design.widget.TabLayout"
+                data-androme-custom-tag-child="android.support.design.widget.TabItem"
+                data-target="toolbar_demo"
+                data-target-module="appBar"
+                data-exclude-resource-child="BOX_STYLE | BOX_SPACING | FONT_STYLE">
+                <li>TAB 1</li>
+                <li>TAB 2</li>
+                <li>TAB 3</li>
+            </ul>
+        </div>
+        <div id="viewpager_demo" data-ext="androme.custom" data-androme-custom-tag="android.support.v4.view.ViewPager" data-exclude-resource="BOX_STYLE | FONT_STYLE">
+            <div style="padding: 20px;" data-ext="androme.external" data-filename="fragment_main.xml">
                 <h3>title</h3>
                 <div class="content">
                     content content content content content content content content content content
@@ -127,34 +177,11 @@
                     content content content content content content content content content content
                     content content content content content content content content content content
                     content content content content content content content content content content
+                    content content content content content content content content content content
                 </div>
-                <input id="fab_menu" type="button" data-ext="androme.widget.floatingactionbutton" style="position: static; background-image: url(images/icons8-squared-menu-24.png); float: right;" />
-                <br /><br /><br /><br /><br /><br />
             </div>
-            <button id="fab_left" data-ext="androme.widget.floatingactionbutton" style="bottom: 0px; left: 0px; background-image: url(images/icons8-left-24.png);"></button>
-            <aside id="drawer_aside">
-                <div>
-                    <img src="images/icons8-chrome.png" />
-                    <label>Chrome</label>
-                </div>
-                <div>
-                    <img src="images/icons8-google-docs.png" />
-                    <label>Docs</label>
-                </div>
-                <div>
-                    <img src="images/icons8-google-news.png" />
-                    <label>News</label>
-                </div>
-                <div>
-                    <img src="images/icons8-google-play.png" />
-                    <label>Play</label>
-                </div>
-                <div>
-                    <img src="images/icons8-google-plus.png" />
-                    <label>Plus</label>
-                </div>
-            </aside>
         </div>
+        <button id="fab_browse_page" data-ext="androme.widget.floatingactionbutton" data-exclude-procedure="ACCESSIBILITY" style="bottom: 0px; right: 0px; background-image: url(images/icons8-browse-page-24.png);"></button>
     </div>
     <!-- END: DEMO -->
 

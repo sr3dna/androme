@@ -249,20 +249,32 @@ export default abstract class Node implements BoxModel {
         return this.styleMap[attr] || (this.style && this.style[attr]) || '';
     }
 
-    public setExcludeProcedure() {
-        if (this.hasElement && this.element.dataset.excludeProcedure != null) {
-            this.element.dataset.excludeProcedure.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
-                if (NODE_PROCEDURE[value] != null) {
+    public setExcludeProcedure(exclude?: string) {
+        if (exclude == null && this.hasElement) {
+            exclude = this.element.dataset.excludeProcedure || '';
+            if (this.element.parentElement != null) {
+                exclude += '|' + (this.element.parentElement.dataset.excludeProcedureChild || '');
+            }
+        }
+        if (exclude != null) {
+            exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
+                if (value !== '' && NODE_PROCEDURE[value] != null) {
                     this.excludeProcedure |= NODE_PROCEDURE[value];
                 }
             });
         }
     }
 
-    public setExcludeResource() {
-        if (this.hasElement && this.element.dataset.excludeResource != null) {
-            this.element.dataset.excludeResource.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
-                if (NODE_RESOURCE[value] != null) {
+    public setExcludeResource(exclude?: string) {
+        if (exclude == null) {
+            exclude = this.element.dataset.excludeResource;
+            if (this.element.parentElement != null) {
+                exclude += '|' + (this.element.parentElement.dataset.excludeResourceChild || '');
+            }
+        }
+        if (this.hasElement && exclude != null) {
+            exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
+                if (value !== '' && NODE_RESOURCE[value] != null) {
                     this.excludeResource |= NODE_RESOURCE[value];
                 }
             });
@@ -345,9 +357,6 @@ export default abstract class Node implements BoxModel {
         if (value == null || value === this._parent) {
             return;
         }
-        if (this._parent && this._documentParent == null) {
-            this._documentParent = this._parent;
-        }
         this._parent = value;
         this.depth = value.depth + 1;
     }
@@ -355,8 +364,12 @@ export default abstract class Node implements BoxModel {
         return this._parent;
     }
 
-    get documentParent() {
-        return this._documentParent || this._parent;
+    set documentParent(value: T) {
+        this._documentParent = value;
+    }
+
+    get documentParent(): T {
+        return this._documentParent || (this.element && this.element.parentElement != null ? (<any> this.element.parentElement).__node : null) || this._parent;
     }
 
     set tagName(value) {

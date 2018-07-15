@@ -116,25 +116,26 @@ export default abstract class Resource<T extends Node> {
         return '';
     }
 
-    public static addColor(value: string) {
+    public static addColor(value: string, opacity = '1') {
         value = value.toUpperCase().trim();
+        const opaque = (parseFloat(opacity) < 1 ? `#${opacity.substring(2) + value.substring(1)}` : value);
         if (value !== '') {
             let colorName = '';
-            if (!Resource.STORED.COLORS.has(value)) {
+            if (!Resource.STORED.COLORS.has(opaque)) {
                 const color = findNearestColor(value);
                 if (color !== '') {
                     color.name = cameltoLowerCase(<string> color.name);
-                    if (value === color.hex) {
+                    if (value === color.hex && value === opaque) {
                         colorName = color.name;
                     }
                     else {
                         colorName = generateId('color', `${color.name}_1`);
                     }
-                    Resource.STORED.COLORS.set(value, colorName);
+                    Resource.STORED.COLORS.set(opaque, colorName);
                 }
             }
             else {
-                colorName = Resource.STORED.COLORS.get(value);
+                colorName = Resource.STORED.COLORS.get(opaque);
             }
             return colorName;
         }
@@ -227,7 +228,7 @@ export default abstract class Resource<T extends Node> {
                         borderBottom: this.parseBorderStyle,
                         borderLeft: this.parseBorderStyle,
                         borderRadius: this.parseBorderRadius,
-                        backgroundColor: parseRGBA,
+                        backgroundColor: this.parseBackgroundColor,
                         backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? this.parseBackgroundImage : ''),
                         backgroundSize: this.parseBoxDimensions
                     };
@@ -241,7 +242,7 @@ export default abstract class Resource<T extends Node> {
                             result.backgroundColor = [];
                         }
                         else {
-                            result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0]);
+                            result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], result.backgroundColor[2]);
                         }
                     }
                     const borderTop = JSON.stringify(result.borderTop);
@@ -264,22 +265,22 @@ export default abstract class Resource<T extends Node> {
                         return;
                     }
                     else {
-                        let color = parseRGBA(node.css('color'));
+                        let color = parseRGBA(node.css('color'), node.css('opacity'));
                         if (color.length > 0) {
                             if (SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
                                 color = [];
                             }
                             else {
-                                color[0] = Resource.addColor(color[0]);
+                                color[0] = Resource.addColor(color[0], color[2]);
                             }
                         }
-                        let backgroundColor = parseRGBA(node.css('backgroundColor'));
+                        let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
                         if (backgroundColor.length > 0) {
                             if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
                                 backgroundColor = [];
                             }
                             else {
-                                backgroundColor[0] = Resource.addColor(backgroundColor[0]);
+                                backgroundColor[0] = Resource.addColor(backgroundColor[0], backgroundColor[2]);
                             }
                         }
                         let fontWeight = (<string> node.css('fontWeight'));
@@ -407,9 +408,9 @@ export default abstract class Resource<T extends Node> {
     private parseBorderStyle(value: string, node: T, attribute: string): BorderAttribute {
         const style = node.css(`${attribute}Style`) || 'none';
         let width = node.css(`${attribute}Width`) || '1px';
-        const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`)) : []);
+        const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`), node.css('opacity')) : []);
         if (color.length > 0) {
-            color[0] = (<string> Resource.addColor(color[0]));
+            color[0] = (<string> Resource.addColor(color[0], color[2]));
         }
         if (style === 'inset' && width === '0px') {
             width = '1px';
@@ -432,6 +433,10 @@ export default abstract class Resource<T extends Node> {
         else {
             return [radiusTop, radiusRight, radiusBottom, radiusLeft];
         }
+    }
+
+    private parseBackgroundColor(value: string, node: T, attribute?: string) {
+        return parseRGBA(value, node.css('opacity'));
     }
 
     private parseBoxDimensions(value: string, node?: T, attribute?: string) {

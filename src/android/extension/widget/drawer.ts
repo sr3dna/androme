@@ -3,12 +3,11 @@ import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import { optional } from '../../../lib/util';
-import { findNestedExtension, findNestedMenu, overwriteDefault } from '../lib/util';
+import { createPlaceholder, findNestedExtension, findNestedMenu, overwriteDefault } from '../lib/util';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import parseRTL from '../../localization';
-import SETTINGS from '../../../settings';
 
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
@@ -58,14 +57,9 @@ export default class Drawer extends Extension<T, U> {
             include = controller.renderNodeStatic('include', depth + 1, { layout: `@layout/${filename}` });
             depth = -1;
         }
-        const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
-        coordinator.parent = node;
-        coordinator.inherit(node, 'base');
-        coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
-        coordinator.isolated = true;
-        coordinator.excludeResource |= NODE_RESOURCE.ALL;
-        application.cache.list.push(coordinator);
-        const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
+        const coordinatorNode = createPlaceholder(application.cache.nextId, node);
+        application.cache.list.push(coordinatorNode);
+        const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinatorNode, true);
         const optionsNavigation = Object.assign({}, this.options.navigation);
         overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
@@ -87,8 +81,8 @@ export default class Drawer extends Extension<T, U> {
         }
         node.children.forEach(item => {
             if ((<any> menu).__node !== item) {
-                item.parent = coordinator;
-                coordinator.children.push(item);
+                item.parent = coordinatorNode;
+                coordinatorNode.children.push(item);
             }
         });
         if (include !== '') {

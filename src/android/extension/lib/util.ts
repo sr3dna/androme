@@ -3,11 +3,22 @@ import Resource from '../../../base/resource';
 import View from '../../view';
 import { convertPX, hasValue, includes, isNumber, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
+import { NODE_RESOURCE } from '../../../lib/constants';
 import { WIDGET_NAME } from './constants';
 import parseRTL from '../../localization';
 import SETTINGS from '../../../settings';
 
 type T = View;
+
+export function createPlaceholder(nextId: number, parent: T, children: T[] = []) {
+    const node = new View(nextId, parent.api, parent.element);
+    node.parent = parent;
+    node.inherit(parent, 'base');
+    node.excludeResource |= NODE_RESOURCE.ALL;
+    node.children = children;
+    node.isolated = true;
+    return node;
+}
 
 export function formatResource(options: {}) {
     for (const namespace in options) {

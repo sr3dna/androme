@@ -144,6 +144,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
 
+<img src="demos/android/custom.viewpager.tablayout.png" alt="custom: viewpager + tablayout" />
+
 <img src="demos/android/drawer.png" alt="drawer: floating action button" />
 
 <img src="demos/android/coordinator.scrolling.png" alt="coordinator: scrolling" />
@@ -265,7 +267,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
             android:id="@+id/gridlayout_1"
             android:columnCount="2"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
             android:paddingTop="@dimen/ul_padding_top">

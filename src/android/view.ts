@@ -99,10 +99,10 @@ export default class View extends Node {
     public modifyBox(area: number, offset: number) {
         const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
         if (value !== '') {
-            const dimen = parseRTL(value);
-            const total = formatPX(offset + convertInt(this.android(dimen)));
-            this.css(dimen, total);
-            this.android(dimen, total);
+            const dimension = parseRTL(value);
+            const total = formatPX(offset + convertInt(this.android(dimension)));
+            this.css(dimension, total);
+            this.android(dimension, total);
             this.setBounds(true);
         }
     }
@@ -252,14 +252,15 @@ export default class View extends Node {
             else if (this.android('layout_width') == null) {
                 let maxRight = 0;
                 let parentMaxRight = 0;
+                const parentMaxWidth = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0));
                 if (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal) {
-                    maxRight = this.cascade().reduce((a: number, b: T) => Math.max(0, b.linear.right), 0);
-                    parentMaxRight = parent.cascade().reduce((a: number, b: T) => Math.max(0, b.linear.right), 0);
+                    maxRight = Math.ceil(this.cascade().reduce((a: number, b: T) => Math.max(a, b.linear.right), 0));
+                    parentMaxRight = Math.floor(parent.cascade().reduce((a: number, b: T) => Math.max(a, b.linear.right), 0));
                 }
                 if (convertInt(this.android('layout_columnWeight')) > 0) {
                     this.android('layout_width', '0px');
                 }
-                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewWidth > 0 && width >= parentWidth) || ((this.renderChildren.length === 0 || maxRight < parentMaxRight) && !this.floating && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
+                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && parentMaxWidth > 0 && width >= parentWidth) || (!this.floating && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight >= parentMaxRight)) && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
                     this.android('layout_width', 'match_parent');
                 }
                 else {
