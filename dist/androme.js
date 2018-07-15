@@ -1,4 +1,4 @@
-/* androme 1.8.4
+/* androme 1.8.5
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -1244,7 +1244,7 @@
     function convertRGB({ rgb }) {
         return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
     }
-    function parseRGBA(value) {
+    function parseRGBA(value, opacity = '1') {
         if (value != null) {
             const color = getByColorName(value);
             if (color !== '') {
@@ -1252,7 +1252,10 @@
             }
             const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
             if (match && match.length >= 4 && match[4] !== '0') {
-                return [`#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[0], match[4] || '1'];
+                if (match[4] == null) {
+                    match[4] = opacity;
+                }
+                return [`#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[0], (parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1')];
             }
         }
         return [];
@@ -2366,25 +2369,26 @@
             }
             return '';
         }
-        static addColor(value) {
+        static addColor(value, opacity = '1') {
             value = value.toUpperCase().trim();
+            const opaque = (parseFloat(opacity) < 1 ? `#${opacity.substring(2) + value.substring(1)}` : value);
             if (value !== '') {
                 let colorName = '';
-                if (!Resource.STORED.COLORS.has(value)) {
+                if (!Resource.STORED.COLORS.has(opaque)) {
                     const color = findNearestColor(value);
                     if (color !== '') {
                         color.name = cameltoLowerCase(color.name);
-                        if (value === color.hex) {
+                        if (value === color.hex && value === opaque) {
                             colorName = color.name;
                         }
                         else {
                             colorName = generateId('color', `${color.name}_1`);
                         }
-                        Resource.STORED.COLORS.set(value, colorName);
+                        Resource.STORED.COLORS.set(opaque, colorName);
                     }
                 }
                 else {
-                    colorName = Resource.STORED.COLORS.get(value);
+                    colorName = Resource.STORED.COLORS.get(opaque);
                 }
                 return colorName;
             }
@@ -2463,7 +2467,7 @@
                             borderBottom: this.parseBorderStyle,
                             borderLeft: this.parseBorderStyle,
                             borderRadius: this.parseBorderRadius,
-                            backgroundColor: parseRGBA,
+                            backgroundColor: this.parseBackgroundColor,
                             backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? this.parseBackgroundImage : ''),
                             backgroundSize: this.parseBoxDimensions
                         };
@@ -2477,7 +2481,7 @@
                                 result.backgroundColor = [];
                             }
                             else {
-                                result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0]);
+                                result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], result.backgroundColor[2]);
                             }
                         }
                         const borderTop = JSON.stringify(result.borderTop);
@@ -2499,22 +2503,22 @@
                             return;
                         }
                         else {
-                            let color = parseRGBA(node.css('color'));
+                            let color = parseRGBA(node.css('color'), node.css('opacity'));
                             if (color.length > 0) {
                                 if (SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
                                     color = [];
                                 }
                                 else {
-                                    color[0] = Resource.addColor(color[0]);
+                                    color[0] = Resource.addColor(color[0], color[2]);
                                 }
                             }
-                            let backgroundColor = parseRGBA(node.css('backgroundColor'));
+                            let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
                             if (backgroundColor.length > 0) {
                                 if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
                                     backgroundColor = [];
                                 }
                                 else {
-                                    backgroundColor[0] = Resource.addColor(backgroundColor[0]);
+                                    backgroundColor[0] = Resource.addColor(backgroundColor[0], backgroundColor[2]);
                                 }
                             }
                             let fontWeight = node.css('fontWeight');
@@ -2636,9 +2640,9 @@
         parseBorderStyle(value, node, attribute) {
             const style = node.css(`${attribute}Style`) || 'none';
             let width = node.css(`${attribute}Width`) || '1px';
-            const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`)) : []);
+            const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`), node.css('opacity')) : []);
             if (color.length > 0) {
-                color[0] = Resource.addColor(color[0]);
+                color[0] = Resource.addColor(color[0], color[2]);
             }
             if (style === 'inset' && width === '0px') {
                 width = '1px';
@@ -2659,6 +2663,9 @@
             else {
                 return [radiusTop, radiusRight, radiusBottom, radiusLeft];
             }
+        }
+        parseBackgroundColor(value, node, attribute) {
+            return parseRGBA(value, node.css('opacity'));
         }
         parseBoxDimensions(value, node, attribute) {
             if (value !== 'auto') {
@@ -2887,19 +2894,31 @@
             }
             return this.styleMap[attr] || (this.style && this.style[attr]) || '';
         }
-        setExcludeProcedure() {
-            if (this.hasElement && this.element.dataset.excludeProcedure != null) {
-                this.element.dataset.excludeProcedure.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
-                    if (NODE_PROCEDURE[value] != null) {
+        setExcludeProcedure(exclude) {
+            if (exclude == null && this.hasElement) {
+                exclude = this.element.dataset.excludeProcedure || '';
+                if (this.element.parentElement != null) {
+                    exclude += '|' + (this.element.parentElement.dataset.excludeProcedureChild || '');
+                }
+            }
+            if (exclude != null) {
+                exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
+                    if (value !== '' && NODE_PROCEDURE[value] != null) {
                         this.excludeProcedure |= NODE_PROCEDURE[value];
                     }
                 });
             }
         }
-        setExcludeResource() {
-            if (this.hasElement && this.element.dataset.excludeResource != null) {
-                this.element.dataset.excludeResource.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
-                    if (NODE_RESOURCE[value] != null) {
+        setExcludeResource(exclude) {
+            if (exclude == null) {
+                exclude = this.element.dataset.excludeResource;
+                if (this.element.parentElement != null) {
+                    exclude += '|' + (this.element.parentElement.dataset.excludeResourceChild || '');
+                }
+            }
+            if (this.hasElement && exclude != null) {
+                exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
+                    if (value !== '' && NODE_RESOURCE[value] != null) {
                         this.excludeResource |= NODE_RESOURCE[value];
                     }
                 });
@@ -2978,17 +2997,17 @@
             if (value == null || value === this._parent) {
                 return;
             }
-            if (this._parent && this._documentParent == null) {
-                this._documentParent = this._parent;
-            }
             this._parent = value;
             this.depth = value.depth + 1;
         }
         get parent() {
             return this._parent;
         }
+        set documentParent(value) {
+            this._documentParent = value;
+        }
         get documentParent() {
-            return this._documentParent || this._parent;
+            return this._documentParent || (this.element && this.element.parentElement != null ? this.element.parentElement.__node : null) || this._parent;
         }
         set tagName(value) {
             this._tagName = value;
@@ -3289,10 +3308,10 @@
         modifyBox(area, offset) {
             const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
             if (value !== '') {
-                const dimen = parseRTL(value);
-                const total = formatPX(offset + convertInt(this.android(dimen)));
-                this.css(dimen, total);
-                this.android(dimen, total);
+                const dimension = parseRTL(value);
+                const total = formatPX(offset + convertInt(this.android(dimension)));
+                this.css(dimension, total);
+                this.android(dimension, total);
                 this.setBounds(true);
             }
         }
@@ -3435,14 +3454,15 @@
                 else if (this.android('layout_width') == null) {
                     let maxRight = 0;
                     let parentMaxRight = 0;
+                    const parentMaxWidth = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a, b) => Math.max(a, b.viewWidth), 0));
                     if (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal) {
-                        maxRight = this.cascade().reduce((a, b) => Math.max(0, b.linear.right), 0);
-                        parentMaxRight = parent.cascade().reduce((a, b) => Math.max(0, b.linear.right), 0);
+                        maxRight = Math.ceil(this.cascade().reduce((a, b) => Math.max(a, b.linear.right), 0));
+                        parentMaxRight = Math.floor(parent.cascade().reduce((a, b) => Math.max(a, b.linear.right), 0));
                     }
                     if (convertInt(this.android('layout_columnWeight')) > 0) {
                         this.android('layout_width', '0px');
                     }
-                    else if (!wrapContent && (parent.overflow === 0 /* NONE */ && parent.viewWidth > 0 && width >= parentWidth) || ((this.renderChildren.length === 0 || maxRight < parentMaxRight) && !this.floating && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
+                    else if (!wrapContent && (parent.overflow === 0 /* NONE */ && parentMaxWidth > 0 && width >= parentWidth) || (!this.floating && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight >= parentMaxRight)) && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
                         this.android('layout_width', 'match_parent');
                     }
                     else {
@@ -3705,7 +3725,7 @@
     class ViewGroup extends View {
         constructor(id, node, parent, children) {
             super(id, node.api);
-            this.parent = node.documentParent;
+            this.documentParent = node.documentParent;
             if (parent != null) {
                 this.parent = parent;
             }
@@ -3859,6 +3879,15 @@
         DIALOG: 'ic_dialog_'
     };
 
+    function createPlaceholder(nextId, parent, children = []) {
+        const node = new View(nextId, parent.api, parent.element);
+        node.parent = parent;
+        node.inherit(parent, 'base');
+        node.excludeResource |= NODE_RESOURCE.ALL;
+        node.children = children;
+        node.isolated = true;
+        return node;
+    }
     function formatResource(options) {
         for (const namespace in options) {
             const object = options[namespace];
@@ -6443,6 +6472,13 @@
                     xml = controller.renderNode(node, parent, data.tag);
                 }
             }
+            if (data.tagChild) {
+                node.children.forEach(item => {
+                    const element = item.element;
+                    element.dataset.ext = this.name;
+                    element.dataset.andromeCustomTag = data.tagChild;
+                });
+            }
             return { xml };
         }
     }
@@ -7031,8 +7067,8 @@
             const parent = this.parent;
             const element = node.element;
             const options = Object.assign({}, this.options[element.id]);
-            const backgroundColor = node.css('backgroundColor');
-            overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor ? `@color/${Resource.addColor(parseRGBA(backgroundColor)[0])}` : '?attr/colorAccent'));
+            const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
+            overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${Resource.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
             if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
                 overwriteDefault(options, 'android', 'focusable', 'true');
             }
@@ -7360,24 +7396,20 @@
                 }
                 const filename = `${node.nodeId}_content`;
                 let include = '';
-                let layout = null;
+                let contentNode = null;
                 if (this.options.includes == null || this.options.includes) {
                     include = controller.renderNodeStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
-                    layout = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
-                    layout.parent = node;
-                    layout.inherit(node, 'base');
-                    layout.excludeResource |= NODE_RESOURCE.ALL;
-                    nodes.forEach(item => {
-                        item.parent = layout;
+                    contentNode = createPlaceholder(application.cache.nextId, node, nodes);
+                    contentNode.children.forEach(item => {
+                        item.parent = contentNode;
                         item.depth++;
                         if (offsetHeight > 0 && item.linear.top >= offsetX) {
                             this.adjustBounds(item, offsetHeight);
                             item.cascade().forEach((child) => this.adjustBounds(child, offsetHeight));
                         }
-                        layout.children.push(item);
                     });
+                    application.cache.list.push(contentNode);
                     node.children = node.children.filter(item => item.isolated);
-                    application.cache.list.push(layout);
                 }
                 const options = { android: {} };
                 const optionsCollapsingToolbar = Object.assign({}, collapsingToolbar);
@@ -7396,9 +7428,9 @@
                 }
                 overwriteDefault((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
                 const depth = (include !== '' ? 0 : node.depth + 1);
-                let content = (include !== '' ? controller.renderNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', layout, true) : '');
+                let content = (include !== '' ? controller.renderNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', contentNode, true) : '');
                 if (collapsingToolbar != null) {
-                    content = controller.renderNodeStatic(NODE_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, SETTINGS.targetAPI), true).replace('{:0}', content);
+                    content = controller.renderNodeStatic(NODE_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, node.api), true).replace('{:0}', content);
                 }
                 if (include !== '') {
                     application.addInclude(filename, content);
@@ -7444,7 +7476,7 @@
         '</resources>',
         '!0'
     ];
-    var EXTENSION_COLLAPSINGTOOLBAR_TMPL = template$9.join('\n');
+    var EXTENSION_APPBAR_TMPL = template$9.join('\n');
 
     class Toolbar extends Extension {
         constructor(name, tagNames, options) {
@@ -7474,16 +7506,18 @@
             return (super.condition() && this.included());
         }
         processNode() {
-            const controller = this.application.controllerHandler;
+            const application = this.application;
+            const controller = application.controllerHandler;
             const node = this.node;
             const target = (node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
-            const backgroundImage = node.css('backgroundImage');
             const options = Object.assign({}, this.options[node.element.id]);
+            const optionsToolbar = Object.assign({}, options.toolbar);
             const optionsAppBar = Object.assign({}, options.appBar);
             const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
-            const optionsToolbar = Object.assign({}, options.toolbar);
-            const appBar = (target || options.appBar != null);
-            const collapsingToolbar = (options.collapsingToolbar != null);
+            const appBarChildren = [];
+            const collapsingToolbarChildren = [];
+            const hasMenu = (findNestedMenu(node) != null);
+            const backgroundImage = node.css('backgroundImage');
             let depth = (target ? 0 : node.depth + node.renderDepth);
             let children = node.children.filter(item => !item.isolated).length;
             Array.from(node.element.children).forEach((element) => {
@@ -7507,36 +7541,57 @@
                         }
                     }
                 }
+                if (element.dataset.target === node.element.id) {
+                    const targetNode = element.__node;
+                    if (targetNode != null) {
+                        switch (element.dataset.targetModule) {
+                            case 'appBar':
+                                appBarChildren.push(targetNode);
+                                children--;
+                                break;
+                            case 'collapsingToolbar':
+                                collapsingToolbarChildren.push(targetNode);
+                                children--;
+                                break;
+                        }
+                    }
+                }
             });
+            const appBar = (target || options.appBar != null || appBarChildren.length > 0);
+            const collapsingToolbar = (options.collapsingToolbar != null || collapsingToolbarChildren.length > 0);
             let appBarOverlay = '';
             let popupOverlay = '';
-            if (target) {
-                overwriteDefault(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
-                if (backgroundImage === 'none') {
-                    overwriteDefault(optionsToolbar, 'android', 'background', '?attr/colorPrimary');
-                }
-            }
             if (collapsingToolbar) {
                 overwriteDefault(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
-                if (optionsToolbar.app.popupTheme != null) {
-                    popupOverlay = optionsToolbar.app.popupTheme;
-                }
-                optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
             }
             else {
-                overwriteDefault(optionsToolbar, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
+                overwriteDefault((appBar ? optionsAppBar : optionsToolbar), 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
-                if (children === 0) {
-                    overwriteDefault(optionsAppBar, 'android', 'layout_height', '?attr/actionBarSize');
-                }
                 if (backgroundImage !== 'none') {
-                    overwriteDefault(optionsAppBar, 'android', 'src', `@drawable/${Resource.addImageURL(backgroundImage)}`);
+                    overwriteDefault((appBarChildren.length > 0 ? optionsAppBar : optionsToolbar), 'android', 'background', `@drawable/${Resource.addImageURL(backgroundImage)}`);
+                    node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
+                }
+                else {
+                    overwriteDefault(optionsToolbar, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
                 }
             }
-            if (findNestedMenu(node) != null) {
-                overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
+            if (appBarChildren.length > 0) {
+                overwriteDefault(optionsAppBar, 'android', 'layout_height', '?attr/actionBarSize');
             }
-            node.depth = depth + (appBar ? 1 : 0) + (options.collapsingToolbar ? 1 : 0);
+            else {
+                overwriteDefault(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
+                node.excludeProcedure |= NODE_PROCEDURE.LAYOUT;
+            }
+            if (hasMenu) {
+                overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
+                if (appBar) {
+                    if (optionsToolbar.app.popupTheme != null) {
+                        popupOverlay = optionsToolbar.app.popupTheme.replace('@style/', '');
+                    }
+                    optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
+                }
+            }
+            node.depth = depth + (appBar ? 1 : 0) + (collapsingToolbar ? 1 : 0);
             let xml = controller.renderNodeStatic(VIEW_SUPPORT.TOOLBAR, node.depth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
             if (collapsingToolbar) {
                 if (backgroundImage !== 'none') {
@@ -7566,35 +7621,52 @@
                 }
             }
             let outer = '';
+            let appBarNode = null;
+            let collapsingToolbarNode = null;
             if (appBar) {
                 overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
                 overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? formatDimen('appbar', 'height', convertPX(node.viewHeight)) : 'wrap_content'));
                 if (collapsingToolbar) {
                     overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
+                }
+                if (hasMenu) {
                     if (optionsAppBar.android.theme != null) {
                         appBarOverlay = optionsAppBar.android.theme;
                     }
                     optionsAppBar.android.theme = '@style/AppTheme.AppBarOverlay';
+                    this.createResourceTheme(appBarOverlay, popupOverlay);
                 }
                 else {
                     overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
                 }
-                outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', null, true);
+                appBarNode = createPlaceholder(application.cache.nextId, node, appBarChildren);
+                appBarNode.children.forEach(item => {
+                    item.parent = appBarNode;
+                    item.depth = depth + 1;
+                });
+                application.cache.list.push(appBarNode);
+                outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
                 if (collapsingToolbar) {
-                    overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsing`);
+                    depth++;
+                    overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
                     overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
                     if (backgroundImage === 'none') {
                         overwriteDefault(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
                     }
                     overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                     overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                    outer = outer.replace('{:0}', controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, ++depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', null, true));
-                    this.createResourceTheme(appBarOverlay, popupOverlay);
+                    collapsingToolbarNode = createPlaceholder(application.cache.nextId, node, collapsingToolbarChildren);
+                    collapsingToolbarNode.children.forEach(item => {
+                        item.parent = collapsingToolbarNode;
+                        item.depth = depth + 1;
+                    });
+                    application.cache.list.push(collapsingToolbarNode);
+                    outer = outer.replace(`{:${appBarNode.id}}`, controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true) + `{:${appBarNode.id}}`);
                 }
                 node.nodeId = optionsAppBar.android.id.replace('@+id/', '');
             }
-            if (outer !== '') {
-                xml = outer.replace('{:0}', xml);
+            if (appBarNode != null) {
+                xml = (collapsingToolbarNode != null ? outer.replace(`{:${collapsingToolbarNode.id}}`, xml + `{:${collapsingToolbarNode.id}}`) : outer.replace(`{:${appBarNode.id}}`, xml + `{:${appBarNode.id}}`));
             }
             let proceed = false;
             if (target) {
@@ -7635,10 +7707,6 @@
                 }
             }
         }
-        afterInsert() {
-            const node = this.node;
-            node.android('layout_height', '?attr/actionBarSize');
-        }
         finalize() {
             const node = this.node;
             const menu = findNestedMenu(node);
@@ -7664,7 +7732,7 @@
             };
             overwriteDefault(options, 'output', 'path', 'res/values');
             overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
-            this.application.resourceHandler.addResourceTheme(EXTENSION_COLLAPSINGTOOLBAR_TMPL, data, options);
+            this.application.resourceHandler.addResourceTheme(EXTENSION_APPBAR_TMPL, data, options);
         }
     }
 
@@ -7800,14 +7868,9 @@
                 include = controller.renderNodeStatic('include', depth + 1, { layout: `@layout/${filename}` });
                 depth = -1;
             }
-            const coordinator = new View(application.cache.nextId, SETTINGS.targetAPI, node.element);
-            coordinator.parent = node;
-            coordinator.inherit(node, 'base');
-            coordinator.renderExtension = application.findExtension(WIDGET_NAME.COORDINATOR);
-            coordinator.isolated = true;
-            coordinator.excludeResource |= NODE_RESOURCE.ALL;
-            application.cache.list.push(coordinator);
-            const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinator, true);
+            const coordinatorNode = createPlaceholder(application.cache.nextId, node);
+            application.cache.list.push(coordinatorNode);
+            const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinatorNode, true);
             const optionsNavigation = Object.assign({}, this.options.navigation);
             overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
             if (menu != null) {
@@ -7829,8 +7892,8 @@
             }
             node.children.forEach(item => {
                 if (menu.__node !== item) {
-                    item.parent = coordinator;
-                    coordinator.children.push(item);
+                    item.parent = coordinatorNode;
+                    coordinatorNode.children.push(item);
                 }
             });
             if (include !== '') {
