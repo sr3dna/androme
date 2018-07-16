@@ -355,15 +355,25 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                                 map[y].push(item);
                             });
-                            if (flex.wrap === 'wrap-reverse') {
-                                if (flex.direction.indexOf('column') !== -1) {
-                                    for (const y in map) {
-                                        map[y].reverse();
+                            function reverseMap() {
+                                for (const y in map) {
+                                    map[y].reverse();
+                                }
+                            }
+                            switch (flex.wrap) {
+                                case 'wrap':
+                                    if (flex.direction === 'column-reverse') {
+                                        reverseMap();
                                     }
-                                }
-                                else {
-                                    levels.reverse();
-                                }
+                                    break;
+                                case 'wrap-reverse':
+                                    if (flex.direction.indexOf('row') !== -1) {
+                                        levels.reverse();
+                                    }
+                                    else if (flex.direction === 'column') {
+                                        reverseMap();
+                                    }
+                                    break;
                             }
                             flexbox = [];
                             for (const n of levels) {
