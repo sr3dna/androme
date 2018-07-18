@@ -427,7 +427,7 @@ export default abstract class Node implements BoxModel {
                 grow: convertInt(style.flexGrow),
                 shrink: convertInt(style.flexShrink),
                 wrap: (<string> style.flexWrap),
-                alignSelf: (<string> (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
+                alignSelf: (<string> (parent && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
                 justifyContent: (<string> style.justifyContent),
                 order: convertInt(style.order)
             };
@@ -438,10 +438,6 @@ export default abstract class Node implements BoxModel {
     get floating() {
         const float = (this.style != null ? (<any> this.style).float : '');
         return (float === 'left' || float === 'right');
-    }
-
-    get fixed() {
-        return (this.style && this.style.display === 'fixed');
     }
 
     get overflow() {

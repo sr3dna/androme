@@ -66,11 +66,13 @@ export default abstract class NodeList<T extends Node> {
     }
 
     public sortAsc(...attr: string[]) {
-        return sortAsc<T>(this._list, ...attr);
+        sortAsc<T>(this._list, ...attr);
+        return this;
     }
 
     public sortDesc(...attr: string[]) {
-        return sortDesc<T>(this._list, ...attr);
+        sortDesc<T>(this._list, ...attr);
+        return this;
     }
 
     public intersect(dimension = 'linear') {

@@ -149,7 +149,8 @@ export const INLINE_ELEMENT = [
     'TIME',
     'TT',
     'U',
-    'VAR'
+    'VAR',
+    'PLAINTEXT'
 ];
 
 export const enum OVERFLOW_ELEMENT {

@@ -5,7 +5,7 @@ import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
 import ViewList from './viewlist';
-import { convertPX, formatPX, generateId, hasValue, includesEnum, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
+import { capitalize, convertPX, formatPX, generateId, hasValue, includesEnum, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { formatResource } from './extension/lib/util';
 import { formatDimen } from '../lib/xml';
 import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD } from '../lib/constants';
@@ -60,23 +60,30 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
         this.cache.visible.forEach(node => {
             const nodes = (<U> new ViewList(node.renderChildren.filter(item => !item.isolated), node));
+            const pageflow = (<U> new ViewList(nodes.list.filter(item => item.pageflow), node));
+            const absolute = (<U> new ViewList(nodes.list.filter(item => !item.pageflow), node));
             const constraint = node.is(NODE_STANDARD.CONSTRAINT);
             const relative = node.is(NODE_STANDARD.RELATIVE);
             const flex = node.flex;
-            if (nodes.list.length > 0 && (constraint || relative || flex.enabled)) {
+            if ((pageflow.length > 0 || absolute.length > 0) && (constraint || relative || flex.enabled)) {
                 node.setBoundsMin();
                 const LAYOUT: StringMap = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
-                const linearX = nodes.linearX;
+                const linearX = pageflow.linearX;
                 function mapParent(item: T, direction: string) {
-                    return (item.app(LAYOUT[direction]) === 'parent');
+                    if (constraint) {
+                        return (item.app(LAYOUT[direction]) === 'parent');
+                    }
+                    else {
+                        return (item.android(`layout_alignParent${capitalize(parseRTL(direction))}`) === 'true');
+                    }
                 }
                 function mapDelete(item: T, ...direction: string[]) {
                     for (const attr of direction) {
                         item.delete((constraint ? 'app' : 'android'), LAYOUT[attr]);
                     }
                 }
-                if (relative || nodes.list.length === 1) {
-                    nodes.list.forEach(current => {
+                if (relative || pageflow.length === 1) {
+                    pageflow.list.forEach(current => {
                         if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
                             if (constraint) {
                                 this.setAlignParent(current);
@@ -225,7 +232,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                     }
                                     else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
-                                        if (current.android('layout_alignParentTop') !== 'true') {
+                                        if (!mapParent(current, 'top')) {
                                             current.anchor(LAYOUT['bottomTop'], stringId, vertical, withinY);
                                         }
                                     }
@@ -245,7 +252,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     });
                 });
                 nodes.list.shift();
-                nodes.list.forEach(current => {
+                pageflow.list.forEach(current => {
                     const leftRight = current.anchor(LAYOUT['leftRight']);
                     if (leftRight != null) {
                         if (flex.enabled) {
@@ -289,10 +296,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         }
                     }
                 });
-                const anchors = nodes.anchors;
+                const anchors = pageflow.anchors;
                 do {
                     let restart = false;
-                    nodes.list.forEach(current => {
+                    pageflow.list.forEach(current => {
                         if (!current.anchored) {
                             const result = (constraint ? search(<ObjectMap<string>> current.app(), '*constraint*') : search(<ObjectMap<string>> current.android(), LAYOUT));
                             for (const [key, value] of result) {
@@ -318,12 +325,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                 }
                 while (true);
-                if (flex.enabled || (SETTINGS.useConstraintChain && constraint && nodes.length > 1 && !nodes.intersect())) {
+                if (flex.enabled || (SETTINGS.useConstraintChain && constraint && pageflow.length > 1 && !pageflow.intersect())) {
                     let flexbox: Null<any[]> = null;
                     if (flex.enabled) {
                          if (flex.wrap === 'nowrap') {
-                            let horizontalChain = nodes.list.slice();
-                            let verticalChain = nodes.list.slice();
+                            let horizontalChain = pageflow.list.slice();
+                            let verticalChain = pageflow.list.slice();
                             switch (flex.direction) {
                                 case 'row-reverse':
                                     horizontalChain.reverse();
@@ -339,7 +346,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             flexbox = [{ constraint: { horizontalChain: new ViewList(horizontalChain), verticalChain: new ViewList(verticalChain) } }];
                         }
                         else {
-                            const sorted = nodes.list.slice();
+                            const sorted = pageflow.list.slice();
                             switch (flex.direction) {
                                 case 'row-reverse':
                                 case 'column-reverse':
@@ -382,9 +389,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         }
                     }
                     else {
-                        nodes.list.forEach(current => {
-                            const horizontalChain = this.partitionChain(nodes, current, ['linear.top', 'linear.bottom'], [LAYOUT['leftRight'], LAYOUT['rightLeft']]);
-                            const verticalChain = this.partitionChain(nodes, current, ['linear.left', 'linear.right'], [LAYOUT['topBottom'], LAYOUT['bottomTop']]);
+                        pageflow.list.forEach(current => {
+                            const horizontalChain = this.partitionChain(pageflow, current, ['linear.top', 'linear.bottom'], [LAYOUT['leftRight'], LAYOUT['rightLeft']]);
+                            const verticalChain = this.partitionChain(pageflow, current, ['linear.left', 'linear.right'], [LAYOUT['topBottom'], LAYOUT['bottomTop']]);
                             current.constraint.horizontalChain = new ViewList(sortAsc(horizontalChain, 'linear.left'));
                             current.constraint.verticalChain = new ViewList(sortAsc(verticalChain, 'linear.top'));
                         });
@@ -394,7 +401,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         direction.reverse();
                     }
                     direction.forEach((value, index) => {
-                        const connected = (flex.enabled ? flexbox : nodes.slice().list.sort((a, b) => a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
+                        const connected = (flex.enabled ? flexbox : pageflow.slice().list.sort((a, b) => a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                         if (connected != null) {
                             if (!SETTINGS.horizontalPerspective) {
                                 index = (index === 0 ? 1 : 0);
@@ -417,7 +424,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     const first = chainable.first;
                                     const last = chainable.last;
                                     let maxOffset = -1;
-                                    for (let i = 0; i < chainable.list.length; i++) {
+                                    for (let i = 0; i < chainable.length; i++) {
                                         const chain = chainable.list[i];
                                         const next = chainable.list[i + 1];
                                         const previous = chainable.list[i - 1];
@@ -600,7 +607,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         this.adjustMargins(chainable.list);
                                         if (!flex.enabled) {
                                             chainable.list.forEach(inner => {
-                                                nodes.list.forEach(outer => {
+                                                pageflow.list.forEach(outer => {
                                                     const horizontal: U = outer.constraint.horizontalChain;
                                                     const vertical: U = outer.constraint.verticalChain;
                                                     if (horizontal.length > 0 && horizontal.find(inner.id) != null) {
@@ -629,7 +636,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 if (flex.enabled && flex.wrap !== 'nowrap') {
                     ['topBottom', 'bottomTop'].forEach((value, index) => {
-                        nodes.list.forEach(current => {
+                        pageflow.list.forEach(current => {
                             if (mapParent(current, (index === 0 ? 'bottom' : 'top'))) {
                                 const chain: T[] = [current];
                                 let valid = false;
@@ -637,7 +644,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 while (adjacent != null) {
                                     const topBottom = (<string> adjacent.app(LAYOUT[value]));
                                     if (topBottom != null) {
-                                        adjacent = (<T> nodes.findByNodeId(topBottom.replace('@+id/', '')));
+                                        adjacent = (<T> pageflow.findByNodeId(topBottom.replace('@+id/', '')));
                                         if (adjacent != null && current.withinY(adjacent.linear)) {
                                             chain.push(adjacent);
                                             valid = mapParent(adjacent, (index === 0 ? 'top' : 'bottom'));
@@ -652,7 +659,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                                 if (!valid) {
                                     chain.forEach(item => {
-                                        nodes.list.some(next => {
+                                        pageflow.list.some(next => {
                                             if (item !== next && next.linear.top === item.linear.top && next.linear.bottom === item.linear.bottom) {
                                                 mapDelete(item, 'topBottom', 'bottomTop');
                                                 item.app(LAYOUT['top'], next.stringId);
@@ -676,15 +683,17 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 item.delete(namespace, LAYOUT[attr]);
                             }
                         }
+                        item.constraint.horizontal = (mapParent(item, 'left') || mapParent(item, 'right'));
+                        item.constraint.vertical = (mapParent(item, 'top') || mapParent(item, 'bottom'));
                     }
                     if (constraint) {
-                        nodes.list.forEach(current => {
+                        pageflow.list.forEach(current => {
                             [['top', 'bottom', 'topBottom'], ['bottom', 'top', 'bottomTop']].forEach(direction => {
                                 if (mapParent(current, direction[1]) && current.app(LAYOUT[direction[2]]) == null) {
                                     ['leftRight', 'rightLeft'].forEach(value => {
                                         const stringId = current.app(LAYOUT[value]);
                                         if (stringId != null) {
-                                            const aligned = nodes.list.find(item => item.stringId === stringId);
+                                            const aligned = pageflow.list.find(item => item.stringId === stringId);
                                             if (aligned != null && aligned.app(LAYOUT[direction[2]]) != null) {
                                                 if (withinFraction(current.linear[direction[0]], aligned.linear[direction[0]])) {
                                                     current.app(LAYOUT[direction[0]], aligned.stringId, true);
@@ -700,7 +709,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         });
                         const unbound = nodes.list.filter(current => !current.anchored && (mapParent(current, 'top') || mapParent(current, 'right') || mapParent(current, 'bottom') || mapParent(current, 'left')));
                         if (anchors.length === 0 && unbound.length === 0) {
-                            unbound.push(nodes.sortAsc('linear.left', 'linear.top')[0]);
+                            unbound.push(sortAsc(nodes.list.slice(), 'linear.left', 'linear.top')[0]);
                         }
                         unbound.forEach(current => {
                             if (SETTINGS.useConstraintGuideline) {
@@ -714,12 +723,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         nodes.list.filter(current => !current.anchored).forEach(opposite => {
                             deleteConstraints(opposite);
                             nodes.anchors.forEach(item => deleteConstraints(item, opposite.stringId));
-                            opposite.constraint.horizontal = mapParent(opposite, 'left') || mapParent(opposite, 'right');
-                            opposite.constraint.vertical = mapParent(opposite, 'top') || mapParent(opposite, 'bottom');
                             if (SETTINGS.useConstraintGuideline) {
                                 this.addGuideline(node, opposite);
                             }
-                            else {
+                            else if (adjacent != null) {
                                 const center1: Point = opposite.center;
                                 const center2: Point = adjacent.center;
                                 const x = Math.abs(center1.x - center2.x);
@@ -780,12 +787,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                     else {
                         nodes.list.forEach(current => {
-                            const parentRight = (current.android(parseRTL('layout_alignParentRight')) === 'true');
-                            const parentBottom = (current.android('layout_alignParentBottom') === 'true');
                             if (!anchors.includes(current)) {
                                 deleteConstraints(current);
-                                current.constraint.horizontal = (current.android(parseRTL('layout_alignParentLeft')) === 'true' || parentRight);
-                                current.constraint.vertical = (current.android('layout_alignParentTop') === 'true' || parentBottom);
                                 if (!current.constraint.horizontal) {
                                     const left = formatPX(Math.max(0, current.linear.left - node.box.left));
                                     if (left !== '0px') {
@@ -808,10 +811,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             else {
                                 this.adjustMargins([current]);
                             }
-                            if (parentRight && current.android(LAYOUT['leftRight']) == null) {
+                            if (mapParent(current, 'right') && current.android(LAYOUT['leftRight']) == null) {
                                 node.constraint.layoutWidth = true;
                             }
-                            if (parentBottom && current.android(LAYOUT['topBottom']) == null) {
+                            if (mapParent(current, 'bottom') && current.android(LAYOUT['topBottom']) == null) {
                                 node.constraint.layoutHeight = true;
                             }
                         });
@@ -827,8 +830,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 switch (node.android('orientation')) {
                     case 'horizontal':
                         let left = node.box.left;
-                        sortAsc(node.renderChildren, 'linear.left').forEach(item => {
-                            if (!item.floating) {
+                        sortAsc(node.renderChildren, 'linear.left').forEach((item, index) => {
+                            let valid = true;
+                            if (index === 0) {
+                                const gravity = node.android('gravity');
+                                if (gravity != null || gravity !== parseRTL('left')) {
+                                    valid = false;
+                                }
+                            }
+                            if (valid && !item.floating) {
                                 const width = Math.ceil(item.linear.left - left);
                                 if (width >= 1) {
                                     item.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
@@ -858,6 +868,16 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         let renderParent = parent;
         if (typeof viewName === 'number') {
             viewName = View.getViewName(viewName);
+        }
+        switch (viewName) {
+            case NODE_ANDROID.LINEAR:
+                options = { android: { orientation: (options && options.vertical ? 'vertical' : 'horizontal') } };
+                break;
+            case NODE_ANDROID.GRID:
+                options = { android: { columnCount: (options && options.columns ? options.columns.toString() : '2'), rowCount: (options && options.rows > 0 ? options.rows.toString() : '') } };
+                break;
+            default:
+                options = {};
         }
         node.setNodeId(viewName);
         if (node.overflow !== OVERFLOW_ELEMENT.NONE) {

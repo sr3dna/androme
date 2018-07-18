@@ -198,15 +198,15 @@ export default class View extends Node {
             return;
         }
         if (width == null) {
-            width = (this.hasElement ? this.element.clientWidth + this.marginLeft + this.marginRight + this.borderLeftWidth + this.borderRightWidth : 0);
+            width = (this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0);
         }
         if (height == null) {
-            height = (this.hasElement ? this.element.clientHeight + this.marginTop + this.marginBottom + this.borderTopWidth + this.borderBottomWidth : 0);
+            height = (this.hasElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0);
         }
         const parent = (<T> this.documentParent);
         const renderParent = (<T> this.renderParent);
-        const parentWidth = (!this.documentRoot ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : Number.MAX_VALUE);
-        const parentHeight = (!this.documentRoot ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : Number.MAX_VALUE);
+        const widthParent = parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth);
+        const heightParent = parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth);
         const wrapContent = parent.flex.enabled || parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID) || (parent.is(NODE_STANDARD.LINEAR) && parent.horizontal) || this.is(NODE_STANDARD.IMAGE);
         const styleMap = this.styleMap;
         const constraint = this.constraint;
@@ -247,20 +247,20 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutWidth) {
-                this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= parentWidth ? 'match_parent' : formatPX(this.bounds.width)));
+                this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)));
             }
             else if (this.android('layout_width') == null) {
                 let maxRight = 0;
-                let parentMaxRight = 0;
+                let maxRightParent = 0;
                 const parentMaxWidth = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0));
                 if (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal) {
                     maxRight = Math.ceil(this.cascade().reduce((a: number, b: T) => Math.max(a, b.linear.right), 0));
-                    parentMaxRight = Math.floor(parent.cascade().reduce((a: number, b: T) => Math.max(a, b.linear.right), 0));
+                    maxRightParent = Math.floor(parent.cascade().reduce((a: number, b: T) => Math.max(a, b.linear.right), 0));
                 }
                 if (convertInt(this.android('layout_columnWeight')) > 0) {
                     this.android('layout_width', '0px');
                 }
-                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && parentMaxWidth > 0 && width >= parentWidth) || (!this.floating && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight >= parentMaxRight)) && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
+                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && parentMaxWidth > 0 && width >= widthParent) || (!this.floating && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight >= maxRightParent)) && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
                     this.android('layout_width', 'match_parent');
                 }
                 else {
@@ -291,12 +291,12 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutHeight) {
-                this.android('layout_height', (this.bounds.height >= parentHeight ? 'match_parent' : formatPX(this.bounds.height)));
+                this.android('layout_height', (this.bounds.height >= heightParent ? 'match_parent' : formatPX(this.bounds.height)));
             }
             else if (this.android('layout_height') == null) {
                 let layoutHeight = 'wrap_content';
-                if (height >= parentHeight) {
-                    if (this.documentRoot || (parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.nodeName) && (!renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content'))) {
+                if (height >= heightParent) {
+                    if ((parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.nodeName) && (!renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content'))) {
                         layoutHeight = 'match_parent';
                     }
                 }
@@ -309,19 +309,30 @@ export default class View extends Node {
         if (!(this.renderParent instanceof View)) {
             return;
         }
+        const left = parseRTL('left');
+        const right = parseRTL('right');
+        function convertHorizontal(value: string) {
+            switch (value) {
+                case 'left':
+                    return left;
+                case 'right':
+                    return right;
+                case 'center':
+                    return 'center_horizontal';
+                default:
+                    return value;
+            }
+        }
         const renderParent = (<T> this.renderParent);
         const textView = this.is(NODE_STANDARD.TEXT);
-        let textAlign = '';
+        let textAlign = this.styleMap.textAlign;
+        let textAlignParent = '';
         const verticalAlign = this.styleMap.verticalAlign;
-        let horizontal = '';
-        let vertical = '';
-        const right = parseRTL('right');
         if (!this.floating || textView) {
-            let node: T = this;
+            let node: T = (<T> this.documentParent);
             while (node != null) {
-                textAlign = node.styleMap.textAlign || textAlign;
-                const float = (node !== this ? node.styleMap.float : '');
-                if (float === 'left' || float === 'right' || hasValue(textAlign)) {
+                textAlignParent = node.styleMap.textAlign || textAlignParent;
+                if (node.floating || hasValue(textAlign)) {
                     break;
                 }
                 node = (<T> node.documentParent);
@@ -330,24 +341,12 @@ export default class View extends Node {
         if (textAlign === '' && this.tagName === 'TH') {
             textAlign = 'center';
         }
-        switch (textAlign) {
-            case 'start':
-                horizontal = 'start';
-                break;
-            case 'right':
-                horizontal = right;
-                break;
-            case 'end':
-                horizontal = 'end';
-                break;
-            case 'center':
-                horizontal = 'center_horizontal';
-                break;
-        }
+        const horizontalParent = convertHorizontal(textAlignParent);
+        let horizontal = convertHorizontal(textAlign);
+        let vertical = '';
         switch (verticalAlign) {
             case 'top':
                 vertical = 'top';
-                break;
             case 'middle':
                 vertical = 'center_vertical';
                 break;
@@ -364,9 +363,10 @@ export default class View extends Node {
             this.android('layout_gravity', 'fill');
         }
         else {
-            let horizontalFloat = (this.css('float') === 'right' && this.renderParent.android('gravity') !== right ? right : '');
+            const gravityParent = (<string> (this.renderParent.android('gravity') || ''));
+            let horizontalFloat = (this.css('float') === 'right' && gravityParent !== right ? right : '');
             let verticalFloat = '';
-            if (horizontalFloat === '' && horizontal !== '' && !hasValue(this.styleMap.textAlign) && !textView) {
+            if (horizontalFloat === '' && gravityParent.indexOf(horizontalParent) === -1 && !textView) {
                 horizontalFloat = horizontal;
                 horizontal = '';
             }
@@ -380,7 +380,7 @@ export default class View extends Node {
             }
         }
         if (this.renderChildren.length > 0) {
-            if (!this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && this.renderChildren.every(item => item.css('float') === 'right')) {
+            if (!this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.css('float') === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
                 this.android('gravity', right);
             }
         }

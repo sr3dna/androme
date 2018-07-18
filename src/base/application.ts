@@ -69,6 +69,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         });
+        this.adjustBoxSpacing();
         this.controllerHandler.setDimensions(this.viewData);
         this.insertAuxillaryViews();
         this.resourceHandler.finalize(this.viewData);
@@ -221,7 +222,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         });
         const rootNode = this.insertNode(root);
         if (rootNode != null) {
-            rootNode.parent = new this.TypeT(0, 0);
+            rootNode.parent = new this.TypeT(0, SETTINGS.targetAPI, root.parentElement || document.body);
             rootNode.documentRoot = true;
             this.cache.parent = rootNode;
         }
@@ -254,7 +255,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         }
-        if (this.cache.list.length > 0) {
+        if (this.cache.length > 0) {
             const preAlignment: ObjectIndex<ObjectMap<Null<string>>> = {};
             this.cache.list.forEach(node => {
                 const element = node.element;
@@ -288,11 +289,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             this.cache.list.forEach(parent => {
                 this.cache.list.forEach(child => {
                     if (parent !== child) {
+                        let elementParent = false;
                         if (child.element.parentElement === parent.element) {
                             child.parent = parent;
                             parent.children.push(child);
+                            elementParent = true;
                         }
-                        if (child.fixed && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
+                        if ((child.css('position') === 'fixed' || (elementParent && child.css('position') === 'absolute' && parent.css('position') !== 'relative')) && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
                             if (parents[child.id] == null) {
                                 parents[child.id] = [];
                             }
@@ -302,9 +305,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 });
             });
             this.cache.list.forEach(node => {
-                const nodes: T[] = parents[node.id];
-                if (nodes != null) {
-                    nodes.push(<T> node.parent);
+                const nodes: Set<T> = new Set(parents[node.id]);
+                if (nodes.size > 0) {
+                    nodes.add(<T> node.parent);
                     let minArea = Number.MAX_VALUE;
                     let closest: Null<T> = null;
                     nodes.forEach(current => {
@@ -319,7 +322,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             }
                         }
                     });
-                    if (closest != null) {
+                    if (closest != null && node.parent !== closest) {
+                        node.parent.children = node.parent.children.filter(child => child !== node);
                         node.parent = closest;
                     }
                 }
@@ -566,11 +570,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public writeLinearLayout(node: T, parent: T, vertical: boolean) {
-        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.LINEAR, { android: { orientation: (vertical ? 'vertical' : 'horizontal') } });
+        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.LINEAR, { vertical });
     }
 
-    public writeGridLayout(node: T, parent: T, columnCount: number, rowCount: number = 0) {
-        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.GRID, { android: { columnCount: columnCount.toString(), rowCount: (rowCount > 0 ? rowCount.toString() : '') } });
+    public writeGridLayout(node: T, parent: T, columns: number, rows: number = 0) {
+        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.GRID, { columns, rows });
     }
 
     public writeRelativeLayout(node: T, parent: T) {
@@ -687,10 +691,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
         return (linearX || linearY) &&
-               (!parent.flex.enabled || (linearX && children.every(node => node.flex.enabled))) &&
-               (!children.some(node => node.floating && node.css('clear') !== 'none') &&
-               (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')) &&
-               children.every(node => node.pageflow));
+               !parent.flex.enabled &&
+               (
+                   !children.some(node => node.floating && node.css('clear') !== 'none') &&
+                   (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')) &&
+                   children.every(node => node.pageflow)
+               );
     }
 
     public addInclude(filename: string, content: string) {
