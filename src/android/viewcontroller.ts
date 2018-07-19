@@ -61,14 +61,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         this.cache.visible.forEach(node => {
             const nodes = (<U> new ViewList(node.renderChildren.filter(item => !item.isolated), node));
             const pageflow = (<U> new ViewList(nodes.list.filter(item => item.pageflow), node));
-            const absolute = (<U> new ViewList(nodes.list.filter(item => !item.pageflow), node));
             const constraint = node.is(NODE_STANDARD.CONSTRAINT);
             const relative = node.is(NODE_STANDARD.RELATIVE);
             const flex = node.flex;
-            if ((pageflow.length > 0 || absolute.length > 0) && (constraint || relative || flex.enabled)) {
+            if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
                 node.setBoundsMin();
                 const LAYOUT: StringMap = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                 const linearX = pageflow.linearX;
+                const verticalPerspective = (!SETTINGS.horizontalPerspective && !flex.enabled && !pageflow.list.some(item => item.floating));
                 function mapParent(item: T, direction: string) {
                     if (constraint) {
                         return (item.app(LAYOUT[direction]) === 'parent');
@@ -137,7 +137,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             current.anchor(LAYOUT['left'], stringId);
                                             current.anchor(LAYOUT['right'], stringId);
                                         }
-                                        else if (!SETTINGS.horizontalPerspective) {
+                                        else if (verticalPerspective) {
                                             if (linear1.left === linear2.left) {
                                                 current.anchor(LAYOUT['left'], stringId);
                                             }
@@ -397,13 +397,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         });
                     }
                     const direction = CHAIN_MAP.direction.slice();
-                    if (!SETTINGS.horizontalPerspective) {
+                    if (verticalPerspective) {
                         direction.reverse();
                     }
                     direction.forEach((value, index) => {
                         const connected = (flex.enabled ? flexbox : pageflow.slice().list.sort((a, b) => a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                         if (connected != null) {
-                            if (!SETTINGS.horizontalPerspective) {
+                            if (verticalPerspective) {
                                 index = (index === 0 ? 1 : 0);
                             }
                             const inverse = (index === 0 ? 1 : 0);
@@ -424,6 +424,16 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     const first = chainable.first;
                                     const last = chainable.last;
                                     let maxOffset = -1;
+                                    if (verticalPerspective) {
+                                        if (first.app(LAYOUT['leftRight']) != null) {
+                                            if (!mapParent(first, 'left')) {
+                                                mapDelete(first, 'left');
+                                            }
+                                        }
+                                        if (first.app(LAYOUT['rightLeft']) != null) {
+                                            mapDelete(first, 'right');
+                                        }
+                                    }
                                     for (let i = 0; i < chainable.length; i++) {
                                         const chain = chainable.list[i];
                                         const next = chainable.list[i + 1];
@@ -439,6 +449,19 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                     chain.anchor(LAYOUT['bottomTop'], nextChain.stringId);
                                                     if (!mapParent(chain, 'bottom')) {
                                                         mapDelete(chain, 'bottom');
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else {
+                                            if (verticalPerspective) {
+                                                if (mapParent(chain, 'right') && chain.app(LAYOUT['leftRight']) != null) {
+                                                    mapDelete(chain, 'right');
+                                                }
+                                                if (chain !== first) {
+                                                    if (chain.app(LAYOUT['left']) != null || chain.app(LAYOUT['right']) != null) {
+                                                        mapDelete(chain, 'leftRight', 'rightLeft');
+                                                        delete chain.constraint.marginHorizontal;
                                                     }
                                                 }
                                             }
@@ -576,6 +599,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 first.app(chainStyle, 'packed');
                                                 first.app(`layout_constraint${HV}_bias`, bias);
                                         }
+                                        chainable.list.forEach(item => delete item.constraint.marginHorizontal);
                                     }
                                     else {
                                         if ((orientation === 'horizontal' && withinFraction(node.box.left, first.linear.left) && withinFraction(last.linear.right, node.box.right)) || (orientation === 'vertical' && withinFraction(node.box.top, first.linear.top) && withinFraction(last.linear.bottom, node.box.bottom))) {
@@ -604,7 +628,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         else {
                                             first.app(chainStyle, 'spread');
                                         }
-                                        this.adjustMargins(chainable.list);
                                         if (!flex.enabled) {
                                             chainable.list.forEach(inner => {
                                                 pageflow.list.forEach(outer => {
@@ -628,53 +651,56 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     }
                                     if (mapParent(first, 'right')) {
                                         mapDelete(first, 'leftRight');
+                                        delete first.constraint.marginHorizontal;
                                     }
                                 }
                             });
                         }
                     });
                 }
-                if (flex.enabled && flex.wrap !== 'nowrap') {
-                    ['topBottom', 'bottomTop'].forEach((value, index) => {
-                        pageflow.list.forEach(current => {
-                            if (mapParent(current, (index === 0 ? 'bottom' : 'top'))) {
-                                const chain: T[] = [current];
-                                let valid = false;
-                                let adjacent: Null<T> = current;
-                                while (adjacent != null) {
-                                    const topBottom = (<string> adjacent.app(LAYOUT[value]));
-                                    if (topBottom != null) {
-                                        adjacent = (<T> pageflow.findByNodeId(topBottom.replace('@+id/', '')));
-                                        if (adjacent != null && current.withinY(adjacent.linear)) {
-                                            chain.push(adjacent);
-                                            valid = mapParent(adjacent, (index === 0 ? 'top' : 'bottom'));
-                                            if (valid) {
-                                                break;
+                if (flex.enabled) {
+                    if (flex.wrap !== 'nowrap') {
+                        ['topBottom', 'bottomTop'].forEach((value, index) => {
+                            pageflow.list.forEach(current => {
+                                if (mapParent(current, (index === 0 ? 'bottom' : 'top'))) {
+                                    const chain: T[] = [current];
+                                    let valid = false;
+                                    let adjacent: Null<T> = current;
+                                    while (adjacent != null) {
+                                        const topBottom = (<string> adjacent.app(LAYOUT[value]));
+                                        if (topBottom != null) {
+                                            adjacent = (<T> pageflow.findByNodeId(topBottom.replace('@+id/', '')));
+                                            if (adjacent != null && current.withinY(adjacent.linear)) {
+                                                chain.push(adjacent);
+                                                valid = mapParent(adjacent, (index === 0 ? 'top' : 'bottom'));
+                                                if (valid) {
+                                                    break;
+                                                }
                                             }
                                         }
+                                        else {
+                                            adjacent = null;
+                                        }
                                     }
-                                    else {
-                                        adjacent = null;
-                                    }
-                                }
-                                if (!valid) {
-                                    chain.forEach(item => {
-                                        pageflow.list.some(next => {
-                                            if (item !== next && next.linear.top === item.linear.top && next.linear.bottom === item.linear.bottom) {
-                                                mapDelete(item, 'topBottom', 'bottomTop');
-                                                item.app(LAYOUT['top'], next.stringId);
-                                                item.app(LAYOUT['bottom'], next.stringId);
-                                                return true;
-                                            }
-                                            return false;
+                                    if (!valid) {
+                                        chain.forEach(item => {
+                                            pageflow.list.some(next => {
+                                                if (item !== next && next.linear.top === item.linear.top && next.linear.bottom === item.linear.bottom) {
+                                                    mapDelete(item, 'topBottom', 'bottomTop');
+                                                    item.app(LAYOUT['top'], next.stringId);
+                                                    item.app(LAYOUT['bottom'], next.stringId);
+                                                    return true;
+                                                }
+                                                return false;
+                                            });
                                         });
-                                    });
+                                    }
                                 }
-                            }
+                            });
                         });
-                    });
+                    }
                 }
-                if (!flex.enabled) {
+                else {
                     function deleteConstraints(item: T, stringId = '') {
                         const namespace = (constraint ? 'app' : 'android');
                         for (const attr in LAYOUT) {
@@ -808,9 +834,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     current.constraint.vertical = true;
                                 }
                             }
-                            else {
-                                this.adjustMargins([current]);
-                            }
                             if (mapParent(current, 'right') && current.android(LAYOUT['leftRight']) == null) {
                                 node.constraint.layoutWidth = true;
                             }
@@ -820,6 +843,26 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         });
                     }
                 }
+                pageflow.list.forEach(current => {
+                    if (current.constraint.marginHorizontal != null) {
+                        const item = this.findByAndroidId(current.constraint.marginHorizontal);
+                        if (item != null) {
+                            const offset = current.linear.left - item.linear.right;
+                            if (offset >= 1) {
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
+                            }
+                        }
+                    }
+                    if (current.constraint.marginVertical != null) {
+                        const item = this.findByAndroidId(current.constraint.marginVertical);
+                        if (item != null) {
+                            const offset = current.linear.top - item.linear.bottom;
+                            if (offset >= 1) {
+                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
+                            }
+                        }
+                    }
+                });
             }
         });
     }
@@ -1268,29 +1311,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     private findByAndroidId(id: string) {
         return this.cache.list.find(node => node.android('id') === id);
-    }
-
-    private adjustMargins(nodes: T[]) {
-        for (const node of nodes) {
-            if (node.constraint.marginHorizontal != null) {
-                const item = this.findByAndroidId(node.constraint.marginHorizontal);
-                if (item != null) {
-                    const offset = node.linear.left - item.linear.right;
-                    if (offset >= 1) {
-                        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
-                    }
-                }
-            }
-            if (node.constraint.marginVertical != null) {
-                const item = this.findByAndroidId(node.constraint.marginVertical);
-                if (item != null) {
-                    const offset = node.linear.top - item.linear.bottom;
-                    if (offset >= 1) {
-                        node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
-                    }
-                }
-            }
-        }
     }
 
     get inlineExclude() {
