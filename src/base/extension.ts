@@ -102,7 +102,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         return;
     }
 
-    public insert() {
+    public beforeInsert() {
         return;
     }
 

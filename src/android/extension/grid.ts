@@ -75,16 +75,16 @@ export default class GridAndroid<T extends View> extends Grid {
             const data = (<GridData> node.data(`${EXT_NAME.GRID}:gridData`));
             if (data != null) {
                 if (data.padding.top > 0) {
-                    node.modifyBox(BOX_STANDARD.PADDING_TOP, data.padding.top);
+                    node.modifyBox(BOX_STANDARD.PADDING_TOP, node.paddingTop + data.padding.top);
                 }
                 if (data.padding.right.length > 0) {
-                    node.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(data.padding.right));
+                    node.modifyBox(BOX_STANDARD.PADDING_RIGHT, node.paddingRight + averageInt(data.padding.right));
                 }
                 if (data.padding.bottom > 0) {
-                    node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, data.padding.bottom);
+                    node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, node.paddingBottom + data.padding.bottom);
                 }
                 if (data.padding.left.length > 0) {
-                    node.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(data.padding.left));
+                    node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft + averageInt(data.padding.left));
                 }
             }
         });

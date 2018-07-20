@@ -10,20 +10,21 @@ export function removePlaceholders(value: string, extension = true) {
     return value.trim();
 }
 
-export function placeIndent(value: string) {
+export function placeIndent(value: string, depth: number) {
     return value.split('\n').map(line => {
         const match = /^({.*?})(.*)/g.exec(line);
+        const indent = repeat(depth);
         if (match != null) {
-            return `${match[1]}>>>>${match[2]}`;
+            return (match[2] !== '' ? match[1] + indent + match[2] : '');
         }
         else {
-            return `>>>>${line}`;
+            return indent + line;
         }
     }).join('\n');
 }
 
-export function restoreIndent(value: string, depth: number) {
-    return value.replace(/>>>>/g, repeat(depth)).replace(/\s*$/, '');
+export function stripId(value: string) {
+    return value.replace(/@\+?id\//, '');
 }
 
 export function replaceDP(xml: string, font = false) {

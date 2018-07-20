@@ -3,7 +3,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { hasValue, convertCamelCase, includesEnum, optional, resetId, sortAsc, trim } from '../lib/util';
+import { hasValue, convertCamelCase, includesEnum, isNumber, optional, resetId, sortAsc, trim } from '../lib/util';
 import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
 import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
@@ -69,7 +69,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         });
-        this.adjustBoxSpacing();
+        this.controllerHandler.adjustBoxSpacing(this.viewData);
         this.controllerHandler.setDimensions(this.viewData);
         this.insertAuxillaryViews();
         this.resourceHandler.finalize(this.viewData);
@@ -120,10 +120,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public setConstraints() {
         this.controllerHandler.setConstraints();
-    }
-
-    public adjustBoxSpacing() {
-        this.controllerHandler.adjustBoxSpacing();
     }
 
     public setResources() {
@@ -394,12 +390,25 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         for (let i = 0; i < mapY.length; i++) {
             const coordsY = Object.keys(mapY[i]);
             const partial = new Map();
-            function renderXml(id, xml: string) {
+            const application = this;
+            function renderXml(node: T, parent: T, xml: string) {
                 if (xml !== '') {
-                    if (!partial.has(id)) {
-                        partial.set(id, []);
+                    if (node.dataset.target != null) {
+                        const target = application.findByDomId(node.dataset.target, true);
+                        if (target == null || target !== parent) {
+                            application.addInsertQueue(node.dataset.target, [xml]);
+                            return;
+                        }
                     }
-                    partial.get(id).push(xml);
+                    else if (parent.dataset.target != null) {
+                        node.dataset.target = parent.nodeId;
+                        application.addInsertQueue(parent.nodeId, [xml]);
+                        return;
+                    }
+                    if (!partial.has(parent.id)) {
+                        partial.set(parent.id, []);
+                    }
+                    partial.get(parent.id).push(xml);
                 }
             }
             for (let j = 0; j < coordsY.length; j++) {
@@ -434,7 +443,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (renderExtension != null) {
                             renderExtension.setTarget(nodeY, parent);
                             const result = renderExtension.processChild();
-                            renderXml(parent.id, result.xml);
+                            renderXml(nodeY, parent, result.xml);
                             if (result.parent) {
                                 parent = (<T> result.parent);
                             }
@@ -450,7 +459,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 if (item.condition()) {
                                     const result =  item.processNode(mapX, mapY);
                                     if (result.xml !== '') {
-                                        renderXml(parent.id, result.xml);
+                                        renderXml(nodeY, parent, result.xml);
                                     }
                                     if (result.parent) {
                                         parent = (<T> result.parent);
@@ -523,7 +532,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             else {
                                 xml += this.writeNode(nodeY, parent, nodeY.nodeName);
                             }
-                            renderXml(parent.id, xml);
+                            renderXml(nodeY, parent, xml);
                         }
                     }
                 }
@@ -541,8 +550,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         const root = (<T> this.cache.parent);
         const extension = (<IExtension> root.renderExtension);
-        if (extension == null || root.data(`${extension.name}:insert`) == null) {
-            const pathname = trim(optional(root, 'element.dataset.folder').trim(), '/');
+        if (extension == null || !hasValue(root.dataset.target)) {
+            const pathname = trim(optional(root, 'dataset.folder').trim(), '/');
             this.updateLayout(pathname, (!empty ? output : ''), (extension != null && extension.documentRoot));
         }
         else {
@@ -598,7 +607,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public addInsertQueue(id: number, views: string[]) {
+    public addInsertQueue(id: string, views: string[]) {
         if (this.insert[id] == null) {
             this.insert[id] = [];
         }
@@ -609,24 +618,42 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.cacheInternal.list.forEach(node => {
             const extension = node.renderExtension;
             if (extension != null) {
-                const insert = `${extension.name}:insert`;
-                let output = (<string> node.data(insert));
-                if (output) {
-                    output = this.controllerHandler.insertAuxillaryViews(output);
-                    const children = this.insert[node.id];
-                    if (children != null) {
-                        output = output.replace(`{:${node.id}}`, children.join(''));
-                    }
-                    output = placeIndent(output.trim());
-                    node.data(insert, output);
-                    extension.setTarget(node);
-                    extension.insert();
-                }
+                extension.setTarget(node);
+                extension.beforeInsert();
             }
         });
         const template: StringMap = {};
         for (const id in this.insert) {
-            template[id] = this.insert[id].join('\n');
+            let replaceId = id;
+            if (!isNumber(id)) {
+                const target = this.findByDomId(id);
+                if (target != null) {
+                    replaceId = target.id.toString();
+                }
+            }
+            let output = this.insert[id].join('\n');
+            if (replaceId !== id) {
+                const target = this.cacheInternal.find(parseInt(replaceId));
+                if (target != null) {
+                    const depth = target.renderDepth + 1;
+                    output = placeIndent(output, depth);
+                    const pattern = /{@([0-9]+)}/g;
+                    let match: Null<RegExpExecArray> = null;
+                    let i = 0;
+                    while ((match = pattern.exec(output)) != null) {
+                        const node = this.cacheInternal.find(parseInt(match[1]));
+                        if (node != null) {
+                            if (i++ === 0) {
+                                node.renderDepth = depth;
+                            }
+                            else {
+                                node.renderDepth = node.parent.renderDepth + 1;
+                            }
+                        }
+                    }
+                }
+            }
+            template[replaceId] = output;
         }
         for (const inner in template) {
             for (const outer in template) {
@@ -715,8 +742,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.controllerHandler.addXmlNs(name, uri);
     }
 
-    public findByDomId(id: string) {
-        return this.cacheInternal.list.find(node => node.element.id === id);
+    public findByDomId(id: string, current = false): Null<T> {
+        return (current ? this.cache : this.cacheInternal).list.find(node => node.element.id === id || node.nodeId === id);
     }
 
     public toString() {

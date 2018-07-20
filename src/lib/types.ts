@@ -25,7 +25,7 @@ export interface IExtension {
     processNode(mapX?: ArrayIndex<ObjectIndex<Node[]>>, mapY?: ArrayIndex<ObjectIndex<Node[]>>): ExtensionResult;
     processChild(mapX?: ArrayIndex<ObjectIndex<Node[]>>, mapY?: ArrayIndex<ObjectIndex<Node[]>>): ExtensionResult;
     afterRender(): void;
-    insert(): void;
+    beforeInsert(): void;
     afterInsert(): void;
     finalize(): void;
 }

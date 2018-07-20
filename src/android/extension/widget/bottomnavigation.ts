@@ -47,9 +47,9 @@ export default class BottomNavigation extends Extension<T, U> {
         const node = (<T> this.node);
         if (findNestedMenu(node) != null) {
             let menu = '';
-            Array.from(this.application.elements).some(item => {
-                if (item.parentElement === node.element && includes(optional(item, 'dataset.ext'), WIDGET_NAME.MENU)) {
-                    menu = (<string> item.dataset.viewName);
+            Array.from(this.application.elements).some(element => {
+                if (element.parentElement === node.element && includes(optional(element, 'dataset.ext'), WIDGET_NAME.MENU)) {
+                    menu = (<string> element.dataset.viewName);
                     return true;
                 }
                 return false;

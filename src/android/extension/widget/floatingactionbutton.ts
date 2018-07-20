@@ -2,9 +2,8 @@ import { ExtensionResult } from '../../../lib/types';
 import Button from '../../../extension/button';
 import Resource from '../../../base/resource';
 import View from '../../view';
-import { includesEnum, optional } from '../../../lib/util';
-import { positionIsolated, overwriteDefault } from '../lib/util';
-import { restoreIndent } from '../../../lib/xml';
+import { hasValue, includesEnum } from '../../../lib/util';
+import { overwriteDefault, positionIsolated } from '../lib/util';
 import { parseRGBA } from '../../../lib/color';
 import { NODE_PROCEDURE, NODE_RESOURCE } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -44,30 +43,25 @@ export default class FloatingActionButton<T extends View> extends Button {
         if (src !== '') {
             overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
-        let insert = false;
-        if (node.isolated) {
-            const id = optional(node, 'parent.element.dataset.target');
-            if (id !== '' && node.parent.nodeName !== VIEW_SUPPORT.COORDINATOR) {
-                const coordinator = document.getElementById(id);
-                if (coordinator != null) {
-                    insert = true;
-                }
-            }
-        }
-        node.depth = (insert ? 0 : node.parent.renderDepth + 1);
-        let xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
+        const target = hasValue(node.dataset.target);
+        node.depth = (target ? node.depth : node.parent.renderDepth + 1);
+        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (target ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
         node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
-        let proceed = false;
         if (node.isolated) {
             positionIsolated(node);
-            if (insert) {
-                node.app('layout_anchor', parent.stringId);
+            if (target) {
+                let anchor = parent.stringId;
+                if (parent.nodeName === VIEW_SUPPORT.TOOLBAR) {
+                    const outerParent = parent.data(`${WIDGET_NAME.TOOLBAR}:outerParent`);
+                    if (outerParent != null) {
+                        anchor = outerParent;
+                    }
+                }
+                node.app('layout_anchor', anchor);
                 node.app('layout_anchorGravity', <string> node.android('layout_gravity'));
                 node.delete('android', 'layout_gravity');
-                node.data(`${WIDGET_NAME.FAB}:insert`, xml);
+                node.excludeProcedure |= NODE_PROCEDURE.ALIGNMENT;
                 node.render(node);
-                xml = '';
-                proceed = true;
             }
             else {
                 node.render(parent);
@@ -76,23 +70,7 @@ export default class FloatingActionButton<T extends View> extends Button {
         else {
             node.render(parent);
         }
-        return { xml, proceed };
-    }
-
-    public insert() {
-        const node = (<T> this.node);
-        const id = optional(node, 'parent.element.dataset.target');
-        if (id !== '') {
-            const parent = this.application.findByDomId(id);
-            if (parent != null && parent.nodeName === VIEW_SUPPORT.COORDINATOR) {
-                let xml = (<string> node.data(`${WIDGET_NAME.FAB}:insert`)) || '';
-                if (xml !== '') {
-                    node.renderDepth = parent.renderDepth + 1;
-                    xml = restoreIndent(xml, node.renderDepth);
-                }
-                this.application.addInsertQueue(parent.id, [xml]);
-            }
-        }
+        return { xml };
     }
 
     public afterInsert() {

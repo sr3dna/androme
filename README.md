@@ -222,6 +222,31 @@ getExtension(name: string) // retrieve an extension by namespace and control | s
 
 addXmlNs(name: string, uri: string) // add global namespaces for android third-party controls
 ```
+### Redirect output location
+
+It is sometimes necessary to append elements into other containers when trying to design a UI which will look identical on the Android device. Redirection will fail if the target "location" is not a block/container element.
+
+```xml
+<div>
+    <span>Item 1</span>
+    <span data-target="location">Item 2</span>
+<div>
+<ul id="location">
+    <li>Item 3</li>
+    <!-- span -->
+</ul>
+```
+```xml
+<LinearLayout>
+    <TextView>Item 1</TextView>
+</LinearLayout>
+<LinearLayout>
+    <TextView>Item 3</TextView>
+    <TextView>Item 2</TextView>
+</LinearLayout>
+```
+Using "target" into a ConstraintLayout or RelativeLayout view will not include automatic positioning.
+
 ### Excluding applied attributes
 
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
@@ -244,8 +269,9 @@ Most attributes can be excluded from the generated XML using the dataset feature
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/androme_ui"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent"
+    android:gravity="top"
+    android:layout_height="wrap_content"
+    android:layout_width="wrap_content"
     android:orientation="vertical">
     <TextView
         android:id="@+id/textview_1"
@@ -1300,7 +1326,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
     <dimen name="button_margin_start">4dp</dimen>
     <dimen name="button_margin_start_1">8dp</dimen>
     <dimen name="button_minheight">25dp</dimen>
-    <dimen name="button_minwidth">30dp</dimen>
+    <dimen name="button_minwidth">35dp</dimen>
     <dimen name="button_padding_horizontal">6dp</dimen>
     <dimen name="button_padding_vertical">1dp</dimen>
     <dimen name="checkbox_margin_end">1dp</dimen>

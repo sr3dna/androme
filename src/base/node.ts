@@ -121,7 +121,7 @@ export default abstract class Node implements BoxModel {
 
     public render(parent: T) {
         this.renderParent = parent;
-        this.renderDepth = (parent === this ? this.depth : (this.documentRoot ? 0 : parent.renderDepth + 1));
+        this.renderDepth = (parent === this || this.documentRoot || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1);
     }
 
     public hide() {
@@ -251,9 +251,9 @@ export default abstract class Node implements BoxModel {
 
     public setExcludeProcedure(exclude?: string) {
         if (exclude == null && this.hasElement) {
-            exclude = this.element.dataset.excludeProcedure || '';
-            if (this.element.parentElement != null) {
-                exclude += '|' + (this.element.parentElement.dataset.excludeProcedureChild || '');
+            exclude = this.dataset.excludeProcedure || '';
+            if (this.parentElement != null) {
+                exclude += '|' + (this.parentElement.dataset.excludeProcedureChild || '');
             }
         }
         if (exclude != null) {
@@ -267,9 +267,9 @@ export default abstract class Node implements BoxModel {
 
     public setExcludeResource(exclude?: string) {
         if (exclude == null) {
-            exclude = this.element.dataset.excludeResource;
-            if (this.element.parentElement != null) {
-                exclude += '|' + (this.element.parentElement.dataset.excludeResourceChild || '');
+            exclude = this.dataset.excludeResource;
+            if (this.parentElement != null) {
+                exclude += '|' + (this.parentElement.dataset.excludeResourceChild || '');
             }
         }
         if (this.hasElement && exclude != null) {
@@ -387,7 +387,7 @@ export default abstract class Node implements BoxModel {
     }
 
     set renderParent(value: any) {
-        if (value instanceof Node) {
+        if (value instanceof Node && value !== this) {
             value.renderChildren.push(this);
         }
         this._renderParent = value;
@@ -412,8 +412,12 @@ export default abstract class Node implements BoxModel {
         return Array.from(this._namespaces);
     }
 
+    get dataset(): DOMStringMap {
+        return (this.hasElement ? this.element.dataset : {});
+    }
+
     get extension() {
-        return (this.hasElement && this.element.dataset.ext != null ? this.element.dataset.ext.split(',')[0].trim() : '');
+        return (this.dataset.ext != null ? this.dataset.ext.split(',')[0].trim() : '');
     }
 
     get flex(): Flexbox {

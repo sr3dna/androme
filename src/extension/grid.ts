@@ -19,7 +19,7 @@ export default class Grid extends Extension<T, U> {
         const node = this.node;
         return (
             this.included() ||
-            (node.hasElement && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_ELEMENT.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].tagName === item.tagName && NodeList.linearX(item.children)))
+            (node.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_ELEMENT.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].tagName === item.tagName && NodeList.linearX(item.children)))
         );
     }
 

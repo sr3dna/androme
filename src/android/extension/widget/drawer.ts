@@ -2,7 +2,8 @@ import { ExtensionResult } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import { optional } from '../../../lib/util';
+import { hasValue, includes, optional } from '../../../lib/util';
+import { stripId } from '../../../lib/xml';
 import { createPlaceholder, findNestedExtension, findNestedMenu, overwriteDefault } from '../lib/util';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
@@ -26,8 +27,8 @@ export default class Drawer extends Extension<T, U> {
     public init(element: HTMLElement) {
         if (this.included(element) && element.children.length > 0) {
             Array.from(element.children).forEach((item: HTMLElement) => {
-                if (item.tagName === 'NAV' && item.dataset.ext == null) {
-                    item.dataset.ext = EXT_NAME.EXTERNAL;
+                if (item.tagName === 'NAV' && !includes(item.dataset.ext || '', EXT_NAME.EXTERNAL)) {
+                    item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
                 }
             });
             this.application.elements.add(element);
@@ -46,6 +47,7 @@ export default class Drawer extends Extension<T, U> {
         const node = (<T> this.node);
         let depth = node.depth + node.renderDepth;
         const optionsDrawer = Object.assign({}, this.options.drawer);
+        const optionsCoordinator = Object.assign({}, this.options.coordinator);
         let menu = findNestedMenu(node);
         if (menu != null) {
             overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
@@ -59,7 +61,9 @@ export default class Drawer extends Extension<T, U> {
         }
         const coordinatorNode = createPlaceholder(application.cache.nextId, node);
         application.cache.list.push(coordinatorNode);
-        const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinatorNode, true);
+        overwriteDefault(optionsCoordinator, 'android', 'id', `${node.stringId}_content`);
+        coordinatorNode.nodeId = stripId(optionsCoordinator.android.id);
+        const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, optionsCoordinator, 'match_parent', 'match_parent', coordinatorNode, true);
         const optionsNavigation = Object.assign({}, this.options.navigation);
         overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
@@ -69,7 +73,7 @@ export default class Drawer extends Extension<T, U> {
             overwriteDefault(optionsNavigation, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
             overwriteDefault(optionsNavigation, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
             const navigation = controller.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, optionsNavigation, 'wrap_content', 'match_parent');
-            xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
+            xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation + `{:${node.id}}`);
         }
         else {
             const navView = node.children[node.children.length - 1];
@@ -91,6 +95,18 @@ export default class Drawer extends Extension<T, U> {
         node.renderParent = true;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
         return { xml };
+    }
+
+    public beforeInsert() {
+        const application = this.application;
+        const node = (<T> this.node);
+        if (application.insert[node.nodeId] != null) {
+            const target = application.cacheInternal.list.find(item => item.isolated && item.parent === node.parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
+            if (target != null) {
+                application.insert[target.nodeId] = application.insert[node.nodeId];
+                delete application.insert[node.nodeId];
+            }
+        }
     }
 
     public afterInsert() {

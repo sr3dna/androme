@@ -3,7 +3,7 @@ import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import { capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, repeat } from '../lib/util';
-import { getTemplateLevel, placeIndent, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
+import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { parseHex } from '../lib/color';
 import { NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -655,32 +655,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (attributes.length > 0) {
                     attributes.sort().forEach((value: string) => append += `\n${indent}${replaceDP(value, true)}`);
                 }
-                let replaced = false;
-                [node, node.parent].some(item => {
-                    if (item.renderExtension != null) {
-                        const attr = `${item.renderExtension.name}:insert`;
-                        let output = (<string> item.data(attr));
-                        if (output) {
-                            const pattern = `{&${id}}`;
-                            if (output.indexOf(pattern) !== -1) {
-                                output = output.replace(`{&${id}}`, placeIndent(append));
-                                item.data(attr, output);
-                                replaced = true;
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                });
-                if (!replaced) {
-                    const layouts = [...viewData.views, ...viewData.includes];
-                    for (let i = 0; i < layouts.length; i++) {
-                        const output = layouts[i].content;
-                        const pattern = `{&${id}}`;
-                        if (output.indexOf(pattern) !== -1) {
-                            layouts[i].content = output.replace(pattern, append);
-                            break;
-                        }
+                const layouts = [...viewData.views, ...viewData.includes];
+                for (let i = 0; i < layouts.length; i++) {
+                    const output = layouts[i].content;
+                    const pattern = `{&${id}}`;
+                    if (output.indexOf(pattern) !== -1) {
+                        layouts[i].content = output.replace(pattern, append);
+                        break;
                     }
                 }
             }

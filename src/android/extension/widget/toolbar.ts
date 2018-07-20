@@ -3,9 +3,9 @@ import Extension from '../../../base/extension';
 import Resource from '../../../base/resource';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import { convertPX, includes, optional } from '../../../lib/util';
+import { convertPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedMenu, overwriteDefault } from '../lib/util';
-import { formatDimen, restoreIndent } from '../../../lib/xml';
+import { formatDimen, stripId } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
@@ -26,8 +26,8 @@ export default class Toolbar extends Extension<T, U> {
     public init(element: HTMLElement) {
         if (this.included(element)) {
             Array.from(element.children).forEach((item: HTMLElement) => {
-                if (item.tagName === 'NAV' && item.dataset.ext == null) {
-                    item.dataset.ext = EXT_NAME.EXTERNAL;
+                if (item.tagName === 'NAV' && !includes(item.dataset.ext || '', EXT_NAME.EXTERNAL)) {
+                    item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
                 }
             });
             if (element.dataset.target != null) {
@@ -51,7 +51,7 @@ export default class Toolbar extends Extension<T, U> {
         const application = this.application;
         const controller = application.controllerHandler;
         const node = (<T> this.node);
-        const target = (node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
+        const target = hasValue(node.dataset.target);
         const options = Object.assign({}, this.options[node.element.id]);
         const optionsToolbar = Object.assign({}, options.toolbar);
         const optionsAppBar = Object.assign({}, options.appBar);
@@ -83,7 +83,7 @@ export default class Toolbar extends Extension<T, U> {
                     }
                 }
             }
-            if (element.dataset.target === node.element.id) {
+            if (!hasValue(element.dataset.target)) {
                 const targetNode = (<any> element).__node;
                 if (targetNode != null) {
                     switch (element.dataset.targetModule) {
@@ -99,8 +99,8 @@ export default class Toolbar extends Extension<T, U> {
                 }
             }
         });
-        const appBar = (target || options.appBar != null || appBarChildren.length > 0);
         const collapsingToolbar = (options.collapsingToolbar != null || collapsingToolbarChildren.length > 0);
+        const appBar = (options.appBar != null || appBarChildren.length > 0 || collapsingToolbar);
         let appBarOverlay = '';
         let popupOverlay = '';
         if (collapsingToolbar) {
@@ -182,9 +182,11 @@ export default class Toolbar extends Extension<T, U> {
                 overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
             appBarNode = createPlaceholder(application.cache.nextId, node, appBarChildren);
+            appBarNode.depth = depth;
+            appBarNode.nodeId = stripId(optionsAppBar.android.id);
             appBarNode.children.forEach(item => {
-                item.parent = (<T> appBarNode);
                 item.depth = depth + 1;
+                item.element.dataset.target = (<T> appBarNode).nodeId;
             });
             application.cache.list.push(appBarNode);
             outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
@@ -198,31 +200,39 @@ export default class Toolbar extends Extension<T, U> {
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
                 collapsingToolbarNode = createPlaceholder(application.cache.nextId, node, collapsingToolbarChildren);
+                appBarNode.depth = depth;
                 collapsingToolbarNode.children.forEach(item => {
-                    item.parent = (<T> collapsingToolbarNode);
                     item.depth = depth + 1;
+                    item.element.dataset.target = (<T> collapsingToolbarNode).nodeId;
                 });
                 application.cache.list.push(collapsingToolbarNode);
                 outer = outer.replace(`{:${appBarNode.id}}`, controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true) + `{:${appBarNode.id}}`);
             }
-            node.nodeId = optionsAppBar.android.id.replace('@+id/', '');
         }
         if (appBarNode != null) {
             xml = (collapsingToolbarNode != null ? outer.replace(`{:${collapsingToolbarNode.id}}`, xml + `{:${collapsingToolbarNode.id}}`) : outer.replace(`{:${appBarNode.id}}`, xml + `{:${appBarNode.id}}`));
         }
-        let proceed = false;
+        if (appBarNode != null) {
+            if (collapsingToolbarNode == null) {
+                node.parent = appBarNode;
+            }
+            else {
+                collapsingToolbarNode.parent = appBarNode;
+            }
+            node.data(`${WIDGET_NAME.TOOLBAR}:outerParent`, appBarNode.stringId);
+        }
+        else if (collapsingToolbarNode != null) {
+            node.parent = collapsingToolbarNode;
+        }
         if (target) {
-            node.data(`${WIDGET_NAME.TOOLBAR}:insert`, xml);
             node.render(node);
-            xml = '';
-            proceed = true;
         }
         else {
             node.render(<T> this.parent);
             node.renderDepth = node.depth;
         }
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
-        return { xml, proceed };
+        return { xml };
     }
 
     public processChild(): ExtensionResult {
@@ -232,24 +242,6 @@ export default class Toolbar extends Extension<T, U> {
             return { xml: '', proceed: true };
         }
         return { xml: '' };
-    }
-
-    public insert() {
-        const application = this.application;
-        const node = (<T> this.node);
-        const id = optional(node, 'element.dataset.target');
-        if (id !== '') {
-            const parent = (<T> application.findByDomId(id));
-            const coordinator = application.cacheInternal.list.find(item => item.isolated && item.parent === parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
-            if (coordinator != null) {
-                let xml = (<string> node.data(`${WIDGET_NAME.TOOLBAR}:insert`)) || '';
-                if (xml !== '') {
-                    xml = restoreIndent(xml, node.renderDepth);
-                    node.renderDepth = node.depth + 1;
-                    application.addInsertQueue(coordinator.id, [xml]);
-                }
-            }
-        }
     }
 
     public finalize() {

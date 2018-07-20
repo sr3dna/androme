@@ -7,7 +7,7 @@ import ViewGroup from './viewgroup';
 import ViewList from './viewlist';
 import { capitalize, convertPX, formatPX, generateId, hasValue, includesEnum, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { formatResource } from './extension/lib/util';
-import { formatDimen } from '../lib/xml';
+import { formatDimen, stripId } from '../lib/xml';
 import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD } from '../lib/constants';
 import { NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -669,7 +669,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     while (adjacent != null) {
                                         const topBottom = (<string> adjacent.app(LAYOUT[value]));
                                         if (topBottom != null) {
-                                            adjacent = (<T> pageflow.findByNodeId(topBottom.replace('@+id/', '')));
+                                            adjacent = (<T> pageflow.findByNodeId(stripId(topBottom)));
                                             if (adjacent != null && current.withinY(adjacent.linear)) {
                                                 chain.push(adjacent);
                                                 valid = mapParent(adjacent, (index === 0 ? 'top' : 'bottom'));
@@ -849,7 +849,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         if (item != null) {
                             const offset = current.linear.left - item.linear.right;
                             if (offset >= 1) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + offset, true);
                             }
                         }
                     }
@@ -858,7 +858,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         if (item != null) {
                             const offset = current.linear.top - item.linear.bottom;
                             if (offset >= 1) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
+                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + offset, true);
                             }
                         }
                     }
@@ -867,8 +867,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
     }
 
-    public adjustBoxSpacing() {
-        this.cache.list.forEach(node => {
+    public adjustBoxSpacing(data: ViewData<T>) {
+        data.cache.forEach(node => {
             if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
                 switch (node.android('orientation')) {
                     case 'horizontal':
@@ -884,7 +884,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             if (valid && !item.floating) {
                                 const width = Math.ceil(item.linear.left - left);
                                 if (width >= 1) {
-                                    item.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
+                                    item.modifyBox(BOX_STANDARD.MARGIN_LEFT, item.marginLeft + width, true);
                                 }
                             }
                             left = (item.label || item).linear.right;
@@ -895,7 +895,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         sortAsc(node.renderChildren, 'linear.top').forEach(item => {
                             const height = Math.ceil(item.linear.top - top);
                             if (height >= 1) {
-                                item.modifyBox(BOX_STANDARD.MARGIN_TOP, height);
+                                item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + height, true);
                             }
                             top = item.linear.bottom;
                         });
@@ -906,6 +906,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     public renderGroup(node: T, parent: T, viewName: number | string, options?: ObjectMap<any>) {
+        const target = hasValue(node.dataset.target);
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
@@ -979,12 +980,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 });
         }
         node.apply(options);
-        node.render(renderParent);
-        return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
+        node.render((target ? node : renderParent));
+        return this.getEnclosingTag((target || hasValue(parent.dataset.target) ? -1 : node.renderDepth), viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
 
     public renderNode(node: T, parent: T, nodeName: number | string, recursive = false) {
         const element: any = node.element;
+        const target = hasValue(node.dataset.target);
         if (typeof nodeName === 'number') {
             nodeName = View.getViewName(nodeName);
         }
@@ -1086,12 +1088,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 break;
         }
-        node.render(parent);
+        node.render((target ? node : parent));
         if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
             node.setAccessibility();
         }
         node.cascade().forEach(item => item.hide());
-        return this.getEnclosingTag(node.renderDepth, node.nodeName, node.id);
+        return this.getEnclosingTag((target || hasValue(parent.dataset.target) ? -1 : node.renderDepth), node.nodeName, node.id);
     }
 
     public renderNodeStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = '', height = '', node: Null<T> = null, children = false) {
@@ -1102,7 +1104,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         }
         const renderDepth = Math.max(0, depth);
         const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
-        tagName = (node != null && node.hasElement ? node.tagName : viewName);
+        tagName = (node.hasElement ? node.tagName : viewName);
         node.setNodeId(viewName);
         if (hasValue(width)) {
             if (!isNaN(parseInt(width))) {

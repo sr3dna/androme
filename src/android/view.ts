@@ -96,14 +96,16 @@ export default class View extends Node {
         }
     }
 
-    public modifyBox(area: number, offset: number) {
+    public modifyBox(area: number, offset: number, styleMap = false) {
         const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
         if (value !== '') {
             const dimension = parseRTL(value);
-            const total = formatPX(offset + convertInt(this.android(dimension)));
-            this.css(dimension, total);
+            const total = formatPX(offset);
             this.android(dimension, total);
-            this.setBounds(true);
+            if (styleMap) {
+                this.css(dimension.replace('layout_', ''), total);
+                this.setBounds(true);
+            }
         }
     }
 
@@ -210,7 +212,7 @@ export default class View extends Node {
         const wrapContent = parent.flex.enabled || parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID) || (parent.is(NODE_STANDARD.LINEAR) && parent.horizontal) || this.is(NODE_STANDARD.IMAGE);
         const styleMap = this.styleMap;
         const constraint = this.constraint;
-        if (this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.LINEAR, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
+        if (this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
             if (this.viewWidth === 0 && !constraint.layoutWidth) {
                 this.android('layout_width', 'match_parent', false);
             }
@@ -314,13 +316,15 @@ export default class View extends Node {
         function convertHorizontal(value: string) {
             switch (value) {
                 case 'left':
+                case 'start':
                     return left;
                 case 'right':
+                case 'end':
                     return right;
                 case 'center':
                     return 'center_horizontal';
                 default:
-                    return value;
+                    return '';
             }
         }
         const renderParent = (<T> this.renderParent);
@@ -347,6 +351,7 @@ export default class View extends Node {
         switch (verticalAlign) {
             case 'top':
                 vertical = 'top';
+                break;
             case 'middle':
                 vertical = 'center_vertical';
                 break;
@@ -379,10 +384,8 @@ export default class View extends Node {
                 this.android('layout_gravity', layoutGravity);
             }
         }
-        if (this.renderChildren.length > 0) {
-            if (!this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.css('float') === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
-                this.android('gravity', right);
-            }
+        if (this.renderChildren.length > 0 && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.css('float') === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
+            this.android('gravity', right);
         }
         else {
             const gravity = [horizontal, vertical].filter(value => value);

@@ -10,14 +10,14 @@ import SETTINGS from '../../../settings';
 
 type T = View;
 
-export function createPlaceholder(nextId: number, parent: T, children: T[] = []) {
-    const node = new View(nextId, parent.api, parent.element);
-    node.parent = parent;
-    node.inherit(parent, 'base');
-    node.excludeResource |= NODE_RESOURCE.ALL;
-    node.children = children;
-    node.isolated = true;
-    return node;
+export function createPlaceholder(nextId: number, node: T, children: T[] = []) {
+    const placeHolder = new View(nextId, node.api, node.element);
+    placeHolder.parent = node.parent;
+    placeHolder.inherit(node, 'base');
+    placeHolder.excludeResource |= NODE_RESOURCE.ALL;
+    placeHolder.children = children;
+    placeHolder.isolated = true;
+    return placeHolder;
 }
 
 export function formatResource(options: {}) {

@@ -1,4 +1,4 @@
-/* androme 1.8.6
+/* androme 1.8.7
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -635,19 +635,20 @@
         }
         return value.trim();
     }
-    function placeIndent(value) {
+    function placeIndent(value, depth) {
         return value.split('\n').map(line => {
             const match = /^({.*?})(.*)/g.exec(line);
+            const indent = repeat(depth);
             if (match != null) {
-                return `${match[1]}>>>>${match[2]}`;
+                return (match[2] !== '' ? match[1] + indent + match[2] : '');
             }
             else {
-                return `>>>>${line}`;
+                return indent + line;
             }
         }).join('\n');
     }
-    function restoreIndent(value, depth) {
-        return value.replace(/>>>>/g, repeat(depth)).replace(/\s*$/, '');
+    function stripId(value) {
+        return value.replace(/@\+?id\//, '');
     }
     function replaceDP(xml, font = false) {
         return (SETTINGS.useUnitDP ? xml.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]) : xml);
@@ -1344,7 +1345,7 @@
                     }
                 }
             });
-            this.adjustBoxSpacing();
+            this.controllerHandler.adjustBoxSpacing(this.viewData);
             this.controllerHandler.setDimensions(this.viewData);
             this.insertAuxillaryViews();
             this.resourceHandler.finalize(this.viewData);
@@ -1391,9 +1392,6 @@
         }
         setConstraints() {
             this.controllerHandler.setConstraints();
-        }
-        adjustBoxSpacing() {
-            this.controllerHandler.adjustBoxSpacing();
         }
         setResources() {
             this.resourceHandler.setFontStyle();
@@ -1660,12 +1658,25 @@
             for (let i = 0; i < mapY.length; i++) {
                 const coordsY = Object.keys(mapY[i]);
                 const partial = new Map();
-                function renderXml(id, xml) {
+                const application = this;
+                function renderXml(node, parent, xml) {
                     if (xml !== '') {
-                        if (!partial.has(id)) {
-                            partial.set(id, []);
+                        if (node.dataset.target != null) {
+                            const target = application.findByDomId(node.dataset.target, true);
+                            if (target == null || target !== parent) {
+                                application.addInsertQueue(node.dataset.target, [xml]);
+                                return;
+                            }
                         }
-                        partial.get(id).push(xml);
+                        else if (parent.dataset.target != null) {
+                            node.dataset.target = parent.nodeId;
+                            application.addInsertQueue(parent.nodeId, [xml]);
+                            return;
+                        }
+                        if (!partial.has(parent.id)) {
+                            partial.set(parent.id, []);
+                        }
+                        partial.get(parent.id).push(xml);
                     }
                 }
                 for (let j = 0; j < coordsY.length; j++) {
@@ -1700,7 +1711,7 @@
                             if (renderExtension != null) {
                                 renderExtension.setTarget(nodeY, parent);
                                 const result = renderExtension.processChild();
-                                renderXml(parent.id, result.xml);
+                                renderXml(nodeY, parent, result.xml);
                                 if (result.parent) {
                                     parent = result.parent;
                                 }
@@ -1716,7 +1727,7 @@
                                     if (item.condition()) {
                                         const result = item.processNode(mapX, mapY);
                                         if (result.xml !== '') {
-                                            renderXml(parent.id, result.xml);
+                                            renderXml(nodeY, parent, result.xml);
                                         }
                                         if (result.parent) {
                                             parent = result.parent;
@@ -1789,7 +1800,7 @@
                                 else {
                                     xml += this.writeNode(nodeY, parent, nodeY.nodeName);
                                 }
-                                renderXml(parent.id, xml);
+                                renderXml(nodeY, parent, xml);
                             }
                         }
                     }
@@ -1807,8 +1818,8 @@
             }
             const root = this.cache.parent;
             const extension = root.renderExtension;
-            if (extension == null || root.data(`${extension.name}:insert`) == null) {
-                const pathname = trim(optional(root, 'element.dataset.folder').trim(), '/');
+            if (extension == null || !hasValue(root.dataset.target)) {
+                const pathname = trim(optional(root, 'dataset.folder').trim(), '/');
                 this.updateLayout(pathname, (!empty ? output : ''), (extension != null && extension.documentRoot));
             }
             else {
@@ -1866,24 +1877,42 @@
             this.cacheInternal.list.forEach(node => {
                 const extension = node.renderExtension;
                 if (extension != null) {
-                    const insert = `${extension.name}:insert`;
-                    let output = node.data(insert);
-                    if (output) {
-                        output = this.controllerHandler.insertAuxillaryViews(output);
-                        const children = this.insert[node.id];
-                        if (children != null) {
-                            output = output.replace(`{:${node.id}}`, children.join(''));
-                        }
-                        output = placeIndent(output.trim());
-                        node.data(insert, output);
-                        extension.setTarget(node);
-                        extension.insert();
-                    }
+                    extension.setTarget(node);
+                    extension.beforeInsert();
                 }
             });
             const template = {};
             for (const id in this.insert) {
-                template[id] = this.insert[id].join('\n');
+                let replaceId = id;
+                if (!isNumber(id)) {
+                    const target = this.findByDomId(id);
+                    if (target != null) {
+                        replaceId = target.id.toString();
+                    }
+                }
+                let output = this.insert[id].join('\n');
+                if (replaceId !== id) {
+                    const target = this.cacheInternal.find(parseInt(replaceId));
+                    if (target != null) {
+                        const depth = target.renderDepth + 1;
+                        output = placeIndent(output, depth);
+                        const pattern = /{@([0-9]+)}/g;
+                        let match = null;
+                        let i = 0;
+                        while ((match = pattern.exec(output)) != null) {
+                            const node = this.cacheInternal.find(parseInt(match[1]));
+                            if (node != null) {
+                                if (i++ === 0) {
+                                    node.renderDepth = depth;
+                                }
+                                else {
+                                    node.renderDepth = node.parent.renderDepth + 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                template[replaceId] = output;
             }
             for (const inner in template) {
                 for (const outer in template) {
@@ -1962,8 +1991,8 @@
         addXmlNs(name, uri) {
             this.controllerHandler.addXmlNs(name, uri);
         }
-        findByDomId(id) {
-            return this.cacheInternal.list.find(node => node.element.id === id);
+        findByDomId(id, current = false) {
+            return (current ? this.cache : this.cacheInternal).list.find(node => node.element.id === id || node.nodeId === id);
         }
         toString() {
             return (this.views.length > 0 ? this.views[0].content : '');
@@ -2130,7 +2159,7 @@
         afterRender() {
             return;
         }
-        insert() {
+        beforeInsert() {
             return;
         }
         afterInsert() {
@@ -2787,7 +2816,7 @@
         }
         render(parent) {
             this.renderParent = parent;
-            this.renderDepth = (parent === this ? this.depth : (this.documentRoot ? 0 : parent.renderDepth + 1));
+            this.renderDepth = (parent === this || this.documentRoot || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1);
         }
         hide() {
             this.renderParent = true;
@@ -2903,9 +2932,9 @@
         }
         setExcludeProcedure(exclude) {
             if (exclude == null && this.hasElement) {
-                exclude = this.element.dataset.excludeProcedure || '';
-                if (this.element.parentElement != null) {
-                    exclude += '|' + (this.element.parentElement.dataset.excludeProcedureChild || '');
+                exclude = this.dataset.excludeProcedure || '';
+                if (this.parentElement != null) {
+                    exclude += '|' + (this.parentElement.dataset.excludeProcedureChild || '');
                 }
             }
             if (exclude != null) {
@@ -2918,9 +2947,9 @@
         }
         setExcludeResource(exclude) {
             if (exclude == null) {
-                exclude = this.element.dataset.excludeResource;
-                if (this.element.parentElement != null) {
-                    exclude += '|' + (this.element.parentElement.dataset.excludeResourceChild || '');
+                exclude = this.dataset.excludeResource;
+                if (this.parentElement != null) {
+                    exclude += '|' + (this.parentElement.dataset.excludeResourceChild || '');
                 }
             }
             if (this.hasElement && exclude != null) {
@@ -3029,7 +3058,7 @@
             return this._nodeName;
         }
         set renderParent(value) {
-            if (value instanceof Node) {
+            if (value instanceof Node && value !== this) {
                 value.renderChildren.push(this);
             }
             this._renderParent = value;
@@ -3049,8 +3078,11 @@
         get namespaces() {
             return Array.from(this._namespaces);
         }
+        get dataset() {
+            return (this.hasElement ? this.element.dataset : {});
+        }
         get extension() {
-            return (this.hasElement && this.element.dataset.ext != null ? this.element.dataset.ext.split(',')[0].trim() : '');
+            return (this.dataset.ext != null ? this.dataset.ext.split(',')[0].trim() : '');
         }
         get flex() {
             const style = this.style;
@@ -3309,14 +3341,16 @@
                 this.constraint[orientation] = true;
             }
         }
-        modifyBox(area, offset) {
+        modifyBox(area, offset, styleMap = false) {
             const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
             if (value !== '') {
                 const dimension = parseRTL(value);
-                const total = formatPX(offset + convertInt(this.android(dimension)));
-                this.css(dimension, total);
+                const total = formatPX(offset);
                 this.android(dimension, total);
-                this.setBounds(true);
+                if (styleMap) {
+                    this.css(dimension.replace('layout_', ''), total);
+                    this.setBounds(true);
+                }
             }
         }
         boxValue(area) {
@@ -3416,7 +3450,7 @@
             const wrapContent = parent.flex.enabled || parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID) || (parent.is(NODE_STANDARD.LINEAR) && parent.horizontal) || this.is(NODE_STANDARD.IMAGE);
             const styleMap = this.styleMap;
             const constraint = this.constraint;
-            if (this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.LINEAR, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
+            if (this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
                 if (this.viewWidth === 0 && !constraint.layoutWidth) {
                     this.android('layout_width', 'match_parent', false);
                 }
@@ -3519,13 +3553,15 @@
             function convertHorizontal(value) {
                 switch (value) {
                     case 'left':
+                    case 'start':
                         return left;
                     case 'right':
+                    case 'end':
                         return right;
                     case 'center':
                         return 'center_horizontal';
                     default:
-                        return value;
+                        return '';
                 }
             }
             const renderParent = this.renderParent;
@@ -3552,6 +3588,7 @@
             switch (verticalAlign) {
                 case 'top':
                     vertical = 'top';
+                    break;
                 case 'middle':
                     vertical = 'center_vertical';
                     break;
@@ -3584,10 +3621,8 @@
                     this.android('layout_gravity', layoutGravity);
                 }
             }
-            if (this.renderChildren.length > 0) {
-                if (!this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.css('float') === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
-                    this.android('gravity', right);
-                }
+            if (this.renderChildren.length > 0 && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.css('float') === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
+                this.android('gravity', right);
             }
             else {
                 const gravity = [horizontal, vertical].filter(value => value);
@@ -3883,14 +3918,14 @@
         DIALOG: 'ic_dialog_'
     };
 
-    function createPlaceholder(nextId, parent, children = []) {
-        const node = new View(nextId, parent.api, parent.element);
-        node.parent = parent;
-        node.inherit(parent, 'base');
-        node.excludeResource |= NODE_RESOURCE.ALL;
-        node.children = children;
-        node.isolated = true;
-        return node;
+    function createPlaceholder(nextId, node, children = []) {
+        const placeHolder = new View(nextId, node.api, node.element);
+        placeHolder.parent = node.parent;
+        placeHolder.inherit(node, 'base');
+        placeHolder.excludeResource |= NODE_RESOURCE.ALL;
+        placeHolder.children = children;
+        placeHolder.isolated = true;
+        return placeHolder;
     }
     function formatResource(options) {
         for (const namespace in options) {
@@ -4047,14 +4082,14 @@
             this.cache.visible.forEach(node => {
                 const nodes = new ViewList(node.renderChildren.filter(item => !item.isolated), node);
                 const pageflow = new ViewList(nodes.list.filter(item => item.pageflow), node);
-                const absolute = new ViewList(nodes.list.filter(item => !item.pageflow), node);
                 const constraint = node.is(NODE_STANDARD.CONSTRAINT);
                 const relative = node.is(NODE_STANDARD.RELATIVE);
                 const flex = node.flex;
-                if ((pageflow.length > 0 || absolute.length > 0) && (constraint || relative || flex.enabled)) {
+                if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
                     node.setBoundsMin();
                     const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                     const linearX = pageflow.linearX;
+                    const verticalPerspective = (!SETTINGS.horizontalPerspective && !flex.enabled && !pageflow.list.some(item => item.floating));
                     function mapParent(item, direction) {
                         if (constraint) {
                             return (item.app(LAYOUT[direction]) === 'parent');
@@ -4123,7 +4158,7 @@
                                                 current.anchor(LAYOUT['left'], stringId);
                                                 current.anchor(LAYOUT['right'], stringId);
                                             }
-                                            else if (!SETTINGS.horizontalPerspective) {
+                                            else if (verticalPerspective) {
                                                 if (linear1.left === linear2.left) {
                                                     current.anchor(LAYOUT['left'], stringId);
                                                 }
@@ -4382,13 +4417,13 @@
                             });
                         }
                         const direction = CHAIN_MAP.direction.slice();
-                        if (!SETTINGS.horizontalPerspective) {
+                        if (verticalPerspective) {
                             direction.reverse();
                         }
                         direction.forEach((value, index) => {
                             const connected = (flex.enabled ? flexbox : pageflow.slice().list.sort((a, b) => a.constraint[value].length >= b.constraint[value].length ? -1 : 1));
                             if (connected != null) {
-                                if (!SETTINGS.horizontalPerspective) {
+                                if (verticalPerspective) {
                                     index = (index === 0 ? 1 : 0);
                                 }
                                 const inverse = (index === 0 ? 1 : 0);
@@ -4409,6 +4444,16 @@
                                         const first = chainable.first;
                                         const last = chainable.last;
                                         let maxOffset = -1;
+                                        if (verticalPerspective) {
+                                            if (first.app(LAYOUT['leftRight']) != null) {
+                                                if (!mapParent(first, 'left')) {
+                                                    mapDelete(first, 'left');
+                                                }
+                                            }
+                                            if (first.app(LAYOUT['rightLeft']) != null) {
+                                                mapDelete(first, 'right');
+                                            }
+                                        }
                                         for (let i = 0; i < chainable.length; i++) {
                                             const chain = chainable.list[i];
                                             const next = chainable.list[i + 1];
@@ -4424,6 +4469,19 @@
                                                         chain.anchor(LAYOUT['bottomTop'], nextChain.stringId);
                                                         if (!mapParent(chain, 'bottom')) {
                                                             mapDelete(chain, 'bottom');
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            else {
+                                                if (verticalPerspective) {
+                                                    if (mapParent(chain, 'right') && chain.app(LAYOUT['leftRight']) != null) {
+                                                        mapDelete(chain, 'right');
+                                                    }
+                                                    if (chain !== first) {
+                                                        if (chain.app(LAYOUT['left']) != null || chain.app(LAYOUT['right']) != null) {
+                                                            mapDelete(chain, 'leftRight', 'rightLeft');
+                                                            delete chain.constraint.marginHorizontal;
                                                         }
                                                     }
                                                 }
@@ -4561,6 +4619,7 @@
                                                     first.app(chainStyle, 'packed');
                                                     first.app(`layout_constraint${HV}_bias`, bias);
                                             }
+                                            chainable.list.forEach(item => delete item.constraint.marginHorizontal);
                                         }
                                         else {
                                             if ((orientation === 'horizontal' && withinFraction(node.box.left, first.linear.left) && withinFraction(last.linear.right, node.box.right)) || (orientation === 'vertical' && withinFraction(node.box.top, first.linear.top) && withinFraction(last.linear.bottom, node.box.bottom))) {
@@ -4589,7 +4648,6 @@
                                             else {
                                                 first.app(chainStyle, 'spread');
                                             }
-                                            this.adjustMargins(chainable.list);
                                             if (!flex.enabled) {
                                                 chainable.list.forEach(inner => {
                                                     pageflow.list.forEach(outer => {
@@ -4613,53 +4671,56 @@
                                         }
                                         if (mapParent(first, 'right')) {
                                             mapDelete(first, 'leftRight');
+                                            delete first.constraint.marginHorizontal;
                                         }
                                     }
                                 });
                             }
                         });
                     }
-                    if (flex.enabled && flex.wrap !== 'nowrap') {
-                        ['topBottom', 'bottomTop'].forEach((value, index) => {
-                            pageflow.list.forEach(current => {
-                                if (mapParent(current, (index === 0 ? 'bottom' : 'top'))) {
-                                    const chain = [current];
-                                    let valid = false;
-                                    let adjacent = current;
-                                    while (adjacent != null) {
-                                        const topBottom = adjacent.app(LAYOUT[value]);
-                                        if (topBottom != null) {
-                                            adjacent = pageflow.findByNodeId(topBottom.replace('@+id/', ''));
-                                            if (adjacent != null && current.withinY(adjacent.linear)) {
-                                                chain.push(adjacent);
-                                                valid = mapParent(adjacent, (index === 0 ? 'top' : 'bottom'));
-                                                if (valid) {
-                                                    break;
+                    if (flex.enabled) {
+                        if (flex.wrap !== 'nowrap') {
+                            ['topBottom', 'bottomTop'].forEach((value, index) => {
+                                pageflow.list.forEach(current => {
+                                    if (mapParent(current, (index === 0 ? 'bottom' : 'top'))) {
+                                        const chain = [current];
+                                        let valid = false;
+                                        let adjacent = current;
+                                        while (adjacent != null) {
+                                            const topBottom = adjacent.app(LAYOUT[value]);
+                                            if (topBottom != null) {
+                                                adjacent = pageflow.findByNodeId(stripId(topBottom));
+                                                if (adjacent != null && current.withinY(adjacent.linear)) {
+                                                    chain.push(adjacent);
+                                                    valid = mapParent(adjacent, (index === 0 ? 'top' : 'bottom'));
+                                                    if (valid) {
+                                                        break;
+                                                    }
                                                 }
                                             }
+                                            else {
+                                                adjacent = null;
+                                            }
                                         }
-                                        else {
-                                            adjacent = null;
-                                        }
-                                    }
-                                    if (!valid) {
-                                        chain.forEach(item => {
-                                            pageflow.list.some(next => {
-                                                if (item !== next && next.linear.top === item.linear.top && next.linear.bottom === item.linear.bottom) {
-                                                    mapDelete(item, 'topBottom', 'bottomTop');
-                                                    item.app(LAYOUT['top'], next.stringId);
-                                                    item.app(LAYOUT['bottom'], next.stringId);
-                                                    return true;
-                                                }
-                                                return false;
+                                        if (!valid) {
+                                            chain.forEach(item => {
+                                                pageflow.list.some(next => {
+                                                    if (item !== next && next.linear.top === item.linear.top && next.linear.bottom === item.linear.bottom) {
+                                                        mapDelete(item, 'topBottom', 'bottomTop');
+                                                        item.app(LAYOUT['top'], next.stringId);
+                                                        item.app(LAYOUT['bottom'], next.stringId);
+                                                        return true;
+                                                    }
+                                                    return false;
+                                                });
                                             });
-                                        });
+                                        }
                                     }
-                                }
+                                });
                             });
-                        });
+                        }
                     }
-                    if (!flex.enabled) {
+                    else {
                         function deleteConstraints(item, stringId = '') {
                             const namespace = (constraint ? 'app' : 'android');
                             for (const attr in LAYOUT) {
@@ -4793,9 +4854,6 @@
                                         current.constraint.vertical = true;
                                     }
                                 }
-                                else {
-                                    this.adjustMargins([current]);
-                                }
                                 if (mapParent(current, 'right') && current.android(LAYOUT['leftRight']) == null) {
                                     node.constraint.layoutWidth = true;
                                 }
@@ -4805,11 +4863,31 @@
                             });
                         }
                     }
+                    pageflow.list.forEach(current => {
+                        if (current.constraint.marginHorizontal != null) {
+                            const item = this.findByAndroidId(current.constraint.marginHorizontal);
+                            if (item != null) {
+                                const offset = current.linear.left - item.linear.right;
+                                if (offset >= 1) {
+                                    current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + offset, true);
+                                }
+                            }
+                        }
+                        if (current.constraint.marginVertical != null) {
+                            const item = this.findByAndroidId(current.constraint.marginVertical);
+                            if (item != null) {
+                                const offset = current.linear.top - item.linear.bottom;
+                                if (offset >= 1) {
+                                    current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + offset, true);
+                                }
+                            }
+                        }
+                    });
                 }
             });
         }
-        adjustBoxSpacing() {
-            this.cache.list.forEach(node => {
+        adjustBoxSpacing(data) {
+            data.cache.forEach(node => {
                 if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
                     switch (node.android('orientation')) {
                         case 'horizontal':
@@ -4825,7 +4903,7 @@
                                 if (valid && !item.floating) {
                                     const width = Math.ceil(item.linear.left - left);
                                     if (width >= 1) {
-                                        item.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
+                                        item.modifyBox(BOX_STANDARD.MARGIN_LEFT, item.marginLeft + width, true);
                                     }
                                 }
                                 left = (item.label || item).linear.right;
@@ -4836,7 +4914,7 @@
                             sortAsc(node.renderChildren, 'linear.top').forEach(item => {
                                 const height = Math.ceil(item.linear.top - top);
                                 if (height >= 1) {
-                                    item.modifyBox(BOX_STANDARD.MARGIN_TOP, height);
+                                    item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + height, true);
                                 }
                                 top = item.linear.bottom;
                             });
@@ -4846,6 +4924,7 @@
             });
         }
         renderGroup(node, parent, viewName, options) {
+            const target = hasValue(node.dataset.target);
             let preXml = '';
             let postXml = '';
             let renderParent = parent;
@@ -4919,11 +4998,12 @@
                 });
             }
             node.apply(options);
-            node.render(renderParent);
-            return this.getEnclosingTag(node.renderDepth, viewName, node.id, `{:${node.id}}`, preXml, postXml);
+            node.render((target ? node : renderParent));
+            return this.getEnclosingTag((target || hasValue(parent.dataset.target) ? -1 : node.renderDepth), viewName, node.id, `{:${node.id}}`, preXml, postXml);
         }
         renderNode(node, parent, nodeName, recursive = false) {
             const element = node.element;
+            const target = hasValue(node.dataset.target);
             if (typeof nodeName === 'number') {
                 nodeName = View.getViewName(nodeName);
             }
@@ -5025,12 +5105,12 @@
                     }
                     break;
             }
-            node.render(parent);
+            node.render((target ? node : parent));
             if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
                 node.setAccessibility();
             }
             node.cascade().forEach(item => item.hide());
-            return this.getEnclosingTag(node.renderDepth, node.nodeName, node.id);
+            return this.getEnclosingTag((target || hasValue(parent.dataset.target) ? -1 : node.renderDepth), node.nodeName, node.id);
         }
         renderNodeStatic(tagName, depth, options = {}, width = '', height = '', node = null, children = false) {
             let minimal = false;
@@ -5040,7 +5120,7 @@
             }
             const renderDepth = Math.max(0, depth);
             const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
-            tagName = (node != null && node.hasElement ? node.tagName : viewName);
+            tagName = (node.hasElement ? node.tagName : viewName);
             node.setNodeId(viewName);
             if (hasValue(width)) {
                 if (!isNaN(parseInt(width))) {
@@ -5235,28 +5315,6 @@
         }
         findByAndroidId(id) {
             return this.cache.list.find(node => node.android('id') === id);
-        }
-        adjustMargins(nodes) {
-            for (const node of nodes) {
-                if (node.constraint.marginHorizontal != null) {
-                    const item = this.findByAndroidId(node.constraint.marginHorizontal);
-                    if (item != null) {
-                        const offset = node.linear.left - item.linear.right;
-                        if (offset >= 1) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
-                        }
-                    }
-                }
-                if (node.constraint.marginVertical != null) {
-                    const item = this.findByAndroidId(node.constraint.marginVertical);
-                    if (item != null) {
-                        const offset = node.linear.top - item.linear.bottom;
-                        if (offset >= 1) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
-                        }
-                    }
-                }
-            }
         }
         get inlineExclude() {
             return WEBVIEW_ANDROID;
@@ -5936,32 +5994,13 @@
                     if (attributes.length > 0) {
                         attributes.sort().forEach((value) => append += `\n${indent}${replaceDP(value, true)}`);
                     }
-                    let replaced = false;
-                    [node, node.parent].some(item => {
-                        if (item.renderExtension != null) {
-                            const attr = `${item.renderExtension.name}:insert`;
-                            let output = item.data(attr);
-                            if (output) {
-                                const pattern = `{&${id}}`;
-                                if (output.indexOf(pattern) !== -1) {
-                                    output = output.replace(`{&${id}}`, placeIndent(append));
-                                    item.data(attr, output);
-                                    replaced = true;
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-                    });
-                    if (!replaced) {
-                        const layouts = [...viewData.views, ...viewData.includes];
-                        for (let i = 0; i < layouts.length; i++) {
-                            const output = layouts[i].content;
-                            const pattern = `{&${id}}`;
-                            if (output.indexOf(pattern) !== -1) {
-                                layouts[i].content = output.replace(pattern, append);
-                                break;
-                            }
+                    const layouts = [...viewData.views, ...viewData.includes];
+                    for (let i = 0; i < layouts.length; i++) {
+                        const output = layouts[i].content;
+                        const pattern = `{&${id}}`;
+                        if (output.indexOf(pattern) !== -1) {
+                            layouts[i].content = output.replace(pattern, append);
+                            break;
                         }
                     }
                 }
@@ -6625,7 +6664,7 @@
         condition() {
             const node = this.node;
             return (this.included() ||
-                (node.hasElement && node.element.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_ELEMENT.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].tagName === item.tagName && NodeList.linearX(item.children))));
+                (node.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_ELEMENT.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].tagName === item.tagName && NodeList.linearX(item.children))));
         }
         processNode(mapX, mapY) {
             const node = this.node;
@@ -6979,16 +7018,16 @@
                 const data = node.data(`${EXT_NAME.GRID}:gridData`);
                 if (data != null) {
                     if (data.padding.top > 0) {
-                        node.modifyBox(BOX_STANDARD.PADDING_TOP, data.padding.top);
+                        node.modifyBox(BOX_STANDARD.PADDING_TOP, node.paddingTop + data.padding.top);
                     }
                     if (data.padding.right.length > 0) {
-                        node.modifyBox(BOX_STANDARD.PADDING_RIGHT, averageInt(data.padding.right));
+                        node.modifyBox(BOX_STANDARD.PADDING_RIGHT, node.paddingRight + averageInt(data.padding.right));
                     }
                     if (data.padding.bottom > 0) {
-                        node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, data.padding.bottom);
+                        node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, node.paddingBottom + data.padding.bottom);
                     }
                     if (data.padding.left.length > 0) {
-                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, averageInt(data.padding.left));
+                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft + averageInt(data.padding.left));
                     }
                 }
             });
@@ -7126,30 +7165,25 @@
             if (src !== '') {
                 overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
             }
-            let insert = false;
-            if (node.isolated) {
-                const id = optional(node, 'parent.element.dataset.target');
-                if (id !== '' && node.parent.nodeName !== VIEW_SUPPORT.COORDINATOR) {
-                    const coordinator = document.getElementById(id);
-                    if (coordinator != null) {
-                        insert = true;
-                    }
-                }
-            }
-            node.depth = (insert ? 0 : node.parent.renderDepth + 1);
-            let xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (insert ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
+            const target = hasValue(node.dataset.target);
+            node.depth = (target ? node.depth : node.parent.renderDepth + 1);
+            const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (target ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
             node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
-            let proceed = false;
             if (node.isolated) {
                 positionIsolated(node);
-                if (insert) {
-                    node.app('layout_anchor', parent.stringId);
+                if (target) {
+                    let anchor = parent.stringId;
+                    if (parent.nodeName === VIEW_SUPPORT.TOOLBAR) {
+                        const outerParent = parent.data(`${WIDGET_NAME.TOOLBAR}:outerParent`);
+                        if (outerParent != null) {
+                            anchor = outerParent;
+                        }
+                    }
+                    node.app('layout_anchor', anchor);
                     node.app('layout_anchorGravity', node.android('layout_gravity'));
                     node.delete('android', 'layout_gravity');
-                    node.data(`${WIDGET_NAME.FAB}:insert`, xml);
+                    node.excludeProcedure |= NODE_PROCEDURE.ALIGNMENT;
                     node.render(node);
-                    xml = '';
-                    proceed = true;
                 }
                 else {
                     node.render(parent);
@@ -7158,22 +7192,7 @@
             else {
                 node.render(parent);
             }
-            return { xml, proceed };
-        }
-        insert() {
-            const node = this.node;
-            const id = optional(node, 'parent.element.dataset.target');
-            if (id !== '') {
-                const parent = this.application.findByDomId(id);
-                if (parent != null && parent.nodeName === VIEW_SUPPORT.COORDINATOR) {
-                    let xml = node.data(`${WIDGET_NAME.FAB}:insert`) || '';
-                    if (xml !== '') {
-                        node.renderDepth = parent.renderDepth + 1;
-                        xml = restoreIndent(xml, node.renderDepth);
-                    }
-                    this.application.addInsertQueue(parent.id, [xml]);
-                }
-            }
+            return { xml };
         }
         afterInsert() {
             const node = this.node;
@@ -7520,8 +7539,8 @@
         init(element) {
             if (this.included(element)) {
                 Array.from(element.children).forEach((item) => {
-                    if (item.tagName === 'NAV' && item.dataset.ext == null) {
-                        item.dataset.ext = EXT_NAME.EXTERNAL;
+                    if (item.tagName === 'NAV' && !includes(item.dataset.ext || '', EXT_NAME.EXTERNAL)) {
+                        item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
                     }
                 });
                 if (element.dataset.target != null) {
@@ -7543,7 +7562,7 @@
             const application = this.application;
             const controller = application.controllerHandler;
             const node = this.node;
-            const target = (node.element.dataset.target != null && document.getElementById(node.element.dataset.target) !== node.parent.element);
+            const target = hasValue(node.dataset.target);
             const options = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = Object.assign({}, options.toolbar);
             const optionsAppBar = Object.assign({}, options.appBar);
@@ -7575,7 +7594,7 @@
                         }
                     }
                 }
-                if (element.dataset.target === node.element.id) {
+                if (!hasValue(element.dataset.target)) {
                     const targetNode = element.__node;
                     if (targetNode != null) {
                         switch (element.dataset.targetModule) {
@@ -7591,8 +7610,8 @@
                     }
                 }
             });
-            const appBar = (target || options.appBar != null || appBarChildren.length > 0);
             const collapsingToolbar = (options.collapsingToolbar != null || collapsingToolbarChildren.length > 0);
+            const appBar = (options.appBar != null || appBarChildren.length > 0 || collapsingToolbar);
             let appBarOverlay = '';
             let popupOverlay = '';
             if (collapsingToolbar) {
@@ -7674,9 +7693,11 @@
                     overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
                 }
                 appBarNode = createPlaceholder(application.cache.nextId, node, appBarChildren);
+                appBarNode.depth = depth;
+                appBarNode.nodeId = stripId(optionsAppBar.android.id);
                 appBarNode.children.forEach(item => {
-                    item.parent = appBarNode;
                     item.depth = depth + 1;
+                    item.element.dataset.target = appBarNode.nodeId;
                 });
                 application.cache.list.push(appBarNode);
                 outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
@@ -7690,31 +7711,39 @@
                     overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                     overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
                     collapsingToolbarNode = createPlaceholder(application.cache.nextId, node, collapsingToolbarChildren);
+                    appBarNode.depth = depth;
                     collapsingToolbarNode.children.forEach(item => {
-                        item.parent = collapsingToolbarNode;
                         item.depth = depth + 1;
+                        item.element.dataset.target = collapsingToolbarNode.nodeId;
                     });
                     application.cache.list.push(collapsingToolbarNode);
                     outer = outer.replace(`{:${appBarNode.id}}`, controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true) + `{:${appBarNode.id}}`);
                 }
-                node.nodeId = optionsAppBar.android.id.replace('@+id/', '');
             }
             if (appBarNode != null) {
                 xml = (collapsingToolbarNode != null ? outer.replace(`{:${collapsingToolbarNode.id}}`, xml + `{:${collapsingToolbarNode.id}}`) : outer.replace(`{:${appBarNode.id}}`, xml + `{:${appBarNode.id}}`));
             }
-            let proceed = false;
+            if (appBarNode != null) {
+                if (collapsingToolbarNode == null) {
+                    node.parent = appBarNode;
+                }
+                else {
+                    collapsingToolbarNode.parent = appBarNode;
+                }
+                node.data(`${WIDGET_NAME.TOOLBAR}:outerParent`, appBarNode.stringId);
+            }
+            else if (collapsingToolbarNode != null) {
+                node.parent = collapsingToolbarNode;
+            }
             if (target) {
-                node.data(`${WIDGET_NAME.TOOLBAR}:insert`, xml);
                 node.render(node);
-                xml = '';
-                proceed = true;
             }
             else {
                 node.render(this.parent);
                 node.renderDepth = node.depth;
             }
             node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
-            return { xml, proceed };
+            return { xml };
         }
         processChild() {
             const element = this.element;
@@ -7723,23 +7752,6 @@
                 return { xml: '', proceed: true };
             }
             return { xml: '' };
-        }
-        insert() {
-            const application = this.application;
-            const node = this.node;
-            const id = optional(node, 'element.dataset.target');
-            if (id !== '') {
-                const parent = application.findByDomId(id);
-                const coordinator = application.cacheInternal.list.find(item => item.isolated && item.parent === parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
-                if (coordinator != null) {
-                    let xml = node.data(`${WIDGET_NAME.TOOLBAR}:insert`) || '';
-                    if (xml !== '') {
-                        xml = restoreIndent(xml, node.renderDepth);
-                        node.renderDepth = node.depth + 1;
-                        application.addInsertQueue(coordinator.id, [xml]);
-                    }
-                }
-            }
         }
         finalize() {
             const node = this.node;
@@ -7816,9 +7828,9 @@
             const node = this.node;
             if (findNestedMenu(node) != null) {
                 let menu = '';
-                Array.from(this.application.elements).some(item => {
-                    if (item.parentElement === node.element && includes(optional(item, 'dataset.ext'), WIDGET_NAME.MENU)) {
-                        menu = item.dataset.viewName;
+                Array.from(this.application.elements).some(element => {
+                    if (element.parentElement === node.element && includes(optional(element, 'dataset.ext'), WIDGET_NAME.MENU)) {
+                        menu = element.dataset.viewName;
                         return true;
                     }
                     return false;
@@ -7873,8 +7885,8 @@
         init(element) {
             if (this.included(element) && element.children.length > 0) {
                 Array.from(element.children).forEach((item) => {
-                    if (item.tagName === 'NAV' && item.dataset.ext == null) {
-                        item.dataset.ext = EXT_NAME.EXTERNAL;
+                    if (item.tagName === 'NAV' && !includes(item.dataset.ext || '', EXT_NAME.EXTERNAL)) {
+                        item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
                     }
                 });
                 this.application.elements.add(element);
@@ -7891,6 +7903,7 @@
             const node = this.node;
             let depth = node.depth + node.renderDepth;
             const optionsDrawer = Object.assign({}, this.options.drawer);
+            const optionsCoordinator = Object.assign({}, this.options.coordinator);
             let menu = findNestedMenu(node);
             if (menu != null) {
                 overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
@@ -7904,7 +7917,9 @@
             }
             const coordinatorNode = createPlaceholder(application.cache.nextId, node);
             application.cache.list.push(coordinatorNode);
-            const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, { android: { id: `${node.stringId}_content` } }, 'match_parent', 'match_parent', coordinatorNode, true);
+            overwriteDefault(optionsCoordinator, 'android', 'id', `${node.stringId}_content`);
+            coordinatorNode.nodeId = stripId(optionsCoordinator.android.id);
+            const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, optionsCoordinator, 'match_parent', 'match_parent', coordinatorNode, true);
             const optionsNavigation = Object.assign({}, this.options.navigation);
             overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
             if (menu != null) {
@@ -7914,7 +7929,7 @@
                 overwriteDefault(optionsNavigation, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
                 overwriteDefault(optionsNavigation, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
                 const navigation = controller.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, optionsNavigation, 'wrap_content', 'match_parent');
-                xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation);
+                xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation + `{:${node.id}}`);
             }
             else {
                 const navView = node.children[node.children.length - 1];
@@ -7936,6 +7951,17 @@
             node.renderParent = true;
             node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
             return { xml };
+        }
+        beforeInsert() {
+            const application = this.application;
+            const node = this.node;
+            if (application.insert[node.nodeId] != null) {
+                const target = application.cacheInternal.list.find(item => item.isolated && item.parent === node.parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
+                if (target != null) {
+                    application.insert[target.nodeId] = application.insert[node.nodeId];
+                    delete application.insert[node.nodeId];
+                }
+            }
         }
         afterInsert() {
             const headerLayout = findNestedExtension(this.node, EXT_NAME.EXTERNAL);
