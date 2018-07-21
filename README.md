@@ -12,32 +12,26 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/Edge/FireFox. The latest version of Chrome is ideally what you should use to generate the production version of your program. ***
 
-Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
+[androme.min.js](https://github.com/anpham6/androme/tree/master/dist/androme.min.js): only one file is required to use this program in your webpage
+
+Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server. 
 
 * Install Node.js: http://www.nodejs.com
-
 * Install androme: (choose one)
-  1. git clone https://github.com/anpham6/androme (unstable)
-  2. npm i androme (stable)
 
-* Change directory: (choose one)
-  1. cd androme
-  2. cd node_modules/androme
+NPM  
+&nbsp;&nbsp;&nbsp;&gt; npm i androme  
+&nbsp;&nbsp;&nbsp;&gt; cd node_modules/androme  
+&nbsp;&nbsp;&nbsp;&gt; node app.js  
 
-* Install dependencies: (choose one)
-  1. npm install && npm run prod
-  2. npm install --production
-
-* Load web server:
-  1. node app.js
-
+GitHub  
+&nbsp;&nbsp;&nbsp;&gt; git clone https://github.com/anpham6/androme  
+&nbsp;&nbsp;&nbsp;&gt; cd androme  
+&nbsp;&nbsp;&nbsp;&gt; npm install  
+&nbsp;&nbsp;&nbsp;&gt; npm run prod  
+&nbsp;&nbsp;&nbsp;&gt; node app.js  
+  
 * Open Browser: http://localhost:3000/demos/index.html
-
-If you install via NPM then it is recommended you put androme into its own separate folder rather than hosting it inside "node_modules".
-
-Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
-
-NOTE: Calling "save" or "write" methods before the images have completely loaded can sometimes cause them to be excluded from the generated layout. In these cases you should use the "parseDocument" chain method "then" to set a callback for your commands.
 
 ```javascript
 <script src="/dist/androme.min.js"></script>
@@ -72,6 +66,12 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
     });
 </script>
 ```
+Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
+
+NOTE: Calling "save" or "write" methods before the images have completely loaded can sometimes cause them to be excluded from the generated layout. In these cases you should use the "parseDocument" chain method "then" to set a callback for your commands.
+
+### User settings
+
 These settings are available in the global variable "androme" to customize your desired XML structure. Compatible attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
 
 ```javascript
@@ -185,10 +185,9 @@ Most of the Android support library extensions can be configured using the same 
     // configure an extension (third-party) - same as built-in
 </script>
 ```
-
 ### API: Public properties and methods (androme)
 
-There is no official documentation for the time being since this project is still in early development. The entire source code is available on Github if you need further clarification.
+There is no official documentation for the time being since this project is still in early development. The entire source code is available on GitHub if you need further clarification.
 
 ```javascript
 .build // android versions: 14 to 28
@@ -222,7 +221,7 @@ getExtension(name: string) // retrieve an extension by namespace and control | s
 
 addXmlNs(name: string, uri: string) // add global namespaces for android third-party controls
 ```
-### Redirect output location
+### Redirecting output location
 
 It is sometimes necessary to append elements into other containers when trying to design a UI which will look identical on the Android device. Redirection will fail if the target "location" is not a block/container element.
 
