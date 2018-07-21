@@ -199,7 +199,7 @@ export default class FileView<T extends View> extends File<T> {
     public resourceStyleToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.STYLES.size > 0) {
-            this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort());
+            this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort(caseInsensitve));
             const template = parseTemplate(STYLE_TMPL);
             const data: {} = {
                 '0': [{

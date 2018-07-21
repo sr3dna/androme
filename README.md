@@ -332,11 +332,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
                 android:layout_width="wrap_content">
                 <Spinner
                     android:id="@+id/month0"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/month0_array"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toTopOf="@+id/month1"
                     app:layout_constraintEnd_toStartOf="@+id/day0"
                     app:layout_constraintHorizontal_bias="0"
@@ -344,43 +340,31 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
                 <Spinner
                     android:id="@+id/day0"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/day0_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toTopOf="@+id/day1"
                     app:layout_constraintEnd_toStartOf="@+id/year0"
                     app:layout_constraintStart_toEndOf="@+id/month0"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
                 <Spinner
                     android:id="@+id/year0"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/year0_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toTopOf="@+id/year1"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/day0"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
                 <Spinner
                     android:id="@+id/month1"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/month0_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/select_margin_top"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toTopOf="@+id/month2"
                     app:layout_constraintEnd_toStartOf="@+id/day1"
                     app:layout_constraintHorizontal_bias="0"
@@ -388,45 +372,33 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/month0"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
                 <Spinner
                     android:id="@+id/day1"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/day0_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_marginTop="@dimen/select_margin_top"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toTopOf="@+id/day2"
                     app:layout_constraintEnd_toStartOf="@+id/year1"
                     app:layout_constraintStart_toEndOf="@+id/month1"
                     app:layout_constraintTop_toBottomOf="@+id/day0"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
                 <Spinner
                     android:id="@+id/year1"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/year0_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_marginTop="@dimen/select_margin_top"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toTopOf="@+id/year2"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/day1"
                     app:layout_constraintTop_toBottomOf="@+id/year0"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
                 <Spinner
                     android:id="@+id/month2"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/month0_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/select_margin_top"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/day2"
                     app:layout_constraintHorizontal_bias="0"
@@ -434,37 +406,29 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/month1"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
                 <Spinner
                     android:id="@+id/day2"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/day0_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_marginTop="@dimen/select_margin_top"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/year2"
                     app:layout_constraintStart_toEndOf="@+id/month2"
                     app:layout_constraintTop_toBottomOf="@+id/day1"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
                 <Spinner
                     android:id="@+id/year2"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/year0_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_marginTop="@dimen/select_margin_top"
-                    android:layout_width="wrap_content"
-                    android:paddingVertical="@dimen/select_padding_vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/day2"
                     app:layout_constraintTop_toBottomOf="@+id/year1"
                     app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select" />
+                    style="@style/Select.constraintlayout_1" />
             </android.support.constraint.ConstraintLayout>
             <Space
                 android:id="@+id/space_2"
@@ -486,23 +450,13 @@ Most attributes can be excluded from the generated XML using the dataset feature
                 android:orientation="horizontal">
                 <Spinner
                     android:id="@+id/hour"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/hour_array"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:minWidth="@dimen/select_minwidth"
-                    android:paddingVertical="@dimen/select_padding_vertical"
-                    style="@style/Select" />
+                    style="@style/Select.linearlayout_1" />
                 <Spinner
                     android:id="@+id/minute"
-                    android:background="@drawable/select_hour"
                     android:entries="@array/minute_array"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/select_margin_start"
-                    android:layout_width="wrap_content"
-                    android:minWidth="@dimen/select_minwidth"
-                    android:paddingVertical="@dimen/select_padding_vertical"
-                    style="@style/Select" />
+                    style="@style/Select.linearlayout_1" />
             </LinearLayout>
             <Space
                 android:id="@+id/space_13"
@@ -1012,22 +966,14 @@ Most attributes can be excluded from the generated XML using the dataset feature
                         android:orientation="horizontal">
                         <RadioButton
                             android:id="@+id/c2"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="@dimen/radio_margin_end"
                             android:layout_marginStart="@dimen/radio_margin_start"
-                            android:layout_marginTop="@dimen/radio_margin_top"
-                            android:layout_width="wrap_content"
                             android:text="@string/birth"
-                            style="@style/Radio" />
+                            style="@style/Radio.radiogroup_1" />
                         <RadioButton
                             android:id="@+id/c3"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="@dimen/radio_margin_end"
                             android:layout_marginStart="@dimen/radio_margin_start_1"
-                            android:layout_marginTop="@dimen/radio_margin_top"
-                            android:layout_width="wrap_content"
                             android:text="@string/death"
-                            style="@style/Radio" />
+                            style="@style/Radio.radiogroup_1" />
                     </RadioGroup>
                     <CheckBox
                         android:id="@+id/c4"
@@ -1290,9 +1236,28 @@ Most attributes can be excluded from the generated XML using the dataset feature
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:textSize">11sp</item>
     </style>
+    <style name="Radio.radiogroup_1">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">@dimen/radio_margin_end</item>
+        <item name="android:layout_marginTop">@dimen/radio_margin_top</item>
+        <item name="android:layout_width">wrap_content</item>
+    </style>
     <style name="Select">
         <item name="android:fontFamily">arial</item>
         <item name="android:textSize">11sp</item>
+    </style>
+    <style name="Select.constraintlayout_1">
+        <item name="android:background">@drawable/select_hour</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:paddingVertical">@dimen/select_padding_vertical</item>
+    </style>
+    <style name="Select.linearlayout_1">
+        <item name="android:background">@drawable/select_hour</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:minWidth">@dimen/select_minwidth</item>
+        <item name="android:paddingVertical">@dimen/select_padding_vertical</item>
     </style>
     <style name="Text">
         <item name="android:fontFamily">arial</item>

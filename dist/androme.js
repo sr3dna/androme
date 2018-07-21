@@ -1,4 +1,4 @@
-/* androme 1.8.7
+/* androme 1.8.8
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -1350,6 +1350,7 @@
             this.insertAuxillaryViews();
             this.resourceHandler.finalize(this.viewData);
             if (SETTINGS.showAttributes) {
+                this.resourceHandler.filterStyles(this.viewData);
                 this.setAttributes();
             }
             this.layouts.forEach(layout => {
@@ -1665,12 +1666,13 @@
                             const target = application.findByDomId(node.dataset.target, true);
                             if (target == null || target !== parent) {
                                 application.addInsertQueue(node.dataset.target, [xml]);
+                                node.relocated = true;
                                 return;
                             }
                         }
                         else if (parent.dataset.target != null) {
-                            node.dataset.target = parent.nodeId;
                             application.addInsertQueue(parent.nodeId, [xml]);
+                            node.dataset.target = parent.nodeId;
                             return;
                         }
                         if (!partial.has(parent.id)) {
@@ -2748,6 +2750,7 @@
             this.visible = true;
             this.companion = false;
             this.isolated = false;
+            this.relocated = false;
             this._namespaces = new Set();
             this._data = {};
             if (element != null) {
@@ -3058,7 +3061,7 @@
             return this._nodeName;
         }
         set renderParent(value) {
-            if (value instanceof Node && value !== this) {
+            if (value instanceof Node && value !== this && value.renderChildren.indexOf(this) === -1) {
                 value.renderChildren.push(this);
             }
             this._renderParent = value;
@@ -3372,16 +3375,18 @@
             }
             return true;
         }
-        combine() {
+        combine(...objs) {
             const result = [];
             this.namespaces.forEach(value => {
                 const ns = this[`_${value}`];
-                for (const attr in ns) {
-                    if (value !== '_') {
-                        result.push(`${value}:${attr}="${ns[attr]}"`);
-                    }
-                    else {
-                        result.push(`${attr}="${ns[attr]}"`);
+                if (objs.length === 0 || objs.includes(value)) {
+                    for (const attr in ns) {
+                        if (value !== '_') {
+                            result.push(`${value}:${attr}="${ns[attr]}"`);
+                        }
+                        else {
+                            result.push(`${attr}="${ns[attr]}"`);
+                        }
                     }
                 }
             });
@@ -4865,7 +4870,7 @@
                     }
                     pageflow.list.forEach(current => {
                         if (current.constraint.marginHorizontal != null) {
-                            const item = this.findByAndroidId(current.constraint.marginHorizontal);
+                            const item = this.findById(current.constraint.marginHorizontal);
                             if (item != null) {
                                 const offset = current.linear.left - item.linear.right;
                                 if (offset >= 1) {
@@ -4874,7 +4879,7 @@
                             }
                         }
                         if (current.constraint.marginVertical != null) {
-                            const item = this.findByAndroidId(current.constraint.marginVertical);
+                            const item = this.findById(current.constraint.marginVertical);
                             if (item != null) {
                                 const offset = current.linear.top - item.linear.bottom;
                                 if (offset >= 1) {
@@ -5313,7 +5318,7 @@
                 }
             });
         }
-        findByAndroidId(id) {
+        findById(id) {
             return this.cache.list.find(node => node.android('id') === id);
         }
         get inlineExclude() {
@@ -5427,9 +5432,6 @@
             this.tagCount = {};
             this.file.stored = STORED;
         }
-        finalize(viewData) {
-            this.processFontStyle(viewData);
-        }
         reset() {
             super.reset();
             STORED.ARRAYS = new Map();
@@ -5440,6 +5442,81 @@
             this.file.reset();
             this.tagStyle = {};
             this.tagCount = {};
+        }
+        finalize(viewData) {
+            this.processFontStyle(viewData);
+        }
+        filterStyles(viewData) {
+            const styles = {};
+            viewData.cache.forEach(node => {
+                const children = node.renderChildren.filter(child => child.visible && !child.isolated && !child.relocated);
+                if (children.length > 1) {
+                    const map = {};
+                    let style = '';
+                    let valid = true;
+                    children.forEach((child, index) => {
+                        let found = false;
+                        child.combine('_', 'android').forEach(value => {
+                            if (value.startsWith('style=')) {
+                                if (index === 0) {
+                                    style = value;
+                                }
+                                else {
+                                    if (value !== style) {
+                                        valid = false;
+                                    }
+                                }
+                                found = true;
+                            }
+                            if (map[value] == null) {
+                                map[value] = 0;
+                            }
+                            map[value]++;
+                        });
+                        if (style !== '' && !found) {
+                            valid = false;
+                        }
+                    });
+                    if (valid) {
+                        for (const attr in map) {
+                            if (map[attr] !== children.length) {
+                                delete map[attr];
+                            }
+                        }
+                        if (Object.keys(map).length > 1) {
+                            if (style !== '') {
+                                style = trim(style.substring(style.indexOf('/') + 1), '"');
+                            }
+                            const theme = [];
+                            for (const attr in map) {
+                                const match = attr.match(/(\w+):(\w+)="(.*?)"/);
+                                if (match != null) {
+                                    children.forEach(child => child.delete(match[1], match[2]));
+                                    theme.push(match[0]);
+                                }
+                            }
+                            theme.sort();
+                            let name = '';
+                            for (const index in styles) {
+                                if (styles[index].join(';') === theme.join(';')) {
+                                    name = index;
+                                    break;
+                                }
+                            }
+                            if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
+                                name = (style !== '' ? `${style}.` : '') + node.nodeId;
+                                styles[name] = theme;
+                            }
+                            children.forEach(child => child.add('_', 'style', `@style/${name}`));
+                        }
+                    }
+                }
+            });
+            if (Object.keys(styles).length > 0) {
+                for (const name in styles) {
+                    STORED.STYLES.set(name, { attributes: styles[name].join(';') });
+                }
+            }
         }
         setBoxSpacing() {
             super.setBoxSpacing();
@@ -5780,7 +5857,7 @@
                 }
             });
         }
-        addResourceTheme(template, data, options) {
+        addTheme(template, data, options) {
             const map = parseTemplate(template);
             if (options.item != null) {
                 const root = getTemplateLevel(data, '0');
@@ -5985,23 +6062,12 @@
                 if (node != null) {
                     const styles = map[id].styles;
                     const attributes = map[id].attributes;
-                    const indent = repeat(node.renderDepth + 1);
-                    let append = '';
                     if (styles.length > 0) {
                         inherit.add(styles.join('.'));
-                        append += `\n${indent + (node.nodeType >= 11 ? 'android:theme="' : 'style="')}@style/${styles.pop()}"`;
+                        node.add('_', 'style', `@style/${styles.pop()}`);
                     }
                     if (attributes.length > 0) {
-                        attributes.sort().forEach((value) => append += `\n${indent}${replaceDP(value, true)}`);
-                    }
-                    const layouts = [...viewData.views, ...viewData.includes];
-                    for (let i = 0; i < layouts.length; i++) {
-                        const output = layouts[i].content;
-                        const pattern = `{&${id}}`;
-                        if (output.indexOf(pattern) !== -1) {
-                            layouts[i].content = output.replace(pattern, append);
-                            break;
-                        }
+                        attributes.sort().forEach((value) => node.attr(replaceDP(value, true)));
                     }
                 }
             }
@@ -6406,7 +6472,7 @@
         resourceStyleToXml(saveToDisk = false) {
             let xml = '';
             if (this.stored.STYLES.size > 0) {
-                this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort());
+                this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort(caseInsensitve));
                 const template = parseTemplate(STYLE_TMPL);
                 const data = {
                     '0': [{
@@ -7778,7 +7844,7 @@
             };
             overwriteDefault(options, 'output', 'path', 'res/values');
             overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
-            this.application.resourceHandler.addResourceTheme(EXTENSION_APPBAR_TMPL, data, options);
+            this.application.resourceHandler.addTheme(EXTENSION_APPBAR_TMPL, data, options);
         }
     }
 
@@ -7853,7 +7919,7 @@
             };
             overwriteDefault(options, 'output', 'path', 'res/values');
             overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
-            this.application.resourceHandler.addResourceTheme(EXTENSION_GENERIC_TMPL, data, options);
+            this.application.resourceHandler.addTheme(EXTENSION_GENERIC_TMPL, data, options);
         }
     }
 
@@ -7996,7 +8062,7 @@
             };
             overwriteDefault(options, 'output', 'path', 'res/values-v21');
             overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-            this.application.resourceHandler.addResourceTheme(EXTENSION_DRAWER_TMPL, data, options);
+            this.application.resourceHandler.addTheme(EXTENSION_DRAWER_TMPL, data, options);
         }
     }
 

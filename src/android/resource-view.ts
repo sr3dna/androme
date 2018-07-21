@@ -2,7 +2,7 @@ import { BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, ViewData } fr
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, repeat } from '../lib/util';
+import { capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, trim } from '../lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { parseHex } from '../lib/color';
@@ -78,10 +78,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.file.stored = STORED;
     }
 
-    public finalize(viewData: ViewData<T>) {
-        this.processFontStyle(viewData);
-    }
-
     public reset() {
         super.reset();
         STORED.ARRAYS = new Map();
@@ -92,6 +88,83 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.file.reset();
         this.tagStyle = {};
         this.tagCount = {};
+    }
+
+    public finalize(viewData: ViewData<T>) {
+        this.processFontStyle(viewData);
+    }
+
+    public filterStyles(viewData: ViewData<T>) {
+        const styles: ObjectMap<string[]> = {};
+        viewData.cache.forEach(node => {
+            const children = node.renderChildren.filter(child => child.visible && !child.isolated && !child.relocated);
+            if (children.length > 1) {
+                const map = {};
+                let style = '';
+                let valid = true;
+                children.forEach((child, index) => {
+                    let found = false;
+                    child.combine('_', 'android').forEach(value => {
+                        if (value.startsWith('style=')) {
+                            if (index === 0) {
+                                style = value;
+                            }
+                            else {
+                                if (value !== style) {
+                                    valid = false;
+                                }
+                            }
+                            found = true;
+                        }
+                        if (map[value] == null) {
+                            map[value] = 0;
+                        }
+                        map[value]++;
+                    });
+                    if (style !== '' && !found) {
+                        valid = false;
+                    }
+                });
+                if (valid) {
+                    for (const attr in map) {
+                        if (map[attr] !== children.length) {
+                            delete map[attr];
+                        }
+                    }
+                    if (Object.keys(map).length > 1) {
+                        if (style !== '') {
+                            style = trim(style.substring(style.indexOf('/') + 1), '"');
+                        }
+                        const theme: string[] = [];
+                        for (const attr in map) {
+                            const match = attr.match(/(\w+):(\w+)="(.*?)"/);
+                            if (match != null) {
+                                children.forEach(child => child.delete(match[1], match[2]));
+                                theme.push(match[0]);
+                            }
+                        }
+                        theme.sort();
+                        let name = '';
+                        for (const index in styles) {
+                            if (styles[index].join(';') === theme.join(';')) {
+                                name = index;
+                                break;
+                            }
+                        }
+                        if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
+                            name = (style !== '' ? `${style}.` : '') + node.nodeId;
+                            styles[name] = theme;
+                        }
+                        children.forEach(child => child.add('_', 'style', `@style/${name}`));
+                    }
+                }
+            }
+        });
+        if (Object.keys(styles).length > 0) {
+            for (const name in styles) {
+                STORED.STYLES.set(name, { attributes: styles[name].join(';') });
+            }
+        }
     }
 
     public setBoxSpacing() {
@@ -439,7 +512,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    public addResourceTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>) {
+    public addTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>) {
         const map: ObjectMap<string> = parseTemplate(template);
         if (options.item != null) {
             const root = getTemplateLevel(data, '0');
@@ -644,25 +717,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
         for (const id in map) {
             const node: Null<T> = viewData.cache.find(item => item.id === parseInt(id));
             if (node != null) {
-                const styles = map[id].styles;
-                const attributes = map[id].attributes;
-                const indent = repeat(node.renderDepth + 1);
-                let append = '';
+                const styles: string[] = map[id].styles;
+                const attributes: string[] = map[id].attributes;
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
-                    append += `\n${indent + (node.nodeType >= 11 ? 'android:theme="' : 'style="')}@style/${styles.pop()}"`;
+                    node.add('_', 'style', `@style/${styles.pop()}`);
                 }
                 if (attributes.length > 0) {
-                    attributes.sort().forEach((value: string) => append += `\n${indent}${replaceDP(value, true)}`);
-                }
-                const layouts = [...viewData.views, ...viewData.includes];
-                for (let i = 0; i < layouts.length; i++) {
-                    const output = layouts[i].content;
-                    const pattern = `{&${id}}`;
-                    if (output.indexOf(pattern) !== -1) {
-                        layouts[i].content = output.replace(pattern, append);
-                        break;
-                    }
+                    attributes.sort().forEach((value: string) => node.attr(replaceDP(value, true)));
                 }
             }
         }

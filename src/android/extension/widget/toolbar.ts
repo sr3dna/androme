@@ -270,6 +270,6 @@ export default class Toolbar extends Extension<T, U> {
         };
         overwriteDefault(options, 'output', 'path', 'res/values');
         overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
-        this.application.resourceHandler.addResourceTheme(EXTENSION_APPBAR_TMPL, data, options);
+        this.application.resourceHandler.addTheme(EXTENSION_APPBAR_TMPL, data, options);
     }
 }

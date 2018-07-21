@@ -845,7 +845,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 pageflow.list.forEach(current => {
                     if (current.constraint.marginHorizontal != null) {
-                        const item = this.findByAndroidId(current.constraint.marginHorizontal);
+                        const item = this.findById(current.constraint.marginHorizontal);
                         if (item != null) {
                             const offset = current.linear.left - item.linear.right;
                             if (offset >= 1) {
@@ -854,7 +854,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         }
                     }
                     if (current.constraint.marginVertical != null) {
-                        const item = this.findByAndroidId(current.constraint.marginVertical);
+                        const item = this.findById(current.constraint.marginVertical);
                         if (item != null) {
                             const offset = current.linear.top - item.linear.bottom;
                             if (offset >= 1) {
@@ -1311,7 +1311,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
     }
 
-    private findByAndroidId(id: string) {
+    private findById(id: string) {
         return this.cache.list.find(node => node.android('id') === id);
     }
 

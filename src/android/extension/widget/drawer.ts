@@ -144,6 +144,6 @@ export default class Drawer extends Extension<T, U> {
         };
         overwriteDefault(options, 'output', 'path', 'res/values-v21');
         overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-        this.application.resourceHandler.addResourceTheme(EXTENSION_DRAWER_TMPL, data, options);
+        this.application.resourceHandler.addTheme(EXTENSION_DRAWER_TMPL, data, options);
     }
 }

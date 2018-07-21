@@ -69,7 +69,7 @@ main.registerResource(Resource);
     load.forEach(item => main.registerExtension(item));
 })();
 
-export function parseDocument(...elements: (Null<string | HTMLElement>)[]) {
+export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     if (main.closed) {
         return;
     }

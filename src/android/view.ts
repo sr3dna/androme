@@ -130,16 +130,18 @@ export default class View extends Node {
         return true;
     }
 
-    public combine() {
+    public combine(...objs: string[]) {
         const result: string[] = [];
         this.namespaces.forEach(value => {
             const ns: StringMap = this[`_${value}`];
-            for (const attr in ns) {
-                if (value !== '_') {
-                    result.push(`${value}:${attr}="${ns[attr]}"`);
-                }
-                else {
-                    result.push(`${attr}="${ns[attr]}"`);
+            if (objs.length === 0 || objs.includes(value)) {
+                for (const attr in ns) {
+                    if (value !== '_') {
+                        result.push(`${value}:${attr}="${ns[attr]}"`);
+                    }
+                    else {
+                        result.push(`${attr}="${ns[attr]}"`);
+                    }
                 }
             }
         });

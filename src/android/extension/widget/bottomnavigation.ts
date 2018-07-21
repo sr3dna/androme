@@ -73,6 +73,6 @@ export default class BottomNavigation extends Extension<T, U> {
         };
         overwriteDefault(options, 'output', 'path', 'res/values');
         overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
-        this.application.resourceHandler.addResourceTheme(EXTENSION_GENERIC_TMPL, data, options);
+        this.application.resourceHandler.addTheme(EXTENSION_GENERIC_TMPL, data, options);
     }
 }

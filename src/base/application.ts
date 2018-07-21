@@ -74,6 +74,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.insertAuxillaryViews();
         this.resourceHandler.finalize(this.viewData);
         if (SETTINGS.showAttributes) {
+            this.resourceHandler.filterStyles(this.viewData);
             this.setAttributes();
         }
         this.layouts.forEach(layout => {
@@ -397,12 +398,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         const target = application.findByDomId(node.dataset.target, true);
                         if (target == null || target !== parent) {
                             application.addInsertQueue(node.dataset.target, [xml]);
+                            node.relocated = true;
                             return;
                         }
                     }
                     else if (parent.dataset.target != null) {
-                        node.dataset.target = parent.nodeId;
                         application.addInsertQueue(parent.nodeId, [xml]);
+                        node.dataset.target = parent.nodeId;
                         return;
                     }
                     if (!partial.has(parent.id)) {

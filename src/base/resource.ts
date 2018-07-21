@@ -1,4 +1,4 @@
-import { BorderAttribute, Null, ObjectMap, StringMap } from '../lib/types';
+import { BorderAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
@@ -181,8 +181,9 @@ export default abstract class Resource<T extends Node> {
     constructor(public file: File<T>) {
     }
 
-    public abstract addResourceTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>): void;
-    public abstract finalize(viewData: {}): void;
+    public abstract filterStyles(viewData: ViewData<T>): void;
+    public abstract addTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>): void;
+    public abstract finalize(viewData: ViewData<T>): void;
 
     public addFile(pathname: string, filename: string, content = '', uri = '') {
         this.file.addFile(pathname, filename, content, uri);

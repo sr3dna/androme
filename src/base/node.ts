@@ -23,6 +23,7 @@ export default abstract class Node implements BoxModel {
     public visible = true;
     public companion = false;
     public isolated = false;
+    public relocated = false;
 
     public abstract children: T[];
     public abstract renderChildren: T[];
@@ -387,7 +388,7 @@ export default abstract class Node implements BoxModel {
     }
 
     set renderParent(value: any) {
-        if (value instanceof Node && value !== this) {
+        if (value instanceof Node && value !== this && value.renderChildren.indexOf(this) === -1) {
             value.renderChildren.push(this);
         }
         this._renderParent = value;
