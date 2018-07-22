@@ -1,4 +1,4 @@
-import { ObjectMap, StringMap } from '../../../lib/types';
+import { StringMap } from '../../../lib/types';
 import Resource from '../../../base/resource';
 import View from '../../view';
 import { convertPX, hasValue, includes, isNumber, optional } from '../../../lib/util';
@@ -72,7 +72,7 @@ export function findNestedExtension(node: T, extension: string) {
     return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext', 'string'), extension)));
 }
 
-export function overwriteDefault(options: ObjectMap<any>, namespace: string, attr: string, value: string) {
+export function overwriteDefault(options: {}, namespace: string, attr: string, value: string) {
     if (namespace !== '') {
         if (options[namespace] == null) {
             options[namespace] = {};

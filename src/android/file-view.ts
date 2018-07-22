@@ -1,4 +1,4 @@
-import { Null, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { Null, PlainFile, StringMap, ViewData } from '../lib/types';
 import File from '../base/file';
 import View from './view';
 import { caseInsensitve, hasValue, lastIndexOf } from '../lib/util';
@@ -120,7 +120,7 @@ export default class FileView<T extends View> extends File<T> {
             };
             const root = getTemplateLevel(data, '0');
             for (const [name, values] of this.stored.ARRAYS.entries()) {
-                const arrayItem: ObjectMap<any> = {
+                const arrayItem: {} = {
                     name,
                     '2': []
                 };
@@ -208,7 +208,7 @@ export default class FileView<T extends View> extends File<T> {
             };
             const root = getTemplateLevel(data, '0');
             for (const [name1, style] of this.stored.STYLES.entries()) {
-                const styleItem: ObjectMap<any> = {
+                const styleItem: {} = {
                     name1,
                     parent: style.parent || '',
                     '2': []
@@ -257,7 +257,7 @@ export default class FileView<T extends View> extends File<T> {
         let xml = '';
         if (this.stored.DRAWABLES.size > 0 || this.stored.IMAGES.size > 0) {
             const template = parseTemplate(DRAWABLE_TMPL);
-            const data: ObjectMap<any> = {
+            const data: {} = {
                 '0': []
             };
             const root = data['0'];

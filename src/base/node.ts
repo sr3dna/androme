@@ -102,19 +102,17 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public apply(options: ObjectMap<any>): ObjectMap<any> | void  {
-        const excluded: ObjectMap<any> = {};
-        if (options != null) {
-            for (const namespace in options) {
-                const obj = options[namespace];
-                if (typeof obj === 'object') {
-                    for (const attr in obj) {
-                        this.add(namespace, attr, obj[attr]);
-                    }
+    public apply(options = {}): void | {} {
+        const excluded = {};
+        for (const ns in options) {
+            const obj = options[ns];
+            if (typeof obj === 'object') {
+                for (const attr in obj) {
+                    this.add(ns, attr, obj[attr]);
                 }
-                else if (hasValue(obj)) {
-                    excluded[namespace] = obj;
-                }
+            }
+            else if (hasValue(obj)) {
+                excluded[ns] = obj;
             }
         }
         return excluded;

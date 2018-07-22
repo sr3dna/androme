@@ -18,7 +18,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
     constructor(
         public name: string,
         tagNames?: string[],
-        options?: ObjectMap<any>)
+        options?: {})
     {
         if (Array.isArray(tagNames)) {
             this.tagNames = tagNames.map(value => value.trim().toUpperCase());

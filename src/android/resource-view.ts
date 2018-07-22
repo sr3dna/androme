@@ -1,4 +1,4 @@
-import { BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -63,14 +63,16 @@ const METHOD_ANDROID = {
     }
 };
 
-interface TagStyle {
+interface StyleTag {
     name?: string;
     attributes: string;
     ids: number[];
 }
 
+type StyleList = ArrayIndex<ObjectMap<number[]>>;
+
 export default class ResourceView<T extends View> extends Resource<T> {
-    private tagStyle: ObjectMap<any> = {};
+    private tagStyle: ObjectMap<StyleList> = {};
     private tagCount: ObjectMap<number> = {};
 
     constructor(file: File<T>) {
@@ -276,7 +278,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                             if (valid) {
                                 const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
-                                const layerList: ObjectMap<any> = {
+                                const layerList: {} = {
                                     'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
                                     'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
                                     'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
@@ -295,7 +297,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 borders.forEach((item: BorderAttribute, index) => {
                                     if (this.borderVisible(item)) {
                                         const hideWidth = `-${item.width}`;
-                                        const layerList: ObjectMap<any> = {
+                                        const layerList: {} = {
                                             'top': hideWidth,
                                             'right': hideWidth,
                                             'bottom': hideWidth,
@@ -355,7 +357,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
         for (const tag in tagName) {
             const nodes: T[] = tagName[tag];
-            const sorted: any[] = [];
+            const sorted: StyleList = [];
             nodes.forEach(node => {
                 if (node.labelFor != null) {
                     return;
@@ -418,8 +420,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                 }
             });
-            if (this.tagStyle[tag] != null) {
-                const tagStyle = this.tagStyle[tag];
+            const tagStyle = this.tagStyle[tag];
+            if (tagStyle != null) {
                 for (let i = 0; i < tagStyle.length; i++) {
                     for (const attr in tagStyle[i]) {
                         if (sorted[i][attr] != null) {
@@ -512,7 +514,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    public addTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>) {
+    public addTheme(template: string, data: {}, options: ObjectMap<any>) {
         const map: ObjectMap<string> = parseTemplate(template);
         if (options.item != null) {
             const root = getTemplateLevel(data, '0');
@@ -530,12 +532,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     private processFontStyle(viewData: ViewData<T>) {
-        const style: ObjectMap<any> = {};
-        const layout: ObjectMap<any> = {};
+        const style = {};
+        const layout = {};
         for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
-            let sorted = this.tagStyle[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
+            let sorted = (<any> this.tagStyle[tag]).filter(item => Object.keys(item).length > 0).sort((a, b) => {
                 let maxA = 0;
                 let maxB = 0;
                 let countA = 0;
@@ -674,10 +676,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
             }
             while (sorted.length > 0);
         }
-        const resource: ObjectMap<TagStyle[]> = {};
+        const resource: ObjectMap<StyleTag[]> = {};
         for (const tagName in style) {
             const tag = style[tagName];
-            const tagData: TagStyle[] = [];
+            const tagData: StyleTag[] = [];
             for (const attributes in tag) {
                 tagData.push({ attributes, ids: tag[attributes]});
             }
@@ -694,7 +696,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         const inherit = new Set();
         const map = {};
         for (const tagName in resource) {
-            for (const item of (<TagStyle[]> resource[tagName])) {
+            for (const item of (<StyleTag[]> resource[tagName])) {
                 for (const id of item.ids) {
                     if (map[id] == null) {
                         map[id] = { styles: [], attributes: [] };

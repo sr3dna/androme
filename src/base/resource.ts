@@ -182,7 +182,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public abstract filterStyles(viewData: ViewData<T>): void;
-    public abstract addTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>): void;
+    public abstract addTheme(template: string, data: {}, options: {}): void;
     public abstract finalize(viewData: ViewData<T>): void;
 
     public addFile(pathname: string, filename: string, content = '', uri = '') {

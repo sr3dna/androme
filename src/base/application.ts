@@ -25,7 +25,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     private _closed = false;
 
     constructor(
-        private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: ObjectMap<any>): T },
+        private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: {}): T },
         private TypeU: { new (nodes?: T[], parent?: T): U })
     {
         this.cache = new this.TypeU();

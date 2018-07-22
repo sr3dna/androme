@@ -1172,7 +1172,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             }
             group[name].push(node);
         }
-        const groups: ObjectMap<any> = {};
+        const groups = {};
         data.cache.filter(node => node.visible).forEach(node => {
             node.mergeBoxSpacing();
             if (SETTINGS.dimensResourceValue) {

@@ -97,7 +97,7 @@ export function parseTemplate(template: string) {
     return result;
 }
 
-export function insertTemplateData(template: ObjectMap<string>, data: ObjectMap<any>, index?: Null<string>, include?: ObjectMap<any>, exclude?: ObjectMap<any>) {
+export function insertTemplateData(template: ObjectMap<string>, data: {}, index?: Null<string>, include?: {}, exclude?: {}) {
     let output = (index != null ? template[index] : '');
     if (data['#include'] != null) {
         include = data['#include'];
@@ -134,13 +134,8 @@ export function insertTemplateData(template: ObjectMap<string>, data: ObjectMap<
         let match: Null<RegExpExecArray>;
         while ((match = pattern.exec(output)) != null) {
             if (include && include[match[1]]) {
-                const attribute = `{#${match[1]}=${match[2]}}`;
-                if (data[match[2]] != null) {
-                    output = output.replace(attribute, data[match[2]]);
-                }
-                else {
-                    output = output.replace(attribute, match[2]);
-                }
+                const attr = `{#${match[1]}=${match[2]}}`;
+                output = output.replace(attr, data[match[2]] || match[2]);
             }
             else if (exclude && exclude[match[1]]) {
                 output = output.replace(match[0], '');

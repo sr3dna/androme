@@ -59,8 +59,8 @@ export default class View extends Node {
         }
     }
 
-    public apply(options: ObjectMap<any> = {}) {
-        const excluded = (<ObjectMap<any>> super.apply(options));
+    public apply(options = {}) {
+        const excluded = (<{}> super.apply(options));
         for (const obj in excluded) {
             this.attr(`${obj}="${excluded[obj]}"`);
         }

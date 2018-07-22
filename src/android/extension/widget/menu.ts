@@ -166,7 +166,7 @@ export default class Menu<T extends View> extends Nav {
         }
     }
 
-    private parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, options: ObjectMap<any>) {
+    private parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, options: {}) {
         for (const attr in element.dataset) {
             const value = element.dataset[attr];
             if (value != null && validator[attr] != null) {
