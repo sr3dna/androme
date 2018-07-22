@@ -76,7 +76,7 @@ export default class Menu<T extends View> extends Nav {
                 else {
                     Array.from(node.element.childNodes).some((item: HTMLElement) => {
                         if (item.nodeName === '#text') {
-                            if (item.textContent != null && item.textContent.trim() !== '') {
+                            if (item.textContent && item.textContent.trim() !== '') {
                                 title = item.textContent.trim();
                                 return true;
                             }

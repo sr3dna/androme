@@ -88,7 +88,7 @@ export default abstract class Resource<T extends Node> {
 
     public static addImage(images: StringMap, prefix = '') {
         let src = '';
-        if (images['mdpi'] != null && hasValue(images['mdpi'])) {
+        if (images && hasValue(images['mdpi'])) {
             src = lastIndexOf(images['mdpi']);
             const format = lastIndexOf(src, '.').toLowerCase();
             src = src.replace(/.\w+$/, '').replace(/-/g, '_');
@@ -344,7 +344,7 @@ export default abstract class Resource<T extends Node> {
                                 numberArray.push(value);
                             }
                             else {
-                                if (numberArray != null && numberArray.length > 0) {
+                                if (numberArray && numberArray.length > 0) {
                                     i = -1;
                                     numberArray = null;
                                     continue;
@@ -356,7 +356,7 @@ export default abstract class Resource<T extends Node> {
                             }
                         }
                     }
-                    object.__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray != null && numberArray.length > 0 ? numberArray : null) };
+                    object.__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray && numberArray.length > 0 ? numberArray : null) };
                 }
             }
         });

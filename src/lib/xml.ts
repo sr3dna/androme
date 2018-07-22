@@ -2,11 +2,9 @@ import { Null, ObjectMap } from './types';
 import { convertDP, hasValue, repeat } from './util';
 import SETTINGS from '../settings';
 
-export function removePlaceholders(value: string, extension = true) {
-    value = value.replace(/{[<:@&>]{1}[0-9]+}/g, '');
-    if (extension) {
-        value = value.replace(/{[0-9]+:.*?}/g, '');
-    }
+export function removePlaceholders(value: string) {
+    value = value.replace(/{[<:@>]{1}[0-9]+}/g, '');
+    value = value.replace(/{[0-9]+:.*?}/g, '');
     return value.trim();
 }
 

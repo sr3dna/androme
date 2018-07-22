@@ -16,7 +16,7 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server. 
 
-* Install Node.js: http://www.nodejs.com
+* Install Node.js: http://www.nodejs.org
 * Install androme: (choose one)
 
 NPM  

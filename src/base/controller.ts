@@ -74,12 +74,12 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
         let output = preXml +
                      `{<${id}}`;
         if (hasValue(xml)) {
-            output += indent + `<${tagName}${(depth === 0 ? '{#0}' : '')}{@${id}}{&${id}}>\n` +
+            output += indent + `<${tagName}${(depth === 0 ? '{#0}' : '')}{@${id}}>\n` +
                                xml +
                       indent + `</${tagName}>\n`;
         }
         else {
-            output += indent + `<${tagName}${(depth === 0 ? '{#0}' : '')}{@${id}}{&${id}} />\n`;
+            output += indent + `<${tagName}${(depth === 0 ? '{#0}' : '')}{@${id}} />\n`;
         }
         output += `{>${id}}` +
                   postXml;

@@ -554,7 +554,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const extension = (<IExtension> root.renderExtension);
         if (extension == null || !hasValue(root.dataset.target)) {
             const pathname = trim(optional(root, 'dataset.folder').trim(), '/');
-            this.updateLayout(pathname, (!empty ? output : ''), (extension != null && extension.documentRoot));
+            this.updateLayout(pathname, (!empty ? output : ''), (extension && extension.documentRoot));
         }
         else {
             this.views.pop();

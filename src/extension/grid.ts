@@ -293,7 +293,7 @@ export default class Grid extends Extension<T, U> {
                 const columnEnd = gridData.columnEnd[Math.min(gridCellData.index + (gridCellData.columnSpan - 1), gridData.columnEnd.length - 1)];
                 siblings = node.documentParent.children.filter(item => !item.renderParent && item.linear.left >= node.linear.right && item.linear.right <= columnEnd);
             }
-            if (siblings != null && siblings.length > 0) {
+            if (siblings && siblings.length > 0) {
                 siblings.unshift(node);
                 sortAsc(siblings, 'linear.left');
                 const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);

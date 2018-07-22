@@ -409,7 +409,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             const inverse = (index === 0 ? 1 : 0);
                             connected.forEach((current, level) => {
                                 const chainable: U = current.constraint[value];
-                                if (chainable != null && chainable.length > (flex.enabled ? 0 : 1)) {
+                                if (chainable && chainable.length > (flex.enabled ? 0 : 1)) {
                                     chainable.parent = node;
                                     if (flex.enabled && chainable.list.some(item => item.flex.order > 0)) {
                                         chainable[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
@@ -670,7 +670,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         const topBottom = (<string> adjacent.app(LAYOUT[value]));
                                         if (topBottom != null) {
                                             adjacent = (<T> pageflow.findByNodeId(stripId(topBottom)));
-                                            if (adjacent != null && current.withinY(adjacent.linear)) {
+                                            if (adjacent && current.withinY(adjacent.linear)) {
                                                 chain.push(adjacent);
                                                 valid = mapParent(adjacent, (index === 0 ? 'top' : 'bottom'));
                                                 if (valid) {
@@ -720,7 +720,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         const stringId = current.app(LAYOUT[value]);
                                         if (stringId != null) {
                                             const aligned = pageflow.list.find(item => item.stringId === stringId);
-                                            if (aligned != null && aligned.app(LAYOUT[direction[2]]) != null) {
+                                            if (aligned && aligned.app(LAYOUT[direction[2]]) != null) {
                                                 if (withinFraction(current.linear[direction[0]], aligned.linear[direction[0]])) {
                                                     current.app(LAYOUT[direction[0]], aligned.stringId, true);
                                                 }

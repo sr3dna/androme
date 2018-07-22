@@ -60,7 +60,7 @@ app.post('/api/savetodisk', (req, res) => {
                 try {
                     mkdirp.sync(pathname);
                     const entrydata = { name: `${(directory ? `${req.query.directory}/` : '')}${file.pathname}/${file.filename}` };
-                    if (file.content != null && file.content.trim() !== '') {
+                    if (file.content && file.content.trim() !== '') {
                         delayed++;
                         fs.writeFile(filename, file.content, (err) => {
                             if (delayed != -1) {
@@ -122,7 +122,7 @@ app.post('/api/savetodisk', (req, res) => {
 });
 
 app.get('/api/downloadtobrowser', (req, res) => {
-    if (req.query.filename != null && req.query.filename.trim() != '') {
+    if (req.query.filename && req.query.filename.trim() != '') {
         res.sendFile(req.query.filename, (err) => {
             if (err) {
                 console.log(`ERROR: ${err}`);
