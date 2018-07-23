@@ -1,10 +1,10 @@
-import { ExtensionResult } from '../../../lib/types';
+import { ExtensionResult, ObjectMap } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import { hasValue, includes, optional } from '../../../lib/util';
 import { stripId } from '../../../lib/xml';
-import { createPlaceholder, findNestedExtension, findNestedMenu, overwriteDefault } from '../lib/util';
+import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -48,7 +48,7 @@ export default class Drawer extends Extension<T, U> {
         let depth = node.depth + node.renderDepth;
         const optionsDrawer = Object.assign({}, this.options.drawer);
         const optionsCoordinator = Object.assign({}, this.options.coordinator);
-        let menu = findNestedMenu(node);
+        let menu = findNestedExtension(node, WIDGET_NAME.MENU);
         if (menu != null) {
             overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
         }
@@ -68,12 +68,7 @@ export default class Drawer extends Extension<T, U> {
         overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
             this.createResourceTheme();
-            overwriteDefault(optionsNavigation, 'android', 'id', `${node.stringId}_view`);
-            overwriteDefault(optionsNavigation, 'android', 'fitsSystemWindows', 'true');
-            overwriteDefault(optionsNavigation, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.DRAWER}:menu}`);
-            overwriteDefault(optionsNavigation, 'app', 'headerLayout', `@layout/{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`);
-            const navigation = controller.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, optionsNavigation, 'wrap_content', 'match_parent');
-            xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + navigation + `{:${node.id}}`);
+            xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + `{:${node.id}}`);
         }
         else {
             const navView = node.children[node.children.length - 1];
@@ -107,6 +102,19 @@ export default class Drawer extends Extension<T, U> {
                 delete application.insert[node.nodeId];
             }
         }
+        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
+        const options: ObjectMap<any> = Object.assign({}, this.options.navigation);
+        overwriteDefault(options, 'android', 'id', `${node.stringId}_view`);
+        overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+        if (menu !== '') {
+            overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
+        }
+        if (headerLayout !== '') {
+            overwriteDefault(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
+        }
+        const xml = application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');
+        application.addInsertQueue(node.id.toString(), [xml]);
     }
 
     public afterInsert() {
@@ -116,18 +124,6 @@ export default class Drawer extends Extension<T, U> {
             if (node.viewHeight === 0) {
                 node.android('layout_height', 'wrap_content');
             }
-        }
-    }
-
-    public finalize() {
-        const node = (<T> this.node);
-        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
-        const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
-        if (menu !== '') {
-            this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:menu}`, menu));
-        }
-        if (headerLayout !== '') {
-            this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.DRAWER}:headerLayout}`, headerLayout));
         }
     }
 

@@ -2,8 +2,8 @@ import { ExtensionResult } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
-import { includes, optional } from '../../../lib/util';
-import { findNestedMenu, overwriteDefault } from '../lib/util';
+import { optional } from '../../../lib/util';
+import { findNestedExtension, overwriteDefault } from '../lib/util';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
@@ -23,7 +23,6 @@ export default class BottomNavigation extends Extension<T, U> {
         const parent = (<T> this.parent);
         const options = Object.assign({}, this.options[node.element.id]);
         overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
-        overwriteDefault(options, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`);
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
         for (let i = 5; i < node.children.length; i++) {
             node.children[i].hide();
@@ -36,27 +35,20 @@ export default class BottomNavigation extends Extension<T, U> {
         return { xml };
     }
 
+    public beforeInsert() {
+        const node = (<T> this.node);
+        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        if (menu !== '') {
+            const options = Object.assign({}, this.options[node.element.id]);
+            overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
+            node.app('menu', options.app.menu);
+        }
+    }
+
     public afterInsert() {
         const node = (<T> this.node);
         if (node.renderParent.viewHeight === 0) {
             node.renderParent.android('layout_height', 'match_parent');
-        }
-    }
-
-    public finalize() {
-        const node = (<T> this.node);
-        if (findNestedMenu(node) != null) {
-            let menu = '';
-            Array.from(this.application.elements).some(element => {
-                if (element.parentElement === node.element && includes(optional(element, 'dataset.ext'), WIDGET_NAME.MENU)) {
-                    menu = (<string> element.dataset.viewName);
-                    return true;
-                }
-                return false;
-            });
-            if (menu !== '') {
-                this.application.layouts.forEach(view => view.content = view.content.replace(`{${node.id}:${WIDGET_NAME.BOTTOM_NAVIGATION}:menu}`, menu));
-            }
         }
     }
 

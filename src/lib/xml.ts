@@ -3,9 +3,7 @@ import { convertDP, hasValue, repeat } from './util';
 import SETTINGS from '../settings';
 
 export function removePlaceholders(value: string) {
-    value = value.replace(/{[<:@>]{1}[0-9]+}/g, '');
-    value = value.replace(/{[0-9]+:.*?}/g, '');
-    return value.trim();
+    return value.replace(/{[<:@>]{1}[0-9]+}/g, '').trim();
 }
 
 export function placeIndent(value: string, depth: number) {

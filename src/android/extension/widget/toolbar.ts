@@ -4,7 +4,7 @@ import Resource from '../../../base/resource';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import { convertPX, hasValue, includes, optional } from '../../../lib/util';
-import { createPlaceholder, findNestedMenu, overwriteDefault } from '../lib/util';
+import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
 import { formatDimen, stripId } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE } from '../../../lib/constants';
@@ -58,7 +58,7 @@ export default class Toolbar extends Extension<T, U> {
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
-        const hasMenu = (findNestedMenu(node) != null);
+        const hasMenu = (findNestedExtension(node, WIDGET_NAME.MENU) != null);
         const backgroundImage = node.css('backgroundImage');
         let depth = (target ? 0 : node.depth + node.renderDepth);
         let children = node.children.filter(item => !item.isolated).length;
@@ -125,7 +125,6 @@ export default class Toolbar extends Extension<T, U> {
             node.excludeProcedure |= NODE_PROCEDURE.LAYOUT;
         }
         if (hasMenu) {
-            overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`);
             if (appBar) {
                 if (optionsToolbar.app.popupTheme != null) {
                     popupOverlay = optionsToolbar.app.popupTheme.replace('@style/', '');
@@ -244,14 +243,14 @@ export default class Toolbar extends Extension<T, U> {
         return { xml: '' };
     }
 
-    public finalize() {
+    public beforeInsert() {
         const node = (<T> this.node);
-        const menu = findNestedMenu(node);
-        if (menu != null) {
-            const layouts = this.application.layouts;
-            for (let i = 0; i < layouts.length; i++) {
-                layouts[i].content = layouts[i].content.replace(`{${node.id}:${WIDGET_NAME.TOOLBAR}:menu}`, <string> menu.dataset.viewName);
-            }
+        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        if (menu !== '') {
+            const options = Object.assign({}, this.options[node.element.id]);
+            const optionsToolbar = Object.assign({}, options.toolbar);
+            overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
+            node.app('menu', optionsToolbar.app.menu);
         }
     }
 

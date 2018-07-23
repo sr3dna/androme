@@ -4,7 +4,6 @@ import View from '../../view';
 import { convertPX, hasValue, includes, isNumber, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../lib/constants';
-import { WIDGET_NAME } from './constants';
 import parseRTL from '../../localization';
 import SETTINGS from '../../../settings';
 
@@ -62,10 +61,6 @@ export function formatResource(options: {}) {
         }
     }
     return options;
-}
-
-export function findNestedMenu(node: T, requireExt = true) {
-    return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => element.tagName === 'NAV' && (!requireExt || includes(optional(element, 'dataset.ext', 'string'), WIDGET_NAME.MENU))));
 }
 
 export function findNestedExtension(node: T, extension: string) {
