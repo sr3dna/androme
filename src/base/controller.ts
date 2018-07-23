@@ -1,7 +1,7 @@
 import { Null, ObjectIndex, ViewData } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
-import { hasValue, repeat } from '../lib/util';
+import { repeat } from '../lib/util';
 
 export default abstract class Controller<T extends Node, U extends NodeList<T>> {
     public cache: U;
@@ -73,7 +73,7 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
         const indent = repeat(Math.max(0, depth));
         let output = preXml +
                      `{<${id}}`;
-        if (hasValue(xml)) {
+        if (xml !== '') {
             output += indent + `<${tagName}${(depth === 0 ? '{#0}' : '')}{@${id}}>\n` +
                                xml +
                       indent + `</${tagName}>\n`;

@@ -307,11 +307,9 @@ export function search(obj: ObjectMap<string>, value: string | StringMap) {
         else if (/\*$/.test(value)) {
             filter = (a: string): boolean => (a.startsWith(value.replace(/\*/, '')));
         }
-        if (filter != null) {
-            for (const i in obj) {
-                if (filter(i)) {
-                    result.push([i, obj[i]]);
-                }
+        for (const i in obj) {
+            if (filter(i)) {
+                result.push([i, obj[i]]);
             }
         }
     }
@@ -350,7 +348,7 @@ export function calculateBias(start: number, end: number) {
 }
 
 export function hasValue(value: any) {
-    return (typeof value !== 'undefined' && value !== null && value.toString() !== '');
+    return (typeof value !== 'undefined' && value !== null && value.toString().trim() !== '');
 }
 
 export function withinRange(a: number, b: number, n = 1) {

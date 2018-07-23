@@ -1,12 +1,14 @@
+import { hasValue } from './util';
+
 interface Color {
     name: string;
     hex: string;
-    rgb: {
+    rgb?: {
         r: number;
         g: number;
         b: number;
     };
-    hsl: {
+    hsl?: {
         h: number;
         s: number;
         l: number;
@@ -161,8 +163,11 @@ const HSL_SORTED: Color[] = [];
 for (const i in X11_CSS3) {
     const x11: Color = X11_CSS3[i];
     for (const j in x11) {
-        x11.rgb = convertHextoRGB(<string> x11[j]);
-        x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
+        const rgb = convertHextoRGB(<string> x11[j]);
+        if (rgb != null) {
+            x11.rgb = rgb;
+            x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
+        }
         HSL_SORTED.push({ name: i, rgb: x11.rgb, hex: x11.hex, hsl: x11.hsl });
     }
 }
@@ -209,14 +214,17 @@ function convertRGBtoHSL(r: number, g: number, b: number) {
 }
 
 function sortHSL(a: Color, b: Color) {
-    let [c, d] = [a.hsl.h, b.hsl.h];
-    if (c === d) {
-        [c, d] = [a.hsl.s, b.hsl.s];
+    if (a.hsl != null && b.hsl != null) {
+        let [c, d] = [a.hsl.h, b.hsl.h];
         if (c === d) {
-            [c, d] = [a.hsl.l, b.hsl.l];
+            [c, d] = [a.hsl.s, b.hsl.s];
+            if (c === d) {
+                [c, d] = [a.hsl.l, b.hsl.l];
+            }
         }
+        return (c >= d ? 1 : -1);
     }
-    return (c >= d ? 1 : -1);
+    return 0;
 }
 
 export function findNearestColor(value: string) {
@@ -239,7 +247,7 @@ export function findNearestColor(value: string) {
 
 export function getByColorName(value: string) {
     for (const color in X11_CSS3) {
-        if (color.toLowerCase() === value.toLowerCase()) {
+        if (color.toLowerCase() === value.trim().toLowerCase()) {
             return X11_CSS3[color];
         }
     }
@@ -247,11 +255,11 @@ export function getByColorName(value: string) {
 }
 
 export function convertRGB({ rgb }: Color) {
-    return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+    return (rgb != null ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '');
 }
 
 export function parseRGBA(value: string, opacity = '1'): string[] {
-    if (value != null) {
+    if (hasValue(value)) {
         const color = getByColorName(value);
         if (color !== '') {
             return [color.hex, convertRGB(color), '1'];
@@ -285,11 +293,11 @@ export function convertHextoRGB(value: string) {
     if (value.length === 6) {
         return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
     }
-    return { r: -1, g: -1, b: -1 };
+    return null;
 }
 
 export function parseHex(value: string) {
-    if (value != null) {
+    if (hasValue(value)) {
         value = value.trim();
         const color = parseRGBA(value);
         if (color.length > 0) {

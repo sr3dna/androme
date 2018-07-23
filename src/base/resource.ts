@@ -382,7 +382,7 @@ export default abstract class Resource<T extends Node> {
                         name = element.innerText.trim();
                         value = element.innerHTML.trim();
                     }
-                    if (hasValue(value)) {
+                    if (value !== '') {
                         const result = Resource.addString(value, name);
                         object.__valueString = result;
                     }
