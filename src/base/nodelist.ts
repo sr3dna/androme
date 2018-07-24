@@ -88,7 +88,7 @@ export default abstract class NodeList<T extends Node> {
     }
 
     get visible() {
-        return this._list.filter(node => node.visible || node.companion);
+        return this._list.filter(node => node.visible);
     }
 
     get elements() {

@@ -158,13 +158,15 @@ export default class Grid extends Extension<T, U> {
                         }
                         else {
                             const current = columns.length - 1;
-                            const minLeft = columns[current].reduce((a: number, b: T) => Math.min(a, b.linear.left), Number.MAX_VALUE);
-                            const maxRight = columns[current].reduce((a: number, b: T) => Math.max(a, b.linear.right), 0);
-                            if (left > minLeft && right > maxRight) {
-                                const filtered = columns.filter(item => item);
-                                const row = findRowIndex();
-                                if (row !== -1 && filtered[filtered.length - 1][row] == null) {
-                                    columns[current] = null;
+                            if (columns[current] != null) {
+                                const minLeft = columns[current].reduce((a: number, b: T) => Math.min(a, b.linear.left), Number.MAX_VALUE);
+                                const maxRight = columns[current].reduce((a: number, b: T) => Math.max(a, b.linear.right), 0);
+                                if (left > minLeft && right > maxRight) {
+                                    const filtered = columns.filter(item => item);
+                                    const row = findRowIndex();
+                                    if (row !== -1 && filtered[filtered.length - 1][row] == null) {
+                                        columns[current] = null;
+                                    }
                                 }
                             }
                         }

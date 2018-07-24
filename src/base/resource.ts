@@ -192,6 +192,7 @@ export default abstract class Resource<T extends Node> {
     public reset() {
         Resource.STORED.STRINGS = new Map();
         Resource.STORED.COLORS = new Map();
+        Resource.STORED.DIMENS = new Map();
         Resource.STORED.IMAGES = new Map();
         this.file.reset();
     }
@@ -370,10 +371,23 @@ export default abstract class Resource<T extends Node> {
                 if (!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources) {
                     let name = '';
                     let value = '';
-                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                        if (element.type !== 'range') {
-                            value = element.value.trim();
+                    if (element.tagName === 'INPUT') {
+                        switch (element.type) {
+                            case 'text':
+                            case 'number':
+                            case 'email':
+                            case 'search':
+                            case 'button':
+                                value = element.value.trim();
+                            default:
+                                if (node.companion != null) {
+                                    value = node.companion.element.innerText.trim();
+                                }
+                                break;
                         }
+                    }
+                    else if (element.tagName === 'TEXTAREA') {
+                        value = element.value.trim();
                     }
                     else if (element.nodeName === '#text') {
                         value = optional(element, 'textContent').trim();

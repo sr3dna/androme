@@ -59,14 +59,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public finalize() {
-        this.cacheInternal.visible.forEach(node => {
-            if (!node.companion) {
-                if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.LAYOUT)) {
-                    node.setLayout();
-                }
-                if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ALIGNMENT)) {
-                    node.setAlignment();
-                }
+        this.cacheInternal.list.filter(node => node.visible && node.renderParent instanceof this.TypeT).forEach(node => {
+            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.LAYOUT)) {
+                node.setLayout();
+            }
+            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ALIGNMENT)) {
+                node.setAlignment();
             }
         });
         this.controllerHandler.adjustBoxSpacing(this.viewData);
@@ -91,13 +89,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public reset() {
         resetId();
         this.cacheInternal.list.forEach(node => {
-            const element: any = node.element;
-            delete element.__boxSpacing;
-            delete element.__boxStyle;
-            delete element.__fontStyle;
-            delete element.__imageSource;
-            delete element.__optionArray;
-            delete element.__valueString;
+            const object: any = node.element;
+            delete object.__style;
+            delete object.__styleMap;
+            delete object.__boxSpacing;
+            delete object.__boxStyle;
+            delete object.__fontStyle;
+            delete object.__imageSource;
+            delete object.__optionArray;
+            delete object.__valueString;
         });
         this.cache.reset();
         this.cacheInternal.reset();
@@ -258,12 +258,16 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 const element = node.element;
                 preAlignment[node.id] = {};
                 const style = preAlignment[node.id];
-                switch (node.styleMap.textAlign) {
+                const textAlign = node.css('textAlign');
+                switch (textAlign) {
                     case 'center':
+                        if (node.tagName !== 'BUTTON' && (<HTMLInputElement> element).type === 'button') {
+                            break;
+                        }
                     case 'right':
                     case 'end':
-                        style.textAlign = node.style.textAlign;
-                        element.style.textAlign = '';
+                        style.textAlign = textAlign;
+                        element.style.textAlign = 'left';
                         break;
                 }
                 style.verticalAlign = node.styleMap.verticalAlign || '';
@@ -282,9 +286,32 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
                 node.setBounds();
             });
+            this.cache.list.forEach(node => {
+                const element = (<HTMLInputElement> node.element);
+                if (element.tagName === 'INPUT' && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+                    switch (element.type) {
+                        case 'radio':
+                        case 'checkbox':
+                            [node.element.previousElementSibling, node.element.nextElementSibling].some((sibling: HTMLLabelElement) => {
+                                if (sibling && sibling.htmlFor !== '' && sibling.htmlFor === node.element.id) {
+                                    const label = (<any> sibling).__node;
+                                    if (label != null) {
+                                        node.companion = label;
+                                        node.setBounds();
+                                        label.hide();
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            });
+                            break;
+                    }
+                }
+            });
             const parents: ObjectIndex<T[]> = {};
-            this.cache.list.forEach(parent => {
-                this.cache.list.forEach(child => {
+            const visible = this.cache.visible;
+            visible.forEach(parent => {
+                visible.forEach(child => {
                     if (parent !== child) {
                         let elementParent = false;
                         if (child.element.parentElement === parent.element) {
@@ -301,7 +328,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                 });
             });
-            this.cache.list.forEach(node => {
+            visible.forEach(node => {
                 const nodes: Set<T> = new Set(parents[node.id]);
                 if (nodes.size > 0) {
                     nodes.add(<T> node.parent);
@@ -351,7 +378,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     let i = 0;
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         const child = (<T> (<any> element).__node);
-                        if (child && child.parent.element === node.element) {
+                        if (child && child.visible && child.parent.element === node.element) {
                             child.parentIndex = i++;
                         }
                     });
@@ -370,7 +397,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const mapX: ArrayIndex<ObjectIndex<T[]>> = [];
         const mapY: ArrayIndex<ObjectIndex<T[]>> = [];
         const extensions = this.extensions;
-        this.cache.list.forEach(node => {
+        this.cache.visible.forEach(node => {
             const x = Math.floor(node.linear.left);
             const y = node.parent.id;
             if (mapX[node.depth] == null) {
@@ -720,8 +747,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
         return (linearX || linearY) &&
-               !parent.flex.enabled &&
-               (
+               !parent.flex.enabled && (
                    !children.some(node => node.floating && node.css('clear') !== 'none') &&
                    (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')) &&
                    children.every(node => node.pageflow)

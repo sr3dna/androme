@@ -260,7 +260,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
 ```
 ### Generated from HTML and CSS
 
-<img src="demos/android/form.png" alt="form" />
+<img src="demos/android/form.png" alt="form" /> <img src="demos/android/form_rtl.png" alt="form: rtl" />
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -292,7 +292,7 @@ Most attributes can be excluded from the generated XML using the dataset feature
             android:id="@+id/gridlayout_1"
             android:columnCount="2"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
             android:paddingTop="@dimen/ul_padding_top">
@@ -961,29 +961,26 @@ Most attributes can be excluded from the generated XML using the dataset feature
                     <RadioGroup
                         android:id="@+id/radiogroup_1"
                         android:checkedButton="@+id/c2"
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        style="@style/linearlayout_8">
                         <RadioButton
                             android:id="@+id/c2"
                             android:layout_marginStart="@dimen/radio_margin_start"
                             android:text="@string/birth"
-                            style="@style/Radio.radiogroup_1" />
+                            style="@style/radiogroup_1" />
                         <RadioButton
                             android:id="@+id/c3"
                             android:layout_marginStart="@dimen/radio_margin_start_1"
                             android:text="@string/death"
-                            style="@style/Radio.radiogroup_1" />
+                            style="@style/radiogroup_1" />
                     </RadioGroup>
                     <CheckBox
                         android:id="@+id/c4"
-                        android:layout_height="wrap_content"
                         android:layout_marginEnd="@dimen/checkbox_margin_end"
                         android:layout_marginStart="@dimen/checkbox_margin_start"
                         android:layout_marginVertical="@dimen/checkbox_margin_vertical"
-                        android:layout_width="wrap_content"
                         android:text="@string/none"
-                        style="@style/Checkbox" />
+                        style="@style/linearlayout_8" />
                 </LinearLayout>
                 <Button
                     android:id="@+id/button_6"
@@ -1214,10 +1211,6 @@ Most attributes can be excluded from the generated XML using the dataset feature
     <style name="Button_1" parent="Button">
         <item name="android:textColor">@color/gray</item>
     </style>
-    <style name="Checkbox">
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="android:textSize">11sp</item>
-    </style>
     <style name="H2">
         <item name="android:background">@color/dark_blue</item>
         <item name="android:fontFamily">tahoma</item>
@@ -1232,11 +1225,11 @@ Most attributes can be excluded from the generated XML using the dataset feature
     <style name="Label_1" parent="Label">
         <item name="android:textStyle">italic</item>
     </style>
-    <style name="Radio">
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="android:textSize">11sp</item>
+    <style name="linearlayout_8">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">wrap_content</item>
     </style>
-    <style name="Radio.radiogroup_1">
+    <style name="radiogroup_1">
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginEnd">@dimen/radio_margin_end</item>
         <item name="android:layout_marginTop">@dimen/radio_margin_top</item>
@@ -1293,8 +1286,8 @@ Most attributes can be excluded from the generated XML using the dataset feature
     <dimen name="button_minwidth">35dp</dimen>
     <dimen name="button_padding_horizontal">6dp</dimen>
     <dimen name="button_padding_vertical">1dp</dimen>
-    <dimen name="checkbox_margin_end">1dp</dimen>
-    <dimen name="checkbox_margin_start">8dp</dimen>
+    <dimen name="checkbox_margin_end">3dp</dimen>
+    <dimen name="checkbox_margin_start">6dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">4dp</dimen>
     <dimen name="form_padding_horizontal">10dp</dimen>
@@ -1307,10 +1300,10 @@ Most attributes can be excluded from the generated XML using the dataset feature
     <dimen name="label_margin_end">5dp</dimen>
     <dimen name="label_padding_top">3dp</dimen>
     <dimen name="label_width">80dp</dimen>
-    <dimen name="radio_margin_end">1dp</dimen>
-    <dimen name="radio_margin_start">5dp</dimen>
-    <dimen name="radio_margin_start_1">9dp</dimen>
+    <dimen name="radio_margin_end">3dp</dimen>
+    <dimen name="radio_margin_start">7dp</dimen>
     <dimen name="radio_margin_top">3dp</dimen>
+    <dimen name="radiogroup_margin_start">5dp</dimen>
     <dimen name="select_constraintwidth_min">37dp</dimen>
     <dimen name="select_margin_start">4dp</dimen>
     <dimen name="select_margin_top">13dp</dimen>

@@ -19,6 +19,10 @@ export default class ViewGroup extends View {
             this.children = children;
         }
         this.depth = node.depth;
+        this.tagName = `${node.tagName}group`;
+        if (this.documentParent instanceof View) {
+            this.css('direction', this.documentParent.dir);
+        }
     }
 
     public setLayout() {
@@ -80,18 +84,17 @@ export default class ViewGroup extends View {
         let left = [children[0]];
         for (let i = 1; i < children.length; i++) {
             const node = children[i];
-            const nodeRight = node.label || node;
             if (top[0].linear.top === node.linear.top) {
                 top.push(node);
             }
             else if (node.linear.top < top[0].linear.top) {
                 top = [node];
             }
-            if (right[0].linear.right === nodeRight.linear.right) {
-                right.push(nodeRight);
+            if (right[0].linear.right === node.linear.right) {
+                right.push(node);
             }
-            else if (nodeRight.linear.right > right[0].linear.right) {
-                right = [nodeRight];
+            else if (node.linear.right > right[0].linear.right) {
+                right = [node];
             }
             if (bottom[0].linear.bottom === node.linear.bottom) {
                 bottom.push(node);

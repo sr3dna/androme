@@ -65,12 +65,12 @@ export default class Drawer extends Extension<T, U> {
         coordinatorNode.nodeId = stripId(optionsCoordinator.android.id);
         const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, optionsCoordinator, 'match_parent', 'match_parent', coordinatorNode, true);
         const optionsNavigation = Object.assign({}, this.options.navigation);
-        overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
         if (menu != null) {
             this.createResourceTheme();
             xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + `{:${node.id}}`);
         }
         else {
+            overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
             const navView = node.children[node.children.length - 1];
             navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
@@ -105,16 +105,18 @@ export default class Drawer extends Extension<T, U> {
         const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
         const options: ObjectMap<any> = Object.assign({}, this.options.navigation);
-        overwriteDefault(options, 'android', 'id', `${node.stringId}_view`);
-        overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
         if (menu !== '') {
             overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
         }
         if (headerLayout !== '') {
             overwriteDefault(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
         }
-        const xml = application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');
-        application.addInsertQueue(node.id.toString(), [xml]);
+        if (menu !== '' || headerLayout !== '') {
+            overwriteDefault(options, 'android', 'id', `${node.stringId}_view`);
+            overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+            const xml = application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');
+            application.addInsertQueue(node.id.toString(), [xml]);
+        }
     }
 
     public afterInsert() {

@@ -873,11 +873,11 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 switch (node.android('orientation')) {
                     case 'horizontal':
                         let left = node.box.left;
-                        sortAsc(node.renderChildren, 'linear.left').forEach((item, index) => {
+                        sortAsc(node.renderChildren.slice(), 'linear.left').forEach((item, index) => {
                             let valid = true;
                             if (index === 0) {
                                 const gravity = node.android('gravity');
-                                if (gravity != null || gravity !== parseRTL('left')) {
+                                if (gravity != null && gravity !== parseRTL('left')) {
                                     valid = false;
                                 }
                             }
@@ -887,12 +887,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     item.modifyBox(BOX_STANDARD.MARGIN_LEFT, item.marginLeft + width, true);
                                 }
                             }
-                            left = (item.label || item).linear.right;
+                            left = item.linear.right;
                         });
                         break;
                     case 'vertical':
                         let top = node.box.top;
-                        sortAsc(node.renderChildren, 'linear.top').forEach(item => {
+                        sortAsc(node.renderChildren.slice(), 'linear.top').forEach(item => {
                             const height = Math.ceil(item.linear.top - top);
                             if (height >= 1) {
                                 item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + height, true);
@@ -1027,23 +1027,18 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
-                            const result = (<T[]> node.documentParent.children.filter(item => (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name));
+                            const result = (<T[]> parent.children.filter(item => (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name));
                             let xml = '';
                             if (result.length > 1) {
-                                const viewGroup = new ViewGroup(this.cache.nextId, node, parent, result);
-                                const view = (<View> viewGroup) as T;
-                                let checked: string = '';
-                                this.cache.list.push(view);
+                                const viewGroup = this.createGroup(node, parent, result);
                                 viewGroup.setNodeId(NODE_ANDROID.RADIO_GROUP);
                                 viewGroup.render(parent);
+                                let checked: string = '';
                                 result.forEach(item => {
-                                    item.inherit(viewGroup, 'data');
                                     if ((<HTMLInputElement> item.element).checked) {
                                         checked = item.stringId;
                                     }
-                                    item.parent = viewGroup;
-                                    item.render(viewGroup);
-                                    xml += this.renderNode(item, view, NODE_STANDARD.RADIO, true);
+                                    xml += this.renderNode(item, (<View> viewGroup) as T, NODE_STANDARD.RADIO, true);
                                 });
                                 viewGroup.android('orientation', NodeList.linearX(viewGroup.children) ? 'horizontal' : 'vertical');
                                 if (checked !== '') {
@@ -1139,6 +1134,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             item.inherit(group, 'data');
         });
         group.setBounds();
+        parent.children = parent.children.filter((item: T) => !children.includes(item));
+        parent.children.push(group);
         this.cache.list.push(<View> group as T);
         return (<View> group as T);
     }
@@ -1224,6 +1221,16 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private parseAttributes(node: T) {
+        if (node.renderChildren.length === 0 && node.dir === 'rtl') {
+            switch (node.nodeName) {
+                case NODE_ANDROID.CHECKBOX:
+                case NODE_ANDROID.RADIO:
+                    node.android('layoutDirection', 'rtl');
+                    break;
+                default:
+                    node.android('textDirection', 'rtl');
+            }
+        }
         const attributes = node.combine();
         const indent = repeat(node.renderDepth + 1);
         const output = attributes.map((value: string) => `\n${indent + value}`).join('');

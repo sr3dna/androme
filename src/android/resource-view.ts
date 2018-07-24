@@ -193,9 +193,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const stored = object.__boxStyle;
                 if (stored != null) {
                     const method = METHOD_ANDROID['boxStyle'];
-                    const label = node.label;
-                    if (label && !sameAsParent(label.element, 'backgroundColor')) {
-                        stored.backgroundColor = (<any> label.element).__boxStyle.backgroundColor;
+                    const companion = node.companion;
+                    if (companion != null && !sameAsParent(companion.element, 'backgroundColor')) {
+                        stored.backgroundColor = (<any> companion.element).__boxStyle.backgroundColor;
                     }
                     if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
                         let template: Null<ObjectMap<string>> = null;
@@ -359,14 +359,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const nodes: T[] = tagName[tag];
             const sorted: StyleList = [];
             nodes.forEach(node => {
-                if (node.labelFor != null) {
-                    return;
-                }
                 let system = false;
                 let labelFor: Null<T> = null;
-                if (node.label != null) {
+                if (node.companion != null) {
                     labelFor = node;
-                    node = (<T> node.label);
+                    node = (<T> node.companion);
                 }
                 const element = node.element;
                 const nodeId = (labelFor || node).id;
@@ -489,8 +486,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setValueString(inlineExclude);
         this.cache.list.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
-                const element = (node.label != null ? node.label.element : node.element);
-                const stored = (<any> element).__valueString;
+                const stored = (<any> node.element).__valueString;
                 if (stored != null) {
                     const method = METHOD_ANDROID['valueString'];
                     let value = (<string> STORED.STRINGS.get(stored));
@@ -508,7 +504,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             STORED.STRINGS.set(stored, value);
                         }
                     }
-                    node.attr(formatString(method['text'], ((parseInt(stored) || '').toString() !== stored ? `@string/${stored}` : stored)), (node.renderExtension == null));
+                    node.attr(formatString(method['text'], (isNaN(parseInt(stored)) || parseInt(stored).toString() !== stored ? `@string/${stored}` : stored)), (node.renderExtension == null));
                 }
             }
         });

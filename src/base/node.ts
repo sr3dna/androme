@@ -20,8 +20,8 @@ export default abstract class Node implements BoxModel {
     public excludeProcedure = 0;
     public excludeResource = 0;
     public documentRoot = false;
+    public companion: T;
     public visible = true;
-    public companion = false;
     public isolated = false;
     public relocated = false;
 
@@ -285,6 +285,12 @@ export default abstract class Node implements BoxModel {
             const bounds = (element != null ? getRangeBounds(element) : (this.hasElement ? assignBounds(<ClientRect> this.element.getBoundingClientRect()) : null));
             if (bounds != null) {
                 this.bounds = bounds;
+                if (this.companion != null) {
+                    const outerBounds = assignBounds(<ClientRect> this.companion.element.getBoundingClientRect());
+                    this.bounds.left = Math.min(bounds.left, outerBounds.left);
+                    this.bounds.right = Math.max(bounds.right, outerBounds.right);
+                    this.bounds.width = this.bounds.right - this.bounds.left;
+                }
             }
         }
         if (this.bounds != null) {
@@ -385,7 +391,7 @@ export default abstract class Node implements BoxModel {
         return this._nodeName;
     }
 
-    set renderParent(value: any) {
+    set renderParent(value: T | boolean) {
         if (value instanceof Node && value !== this && value.renderChildren.indexOf(this) === -1) {
             value.renderChildren.push(this);
         }
@@ -473,13 +479,21 @@ export default abstract class Node implements BoxModel {
         return (this.inline ? 0 : convertInt(this.css('marginTop')));
     }
     get marginRight() {
-        return convertInt(this.css('marginRight'));
+        let node = (<T> this);
+        if (this.companion != null && this.companion.bounds.right > this.bounds.right) {
+            node = this.companion;
+        }
+        return convertInt(node.css('marginRight'));
     }
     get marginBottom() {
         return (this.inline ? 0 : convertInt(this.css('marginBottom')));
     }
     get marginLeft() {
-        return convertInt(this.css('marginLeft'));
+        let node = (<T> this);
+        if (this.companion != null && this.companion.bounds.left < this.bounds.left) {
+            node = this.companion;
+        }
+        return convertInt(node.css('marginLeft'));
     }
 
     get borderTopWidth() {
@@ -499,13 +513,21 @@ export default abstract class Node implements BoxModel {
         return convertInt(this.css('paddingTop'));
     }
     get paddingRight() {
-        return convertInt(this.css('paddingRight'));
+        let node = (<T> this);
+        if (this.companion != null && this.companion.bounds.right > this.bounds.right) {
+            node = this.companion;
+        }
+        return convertInt(node.css('paddingRight'));
     }
     get paddingBottom() {
         return convertInt(this.css('paddingBottom'));
     }
     get paddingLeft() {
-        return convertInt(this.css('paddingLeft'));
+        let node = (<T> this);
+        if (this.companion != null && this.companion.bounds.left < this.bounds.left) {
+            node = this.companion;
+        }
+        return convertInt(node.css('paddingLeft'));
     }
 
     get pageflow() {
@@ -515,6 +537,26 @@ export default abstract class Node implements BoxModel {
 
     get inline() {
         return (!this.floating && (this.css('display') === 'inline' || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName))));
+    }
+
+    get dir() {
+        switch (this.css('direction')) {
+            case 'unset':
+            case 'inherit':
+                let parent = this.documentParent;
+                while (parent != null) {
+                    const dir = parent.dir;
+                    if (dir !== '') {
+                        return dir;
+                    }
+                    parent = parent.documentParent;
+                }
+                return '';
+            case 'rtl':
+                return 'rtl';
+            default:
+                return 'ltr';
+        }
     }
 
     get center(): Point {

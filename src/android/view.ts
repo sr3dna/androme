@@ -14,13 +14,11 @@ export default class View extends Node {
     }
 
     public constraint: ObjectMap<any> = {};
-    public labelFor: T;
     public children: T[] = [];
     public renderChildren: T[] = [];
 
     private _android: StringMap;
     private _app: StringMap;
-    private _label: T;
 
     constructor(
         public id: number,
@@ -77,22 +75,24 @@ export default class View extends Node {
         if (overwrite == null) {
             overwrite = (adjacent === 'parent' || adjacent === 'true');
         }
-        switch (this.renderParent.nodeName) {
-            case NODE_ANDROID.CONSTRAINT:
-                if (arguments.length === 1) {
-                    return this.app(position);
-                }
-                this.app(position, adjacent, overwrite);
-                break;
-            case NODE_ANDROID.RELATIVE:
-                if (arguments.length === 1) {
-                    return this.android(position);
-                }
-                this.android(position, adjacent, overwrite);
-                break;
-        }
-        if (hasValue(orientation)) {
-            this.constraint[<string> orientation] = true;
+        if (this.renderParent instanceof View) {
+            switch (this.renderParent.nodeName) {
+                case NODE_ANDROID.CONSTRAINT:
+                    if (arguments.length === 1) {
+                        return this.app(position);
+                    }
+                    this.app(position, adjacent, overwrite);
+                    break;
+                case NODE_ANDROID.RELATIVE:
+                    if (arguments.length === 1) {
+                        return this.android(position);
+                    }
+                    this.android(position, adjacent, overwrite);
+                    break;
+            }
+            if (hasValue(orientation)) {
+                this.constraint[<string> orientation] = true;
+            }
         }
     }
 
@@ -198,9 +198,6 @@ export default class View extends Node {
     }
 
     public setLayout(width?: number, height?: number) {
-        if (!(this.renderParent instanceof View)) {
-            return;
-        }
         if (width == null) {
             width = (this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0);
         }
@@ -258,13 +255,13 @@ export default class View extends Node {
                 let maxRightParent = 0;
                 const parentMaxWidth = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0));
                 if (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal) {
-                    maxRight = Math.ceil(this.cascade().reduce((a: number, b: T) => Math.max(a, b.linear.right), 0));
-                    maxRightParent = Math.floor(parent.cascade().reduce((a: number, b: T) => Math.max(a, b.linear.right), 0));
+                    maxRight = Math.floor(this.cascade().filter(node => node.visible).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
+                    maxRightParent = Math.floor(parent.cascade().filter((node: T) => node.visible && !parent.children.includes(node)).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
                 }
                 if (convertInt(this.android('layout_columnWeight')) > 0) {
                     this.android('layout_width', '0px');
                 }
-                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && parentMaxWidth > 0 && width >= widthParent) || (!this.floating && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight >= maxRightParent)) && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
+                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && parentMaxWidth > 0 && width >= widthParent) || (!this.floating && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight < maxRightParent)) && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
                     this.android('layout_width', 'match_parent');
                 }
                 else {
@@ -310,9 +307,6 @@ export default class View extends Node {
     }
 
     public setAlignment() {
-        if (!(this.renderParent instanceof View)) {
-            return;
-        }
         const left = parseRTL('left');
         const right = parseRTL('right');
         function convertHorizontal(value: string) {
@@ -370,14 +364,14 @@ export default class View extends Node {
             this.android('layout_gravity', 'fill');
         }
         else {
-            const gravityParent = (<string> (this.renderParent.android('gravity') || ''));
-            let horizontalFloat = (this.css('float') === 'right' && gravityParent !== right ? right : '');
+            const gravityParent = (<string> (renderParent.android('gravity') || ''));
+            let horizontalFloat = ((this.css('float') === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
             let verticalFloat = '';
-            if (horizontalFloat === '' && gravityParent.indexOf(horizontalParent) === -1 && !textView) {
+            if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
                 horizontalFloat = horizontal;
                 horizontal = '';
             }
-            if (vertical !== '' && renderParent instanceof View && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
+            if (vertical !== '' && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
                 verticalFloat = vertical;
                 vertical = '';
             }
@@ -406,7 +400,8 @@ export default class View extends Node {
     }
 
     public mergeBoxSpacing() {
-        if (this.api >= BUILD_ANDROID.OREO) {
+        const renderParent = this.renderParent;
+        if (this.api >= BUILD_ANDROID.OREO && renderParent instanceof View) {
             ['layout_margin', 'padding'].forEach((value, index) => {
                 const leftRtl = parseRTL(`${value}Left`);
                 const rightRtl = parseRTL(`${value}Right`);
@@ -419,7 +414,7 @@ export default class View extends Node {
                     this.android(value, formatPX(top));
                 }
                 else {
-                    if (index !== 0 || (this.renderParent instanceof View && !this.renderParent.is(NODE_STANDARD.GRID))) {
+                    if (index !== 0 || !renderParent.is(NODE_STANDARD.GRID)) {
                         if (top !== 0 && top === bottom) {
                             this.delete('android', `${value}Top`, `${value}Bottom`);
                             this.android(`${value}Vertical`, formatPX(top));
@@ -435,37 +430,24 @@ export default class View extends Node {
     }
 
     public setAccessibility() {
+        const node = (<T> this);
         const element = this.element;
-        const nextElement = (<HTMLLabelElement> element.nextElementSibling);
-        let labeled = false;
-        if (nextElement && nextElement.htmlFor === element.id && element.tagName === 'INPUT') {
-            const node = (<any> nextElement).__node;
-            if (node.children.length === 0) {
-                node.setNodeId(NODE_ANDROID.TEXT);
-                this.css('marginRight', node.style.marginRight);
-                this.css('paddingRight', node.style.paddingRight);
-                this.label = node;
-                node.hide();
-                node.labelFor = this;
-                labeled = true;
-            }
-        }
         switch (this.nodeName) {
             case NODE_ANDROID.EDIT:
-                if (!labeled) {
-                    let parent: T = this.renderParent;
-                    let current: T = this;
+                if (node.companion == null) {
+                    let parent = (<T> this.renderParent);
+                    let current = (<T> this);
                     let label: Null<T> = null;
-                    while (parent && parent.renderChildren != null) {
-                        const index = parent.renderChildren.findIndex(node => node === current);
+                    while (parent instanceof View && parent.renderChildren.length > 0) {
+                        const index = parent.renderChildren.findIndex(item => item === current);
                         if (index > 0) {
                             label = parent.renderChildren[index - 1];
                             break;
                         }
                         current = parent;
-                        parent = parent.renderParent;
+                        parent = (<T> parent.renderParent);
                     }
-                    if (label && label.is(NODE_STANDARD.TEXT)) {
+                    if (label && label.is(NODE_STANDARD.TEXT) && (<HTMLLabelElement> label.element).htmlFor === node.element.id) {
                         label.android('labelFor', this.stringId);
                     }
                 }
@@ -473,20 +455,11 @@ export default class View extends Node {
             case NODE_ANDROID.CHECKBOX:
             case NODE_ANDROID.RADIO:
             case NODE_ANDROID.BUTTON:
-                if ((<HTMLInputElement> this.element).disabled) {
+                if ((<HTMLInputElement> element).disabled) {
                     this.android('focusable', 'false');
                 }
                 break;
         }
-    }
-
-    set label(value: T) {
-        this._label = value;
-        value.companion = true;
-        value.labelFor = this;
-    }
-    get label() {
-        return this._label;
     }
 
     get stringId() {
