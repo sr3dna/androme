@@ -41,8 +41,15 @@ const CHAIN_MAP = {
 };
 
 export default class ViewController<T extends View, U extends ViewList<T>> extends Controller<T, U> {
+    private merge = {};
+
     constructor() {
         super();
+    }
+
+    public reset() {
+        super.reset();
+        this.merge = {};
     }
 
     public setConstraints() {
@@ -906,7 +913,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     public renderGroup(node: T, parent: T, viewName: number | string, options?: ObjectMap<any>) {
-        const target = hasValue(node.dataset.target);
+        const target = (hasValue(node.dataset.target) && !hasValue(node.dataset.include));
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
@@ -981,12 +988,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         }
         node.apply(options);
         node.render((target ? node : renderParent));
-        return this.getEnclosingTag((target || hasValue(parent.dataset.target) ? -1 : node.renderDepth), viewName, node.id, `{:${node.id}}`, preXml, postXml);
+        return this.getEnclosingTag((target || hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
 
     public renderNode(node: T, parent: T, nodeName: number | string, recursive = false) {
         const element: any = node.element;
-        const target = hasValue(node.dataset.target);
+        const target = (hasValue(node.dataset.target) && !hasValue(node.dataset.include));
         if (typeof nodeName === 'number') {
             nodeName = View.getViewName(nodeName);
         }
@@ -1088,14 +1095,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             node.setAccessibility();
         }
         node.cascade().forEach(item => item.hide());
-        return this.getEnclosingTag((target || hasValue(parent.dataset.target) ? -1 : node.renderDepth), node.nodeName, node.id);
+        return this.getEnclosingTag((target || hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), node.nodeName, node.id);
     }
 
     public renderNodeStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = '', height = '', node: Null<T> = null, children = false) {
-        let minimal = false;
         if (node == null) {
             node = (<T> new View(0, SETTINGS.targetAPI));
-            minimal = true;
         }
         const renderDepth = Math.max(0, depth);
         const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
@@ -1117,7 +1122,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         if (options != null) {
             node.apply(formatResource(options));
         }
-        let output = this.getEnclosingTag((depth === 0 && minimal ? -1 : depth), viewName, node.id, (children ? `{:${node.id}}` : ''));
+        let output = this.getEnclosingTag((depth === 0 && !node.documentRoot ? -1 : depth), viewName, node.id, (children ? `{:${node.id}}` : ''));
         if (SETTINGS.showAttributes && node.id === 0) {
             const indent = repeat(renderDepth + 1);
             const attributes = node.combine().map(value => `\n${indent + value}`).join('');
@@ -1125,6 +1130,26 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         }
         options.stringId = node.stringId;
         return output;
+    }
+
+    public renderInclude(node: T, name: string) {
+        this.merge[name] = (node.dataset.includeMerge === 'true');
+        node.documentRoot = !this.merge[name];
+        return this.renderNodeStatic('include', node.depth, { layout: `@layout/${name}` });
+    }
+
+    public renderIncludeContent(name: string, content: string[]) {
+        let xml = content.join('');
+        if (this.merge[name]) {
+            const node = new View(0, 0);
+            node.documentRoot = true;
+            xml = this.renderNodeStatic('merge', 0, {}, '', '', <T> node, true).replace('{:0}', xml);
+        }
+        return xml;
+    }
+
+    public getIncludeRenderDepth(name: string) {
+        return (this.merge[name] ? 0 : -1);
     }
 
     public createGroup(node: T, parent: T, children: T[]) {
@@ -1221,14 +1246,16 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private parseAttributes(node: T) {
-        if (node.renderChildren.length === 0 && node.dir === 'rtl') {
+        if (node.dir === 'rtl') {
             switch (node.nodeName) {
                 case NODE_ANDROID.CHECKBOX:
                 case NODE_ANDROID.RADIO:
                     node.android('layoutDirection', 'rtl');
                     break;
                 default:
-                    node.android('textDirection', 'rtl');
+                    if (node.renderChildren.length === 0) {
+                        node.android('textDirection', 'rtl');
+                    }
             }
         }
         const attributes = node.combine();
@@ -1322,7 +1349,11 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return this.cache.list.find(node => node.android('id') === id);
     }
 
-    get inlineExclude() {
+    get supportInline() {
         return WEBVIEW_ANDROID;
+    }
+
+    get supportIncludes() {
+        return true;
     }
 }

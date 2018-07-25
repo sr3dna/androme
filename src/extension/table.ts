@@ -54,7 +54,7 @@ export default class Table extends Extension<T, U> {
                 if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
                     td.styleMap.verticalAlign = 'middle';
                 }
-                const [width, height] = (node.style.borderCollapse === 'collapse' ? ['0px', '0px'] : (<string> node.style.borderSpacing).split(' '));
+                const [width, height] = (node.css('borderCollapse') === 'collapse' ? ['0px', '0px'] : (<string> node.css('borderSpacing')).split(' '));
                 delete td.styleMap.margin;
                 td.styleMap.marginTop = height;
                 td.styleMap.marginRight = width;

@@ -22,9 +22,13 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
     public abstract renderNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
+    public abstract renderInclude(node: T, name: string): string;
+    public abstract renderIncludeContent(name: string, content: string[]): string;
+    public abstract getIncludeRenderDepth(name: string): number;
     public abstract createGroup(node: T, parent: T, children: T[]): T;
 
-    public abstract get inlineExclude(): string[];
+    public abstract get supportInline(): string[];
+    public abstract get supportIncludes(): boolean;
 
     public reset() {
         this.before = {};

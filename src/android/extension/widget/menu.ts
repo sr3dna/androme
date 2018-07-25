@@ -44,6 +44,7 @@ export default class Menu<T extends View> extends Nav {
 
     public processNode(): ExtensionResult {
         const node = (<T> this.node);
+        node.documentRoot = true;
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.renderParent = true;
         node.cascade().forEach(item => item.renderExtension = (<IExtension> this));

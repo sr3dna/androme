@@ -137,25 +137,25 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         if (style !== '') {
                             style = trim(style.substring(style.indexOf('/') + 1), '"');
                         }
-                        const theme: string[] = [];
+                        const common: string[] = [];
                         for (const attr in map) {
                             const match = attr.match(/(\w+):(\w+)="(.*?)"/);
                             if (match != null) {
                                 children.forEach(child => child.delete(match[1], match[2]));
-                                theme.push(match[0]);
+                                common.push(match[0]);
                             }
                         }
-                        theme.sort();
+                        common.sort();
                         let name = '';
                         for (const index in styles) {
-                            if (styles[index].join(';') === theme.join(';')) {
+                            if (styles[index].join(';') === common.join(';')) {
                                 name = index;
                                 break;
                             }
                         }
                         if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
                             name = (style !== '' ? `${style}.` : '') + node.nodeId;
-                            styles[name] = theme;
+                            styles[name] = common;
                         }
                         children.forEach(child => child.add('_', 'style', `@style/${name}`));
                     }
@@ -345,7 +345,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setFontStyle() {
         super.setFontStyle();
         const tagName: ObjectMap<T[]> = {};
-        this.cache.list.forEach(node => {
+        this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
                 if ((<any> node.element).__fontStyle != null) {
                     if (tagName[node.tagName] == null) {
@@ -440,7 +440,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setImageSource() {
         super.setImageSource();
-        this.cache.list.filter(node => node.tagName === 'IMG').forEach(node => {
+        this.cache.visible.filter(node => node.tagName === 'IMG').forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
                 const object: any = node.element;
                 const stored = object.__imageSource;
@@ -454,7 +454,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.list.filter(node => node.tagName === 'SELECT').forEach(node => {
+        this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
                 const stored: ObjectMap<string[]> = (<any> node.element).__optionArray;
                 const method = METHOD_ANDROID['optionArray'];
@@ -482,9 +482,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    public setValueString(inlineExclude: string[]) {
-        super.setValueString(inlineExclude);
-        this.cache.list.forEach(node => {
+    public setValueString(supportInline: string[]) {
+        super.setValueString(supportInline);
+        this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const stored = (<any> node.element).__valueString;
                 if (stored != null) {

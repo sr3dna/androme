@@ -173,6 +173,23 @@ export default class View extends Node {
         });
     }
 
+    public clone(): T {
+        const node = new View(this.id, this.api, this.element);
+        node.nodeId = this.nodeId;
+        node.nodeType = this.nodeType;
+        node.nodeName = this.nodeName;
+        node.depth = this.depth;
+        node.renderDepth = this.renderDepth;
+        node.renderParent = this.renderParent;
+        node.renderExtension = this.renderExtension;
+        node.visible = this.visible;
+        node.documentRoot = this.documentRoot;
+        node.documentParent = this.documentParent;
+        node.children = this.children;
+        node.inherit(this, 'base', 'style', 'styleMap');
+        return node;
+    }
+
     public is(...views: number[]) {
         for (const value of views) {
             if (this.nodeName === View.getViewName(value)) {

@@ -65,6 +65,7 @@ export default abstract class Node implements BoxModel {
     public abstract applyCustomizations(): void;
     public abstract modifyBox(area: number, offset: number): void;
     public abstract boxValue(area: number): string[];
+    public abstract clone(): T;
 
     public add(ns: string, attr: string, value = '', overwrite = true) {
         const name = `_${ns || '_'}`;
@@ -120,7 +121,7 @@ export default abstract class Node implements BoxModel {
 
     public render(parent: T) {
         this.renderParent = parent;
-        this.renderDepth = (parent === this || this.documentRoot || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1);
+        this.renderDepth = (parent === this || this.documentRoot || (hasValue(parent.dataset.target) && !hasValue(parent.dataset.include)) ? 0 : parent.renderDepth + 1);
     }
 
     public hide() {

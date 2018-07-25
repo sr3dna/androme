@@ -363,7 +363,7 @@ export default abstract class Resource<T extends Node> {
         });
     }
 
-    public setValueString(inlineExclude: string[]) {
+    public setValueString(supportInline: string[]) {
         this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const element = (<HTMLInputElement> node.element);
@@ -392,7 +392,7 @@ export default abstract class Resource<T extends Node> {
                     else if (element.nodeName === '#text') {
                         value = optional(element, 'textContent').trim();
                     }
-                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && inlineExclude.includes(child.tagName)))))) {
+                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))))) {
                         name = element.innerText.trim();
                         value = element.innerHTML.trim();
                     }

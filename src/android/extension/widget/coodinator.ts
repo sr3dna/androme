@@ -48,6 +48,7 @@ export default class Coordinator extends Extension<T, U> {
             if (this.options.includes == null || this.options.includes) {
                 include = controller.renderNodeStatic('include', node.depth + 1, { layout: `@layout/${filename}` });
                 contentNode = createPlaceholder(application.cache.nextId, node, nodes);
+                contentNode.documentRoot = true;
                 contentNode.children.forEach(item => {
                     item.parent = (<T> contentNode);
                     item.depth++;
@@ -78,7 +79,9 @@ export default class Coordinator extends Extension<T, U> {
             const depth = (include !== '' ? 0 : node.depth + 1);
             let content = (include !== '' ? controller.renderNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', contentNode, true) : '');
             if (collapsingToolbar != null) {
-                content = controller.renderNodeStatic(NODE_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', new View(0, node.api), true).replace('{:0}', content);
+                const scrollView = new View(0, node.api);
+                scrollView.documentRoot = true;
+                content = controller.renderNodeStatic(NODE_ANDROID.SCROLL_NESTED, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', scrollView, true).replace('{:0}', content);
             }
             if (include !== '') {
                 application.addInclude(filename, content);

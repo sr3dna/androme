@@ -258,6 +258,35 @@ Most attributes can be excluded from the generated XML using the dataset feature
     <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>
 </div>
 ```
+### Using layout includes with merge tag
+
+Some applications can benefit from using includes and merge tags in order share common templates. These can be created easily and also supports nested includes.
+
+```xml
+<div>Item 1</div>
+<div data-include="filename1" data-include-merge="true">Item 2</div>
+<div>Item 3</div>
+<div data-include-end="true">Item 4</div>
+<div data-include="filename2" data-include-end="true">Item 5</div>
+```
+```xml
+<TextView>Item 1</TextView>
+<include layout="@layout/filename1">
+<include layout="@layout/filename2">
+<!-- res/layout/activity_main.xml -->
+
+<merge>
+    <TextView>Item 2</TextView>
+    <TextView>Item 3</TextView>
+    <TextView>Item 4</TextView>
+</merge>
+<!-- res/layout/filename1.xml -->
+
+<TextView>Item 5</TextView>
+<!-- res/layout/filename2.xml -->
+```
+See /demos/custom.html for usage instructions.
+
 ### Generated from HTML and CSS
 
 <img src="demos/android/form.png" alt="form" /> <img src="demos/android/form_rtl.png" alt="form: rtl" />

@@ -60,6 +60,7 @@ export default class Drawer extends Extension<T, U> {
             depth = -1;
         }
         const coordinatorNode = createPlaceholder(application.cache.nextId, node);
+        coordinatorNode.documentRoot = true;
         application.cache.list.push(coordinatorNode);
         overwriteDefault(optionsCoordinator, 'android', 'id', `${node.stringId}_content`);
         coordinatorNode.nodeId = stripId(optionsCoordinator.android.id);
@@ -114,6 +115,7 @@ export default class Drawer extends Extension<T, U> {
         if (menu !== '' || headerLayout !== '') {
             overwriteDefault(options, 'android', 'id', `${node.stringId}_view`);
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+            overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
             const xml = application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');
             application.addInsertQueue(node.id.toString(), [xml]);
         }

@@ -127,7 +127,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.resourceHandler.setFontStyle();
         this.resourceHandler.setBoxSpacing();
         this.resourceHandler.setBoxStyle();
-        this.resourceHandler.setValueString(this.controllerHandler.inlineExclude);
+        this.resourceHandler.setValueString(this.controllerHandler.supportInline);
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
     }
@@ -230,8 +230,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (!this.elements.has(element)) {
                 this.orderExt(extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
-                    const inlineExclude = this.controllerHandler.inlineExclude;
-                    if (element.parentElement != null && inlineExclude.includes(element.tagName) && (MAP_ELEMENT[element.parentElement.tagName] != null || inlineExclude.includes(element.parentElement.tagName))) {
+                    const supportInline = this.controllerHandler.supportInline;
+                    if (element.parentElement != null && supportInline.includes(element.tagName) && (MAP_ELEMENT[element.parentElement.tagName] != null || supportInline.includes(element.parentElement.tagName))) {
                         continue;
                     }
                     let valid = true;
@@ -351,8 +351,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         node.parent = closest;
                     }
                 }
-                const inlineExclude = this.controllerHandler.inlineExclude;
-                if (node.element.children.length > 0 && (inlineExclude.length === 0 || node.children.some(current => !inlineExclude.includes(current.tagName)))) {
+                const supportInline = this.controllerHandler.supportInline;
+                if (node.element.children.length > 0 && (supportInline.length === 0 || node.children.some(current => !supportInline.includes(current.tagName)))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
@@ -418,26 +418,37 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         for (let i = 0; i < mapY.length; i++) {
             const coordsY = Object.keys(mapY[i]);
             const partial = new Map();
+            const external = new Map();
             const application = this;
-            function renderXml(node: T, parent: T, xml: string) {
+            function renderXml(node: T, parent: T, xml: string, current = '') {
                 if (xml !== '') {
-                    if (node.dataset.target != null) {
-                        const target = application.findByDomId(node.dataset.target, true);
-                        if (target == null || target !== parent) {
-                            application.addInsertQueue(node.dataset.target, [xml]);
-                            node.relocated = true;
+                    if (current === '') {
+                        if (node.dataset.target != null) {
+                            const target = application.findByDomId(node.dataset.target, true);
+                            if (target == null || target !== parent) {
+                                application.addInsertQueue(node.dataset.target, [xml]);
+                                node.relocated = true;
+                                return;
+                            }
+                        }
+                        else if (parent.dataset.target != null) {
+                            application.addInsertQueue(parent.nodeId, [xml]);
+                            node.dataset.target = parent.nodeId;
                             return;
                         }
                     }
-                    else if (parent.dataset.target != null) {
-                        application.addInsertQueue(parent.nodeId, [xml]);
-                        node.dataset.target = parent.nodeId;
-                        return;
+                    if (current !== '') {
+                        if (!external.has(current)) {
+                            external.set(current, []);
+                        }
+                        external.get(current).push(xml);
                     }
-                    if (!partial.has(parent.id)) {
-                        partial.set(parent.id, []);
+                    else {
+                        if (!partial.has(parent.id)) {
+                            partial.set(parent.id, []);
+                        }
+                        partial.get(parent.id).push(xml);
                     }
-                    partial.get(parent.id).push(xml);
                 }
             }
             for (let j = 0; j < coordsY.length; j++) {
@@ -458,10 +469,27 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     return (a.parentIndex > b.parentIndex ? 1 : -1);
                 });
                 axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
+                const includes: string[] = [];
+                let current = '';
                 for (let k = 0; k < axisY.length; k++) {
                     const nodeY = axisY[k];
                     if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
                         continue;
+                    }
+                    if (this.controllerHandler.supportIncludes) {
+                        if (hasValue(nodeY.dataset.include)) {
+                            const filename = (<string> nodeY.dataset.include).trim();
+                            if (includes.indexOf(filename) === -1) {
+                                renderXml(nodeY, <T> nodeY.parent, this.controllerHandler.renderInclude(nodeY, filename), (includes.length > 0 ? includes[includes.length - 1] : ''));
+                                includes.push(filename);
+                            }
+                        }
+                        current = (includes.length > 0 ? includes[includes.length - 1] : '');
+                        if (current !== '') {
+                            const cloneParent = (<T> nodeY.parent.clone());
+                            cloneParent.renderDepth = this.controllerHandler.getIncludeRenderDepth(current);
+                            nodeY.parent = cloneParent;
+                        }
                     }
                     let parent = (<T> nodeY.parent);
                     if (!nodeY.renderParent) {
@@ -472,7 +500,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (renderExtension != null) {
                             renderExtension.setTarget(nodeY, parent);
                             const result = renderExtension.processChild();
-                            renderXml(nodeY, parent, result.xml);
+                            if (result.xml !== '') {
+                                renderXml(nodeY, parent, result.xml, current);
+                            }
                             if (result.parent) {
                                 parent = (<T> result.parent);
                             }
@@ -488,7 +518,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 if (item.condition()) {
                                     const result =  item.processNode(mapX, mapY);
                                     if (result.xml !== '') {
-                                        renderXml(nodeY, parent, result.xml);
+                                        renderXml(nodeY, parent, result.xml, current);
                                     }
                                     if (result.parent) {
                                         parent = (<T> result.parent);
@@ -513,8 +543,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (!nodeY.renderParent) {
                             let xml = '';
                             if (nodeY.nodeName === '') {
-                                const inlineExclude = this.controllerHandler.inlineExclude;
-                                if (nodeY.children.length === 0 || (!nodeY.documentRoot && inlineExclude.length > 0 && nodeY.cascade().every(node => inlineExclude.includes(node.element.tagName)))) {
+                                const supportInline = this.controllerHandler.supportInline;
+                                if (nodeY.children.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.cascade().every(node => supportInline.includes(node.element.tagName)))) {
                                     if (hasFreeFormText(nodeY.element) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
                                         xml += this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
@@ -561,7 +591,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             else {
                                 xml += this.writeNode(nodeY, parent, nodeY.nodeName);
                             }
-                            renderXml(nodeY, parent, xml);
+                            renderXml(nodeY, parent, xml, current);
+                        }
+                    }
+                    if (this.controllerHandler.supportIncludes) {
+                        if (includes.length > 0 && optional(nodeY, 'dataset.includeEnd') === 'true') {
+                            includes.pop();
                         }
                     }
                 }
@@ -575,6 +610,10 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 else {
                     this.addInsertQueue(id, views);
                 }
+            }
+            for (const [current, views] of external.entries()) {
+                const xml = this.controllerHandler.renderIncludeContent(current, views);
+                this.addInclude(current, xml);
             }
         }
         const root = (<T> this.cache.parent);
@@ -687,7 +726,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         for (const inner in template) {
             for (const outer in template) {
                 if (inner !== outer) {
-                    template[inner] = template[inner].replace(`{:${outer}}`, template[inner]);
+                    template[inner] = template[inner].replace(`{:${outer}}`, template[outer]);
                     template[outer] = template[outer].replace(`{:${inner}}`, template[inner]);
                 }
             }
