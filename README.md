@@ -260,19 +260,23 @@ Most attributes can be excluded from the generated XML using the dataset feature
 ```
 ### Using layout includes with merge tag
 
-Some applications can benefit from using includes and merge tags in order share common templates. These can be created easily and also supports nested includes.
+Some applications can benefit from using includes and merge tags in order share common templates. Nested includes are also supported.
 
 ```xml
-<div>Item 1</div>
-<div data-include="filename1" data-include-merge="true">Item 2</div>
-<div>Item 3</div>
-<div data-include-end="true">Item 4</div>
-<div data-include="filename2" data-include-end="true">Item 5</div>
+<div>
+    <div>Item 1</div>
+    <div data-include="filename1" data-include-merge="true">Item 2</div>
+    <div>Item 3</div>
+    <div data-include-end="true">Item 4</div>
+    <div data-include="filename2" data-include-end="true">Item 5</div>
+</div>
 ```
 ```xml
-<TextView>Item 1</TextView>
-<include layout="@layout/filename1">
-<include layout="@layout/filename2">
+<LinearLayout>
+    <TextView>Item 1</TextView>
+    <include layout="@layout/filename1">
+    <include layout="@layout/filename2">
+</LinearLayout>
 <!-- res/layout/activity_main.xml -->
 
 <merge>
@@ -285,7 +289,7 @@ Some applications can benefit from using includes and merge tags in order share 
 <TextView>Item 5</TextView>
 <!-- res/layout/filename2.xml -->
 ```
-See /demos/custom.html for usage instructions.
+The attributes "include" and "include-end" can only be applied to elements which share the same parent container. See /demos/custom.html for usage instructions.
 
 ### Generated from HTML and CSS
 

@@ -1105,7 +1105,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         const renderDepth = Math.max(0, depth);
         const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
         tagName = (node.hasElement ? node.tagName : viewName);
-        node.setNodeId(viewName);
+        switch (viewName) {
+            case 'include':
+            case 'merge':
+            case 'menu':
+                break;
+            default:
+                node.setNodeId(viewName);
+        }
         if (hasValue(width)) {
             if (!isNaN(parseInt(width))) {
                 width = formatDimen(tagName, 'width', width);
@@ -1132,10 +1139,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return output;
     }
 
-    public renderInclude(node: T, name: string) {
+    public renderInclude(node: T, parent: T, name: string) {
         this.merge[name] = (node.dataset.includeMerge === 'true');
         node.documentRoot = !this.merge[name];
-        return this.renderNodeStatic('include', node.depth, { layout: `@layout/${name}` });
+        return this.renderNodeStatic('include', parent.renderDepth + 1, { layout: `@layout/${name}` });
     }
 
     public renderIncludeContent(name: string, content: string[]) {
@@ -1353,7 +1360,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return WEBVIEW_ANDROID;
     }
 
-    get supportIncludes() {
+    get supportInclude() {
         return true;
     }
 }

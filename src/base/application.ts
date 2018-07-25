@@ -423,15 +423,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             function renderXml(node: T, parent: T, xml: string, current = '') {
                 if (xml !== '') {
                     if (current === '') {
-                        if (node.dataset.target != null) {
-                            const target = application.findByDomId(node.dataset.target, true);
+                        if (hasValue(node.dataset.target)) {
+                            const target = application.findByDomId(<string> node.dataset.target, true);
                             if (target == null || target !== parent) {
-                                application.addInsertQueue(node.dataset.target, [xml]);
+                                application.addInsertQueue(<string> node.dataset.target, [xml]);
                                 node.relocated = true;
                                 return;
                             }
                         }
-                        else if (parent.dataset.target != null) {
+                        else if (hasValue(parent.dataset.target)) {
                             application.addInsertQueue(parent.nodeId, [xml]);
                             node.dataset.target = parent.nodeId;
                             return;
@@ -476,13 +476,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
                         continue;
                     }
-                    if (this.controllerHandler.supportIncludes) {
-                        if (hasValue(nodeY.dataset.include)) {
-                            const filename = (<string> nodeY.dataset.include).trim();
-                            if (includes.indexOf(filename) === -1) {
-                                renderXml(nodeY, <T> nodeY.parent, this.controllerHandler.renderInclude(nodeY, filename), (includes.length > 0 ? includes[includes.length - 1] : ''));
-                                includes.push(filename);
-                            }
+                    if (this.controllerHandler.supportInclude) {
+                        const filename = optional(nodeY, 'dataset.include').trim();
+                        if (filename !== '' && includes.indexOf(filename) === -1) {
+                            renderXml(nodeY, <T> nodeY.parent, this.controllerHandler.renderInclude(nodeY, <T> nodeY.parent, filename), (includes.length > 0 ? includes[includes.length - 1] : ''));
+                            includes.push(filename);
                         }
                         current = (includes.length > 0 ? includes[includes.length - 1] : '');
                         if (current !== '') {
@@ -594,7 +592,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             renderXml(nodeY, parent, xml, current);
                         }
                     }
-                    if (this.controllerHandler.supportIncludes) {
+                    if (this.controllerHandler.supportInclude) {
                         if (includes.length > 0 && optional(nodeY, 'dataset.includeEnd') === 'true') {
                             includes.pop();
                         }

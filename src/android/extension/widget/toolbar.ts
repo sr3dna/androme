@@ -30,8 +30,8 @@ export default class Toolbar extends Extension<T, U> {
                     item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
                 }
             });
-            if (element.dataset.target != null) {
-                const target = document.getElementById(element.dataset.target);
+            if (hasValue(element.dataset.target)) {
+                const target = document.getElementById(<string> element.dataset.target);
                 if (target != null && element.parentElement !== target && !includes(optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR)) {
                     this.application.elements.add(element);
                 }
