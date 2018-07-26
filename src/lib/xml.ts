@@ -95,7 +95,7 @@ export function parseTemplate(template: string) {
     return result;
 }
 
-export function insertTemplateData(template: ObjectMap<string>, data: {}, index?: Null<string>, include?: {}, exclude?: {}) {
+export function insertTemplateData(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}) {
     let output = (index != null ? template[index] : '');
     if (data['#include'] != null) {
         include = data['#include'];

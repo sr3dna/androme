@@ -28,7 +28,7 @@ app.post('/api/savetodisk', (req, res) => {
     const directory = (req.query.directory != null && req.query.directory !== '');
     const dirname = `${__dirname.replace(/\\/g, '/')}/temp/${uuid()}`;
     const diroutput = dirname + (directory ? `/${req.query.directory}` : '');
-    const processingTime = ((!isNaN(parseInt(req.query.processingtime)) ? parseInt(req.query.processingtime) : 30) * 1000);
+    const processingTime = (!isNaN(parseInt(req.query.processingtime) ? parseInt(req.query.processingtime) : 30) * 1000);
     const finalizeTime = Date.now() + processingTime;
     try {
         mkdirp.sync(diroutput);

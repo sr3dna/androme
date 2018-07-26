@@ -229,7 +229,7 @@ function sortHSL(a: Color, b: Color) {
 
 export function findNearestColor(value: string) {
     const result = HSL_SORTED.slice();
-    let index = result.findIndex((item: Color) => item.hex === value);
+    let index = result.findIndex(item => item.hex === value);
     if (index !== -1) {
         return result[index];
     }
@@ -238,7 +238,7 @@ export function findNearestColor(value: string) {
         if (hsl != null) {
             result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
             result.sort(sortHSL);
-            index = result.findIndex((item: Color) => item.name === '');
+            index = result.findIndex(item => item.name === '');
             return result[Math.min(index + 1, result.length - 1)];
         }
         return '';

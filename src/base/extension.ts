@@ -79,8 +79,8 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
 
     public condition() {
         if (this.node && this.node.hasElement) {
-            const ext = optional(this.node.element, 'dataset.ext');
-            if (ext === '') {
+            const extension: string = optional(this.node.element, 'dataset.ext');
+            if (extension === '') {
                 return (this.tagNames.length > 0);
             }
             else {

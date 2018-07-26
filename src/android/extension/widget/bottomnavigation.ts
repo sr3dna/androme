@@ -37,7 +37,7 @@ export default class BottomNavigation extends Extension<T, U> {
 
     public beforeInsert() {
         const node = (<T> this.node);
-        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
             overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);

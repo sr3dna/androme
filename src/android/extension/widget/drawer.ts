@@ -103,8 +103,8 @@ export default class Drawer extends Extension<T, U> {
                 delete application.insert[node.nodeId];
             }
         }
-        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
-        const headerLayout = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
+        const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const headerLayout: string = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
         const options: ObjectMap<any> = Object.assign({}, this.options.navigation);
         if (menu !== '') {
             overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);

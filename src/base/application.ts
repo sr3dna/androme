@@ -17,12 +17,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
     public insert: ObjectIndex<string[]> = {};
+    public closed = false;
 
     private views: PlainFile[] = [];
     private includes: PlainFile[] = [];
     private currentIndex = -1;
     private _extensions: IExtension[] = [];
-    private _closed = false;
 
     constructor(
         private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: {}): T },
@@ -83,7 +83,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             layout.content = replaceDP(layout.content);
             layout.content = replaceTab(layout.content);
         });
-        this._closed = true;
+        this.closed = true;
     }
 
     public reset() {
@@ -108,7 +108,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         this.includes = [];
         this.insert = {};
         this.currentIndex = -1;
-        this._closed = false;
+        this.closed = false;
     }
 
     public resetController() {
@@ -292,8 +292,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     switch (element.type) {
                         case 'radio':
                         case 'checkbox':
-                            [node.element.previousElementSibling, node.element.nextElementSibling].some((sibling: HTMLLabelElement) => {
-                                if (sibling && sibling.htmlFor !== '' && sibling.htmlFor === node.element.id) {
+                            [element.previousElementSibling, element.nextElementSibling].some((sibling: HTMLLabelElement) => {
+                                if (sibling && sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
                                     const label = (<any> sibling).__node;
                                     if (label != null) {
                                         node.companion = label;
@@ -477,7 +477,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         continue;
                     }
                     if (this.controllerHandler.supportInclude) {
-                        const filename = optional(nodeY, 'dataset.include').trim();
+                        const filename: string = optional(nodeY, 'dataset.include').trim();
                         if (filename !== '' && includes.indexOf(filename) === -1) {
                             renderXml(nodeY, <T> nodeY.parent, this.controllerHandler.renderInclude(nodeY, <T> nodeY.parent, filename), (includes.length > 0 ? includes[includes.length - 1] : ''));
                             includes.push(filename);
@@ -617,7 +617,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         const root = (<T> this.cache.parent);
         const extension = (<IExtension> root.renderExtension);
         if (extension == null || !hasValue(root.dataset.target)) {
-            const pathname = trim(optional(root, 'dataset.folder').trim(), '/');
+            const pathname: string = trim(optional(root, 'dataset.folder').trim(), '/');
             this.updateLayout(pathname, (!empty ? output : ''), (extension && extension.documentRoot));
         }
         else {
@@ -784,7 +784,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
         return (linearX || linearY) &&
-               !parent.flex.enabled && (
+               !parent.flex.enabled &&
+               (
                    !children.some(node => node.floating && node.css('clear') !== 'none') &&
                    (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')) &&
                    children.every(node => node.pageflow)
@@ -888,10 +889,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     get layouts() {
         return [...this.views, ...this.includes];
-    }
-
-    get closed() {
-        return this._closed;
     }
 
     get extensions() {

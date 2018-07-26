@@ -75,7 +75,7 @@ export default class Coordinator extends Extension<T, U> {
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_behavior', '@string/appbar_scrolling_view_behavior');
                 node.android('fitsSystemWindows', 'true');
             }
-            overwriteDefault((collapsingToolbar != null ? optionsCollapsingToolbar : options), 'android', 'id', `${node.stringId}_content`);
+            overwriteDefault(collapsingToolbar != null ? optionsCollapsingToolbar : options, 'android', 'id', `${node.stringId}_content`);
             const depth = (include !== '' ? 0 : node.depth + 1);
             let content = (include !== '' ? controller.renderNodeStatic(viewName, depth + (collapsingToolbar ? 1 : 0), options, 'match_parent', 'wrap_content', contentNode, true) : '');
             if (collapsingToolbar != null) {

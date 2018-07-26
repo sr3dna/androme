@@ -58,7 +58,7 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
             const attr = border + direction;
-            const value = convertInt((node != null ? node[attr] : style[attr]));
+            const value = convertInt(node != null ? node[attr] : style[attr]);
             if (complete || value !== 0) {
                 result[attr] = value;
             }

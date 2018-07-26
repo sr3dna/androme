@@ -100,12 +100,12 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             }
             else {
                 if (element.id === '') {
-                    element.id = `view_${main.size}`;
+                    element.id = `content_${main.size}`;
                 }
             }
-            const filename = optional(element, 'dataset.filename').trim().replace(/\.xml$/, '') || element.id;
+            const filename: string = optional(element, 'dataset.filename').trim().replace(/\.xml$/, '') || element.id;
             element.dataset.views = (optional(element, 'dataset.views', 'number') + 1).toString();
-            element.dataset.viewName = convertWord((element.dataset.views !== '1' ? `${filename}_${element.dataset.views}` : filename));
+            element.dataset.viewName = convertWord(element.dataset.views !== '1' ? `${filename}_${element.dataset.views}` : filename);
             if (main.createNodeCache(element)) {
                 main.createLayoutXml();
                 main.setResources();
@@ -117,7 +117,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             __THEN.call(main);
         }
     }
-    const images: HTMLImageElement[] = Array.from(main.elements).map((element: HTMLElement) => <HTMLImageElement[]> Array.from(element.querySelectorAll('IMG'))).reduce((a, b) => a.concat(b), []).filter(element => !element.complete);
+    const images: HTMLImageElement[] = Array.from(main.elements).map(element => <HTMLImageElement[]> Array.from(element.querySelectorAll('IMG'))).reduce((a, b) => a.concat(b), []).filter(element => !element.complete);
     if (images.length === 0) {
         parseResume();
     }
@@ -203,71 +203,63 @@ export function saveAllToDisk() {
 }
 
 export function writeLayoutAllXml(saveToDisk = false) {
-    autoClose();
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
     }
     return '';
 }
 
 export function writeResourceAllXml(saveToDisk = false) {
-    autoClose();
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.resourceAllToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStringXml(saveToDisk = false) {
-    autoClose();
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.resourceStringToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceArrayXml(saveToDisk = false) {
-    autoClose();
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceFontXml(saveToDisk = false) {
-    autoClose();
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.resourceFontToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceColorXml(saveToDisk = false) {
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.resourceColorToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceStyleXml(saveToDisk = false) {
-    autoClose();
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceDimenXml(saveToDisk = false) {
-    autoClose();
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.resourceDimenToXml(saveToDisk);
     }
     return '';
 }
 
 export function writeResourceDrawableXml(saveToDisk = false) {
-    autoClose();
-    if (main.closed) {
+    if (main.closed || autoClose()) {
         return main.resourceHandler.file.resourceDrawableToXml(saveToDisk);
     }
     return '';
@@ -294,7 +286,9 @@ export function toString() {
 function autoClose() {
     if (SETTINGS.autoCloseOnWrite && !LOADING && !main.closed) {
         main.finalize();
+        return true;
     }
+    return false;
 }
 
 export { BUILD_ANDROID as build, DENSITY_ANDROID as density, SETTINGS as settings, Extension };

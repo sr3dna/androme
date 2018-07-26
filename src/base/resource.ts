@@ -50,7 +50,7 @@ export default abstract class Resource<T extends Node> {
         const images: StringMap = {};
         if (hasValue(srcset)) {
             const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-            srcset.split(',').forEach((value: string) => {
+            srcset.split(',').forEach(value => {
                 const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
                 if (match != null) {
                     if (match[2] == null) {
@@ -379,6 +379,7 @@ export default abstract class Resource<T extends Node> {
                             case 'search':
                             case 'button':
                                 value = element.value.trim();
+                                break;
                             default:
                                 if (node.companion != null) {
                                     value = node.companion.element.innerText.trim();
@@ -420,10 +421,10 @@ export default abstract class Resource<T extends Node> {
         return result[border.style] || 'android:color="@android:color/black"';
     }
 
-    private parseBorderStyle(value: string, node: T, attribute: string): BorderAttribute {
-        const style = node.css(`${attribute}Style`) || 'none';
-        let width = node.css(`${attribute}Width`) || '1px';
-        const color = (style !== 'none' ? parseRGBA(node.css(`${attribute}Color`), node.css('opacity')) : []);
+    private parseBorderStyle(value: string, node: T, attr: string): BorderAttribute {
+        const style = node.css(`${attr}Style`) || 'none';
+        let width = node.css(`${attr}Width`) || '1px';
+        const color = (style !== 'none' ? parseRGBA(node.css(`${attr}Color`), node.css('opacity')) : []);
         if (color.length > 0) {
             color[0] = (<string> Resource.addColor(color[0], color[2]));
         }
@@ -433,11 +434,11 @@ export default abstract class Resource<T extends Node> {
         return { style, width, color: (color.length > 0 ? color[0] : '#000000') };
     }
 
-    private parseBackgroundImage(value: string, node?: T, attribute?: string) {
+    private parseBackgroundImage(value: string) {
         return Resource.addImageURL(value);
     }
 
-    private parseBorderRadius(value: string, node: T, attribute?: string) {
+    private parseBorderRadius(value: string, node: T) {
         const radiusTop = node.css('borderTopLeftRadius');
         const radiusRight = node.css('borderTopRightRadius');
         const radiusBottom = node.css('borderBottomLeftRadius');
@@ -450,11 +451,11 @@ export default abstract class Resource<T extends Node> {
         }
     }
 
-    private parseBackgroundColor(value: string, node: T, attribute?: string) {
+    private parseBackgroundColor(value: string, node: T) {
         return parseRGBA(value, node.css('opacity'));
     }
 
-    private parseBoxDimensions(value: string, node?: T, attribute?: string) {
+    private parseBoxDimensions(value: string) {
         if (value !== 'auto') {
             const match = value.match(/^([0-9]+(?:px|pt|em)|auto)(?: ([0-9]+(?:px|pt|em)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
             if (match != null) {

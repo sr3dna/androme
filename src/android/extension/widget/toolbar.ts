@@ -107,10 +107,10 @@ export default class Toolbar extends Extension<T, U> {
             overwriteDefault(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
         }
         else {
-            overwriteDefault((appBar ? optionsAppBar : optionsToolbar), 'android', 'fitsSystemWindows', 'true');
+            overwriteDefault(appBar ? optionsAppBar : optionsToolbar, 'android', 'fitsSystemWindows', 'true');
             overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             if (backgroundImage !== 'none') {
-                overwriteDefault((appBarChildren.length > 0 ? optionsAppBar : optionsToolbar), 'android', 'background', `@drawable/${Resource.addImageURL(backgroundImage)}`);
+                overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${Resource.addImageURL(backgroundImage)}`);
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
             else {
@@ -245,7 +245,7 @@ export default class Toolbar extends Extension<T, U> {
 
     public beforeInsert() {
         const node = (<T> this.node);
-        const menu = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = Object.assign({}, options.toolbar);
