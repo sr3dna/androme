@@ -246,16 +246,21 @@ It is sometimes necessary to append elements into other containers when trying t
 ```
 Using "target" into a ConstraintLayout or RelativeLayout view will not include automatic positioning.
 
-### Excluding applied attributes
+### Excluding or including applied attributes
 
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
 
 ```xml
 <div data-exclude-procedure="LAYOUT | ALIGNMENT | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
-
 <div>
     <span data-exclude-resource="FONT_STYLE">content</span>
     <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>
+</div>
+```
+```xml
+<div
+    data-attr-android="layout_width::match_parent;layout_height::match_parent"
+    data-attr-app="layout_scrollFlags::scroll|exitUntilCollapsed">
 </div>
 ```
 ### Using layout includes with merge tag
@@ -1334,9 +1339,9 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="label_padding_top">3dp</dimen>
     <dimen name="label_width">80dp</dimen>
     <dimen name="radio_margin_end">3dp</dimen>
-    <dimen name="radio_margin_start">7dp</dimen>
+    <dimen name="radio_margin_start">5dp</dimen>
+    <dimen name="radio_margin_start_1">7dp</dimen>
     <dimen name="radio_margin_top">3dp</dimen>
-    <dimen name="radiogroup_margin_start">5dp</dimen>
     <dimen name="select_constraintwidth_min">37dp</dimen>
     <dimen name="select_margin_start">4dp</dimen>
     <dimen name="select_margin_top">13dp</dimen>

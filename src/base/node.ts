@@ -414,6 +414,10 @@ export default abstract class Node implements BoxModel {
         return this._element && this._element.parentElement;
     }
 
+    get untargeted() {
+        return this.children.filter(node => !hasValue(node.dataset.target));
+    }
+
     get namespaces() {
         return Array.from(this._namespaces);
     }

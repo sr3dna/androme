@@ -116,22 +116,24 @@
     <!-- START: DEMO -->
     <div id="androme_ui">
         <div id="drawer_demo" data-ext="androme.widget.drawer" onclick="toggleAside();">
-            <div style="padding: 20px;">
-                <h3>title</h3>
-                <div class="content">
-                    content content content content content content content content content content
-                    content content content content content content content content content content
-                    content content content content content content content content content content
-                    content content content content content content content content content content
-                    content content content content content content content content content content
-                    content content content content content content content content content content
-                    content content content content content content content content content content
-                    content content content content content content content content content content
+            <div data-ext="androme.widget.coordinator" data-include="drawer_content" data-include-end="true">
+                <div style="padding: 0px 20px 20px 20px;">
+                    <h3>title</h3>
+                    <div class="content">
+                        content content content content content content content content content content
+                        content content content content content content content content content content
+                        content content content content content content content content content content
+                        content content content content content content content content content content
+                        content content content content content content content content content content
+                        content content content content content content content content content content
+                        content content content content content content content content content content
+                        content content content content content content content content content content
+                    </div>
+                    <input id="fab_menu" type="button" data-ext="androme.widget.floatingactionbutton" style="position: static; background-image: url(images/icons8-squared-menu-24.png); float: right;" />
+                    <br /><br /><br /><br /><br /><br />
                 </div>
-                <input id="fab_menu" type="button" data-ext="androme.widget.floatingactionbutton" style="position: static; background-image: url(images/icons8-squared-menu-24.png); float: right;" />
-                <br /><br /><br /><br /><br /><br />
+                <button id="fab_left" data-ext="androme.widget.floatingactionbutton" style="bottom: 0px; left: 0px; background-image: url(images/icons8-left-24.png);"></button>
             </div>
-            <button id="fab_left" data-ext="androme.widget.floatingactionbutton" style="bottom: 0px; left: 0px; background-image: url(images/icons8-left-24.png);"></button>
             <aside id="drawer_aside">
                 <div>
                     <img src="images/icons8-chrome.png" />

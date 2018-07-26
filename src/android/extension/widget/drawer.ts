@@ -3,8 +3,7 @@ import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import { hasValue, includes, optional } from '../../../lib/util';
-import { stripId } from '../../../lib/xml';
-import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
+import { findNestedExtension, overwriteDefault } from '../lib/util';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -45,48 +44,25 @@ export default class Drawer extends Extension<T, U> {
         const application = this.application;
         const controller = application.controllerHandler;
         const node = (<T> this.node);
-        let depth = node.depth + node.renderDepth;
+        node.depth = 0;
+        node.documentRoot = true;
         const optionsDrawer = Object.assign({}, this.options.drawer);
-        const optionsCoordinator = Object.assign({}, this.options.coordinator);
         let menu = findNestedExtension(node, WIDGET_NAME.MENU);
         if (menu != null) {
             overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
         }
-        let xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
-        const filename = `${node.nodeId}_content`;
-        let include = '';
-        if (this.options.includes == null || this.options.includes) {
-            include = controller.renderNodeStatic('include', depth + 1, { layout: `@layout/${filename}` });
-            depth = -1;
-        }
-        const coordinatorNode = createPlaceholder(application.cache.nextId, node);
-        coordinatorNode.documentRoot = true;
-        application.cache.list.push(coordinatorNode);
-        overwriteDefault(optionsCoordinator, 'android', 'id', `${node.stringId}_content`);
-        coordinatorNode.nodeId = stripId(optionsCoordinator.android.id);
-        const content = controller.renderNodeStatic(VIEW_SUPPORT.COORDINATOR, depth + 1, optionsCoordinator, 'match_parent', 'match_parent', coordinatorNode, true);
-        const optionsNavigation = Object.assign({}, this.options.navigation);
+        const xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
         if (menu != null) {
             this.createResourceTheme();
-            xml = xml.replace(`{:${node.id}}`, (include !== '' ? include : content) + `{:${node.id}}`);
         }
         else {
+            const optionsNavigation = Object.assign({}, this.options.navigation);
             overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
             const navView = node.children[node.children.length - 1];
             navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
             navView.isolated = true;
-            controller.prependBefore(navView.id, (include !== '' ? include : content));
             menu = navView.element;
-        }
-        node.children.forEach(item => {
-            if ((<any> menu).__node !== item) {
-                item.parent = coordinatorNode;
-                coordinatorNode.children.push(item);
-            }
-        });
-        if (include !== '') {
-            application.addInclude(filename, content);
         }
         node.renderParent = true;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;

@@ -1265,6 +1265,17 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
             }
         }
+        for (const name in node.dataset) {
+            if (/^attr[A-Z]+/.test(name)) {
+                const obj = capitalize(name.substring(4), false);
+                (<string> node.dataset[name]).split(';').forEach(values => {
+                    const [key, value] = values.split('::');
+                    if (hasValue(key) && hasValue(value)) {
+                        node.add(obj, key, value);
+                    }
+                });
+            }
+        }
         const attributes = node.combine();
         const indent = repeat(node.renderDepth + 1);
         const output = attributes.map((value: string) => `\n${indent + value}`).join('');

@@ -422,7 +422,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             const application = this;
             function renderXml(node: T, parent: T, xml: string, current = '') {
                 if (xml !== '') {
-                    if (current === '') {
+                    if (current === '' && !application.elements.has(node.element)) {
                         if (hasValue(node.dataset.target)) {
                             const target = application.findByDomId(<string> node.dataset.target, true);
                             if (target == null || target !== parent) {
@@ -542,7 +542,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             let xml = '';
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;
-                                if (nodeY.children.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.cascade().every(node => supportInline.includes(node.element.tagName)))) {
+                                if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.cascade().every(node => supportInline.includes(node.element.tagName)))) {
                                     if (hasFreeFormText(nodeY.element) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
                                         xml += this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
@@ -556,13 +556,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                 }
                                 else {
-                                    if (nodeY.flex.enabled || nodeY.children.some(node => !node.pageflow)) {
+                                    if (nodeY.flex.enabled || nodeY.untargeted.some(node => !node.pageflow)) {
                                         xml += this.writeDefaultLayout(nodeY, parent);
                                     }
                                     else {
-                                        if (nodeY.children.length === 1) {
+                                        if (nodeY.untargeted.length === 1) {
                                             if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
-                                                const child = nodeY.children[0];
+                                                const child = nodeY.untargeted[0];
                                                 child.documentRoot = nodeY.documentRoot;
                                                 child.parent = parent;
                                                 nodeY.cascade().forEach(item => item.renderDepth--);

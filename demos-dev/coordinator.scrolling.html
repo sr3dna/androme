@@ -63,7 +63,6 @@
         System.import('/build/main.js').then(function(result) {
             androme = result;
             androme.ext('androme.widget.toolbar', { // optional: default configuration is provided
-                includes: true,
                 toolbar_demo: {
                     appBar: {
                         android: {
@@ -124,21 +123,28 @@
             </nav>
             <button id="fab_menu" data-ext="androme.widget.floatingactionbutton" data-target="androme_ui" style="bottom: 0px; right: 0px; background-image: url(../demos/images/icons8-menu-24.png);"></button>
         </div>
-        <div style="padding: 20px;">
-            <h3>title</h3>
-            <div class="content">
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
-                content content content content content content content content content content
+        <div
+            data-ext="androme.custom"
+            data-androme-custom-tag="android.support.v4.widget.NestedScrollView"
+            data-attr-app="layout_behavior::@string/appbar_scrolling_view_behavior"
+            data-include="coordinator_content" data-include-end="true"
+            style="padding: 20px;">
+            <div>
+                <h3>title</h3>
+                <div class="content">
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                    content content content content content content content content content content
+                </div>
             </div>
         </div>
     </div>
