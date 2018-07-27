@@ -350,6 +350,10 @@ export default abstract class Node implements BoxModel {
         }
     }
 
+    protected appendChild(node: T) {
+        this.renderChildren.push(node);
+    }
+
     protected setDimensions() {
         const linear = this.linear;
         linear.width = linear.right - linear.left;
@@ -394,7 +398,7 @@ export default abstract class Node implements BoxModel {
 
     set renderParent(value: T | boolean) {
         if (value instanceof Node && value !== this && value.renderChildren.indexOf(this) === -1) {
-            value.renderChildren.push(this);
+            value.appendChild(this);
         }
         this._renderParent = value;
     }

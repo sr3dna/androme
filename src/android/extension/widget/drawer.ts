@@ -1,4 +1,4 @@
-import { ExtensionResult, ObjectMap } from '../../../lib/types';
+import { ExtensionResult } from '../../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
@@ -46,13 +46,9 @@ export default class Drawer extends Extension<T, U> {
         const node = (<T> this.node);
         node.depth = 0;
         node.documentRoot = true;
-        const optionsDrawer = Object.assign({}, this.options.drawer);
-        let menu = findNestedExtension(node, WIDGET_NAME.MENU);
-        if (menu != null) {
-            overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
-        }
-        const xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
-        if (menu != null) {
+        const options = Object.assign({}, this.options.drawer);
+        if (findNestedExtension(node, WIDGET_NAME.MENU) != null) {
+            overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             this.createResourceTheme();
         }
         else {
@@ -62,8 +58,8 @@ export default class Drawer extends Extension<T, U> {
             navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
             navView.isolated = true;
-            menu = navView.element;
         }
+        const xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
         node.renderParent = true;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
         return { xml };
@@ -81,7 +77,7 @@ export default class Drawer extends Extension<T, U> {
         }
         const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         const headerLayout: string = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
-        const options: ObjectMap<any> = Object.assign({}, this.options.navigation);
+        const options: {} = Object.assign({}, this.options.navigation);
         if (menu !== '') {
             overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
         }

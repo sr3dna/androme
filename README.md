@@ -118,7 +118,7 @@ Constraint chain is available as a setting since flexbox does not always support
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using a table to create your layouts is recommended if you are not experienced with HTML.
 
-Android defaults their controls to vertical align "top" whereas HTML defaults to "baseline" which can cause the vertical alignment to be skewed. If you want them to be look similar vertically then you might have to explicity set the CSS property "vertical-align" to the nearest position "middle" as the "baseline" setting is only partially available in Android.
+Android defaults their controls to vertical align "top" whereas HTML defaults to "baseline" which sometimes causes the vertical alignment to be skewed. If you want them to be look similar vertically then you might have to explicity set the CSS property "vertical-align" to the nearest position "middle" as the "baseline" setting is only partially available in Android.
 
 ### Standard
 
@@ -483,6 +483,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -534,6 +535,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_2"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -694,6 +696,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_3"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -814,6 +817,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_4"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -864,6 +868,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_5"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -927,6 +932,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_6"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -967,7 +973,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_19"
-                android:layout_gravity="center_vertical"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -976,6 +981,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_7"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -983,7 +989,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/person"
                     android:background="@drawable/select_hour"
                     android:entries="@array/typeofentry_array"
-                    android:layout_gravity="center_vertical"
                     android:layout_height="wrap_content"
                     android:layout_width="@dimen/select_width_2"
                     android:minWidth="@dimen/select_minwidth"
@@ -991,7 +996,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/Select" />
                 <LinearLayout
                     android:id="@+id/linearlayout_8"
-                    android:layout_gravity="center_vertical"
+                    android:baselineAlignedChildIndex="1"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/div_margin_start"
                     android:layout_width="wrap_content"
@@ -1023,7 +1028,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 <Button
                     android:id="@+id/button_6"
                     android:background="@drawable/button_button_1"
-                    android:layout_gravity="center_vertical"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/button_margin_start"
                     android:layout_width="wrap_content"

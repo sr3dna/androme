@@ -23,7 +23,6 @@ export default class ListAndroid<T extends View> extends List {
                     node.depth + node.renderDepth, {
                         android: {
                             gravity: parseRTL('right'),
-                            layout_gravity: 'fill',
                             layout_columnWeight: '0',
                             [parseRTL('layout_marginRight')]: formatDimen(node.tagName, parseRTL('margin_right'), '8px'),
                             text: (listStyle !== '0' ? listStyle : '')

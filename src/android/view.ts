@@ -479,6 +479,47 @@ export default class View extends Node {
         }
     }
 
+    public alignBaseline(nodes: T[]) {
+        let childIndex = -1;
+        nodes.some((item: T, index) => {
+            if (item.is(NODE_STANDARD.LINEAR) && item.android('baselineAlignedChildIndex') != null) {
+                childIndex = index;
+            }
+            else if (item.nodeType <= NODE_STANDARD.EDIT) {
+                switch (item.css('verticalAlign')) {
+                    case 'baseline':
+                    case 'sub':
+                    case 'super':
+                        if (childIndex === -1 && item.nodeType <= NODE_STANDARD.BUTTON) {
+                            childIndex = index;
+                        }
+                        break;
+                    default:
+                        childIndex = -1;
+                        return true;
+                }
+            }
+            return false;
+        });
+        if (childIndex !== -1) {
+            this.android('baselineAlignedChildIndex', childIndex.toString());
+            if (this.renderParent instanceof View && this.renderParent.is(NODE_STANDARD.LINEAR) && this.renderParent.horizontal) {
+                this.renderParent.alignBaseline(this.renderParent.renderChildren);
+            }
+        }
+    }
+
+    protected appendChild(node: T) {
+        super.appendChild(node);
+        switch (this.nodeName) {
+            case NODE_ANDROID.LINEAR:
+                if (this.horizontal) {
+                    this.alignBaseline(this.renderChildren);
+                }
+                break;
+        }
+    }
+
     get stringId() {
         return (hasValue(this.nodeId) ? `@+id/${this.nodeId}` : '');
     }

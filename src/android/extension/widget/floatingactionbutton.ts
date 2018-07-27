@@ -20,8 +20,8 @@ export default class FloatingActionButton<T extends View> extends Button {
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
         overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${Resource.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
-        if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
-            overwriteDefault(options, 'android', 'focusable', 'true');
+        if (includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+            overwriteDefault(options, 'android', 'focusable', 'false');
         }
         let src = '';
         switch (element.tagName) {
