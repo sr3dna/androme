@@ -431,6 +431,43 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     const first = chainable.first;
                                     const last = chainable.last;
                                     let maxOffset = -1;
+                                    let disconnected = false;
+                                    const attr = (index === 0 ? ['horizontal', 'left', 'leftRight', 'top', 'vertical', 'viewWidth', 'right', 'marginHorizontal'] : ['vertical', 'top', 'topBottom', 'left', 'horizontal', 'viewHeight', 'bottom', 'marginVertical']);
+                                    for (let i = 0; i < chainable.length; i++) {
+                                        if (i === 0) {
+                                            if (!mapParent(first, attr[1])) {
+                                                disconnected = true;
+                                                break;
+                                            }
+                                        }
+                                        else {
+                                            if (chainable.list[i].app(LAYOUT[attr[2]]) == null) {
+                                                disconnected = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (!disconnected) {
+                                        if (chainable.list.every(item => same(first, item, `linear.${attr[3]}`))) {
+                                            for (let j = 1; j < chainable.length; j++) {
+                                                const adjacent = chainable.list[j];
+                                                if (!adjacent.constraint[attr[4]]) {
+                                                    adjacent.app(LAYOUT[attr[3]], first.stringId);
+                                                    adjacent.constraint[attr[4]] = true;
+                                                }
+                                            }
+                                        }
+                                        if (!flex.enabled && node[attr[5]] === 0) {
+                                            mapDelete(last, attr[6]);
+                                            last.constraint[attr[7]] = last.app(LAYOUT[attr[2]]);
+                                        }
+                                    }
+                                    else {
+                                        first.app(LAYOUT[LT], 'parent');
+                                        first.constraint[orientation] = true;
+                                        last.app(LAYOUT[RB], 'parent');
+                                        last.constraint[orientation] = true;
+                                    }
                                     if (verticalPerspective) {
                                         if (first.app(LAYOUT['leftRight']) != null) {
                                             if (!mapParent(first, 'left')) {
@@ -559,10 +596,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             }
                                         }
                                     }
-                                    first.app(LAYOUT[LT], 'parent');
-                                    first.constraint[orientation] = true;
-                                    last.app(LAYOUT[RB], 'parent');
-                                    last.constraint[orientation] = true;
                                     const chainStyle = `layout_constraint${HV}_chainStyle`;
                                     if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainable.list.map(item => item.flex.grow)) === 0) {
                                         switch (flex.justifyContent) {
@@ -614,8 +647,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 first.app(chainStyle, 'spread_inside');
                                             }
                                             else {
-                                                mapDelete(first, CHAIN_MAP['rightLeftBottomTop'][index]);
-                                                mapDelete(last, CHAIN_MAP['leftRightTopBottom'][index]);
+                                                if (mapParent(first, LT)) {
+                                                    mapDelete(first, CHAIN_MAP['rightLeftBottomTop'][index]);
+                                                }
+                                                if (mapParent(last, RB)) {
+                                                    mapDelete(last, CHAIN_MAP['leftRightTopBottom'][index]);
+                                                }
                                             }
                                         }
                                         else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === 'horizontal' && (first.linear.left === node.box.left || last.linear.right === node.box.right))) {

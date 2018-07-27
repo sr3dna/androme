@@ -133,61 +133,63 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public setStyleMap() {
-        let cssWarning = false;
+        let warning = false;
         for (let i = 0; i < document.styleSheets.length; i++) {
             const styleSheet = (<CSSStyleSheet> document.styleSheets[i]);
-            try {
+            if (styleSheet.cssRules != null) {
                 for (let j = 0; j < styleSheet.cssRules.length; j++) {
-                    const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
-                    const attributes: Set<string> = new Set();
-                    for (const attr of Array.from(cssRule.style)) {
-                        attributes.add(convertCamelCase(attr));
-                    }
-                    const elements = document.querySelectorAll(cssRule.selectorText);
-                    if (this.appName !== '') {
-                        Array.from(elements).forEach((element: HTMLElement) => {
-                            const object: any = element;
-                            delete object.__style;
-                            delete object.__styleMap;
-                        });
-                    }
-                    Array.from(elements).forEach((element: HTMLElement) => {
-                        for (const attr of Array.from(element.style)) {
+                    try {
+                        const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
+                        const attributes: Set<string> = new Set();
+                        for (const attr of Array.from(cssRule.style)) {
                             attributes.add(convertCamelCase(attr));
                         }
-                        const style = getStyle(element);
-                        const styleMap: StringMap = {};
-                        for (const name of attributes) {
-                            if (name.toLowerCase().indexOf('color') !== -1) {
-                                const color = getByColorName(cssRule.style[name]);
-                                if (color !== '') {
-                                    cssRule.style[name] = convertRGB(color);
+                        const elements = document.querySelectorAll(cssRule.selectorText);
+                        if (this.appName !== '') {
+                            Array.from(elements).forEach((element: HTMLElement) => {
+                                const object: any = element;
+                                delete object.__style;
+                                delete object.__styleMap;
+                            });
+                        }
+                        Array.from(elements).forEach((element: HTMLElement) => {
+                            for (const attr of Array.from(element.style)) {
+                                attributes.add(convertCamelCase(attr));
+                            }
+                            const style = getStyle(element);
+                            const styleMap: StringMap = {};
+                            for (const name of attributes) {
+                                if (name.toLowerCase().indexOf('color') !== -1) {
+                                    const color = getByColorName(cssRule.style[name]);
+                                    if (color !== '') {
+                                        cssRule.style[name] = convertRGB(color);
+                                    }
+                                }
+                                if (hasValue(element.style[name])) {
+                                    styleMap[name] = element.style[name];
+                                }
+                                else if (style[name] === cssRule.style[name]) {
+                                    styleMap[name] = style[name];
                                 }
                             }
-                            if (hasValue(element.style[name])) {
-                                styleMap[name] = element.style[name];
+                            const object: any = element;
+                            if (object.__styleMap != null) {
+                                Object.assign(object.__styleMap, styleMap);
                             }
-                            else if (style[name] === cssRule.style[name]) {
-                                styleMap[name] = style[name];
+                            else {
+                                object.__style = style;
+                                object.__styleMap = styleMap;
                             }
+                        });
+                    }
+                    catch (error) {
+                        if (!warning) {
+                            alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
+                                  'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
+                                  `${styleSheet.href}\n\n${error}`);
+                            warning = true;
                         }
-                        const object: any = element;
-                        if (object.__styleMap != null) {
-                            Object.assign(object.__styleMap, styleMap);
-                        }
-                        else {
-                            object.__style = style;
-                            object.__styleMap = styleMap;
-                        }
-                    });
-                }
-            }
-            catch (error) {
-                if (!cssWarning) {
-                    alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
-                          'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
-                          `${styleSheet.href}\n\n${error}`);
-                    cssWarning = true;
+                    }
                 }
             }
         }

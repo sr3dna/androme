@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <style type="text/css">
+        body {
+            font-family: Tahoma, Arial;
+            padding: 10px;
+            margin: 0px;
+            background-color: #eee;
+        }
+        body > div {
+            vertical-align: top;
+            display: inline-block;
+        }
+        button {
+            font-size: 10px;
+            margin-top: 6px;
+        }
+        .output {
+            width: 400px;
+            overflow: auto;
+            float: left;
+        }
+        .output pre {
+            height: 600px;
+            font-size: 10px;
+            margin: 0px 0px 0px 15px;
+            padding: 10px;
+            background-color: floralwhite;
+            border: 1px solid #ccc;
+            overflow: auto;
+        }
+        .output div {
+            text-align: right;
+        }
+        #androme_ui {
+            column-count: 4;
+            column-gap: 3em;
+        }
+        img {
+            width: 50px;
+            height: 50px; 
+            text-align: center;
+            display: block;
+        }
+        p {
+            font-size: 11px;
+            text-align: center;
+            width: 50px;
+        }
+    </style>
+    <script src="../dist/androme.min.js"></script>
+    <script src="common/prod.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            androme.parseDocument('androme_ui').then(function() {
+                androme.close();
+
+                var views = androme.writeLayoutAllXml();
+                document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+
+                var resource = androme.writeResourceAllXml();
+                document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- START: DEMO -->
+    <div id="androme_ui">
+        <img src="images/icons8-google-docs.png" />
+        <p>Nunc a vulputate turpis. Duis ornare lacus magna, vitae tincidunt leo elementum et.</p>
+        <img src="images/icons8-google-news.png" />
+        <p> Nulla vitae magna sed sapien ultricies dapibus a non libero. Fusce lobortis adipiscing purus vel rhoncus.</p>
+        <img src="images/icons8-google-play.png" />
+        <p>Proin blandit, tortor quis tristique porta, nisl est rhoncus turpis, non interdum nibh ligula sit amet dolor.</p>
+        <img src="images/icons8-google-plus.png" />
+        <p>Sed sagittis aliquam nulla vel viverra. Sed at augue eros. Nam tincidunt mi eu malesuada molestie.</p>
+    </div>
+    <!-- END: DEMO -->
+
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
+                <button onclick="androme.saveAllToDisk();">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

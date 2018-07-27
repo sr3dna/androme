@@ -1,4 +1,4 @@
-/* androme 1.8.11
+/* androme 1.8.12
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -762,13 +762,13 @@
     (function (NODE_STANDARD) {
         NODE_STANDARD[NODE_STANDARD["NONE"] = 0] = "NONE";
         NODE_STANDARD[NODE_STANDARD["TEXT"] = 1] = "TEXT";
-        NODE_STANDARD[NODE_STANDARD["EDIT"] = 2] = "EDIT";
-        NODE_STANDARD[NODE_STANDARD["IMAGE"] = 3] = "IMAGE";
-        NODE_STANDARD[NODE_STANDARD["SELECT"] = 4] = "SELECT";
-        NODE_STANDARD[NODE_STANDARD["RANGE"] = 5] = "RANGE";
-        NODE_STANDARD[NODE_STANDARD["CHECKBOX"] = 6] = "CHECKBOX";
-        NODE_STANDARD[NODE_STANDARD["RADIO"] = 7] = "RADIO";
-        NODE_STANDARD[NODE_STANDARD["BUTTON"] = 8] = "BUTTON";
+        NODE_STANDARD[NODE_STANDARD["IMAGE"] = 2] = "IMAGE";
+        NODE_STANDARD[NODE_STANDARD["SELECT"] = 3] = "SELECT";
+        NODE_STANDARD[NODE_STANDARD["RANGE"] = 4] = "RANGE";
+        NODE_STANDARD[NODE_STANDARD["CHECKBOX"] = 5] = "CHECKBOX";
+        NODE_STANDARD[NODE_STANDARD["RADIO"] = 6] = "RADIO";
+        NODE_STANDARD[NODE_STANDARD["BUTTON"] = 7] = "BUTTON";
+        NODE_STANDARD[NODE_STANDARD["EDIT"] = 8] = "EDIT";
         NODE_STANDARD[NODE_STANDARD["LINE"] = 9] = "LINE";
         NODE_STANDARD[NODE_STANDARD["SPACE"] = 10] = "SPACE";
         NODE_STANDARD[NODE_STANDARD["FRAME"] = 11] = "FRAME";
@@ -1398,61 +1398,63 @@
             this.resourceHandler.setImageSource();
         }
         setStyleMap() {
-            let cssWarning = false;
+            let warning = false;
             for (let i = 0; i < document.styleSheets.length; i++) {
                 const styleSheet = document.styleSheets[i];
-                try {
+                if (styleSheet.cssRules != null) {
                     for (let j = 0; j < styleSheet.cssRules.length; j++) {
-                        const cssRule = styleSheet.cssRules[j];
-                        const attributes = new Set();
-                        for (const attr of Array.from(cssRule.style)) {
-                            attributes.add(convertCamelCase(attr));
-                        }
-                        const elements = document.querySelectorAll(cssRule.selectorText);
-                        if (this.appName !== '') {
-                            Array.from(elements).forEach((element) => {
-                                const object = element;
-                                delete object.__style;
-                                delete object.__styleMap;
-                            });
-                        }
-                        Array.from(elements).forEach((element) => {
-                            for (const attr of Array.from(element.style)) {
+                        try {
+                            const cssRule = styleSheet.cssRules[j];
+                            const attributes = new Set();
+                            for (const attr of Array.from(cssRule.style)) {
                                 attributes.add(convertCamelCase(attr));
                             }
-                            const style = getStyle(element);
-                            const styleMap = {};
-                            for (const name of attributes) {
-                                if (name.toLowerCase().indexOf('color') !== -1) {
-                                    const color = getByColorName(cssRule.style[name]);
-                                    if (color !== '') {
-                                        cssRule.style[name] = convertRGB(color);
+                            const elements = document.querySelectorAll(cssRule.selectorText);
+                            if (this.appName !== '') {
+                                Array.from(elements).forEach((element) => {
+                                    const object = element;
+                                    delete object.__style;
+                                    delete object.__styleMap;
+                                });
+                            }
+                            Array.from(elements).forEach((element) => {
+                                for (const attr of Array.from(element.style)) {
+                                    attributes.add(convertCamelCase(attr));
+                                }
+                                const style = getStyle(element);
+                                const styleMap = {};
+                                for (const name of attributes) {
+                                    if (name.toLowerCase().indexOf('color') !== -1) {
+                                        const color = getByColorName(cssRule.style[name]);
+                                        if (color !== '') {
+                                            cssRule.style[name] = convertRGB(color);
+                                        }
+                                    }
+                                    if (hasValue(element.style[name])) {
+                                        styleMap[name] = element.style[name];
+                                    }
+                                    else if (style[name] === cssRule.style[name]) {
+                                        styleMap[name] = style[name];
                                     }
                                 }
-                                if (hasValue(element.style[name])) {
-                                    styleMap[name] = element.style[name];
+                                const object = element;
+                                if (object.__styleMap != null) {
+                                    Object.assign(object.__styleMap, styleMap);
                                 }
-                                else if (style[name] === cssRule.style[name]) {
-                                    styleMap[name] = style[name];
+                                else {
+                                    object.__style = style;
+                                    object.__styleMap = styleMap;
                                 }
+                            });
+                        }
+                        catch (error) {
+                            if (!warning) {
+                                alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
+                                    'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
+                                    `${styleSheet.href}\n\n${error}`);
+                                warning = true;
                             }
-                            const object = element;
-                            if (object.__styleMap != null) {
-                                Object.assign(object.__styleMap, styleMap);
-                            }
-                            else {
-                                object.__style = style;
-                                object.__styleMap = styleMap;
-                            }
-                        });
-                    }
-                }
-                catch (error) {
-                    if (!cssWarning) {
-                        alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
-                            'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
-                            `${styleSheet.href}\n\n${error}`);
-                        cssWarning = true;
+                        }
                     }
                 }
             }
@@ -3098,6 +3100,9 @@
                 }
             }
         }
+        appendChild(node) {
+            this.renderChildren.push(node);
+        }
         setDimensions() {
             const linear = this.linear;
             linear.width = linear.right - linear.left;
@@ -3136,7 +3141,7 @@
         }
         set renderParent(value) {
             if (value instanceof Node && value !== this && value.renderChildren.indexOf(this) === -1) {
-                value.renderChildren.push(this);
+                value.appendChild(this);
             }
             this._renderParent = value;
         }
@@ -3825,6 +3830,45 @@
                 case NODE_ANDROID.BUTTON:
                     if (element.disabled) {
                         this.android('focusable', 'false');
+                    }
+                    break;
+            }
+        }
+        alignBaseline(nodes) {
+            let childIndex = -1;
+            nodes.some((item, index) => {
+                if (item.is(NODE_STANDARD.LINEAR) && item.android('baselineAlignedChildIndex') != null) {
+                    childIndex = index;
+                }
+                else if (item.nodeType <= NODE_STANDARD.EDIT) {
+                    switch (item.css('verticalAlign')) {
+                        case 'baseline':
+                        case 'sub':
+                        case 'super':
+                            if (childIndex === -1 && item.nodeType <= NODE_STANDARD.BUTTON) {
+                                childIndex = index;
+                            }
+                            break;
+                        default:
+                            childIndex = -1;
+                            return true;
+                    }
+                }
+                return false;
+            });
+            if (childIndex !== -1) {
+                this.android('baselineAlignedChildIndex', childIndex.toString());
+                if (this.renderParent instanceof View && this.renderParent.is(NODE_STANDARD.LINEAR) && this.renderParent.horizontal) {
+                    this.renderParent.alignBaseline(this.renderParent.renderChildren);
+                }
+            }
+        }
+        appendChild(node) {
+            super.appendChild(node);
+            switch (this.nodeName) {
+                case NODE_ANDROID.LINEAR:
+                    if (this.horizontal) {
+                        this.alignBaseline(this.renderChildren);
                     }
                     break;
             }
@@ -4530,6 +4574,43 @@
                                         const first = chainable.first;
                                         const last = chainable.last;
                                         let maxOffset = -1;
+                                        let disconnected = false;
+                                        const attr = (index === 0 ? ['horizontal', 'left', 'leftRight', 'top', 'vertical', 'viewWidth', 'right', 'marginHorizontal'] : ['vertical', 'top', 'topBottom', 'left', 'horizontal', 'viewHeight', 'bottom', 'marginVertical']);
+                                        for (let i = 0; i < chainable.length; i++) {
+                                            if (i === 0) {
+                                                if (!mapParent(first, attr[1])) {
+                                                    disconnected = true;
+                                                    break;
+                                                }
+                                            }
+                                            else {
+                                                if (chainable.list[i].app(LAYOUT[attr[2]]) == null) {
+                                                    disconnected = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        if (!disconnected) {
+                                            if (chainable.list.every(item => same(first, item, `linear.${attr[3]}`))) {
+                                                for (let j = 1; j < chainable.length; j++) {
+                                                    const adjacent = chainable.list[j];
+                                                    if (!adjacent.constraint[attr[4]]) {
+                                                        adjacent.app(LAYOUT[attr[3]], first.stringId);
+                                                        adjacent.constraint[attr[4]] = true;
+                                                    }
+                                                }
+                                            }
+                                            if (!flex.enabled && node[attr[5]] === 0) {
+                                                mapDelete(last, attr[6]);
+                                                last.constraint[attr[7]] = last.app(LAYOUT[attr[2]]);
+                                            }
+                                        }
+                                        else {
+                                            first.app(LAYOUT[LT], 'parent');
+                                            first.constraint[orientation] = true;
+                                            last.app(LAYOUT[RB], 'parent');
+                                            last.constraint[orientation] = true;
+                                        }
                                         if (verticalPerspective) {
                                             if (first.app(LAYOUT['leftRight']) != null) {
                                                 if (!mapParent(first, 'left')) {
@@ -4658,10 +4739,6 @@
                                                 }
                                             }
                                         }
-                                        first.app(LAYOUT[LT], 'parent');
-                                        first.constraint[orientation] = true;
-                                        last.app(LAYOUT[RB], 'parent');
-                                        last.constraint[orientation] = true;
                                         const chainStyle = `layout_constraint${HV}_chainStyle`;
                                         if (flex.enabled && flex.justifyContent !== 'normal' && Math.max.apply(null, chainable.list.map(item => item.flex.grow)) === 0) {
                                             switch (flex.justifyContent) {
@@ -4713,8 +4790,12 @@
                                                     first.app(chainStyle, 'spread_inside');
                                                 }
                                                 else {
-                                                    mapDelete(first, CHAIN_MAP['rightLeftBottomTop'][index]);
-                                                    mapDelete(last, CHAIN_MAP['leftRightTopBottom'][index]);
+                                                    if (mapParent(first, LT)) {
+                                                        mapDelete(first, CHAIN_MAP['rightLeftBottomTop'][index]);
+                                                    }
+                                                    if (mapParent(last, RB)) {
+                                                        mapDelete(last, CHAIN_MAP['leftRightTopBottom'][index]);
+                                                    }
                                                 }
                                             }
                                             else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === 'horizontal' && (first.linear.left === node.box.left || last.linear.right === node.box.right))) {
@@ -6827,7 +6908,6 @@
                 controller.prependBefore(node.id, controller.renderNodeStatic((listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE), node.depth + node.renderDepth, {
                     android: {
                         gravity: parseRTL('right'),
-                        layout_gravity: 'fill',
                         layout_columnWeight: '0',
                         [parseRTL('layout_marginRight')]: formatDimen(node.tagName, parseRTL('margin_right'), '8px'),
                         text: (listStyle !== '0' ? listStyle : '')
@@ -7360,8 +7440,8 @@
             const options = Object.assign({}, this.options[element.id]);
             const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
             overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${Resource.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
-            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
-                overwriteDefault(options, 'android', 'focusable', 'true');
+            if (includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+                overwriteDefault(options, 'android', 'focusable', 'false');
             }
             let src = '';
             switch (element.tagName) {
@@ -8058,13 +8138,9 @@
             const node = this.node;
             node.depth = 0;
             node.documentRoot = true;
-            const optionsDrawer = Object.assign({}, this.options.drawer);
-            let menu = findNestedExtension(node, WIDGET_NAME.MENU);
-            if (menu != null) {
-                overwriteDefault(optionsDrawer, 'android', 'fitsSystemWindows', 'true');
-            }
-            const xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, optionsDrawer, 'match_parent', 'match_parent', node, true);
-            if (menu != null) {
+            const options = Object.assign({}, this.options.drawer);
+            if (findNestedExtension(node, WIDGET_NAME.MENU) != null) {
+                overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
                 this.createResourceTheme();
             }
             else {
@@ -8074,8 +8150,8 @@
                 navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
                 navView.android('layout_height', 'match_parent');
                 navView.isolated = true;
-                menu = navView.element;
             }
+            const xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
             node.renderParent = true;
             node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
             return { xml };
