@@ -140,9 +140,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 for (let j = 0; j < styleSheet.cssRules.length; j++) {
                     try {
                         const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
-                        const attributes: Set<string> = new Set();
+                        const attrs: Set<string> = new Set();
                         for (const attr of Array.from(cssRule.style)) {
-                            attributes.add(convertCamelCase(attr));
+                            attrs.add(convertCamelCase(attr));
                         }
                         const elements = document.querySelectorAll(cssRule.selectorText);
                         if (this.appName !== '') {
@@ -154,22 +154,22 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                         Array.from(elements).forEach((element: HTMLElement) => {
                             for (const attr of Array.from(element.style)) {
-                                attributes.add(convertCamelCase(attr));
+                                attrs.add(convertCamelCase(attr));
                             }
                             const style = getStyle(element);
                             const styleMap: StringMap = {};
-                            for (const name of attributes) {
-                                if (name.toLowerCase().indexOf('color') !== -1) {
-                                    const color = getByColorName(cssRule.style[name]);
+                            for (const attr of attrs) {
+                                if (attr.toLowerCase().indexOf('color') !== -1) {
+                                    const color = getByColorName(cssRule.style[attr]);
                                     if (color !== '') {
-                                        cssRule.style[name] = convertRGB(color);
+                                        cssRule.style[attr] = convertRGB(color);
                                     }
                                 }
-                                if (hasValue(element.style[name])) {
-                                    styleMap[name] = element.style[name];
+                                if (hasValue(element.style[attr])) {
+                                    styleMap[attr] = element.style[attr];
                                 }
-                                else if (style[name] === cssRule.style[name]) {
-                                    styleMap[name] = style[name];
+                                else if (style[attr] === cssRule.style[attr]) {
+                                    styleMap[attr] = style[attr];
                                 }
                             }
                             const object: any = element;

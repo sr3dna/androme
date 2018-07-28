@@ -4,7 +4,7 @@ import { calculateBias, convertEnum, convertInt, convertPX, convertWord, formatP
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
-import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './constants';
+import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './constants';
 
 type T = View;
 
@@ -18,6 +18,7 @@ export default class View extends Node {
         }
         return View._documentBody;
     }
+
     public static getViewName(tagName: number): string {
         return NODE_ANDROID[NODE_STANDARD[tagName]];
     }
@@ -41,30 +42,26 @@ export default class View extends Node {
 
     public add(ns: string, attr: string, value = '', overwrite = true) {
         if (!this.supported(ns, attr)) {
-            return false;
+            return;
         }
-        return super.add(ns, attr, value, overwrite);
+        super.add(ns, attr, value, overwrite);
     }
 
     public android(attr: string = '', value: string = '', overwrite = true) {
-        switch (arguments.length) {
-            case 0:
-                return this._android;
-            case 1:
-                return this._android && this._android[attr];
-            default:
-                this.add('android', attr, value, overwrite);
+        if (hasValue(value)) {
+            this.add('android', attr, value, overwrite);
+        }
+        else {
+            return (this._android && this._android[attr] != null ? this._android[attr] : null);
         }
     }
 
     public app(attr: string = '', value: string = '', overwrite = true) {
-        switch (arguments.length) {
-            case 0:
-                return this._app;
-            case 1:
-                return this._app && this._app[attr];
-            default:
-                this.add('app', attr, value, overwrite);
+        if (hasValue(value)) {
+            this.add('app', attr, value, overwrite);
+        }
+        else {
+            return (this._app && this._app[attr] != null ? this._app[attr] : null);
         }
     }
 
@@ -592,7 +589,7 @@ export default class View extends Node {
     }
 
     get horizontal() {
-        return (this._android && this._android.orientation === 'horizontal');
+        return (this._android && this._android.orientation === AXIS_ANDROID.HORIZONTAL);
     }
 
     get horizontalBias() {

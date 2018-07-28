@@ -67,6 +67,11 @@ export const BOX_ANDROID = {
     PADDING_LEFT: 'paddingLeft'
 };
 
+export const AXIS_ANDROID = {
+    HORIZONTAL: 'horizontal',
+    VERTICAL: 'vertical'
+};
+
 export const FIXED_ANDROID = [
     NODE_ANDROID.EDIT,
     NODE_ANDROID.SELECT,

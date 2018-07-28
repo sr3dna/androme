@@ -3,9 +3,9 @@ import { ObjectMap, StringMap } from './types';
 let ID: ObjectMap<string[]>;
 resetId();
 
-function sort<T>(list: T[], asc = 0, ...attributes: string[]) {
+function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     return list.sort((a: T, b: T) => {
-        for (const attr of attributes) {
+        for (const attr of attrs) {
             const result = compare(a, b, attr);
             if (result && result[0] !== result[1]) {
                 if (asc === 0) {
@@ -276,8 +276,8 @@ export function lastIndexOf(value: string, character = '/') {
     return value.substring(value.lastIndexOf(character) + 1);
 }
 
-export function same(obj1: {}, obj2: {}, ...attributes: string[]) {
-    for (const attr of attributes) {
+export function same(obj1: {}, obj2: {}, ...attrs: string[]) {
+    for (const attr of attrs) {
         const result = compare(obj1, obj2, attr);
         if (!result || result[0] !== result[1]) {
             return false;
@@ -290,9 +290,9 @@ export function search(obj: ObjectMap<string>, value: string | StringMap) {
     const result: any[][] = [];
     if (typeof value === 'object') {
         for (const term in value) {
-            const i = value[term];
-            if (hasValue(obj[i])) {
-                result.push([i, obj[i]]);
+            const attr = value[term];
+            if (hasValue(obj[attr])) {
+                result.push([attr, obj[attr]]);
             }
         }
     }
@@ -363,10 +363,10 @@ export function caseInsensitve(a: string | string[], b: string | string[]) {
     return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
 }
 
-export function sortAsc<T>(list: T[], ...attributes: string[]) {
-    return sort<T>(list, 0, ...attributes);
+export function sortAsc<T>(list: T[], ...attrs: string[]) {
+    return sort<T>(list, 0, ...attrs);
 }
 
-export function sortDesc<T>(list: T[], ...attributes: string[]) {
-    return sort<T>(list, 1, ...attributes);
+export function sortDesc<T>(list: T[], ...attrs: string[]) {
+    return sort<T>(list, 1, ...attrs);
 }

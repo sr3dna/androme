@@ -81,16 +81,15 @@ export default abstract class Node implements BoxModel {
                 this[name] = {};
             }
             if (!overwrite && this[name][attr] != null) {
-                return null;
+                return;
             }
             this[name][attr] = value;
         }
-        return this[name] && this[name][attr];
     }
 
-    public get(ns: string, attr: string): string {
+    public get(ns: string): StringMap {
         const name = `_${ns || '_'}`;
-        return (this[name] && this[name][attr] != null ? this[name][attr] : '');
+        return (this[name] != null ? this[name] : {});
     }
 
     public delete(ns: string, ...attrs: string[]) {

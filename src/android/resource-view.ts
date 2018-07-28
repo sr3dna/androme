@@ -716,13 +716,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const node: Null<T> = viewData.cache.find(item => item.id === parseInt(id));
             if (node != null) {
                 const styles: string[] = map[id].styles;
-                const attributes: string[] = map[id].attributes;
+                const attrs: string[] = map[id].attributes;
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
                     node.add('_', 'style', `@style/${styles.pop()}`);
                 }
-                if (attributes.length > 0) {
-                    attributes.sort().forEach((value: string) => node.attr(replaceDP(value, true)));
+                if (attrs.length > 0) {
+                    attrs.sort().forEach((value: string) => node.attr(replaceDP(value, true)));
                 }
             }
         }
@@ -739,8 +739,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
         }
     }
 
-    private deleteStyleAttribute(sorted: any, attributes: string, ids: number[]) {
-        attributes.split(';').forEach(value => {
+    private deleteStyleAttribute(sorted: any, attrs: string, ids: number[]) {
+        attrs.split(';').forEach(value => {
             for (let i = 0; i < sorted.length; i++) {
                 if (sorted[i] != null) {
                     let index = -1;
