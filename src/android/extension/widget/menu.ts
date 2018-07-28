@@ -46,7 +46,7 @@ export default class Menu<T extends View> extends Nav {
         const node = (<T> this.node);
         node.documentRoot = true;
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
-        node.renderParent = true;
+        node.rendered = true;
         node.cascade().forEach(item => item.renderExtension = (<IExtension> this));
         node.excludeResource |= NODE_RESOURCE.ALL;
         return { xml };
@@ -61,7 +61,7 @@ export default class Menu<T extends View> extends Nav {
         }
         const parent = (<T> this.parent);
         node.renderDepth = parent.renderDepth + 1;
-        node.renderParent = true;
+        node.rendered = true;
         node.excludeResource |= NODE_RESOURCE.ALL;
         const options: ObjectMap<StringMap> = { android: {}, app: {} };
         const children = (<HTMLElement[]> Array.from(node.element.children));

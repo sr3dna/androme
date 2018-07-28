@@ -84,9 +84,6 @@ export function overwriteDefault(options: {}, namespace: string, attr: string, v
 }
 
 export function positionIsolated(node: T) {
-    const renderParent = node.renderParent;
-    const parent = node.documentParent;
-    node.renderParent = parent;
     const horizontalBias = node.horizontalBias;
     const verticalBias = node.verticalBias;
     const gravity: string[] = [];
@@ -110,6 +107,7 @@ export function positionIsolated(node: T) {
         gravity.push('center_vertical');
     }
     node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
+    const parent = (<T> node.documentParent);
     if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
         if (horizontalBias < 0.5) {
             node.css('marginLeft', convertPX(Math.floor(node.bounds.left - parent.box.left)));
@@ -126,5 +124,4 @@ export function positionIsolated(node: T) {
             node.css('marginBottom', convertPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
         }
     }
-    node.renderParent = renderParent;
 }

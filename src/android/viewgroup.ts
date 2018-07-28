@@ -20,9 +20,7 @@ export default class ViewGroup extends View {
         }
         this.depth = node.depth;
         this.tagName = `${node.tagName}group`;
-        if (this.documentParent instanceof View) {
-            this.css('direction', this.documentParent.dir);
-        }
+        this.css('direction', this.documentParent.dir);
     }
 
     public setLayout() {

@@ -9,9 +9,20 @@ import { BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID } from './const
 type T = View;
 
 export default class View extends Node {
+    public static documentBody() {
+        if (View._documentBody == null) {
+            const body = new View(0, 0, document.body);
+            body.hide();
+            body.setBounds();
+            View._documentBody = body;
+        }
+        return View._documentBody;
+    }
     public static getViewName(tagName: number): string {
         return NODE_ANDROID[NODE_STANDARD[tagName]];
     }
+
+    private static _documentBody: T;
 
     public constraint: ObjectMap<any> = {};
     public children: T[] = [];
@@ -75,24 +86,22 @@ export default class View extends Node {
         if (overwrite == null) {
             overwrite = (adjacent === 'parent' || adjacent === 'true');
         }
-        if (this.renderParent instanceof View) {
-            switch (this.renderParent.nodeName) {
-                case NODE_ANDROID.CONSTRAINT:
-                    if (arguments.length === 1) {
-                        return this.app(position);
-                    }
-                    this.app(position, adjacent, overwrite);
-                    break;
-                case NODE_ANDROID.RELATIVE:
-                    if (arguments.length === 1) {
-                        return this.android(position);
-                    }
-                    this.android(position, adjacent, overwrite);
-                    break;
-            }
-            if (hasValue(orientation)) {
-                this.constraint[<string> orientation] = true;
-            }
+        switch (this.renderParent.nodeName) {
+            case NODE_ANDROID.CONSTRAINT:
+                if (arguments.length === 1) {
+                    return this.app(position);
+                }
+                this.app(position, adjacent, overwrite);
+                break;
+            case NODE_ANDROID.RELATIVE:
+                if (arguments.length === 1) {
+                    return this.android(position);
+                }
+                this.android(position, adjacent, overwrite);
+                break;
+        }
+        if (hasValue(orientation)) {
+            this.constraint[<string> orientation] = true;
         }
     }
 
@@ -179,6 +188,7 @@ export default class View extends Node {
         node.nodeType = this.nodeType;
         node.nodeName = this.nodeName;
         node.depth = this.depth;
+        node.rendered = this.rendered;
         node.renderDepth = this.renderDepth;
         node.renderParent = this.renderParent;
         node.renderExtension = this.renderExtension;
@@ -313,8 +323,8 @@ export default class View extends Node {
             }
             else if (this.android('layout_height') == null) {
                 let layoutHeight = 'wrap_content';
-                if (height >= heightParent) {
-                    if ((parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.nodeName) && (!renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content'))) {
+                if (height >= heightParent && parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.nodeName)) {
+                    if (!renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content') {
                         layoutHeight = 'match_parent';
                     }
                 }
@@ -346,14 +356,15 @@ export default class View extends Node {
         let textAlignParent = '';
         const verticalAlign = this.styleMap.verticalAlign;
         if (!this.floating || textView) {
-            let node: T = (<T> this.documentParent);
-            while (node != null) {
-                textAlignParent = node.styleMap.textAlign || textAlignParent;
-                if (node.floating || hasValue(textAlign)) {
+            let parent: T = (<T> this.documentParent);
+            do {
+                textAlignParent = parent.styleMap.textAlign;
+                if (parent.id === 0 || parent.floating || hasValue(textAlignParent)) {
                     break;
                 }
-                node = (<T> node.documentParent);
+                parent = (<T> parent.documentParent);
             }
+            while (true);
         }
         if (textAlign === '' && this.tagName === 'TH') {
             textAlign = 'center';
@@ -417,8 +428,7 @@ export default class View extends Node {
     }
 
     public mergeBoxSpacing() {
-        const renderParent = this.renderParent;
-        if (this.api >= BUILD_ANDROID.OREO && renderParent instanceof View) {
+        if (this.api >= BUILD_ANDROID.OREO) {
             ['layout_margin', 'padding'].forEach((value, index) => {
                 const leftRtl = parseRTL(`${value}Left`);
                 const rightRtl = parseRTL(`${value}Right`);
@@ -431,7 +441,7 @@ export default class View extends Node {
                     this.android(value, formatPX(top));
                 }
                 else {
-                    if (index !== 0 || !renderParent.is(NODE_STANDARD.GRID)) {
+                    if (index !== 0 || !this.renderParent.is(NODE_STANDARD.GRID)) {
                         if (top !== 0 && top === bottom) {
                             this.delete('android', `${value}Top`, `${value}Bottom`);
                             this.android(`${value}Vertical`, formatPX(top));
@@ -503,7 +513,7 @@ export default class View extends Node {
         });
         if (childIndex !== -1) {
             this.android('baselineAlignedChildIndex', childIndex.toString());
-            if (this.renderParent instanceof View && this.renderParent.is(NODE_STANDARD.LINEAR) && this.renderParent.horizontal) {
+            if (this.renderParent.is(NODE_STANDARD.LINEAR) && this.renderParent.horizontal) {
                 this.renderParent.alignBaseline(this.renderParent.renderChildren);
             }
         }
@@ -537,6 +547,46 @@ export default class View extends Node {
         }
     }
 
+    set documentParent(value: T) {
+        this._documentParent = value;
+    }
+    get documentParent() {
+        if (this._documentParent != null) {
+            return (<T> this._documentParent);
+        }
+        else if (this.id === 0) {
+            return this;
+        }
+        else {
+            let parent: Null<HTMLElement> = this.element.parentElement;
+            while (parent != null) {
+                const node: T = (<any> parent).__node;
+                if (node != null) {
+                    return node;
+                }
+                parent = parent.parentElement;
+            }
+        }
+        return View.documentBody();
+    }
+
+    set renderParent(value: T) {
+        if (value !== this && value.renderChildren.indexOf(this) === -1) {
+            value.appendChild(this);
+        }
+        this._renderParent = value;
+    }
+    get renderParent() {
+        if (this._renderParent != null) {
+            return (<T> this._renderParent);
+        }
+        else {
+            const node = new View(0, this.api);
+            node.hide();
+            return node;
+        }
+    }
+
     get anchored() {
         return (this.constraint.horizontal && this.constraint.vertical);
     }
@@ -546,8 +596,8 @@ export default class View extends Node {
     }
 
     get horizontalBias() {
-        const parent = this.renderParent;
-        if (parent instanceof View && parent.visible) {
+        const parent = this.documentParent;
+        if (parent !== this) {
             const left = this.linear.left - parent.box.left;
             const right = parent.box.right - this.linear.right;
             return calculateBias(left, right);
@@ -555,8 +605,8 @@ export default class View extends Node {
         return 0.5;
     }
     get verticalBias() {
-        const parent = this.renderParent;
-        if (parent instanceof View && parent.visible) {
+        const parent = this.documentParent;
+        if (parent !== this) {
             const top = this.linear.top - parent.box.top;
             const bottom = parent.box.bottom - this.linear.bottom;
             return calculateBias(top, bottom);

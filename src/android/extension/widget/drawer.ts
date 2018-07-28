@@ -60,7 +60,7 @@ export default class Drawer extends Extension<T, U> {
             navView.isolated = true;
         }
         const xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
-        node.renderParent = true;
+        node.rendered = true;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
         return { xml };
     }

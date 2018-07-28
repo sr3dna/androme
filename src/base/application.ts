@@ -59,7 +59,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public finalize() {
-        this.cacheInternal.list.filter(node => node.visible && node.renderParent instanceof this.TypeT).forEach(node => {
+        this.cacheInternal.visible.forEach(node => {
             if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
             }
@@ -492,7 +492,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                     }
                     let parent = (<T> nodeY.parent);
-                    if (!nodeY.renderParent) {
+                    if (!nodeY.rendered) {
                         if (!includesEnum(nodeY.excludeProcedure, NODE_PROCEDURE.CUSTOMIZATION)) {
                             nodeY.applyCustomizations();
                         }
@@ -540,7 +540,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (proceed) {
                             continue;
                         }
-                        if (!nodeY.renderParent) {
+                        if (!nodeY.rendered) {
                             let xml = '';
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;

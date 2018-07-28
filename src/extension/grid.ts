@@ -293,7 +293,7 @@ export default class Grid extends Extension<T, U> {
             }
             else {
                 const columnEnd = gridData.columnEnd[Math.min(gridCellData.index + (gridCellData.columnSpan - 1), gridData.columnEnd.length - 1)];
-                siblings = node.documentParent.children.filter(item => !item.renderParent && item.linear.left >= node.linear.right && item.linear.right <= columnEnd);
+                siblings = node.documentParent.children.filter(item => !item.rendered && item.linear.left >= node.linear.right && item.linear.right <= columnEnd);
             }
             if (siblings && siblings.length > 0) {
                 siblings.unshift(node);

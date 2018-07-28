@@ -22,6 +22,7 @@ export default abstract class Node implements BoxModel {
     public documentRoot = false;
     public companion: T;
     public visible = true;
+    public rendered = false;
     public isolated = false;
     public relocated = false;
 
@@ -29,12 +30,12 @@ export default abstract class Node implements BoxModel {
     public abstract renderChildren: T[];
 
     protected _nodeName: string;
+    protected _renderParent: T;
+    protected _documentParent: T;
 
     private _element: HTMLElement;
     private _namespaces = new Set<string>();
     private _parent: T;
-    private _documentParent: T;
-    private _renderParent: T | boolean;
     private _tagName: string;
     private _data: ObjectMap<any> = {};
 
@@ -66,6 +67,11 @@ export default abstract class Node implements BoxModel {
     public abstract modifyBox(area: number, offset: number): void;
     public abstract boxValue(area: number): string[];
     public abstract clone(): T;
+
+    public abstract set documentParent(value: T);
+    public abstract get documentParent(): T;
+    public abstract set renderParent(value: T);
+    public abstract get renderParent(): T;
 
     public add(ns: string, attr: string, value = '', overwrite = true) {
         const name = `_${ns || '_'}`;
@@ -122,10 +128,11 @@ export default abstract class Node implements BoxModel {
     public render(parent: T) {
         this.renderParent = parent;
         this.renderDepth = (parent === this || this.documentRoot || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1);
+        this.rendered = true;
     }
 
     public hide() {
-        this.renderParent = true;
+        this.rendered = true;
         this.visible = false;
     }
 
@@ -374,14 +381,6 @@ export default abstract class Node implements BoxModel {
         return this._parent;
     }
 
-    set documentParent(value: T) {
-        this._documentParent = value;
-    }
-
-    get documentParent(): T {
-        return this._documentParent || (this.element && this.element.parentElement != null ? (<any> this.element.parentElement).__node : null) || this._parent;
-    }
-
     set tagName(value) {
         this._tagName = value;
     }
@@ -394,16 +393,6 @@ export default abstract class Node implements BoxModel {
     }
     get nodeName() {
         return this._nodeName;
-    }
-
-    set renderParent(value: T | boolean) {
-        if (value instanceof Node && value !== this && value.renderChildren.indexOf(this) === -1) {
-            value.appendChild(this);
-        }
-        this._renderParent = value;
-    }
-    get renderParent() {
-        return this._renderParent;
     }
 
     get element() {
@@ -553,13 +542,14 @@ export default abstract class Node implements BoxModel {
             case 'unset':
             case 'inherit':
                 let parent = this.documentParent;
-                while (parent != null) {
+                do {
                     const dir = parent.dir;
                     if (dir !== '') {
                         return dir;
                     }
                     parent = parent.documentParent;
                 }
+                while (parent.id !== 0);
                 return '';
             case 'rtl':
                 return 'rtl';

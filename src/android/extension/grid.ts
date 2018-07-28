@@ -34,7 +34,7 @@ export default class GridAndroid<T extends View> extends Grid {
             }
             else {
                 const parent = (<T> node.renderParent);
-                if (parent instanceof View && parent.is(NODE_STANDARD.GRID)) {
+                if (parent.is(NODE_STANDARD.GRID)) {
                     const gridData = (<GridData> parent.data(`${EXT_NAME.GRID}:gridData`));
                     const gridCellData = (<GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`));
                     if (gridData != null && gridCellData != null) {

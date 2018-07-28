@@ -47,10 +47,8 @@ export default class BottomNavigation extends Extension<T, U> {
 
     public afterInsert() {
         const node = (<T> this.node);
-        if (node.renderParent instanceof View) {
-            if (node.renderParent.viewHeight === 0) {
-                node.renderParent.android('layout_height', 'match_parent');
-            }
+        if (node.renderParent.viewHeight === 0) {
+            node.renderParent.android('layout_height', 'match_parent');
         }
     }
 
