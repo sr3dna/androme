@@ -315,13 +315,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             visible.forEach(parent => {
                 visible.forEach(child => {
                     if (parent !== child) {
-                        let elementParent = false;
                         if (child.element.parentElement === parent.element) {
                             child.parent = parent;
                             parent.children.push(child);
-                            elementParent = true;
                         }
-                        if ((child.css('position') === 'fixed' || (elementParent && child.css('position') === 'absolute' && parent.css('position') !== 'relative')) && child.box.left >= parent.linear.left && child.box.right <= parent.linear.right && child.box.top >= parent.linear.top && child.box.bottom <= parent.linear.bottom) {
+                        if (child.absolute && child.linear.left >= parent.box.left && child.linear.right <= parent.box.right && child.linear.top >= parent.box.top && child.linear.bottom <= parent.box.bottom) {
                             if (parents[child.id] == null) {
                                 parents[child.id] = [];
                             }
@@ -337,7 +335,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     let minArea = Number.MAX_VALUE;
                     let closest: Null<T> = null;
                     nodes.forEach(current => {
-                        const area = (current.box.left - node.linear.left) + (current.box.right - node.linear.right) + (current.box.top - node.linear.top) + (current.box.bottom - node.linear.bottom);
+                        const area = (node.linear.left - current.box.left) + (current.box.right - node.linear.right) + (node.linear.top - current.box.top) + (current.box.bottom - node.linear.bottom);
                         if (area < minArea) {
                             closest = current;
                             minArea = area;

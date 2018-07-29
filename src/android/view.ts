@@ -554,6 +554,9 @@ export default class View extends Node {
         else if (this.id === 0) {
             return this;
         }
+        else if (this.absolute) {
+            return (<T> this.parent);
+        }
         else {
             let parent: Null<HTMLElement> = this.element.parentElement;
             while (parent != null) {

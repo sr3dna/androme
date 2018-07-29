@@ -1,4 +1,4 @@
-import { BoxModel, ClientRect } from './types';
+import { BoxModel, ClientRect, Null } from './types';
 import { convertInt, optional } from './util';
 import { BLOCK_ELEMENT } from './constants';
 
@@ -25,20 +25,22 @@ export function assignBounds(bounds: ClientRect): ClientRect {
     };
 }
 
-export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaration {
-    const object: any = element;
-    if (cache) {
-        if (object.__style != null) {
-            return object.__style;
+export function getStyle(element: Null<HTMLElement>, cache = true): CSSStyleDeclaration {
+    if (element != null) {
+        const object: any = element;
+        if (cache) {
+            if (object.__style != null) {
+                return object.__style;
+            }
+            else if (object.__node != null && object.__node.style != null) {
+                return object.__node.style;
+            }
         }
-        else if (object.__node != null && object.__node.style != null) {
-            return object.__node.style;
+        if (element.nodeName !== '#text') {
+            const style = getComputedStyle(element);
+            object.__style = style;
+            return style;
         }
-    }
-    if (element.nodeName !== '#text') {
-        const style = getComputedStyle(element);
-        object.__style = style;
-        return style;
     }
     return (<CSSStyleDeclaration> {});
 }

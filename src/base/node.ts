@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { convertInt, hasValue, convertCamelCase, includesEnum, search } from '../lib/util';
-import { assignBounds, getRangeBounds } from '../lib/dom';
+import { assignBounds, getRangeBounds, getStyle } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_PROCEDURE } from '../lib/constants';
 
 type T = Node;
@@ -50,7 +50,7 @@ export default abstract class Node implements BoxModel {
                 for (const inline of Array.from(element.style)) {
                     styleMap[convertCamelCase(inline)] = (<any> element.style)[inline];
                 }
-                this.style = object.__style || getComputedStyle(element);
+                this.style = (<CSSStyleDeclaration> object.__style) || getComputedStyle(element);
                 this.styleMap = styleMap;
             }
             this._element = element;
@@ -423,9 +423,9 @@ export default abstract class Node implements BoxModel {
     }
 
     get flex(): Flexbox {
+        const parent = this.documentParent;
         const style = this.style;
-        if (style != null) {
-            const parent = this.documentParent;
+        if (style != null && parent !== this) {
             return {
                 enabled: ((<string> style.display).indexOf('flex') !== -1),
                 direction: (<string> style.flexDirection),
@@ -433,7 +433,7 @@ export default abstract class Node implements BoxModel {
                 grow: convertInt(style.flexGrow),
                 shrink: convertInt(style.flexShrink),
                 wrap: (<string> style.flexWrap),
-                alignSelf: (<string> (parent && parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
+                alignSelf: (<string> (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
                 justifyContent: (<string> style.justifyContent),
                 order: convertInt(style.order)
             };
@@ -530,6 +530,11 @@ export default abstract class Node implements BoxModel {
     get pageflow() {
         const position = this.css('position');
         return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && convertInt(this.css('top')) === 0 && convertInt(this.css('right')) === 0 && convertInt(this.css('bottom')) === 0 && convertInt(this.css('left')) === 0));
+    }
+
+    get absolute() {
+        const position = this.css('position');
+        return (position === 'fixed' || (position === 'absolute' && getStyle(this.parentElement).position !== 'relative'));
     }
 
     get inline() {
