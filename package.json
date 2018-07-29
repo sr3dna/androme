@@ -66,7 +66,6 @@
     "rollup": "^0.59.4",
     "rollup-plugin-babel": "^3.0.7",
     "rollup-plugin-babel-minify": "^5.0.0",
-    "rollup-plugin-buble": "^0.19.2",
     "systemjs": "^0.21.4",
     "systemjs-plugin-babel": "0.0.25",
     "tslint": "^5.10.0",

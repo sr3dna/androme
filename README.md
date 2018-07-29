@@ -12,7 +12,7 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/Edge/FireFox. The latest version of Chrome is ideally what you should use to generate the production version of your program. ***
 
-[androme.min.js](https://github.com/anpham6/androme/tree/master/dist/androme.min.js): only one file is required to use this program in your webpage
+[https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js](https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js): only one file is required to use this program in your webpage
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server. 
 
@@ -34,7 +34,7 @@ GitHub
 * Open Browser: http://localhost:3000/demos/index.html
 
 ```javascript
-<script src="/dist/androme.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js"></script>
 <script>
     // optional  
     androme.settings.targetAPI = 19; // androme.build.KITKAT
