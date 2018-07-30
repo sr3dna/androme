@@ -96,13 +96,15 @@ export default abstract class Node implements BoxModel {
         const name = `_${ns || '_'}`;
         if (this[name] != null) {
             for (const attr of attrs) {
-                if (attr.indexOf('*') !== -1) {
-                    for (const [key] of search(this[name], attr)) {
-                        delete this[name][key];
+                if (hasValue(attr)) {
+                    if (attr.indexOf('*') !== -1) {
+                        for (const [key] of search(this[name], attr)) {
+                            delete this[name][key];
+                        }
                     }
-                }
-                else {
-                    delete this[name][attr];
+                    else {
+                        delete this[name][attr];
+                    }
                 }
             }
         }
@@ -248,7 +250,7 @@ export default abstract class Node implements BoxModel {
         );
     }
 
-    public css(attr: string, value = '') {
+    public css(attr: string, value = ''): string {
         if (arguments.length === 2) {
             this.styleMap[attr] = (hasValue(value) ? value : '');
         }
@@ -445,6 +447,10 @@ export default abstract class Node implements BoxModel {
         return (float === 'left' || float === 'right');
     }
 
+    get float() {
+        return this.css('float');
+    }
+
     get overflow() {
         let value = OVERFLOW_ELEMENT.NONE;
         if (this.hasElement) {
@@ -584,6 +590,22 @@ export default abstract class Node implements BoxModel {
             default:
                 return 'ltr';
         }
+    }
+
+    get previousSibling() {
+        const index = this.parent.children.findIndex(node => node === this);
+        if (index > 0) {
+            return this.parent.children[index - 1];
+        }
+        return null;
+    }
+
+    get nextSibling() {
+        const index = this.parent.children.findIndex(node => node === this);
+        if (index !== -1) {
+            return this.parent.children[index + 1];
+        }
+        return null;
     }
 
     get center(): Point {

@@ -58,7 +58,7 @@ export default abstract class List extends Extension<T, U> {
                         break;
                     default:
                         if (node.tagName === 'OL') {
-                            ordinal = `${(listStyle === 'decimal-leading-zero' && j < 9 ? '0' : '') && (j + 1).toString()}.`;
+                            ordinal = `${(listStyle === 'decimal-leading-zero' && j < 9 ? '0' : '') + (j + 1).toString()}.`;
                         }
                         else {
                             ordinal = '○';

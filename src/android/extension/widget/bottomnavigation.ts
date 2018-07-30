@@ -29,8 +29,9 @@ export default class BottomNavigation extends Extension<T, U> {
             node.children[i].cascade().forEach(item => item.hide());
         }
         node.cascade().forEach(item => item.renderExtension = this);
-        node.excludeResource |= NODE_RESOURCE.ASSET;
         node.render(parent);
+        node.nodeType = NODE_STANDARD.BLOCK;
+        node.excludeResource |= NODE_RESOURCE.ASSET;
         this.createResourceTheme();
         return { xml };
     }

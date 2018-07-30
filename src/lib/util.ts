@@ -91,6 +91,10 @@ export function convertInt(value: any) {
     return parseInt(value) || 0;
 }
 
+export function convertFloat(value: any) {
+    return parseFloat(value) || 0;
+}
+
 export function convertPX(value: any) {
     if (hasValue(value)) {
         if (isNumber(value)) {

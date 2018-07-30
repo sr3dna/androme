@@ -33,6 +33,9 @@ export default class ListAndroid<T extends View> extends List {
                 )
             );
             node.android('layout_columnWeight', '1');
+            if (node.viewWidth === 0) {
+                node.android('layout_width', 'wrap_content');
+            }
         }
         return { xml: '' };
     }

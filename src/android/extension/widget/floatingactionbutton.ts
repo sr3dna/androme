@@ -5,7 +5,7 @@ import View from '../../view';
 import { hasValue, includesEnum } from '../../../lib/util';
 import { overwriteDefault, positionIsolated } from '../lib/util';
 import { parseRGBA } from '../../../lib/color';
-import { NODE_PROCEDURE, NODE_RESOURCE } from '../../../lib/constants';
+import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 export default class FloatingActionButton<T extends View> extends Button {
@@ -46,6 +46,7 @@ export default class FloatingActionButton<T extends View> extends Button {
         const target = hasValue(node.dataset.target);
         node.depth = (target ? node.depth : node.parent.renderDepth + 1);
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (target ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
+        node.nodeType = NODE_STANDARD.BUTTON;
         node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
         if (node.isolated) {
             positionIsolated(node);

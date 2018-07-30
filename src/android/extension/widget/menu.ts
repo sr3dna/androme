@@ -2,7 +2,7 @@ import { ExtensionResult, IExtension, ObjectMap, StringMap } from '../../../lib/
 import Nav from '../../../extension/nav';
 import Resource from '../../../base/resource';
 import View from '../../view';
-import { BLOCK_ELEMENT, NODE_RESOURCE } from '../../../lib/constants';
+import { BLOCK_ELEMENT, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
 const VALIDATE_ITEM = {
@@ -42,12 +42,17 @@ export default class Menu<T extends View> extends Nav {
         super(name, tagNames, options);
     }
 
+    public condition() {
+        return this.included();
+    }
+
     public processNode(): ExtensionResult {
         const node = (<T> this.node);
         node.documentRoot = true;
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.rendered = true;
         node.cascade().forEach(item => item.renderExtension = (<IExtension> this));
+        node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ALL;
         return { xml };
     }

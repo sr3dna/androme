@@ -124,7 +124,7 @@ export default class Grid extends Extension<T, U> {
                         const nextX = nextAxisX[m];
                         let [left, right] = [nextX.linear.left, nextX.linear.right];
                         let index = l;
-                        if (index > 0 && nextX.css('float') === 'right') {
+                        if (index > 0 && nextX.float === 'right') {
                             const style: any = nextX.element.style;
                             style.float = 'left';
                             const bounds = nextX.element.getBoundingClientRect();

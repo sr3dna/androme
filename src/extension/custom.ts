@@ -2,6 +2,7 @@ import { ExtensionResult } from '../lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import { BLOCK_ELEMENT, NODE_STANDARD } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;
@@ -26,6 +27,7 @@ export default class Custom extends Extension<T, U> {
             else {
                 xml = controller.renderNode(node, parent, data.tag);
             }
+            node.nodeType = (BLOCK_ELEMENT.includes(node.tagName) ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE);
         }
         if (data.tagChild) {
             node.children.forEach(item => {

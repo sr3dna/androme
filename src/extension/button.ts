@@ -24,6 +24,6 @@ export default abstract class Button extends Extension<T, U> {
     }
 
     public condition() {
-        return (super.condition() && this.included());
+        return this.included();
     }
 }

@@ -1,6 +1,5 @@
 export enum NODE_STANDARD {
     NONE = 0,
-    TEXT,
     IMAGE,
     SELECT,
     RANGE,
@@ -8,8 +7,11 @@ export enum NODE_STANDARD {
     RADIO,
     BUTTON,
     EDIT,
+    INLINE,
+    TEXT,
     LINE,
     SPACE,
+    BLOCK,
     FRAME,
     LINEAR,
     CONSTRAINT,

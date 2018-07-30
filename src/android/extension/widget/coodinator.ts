@@ -3,7 +3,7 @@ import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import { includes, optional } from '../../../lib/util';
-import { NODE_RESOURCE } from '../../../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 type T = View;
@@ -19,6 +19,7 @@ export default class Coordinator extends Extension<T, U> {
         const node = (<T> this.node);
         const xml = controller.renderGroup(node, <T> this.parent, VIEW_SUPPORT.COORDINATOR);
         node.apply(this.options[node.element.id]);
+        node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ASSET;
         if (node.children.filter(item => !item.isolated).length > 0) {
             const toolbar = this.getToolbar(node);

@@ -4,7 +4,7 @@ import View from '../../view';
 import ViewList from '../../viewlist';
 import { hasValue, includes, optional } from '../../../lib/util';
 import { findNestedExtension, overwriteDefault } from '../lib/util';
-import { NODE_RESOURCE } from '../../../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import parseRTL from '../../localization';
@@ -36,10 +36,6 @@ export default class Drawer extends Extension<T, U> {
         return false;
     }
 
-    public condition() {
-        return (super.condition() && this.included());
-    }
-
     public processNode(): ExtensionResult {
         const application = this.application;
         const controller = application.controllerHandler;
@@ -61,6 +57,7 @@ export default class Drawer extends Extension<T, U> {
         }
         const xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
         node.rendered = true;
+        node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
         return { xml };
     }

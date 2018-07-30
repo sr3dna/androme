@@ -379,6 +379,8 @@ export default abstract class Resource<T extends Node> {
                             case 'number':
                             case 'email':
                             case 'search':
+                            case 'submit':
+                            case 'reset':
                             case 'button':
                                 value = element.value.trim();
                                 break;
@@ -393,7 +395,14 @@ export default abstract class Resource<T extends Node> {
                         value = element.value.trim();
                     }
                     else if (element.nodeName === '#text') {
-                        value = optional(element, 'textContent').trim();
+                        value = optional(element, 'textContent');
+                        const nextSibling = node.nextSibling;
+                        if (nextSibling != null && nextSibling.inline && /\s+$/.test(value)) {
+                            value = value.trim() + '&#160;';
+                        }
+                        else {
+                            value = value.trim();
+                        }
                     }
                     else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))))) {
                         name = element.innerText.trim();

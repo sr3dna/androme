@@ -7,7 +7,7 @@ import { convertPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
 import { formatDimen, stripId } from '../../../lib/xml';
 import { getStyle } from '../../../lib/dom';
-import { NODE_PROCEDURE, NODE_RESOURCE } from '../../../lib/constants';
+import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -41,10 +41,6 @@ export default class Toolbar extends Extension<T, U> {
             }
         }
         return false;
-    }
-
-    public condition() {
-        return (super.condition() && this.included());
     }
 
     public processNode(): ExtensionResult {
@@ -230,6 +226,7 @@ export default class Toolbar extends Extension<T, U> {
             node.render(<T> this.parent);
             node.renderDepth = node.depth;
         }
+        node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
         return { xml };
     }

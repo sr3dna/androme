@@ -34,6 +34,7 @@ export default class Table extends Extension<T, U> {
         }
         const rowCount = tableRows.length;
         let columnCount = 0;
+        const [width, height] = (node.css('borderCollapse') === 'collapse' ? ['0px', '0px'] : (<string> node.css('borderSpacing')).split(' '));
         for (let i = 0; i < tableRows.length; i++) {
             const tr = tableRows[i];
             tr.hide();
@@ -54,7 +55,6 @@ export default class Table extends Extension<T, U> {
                 if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
                     td.styleMap.verticalAlign = 'middle';
                 }
-                const [width, height] = (node.css('borderCollapse') === 'collapse' ? ['0px', '0px'] : (<string> node.css('borderSpacing')).split(' '));
                 delete td.styleMap.margin;
                 td.styleMap.marginTop = height;
                 td.styleMap.marginRight = width;
@@ -62,6 +62,13 @@ export default class Table extends Extension<T, U> {
                 td.styleMap.marginLeft = width;
                 td.parent = node;
             }
+        }
+        const caption = node.children.find(item => item.tagName === 'CAPTION');
+        if (caption != null) {
+            if (caption.styleMap.textAlign == null) {
+                caption.styleMap.textAlign = 'center';
+            }
+            caption.data(`${EXT_NAME.TABLE}:columnSpan`, columnCount);
         }
         const xml = this.application.writeGridLayout(node, (<T> this.parent), columnCount, rowCount);
         return { xml };

@@ -820,7 +820,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                !parent.flex.enabled &&
                (
                    !children.some(node => node.floating && node.css('clear') !== 'none') &&
-                   (children.every(node => node.css('float') !== 'right') || children.every(node => node.css('float') === 'right')) &&
+                   (children.every(node => node.float !== 'right') || children.every(node => node.float === 'right')) &&
                    children.every(node => node.pageflow)
                );
     }
