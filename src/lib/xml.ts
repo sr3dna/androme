@@ -23,26 +23,30 @@ export function stripId(value: string) {
     return value.replace(/@\+?id\//, '');
 }
 
-export function replaceDP(xml: string, font = false) {
-    return (SETTINGS.useUnitDP ? xml.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]) : xml);
+export function replaceDP(value: string, font = false) {
+    return (SETTINGS.useUnitDP ? value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]) : value);
 }
 
-export function replaceTab(xml: string, preserve = false) {
+export function replaceTab(value: string, preserve = false) {
     if (SETTINGS.insertSpaces > 0) {
         if (preserve) {
-            xml = xml.split('\n').map(value => {
-                const match = value.match(/^(\t+)(.*)$/);
+            value = value.split('\n').map(line => {
+                const match = line.match(/^(\t+)(.*)$/);
                 if (match != null) {
                     return ' '.repeat(SETTINGS.insertSpaces * match[1].length) + match[2];
                 }
-                return value;
+                return line;
             }).join('\n');
         }
         else {
-            xml = xml.replace(/\t/g, ' '.repeat(SETTINGS.insertSpaces));
+            value = value.replace(/\t/g, ' '.repeat(SETTINGS.insertSpaces));
         }
     }
-    return xml;
+    return value;
+}
+
+export function replaceEntity(value: string) {
+    return value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(capture));
 }
 
 export function formatDimen(tagName: string, attr: string, size: string) {

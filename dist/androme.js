@@ -1,4 +1,4 @@
-/* androme 1.8.13
+/* androme 1.8.14
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -322,7 +322,7 @@
         }
     }
     function calculateBias(start, end) {
-        return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(2));
+        return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(3));
     }
     function hasValue(value) {
         return (typeof value !== 'undefined' && value !== null && value.toString().trim() !== '');
@@ -361,22 +361,28 @@
             return false;
         }
         static linearX(list) {
-            const nodes = list.filter(node => !node.isolated);
+            const nodes = sortAsc(list.filter(node => !node.isolated), 'bounds.top');
             if (nodes.length > 0 && !NodeList.intersect(nodes)) {
-                if (nodes.length > 1) {
-                    const minBottom = Math.min.apply(null, nodes.map(node => node.linear.bottom));
-                    return !nodes.some(node => node.linear.top >= minBottom);
+                if (nodes.length > 2) {
+                    const minBottom = Math.min.apply(null, nodes.map(node => node.bounds.bottom));
+                    return !nodes.some(node => node.bounds.top > minBottom);
+                }
+                else if (nodes.length > 1) {
+                    return (nodes[1].bounds.top < nodes[0].bounds.bottom);
                 }
                 return true;
             }
             return false;
         }
         static linearY(list) {
-            const nodes = list.filter(node => !node.isolated);
+            const nodes = sortAsc(list.filter(node => !node.isolated), 'bounds.left');
             if (nodes.length > 0 && !NodeList.intersect(nodes)) {
-                if (nodes.length > 1) {
-                    const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
-                    return !nodes.some(node => node.linear.left >= minRight);
+                if (nodes.length > 2) {
+                    const minRight = Math.min.apply(null, nodes.map(node => node.bounds.right));
+                    return !nodes.some(node => node.bounds.left > minRight);
+                }
+                else if (nodes.length > 1) {
+                    return (nodes[1].bounds.left < nodes[0].bounds.right);
                 }
                 return true;
             }
@@ -651,25 +657,28 @@
     function stripId(value) {
         return value.replace(/@\+?id\//, '');
     }
-    function replaceDP(xml, font = false) {
-        return (SETTINGS.useUnitDP ? xml.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]) : xml);
+    function replaceDP(value, font = false) {
+        return (SETTINGS.useUnitDP ? value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]) : value);
     }
-    function replaceTab(xml, preserve = false) {
+    function replaceTab(value, preserve = false) {
         if (SETTINGS.insertSpaces > 0) {
             if (preserve) {
-                xml = xml.split('\n').map(value => {
-                    const match = value.match(/^(\t+)(.*)$/);
+                value = value.split('\n').map(line => {
+                    const match = line.match(/^(\t+)(.*)$/);
                     if (match != null) {
                         return ' '.repeat(SETTINGS.insertSpaces * match[1].length) + match[2];
                     }
-                    return value;
+                    return line;
                 }).join('\n');
             }
             else {
-                xml = xml.replace(/\t/g, ' '.repeat(SETTINGS.insertSpaces));
+                value = value.replace(/\t/g, ' '.repeat(SETTINGS.insertSpaces));
             }
         }
-        return xml;
+        return value;
+    }
+    function replaceEntity(value) {
+        return value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(capture));
     }
     function formatDimen(tagName, attr, size) {
         return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()}-${attr}-${size}}` : size);
@@ -1627,7 +1636,7 @@
                         }
                     }
                     const supportInline = this.controllerHandler.supportInline;
-                    if (node.element.children.length > 0 && (supportInline.length === 0 || node.children.some(current => !current.pageflow || !supportInline.includes(current.tagName)))) {
+                    if (supportInline.length === 0 || node.children.some(current => !current.pageflow || !supportInline.includes(current.tagName))) {
                         Array.from(node.element.childNodes).forEach((element) => {
                             if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                                 this.insertNode(element, node);
@@ -1783,20 +1792,41 @@
                         if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
                             continue;
                         }
+                        let parent = nodeY.parent;
+                        if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
+                            const nodes = [nodeY];
+                            const float = nodeY.float;
+                            for (let l = k + 1; l < axisY.length; l++) {
+                                const adjacent = axisY[l];
+                                if (adjacent.pageflow && float === adjacent.float) {
+                                    nodes.push(adjacent);
+                                    if (!NodeList.linearX(nodes)) {
+                                        nodes.pop();
+                                        break;
+                                    }
+                                }
+                            }
+                            if (nodes.length > 1) {
+                                const viewGroup = this.controllerHandler.createGroup(nodeY, parent, nodes);
+                                const xml = this.writeLinearLayout(viewGroup, parent, false);
+                                renderXml(viewGroup, parent, xml, current);
+                                parent = viewGroup;
+                            }
+                        }
                         if (this.controllerHandler.supportInclude) {
                             const filename = optional(nodeY, 'dataset.include').trim();
                             if (filename !== '' && includes$$1.indexOf(filename) === -1) {
-                                renderXml(nodeY, nodeY.parent, this.controllerHandler.renderInclude(nodeY, nodeY.parent, filename), (includes$$1.length > 0 ? includes$$1[includes$$1.length - 1] : ''));
+                                renderXml(nodeY, parent, this.controllerHandler.renderInclude(nodeY, parent, filename), (includes$$1.length > 0 ? includes$$1[includes$$1.length - 1] : ''));
                                 includes$$1.push(filename);
                             }
                             current = (includes$$1.length > 0 ? includes$$1[includes$$1.length - 1] : '');
                             if (current !== '') {
-                                const cloneParent = nodeY.parent.clone();
+                                const cloneParent = parent.clone();
                                 cloneParent.renderDepth = this.controllerHandler.getIncludeRenderDepth(current);
                                 nodeY.parent = cloneParent;
+                                parent = cloneParent;
                             }
                         }
-                        let parent = nodeY.parent;
                         if (!nodeY.rendered) {
                             if (!includesEnum(nodeY.excludeProcedure, NODE_PROCEDURE.CUSTOMIZATION)) {
                                 nodeY.applyCustomizations();
@@ -2767,18 +2797,22 @@
                             value = element.value.trim();
                         }
                         else if (element.nodeName === '#text') {
-                            value = optional(element, 'textContent');
+                            const textContent = element.textContent;
+                            value = textContent.trim();
+                            const previousSibling = node.previousSibling;
                             const nextSibling = node.nextSibling;
-                            if (nextSibling != null && nextSibling.inline && /\s+$/.test(value)) {
-                                value = value.trim() + '&#160;';
+                            if (previousSibling != null && previousSibling.inline && /^\s{2,}/.test(textContent)) {
+                                value = '&#160;' + value;
                             }
-                            else {
-                                value = value.trim();
+                            if (nextSibling != null && nextSibling.inline && /\s+$/.test(textContent)) {
+                                value = value + '&#160;';
                             }
                         }
-                        else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))))) {
-                            name = element.innerText.trim();
-                            value = element.innerHTML.trim();
+                        else if (node.hasElement) {
+                            if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))) {
+                                name = element.innerText.trim();
+                                value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText).trim();
+                            }
                         }
                         if (value !== '') {
                             const result = Resource.addString(value, name);
@@ -4122,6 +4156,9 @@
             };
             this.setDimensions();
         }
+        get pageflow() {
+            return !this.children.some(node => !node.pageflow);
+        }
         get childrenBox() {
             let minLeft = Number.MAX_VALUE;
             let maxRight = 0;
@@ -4439,8 +4476,12 @@
                                         }
                                         else {
                                             if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
-                                                current.anchor(LAYOUT['left'], stringId);
-                                                current.anchor(LAYOUT['right'], stringId);
+                                                if (!mapParent(current, 'right')) {
+                                                    current.anchor(LAYOUT['left'], stringId);
+                                                }
+                                                if (!mapParent(current, 'left')) {
+                                                    current.anchor(LAYOUT['right'], stringId);
+                                                }
                                             }
                                             else if (verticalPerspective) {
                                                 if (linear1.left === linear2.left) {
@@ -4828,7 +4869,6 @@
                                                 }
                                             }
                                             if (flex.enabled) {
-                                                const map = LAYOUT_MAP.constraint;
                                                 chain.app(`layout_constraint${HV}_weight`, chain.flex.grow.toString());
                                                 if (chain[`view${WH}`] == null && chain.flex.grow === 0 && chain.flex.shrink <= 1) {
                                                     chain.android(`layout_${dimension}`, 'wrap_content');
@@ -4841,25 +4881,33 @@
                                                 }
                                                 switch (chain.flex.alignSelf) {
                                                     case 'flex-start':
-                                                        chain.app(map[TL], 'parent');
+                                                        chain.app(LAYOUT[TL], 'parent');
                                                         chain.constraint[orientationInverse] = true;
                                                         break;
                                                     case 'flex-end':
-                                                        chain.app(map[BR], 'parent');
+                                                        chain.app(LAYOUT[BR], 'parent');
                                                         chain.constraint[orientationInverse] = true;
                                                         break;
                                                     case 'baseline':
-                                                        chain.app(map['baseline'], 'parent');
-                                                        mapDelete(chain, 'top', 'bottom');
-                                                        chainable.list.forEach(item => {
-                                                            if (item.app(map['top']) === chain.stringId) {
-                                                                mapDelete(item, 'top');
+                                                        const valid = chainable.list.some(adjacent => {
+                                                            if (adjacent !== chain && adjacent.nodeType <= NODE_STANDARD.TEXT) {
+                                                                chain.app(LAYOUT['baseline'], adjacent.stringId);
+                                                                return true;
                                                             }
-                                                            if (item.app(map['bottom']) === chain.stringId) {
-                                                                mapDelete(item, 'bottom');
-                                                            }
+                                                            return false;
                                                         });
-                                                        chain.constraint.vertical = true;
+                                                        if (valid) {
+                                                            mapDelete(chain, 'top', 'bottom');
+                                                            chainable.list.forEach(item => {
+                                                                if (item.app(LAYOUT['top']) === chain.stringId) {
+                                                                    mapDelete(item, 'top');
+                                                                }
+                                                                if (item.app(LAYOUT['bottom']) === chain.stringId) {
+                                                                    mapDelete(item, 'bottom');
+                                                                }
+                                                            });
+                                                            chain.constraint.vertical = true;
+                                                        }
                                                         break;
                                                     case 'center':
                                                     case 'stretch':
@@ -4933,7 +4981,7 @@
                                                 if (chainable.length > 2 || flex.enabled) {
                                                     first.app(chainStyle, 'spread_inside');
                                                 }
-                                                else {
+                                                else if (maxOffset > SETTINGS[`chainPacked${HV}Offset`]) {
                                                     if (mapParent(first, LT)) {
                                                         mapDelete(first, CHAIN_MAP['rightLeftBottomTop'][index]);
                                                     }
@@ -6082,11 +6130,11 @@
                                     if (this.borderVisible(item)) {
                                         if (width !== '' && width !== item.width && borderStyle !== '' && borderStyle !== this.getBorderStyle(item) && radius !== '' && radius !== stored.borderRadius[index]) {
                                             valid = false;
-                                            return false;
+                                            return true;
                                         }
                                         [width, borderStyle, radius] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
                                     }
-                                    return true;
+                                    return false;
                                 });
                                 const borderRadius = {};
                                 if (stored.borderRadius.length > 1) {

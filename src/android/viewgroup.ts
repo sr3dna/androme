@@ -60,6 +60,10 @@ export default class ViewGroup extends View {
         this.setDimensions();
     }
 
+    get pageflow() {
+        return !this.children.some(node => !node.pageflow);
+    }
+
     get childrenBox() {
         let minLeft = Number.MAX_VALUE;
         let maxRight = 0;

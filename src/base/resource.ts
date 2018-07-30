@@ -2,8 +2,9 @@ import { BorderAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/ty
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { cameltoLowerCase, convertPX, generateId, hasValue, includesEnum, isNumber, optional, resolvePath, lastIndexOf } from '../lib/util';
-import { getBoxSpacing, sameAsParent } from '../lib/dom';
+import { cameltoLowerCase, convertPX, generateId, hasValue, includesEnum, isNumber, resolvePath, lastIndexOf } from '../lib/util';
+import { replaceEntity } from '../lib/xml';
+import { getBoxSpacing, sameAsParent, hasFreeFormText } from '../lib/dom';
 import { findNearestColor, parseRGBA } from '../lib/color';
 import { MAP_ELEMENT, NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -395,18 +396,22 @@ export default abstract class Resource<T extends Node> {
                         value = element.value.trim();
                     }
                     else if (element.nodeName === '#text') {
-                        value = optional(element, 'textContent');
+                        const textContent = <string> element.textContent;
+                        value = textContent.trim();
+                        const previousSibling = node.previousSibling;
                         const nextSibling = node.nextSibling;
-                        if (nextSibling != null && nextSibling.inline && /\s+$/.test(value)) {
-                            value = value.trim() + '&#160;';
+                        if (previousSibling != null && previousSibling.inline && /^\s{2,}/.test(textContent)) {
+                            value = '&#160;' + value;
                         }
-                        else {
-                            value = value.trim();
+                        if (nextSibling != null && nextSibling.inline && /\s+$/.test(textContent)) {
+                            value = value + '&#160;';
                         }
                     }
-                    else if (element.tagName === 'BUTTON' || (node.hasElement && ((element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))))) {
-                        name = element.innerText.trim();
-                        value = element.innerHTML.trim();
+                    else if (node.hasElement) {
+                        if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))) {
+                            name = element.innerText.trim();
+                            value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText).trim();
+                        }
                     }
                     if (value !== '') {
                         const result = Resource.addString(value, name);

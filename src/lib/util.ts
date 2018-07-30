@@ -348,7 +348,7 @@ export function compare(obj1: {}, obj2: {}, attr: string) {
 }
 
 export function calculateBias(start: number, end: number) {
-    return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(2));
+    return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(3));
 }
 
 export function hasValue(value: any) {

@@ -352,7 +352,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                 }
                 const supportInline = this.controllerHandler.supportInline;
-                if (node.element.children.length > 0 && (supportInline.length === 0 || node.children.some(current => !current.pageflow || !supportInline.includes(current.tagName)))) {
+                if (supportInline.length === 0 || node.children.some(current => !current.pageflow || !supportInline.includes(current.tagName))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
@@ -509,20 +509,41 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
                         continue;
                     }
+                    let parent = (<T> nodeY.parent);
+                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
+                        const nodes = [nodeY];
+                        const float = nodeY.float;
+                        for (let l = k + 1; l < axisY.length; l++) {
+                            const adjacent = axisY[l];
+                            if (adjacent.pageflow && float === adjacent.float) {
+                                nodes.push(adjacent);
+                                if (!NodeList.linearX(nodes)) {
+                                    nodes.pop();
+                                    break;
+                                }
+                            }
+                        }
+                        if (nodes.length > 1) {
+                            const viewGroup = this.controllerHandler.createGroup(nodeY, parent, nodes);
+                            const xml = this.writeLinearLayout(viewGroup, parent, false);
+                            renderXml(viewGroup, parent, xml, current);
+                            parent = viewGroup;
+                        }
+                    }
                     if (this.controllerHandler.supportInclude) {
                         const filename: string = optional(nodeY, 'dataset.include').trim();
                         if (filename !== '' && includes.indexOf(filename) === -1) {
-                            renderXml(nodeY, <T> nodeY.parent, this.controllerHandler.renderInclude(nodeY, <T> nodeY.parent, filename), (includes.length > 0 ? includes[includes.length - 1] : ''));
+                            renderXml(nodeY, parent, this.controllerHandler.renderInclude(nodeY, parent, filename), (includes.length > 0 ? includes[includes.length - 1] : ''));
                             includes.push(filename);
                         }
                         current = (includes.length > 0 ? includes[includes.length - 1] : '');
                         if (current !== '') {
-                            const cloneParent = (<T> nodeY.parent.clone());
+                            const cloneParent = (<T> parent.clone());
                             cloneParent.renderDepth = this.controllerHandler.getIncludeRenderDepth(current);
                             nodeY.parent = cloneParent;
+                            parent = cloneParent;
                         }
                     }
-                    let parent = (<T> nodeY.parent);
                     if (!nodeY.rendered) {
                         if (!includesEnum(nodeY.excludeProcedure, NODE_PROCEDURE.CUSTOMIZATION)) {
                             nodeY.applyCustomizations();

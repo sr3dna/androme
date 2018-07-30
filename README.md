@@ -368,105 +368,75 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:id="@+id/constraintlayout_1"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content">
-                <Spinner
-                    android:id="@+id/month0"
-                    android:entries="@array/month0_array"
-                    app:layout_constraintBottom_toTopOf="@+id/month1"
-                    app:layout_constraintEnd_toStartOf="@+id/day0"
-                    app:layout_constraintHorizontal_bias="0"
-                    app:layout_constraintHorizontal_chainStyle="packed"
+                <LinearLayout
+                    android:id="@+id/linearlayout_9"
+                    app:layout_constraintBottom_toTopOf="@+id/linearlayout_10"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
-                <Spinner
-                    android:id="@+id/day0"
-                    android:entries="@array/day0_array"
-                    android:layout_marginStart="@dimen/select_margin_start"
-                    app:layout_constraintBottom_toTopOf="@+id/day1"
-                    app:layout_constraintEnd_toStartOf="@+id/year0"
-                    app:layout_constraintStart_toEndOf="@+id/month0"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
-                <Spinner
-                    android:id="@+id/year0"
-                    android:entries="@array/year0_array"
-                    android:layout_marginStart="@dimen/select_margin_start"
-                    app:layout_constraintBottom_toTopOf="@+id/year1"
+                    app:layout_constraintVertical_chainStyle="spread_inside"
+                    style="@style/constraintlayout_1">
+                    <Spinner
+                        android:id="@+id/month0"
+                        android:entries="@array/month0_array"
+                        style="@style/Select.linearlayout_1" />
+                    <Spinner
+                        android:id="@+id/day0"
+                        android:entries="@array/day0_array"
+                        android:layout_marginStart="@dimen/select_margin_start"
+                        style="@style/Select.linearlayout_1" />
+                    <Spinner
+                        android:id="@+id/year0"
+                        android:entries="@array/year0_array"
+                        android:layout_marginStart="@dimen/select_margin_start"
+                        style="@style/Select.linearlayout_1" />
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/linearlayout_10"
+                    android:layout_marginTop="@dimen/selectgroup_margin_top"
+                    app:layout_constraintBottom_toTopOf="@+id/linearlayout_11"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/day0"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
-                <Spinner
-                    android:id="@+id/month1"
-                    android:entries="@array/month0_array"
-                    android:layout_marginTop="@dimen/select_margin_top"
-                    app:layout_constraintBottom_toTopOf="@+id/month2"
-                    app:layout_constraintEnd_toStartOf="@+id/day1"
-                    app:layout_constraintHorizontal_bias="0"
-                    app:layout_constraintHorizontal_chainStyle="packed"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/month0"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
-                <Spinner
-                    android:id="@+id/day1"
-                    android:entries="@array/day0_array"
-                    android:layout_marginStart="@dimen/select_margin_start"
-                    android:layout_marginTop="@dimen/select_margin_top"
-                    app:layout_constraintBottom_toTopOf="@+id/day2"
-                    app:layout_constraintEnd_toStartOf="@+id/year1"
-                    app:layout_constraintStart_toEndOf="@+id/month1"
-                    app:layout_constraintTop_toBottomOf="@+id/day0"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
-                <Spinner
-                    android:id="@+id/year1"
-                    android:entries="@array/year0_array"
-                    android:layout_marginStart="@dimen/select_margin_start"
-                    android:layout_marginTop="@dimen/select_margin_top"
-                    app:layout_constraintBottom_toTopOf="@+id/year2"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/day1"
-                    app:layout_constraintTop_toBottomOf="@+id/year0"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
-                <Spinner
-                    android:id="@+id/month2"
-                    android:entries="@array/month0_array"
-                    android:layout_marginTop="@dimen/select_margin_top"
+                    app:layout_constraintTop_toBottomOf="@+id/linearlayout_9"
+                    style="@style/constraintlayout_1">
+                    <Spinner
+                        android:id="@+id/month1"
+                        android:entries="@array/month0_array"
+                        style="@style/Select.linearlayout_1" />
+                    <Spinner
+                        android:id="@+id/day1"
+                        android:entries="@array/day0_array"
+                        android:layout_marginStart="@dimen/select_margin_start"
+                        style="@style/Select.linearlayout_1" />
+                    <Spinner
+                        android:id="@+id/year1"
+                        android:entries="@array/year0_array"
+                        android:layout_marginStart="@dimen/select_margin_start"
+                        style="@style/Select.linearlayout_1" />
+                </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/linearlayout_11"
+                    android:layout_marginTop="@dimen/selectgroup_margin_top"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/day2"
-                    app:layout_constraintHorizontal_bias="0"
-                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/month1"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
-                <Spinner
-                    android:id="@+id/day2"
-                    android:entries="@array/day0_array"
-                    android:layout_marginStart="@dimen/select_margin_start"
-                    android:layout_marginTop="@dimen/select_margin_top"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/year2"
-                    app:layout_constraintStart_toEndOf="@+id/month2"
-                    app:layout_constraintTop_toBottomOf="@+id/day1"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
-                <Spinner
-                    android:id="@+id/year2"
-                    android:entries="@array/year0_array"
-                    android:layout_marginStart="@dimen/select_margin_start"
-                    android:layout_marginTop="@dimen/select_margin_top"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/day2"
-                    app:layout_constraintTop_toBottomOf="@+id/year1"
-                    app:layout_constraintWidth_min="@dimen/select_constraintwidth_min"
-                    style="@style/Select.constraintlayout_1" />
+                    app:layout_constraintTop_toBottomOf="@+id/linearlayout_10"
+                    style="@style/constraintlayout_1">
+                    <Spinner
+                        android:id="@+id/month2"
+                        android:entries="@array/month0_array"
+                        style="@style/Select.linearlayout_1" />
+                    <Spinner
+                        android:id="@+id/day2"
+                        android:entries="@array/day0_array"
+                        android:layout_marginStart="@dimen/select_margin_start"
+                        style="@style/Select.linearlayout_1" />
+                    <Spinner
+                        android:id="@+id/year2"
+                        android:entries="@array/year0_array"
+                        android:layout_marginStart="@dimen/select_margin_start"
+                        style="@style/Select.linearlayout_1" />
+                </LinearLayout>
             </android.support.constraint.ConstraintLayout>
             <Space
                 android:id="@+id/space_2"
@@ -1047,37 +1017,37 @@ The attributes "include" and "include-end" can only be applied to elements which
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">androme_ui</string>
-    <string name="__00_inactive">00 - Inactive</string>
-    <string name="__01_active">01 - Active</string>
-    <string name="active">Active:</string>
-    <string name="all">All</string>
-    <string name="birth">Birth</string>
-    <string name="branch">Branch:</string>
-    <string name="calendar">Calendar:</string>
-    <string name="clone">Clone</string>
-    <string name="conclusion">Conclusion:</string>
-    <string name="custom_add">Custom (<a href="#">Add</a>):</string>
-    <string name="date_add">Date (<a href="#">Add</a>):</string>
-    <string name="death">Death</string>
-    <string name="entries">Entries:</string>
-    <string name="entry">Entry</string>
-    <string name="mode">Mode:</string>
-    <string name="no">No</string>
-    <string name="none">None</string>
-    <string name="open">Open</string>
-    <string name="order">Order:</string>
-    <string name="predefined">Predefined</string>
-    <string name="series">Series:</string>
-    <string name="style">Style:</string>
-    <string name="subset">Subset:</string>
-    <string name="time">Time:</string>
-    <string name="topic_add">Topic (<a href="#">Add</a>):</string>
-    <string name="type">Type:</string>
-    <string name="update">Update</string>
-    <string name="variant">Variant</string>
-    <string name="version">Version:</string>
-    <string name="yes">Yes</string>
+	<string name="app_name">androme_ui</string>
+	<string name="__00_inactive">00 - Inactive</string>
+	<string name="__01_active">01 - Active</string>
+	<string name="active">Active:</string>
+	<string name="all">All</string>
+	<string name="birth">Birth</string>
+	<string name="branch">Branch:</string>
+	<string name="calendar">Calendar:</string>
+	<string name="clone">Clone</string>
+	<string name="conclusion">Conclusion:</string>
+	<string name="custom_add">Custom (<a href="#">Add</a>):</string>
+	<string name="date_add">Date (<a href="#">Add</a>):</string>
+	<string name="death">Death</string>
+	<string name="entries">Entries:</string>
+	<string name="entry">Entry</string>
+	<string name="mode">Mode:</string>
+	<string name="no">No</string>
+	<string name="none">None</string>
+	<string name="open">Open</string>
+	<string name="order">Order:</string>
+	<string name="predefined">Predefined</string>
+	<string name="series">Series:</string>
+	<string name="style">Style:</string>
+	<string name="subset">Subset:</string>
+	<string name="time">Time:</string>
+	<string name="topic_add">Topic (<a href="#">Add</a>):</string>
+	<string name="type">Type:</string>
+	<string name="update">Update</string>
+	<string name="variant">Variant</string>
+	<string name="version">Version:</string>
+	<string name="yes">Yes</string>
 </resources>
 <!-- filename: res/values/strings.xml -->
 ```
@@ -1253,6 +1223,12 @@ The attributes "include" and "include-end" can only be applied to elements which
     <style name="Button_1" parent="Button">
         <item name="android:textColor">@color/gray</item>
     </style>
+    <style name="constraintlayout_1">
+        <item name="android:baselineAlignedChildIndex">0</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
     <style name="H2">
         <item name="android:background">@color/dark_blue</item>
         <item name="android:fontFamily">tahoma</item>
@@ -1280,12 +1256,6 @@ The attributes "include" and "include-end" can only be applied to elements which
     <style name="Select">
         <item name="android:fontFamily">arial</item>
         <item name="android:textSize">11sp</item>
-    </style>
-    <style name="Select.constraintlayout_1">
-        <item name="android:background">@drawable/select_hour</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:paddingVertical">@dimen/select_padding_vertical</item>
     </style>
     <style name="Select.linearlayout_1">
         <item name="android:background">@drawable/select_hour</item>
@@ -1326,15 +1296,15 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="button_margin_start_1">8dp</dimen>
     <dimen name="button_minheight">25dp</dimen>
     <dimen name="button_minwidth">35dp</dimen>
-    <dimen name="button_padding_horizontal">6dp</dimen>
-    <dimen name="button_padding_vertical">1dp</dimen>
+    <dimen name="button_padding_horizontal">8dp</dimen>
+    <dimen name="button_padding_vertical">3dp</dimen>
     <dimen name="checkbox_margin_end">3dp</dimen>
     <dimen name="checkbox_margin_start">6dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">4dp</dimen>
-    <dimen name="form_padding_horizontal">10dp</dimen>
-    <dimen name="form_padding_vertical">5dp</dimen>
-    <dimen name="h2_padding">8dp</dimen>
+    <dimen name="form_padding_horizontal">11dp</dimen>
+    <dimen name="form_padding_vertical">6dp</dimen>
+    <dimen name="h2_padding">9dp</dimen>
     <dimen name="hr_height">1dp</dimen>
     <dimen name="hr_margin_horizontal">27dp</dimen>
     <dimen name="hr_margin_vertical">10dp</dimen>
@@ -1346,17 +1316,16 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="radio_margin_start">5dp</dimen>
     <dimen name="radio_margin_start_1">7dp</dimen>
     <dimen name="radio_margin_top">3dp</dimen>
-    <dimen name="select_constraintwidth_min">37dp</dimen>
     <dimen name="select_margin_start">4dp</dimen>
-    <dimen name="select_margin_top">13dp</dimen>
     <dimen name="select_minwidth">37dp</dimen>
-    <dimen name="select_padding_vertical">2dp</dimen>
+    <dimen name="select_padding_vertical">3dp</dimen>
     <dimen name="select_width">160dp</dimen>
     <dimen name="select_width_1">200dp</dimen>
     <dimen name="select_width_2">100dp</dimen>
+    <dimen name="selectgroup_margin_top">13dp</dimen>
     <dimen name="space_height">6dp</dimen>
     <dimen name="text_margin_end">5dp</dimen>
-    <dimen name="text_padding_vertical">1dp</dimen>
+    <dimen name="text_padding_vertical">3dp</dimen>
     <dimen name="text_width">40dp</dimen>
     <dimen name="text_width_1">130dp</dimen>
     <dimen name="ul_padding_bottom">11dp</dimen>

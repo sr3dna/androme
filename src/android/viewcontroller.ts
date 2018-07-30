@@ -141,8 +141,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     }
                                     else {
                                         if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
-                                            current.anchor(LAYOUT['left'], stringId);
-                                            current.anchor(LAYOUT['right'], stringId);
+                                            if (!mapParent(current, 'right')) {
+                                                current.anchor(LAYOUT['left'], stringId);
+                                            }
+                                            if (!mapParent(current, 'left')) {
+                                                current.anchor(LAYOUT['right'], stringId);
+                                            }
                                         }
                                         else if (verticalPerspective) {
                                             if (linear1.left === linear2.left) {
@@ -530,7 +534,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             }
                                         }
                                         if (flex.enabled) {
-                                            const map: StringMap = LAYOUT_MAP.constraint;
                                             chain.app(`layout_constraint${HV}_weight`, chain.flex.grow.toString());
                                             if (chain[`view${WH}`] == null && chain.flex.grow === 0 && chain.flex.shrink <= 1) {
                                                 chain.android(`layout_${dimension}`, 'wrap_content');
@@ -543,25 +546,33 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             }
                                             switch (chain.flex.alignSelf) {
                                                 case 'flex-start':
-                                                    chain.app(map[TL], 'parent');
+                                                    chain.app(LAYOUT[TL], 'parent');
                                                     chain.constraint[orientationInverse] = true;
                                                     break;
                                                 case 'flex-end':
-                                                    chain.app(map[BR], 'parent');
+                                                    chain.app(LAYOUT[BR], 'parent');
                                                     chain.constraint[orientationInverse] = true;
                                                     break;
                                                 case 'baseline':
-                                                    chain.app(map['baseline'], 'parent');
-                                                    mapDelete(chain, 'top', 'bottom');
-                                                    chainable.list.forEach(item => {
-                                                        if (item.app(map['top']) === chain.stringId) {
-                                                            mapDelete(item, 'top');
+                                                    const valid = chainable.list.some(adjacent => {
+                                                        if (adjacent !== chain && adjacent.nodeType <= NODE_STANDARD.TEXT) {
+                                                            chain.app(LAYOUT['baseline'], adjacent.stringId);
+                                                            return true;
                                                         }
-                                                        if (item.app(map['bottom']) === chain.stringId) {
-                                                            mapDelete(item, 'bottom');
-                                                        }
+                                                        return false;
                                                     });
-                                                    chain.constraint.vertical = true;
+                                                    if (valid) {
+                                                        mapDelete(chain, 'top', 'bottom');
+                                                        chainable.list.forEach(item => {
+                                                            if (item.app(LAYOUT['top']) === chain.stringId) {
+                                                                mapDelete(item, 'top');
+                                                            }
+                                                            if (item.app(LAYOUT['bottom']) === chain.stringId) {
+                                                                mapDelete(item, 'bottom');
+                                                            }
+                                                        });
+                                                        chain.constraint.vertical = true;
+                                                    }
                                                     break;
                                                 case 'center':
                                                 case 'stretch':
@@ -635,7 +646,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             if (chainable.length > 2 || flex.enabled) {
                                                 first.app(chainStyle, 'spread_inside');
                                             }
-                                            else {
+                                            else if (maxOffset > SETTINGS[`chainPacked${HV}Offset`]) {
                                                 if (mapParent(first, LT)) {
                                                     mapDelete(first, CHAIN_MAP['rightLeftBottomTop'][index]);
                                                 }

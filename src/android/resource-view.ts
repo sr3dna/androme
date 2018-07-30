@@ -326,11 +326,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 if (this.borderVisible(item)) {
                                     if (width !== '' && width !== item.width && borderStyle !== '' && borderStyle !== this.getBorderStyle(item) && radius !== '' && radius !== stored.borderRadius[index]) {
                                         valid = false;
-                                        return false;
+                                        return true;
                                     }
                                     [width, borderStyle, radius] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
                                 }
-                                return true;
+                                return false;
                             });
                             const borderRadius = {};
                             if (stored.borderRadius.length > 1) {
