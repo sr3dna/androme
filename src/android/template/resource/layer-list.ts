@@ -23,6 +23,11 @@ const template = [
 '!6',
 '	<item android:drawable="@drawable/{image}" width="{@width}" height="{@height}" />',
 '!6',
+'!7',
+'	<item>',
+'		<bitmap android:src="@drawable/{image}" android:gravity="{@gravity}" android:tileMode="{@tileMode}" android:tileModeX="{@tileModeX}" android:tileModeY="{@tileModeY}" />',
+'	</item>',
+'!7',
 '</layer-list>',
 '!0'
 ];

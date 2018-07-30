@@ -1,5 +1,5 @@
 import { BoxModel, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
-import { convertInt, hasValue, convertCamelCase, includesEnum, search } from '../lib/util';
+import { convertInt, hasValue, convertCamelCase, includesEnum, search, formatPX } from '../lib/util';
 import { assignBounds, getRangeBounds, getStyle } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_PROCEDURE } from '../lib/constants';
 
@@ -356,17 +356,16 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    protected appendChild(node: T) {
-        this.renderChildren.push(node);
+    public setDimensions(area = ['linear', 'box']) {
+        area.forEach(value => {
+            const dimen = this[value];
+            dimen.width = dimen.right - dimen.left;
+            dimen.height = dimen.bottom - dimen.top;
+        });
     }
 
-    protected setDimensions() {
-        const linear = this.linear;
-        linear.width = linear.right - linear.left;
-        linear.height = linear.bottom - linear.top;
-        const box = this.box;
-        box.width = box.right - box.left;
-        box.height = box.bottom - box.top;
+    protected appendChild(node: T) {
+        this.renderChildren.push(node);
     }
 
     set parent(value) {
@@ -472,6 +471,31 @@ export default abstract class Node implements BoxModel {
         return convertInt(this.styleMap.height || this.styleMap.lineHeight || this.styleMap.minHeight);
     }
 
+    set top(value) {
+        this.css('top', formatPX(value));
+    }
+    get top() {
+        return convertInt(this.css('top'));
+    }
+    set right(value) {
+        this.css('right', formatPX(value));
+    }
+    get right() {
+        return convertInt(this.css('right'));
+    }
+    set bottom(value) {
+        this.css('bottom', formatPX(value));
+    }
+    get bottom() {
+        return convertInt(this.css('bottom'));
+    }
+    set left(value) {
+        this.css('left', formatPX(value));
+    }
+    get left() {
+        return convertInt(this.css('left'));
+    }
+
     get marginTop() {
         return (this.inline ? 0 : convertInt(this.css('marginTop')));
     }
@@ -529,7 +553,7 @@ export default abstract class Node implements BoxModel {
 
     get pageflow() {
         const position = this.css('position');
-        return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && convertInt(this.css('top')) === 0 && convertInt(this.css('right')) === 0 && convertInt(this.css('bottom')) === 0 && convertInt(this.css('left')) === 0));
+        return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && this.top === 0 && this.right === 0 && this.bottom === 0 && this.left === 0));
     }
 
     get absolute() {

@@ -7,7 +7,7 @@ import { hasValue, convertCamelCase, includesEnum, isNumber, optional, resetId, 
 import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
 import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
-import { BLOCK_ELEMENT, MAP_ELEMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
@@ -352,12 +352,47 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                 }
                 const supportInline = this.controllerHandler.supportInline;
-                if (node.element.children.length > 0 && (supportInline.length === 0 || node.children.some(current => !supportInline.includes(current.tagName)))) {
+                if (node.element.children.length > 0 && (supportInline.length === 0 || node.children.some(current => !current.pageflow || !supportInline.includes(current.tagName)))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
                         }
                     });
+                }
+                if (node.children.some(current => !current.pageflow && ((current.top < 0 && node.marginTop > 0) || (current.left < 0 && node.marginLeft > 0)))) {
+                    let marginTop = false;
+                    let marginLeft = false;
+                    node.children.forEach(current => {
+                        if (!current.pageflow) {
+                            if (current.top < 0) {
+                                current.top += node.marginTop;
+                                marginTop = true;
+                            }
+                            if (current.left < 0) {
+                                current.left += node.marginLeft;
+                                marginLeft = true;
+                            }
+                        }
+                    });
+                    node.children.forEach(current => {
+                        if (current.pageflow) {
+                            if (marginTop && node.marginTop > 0) {
+                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + node.marginTop);
+                            }
+                            if (marginLeft && node.marginLeft > 0) {
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft);
+                            }
+                        }
+                    });
+                    if (marginTop) {
+                        node.box.top -= node.marginTop;
+                        node.css('marginTop', '0px');
+                    }
+                    if (marginLeft) {
+                        node.box.left -= node.marginLeft;
+                        node.css('marginLeft', '0px');
+                    }
+                    node.setDimensions(['box']);
                 }
             });
             this.cache.list.forEach(node => {
@@ -373,17 +408,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 item.afterInit();
             });
             this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
-            this.cache.list.forEach(node => {
-                if (node.hasElement) {
-                    let i = 0;
-                    Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
-                        const child = (<T> (<any> element).__node);
-                        if (child && child.visible && child.parent.element === node.element) {
-                            child.parentIndex = i++;
-                        }
-                    });
-                    sortAsc(node.children, 'parentIndex');
-                }
+            this.cache.elements.forEach(node => {
+                let i = 0;
+                Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
+                    const child = (<T> (<any> element).__node);
+                    if (child && child.visible && child.parent.element === node.element) {
+                        child.parentIndex = i++;
+                    }
+                });
+                sortAsc(node.children, 'parentIndex');
             });
             this.addLayout(<string> root.dataset.viewName);
             return true;

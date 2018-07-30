@@ -107,7 +107,12 @@ export default class View extends Node {
         if (value !== '') {
             const dimension = parseRTL(value);
             const total = formatPX(offset);
-            this.android(dimension, total);
+            if (total !== '0px') {
+                this.android(dimension, total);
+            }
+            else {
+                this.delete('android', dimension);
+            }
             if (styleMap) {
                 this.css(dimension.replace('layout_', ''), total);
                 this.setBounds(true);
@@ -236,7 +241,7 @@ export default class View extends Node {
         const styleMap = this.styleMap;
         const constraint = this.constraint;
         if ((this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE, NODE_STANDARD.SCROLL_VERTICAL, NODE_STANDARD.SCROLL_HORIZONTAL, NODE_STANDARD.SCROLL_NESTED)) || this.element === document.body) {
-            if (this.viewWidth === 0 && !constraint.layoutWidth) {
+            if (this.viewWidth === 0) {
                 this.android('layout_width', 'match_parent', false);
             }
             if (this.viewHeight === 0 && !constraint.layoutHeight) {
@@ -272,7 +277,7 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutWidth) {
-                this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)));
+                this.android('layout_width', (this.renderChildren.some(node => node.css('float') === 'right') || this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)), false);
             }
             else if (this.android('layout_width') == null) {
                 let maxRight = 0;
@@ -285,7 +290,7 @@ export default class View extends Node {
                 if (convertInt(this.android('layout_columnWeight')) > 0) {
                     this.android('layout_width', '0px');
                 }
-                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && parentMaxWidth > 0 && width >= widthParent) || (!this.floating && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight < maxRightParent)) && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
+                else if (!wrapContent && (parent.overflow === OVERFLOW_ELEMENT.NONE && (parentMaxWidth > 0 || this.parentElement === document.body) && width >= widthParent) || (!this.floating && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight < maxRightParent)) && optional(this, 'style.display').indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName)) {
                     this.android('layout_width', 'match_parent');
                 }
                 else {
@@ -316,7 +321,7 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutHeight) {
-                this.android('layout_height', (this.bounds.height >= heightParent ? 'match_parent' : formatPX(this.bounds.height)));
+                this.android('layout_height', (this.bounds.height >= heightParent ? 'match_parent' : formatPX(this.bounds.height)), false);
             }
             else if (this.android('layout_height') == null) {
                 let layoutHeight = 'wrap_content';
@@ -425,14 +430,32 @@ export default class View extends Node {
     }
 
     public mergeBoxSpacing() {
-        if (this.api >= BUILD_ANDROID.OREO) {
-            ['layout_margin', 'padding'].forEach((value, index) => {
-                const leftRtl = parseRTL(`${value}Left`);
-                const rightRtl = parseRTL(`${value}Right`);
-                const top = (index === 0 && this.inline ? 0 : convertInt(this.android(`${value}Top`)));
-                const right = convertInt(this.android(rightRtl));
-                const bottom = (index === 0 && this.inline ? 0 : convertInt(this.android(`${value}Bottom`)));
-                const left = convertInt(this.android(leftRtl));
+        ['layout_margin', 'padding'].forEach((value, index) => {
+            const leftRtl = parseRTL(`${value}Left`);
+            const rightRtl = parseRTL(`${value}Right`);
+            let top = (index === 0 && this.inline ? 0 : convertInt(this.android(`${value}Top`)));
+            let right = convertInt(this.android(rightRtl));
+            let bottom = (index === 0 && this.inline ? 0 : convertInt(this.android(`${value}Bottom`)));
+            let left = convertInt(this.android(leftRtl));
+            if (index === 1) {
+                if (this.viewWidth === 0) {
+                    if (this.borderLeftWidth > 0) {
+                        left += this.borderLeftWidth;
+                    }
+                    if (this.borderRightWidth > 0) {
+                        right += this.borderRightWidth;
+                    }
+                }
+                if (this.viewHeight === 0) {
+                    if (this.borderTopWidth > 0) {
+                        top += this.borderBottomWidth;
+                    }
+                    if (this.borderBottomWidth > 0) {
+                        bottom += this.borderBottomWidth;
+                    }
+                }
+            }
+            if (this.api >= BUILD_ANDROID.OREO) {
                 if (top !== 0 && top === bottom && bottom === left && left === right) {
                     this.delete('android', `${value}*`);
                     this.android(value, formatPX(top));
@@ -449,8 +472,8 @@ export default class View extends Node {
                         }
                     }
                 }
-            });
-        }
+            }
+        });
     }
 
     public setAccessibility() {

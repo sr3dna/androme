@@ -6,7 +6,7 @@ export function getRangeBounds(element: HTMLElement) {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = range.getClientRects();
-    const bounds = assignBounds(<ClientRect> domRect[domRect.length - 1]);
+    const bounds = assignBounds(<ClientRect> (domRect.length > 1 ? domRect[1] : domRect[0]));
     if (domRect.length > 1) {
         bounds.left = Math.min.apply(null, Array.from(domRect).map((item: ClientRect) => item.left));
         bounds.width = Array.from(domRect).reduce((a: number, b: ClientRect) => a + b.width, 0);

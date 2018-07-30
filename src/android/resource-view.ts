@@ -176,8 +176,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const stored = (<any> node.element).__boxSpacing;
                 if (stored != null) {
                     const method: StringMap = METHOD_ANDROID['boxSpacing'];
-                    for (const i in stored) {
-                        node.attr(formatString(parseRTL(method[i]), stored[i]), (node.renderExtension == null));
+                    for (const attr in stored) {
+                        if (stored[attr] !== '0px') {
+                            node.attr(formatString(parseRTL(method[attr]), stored[attr]), (node.renderExtension == null));
+                        }
                     }
                 }
             }
@@ -201,6 +203,67 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         let template: Null<ObjectMap<string>> = null;
                         let data;
                         let resourceName = '';
+                        let gravity = '';
+                        let tileMode = '';
+                        let tileModeX = '';
+                        let tileModeY = '';
+                        switch (stored.backgroundPosition) {
+                            case 'left center':
+                            case '0% 50%':
+                                gravity = 'left|center_vertical';
+                                break;
+                            case 'left bottom':
+                            case '0% 100%':
+                                gravity = 'left|bottom';
+                                break;
+                            case 'right top':
+                            case '100% 0%':
+                                gravity = 'right|top';
+                                break;
+                            case 'right center':
+                            case '100% 50%':
+                                gravity = 'right|center_vertical';
+                                break;
+                            case 'right bottom':
+                            case '100% 100%':
+                                gravity = 'right|bottom';
+                                break;
+                            case 'center top':
+                            case '50% 0%':
+                                gravity = 'center_horizontal|top';
+                                break;
+                            case 'center bottom':
+                            case '50% 100%':
+                                gravity = 'center_horizontal|bottom';
+                                break;
+                            case 'center center':
+                            case '50% 50%':
+                                gravity = 'center';
+                                break;
+                        }
+                        switch (stored.backgroundRepeat) {
+                            case 'repeat-x':
+                                tileModeX = 'repeat';
+                                break;
+                            case 'repeat-y':
+                                tileModeY = 'repeat';
+                                break;
+                            case 'no-repeat':
+                                tileMode = 'disabled';
+                                break;
+                            default:
+                                tileMode = 'repeat';
+                        }
+                        const image6: ArrayIndex<StringMap> = [];
+                        const image7: ArrayIndex<StringMap> = [];
+                        if (stored.backgroundImage !== '') {
+                            if (stored.backgroundSize.length > 0) {
+                                image6[0] = { image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] };
+                            }
+                            else {
+                                image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
+                            }
+                        }
                         if (stored.border != null) {
                             if (stored.backgroundImage === '') {
                                 template = parseTemplate(SHAPERECTANGLE_TMPL);
@@ -233,7 +296,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                             '4': this.getShapeAttribute(stored, 'radius'),
                                             '5': this.getShapeAttribute(stored, 'radiusInit')
                                         }],
-                                        '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
+                                        '6': (image6.length > 0 ? image6 : false),
+                                        '7': (image7.length > 0 ? image7 : false)
                                     }]
                                 };
                                 if (stored.borderRadius.length > 1) {
@@ -248,7 +312,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             data = {
                                 '0': [{
                                     '1': [],
-                                    '6': (stored.backgroundImage !== '' ? [{ image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] }] : false)
+                                    '6': (image6.length > 0 ? image6 : false),
+                                    '7': (image7.length > 0 ? image7 : false)
                                 }]
                             };
                             const root = getTemplateLevel(data, '0');

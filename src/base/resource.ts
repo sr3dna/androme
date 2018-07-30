@@ -232,7 +232,9 @@ export default abstract class Resource<T extends Node> {
                         borderRadius: this.parseBorderRadius,
                         backgroundColor: this.parseBackgroundColor,
                         backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? this.parseBackgroundImage : ''),
-                        backgroundSize: this.parseBoxDimensions
+                        backgroundSize: this.parseBoxDimensions,
+                        backgroundRepeat: this.parseBackgroundRepeat,
+                        backgroundPosition: this.parseBackgroundPosition
                     };
                     for (const i in result) {
                         if (typeof result[i] === 'function') {
@@ -453,6 +455,14 @@ export default abstract class Resource<T extends Node> {
 
     private parseBackgroundColor(value: string, node: T) {
         return parseRGBA(value, node.css('opacity'));
+    }
+
+    private parseBackgroundRepeat(value: string) {
+        return value;
+    }
+
+    private parseBackgroundPosition(value: string) {
+        return value;
     }
 
     private parseBoxDimensions(value: string) {
