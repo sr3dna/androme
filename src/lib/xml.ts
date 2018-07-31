@@ -123,7 +123,7 @@ export function insertTemplateData(template: ObjectMap<string>, data: {}, index?
         else {
             value = data[i];
         }
-        if (hasValue(value)) {
+        if (value != null && value !== '') {
             output = (index != null ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim());
         }
         else if (new RegExp(`{%${i}}`).test(output) || value === false) {

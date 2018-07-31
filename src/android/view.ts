@@ -395,12 +395,15 @@ export default class View extends Node {
             this.android('layout_gravity', 'fill');
         }
         else {
-            const gravityParent = (<string> (renderParent.android('gravity') || ''));
-            let horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
+            let horizontalFloat = '';
             let verticalFloat = '';
-            if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
-                horizontalFloat = horizontal;
-                horizontal = '';
+            if (renderParent.app(parseRTL('layout_constraintRight_toRightOf')) !== 'parent') {
+                const gravityParent = (<string> (renderParent.android('gravity') || ''));
+                horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
+                if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
+                    horizontalFloat = horizontal;
+                    horizontal = '';
+                }
             }
             if (vertical !== '' && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
                 verticalFloat = vertical;

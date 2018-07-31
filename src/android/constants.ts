@@ -37,6 +37,7 @@ export const NODE_ANDROID = {
     SCROLL_HORIZONTAL: 'HorizontalScrollView',
     SCROLL_NESTED: 'android.support.v4.widget.NestedScrollView',
     RADIO_GROUP: 'RadioGroup',
+    WEB_VIEW: 'WebView',
     TEXT: 'TextView',
     EDIT: 'EditText',
     IMAGE: 'ImageView',

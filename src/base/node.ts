@@ -448,7 +448,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get float() {
-        return this.css('float');
+        return this.css('float') || 'none';
     }
 
     get overflow() {

@@ -18,7 +18,7 @@ export default abstract class Resource<T extends Node> {
     };
 
     public static addString(value: string, name = '') {
-        if (hasValue(value)) {
+        if (value != null && value !== '') {
             if (name === '') {
                 name = value;
             }
@@ -410,7 +410,21 @@ export default abstract class Resource<T extends Node> {
                     else if (node.hasElement) {
                         if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))) {
                             name = element.innerText.trim();
-                            value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText).trim();
+                            value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText);
+                            switch (node.css('whiteSpace')) {
+                                case 'nowrap':
+                                    value = value.replace(/\n/g, ' ');
+                                    break;
+                                case 'pre':
+                                case 'pre-wrap':
+                                    value = value.replace(/\s/g, '&#160;');
+                                    break;
+                                case 'pre-line':
+                                    value = value.replace(/\s+/g, ' ');
+                                default:
+                                    break;
+                            }
+                            value = value.replace(/<br\s*\/?>/g, '\n');
                         }
                     }
                     if (value !== '') {

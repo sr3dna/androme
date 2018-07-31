@@ -20,7 +20,8 @@ export enum NODE_STANDARD {
     SCROLL_VERTICAL,
     SCROLL_HORIZONTAL,
     SCROLL_NESTED,
-    RADIO_GROUP
+    RADIO_GROUP,
+    WEB_VIEW
 }
 
 export enum NODE_RESOURCE {
@@ -77,7 +78,8 @@ export const MAP_ELEMENT = {
     'BUTTON': NODE_STANDARD.BUTTON,
     'SUBMIT': NODE_STANDARD.BUTTON,
     'RESET': NODE_STANDARD.BUTTON,
-    'TEXTAREA': NODE_STANDARD.EDIT
+    'TEXTAREA': NODE_STANDARD.EDIT,
+    'IFRAME': NODE_STANDARD.WEB_VIEW
 };
 
 export const BLOCK_ELEMENT = [
@@ -130,6 +132,7 @@ export const INLINE_ELEMENT = [
     'DFN',
     'EM',
     'I',
+    'IFRAME',
     'IMG',
     'INPUT',
     'KBD',
