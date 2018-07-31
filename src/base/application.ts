@@ -510,7 +510,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         continue;
                     }
                     let parent = (<T> nodeY.parent);
-                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
+                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
                         const nodes = [nodeY];
                         const float = nodeY.float;
                         for (let l = k + 1; l < axisY.length; l++) {
@@ -525,7 +525,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                         if (nodes.length > 1) {
                             const viewGroup = this.controllerHandler.createGroup(nodeY, parent, nodes);
-                            const xml = this.writeLinearLayout(viewGroup, parent, false);
+                            const xml = this.writeLinearLayout(viewGroup, parent, true);
                             renderXml(viewGroup, parent, xml, current);
                             parent = viewGroup;
                         }
@@ -596,8 +596,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             let xml = '';
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;
-                                if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.cascade().every(node => supportInline.includes(node.element.tagName)))) {
-                                    if (hasFreeFormText(nodeY.element) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
+                                if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.cascade().every(node => node.inline && supportInline.includes(node.tagName)))) {
+                                    if (hasFreeFormText(nodeY.element) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.tagName))) {
                                         xml += this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
                                     else {
@@ -631,7 +631,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         else {
                                             const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                             if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
-                                                xml += this.writeLinearLayout(nodeY, parent, linearY);
+                                                xml += this.writeLinearLayout(nodeY, parent, linearX);
+                                            }
+                                            else if (SETTINGS.horizontalPerspective && nodeY.children.every(node => node.pageflow && node.inline)) {
+                                                nodeY.inlineWrap = true;
+                                                xml += this.writeRelativeLayout(nodeY, parent);
                                             }
                                             else {
                                                 xml += this.writeDefaultLayout(nodeY, parent);
@@ -698,8 +702,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
     }
 
-    public writeLinearLayout(node: T, parent: T, vertical: boolean) {
-        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.LINEAR, { vertical });
+    public writeLinearLayout(node: T, parent: T, horizontal: boolean) {
+        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.LINEAR, { horizontal });
     }
 
     public writeGridLayout(node: T, parent: T, columns: number, rows: number = 0) {
@@ -837,13 +841,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
-        return (linearX || linearY) &&
-               !parent.flex.enabled &&
-               (
-                   !children.some(node => node.floating && node.css('clear') !== 'none') &&
-                   (children.every(node => node.float !== 'right') || children.every(node => node.float === 'right')) &&
-                   children.every(node => node.pageflow)
-               );
+        return ((linearX || linearY) && !parent.flex.enabled && children.every(node => node.pageflow) && children.every(node => children[0].float === node.float));
     }
 
     public addInclude(filename: string, content: string) {
@@ -881,7 +879,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     node.inherit(parent, 'style');
                     parent.children.push(node);
                 }
-                node.setBounds(false, element);
+                node.setBounds();
             }
         }
         else if (isVisible(element)) {

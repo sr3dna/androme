@@ -232,9 +232,9 @@ export default class Toolbar extends Extension<T, U> {
     }
 
     public processChild(): ExtensionResult {
-        const element = this.element;
-        if (element && element.tagName === 'IMG' && (element.dataset.navigationIcon != null || element.dataset.collapseIcon != null)) {
-            this.node.hide();
+        const node = (<T> this.node);
+        if (node.element.tagName === 'IMG' && (node.dataset.navigationIcon != null || node.dataset.collapseIcon != null)) {
+            node.hide();
             return { xml: '', proceed: true };
         }
         return { xml: '' };

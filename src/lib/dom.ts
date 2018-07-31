@@ -2,16 +2,40 @@ import { BoxModel, ClientRect, Null } from './types';
 import { convertInt, optional } from './util';
 import { BLOCK_ELEMENT } from './constants';
 
-export function getRangeBounds(element: HTMLElement) {
+export function previousNode(element: HTMLElement) {
+    let previous: Null<HTMLElement>;
+    do {
+        previous = (<HTMLElement> element.previousSibling);
+        if (previous != null && (<any> previous).__node != null) {
+            return (<any> previous).__node;
+        }
+    }
+    while (previous != null);
+    return null;
+}
+
+export function getRangeBounds(element: HTMLElement): [ClientRect, boolean] {
+    let multiLine = false;
     const range = document.createRange();
     range.selectNodeContents(element);
-    const domRect = range.getClientRects();
-    const bounds = assignBounds(<ClientRect> (domRect.length > 1 ? domRect[1] : domRect[0]));
-    if (domRect.length > 1) {
-        bounds.left = Math.min.apply(null, Array.from(domRect).map((item: ClientRect) => item.left));
-        bounds.width = Array.from(domRect).reduce((a: number, b: ClientRect) => a + b.width, 0);
+    const domRect = Array.from(range.getClientRects());
+    const result = (<ClientRect> JSON.parse(JSON.stringify(domRect[0])));
+    const top = new Set([result.top]);
+    const bottom = new Set([result.bottom]);
+    for (let i = 1 ; i < domRect.length; i++) {
+        const rect = domRect[i];
+        top.add(rect.top);
+        bottom.add(rect.bottom);
+        result.width += rect.width;
+        result.right = Math.max(rect.right, result.right);
     }
-    return bounds;
+    if (top.size > 1 && bottom.size > 1) {
+        result.top = Math.min.apply(null, Array.from(top));
+        result.bottom = Math.max.apply(null, Array.from(bottom));
+        result.height = result.bottom - result.top;
+        multiLine = true;
+    }
+    return [assignBounds(<ClientRect> result), multiLine];
 }
 
 export function assignBounds(bounds: ClientRect): ClientRect {

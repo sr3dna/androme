@@ -27,11 +27,24 @@ export default abstract class NodeList<T extends Node> {
     public static linearY<T extends Node>(list: T[]) {
         const nodes = sortAsc(list.filter(node => !node.isolated), 'linear.left');
         if (nodes.length > 0 && !NodeList.intersect(nodes)) {
+            let valid = true;
             if (nodes.length > 1) {
                 const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
-                return !nodes.some(node => node.linear.left >= minRight);
+                const maxRight = Math.max.apply(null, nodes.map(node => node.linear.right));
+                nodes.forEach((node, index) => {
+                    if (node.linear.left < minRight) {
+                        return;
+                    }
+                    else {
+                        const previous = nodes[index - 1];
+                        if ((previous == null || (previous.pageflow && previous.inline && previous.linear.right !== maxRight)) && node.inline && node.pageflow && node.linear.right !== maxRight) {
+                            return;
+                        }
+                    }
+                    valid = false;
+                });
             }
-            return true;
+            return valid;
         }
         return false;
     }

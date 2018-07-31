@@ -918,7 +918,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     node.add('_', 'style', `@style/${styles.pop()}`);
                 }
                 if (attrs.length > 0) {
-                    attrs.sort().forEach((value: string) => node.attr(replaceDP(value, true)));
+                    attrs.sort().forEach(value => node.attr(replaceDP(value, true), false));
                 }
             }
         }

@@ -301,7 +301,7 @@ export default class Grid extends Extension<T, U> {
                 const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 if (linearX || linearY) {
-                    xml = this.application.writeLinearLayout(viewGroup, parent, linearY);
+                    xml = this.application.writeLinearLayout(viewGroup, parent, linearX);
                 }
                 else {
                     xml = this.application.writeDefaultLayout(viewGroup, parent);

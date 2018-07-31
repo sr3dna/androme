@@ -427,7 +427,7 @@ export default class View extends Node {
             const marginLeft = this.css('marginLeft');
             const marginRight = this.css('marginRight');
             const margin = this.css('margin').split(' ');
-            if ((marginLeft === 'auto' && marginRight === 'auto') || (marginLeft !== '0px' && marginLeft === marginRight && marginLeft === margin[1])) {
+            if ((marginLeft === 'auto' && marginRight === 'auto') || (this.is(NODE_STANDARD.LINE) && marginLeft !== '0px' && marginLeft === marginRight && marginLeft === margin[1])) {
                 this.android('layout_gravity', 'center_horizontal');
             }
         }

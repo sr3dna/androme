@@ -25,6 +25,8 @@ export default abstract class Node implements BoxModel {
     public rendered = false;
     public isolated = false;
     public relocated = false;
+    public inlineWrap = false;
+    public multiLine = false;
 
     public abstract children: T[];
     public abstract renderChildren: T[];
@@ -72,6 +74,7 @@ export default abstract class Node implements BoxModel {
     public abstract get documentParent(): T;
     public abstract set renderParent(value: T);
     public abstract get renderParent(): T;
+    public abstract get horizontal(): boolean;
 
     public add(ns: string, attr: string, value = '', overwrite = true) {
         const name = `_${ns || '_'}`;
@@ -289,9 +292,17 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public setBounds(calibrate = false, element?: HTMLElement) {
+    public setBounds(calibrate = false) {
         if (!calibrate) {
-            const bounds = (element != null ? getRangeBounds(element) : (this.hasElement ? assignBounds(<ClientRect> this.element.getBoundingClientRect()) : null));
+            let bounds: ClientRect;
+            if (this.hasElement) {
+                bounds = assignBounds(<ClientRect> this.element.getBoundingClientRect());
+            }
+            else {
+                const [range, multiLine] = getRangeBounds(this.element);
+                bounds = range;
+                this.multiLine = multiLine;
+            }
             if (bounds != null) {
                 this.bounds = bounds;
                 if (this.companion != null) {
@@ -568,7 +579,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inline() {
-        return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.css('display') === 'inline' || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
+        return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.css('display').indexOf('inline') !== -1 || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
     }
 
     get dir() {
