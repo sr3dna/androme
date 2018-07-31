@@ -337,13 +337,12 @@ export default class View extends Node {
     }
 
     public setAlignment() {
-        const left = parseRTL('left');
         const right = parseRTL('right');
         function convertHorizontal(value: string) {
             switch (value) {
                 case 'left':
                 case 'start':
-                    return left;
+                    return parseRTL('left');
                 case 'right':
                 case 'end':
                     return right;
@@ -391,13 +390,14 @@ export default class View extends Node {
                     vertical = 'center_vertical';
                 }
         }
+        const constraintRight = (renderParent.app(parseRTL('layout_constraintRight_toRightOf')) === 'parent');
         if (renderParent.tagName === 'TABLE') {
             this.android('layout_gravity', 'fill');
         }
         else {
             let horizontalFloat = '';
             let verticalFloat = '';
-            if (renderParent.app(parseRTL('layout_constraintRight_toRightOf')) !== 'parent') {
+            if (!constraintRight) {
                 const gravityParent = (<string> (renderParent.android('gravity') || ''));
                 horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
                 if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
@@ -414,7 +414,7 @@ export default class View extends Node {
                 this.android('layout_gravity', layoutGravity);
             }
         }
-        if (this.renderChildren.length > 0 && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
+        if (this.renderChildren.length > 0 && !constraintRight && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
             this.android('gravity', right);
         }
         else {

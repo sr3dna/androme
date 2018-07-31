@@ -12,12 +12,12 @@ export default abstract class NodeList<T extends Node> {
     }
 
     public static linearX<T extends Node>(list: T[]) {
-        const nodes = sortAsc(list.filter(node => !node.isolated), 'bounds.top');
+        const nodes = sortAsc(list.filter(node => !node.isolated), 'linear.top');
         if (nodes.length > 0 && !NodeList.intersect(nodes)) {
             if (nodes.length > 1) {
-                const minTop = Math.min.apply(null, nodes.map(node => node.bounds.top));
-                const maxBottom = Math.max.apply(null, nodes.filter(node => node.bounds.top === minTop).map(node => node.bounds.bottom));
-                return !nodes.some(node => !(node.bounds.top >= minTop && node.bounds.bottom <= maxBottom));
+                const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
+                const maxBottom = Math.max.apply(null, nodes.filter(node => node.linear.top === minTop).map(node => node.linear.bottom));
+                return !nodes.some(node => !(node.linear.top >= minTop && node.linear.bottom <= maxBottom));
             }
             return true;
         }
@@ -25,11 +25,11 @@ export default abstract class NodeList<T extends Node> {
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = sortAsc(list.filter(node => !node.isolated), 'bounds.left');
+        const nodes = sortAsc(list.filter(node => !node.isolated), 'linear.left');
         if (nodes.length > 0 && !NodeList.intersect(nodes)) {
             if (nodes.length > 1) {
-                const minRight = Math.min.apply(null, nodes.map(node => node.bounds.right));
-                return !nodes.some(node => node.bounds.left >= minRight);
+                const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
+                return !nodes.some(node => node.linear.left >= minRight);
             }
             return true;
         }
