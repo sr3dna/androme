@@ -1,4 +1,4 @@
-import { ArrayIndex, IExtension, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, IExtension, Null, ObjectIndex, ObjectMap, PlainFile, ViewData } from '../lib/types';
 import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
@@ -157,7 +157,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 attrs.add(convertCamelCase(attr));
                             }
                             const style = getStyle(element);
-                            const styleMap: StringMap = {};
+                            const styleMap = {};
                             for (const attr of attrs) {
                                 if (attr.toLowerCase().indexOf('color') !== -1) {
                                     const color = getByColorName(cssRule.style[attr]);
@@ -742,7 +742,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 extension.beforeInsert();
             }
         });
-        const template: StringMap = {};
+        const template = {};
         for (const id in this.insert) {
             let replaceId = id;
             if (!isNumber(id)) {

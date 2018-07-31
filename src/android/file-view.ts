@@ -1,4 +1,4 @@
-import { Null, PlainFile, StringMap, ViewData } from '../lib/types';
+import { Null, PlainFile, ViewData } from '../lib/types';
 import File from '../base/file';
 import View from './view';
 import { caseInsensitve, lastIndexOf } from '../lib/util';
@@ -38,7 +38,7 @@ export default class FileView<T extends View> extends File<T> {
     }
 
     public layoutAllToXml(data: ViewData<T>, saveToDisk = false) {
-        const result: StringMap = {};
+        const result = {};
         const files: PlainFile[] = [];
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
@@ -55,7 +55,7 @@ export default class FileView<T extends View> extends File<T> {
     }
 
     public resourceAllToXml(saveToDisk = false) {
-        const result: StringMap = {
+        const result = {
             string: this.resourceStringToXml(),
             stringArray: this.resourceStringArrayToXml(),
             font: this.resourceFontToXml(),

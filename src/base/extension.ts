@@ -114,9 +114,9 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         return;
     }
 
-    public getData() {
+    public getData(): StringMap {
         const element = this.element;
-        const result: StringMap = {};
+        const result = {};
         if (element != null) {
             const prefix = convertCamelCase(this.name, '\\.');
             for (const attr in element.dataset) {

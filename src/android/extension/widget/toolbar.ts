@@ -1,6 +1,6 @@
 import { ExtensionResult, Null } from '../../../lib/types';
 import Extension from '../../../base/extension';
-import Resource from '../../../base/resource';
+import ResourceView from '../../resource-view';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import { convertPX, hasValue, includes, optional } from '../../../lib/util';
@@ -61,7 +61,7 @@ export default class Toolbar extends Extension<T, U> {
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
                 if (element.dataset.navigationIcon != null) {
-                    const result = Resource.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
+                    const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
                         overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
@@ -70,7 +70,7 @@ export default class Toolbar extends Extension<T, U> {
                     }
                 }
                 if (element.dataset.collapseIcon != null) {
-                    const result = Resource.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
+                    const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
                         overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                         if (getStyle(element).display !== 'none') {
@@ -106,7 +106,7 @@ export default class Toolbar extends Extension<T, U> {
             overwriteDefault(appBar ? optionsAppBar : optionsToolbar, 'android', 'fitsSystemWindows', 'true');
             overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             if (backgroundImage !== 'none') {
-                overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${Resource.addImageURL(backgroundImage)}`);
+                overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${ResourceView.addImageURL(backgroundImage)}`);
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
             else {
@@ -149,7 +149,7 @@ export default class Toolbar extends Extension<T, U> {
                         break;
                 }
                 overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
-                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${Resource.addImageURL(backgroundImage)}`);
+                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${ResourceView.addImageURL(backgroundImage)}`);
                 overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');

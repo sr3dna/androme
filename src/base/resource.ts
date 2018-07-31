@@ -1,147 +1,25 @@
-import { BorderAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
+import { BorderAttribute, FontAttribute, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { cameltoLowerCase, convertPX, generateId, hasValue, includesEnum, isNumber, resolvePath, lastIndexOf } from '../lib/util';
+import { convertPX, hasValue, includesEnum, isNumber } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 import { getBoxSpacing, sameAsParent, hasFreeFormText } from '../lib/dom';
-import { findNearestColor, parseRGBA } from '../lib/color';
+import { parseRGBA } from '../lib/color';
 import { MAP_ELEMENT, NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
-    public static STORED = {
+    public static STORED: ResourceMap = {
         STRINGS: new Map(),
+        ARRAYS: new Map(),
+        FONTS: new Map(),
         COLORS: new Map(),
+        STYLES: new Map(),
         DIMENS: new Map(),
+        DRAWABLES: new Map(),
         IMAGES: new Map()
     };
-
-    public static addString(value: string, name = '') {
-        if (value != null && value !== '') {
-            if (name === '') {
-                name = value;
-            }
-            const numeric = isNumber(value);
-            if (SETTINGS.numberResourceValue || !numeric) {
-                for (const [resourceName, resourceValue] of Resource.STORED.STRINGS.entries()) {
-                    if (resourceValue === value) {
-                        return resourceName;
-                    }
-                }
-                name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
-                if (numeric || /^[0-9]/.test(value)) {
-                    name = `__${name}`;
-                }
-                else if (name === '') {
-                    name = `__symbol${Math.ceil(Math.random() * 100000)}`;
-                }
-                if (Resource.STORED.STRINGS.has(name)) {
-                    name = generateId('strings', `${name}_1`);
-                }
-                Resource.STORED.STRINGS.set(name, value);
-            }
-            return name;
-        }
-        return '';
-    }
-
-    public static addImageSrcSet(element: HTMLImageElement, prefix = '') {
-        const srcset = element.srcset.trim();
-        const images: StringMap = {};
-        if (hasValue(srcset)) {
-            const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-            srcset.split(',').forEach(value => {
-                const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                if (match != null) {
-                    if (match[2] == null) {
-                        match[2] = '1x';
-                    }
-                    const image = filePath + lastIndexOf(match[1]);
-                    switch (match[2]) {
-                        case '0.75x':
-                            images['ldpi'] = image;
-                            break;
-                        case '1x':
-                            images['mdpi'] = image;
-                            break;
-                        case '1.5x':
-                            images['hdpi'] = image;
-                            break;
-                        case '2x':
-                            images['xhdpi'] = image;
-                            break;
-                        case '3x':
-                            images['xxhdpi'] = image;
-                            break;
-                        case '4x':
-                            images['xxxhdpi'] = image;
-                            break;
-                    }
-                }
-            });
-        }
-        if (images['mdpi'] == null) {
-            images['mdpi'] = element.src;
-        }
-        return Resource.addImage(images, prefix);
-    }
-
-    public static addImage(images: StringMap, prefix = '') {
-        let src = '';
-        if (images && hasValue(images['mdpi'])) {
-            src = lastIndexOf(images['mdpi']);
-            const format = lastIndexOf(src, '.').toLowerCase();
-            src = src.replace(/.\w+$/, '').replace(/-/g, '_');
-            switch (format) {
-                case 'bmp':
-                case 'cur':
-                case 'gif':
-                case 'ico':
-                case 'jpg':
-                case 'png':
-                    src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
-                    break;
-                default:
-                    src = '';
-            }
-        }
-        return src;
-    }
-
-    public static addImageURL(value: string, prefix: string = '') {
-        const match = value.match(/^url\("?(.*?)"?\)$/);
-        if (match != null) {
-            return Resource.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
-        }
-        return '';
-    }
-
-    public static addColor(value: string, opacity = '1') {
-        value = value.toUpperCase().trim();
-        const opaque = (parseFloat(opacity) < 1 ? `#${opacity.substring(2) + value.substring(1)}` : value);
-        if (value !== '') {
-            let colorName = '';
-            if (!Resource.STORED.COLORS.has(opaque)) {
-                const color = findNearestColor(value);
-                if (color !== '') {
-                    color.name = cameltoLowerCase(<string> color.name);
-                    if (value === color.hex && value === opaque) {
-                        colorName = color.name;
-                    }
-                    else {
-                        colorName = generateId('color', `${color.name}_1`);
-                    }
-                    Resource.STORED.COLORS.set(opaque, colorName);
-                }
-            }
-            else {
-                colorName = Resource.STORED.COLORS.get(opaque);
-            }
-            return colorName;
-        }
-        return '';
-    }
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
         const stored: Map<string, any> = Resource.STORED[asset];
@@ -183,6 +61,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public abstract filterStyles(viewData: ViewData<T>): void;
+    public abstract setImageSource(): void;
     public abstract addTheme(template: string, data: {}, options: {}): void;
     public abstract finalize(viewData: ViewData<T>): void;
 
@@ -192,6 +71,10 @@ export default abstract class Resource<T extends Node> {
 
     public reset() {
         Resource.STORED.STRINGS = new Map();
+        Resource.STORED.ARRAYS = new Map();
+        Resource.STORED.FONTS = new Map();
+        Resource.STORED.STYLES = new Map();
+        Resource.STORED.DRAWABLES = new Map();
         Resource.STORED.COLORS = new Map();
         Resource.STORED.DIMENS = new Map();
         Resource.STORED.IMAGES = new Map();
@@ -242,13 +125,8 @@ export default abstract class Resource<T extends Node> {
                             result[i] = result[i](node.css(i), node, i);
                         }
                     }
-                    if (result.backgroundColor.length > 0) {
-                        if ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(element, 'backgroundColor'))) {
-                            result.backgroundColor = [];
-                        }
-                        else {
-                            result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], result.backgroundColor[2]);
-                        }
+                    if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(element, 'backgroundColor')))) {
+                        result.backgroundColor = [];
                     }
                     const borderTop = JSON.stringify(result.borderTop);
                     if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
@@ -271,22 +149,12 @@ export default abstract class Resource<T extends Node> {
                     }
                     else {
                         let color = parseRGBA(node.css('color'), node.css('opacity'));
-                        if (color.length > 0) {
-                            if (SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
-                                color = [];
-                            }
-                            else {
-                                color[0] = Resource.addColor(color[0], color[2]);
-                            }
+                        if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
+                            color = [];
                         }
                         let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                        if (backgroundColor.length > 0) {
-                            if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
-                                backgroundColor = [];
-                            }
-                            else {
-                                backgroundColor[0] = Resource.addColor(backgroundColor[0], backgroundColor[2]);
-                            }
+                        if (backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')))) {
+                            backgroundColor = [];
                         }
                         let fontWeight = (<string> node.css('fontWeight'));
                         if (!isNumber(fontWeight)) {
@@ -304,29 +172,16 @@ export default abstract class Resource<T extends Node> {
                                     fontWeight = '400';
                             }
                         }
-                        const result = {
+                        const result: FontAttribute = {
                             fontFamily: node.css('fontFamily'),
                             fontStyle: node.css('fontStyle'),
                             fontSize: node.css('fontSize'),
                             fontWeight,
-                            color: (color.length > 0 ? `@color/${color[0]}` : ''),
-                            backgroundColor: (backgroundColor.length > 0 ? `@color/${backgroundColor[0]}` : '')
+                            color,
+                            backgroundColor
                         };
                         object.__fontStyle = result;
                     }
-                }
-            }
-        });
-    }
-
-    public setImageSource() {
-        this.cache.elements.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')).forEach(node => {
-            const element = (<HTMLImageElement> node.element);
-            const object: any = element;
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
-                if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
-                    const result = (node.tagName === 'IMG' ? Resource.addImageSrcSet(element) : Resource.addImage({ 'mdpi': element.src }));
-                    object.__imageSource = result;
                 }
             }
         });
@@ -353,9 +208,8 @@ export default abstract class Resource<T extends Node> {
                                     numberArray = null;
                                     continue;
                                 }
-                                const result = Resource.addString(value);
-                                if (result !== '') {
-                                    stringArray.push(result);
+                                if (value !== '') {
+                                    stringArray.push(value);
                                 }
                             }
                         }
@@ -374,6 +228,7 @@ export default abstract class Resource<T extends Node> {
                 if (!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources) {
                     let name = '';
                     let value = '';
+                    let inlineTrim = false;
                     if (element.tagName === 'INPUT') {
                         switch (element.type) {
                             case 'text':
@@ -396,16 +251,8 @@ export default abstract class Resource<T extends Node> {
                         value = element.value.trim();
                     }
                     else if (element.nodeName === '#text') {
-                        const textContent = <string> element.textContent;
-                        value = textContent.trim();
-                        const previousSibling = node.previousSibling;
-                        const nextSibling = node.nextSibling;
-                        if (previousSibling != null && previousSibling.inline && /^\s{2,}/.test(textContent)) {
-                            value = '&#160;' + value;
-                        }
-                        if (nextSibling != null && nextSibling.inline && /\s+$/.test(textContent)) {
-                            value = value + '&#160;';
-                        }
+                        value = <string> element.textContent;
+                        inlineTrim = true;
                     }
                     else if (node.hasElement) {
                         if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))) {
@@ -422,14 +269,26 @@ export default abstract class Resource<T extends Node> {
                                 case 'pre-line':
                                     value = value.replace(/\s+/g, ' ');
                                 default:
+                                    inlineTrim = true;
                                     break;
                             }
                             value = value.replace(/<br\s*\/?>/g, '\n');
                         }
                     }
+                    if (inlineTrim) {
+                        const original = value;
+                        value = value.trim();
+                        const previousSibling = node.previousSibling;
+                        const nextSibling = node.nextSibling;
+                        if (previousSibling && previousSibling.inline && /^\s+/.test(original)) {
+                            value = '&#160;' + value;
+                        }
+                        if (nextSibling && nextSibling.inline && /\s+$/.test(original)) {
+                            value = value + '&#160;';
+                        }
+                    }
                     if (value !== '') {
-                        const result = Resource.addString(value, name);
-                        object.__valueString = result;
+                        object.__valueString = { value, name };
                     }
                 }
             }
@@ -441,7 +300,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     protected getBorderStyle(border: BorderAttribute) {
-        const result: StringMap = { solid: `android:color="@color/${border.color}"` };
+        const result = { solid: `android:color="@color/${border.color}"` };
         Object.assign(result, {
             inset: result.solid,
             outset: result.solid,
@@ -455,17 +314,14 @@ export default abstract class Resource<T extends Node> {
         const style = node.css(`${attr}Style`) || 'none';
         let width = node.css(`${attr}Width`) || '1px';
         const color = (style !== 'none' ? parseRGBA(node.css(`${attr}Color`), node.css('opacity')) : []);
-        if (color.length > 0) {
-            color[0] = (<string> Resource.addColor(color[0], color[2]));
-        }
         if (style === 'inset' && width === '0px') {
             width = '1px';
         }
-        return { style, width, color: (color.length > 0 ? color[0] : '#000000') };
+        return { style, width, color: (color.length > 0 ? color : ['#000000', '', '1']) };
     }
 
     private parseBackgroundImage(value: string) {
-        return Resource.addImageURL(value);
+        return value;
     }
 
     private parseBorderRadius(value: string, node: T) {

@@ -16,7 +16,7 @@ export default abstract class List extends Extension<T, U> {
     public condition() {
         return (
             super.condition() &&
-            (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (NodeList.linearX(this.node.children) || NodeList.linearY(this.node.children)))
+            (this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (NodeList.linearX(this.node.children) || NodeList.linearY(this.node.children)))
         );
     }
 

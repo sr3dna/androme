@@ -1,6 +1,6 @@
 import { ExtensionResult, IExtension, ObjectMap, StringMap } from '../../../lib/types';
 import Nav from '../../../extension/nav';
-import Resource from '../../../base/resource';
+import ResourceView from '../../resource-view';
 import View from '../../view';
 import { BLOCK_ELEMENT, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
@@ -126,14 +126,14 @@ export default class Menu<T extends View> extends Nav {
             case VIEW_NAVIGATION.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') == null) {
-                    let src = Resource.addImageURL(<string> element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
+                    let src = ResourceView.addImageURL(<string> element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
                     if (src !== '') {
                         options.android.icon = `@drawable/${src}`;
                     }
                     else {
                         const image = node.children.find(item => item.element.tagName === 'IMG');
                         if (image != null) {
-                            src = Resource.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
+                            src = ResourceView.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
                             if (src !== '') {
                                 options.android.icon = `@drawable/${src}`;
                             }
@@ -147,7 +147,7 @@ export default class Menu<T extends View> extends Nav {
         }
         if (node.android('title') == null) {
             if (title !== '') {
-                const name = Resource.addString(title);
+                const name = ResourceView.addString(title);
                 if (name !== '') {
                     title = `@string/${name}`;
                 }

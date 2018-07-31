@@ -12,7 +12,7 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/Edge/FireFox. The latest version of Chrome is ideally what you should use to generate the production version of your program. ***
 
-[https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js](https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js): only one file is required to use this program in your webpage
+[https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js](https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js): the only file required to use this program in your webpage
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server. 
 
@@ -34,7 +34,7 @@ GitHub
 * Open Browser: http://localhost:3000/demos/index.html
 
 ```javascript
-<script src="https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js"></script>
+<script src="/dist/androme.min.js"></script>
 <script>
     // optional  
     androme.settings.targetAPI = 19; // androme.build.KITKAT
@@ -1017,37 +1017,37 @@ The attributes "include" and "include-end" can only be applied to elements which
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="app_name">androme_ui</string>
-	<string name="__00_inactive">00 - Inactive</string>
-	<string name="__01_active">01 - Active</string>
-	<string name="active">Active:</string>
-	<string name="all">All</string>
-	<string name="birth">Birth</string>
-	<string name="branch">Branch:</string>
-	<string name="calendar">Calendar:</string>
-	<string name="clone">Clone</string>
-	<string name="conclusion">Conclusion:</string>
-	<string name="custom_add">Custom (<a href="#">Add</a>):</string>
-	<string name="date_add">Date (<a href="#">Add</a>):</string>
-	<string name="death">Death</string>
-	<string name="entries">Entries:</string>
-	<string name="entry">Entry</string>
-	<string name="mode">Mode:</string>
-	<string name="no">No</string>
-	<string name="none">None</string>
-	<string name="open">Open</string>
-	<string name="order">Order:</string>
-	<string name="predefined">Predefined</string>
-	<string name="series">Series:</string>
-	<string name="style">Style:</string>
-	<string name="subset">Subset:</string>
-	<string name="time">Time:</string>
-	<string name="topic_add">Topic (<a href="#">Add</a>):</string>
-	<string name="type">Type:</string>
-	<string name="update">Update</string>
-	<string name="variant">Variant</string>
-	<string name="version">Version:</string>
-	<string name="yes">Yes</string>
+    <string name="app_name">androme_ui</string>
+    <string name="__00_inactive">00 - Inactive</string>
+    <string name="__01_active">01 - Active</string>
+    <string name="active">Active:</string>
+    <string name="all">All</string>
+    <string name="birth">Birth</string>
+    <string name="branch">Branch:</string>
+    <string name="calendar">Calendar:</string>
+    <string name="clone">Clone</string>
+    <string name="conclusion">Conclusion:</string>
+    <string name="custom_add">Custom (<a href="#">Add</a>):</string>
+    <string name="date_add">Date (<a href="#">Add</a>):</string>
+    <string name="death">Death</string>
+    <string name="entries">Entries:</string>
+    <string name="entry">Entry</string>
+    <string name="mode">Mode:</string>
+    <string name="no">No</string>
+    <string name="none">None</string>
+    <string name="open">Open</string>
+    <string name="order">Order:</string>
+    <string name="predefined">Predefined</string>
+    <string name="series">Series:</string>
+    <string name="style">Style:</string>
+    <string name="subset">Subset:</string>
+    <string name="time">Time:</string>
+    <string name="topic_add">Topic (<a href="#">Add</a>):</string>
+    <string name="type">Type:</string>
+    <string name="update">Update</string>
+    <string name="variant">Variant</string>
+    <string name="version">Version:</string>
+    <string name="yes">Yes</string>
 </resources>
 <!-- filename: res/values/strings.xml -->
 ```

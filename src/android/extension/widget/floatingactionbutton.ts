@@ -1,6 +1,6 @@
 import { ExtensionResult } from '../../../lib/types';
 import Button from '../../../extension/button';
-import Resource from '../../../base/resource';
+import ResourceView from '../../resource-view';
 import View from '../../view';
 import { hasValue, includesEnum } from '../../../lib/util';
 import { overwriteDefault, positionIsolated } from '../lib/util';
@@ -19,25 +19,25 @@ export default class FloatingActionButton<T extends View> extends Button {
         const element = node.element;
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-        overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${Resource.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
+        overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${ResourceView.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
         if (includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
             overwriteDefault(options, 'android', 'focusable', 'false');
         }
         let src = '';
         switch (element.tagName) {
             case 'IMG':
-                src = Resource.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.DIALOG);
+                src = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.DIALOG);
                 break;
             case 'INPUT':
                 if ((<HTMLInputElement> element).type === 'image') {
-                    src = Resource.addImage({ 'mdpi': (<HTMLInputElement> element).src }, DRAWABLE_PREFIX.DIALOG);
+                    src = ResourceView.addImage({ 'mdpi': (<HTMLInputElement> element).src }, DRAWABLE_PREFIX.DIALOG);
                 }
                 else {
-                    src = Resource.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                    src = ResourceView.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
                 }
                 break;
             case 'BUTTON':
-                src = Resource.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                src = ResourceView.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
                 break;
         }
         if (src !== '') {

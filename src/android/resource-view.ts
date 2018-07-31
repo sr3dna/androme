@@ -1,31 +1,18 @@
-import { ArrayIndex, BorderAttribute, Null, ObjectMap, ResourceMap, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, BorderAttribute, FontAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, trim } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertWord, formatPX, formatString, generateId, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
-import { parseHex } from '../lib/color';
+import { findNearestColor, parseHex } from '../lib/color';
 import { NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
-import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID } from './constants';
+import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';
-
-const STORED: ResourceMap = {
-    STRINGS: new Map(),
-    ARRAYS: new Map(),
-    FONTS: new Map(),
-    COLORS: new Map(),
-    STYLES: new Map(),
-    DIMENS: new Map(),
-    DRAWABLES: new Map(),
-    IMAGES: new Map()
-};
-
-Object.assign(STORED, Resource.STORED);
 
 const METHOD_ANDROID = {
     'boxSpacing': {
@@ -72,21 +59,142 @@ interface StyleTag {
 type StyleList = ArrayIndex<ObjectMap<number[]>>;
 
 export default class ResourceView<T extends View> extends Resource<T> {
+    public static addString(value: string, name = '') {
+        if (value != null && value !== '') {
+            if (name === '') {
+                name = value;
+            }
+            const numeric = isNumber(value);
+            if (SETTINGS.numberResourceValue || !numeric) {
+                for (const [resourceName, resourceValue] of Resource.STORED.STRINGS.entries()) {
+                    if (resourceValue === value) {
+                        return resourceName;
+                    }
+                }
+                name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
+                if (numeric || /^[0-9]/.test(value) || RESERVED_JAVA.includes(name)) {
+                    name = `__${name}`;
+                }
+                else if (name === '') {
+                    name = `__symbol${Math.ceil(Math.random() * 100000)}`;
+                }
+                if (Resource.STORED.STRINGS.has(name)) {
+                    name = generateId('strings', `${name}_1`);
+                }
+                Resource.STORED.STRINGS.set(name, value);
+            }
+            return name;
+        }
+        return '';
+    }
+
+    public static addImageSrcSet(element: HTMLImageElement, prefix = '') {
+        const srcset = element.srcset.trim();
+        const images = {};
+        if (hasValue(srcset)) {
+            const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+            srcset.split(',').forEach(value => {
+                const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                if (match != null) {
+                    if (match[2] == null) {
+                        match[2] = '1x';
+                    }
+                    const image = filePath + lastIndexOf(match[1]);
+                    switch (match[2]) {
+                        case '0.75x':
+                            images['ldpi'] = image;
+                            break;
+                        case '1x':
+                            images['mdpi'] = image;
+                            break;
+                        case '1.5x':
+                            images['hdpi'] = image;
+                            break;
+                        case '2x':
+                            images['xhdpi'] = image;
+                            break;
+                        case '3x':
+                            images['xxhdpi'] = image;
+                            break;
+                        case '4x':
+                            images['xxxhdpi'] = image;
+                            break;
+                    }
+                }
+            });
+        }
+        if (images['mdpi'] == null) {
+            images['mdpi'] = element.src;
+        }
+        return ResourceView.addImage(images, prefix);
+    }
+
+    public static addImage(images: StringMap, prefix = '') {
+        let src = '';
+        if (images && hasValue(images['mdpi'])) {
+            src = lastIndexOf(images['mdpi']);
+            const format = lastIndexOf(src, '.').toLowerCase();
+            src = src.replace(/.\w+$/, '').replace(/-/g, '_');
+            switch (format) {
+                case 'bmp':
+                case 'cur':
+                case 'gif':
+                case 'ico':
+                case 'jpg':
+                case 'png':
+                    src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
+                    break;
+                default:
+                    src = '';
+            }
+        }
+        return src;
+    }
+
+    public static addImageURL(value: string, prefix: string = '') {
+        const match = value.match(/^url\("?(.*?)"?\)$/);
+        if (match != null) {
+            return ResourceView.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
+        }
+        return '';
+    }
+
+    public static addColor(value: string, opacity = '1') {
+        value = value.toUpperCase().trim();
+        const opaque = (parseFloat(opacity) < 1 ? `#${opacity.substring(2) + value.substring(1)}` : value);
+        if (value !== '') {
+            let colorName = '';
+            if (!Resource.STORED.COLORS.has(opaque)) {
+                const color = findNearestColor(value);
+                if (color !== '') {
+                    color.name = cameltoLowerCase(<string> color.name);
+                    if (value === color.hex && value === opaque) {
+                        colorName = color.name;
+                    }
+                    else {
+                        colorName = generateId('color', `${color.name}_1`);
+                    }
+                    Resource.STORED.COLORS.set(opaque, colorName);
+                }
+            }
+            else {
+                colorName = (<string> Resource.STORED.COLORS.get(opaque));
+            }
+            return colorName;
+        }
+        return '';
+    }
+
     private tagStyle: ObjectMap<StyleList> = {};
     private tagCount: ObjectMap<number> = {};
 
     constructor(file: File<T>) {
         super(file);
-        this.file.stored = STORED;
+        this.file.stored = Resource.STORED;
     }
 
     public reset() {
         super.reset();
-        STORED.ARRAYS = new Map();
-        STORED.FONTS = new Map();
-        STORED.STYLES = new Map();
-        STORED.DRAWABLES = new Map();
-        Object.assign(STORED, Resource.STORED);
         this.file.reset();
         this.tagStyle = {};
         this.tagCount = {};
@@ -164,7 +272,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
         if (Object.keys(styles).length > 0) {
             for (const name in styles) {
-                STORED.STYLES.set(name, { attributes: styles[name].join(';') });
+                Resource.STORED.STYLES.set(name, { attributes: styles[name].join(';') });
             }
         }
     }
@@ -175,7 +283,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
                 const stored = (<any> node.element).__boxSpacing;
                 if (stored != null) {
-                    const method: StringMap = METHOD_ANDROID['boxSpacing'];
+                    const method = METHOD_ANDROID['boxSpacing'];
                     for (const attr in stored) {
                         if (stored[attr] !== '0px') {
                             node.attr(formatString(parseRTL(method[attr]), stored[attr]), (node.renderExtension == null));
@@ -194,10 +302,22 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const object: any = element;
                 const stored = object.__boxStyle;
                 if (stored != null) {
+                    if (stored.backgroundColor && stored.backgroundColor.length > 0) {
+                        stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
+                    }
+                    stored.backgroundImage = ResourceView.addImageURL(stored.backgroundImage);
+                    [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
+                        if (item.color && item.color.length > 0) {
+                            item.color = (<string> ResourceView.addColor(item.color[0], item.color[2]));
+                        }
+                    });
                     const method = METHOD_ANDROID['boxStyle'];
                     const companion = node.companion;
-                    if (companion != null && !sameAsParent(companion.element, 'backgroundColor')) {
-                        stored.backgroundColor = (<any> companion.element).__boxStyle.backgroundColor;
+                    if (companion && !sameAsParent(companion.element, 'backgroundColor')) {
+                         const boxStyle = (<any> companion.element).__boxStyle;
+                         if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
+                            stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
+                         }
                     }
                     if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
                         let template: Null<ObjectMap<string>> = null;
@@ -317,12 +437,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 }]
                             };
                             const root = getTemplateLevel(data, '0');
-                            const borders = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
+                            const borders: BorderAttribute[] = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
                             let valid = true;
                             let width = '';
                             let borderStyle = '';
                             let radius = '';
-                            borders.some((item: BorderAttribute, index) => {
+                            borders.some((item, index) => {
                                 if (this.borderVisible(item)) {
                                     if (width !== '' && width !== item.width && borderStyle !== '' && borderStyle !== this.getBorderStyle(item) && radius !== '' && radius !== stored.borderRadius[index]) {
                                         valid = false;
@@ -359,7 +479,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 root['1'].push(layerList);
                             }
                             else {
-                                borders.forEach((item: BorderAttribute, index) => {
+                                borders.forEach((item, index) => {
                                     if (this.borderVisible(item)) {
                                         const hideWidth = `-${item.width}`;
                                         const layerList: {} = {
@@ -386,7 +506,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         if (template != null) {
                             const xml = insertTemplateData(template, data);
-                            for (const [name, value] of STORED.DRAWABLES.entries()) {
+                            for (const [name, value] of Resource.STORED.DRAWABLES.entries()) {
                                 if (value === xml) {
                                     resourceName = name;
                                     break;
@@ -394,13 +514,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                             if (resourceName === '') {
                                 resourceName = `${node.tagName.toLowerCase()}_${node.nodeId}`;
-                                STORED.DRAWABLES.set(resourceName, xml);
+                                Resource.STORED.DRAWABLES.set(resourceName, xml);
                             }
                         }
                         node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
                     }
                     else if (object.__fontStyle == null && stored.backgroundColor.length > 0) {
-                        node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]), (node.renderExtension == null));
+                        node.attr(formatString(method['backgroundColor'], stored.backgroundColor), (node.renderExtension == null));
                     }
                 }
             }
@@ -432,11 +552,17 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
                 const element = node.element;
                 const nodeId = (labelFor || node).id;
-                const stored = Object.assign({}, (<any> element).__fontStyle);
+                const stored: FontAttribute = Object.assign({}, (<any> element).__fontStyle);
+                if (stored.backgroundColor && stored.backgroundColor.length > 0) {
+                    stored.backgroundColor = `@color/${ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
+                }
                 if (stored.fontFamily != null) {
                     let fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
                     let fontStyle = '';
                     let fontWeight = '';
+                    if (stored.color && stored.color.length > 0) {
+                        stored.color = `@color/${ResourceView.addColor(stored.color[0], stored.color[2])}`;
+                    }
                     if (SETTINGS.useFontAlias && FONTREPLACE_ANDROID[fontFamily] != null) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
@@ -459,12 +585,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         delete stored.fontWeight;
                     }
                     if (!system) {
-                        const fonts = STORED.FONTS.get(fontFamily) || {};
+                        const fonts = Resource.STORED.FONTS.get(fontFamily) || {};
                         Object.assign(fonts, { [`${fontStyle}-${fontWeight}`]: true });
-                        STORED.FONTS.set(fontFamily, fonts);
+                        Resource.STORED.FONTS.set(fontFamily, fonts);
                     }
                 }
-                const method: StringMap = METHOD_ANDROID['fontStyle'];
+                const method = METHOD_ANDROID['fontStyle'];
                 const keys = Object.keys(method);
                 for (let i = 0; i < keys.length; i++) {
                     if (sorted[i] == null) {
@@ -504,14 +630,15 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public setImageSource() {
-        super.setImageSource();
-        this.cache.visible.filter(node => node.tagName === 'IMG').forEach(node => {
+        this.cache.visible.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')).forEach(node => {
+            const element = (<HTMLImageElement> node.element);
+            const object: any = element;
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
-                const object: any = node.element;
-                const stored = object.__imageSource;
-                if (stored != null) {
+                if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
+                    const result = (node.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
                     const method = METHOD_ANDROID['imageSource'];
-                    node.attr(formatString(method['src'], stored), (node.renderExtension == null));
+                    node.attr(formatString(method['src'], result), (node.renderExtension == null));
+                    object.__imageSource = result;
                 }
             }
         });
@@ -525,14 +652,17 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const method = METHOD_ANDROID['optionArray'];
                 let result: string[] = [];
                 if (stored.stringArray != null) {
-                    result = stored.stringArray.map(value => `@string/${value}`);
+                    result = stored.stringArray.map(value => {
+                        value = ResourceView.addString(value);
+                        return (value !== '' ? `@string/${value}` : '');
+                    }).filter(value => value);
                 }
                 if (stored.numberArray != null) {
                     result = stored.numberArray;
                 }
                 let arrayName = '';
                 const arrayValue = result.join('-');
-                for (const [storedName, storedResult] of STORED.ARRAYS.entries()) {
+                for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
                     if (arrayValue === storedResult.join('-')) {
                         arrayName = storedName;
                         break;
@@ -540,7 +670,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
                 if (arrayName === '') {
                     arrayName = `${node.nodeId}_array`;
-                    STORED.ARRAYS.set(arrayName, result);
+                    Resource.STORED.ARRAYS.set(arrayName, result);
                 }
                 node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
             }
@@ -553,8 +683,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const stored = (<any> node.element).__valueString;
                 if (stored != null) {
+                    const result = ResourceView.addString(stored.value, stored.name);
                     const method = METHOD_ANDROID['valueString'];
-                    let value = (<string> STORED.STRINGS.get(stored));
+                    let value = (<string> Resource.STORED.STRINGS.get(result));
                     if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
                         const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
                         if (match != null) {
@@ -566,10 +697,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     value = `<strike>${value}</strike>`;
                                     break;
                             }
-                            STORED.STRINGS.set(stored, value);
+                            Resource.STORED.STRINGS.set(result, value);
                         }
                     }
-                    node.attr(formatString(method['text'], (isNaN(parseInt(stored)) || parseInt(stored).toString() !== stored ? `@string/${stored}` : stored)), (node.renderExtension == null));
+                    node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
                 }
             }
         });
@@ -583,7 +714,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let value = options.item[name];
                 const hex = parseHex(value);
                 if (hex !== '') {
-                    value = `@color/${Resource.addColor(hex)}`;
+                    value = `@color/${ResourceView.addColor(hex)}`;
                 }
                 root['1'].push({ name, value });
             }
@@ -797,7 +928,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                 if (match != null) {
                     const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];
-                    STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
+                    Resource.STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
                     parent = value;
                 }
             });
@@ -833,17 +964,18 @@ export default class ResourceView<T extends View> extends Resource<T> {
     private getShapeAttribute(stored: ObjectMap<any>, name: string) {
         switch (name) {
             case 'stroke':
-                return (stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);
+                return (stored.border && stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);
             case 'backgroundColor':
-                return (stored.backgroundColor.length > 0 ? [{ color: stored.backgroundColor[0] }] : false);
+                return (stored.backgroundColor.length > 0 ? [{ color: stored.backgroundColor }] : false);
             case 'radius':
                 return (stored.borderRadius.length === 1 && stored.borderRadius[0] !== '0px' ? [{ radius: stored.borderRadius[0] }] : false);
             case 'radiusInit':
                 return (stored.borderRadius.length > 1 ? [] : false);
             case 'radiusAll':
-                const result: StringMap = {};
+                const result = {};
                 stored.borderRadius.forEach((value: string, index: number) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
                 return result;
         }
+        return false;
     }
 }

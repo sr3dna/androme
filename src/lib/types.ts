@@ -97,7 +97,16 @@ export interface Flexbox {
 export interface BorderAttribute {
     style: string;
     width: string;
-    color: string;
+    color: string[] | string;
+}
+
+export interface FontAttribute {
+    fontFamily: string;
+    fontStyle: string;
+    fontSize: string;
+    fontWeight: string;
+    color: string[] | string;
+    backgroundColor: string[] | string;
 }
 
 export interface PlainFile {

@@ -1,4 +1,4 @@
-/* androme 1.8.14
+/* androme 1.8.15
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -361,28 +361,23 @@
             return false;
         }
         static linearX(list) {
-            const nodes = sortAsc(list.filter(node => !node.isolated), 'bounds.top');
+            const nodes = sortAsc(list.filter(node => !node.isolated), 'linear.top');
             if (nodes.length > 0 && !NodeList.intersect(nodes)) {
-                if (nodes.length > 2) {
-                    const minBottom = Math.min.apply(null, nodes.map(node => node.bounds.bottom));
-                    return !nodes.some(node => node.bounds.top > minBottom);
-                }
-                else if (nodes.length > 1) {
-                    return (nodes[1].bounds.top < nodes[0].bounds.bottom);
+                if (nodes.length > 1) {
+                    const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
+                    const maxBottom = Math.max.apply(null, nodes.filter(node => node.linear.top === minTop).map(node => node.linear.bottom));
+                    return !nodes.some(node => !(node.linear.top >= minTop && node.linear.bottom <= maxBottom));
                 }
                 return true;
             }
             return false;
         }
         static linearY(list) {
-            const nodes = sortAsc(list.filter(node => !node.isolated), 'bounds.left');
+            const nodes = sortAsc(list.filter(node => !node.isolated), 'linear.left');
             if (nodes.length > 0 && !NodeList.intersect(nodes)) {
-                if (nodes.length > 2) {
-                    const minRight = Math.min.apply(null, nodes.map(node => node.bounds.right));
-                    return !nodes.some(node => node.bounds.left > minRight);
-                }
-                else if (nodes.length > 1) {
-                    return (nodes[1].bounds.left < nodes[0].bounds.right);
+                if (nodes.length > 1) {
+                    const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
+                    return !nodes.some(node => node.linear.left >= minRight);
                 }
                 return true;
             }
@@ -479,6 +474,7 @@
         SCROLL_HORIZONTAL: 'HorizontalScrollView',
         SCROLL_NESTED: 'android.support.v4.widget.NestedScrollView',
         RADIO_GROUP: 'RadioGroup',
+        WEB_VIEW: 'WebView',
         TEXT: 'TextView',
         EDIT: 'EditText',
         IMAGE: 'ImageView',
@@ -600,6 +596,61 @@
         'DEL',
         'LABEL',
         'PLAINTEXT'
+    ];
+    const RESERVED_JAVA = [
+        'abstract',
+        'assert',
+        'boolean',
+        'break',
+        'byte',
+        'case',
+        'catch',
+        'char',
+        'class',
+        'const',
+        'continue',
+        'default',
+        'double',
+        'do',
+        'else',
+        'enum',
+        'extends',
+        'false',
+        'final',
+        'finally',
+        'float',
+        'for',
+        'goto',
+        'if',
+        'implements',
+        'import',
+        'instanceof',
+        'int',
+        'interface',
+        'long',
+        'native',
+        'new',
+        'null',
+        'package',
+        'private',
+        'protected',
+        'public',
+        'return',
+        'short',
+        'static',
+        'strictfp',
+        'super',
+        'switch',
+        'synchronized',
+        'this',
+        'throw',
+        'throws',
+        'transient',
+        'true',
+        'try',
+        'void',
+        'volatile',
+        'while'
     ];
 
     const SETTINGS = {
@@ -750,7 +801,7 @@
             else {
                 value = data[i];
             }
-            if (hasValue(value)) {
+            if (value != null && value !== '') {
                 output = (index != null ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim());
             }
             else if (new RegExp(`{%${i}}`).test(output) || value === false) {
@@ -798,6 +849,7 @@
         NODE_STANDARD[NODE_STANDARD["SCROLL_HORIZONTAL"] = 19] = "SCROLL_HORIZONTAL";
         NODE_STANDARD[NODE_STANDARD["SCROLL_NESTED"] = 20] = "SCROLL_NESTED";
         NODE_STANDARD[NODE_STANDARD["RADIO_GROUP"] = 21] = "RADIO_GROUP";
+        NODE_STANDARD[NODE_STANDARD["WEB_VIEW"] = 22] = "WEB_VIEW";
     })(NODE_STANDARD || (NODE_STANDARD = {}));
     var NODE_RESOURCE;
     (function (NODE_RESOURCE) {
@@ -853,7 +905,8 @@
         'BUTTON': NODE_STANDARD.BUTTON,
         'SUBMIT': NODE_STANDARD.BUTTON,
         'RESET': NODE_STANDARD.BUTTON,
-        'TEXTAREA': NODE_STANDARD.EDIT
+        'TEXTAREA': NODE_STANDARD.EDIT,
+        'IFRAME': NODE_STANDARD.WEB_VIEW
     };
     const BLOCK_ELEMENT = [
         'ADDRESS',
@@ -904,6 +957,7 @@
         'DFN',
         'EM',
         'I',
+        'IFRAME',
         'IMG',
         'INPUT',
         'KBD',
@@ -2441,127 +2495,6 @@
         constructor(file) {
             this.file = file;
         }
-        static addString(value, name = '') {
-            if (hasValue(value)) {
-                if (name === '') {
-                    name = value;
-                }
-                const numeric = isNumber(value);
-                if (SETTINGS.numberResourceValue || !numeric) {
-                    for (const [resourceName, resourceValue] of Resource.STORED.STRINGS.entries()) {
-                        if (resourceValue === value) {
-                            return resourceName;
-                        }
-                    }
-                    name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
-                    if (numeric || /^[0-9]/.test(value)) {
-                        name = `__${name}`;
-                    }
-                    else if (name === '') {
-                        name = `__symbol${Math.ceil(Math.random() * 100000)}`;
-                    }
-                    if (Resource.STORED.STRINGS.has(name)) {
-                        name = generateId('strings', `${name}_1`);
-                    }
-                    Resource.STORED.STRINGS.set(name, value);
-                }
-                return name;
-            }
-            return '';
-        }
-        static addImageSrcSet(element, prefix = '') {
-            const srcset = element.srcset.trim();
-            const images = {};
-            if (hasValue(srcset)) {
-                const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-                srcset.split(',').forEach(value => {
-                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                    if (match != null) {
-                        if (match[2] == null) {
-                            match[2] = '1x';
-                        }
-                        const image = filePath + lastIndexOf(match[1]);
-                        switch (match[2]) {
-                            case '0.75x':
-                                images['ldpi'] = image;
-                                break;
-                            case '1x':
-                                images['mdpi'] = image;
-                                break;
-                            case '1.5x':
-                                images['hdpi'] = image;
-                                break;
-                            case '2x':
-                                images['xhdpi'] = image;
-                                break;
-                            case '3x':
-                                images['xxhdpi'] = image;
-                                break;
-                            case '4x':
-                                images['xxxhdpi'] = image;
-                                break;
-                        }
-                    }
-                });
-            }
-            if (images['mdpi'] == null) {
-                images['mdpi'] = element.src;
-            }
-            return Resource.addImage(images, prefix);
-        }
-        static addImage(images, prefix = '') {
-            let src = '';
-            if (images && hasValue(images['mdpi'])) {
-                src = lastIndexOf(images['mdpi']);
-                const format = lastIndexOf(src, '.').toLowerCase();
-                src = src.replace(/.\w+$/, '').replace(/-/g, '_');
-                switch (format) {
-                    case 'bmp':
-                    case 'cur':
-                    case 'gif':
-                    case 'ico':
-                    case 'jpg':
-                    case 'png':
-                        src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
-                        break;
-                    default:
-                        src = '';
-                }
-            }
-            return src;
-        }
-        static addImageURL(value, prefix = '') {
-            const match = value.match(/^url\("?(.*?)"?\)$/);
-            if (match != null) {
-                return Resource.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
-            }
-            return '';
-        }
-        static addColor(value, opacity = '1') {
-            value = value.toUpperCase().trim();
-            const opaque = (parseFloat(opacity) < 1 ? `#${opacity.substring(2) + value.substring(1)}` : value);
-            if (value !== '') {
-                let colorName = '';
-                if (!Resource.STORED.COLORS.has(opaque)) {
-                    const color = findNearestColor(value);
-                    if (color !== '') {
-                        color.name = cameltoLowerCase(color.name);
-                        if (value === color.hex && value === opaque) {
-                            colorName = color.name;
-                        }
-                        else {
-                            colorName = generateId('color', `${color.name}_1`);
-                        }
-                        Resource.STORED.COLORS.set(opaque, colorName);
-                    }
-                }
-                else {
-                    colorName = Resource.STORED.COLORS.get(opaque);
-                }
-                return colorName;
-            }
-            return '';
-        }
         static insertStoredAsset(asset, name, value) {
             const stored = Resource.STORED[asset];
             if (stored != null) {
@@ -2599,6 +2532,10 @@
         }
         reset() {
             Resource.STORED.STRINGS = new Map();
+            Resource.STORED.ARRAYS = new Map();
+            Resource.STORED.FONTS = new Map();
+            Resource.STORED.STYLES = new Map();
+            Resource.STORED.DRAWABLES = new Map();
             Resource.STORED.COLORS = new Map();
             Resource.STORED.DIMENS = new Map();
             Resource.STORED.IMAGES = new Map();
@@ -2647,13 +2584,8 @@
                                 result[i] = result[i](node.css(i), node, i);
                             }
                         }
-                        if (result.backgroundColor.length > 0) {
-                            if ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(element, 'backgroundColor'))) {
-                                result.backgroundColor = [];
-                            }
-                            else {
-                                result.backgroundColor[0] = Resource.addColor(result.backgroundColor[0], result.backgroundColor[2]);
-                            }
+                        if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(element, 'backgroundColor')))) {
+                            result.backgroundColor = [];
                         }
                         const borderTop = JSON.stringify(result.borderTop);
                         if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
@@ -2675,22 +2607,12 @@
                         }
                         else {
                             let color = parseRGBA(node.css('color'), node.css('opacity'));
-                            if (color.length > 0) {
-                                if (SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
-                                    color = [];
-                                }
-                                else {
-                                    color[0] = Resource.addColor(color[0], color[2]);
-                                }
+                            if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
+                                color = [];
                             }
                             let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                            if (backgroundColor.length > 0) {
-                                if ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor'))) {
-                                    backgroundColor = [];
-                                }
-                                else {
-                                    backgroundColor[0] = Resource.addColor(backgroundColor[0], backgroundColor[2]);
-                                }
+                            if (backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')))) {
+                                backgroundColor = [];
                             }
                             let fontWeight = node.css('fontWeight');
                             if (!isNumber(fontWeight)) {
@@ -2713,23 +2635,11 @@
                                 fontStyle: node.css('fontStyle'),
                                 fontSize: node.css('fontSize'),
                                 fontWeight,
-                                color: (color.length > 0 ? `@color/${color[0]}` : ''),
-                                backgroundColor: (backgroundColor.length > 0 ? `@color/${backgroundColor[0]}` : '')
+                                color,
+                                backgroundColor
                             };
                             object.__fontStyle = result;
                         }
-                    }
-                }
-            });
-        }
-        setImageSource() {
-            this.cache.elements.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && node.element.type === 'image')).forEach(node => {
-                const element = node.element;
-                const object = element;
-                if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
-                    if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
-                        const result = (node.tagName === 'IMG' ? Resource.addImageSrcSet(element) : Resource.addImage({ 'mdpi': element.src }));
-                        object.__imageSource = result;
                     }
                 }
             });
@@ -2755,9 +2665,8 @@
                                         numberArray = null;
                                         continue;
                                     }
-                                    const result = Resource.addString(value);
-                                    if (result !== '') {
-                                        stringArray.push(result);
+                                    if (value !== '') {
+                                        stringArray.push(value);
                                     }
                                 }
                             }
@@ -2775,6 +2684,7 @@
                     if (!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources) {
                         let name = '';
                         let value = '';
+                        let inlineTrim = false;
                         if (element.tagName === 'INPUT') {
                             switch (element.type) {
                                 case 'text':
@@ -2797,26 +2707,44 @@
                             value = element.value.trim();
                         }
                         else if (element.nodeName === '#text') {
-                            const textContent = element.textContent;
-                            value = textContent.trim();
-                            const previousSibling = node.previousSibling;
-                            const nextSibling = node.nextSibling;
-                            if (previousSibling != null && previousSibling.inline && /^\s{2,}/.test(textContent)) {
-                                value = '&#160;' + value;
-                            }
-                            if (nextSibling != null && nextSibling.inline && /\s+$/.test(textContent)) {
-                                value = value + '&#160;';
-                            }
+                            value = element.textContent;
+                            inlineTrim = true;
                         }
                         else if (node.hasElement) {
                             if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))) {
                                 name = element.innerText.trim();
-                                value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText).trim();
+                                value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText);
+                                switch (node.css('whiteSpace')) {
+                                    case 'nowrap':
+                                        value = value.replace(/\n/g, ' ');
+                                        break;
+                                    case 'pre':
+                                    case 'pre-wrap':
+                                        value = value.replace(/\s/g, '&#160;');
+                                        break;
+                                    case 'pre-line':
+                                        value = value.replace(/\s+/g, ' ');
+                                    default:
+                                        inlineTrim = true;
+                                        break;
+                                }
+                                value = value.replace(/<br\s*\/?>/g, '\n');
+                            }
+                        }
+                        if (inlineTrim) {
+                            const original = value;
+                            value = value.trim();
+                            const previousSibling = node.previousSibling;
+                            const nextSibling = node.nextSibling;
+                            if (previousSibling && previousSibling.inline && /^\s+/.test(original)) {
+                                value = '&#160;' + value;
+                            }
+                            if (nextSibling && nextSibling.inline && /\s+$/.test(original)) {
+                                value = value + '&#160;';
                             }
                         }
                         if (value !== '') {
-                            const result = Resource.addString(value, name);
-                            object.__valueString = result;
+                            object.__valueString = { value, name };
                         }
                     }
                 }
@@ -2839,16 +2767,13 @@
             const style = node.css(`${attr}Style`) || 'none';
             let width = node.css(`${attr}Width`) || '1px';
             const color = (style !== 'none' ? parseRGBA(node.css(`${attr}Color`), node.css('opacity')) : []);
-            if (color.length > 0) {
-                color[0] = Resource.addColor(color[0], color[2]);
-            }
             if (style === 'inset' && width === '0px') {
                 width = '1px';
             }
-            return { style, width, color: (color.length > 0 ? color[0] : '#000000') };
+            return { style, width, color: (color.length > 0 ? color : ['#000000', '', '1']) };
         }
         parseBackgroundImage(value) {
-            return Resource.addImageURL(value);
+            return value;
         }
         parseBorderRadius(value, node) {
             const radiusTop = node.css('borderTopLeftRadius');
@@ -2897,8 +2822,12 @@
     }
     Resource.STORED = {
         STRINGS: new Map(),
+        ARRAYS: new Map(),
+        FONTS: new Map(),
         COLORS: new Map(),
+        STYLES: new Map(),
         DIMENS: new Map(),
+        DRAWABLES: new Map(),
         IMAGES: new Map()
     };
 
@@ -3272,7 +3201,7 @@
             return (float === 'left' || float === 'right');
         }
         get float() {
-            return this.css('float');
+            return this.css('float') || 'none';
         }
         get overflow() {
             let value = 0 /* NONE */;
@@ -3383,7 +3312,7 @@
             return (position === 'fixed' || (position === 'absolute' && getStyle(this.parentElement).position !== 'relative'));
         }
         get inline() {
-            return (!this.floating && (this.css('display') === 'inline' || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName))));
+            return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.css('display') === 'inline' || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
         }
         get dir() {
             switch (this.css('direction')) {
@@ -3817,13 +3746,12 @@
             }
         }
         setAlignment() {
-            const left = parseRTL('left');
             const right = parseRTL('right');
             function convertHorizontal(value) {
                 switch (value) {
                     case 'left':
                     case 'start':
-                        return left;
+                        return parseRTL('left');
                     case 'right':
                     case 'end':
                         return right;
@@ -3870,16 +3798,20 @@
                         vertical = 'center_vertical';
                     }
             }
+            const constraintRight = (renderParent.app(parseRTL('layout_constraintRight_toRightOf')) === 'parent');
             if (renderParent.tagName === 'TABLE') {
                 this.android('layout_gravity', 'fill');
             }
             else {
-                const gravityParent = (renderParent.android('gravity') || '');
-                let horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
+                let horizontalFloat = '';
                 let verticalFloat = '';
-                if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
-                    horizontalFloat = horizontal;
-                    horizontal = '';
+                if (!constraintRight) {
+                    const gravityParent = (renderParent.android('gravity') || '');
+                    horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
+                    if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
+                        horizontalFloat = horizontal;
+                        horizontal = '';
+                    }
                 }
                 if (vertical !== '' && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
                     verticalFloat = vertical;
@@ -3890,7 +3822,7 @@
                     this.android('layout_gravity', layoutGravity);
                 }
             }
-            if (this.renderChildren.length > 0 && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
+            if (this.renderChildren.length > 0 && !constraintRight && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
                 this.android('gravity', right);
             }
             else {
@@ -4240,6 +4172,1001 @@
         }
     }
 
+    const template = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">',
+        '!1',
+        '	<stroke android:width="{&width}" {borderStyle} />',
+        '!1',
+        '!2',
+        '!3',
+        '	<solid android:color="@color/{&color}" />',
+        '!3',
+        '!4',
+        '	<corners android:radius="{&radius}" />',
+        '!4',
+        '!5',
+        '	<corners android:topLeftRadius="{&topLeftRadius}" android:topRightRadius="{&topRightRadius}" android:bottomRightRadius="{&bottomRightRadius}" android:bottomLeftRadius="{&bottomLeftRadius}" />',
+        '!5',
+        '!2',
+        '</shape>',
+        '!0'
+    ];
+    var SHAPERECTANGLE_TMPL = template.join('\n');
+
+    const template$1 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">',
+        '!1',
+        '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}">',
+        '		<shape android:shape="rectangle">',
+        '!2',
+        '			<stroke android:width="{&width}" {borderStyle} />',
+        '!2',
+        '!3',
+        '			<solid android:color="@color/{&color}" />',
+        '!3',
+        '!4',
+        '			<corners android:radius="{&radius}" />',
+        '!4',
+        '!5',
+        '			<corners android:topLeftRadius="{@topLeftRadius}" android:topRightRadius="{@topRightRadius}" android:bottomRightRadius="{@bottomRightRadius}" android:bottomLeftRadius="{@bottomLeftRadius}" />',
+        '!5',
+        '		</shape>',
+        '	</item>',
+        '!1',
+        '!6',
+        '	<item android:drawable="@drawable/{image}" width="{@width}" height="{@height}" />',
+        '!6',
+        '!7',
+        '	<item>',
+        '		<bitmap android:src="@drawable/{image}" android:gravity="{@gravity}" android:tileMode="{@tileMode}" android:tileModeX="{@tileModeX}" android:tileModeY="{@tileModeY}" />',
+        '	</item>',
+        '!7',
+        '</layer-list>',
+        '!0'
+    ];
+    var LAYERLIST_TMPL = template$1.join('\n');
+
+    const METHOD_ANDROID = {
+        'boxSpacing': {
+            'margin': 'android:layout_margin="{0}"',
+            'marginTop': 'android:layout_marginTop="{0}"',
+            'marginRight': 'android:layout_marginRight="{0}"',
+            'marginBottom': 'android:layout_marginBottom="{0}"',
+            'marginLeft': 'android:layout_marginLeft="{0}"',
+            'padding': 'android:padding="{0}"',
+            'paddingTop': 'android:paddingTop="{0}"',
+            'paddingRight': 'android:paddingRight="{0}"',
+            'paddingBottom': 'android:paddingBottom="{0}"',
+            'paddingLeft': 'android:paddingLeft="{0}"'
+        },
+        'boxStyle': {
+            'background': 'android:background="@drawable/{0}"',
+            'backgroundColor': 'android:background="@color/{0}"'
+        },
+        'fontStyle': {
+            'fontFamily': 'android:fontFamily="{0}"',
+            'fontStyle': 'android:textStyle="{0}"',
+            'fontWeight': 'android:fontWeight="{0}"',
+            'fontSize': 'android:textSize="{0}"',
+            'color': 'android:textColor="{0}"',
+            'backgroundColor': 'android:background="{0}"'
+        },
+        'valueString': {
+            'text': 'android:text="{0}"'
+        },
+        'optionArray': {
+            'entries': 'android:entries="@array/{0}"'
+        },
+        'imageSource': {
+            'src': 'android:src="@drawable/{0}"'
+        }
+    };
+    class ResourceView extends Resource {
+        constructor(file) {
+            super(file);
+            this.tagStyle = {};
+            this.tagCount = {};
+            this.file.stored = Resource.STORED;
+        }
+        static addString(value, name = '') {
+            if (value != null && value !== '') {
+                if (name === '') {
+                    name = value;
+                }
+                const numeric = isNumber(value);
+                if (SETTINGS.numberResourceValue || !numeric) {
+                    for (const [resourceName, resourceValue] of Resource.STORED.STRINGS.entries()) {
+                        if (resourceValue === value) {
+                            return resourceName;
+                        }
+                    }
+                    name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
+                    if (numeric || /^[0-9]/.test(value) || RESERVED_JAVA.includes(name)) {
+                        name = `__${name}`;
+                    }
+                    else if (name === '') {
+                        name = `__symbol${Math.ceil(Math.random() * 100000)}`;
+                    }
+                    if (Resource.STORED.STRINGS.has(name)) {
+                        name = generateId('strings', `${name}_1`);
+                    }
+                    Resource.STORED.STRINGS.set(name, value);
+                }
+                return name;
+            }
+            return '';
+        }
+        static addImageSrcSet(element, prefix = '') {
+            const srcset = element.srcset.trim();
+            const images = {};
+            if (hasValue(srcset)) {
+                const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+                srcset.split(',').forEach(value => {
+                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                    if (match != null) {
+                        if (match[2] == null) {
+                            match[2] = '1x';
+                        }
+                        const image = filePath + lastIndexOf(match[1]);
+                        switch (match[2]) {
+                            case '0.75x':
+                                images['ldpi'] = image;
+                                break;
+                            case '1x':
+                                images['mdpi'] = image;
+                                break;
+                            case '1.5x':
+                                images['hdpi'] = image;
+                                break;
+                            case '2x':
+                                images['xhdpi'] = image;
+                                break;
+                            case '3x':
+                                images['xxhdpi'] = image;
+                                break;
+                            case '4x':
+                                images['xxxhdpi'] = image;
+                                break;
+                        }
+                    }
+                });
+            }
+            if (images['mdpi'] == null) {
+                images['mdpi'] = element.src;
+            }
+            return ResourceView.addImage(images, prefix);
+        }
+        static addImage(images, prefix = '') {
+            let src = '';
+            if (images && hasValue(images['mdpi'])) {
+                src = lastIndexOf(images['mdpi']);
+                const format = lastIndexOf(src, '.').toLowerCase();
+                src = src.replace(/.\w+$/, '').replace(/-/g, '_');
+                switch (format) {
+                    case 'bmp':
+                    case 'cur':
+                    case 'gif':
+                    case 'ico':
+                    case 'jpg':
+                    case 'png':
+                        src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
+                        break;
+                    default:
+                        src = '';
+                }
+            }
+            return src;
+        }
+        static addImageURL(value, prefix = '') {
+            const match = value.match(/^url\("?(.*?)"?\)$/);
+            if (match != null) {
+                return ResourceView.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
+            }
+            return '';
+        }
+        static addColor(value, opacity = '1') {
+            value = value.toUpperCase().trim();
+            const opaque = (parseFloat(opacity) < 1 ? `#${opacity.substring(2) + value.substring(1)}` : value);
+            if (value !== '') {
+                let colorName = '';
+                if (!Resource.STORED.COLORS.has(opaque)) {
+                    const color = findNearestColor(value);
+                    if (color !== '') {
+                        color.name = cameltoLowerCase(color.name);
+                        if (value === color.hex && value === opaque) {
+                            colorName = color.name;
+                        }
+                        else {
+                            colorName = generateId('color', `${color.name}_1`);
+                        }
+                        Resource.STORED.COLORS.set(opaque, colorName);
+                    }
+                }
+                else {
+                    colorName = Resource.STORED.COLORS.get(opaque);
+                }
+                return colorName;
+            }
+            return '';
+        }
+        reset() {
+            super.reset();
+            this.file.reset();
+            this.tagStyle = {};
+            this.tagCount = {};
+        }
+        finalize(viewData) {
+            this.processFontStyle(viewData);
+        }
+        filterStyles(viewData) {
+            const styles = {};
+            viewData.cache.forEach(node => {
+                const children = node.renderChildren.filter(child => child.visible && !child.isolated && !child.relocated);
+                if (children.length > 1) {
+                    const map = {};
+                    let style = '';
+                    let valid = true;
+                    children.forEach((child, index) => {
+                        let found = false;
+                        child.combine('_', 'android').forEach(value => {
+                            if (value.startsWith('style=')) {
+                                if (index === 0) {
+                                    style = value;
+                                }
+                                else {
+                                    if (value !== style) {
+                                        valid = false;
+                                    }
+                                }
+                                found = true;
+                            }
+                            if (map[value] == null) {
+                                map[value] = 0;
+                            }
+                            map[value]++;
+                        });
+                        if (style !== '' && !found) {
+                            valid = false;
+                        }
+                    });
+                    if (valid) {
+                        for (const attr in map) {
+                            if (map[attr] !== children.length) {
+                                delete map[attr];
+                            }
+                        }
+                        if (Object.keys(map).length > 1) {
+                            if (style !== '') {
+                                style = trim(style.substring(style.indexOf('/') + 1), '"');
+                            }
+                            const common = [];
+                            for (const attr in map) {
+                                const match = attr.match(/(\w+):(\w+)="(.*?)"/);
+                                if (match != null) {
+                                    children.forEach(child => child.delete(match[1], match[2]));
+                                    common.push(match[0]);
+                                }
+                            }
+                            common.sort();
+                            let name = '';
+                            for (const index in styles) {
+                                if (styles[index].join(';') === common.join(';')) {
+                                    name = index;
+                                    break;
+                                }
+                            }
+                            if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
+                                name = (style !== '' ? `${style}.` : '') + node.nodeId;
+                                styles[name] = common;
+                            }
+                            children.forEach(child => child.add('_', 'style', `@style/${name}`));
+                        }
+                    }
+                }
+            });
+            if (Object.keys(styles).length > 0) {
+                for (const name in styles) {
+                    Resource.STORED.STYLES.set(name, { attributes: styles[name].join(';') });
+                }
+            }
+        }
+        setBoxSpacing() {
+            super.setBoxSpacing();
+            this.cache.elements.forEach(node => {
+                if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
+                    const stored = node.element.__boxSpacing;
+                    if (stored != null) {
+                        const method = METHOD_ANDROID['boxSpacing'];
+                        for (const attr in stored) {
+                            if (stored[attr] !== '0px') {
+                                node.attr(formatString(parseRTL(method[attr]), stored[attr]), (node.renderExtension == null));
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        setBoxStyle() {
+            super.setBoxStyle();
+            this.cache.elements.forEach(node => {
+                if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
+                    const element = node.element;
+                    const object = element;
+                    const stored = object.__boxStyle;
+                    if (stored != null) {
+                        if (stored.backgroundColor && stored.backgroundColor.length > 0) {
+                            stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
+                        }
+                        stored.backgroundImage = ResourceView.addImageURL(stored.backgroundImage);
+                        [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item) => {
+                            if (item.color && item.color.length > 0) {
+                                item.color = ResourceView.addColor(item.color[0], item.color[2]);
+                            }
+                        });
+                        const method = METHOD_ANDROID['boxStyle'];
+                        const companion = node.companion;
+                        if (companion && !sameAsParent(companion.element, 'backgroundColor')) {
+                            const boxStyle = companion.element.__boxStyle;
+                            if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
+                                stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
+                            }
+                        }
+                        if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
+                            let template = null;
+                            let data;
+                            let resourceName = '';
+                            let gravity = '';
+                            let tileMode = '';
+                            let tileModeX = '';
+                            let tileModeY = '';
+                            switch (stored.backgroundPosition) {
+                                case 'left center':
+                                case '0% 50%':
+                                    gravity = 'left|center_vertical';
+                                    break;
+                                case 'left bottom':
+                                case '0% 100%':
+                                    gravity = 'left|bottom';
+                                    break;
+                                case 'right top':
+                                case '100% 0%':
+                                    gravity = 'right|top';
+                                    break;
+                                case 'right center':
+                                case '100% 50%':
+                                    gravity = 'right|center_vertical';
+                                    break;
+                                case 'right bottom':
+                                case '100% 100%':
+                                    gravity = 'right|bottom';
+                                    break;
+                                case 'center top':
+                                case '50% 0%':
+                                    gravity = 'center_horizontal|top';
+                                    break;
+                                case 'center bottom':
+                                case '50% 100%':
+                                    gravity = 'center_horizontal|bottom';
+                                    break;
+                                case 'center center':
+                                case '50% 50%':
+                                    gravity = 'center';
+                                    break;
+                            }
+                            switch (stored.backgroundRepeat) {
+                                case 'repeat-x':
+                                    tileModeX = 'repeat';
+                                    break;
+                                case 'repeat-y':
+                                    tileModeY = 'repeat';
+                                    break;
+                                case 'no-repeat':
+                                    tileMode = 'disabled';
+                                    break;
+                                default:
+                                    tileMode = 'repeat';
+                            }
+                            const image6 = [];
+                            const image7 = [];
+                            if (stored.backgroundImage !== '') {
+                                if (stored.backgroundSize.length > 0) {
+                                    image6[0] = { image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] };
+                                }
+                                else {
+                                    image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
+                                }
+                            }
+                            if (stored.border != null) {
+                                if (stored.backgroundImage === '') {
+                                    template = parseTemplate(SHAPERECTANGLE_TMPL);
+                                    data = {
+                                        '0': [{
+                                                '1': this.getShapeAttribute(stored, 'stroke'),
+                                                '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
+                                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                                        '4': this.getShapeAttribute(stored, 'radius'),
+                                                        '5': this.getShapeAttribute(stored, 'radiusInit')
+                                                    }] : false)
+                                            }]
+                                    };
+                                    if (stored.borderRadius.length > 1) {
+                                        const shape = getTemplateLevel(data, '0', '2');
+                                        const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                                        shape['5'].push(borderRadius);
+                                    }
+                                }
+                                else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.size === '0px')) {
+                                    resourceName = stored.backgroundImage;
+                                }
+                                else {
+                                    template = parseTemplate(LAYERLIST_TMPL);
+                                    data = {
+                                        '0': [{
+                                                '1': [{
+                                                        '2': this.getShapeAttribute(stored, 'stroke'),
+                                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                                        '4': this.getShapeAttribute(stored, 'radius'),
+                                                        '5': this.getShapeAttribute(stored, 'radiusInit')
+                                                    }],
+                                                '6': (image6.length > 0 ? image6 : false),
+                                                '7': (image7.length > 0 ? image7 : false)
+                                            }]
+                                    };
+                                    if (stored.borderRadius.length > 1) {
+                                        const shape = getTemplateLevel(data, '0', '1');
+                                        const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                                        shape['5'].push(borderRadius);
+                                    }
+                                }
+                            }
+                            else {
+                                template = parseTemplate(LAYERLIST_TMPL);
+                                data = {
+                                    '0': [{
+                                            '1': [],
+                                            '6': (image6.length > 0 ? image6 : false),
+                                            '7': (image7.length > 0 ? image7 : false)
+                                        }]
+                                };
+                                const root = getTemplateLevel(data, '0');
+                                const borders = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
+                                let valid = true;
+                                let width = '';
+                                let borderStyle = '';
+                                let radius = '';
+                                borders.some((item, index) => {
+                                    if (this.borderVisible(item)) {
+                                        if (width !== '' && width !== item.width && borderStyle !== '' && borderStyle !== this.getBorderStyle(item) && radius !== '' && radius !== stored.borderRadius[index]) {
+                                            valid = false;
+                                            return true;
+                                        }
+                                        [width, borderStyle, radius] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
+                                    }
+                                    return false;
+                                });
+                                const borderRadius = {};
+                                if (stored.borderRadius.length > 1) {
+                                    Object.assign(borderRadius, {
+                                        topLeftRadius: stored.borderRadius[0],
+                                        topRightRadius: stored.borderRadius[1],
+                                        bottomRightRadius: stored.borderRadius[2],
+                                        bottomLeftRadius: stored.borderRadius[3]
+                                    });
+                                }
+                                if (valid) {
+                                    const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
+                                    const layerList = {
+                                        'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
+                                        'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
+                                        'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
+                                        'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
+                                        '2': [{ width, borderStyle }],
+                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                        '4': this.getShapeAttribute(stored, 'radius'),
+                                        '5': this.getShapeAttribute(stored, 'radiusInit')
+                                    };
+                                    if (stored.borderRadius.length > 1) {
+                                        layerList['5'].push(borderRadius);
+                                    }
+                                    root['1'].push(layerList);
+                                }
+                                else {
+                                    borders.forEach((item, index) => {
+                                        if (this.borderVisible(item)) {
+                                            const hideWidth = `-${item.width}`;
+                                            const layerList = {
+                                                'top': hideWidth,
+                                                'right': hideWidth,
+                                                'bottom': hideWidth,
+                                                'left': hideWidth,
+                                                '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
+                                                '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                                '4': this.getShapeAttribute(stored, 'radius'),
+                                                '5': this.getShapeAttribute(stored, 'radiusInit')
+                                            };
+                                            layerList[['top', 'right', 'bottom', 'left'][index]] = item.width;
+                                            if (stored.borderRadius.length > 1) {
+                                                layerList['5'].push(borderRadius);
+                                            }
+                                            root['1'].push(layerList);
+                                        }
+                                    });
+                                }
+                                if (root['1'].length === 0) {
+                                    root['1'] = false;
+                                }
+                            }
+                            if (template != null) {
+                                const xml = insertTemplateData(template, data);
+                                for (const [name, value] of Resource.STORED.DRAWABLES.entries()) {
+                                    if (value === xml) {
+                                        resourceName = name;
+                                        break;
+                                    }
+                                }
+                                if (resourceName === '') {
+                                    resourceName = `${node.tagName.toLowerCase()}_${node.nodeId}`;
+                                    Resource.STORED.DRAWABLES.set(resourceName, xml);
+                                }
+                            }
+                            node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
+                        }
+                        else if (object.__fontStyle == null && stored.backgroundColor.length > 0) {
+                            node.attr(formatString(method['backgroundColor'], stored.backgroundColor), (node.renderExtension == null));
+                        }
+                    }
+                }
+            });
+        }
+        setFontStyle() {
+            super.setFontStyle();
+            const tagName = {};
+            this.cache.visible.forEach(node => {
+                if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
+                    if (node.element.__fontStyle != null) {
+                        if (tagName[node.tagName] == null) {
+                            tagName[node.tagName] = [];
+                        }
+                        tagName[node.tagName].push(node);
+                    }
+                }
+            });
+            for (const tag in tagName) {
+                const nodes = tagName[tag];
+                const sorted = [];
+                nodes.forEach(node => {
+                    let system = false;
+                    let labelFor = null;
+                    if (node.companion != null) {
+                        labelFor = node;
+                        node = node.companion;
+                    }
+                    const element = node.element;
+                    const nodeId = (labelFor || node).id;
+                    const stored = Object.assign({}, element.__fontStyle);
+                    if (stored.backgroundColor && stored.backgroundColor.length > 0) {
+                        stored.backgroundColor = `@color/${ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
+                    }
+                    if (stored.fontFamily != null) {
+                        let fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                        let fontStyle = '';
+                        let fontWeight = '';
+                        if (stored.color && stored.color.length > 0) {
+                            stored.color = `@color/${ResourceView.addColor(stored.color[0], stored.color[2])}`;
+                        }
+                        if (SETTINGS.useFontAlias && FONTREPLACE_ANDROID[fontFamily] != null) {
+                            fontFamily = FONTREPLACE_ANDROID[fontFamily];
+                        }
+                        if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                            system = true;
+                            stored.fontFamily = fontFamily;
+                            if (stored.fontStyle === 'normal') {
+                                delete stored.fontStyle;
+                            }
+                            if (stored.fontWeight === '400') {
+                                delete stored.fontWeight;
+                            }
+                        }
+                        else {
+                            fontFamily = convertWord(fontFamily);
+                            stored.fontFamily = `@font/${fontFamily + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
+                            fontStyle = stored.fontStyle;
+                            fontWeight = stored.fontWeight;
+                            delete stored.fontStyle;
+                            delete stored.fontWeight;
+                        }
+                        if (!system) {
+                            const fonts = Resource.STORED.FONTS.get(fontFamily) || {};
+                            Object.assign(fonts, { [`${fontStyle}-${fontWeight}`]: true });
+                            Resource.STORED.FONTS.set(fontFamily, fonts);
+                        }
+                    }
+                    const method = METHOD_ANDROID['fontStyle'];
+                    const keys = Object.keys(method);
+                    for (let i = 0; i < keys.length; i++) {
+                        if (sorted[i] == null) {
+                            sorted[i] = {};
+                        }
+                        const value = stored[keys[i]];
+                        if (hasValue(value)) {
+                            if (node.supported('android', keys[i])) {
+                                const attr = formatString(method[keys[i]], value);
+                                if (sorted[i][attr] == null) {
+                                    sorted[i][attr] = [];
+                                }
+                                sorted[i][attr].push(nodeId);
+                            }
+                        }
+                    }
+                });
+                const tagStyle = this.tagStyle[tag];
+                if (tagStyle != null) {
+                    for (let i = 0; i < tagStyle.length; i++) {
+                        for (const attr in tagStyle[i]) {
+                            if (sorted[i][attr] != null) {
+                                sorted[i][attr].push(...tagStyle[i][attr]);
+                            }
+                            else {
+                                sorted[i][attr] = tagStyle[i][attr];
+                            }
+                        }
+                    }
+                    this.tagCount[tag] += nodes.filter(item => item.visible).length;
+                }
+                else {
+                    this.tagCount[tag] = nodes.filter(item => item.visible).length;
+                }
+                this.tagStyle[tag] = sorted;
+            }
+        }
+        setImageSource() {
+            this.cache.visible.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && node.element.type === 'image')).forEach(node => {
+                const element = node.element;
+                const object = element;
+                if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
+                    if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
+                        const result = (node.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
+                        const method = METHOD_ANDROID['imageSource'];
+                        node.attr(formatString(method['src'], result), (node.renderExtension == null));
+                        object.__imageSource = result;
+                    }
+                }
+            });
+        }
+        setOptionArray() {
+            super.setOptionArray();
+            this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
+                if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
+                    const stored = node.element.__optionArray;
+                    const method = METHOD_ANDROID['optionArray'];
+                    let result = [];
+                    if (stored.stringArray != null) {
+                        result = stored.stringArray.map(value => {
+                            value = ResourceView.addString(value);
+                            return (value !== '' ? `@string/${value}` : '');
+                        }).filter(value => value);
+                    }
+                    if (stored.numberArray != null) {
+                        result = stored.numberArray;
+                    }
+                    let arrayName = '';
+                    const arrayValue = result.join('-');
+                    for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
+                        if (arrayValue === storedResult.join('-')) {
+                            arrayName = storedName;
+                            break;
+                        }
+                    }
+                    if (arrayName === '') {
+                        arrayName = `${node.nodeId}_array`;
+                        Resource.STORED.ARRAYS.set(arrayName, result);
+                    }
+                    node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
+                }
+            });
+        }
+        setValueString(supportInline) {
+            super.setValueString(supportInline);
+            this.cache.visible.forEach(node => {
+                if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
+                    const stored = node.element.__valueString;
+                    if (stored != null) {
+                        const result = ResourceView.addString(stored.value, stored.name);
+                        const method = METHOD_ANDROID['valueString'];
+                        let value = Resource.STORED.STRINGS.get(result);
+                        if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
+                            const match = node.style.textDecoration.match(/(underline|line-through)/);
+                            if (match != null) {
+                                switch (match[0]) {
+                                    case 'underline':
+                                        value = `<u>${value}</u>`;
+                                        break;
+                                    case 'line-through':
+                                        value = `<strike>${value}</strike>`;
+                                        break;
+                                }
+                                Resource.STORED.STRINGS.set(result, value);
+                            }
+                        }
+                        node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
+                    }
+                }
+            });
+        }
+        addTheme(template, data, options) {
+            const map = parseTemplate(template);
+            if (options.item != null) {
+                const root = getTemplateLevel(data, '0');
+                for (const name in options.item) {
+                    let value = options.item[name];
+                    const hex = parseHex(value);
+                    if (hex !== '') {
+                        value = `@color/${ResourceView.addColor(hex)}`;
+                    }
+                    root['1'].push({ name, value });
+                }
+            }
+            const xml = insertTemplateData(map, data);
+            this.addFile(options.output.path, options.output.file, xml);
+        }
+        processFontStyle(viewData) {
+            const style = {};
+            const layout = {};
+            for (const tag in this.tagStyle) {
+                style[tag] = {};
+                layout[tag] = {};
+                let sorted = this.tagStyle[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
+                    let maxA = 0;
+                    let maxB = 0;
+                    let countA = 0;
+                    let countB = 0;
+                    for (const attr in a) {
+                        maxA = Math.max(a[attr].length, maxA);
+                        countA += a[attr].length;
+                    }
+                    for (const attr in b) {
+                        if (b[attr] != null) {
+                            maxB = Math.max(b[attr].length, maxB);
+                            countB += b[attr].length;
+                        }
+                    }
+                    if (maxA !== maxB) {
+                        return (maxA > maxB ? -1 : 1);
+                    }
+                    else {
+                        return (countA >= countB ? -1 : 1);
+                    }
+                });
+                const count = this.tagCount[tag];
+                do {
+                    if (sorted.length === 1) {
+                        for (const attr in sorted[0]) {
+                            const value = sorted[0][attr];
+                            if (value.length > 2) {
+                                style[tag][attr] = value;
+                            }
+                            else {
+                                layout[tag][attr] = value;
+                            }
+                        }
+                        sorted.length = 0;
+                    }
+                    else {
+                        const styleKey = {};
+                        const layoutKey = {};
+                        for (let i = 0; i < sorted.length; i++) {
+                            const filtered = {};
+                            const combined = {};
+                            const deleteKeys = new Set();
+                            for (const attr1 in sorted[i]) {
+                                if (sorted[i] == null) {
+                                    continue;
+                                }
+                                const ids = sorted[i][attr1];
+                                let revalidate = false;
+                                if (ids == null || ids.length === 0) {
+                                    continue;
+                                }
+                                else if (ids.length === count) {
+                                    styleKey[attr1] = ids;
+                                    sorted[i] = null;
+                                    revalidate = true;
+                                }
+                                else if (ids.length === 1) {
+                                    layoutKey[attr1] = ids;
+                                    sorted[i][attr1] = null;
+                                    revalidate = true;
+                                }
+                                if (!revalidate) {
+                                    const found = {};
+                                    let merged = false;
+                                    for (let j = 0; j < sorted.length; j++) {
+                                        if (i !== j) {
+                                            for (const attr in sorted[j]) {
+                                                const compare$$1 = sorted[j][attr];
+                                                for (const nodeId of ids) {
+                                                    if (compare$$1.includes(nodeId)) {
+                                                        if (found[attr] == null) {
+                                                            found[attr] = [];
+                                                        }
+                                                        found[attr].push(nodeId);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    for (const attr2 in found) {
+                                        if (found[attr2].length > 1) {
+                                            filtered[[attr1, attr2].sort().join(';')] = found[attr2];
+                                            merged = true;
+                                        }
+                                    }
+                                    if (!merged) {
+                                        filtered[attr1] = ids;
+                                    }
+                                }
+                            }
+                            for (const attr1 in filtered) {
+                                for (const attr2 in filtered) {
+                                    if (attr1 !== attr2 && filtered[attr1].join('') === filtered[attr2].join('')) {
+                                        const index = filtered[attr1].join(',');
+                                        if (combined[index] != null) {
+                                            combined[index] = new Set([...combined[index], ...attr2.split(';')]);
+                                        }
+                                        else {
+                                            combined[index] = new Set([...attr1.split(';'), ...attr2.split(';')]);
+                                        }
+                                        deleteKeys.add(attr1).add(attr2);
+                                    }
+                                }
+                            }
+                            deleteKeys.forEach(value => delete filtered[value]);
+                            for (const attrs in filtered) {
+                                this.deleteStyleAttribute(sorted, attrs, filtered[attrs]);
+                                style[tag][attrs] = filtered[attrs];
+                            }
+                            for (const index in combined) {
+                                const attrs = Array.from(combined[index]).sort().join(';');
+                                const ids = index.split(',').map((value) => parseInt(value));
+                                this.deleteStyleAttribute(sorted, attrs, ids);
+                                style[tag][attrs] = ids;
+                            }
+                        }
+                        const shared = Object.keys(styleKey);
+                        if (shared.length > 0) {
+                            if (shared.length > 1 || styleKey[shared[0]].length > 1) {
+                                style[tag][shared.join(';')] = styleKey[shared[0]];
+                            }
+                            else {
+                                Object.assign(layoutKey, styleKey);
+                            }
+                        }
+                        for (const attr in layoutKey) {
+                            layout[tag][attr] = layoutKey[attr];
+                        }
+                        for (let i = 0; i < sorted.length; i++) {
+                            if (sorted[i] && Object.keys(sorted[i]).length === 0) {
+                                delete sorted[i];
+                            }
+                        }
+                        sorted = sorted.filter((item) => item && item.length > 0);
+                    }
+                } while (sorted.length > 0);
+            }
+            const resource = {};
+            for (const tagName in style) {
+                const tag = style[tagName];
+                const tagData = [];
+                for (const attributes in tag) {
+                    tagData.push({ attributes, ids: tag[attributes] });
+                }
+                tagData.sort((a, b) => {
+                    let [c, d] = [a.ids.length, b.ids.length];
+                    if (c === d) {
+                        [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
+                    }
+                    return (c >= d ? -1 : 1);
+                });
+                tagData.forEach((item, index) => item.name = capitalize(tagName) + (index > 0 ? `_${index}` : ''));
+                resource[tagName] = tagData;
+            }
+            const inherit = new Set();
+            const map = {};
+            for (const tagName in resource) {
+                for (const item of resource[tagName]) {
+                    for (const id of item.ids) {
+                        if (map[id] == null) {
+                            map[id] = { styles: [], attributes: [] };
+                        }
+                        map[id].styles.push(item.name);
+                    }
+                }
+                const tagData = layout[tagName];
+                if (tagData != null) {
+                    for (const attr in tagData) {
+                        for (const id of tagData[attr]) {
+                            if (map[id] == null) {
+                                map[id] = { styles: [], attributes: [] };
+                            }
+                            map[id].attributes.push(attr);
+                        }
+                    }
+                }
+            }
+            for (const id in map) {
+                const node = viewData.cache.find(item => item.id === parseInt(id));
+                if (node != null) {
+                    const styles = map[id].styles;
+                    const attrs = map[id].attributes;
+                    if (styles.length > 0) {
+                        inherit.add(styles.join('.'));
+                        node.add('_', 'style', `@style/${styles.pop()}`);
+                    }
+                    if (attrs.length > 0) {
+                        attrs.sort().forEach((value) => node.attr(replaceDP(value, true)));
+                    }
+                }
+            }
+            for (const styles of inherit) {
+                let parent = '';
+                styles.split('.').forEach(value => {
+                    const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
+                    if (match != null) {
+                        const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];
+                        Resource.STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
+                        parent = value;
+                    }
+                });
+            }
+        }
+        deleteStyleAttribute(sorted, attrs, ids) {
+            attrs.split(';').forEach(value => {
+                for (let i = 0; i < sorted.length; i++) {
+                    if (sorted[i] != null) {
+                        let index = -1;
+                        let key = '';
+                        for (const j in sorted[i]) {
+                            if (j === value) {
+                                index = i;
+                                key = j;
+                                i = sorted.length;
+                                break;
+                            }
+                        }
+                        if (index !== -1) {
+                            sorted[index][key] = sorted[index][key].filter((id) => !ids.includes(id));
+                            if (sorted[index][key].length === 0) {
+                                delete sorted[index][key];
+                            }
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+        getShapeAttribute(stored, name) {
+            switch (name) {
+                case 'stroke':
+                    return (stored.border && stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);
+                case 'backgroundColor':
+                    return (stored.backgroundColor.length > 0 ? [{ color: stored.backgroundColor }] : false);
+                case 'radius':
+                    return (stored.borderRadius.length === 1 && stored.borderRadius[0] !== '0px' ? [{ radius: stored.borderRadius[0] }] : false);
+                case 'radiusInit':
+                    return (stored.borderRadius.length > 1 ? [] : false);
+                case 'radiusAll':
+                    const result = {};
+                    stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                    return result;
+            }
+            return false;
+        }
+    }
+
     function createPlaceholder(nextId, node, children = []) {
         const placeHolder = new View(nextId, node.api, node.element);
         placeHolder.parent = node.parent;
@@ -4262,7 +5189,7 @@
                                     case 'text':
                                         if (!value.startsWith('@string/')) {
                                             if (SETTINGS.numberResourceValue || !isNumber(value)) {
-                                                value = Resource.addString(value);
+                                                value = ResourceView.addString(value);
                                                 if (value !== '') {
                                                     object[attr] = `@string/${value}`;
                                                     continue;
@@ -4272,7 +5199,7 @@
                                         break;
                                     case 'src':
                                         if (/^\w+:\/\//.test(value)) {
-                                            value = Resource.addImage({ 'mdpi': value });
+                                            value = ResourceView.addImage({ 'mdpi': value });
                                             if (value !== '') {
                                                 object[attr] = `@drawable/${value}`;
                                                 continue;
@@ -4284,7 +5211,7 @@
                         }
                         const hex = parseHex(value);
                         if (hex !== '') {
-                            object[attr] = `@color/${Resource.addColor(hex)}`;
+                            object[attr] = `@color/${ResourceView.addColor(hex)}`;
                         }
                     }
                 }
@@ -5777,872 +6704,6 @@
         }
     }
 
-    const template = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">',
-        '!1',
-        '	<stroke android:width="{&width}" {borderStyle} />',
-        '!1',
-        '!2',
-        '!3',
-        '	<solid android:color="@color/{&color}" />',
-        '!3',
-        '!4',
-        '	<corners android:radius="{&radius}" />',
-        '!4',
-        '!5',
-        '	<corners android:topLeftRadius="{&topLeftRadius}" android:topRightRadius="{&topRightRadius}" android:bottomRightRadius="{&bottomRightRadius}" android:bottomLeftRadius="{&bottomLeftRadius}" />',
-        '!5',
-        '!2',
-        '</shape>',
-        '!0'
-    ];
-    var SHAPERECTANGLE_TMPL = template.join('\n');
-
-    const template$1 = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<layer-list xmlns:android="http://schemas.android.com/apk/res/android">',
-        '!1',
-        '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}">',
-        '		<shape android:shape="rectangle">',
-        '!2',
-        '			<stroke android:width="{&width}" {borderStyle} />',
-        '!2',
-        '!3',
-        '			<solid android:color="@color/{&color}" />',
-        '!3',
-        '!4',
-        '			<corners android:radius="{&radius}" />',
-        '!4',
-        '!5',
-        '			<corners android:topLeftRadius="{@topLeftRadius}" android:topRightRadius="{@topRightRadius}" android:bottomRightRadius="{@bottomRightRadius}" android:bottomLeftRadius="{@bottomLeftRadius}" />',
-        '!5',
-        '		</shape>',
-        '	</item>',
-        '!1',
-        '!6',
-        '	<item android:drawable="@drawable/{image}" width="{@width}" height="{@height}" />',
-        '!6',
-        '!7',
-        '	<item>',
-        '		<bitmap android:src="@drawable/{image}" android:gravity="{@gravity}" android:tileMode="{@tileMode}" android:tileModeX="{@tileModeX}" android:tileModeY="{@tileModeY}" />',
-        '	</item>',
-        '!7',
-        '</layer-list>',
-        '!0'
-    ];
-    var LAYERLIST_TMPL = template$1.join('\n');
-
-    const STORED = {
-        STRINGS: new Map(),
-        ARRAYS: new Map(),
-        FONTS: new Map(),
-        COLORS: new Map(),
-        STYLES: new Map(),
-        DIMENS: new Map(),
-        DRAWABLES: new Map(),
-        IMAGES: new Map()
-    };
-    Object.assign(STORED, Resource.STORED);
-    const METHOD_ANDROID = {
-        'boxSpacing': {
-            'margin': 'android:layout_margin="{0}"',
-            'marginTop': 'android:layout_marginTop="{0}"',
-            'marginRight': 'android:layout_marginRight="{0}"',
-            'marginBottom': 'android:layout_marginBottom="{0}"',
-            'marginLeft': 'android:layout_marginLeft="{0}"',
-            'padding': 'android:padding="{0}"',
-            'paddingTop': 'android:paddingTop="{0}"',
-            'paddingRight': 'android:paddingRight="{0}"',
-            'paddingBottom': 'android:paddingBottom="{0}"',
-            'paddingLeft': 'android:paddingLeft="{0}"'
-        },
-        'boxStyle': {
-            'background': 'android:background="@drawable/{0}"',
-            'backgroundColor': 'android:background="@color/{0}"'
-        },
-        'fontStyle': {
-            'fontFamily': 'android:fontFamily="{0}"',
-            'fontStyle': 'android:textStyle="{0}"',
-            'fontWeight': 'android:fontWeight="{0}"',
-            'fontSize': 'android:textSize="{0}"',
-            'color': 'android:textColor="{0}"',
-            'backgroundColor': 'android:background="{0}"'
-        },
-        'valueString': {
-            'text': 'android:text="{0}"'
-        },
-        'optionArray': {
-            'entries': 'android:entries="@array/{0}"'
-        },
-        'imageSource': {
-            'src': 'android:src="@drawable/{0}"'
-        }
-    };
-    class ResourceView extends Resource {
-        constructor(file) {
-            super(file);
-            this.tagStyle = {};
-            this.tagCount = {};
-            this.file.stored = STORED;
-        }
-        reset() {
-            super.reset();
-            STORED.ARRAYS = new Map();
-            STORED.FONTS = new Map();
-            STORED.STYLES = new Map();
-            STORED.DRAWABLES = new Map();
-            Object.assign(STORED, Resource.STORED);
-            this.file.reset();
-            this.tagStyle = {};
-            this.tagCount = {};
-        }
-        finalize(viewData) {
-            this.processFontStyle(viewData);
-        }
-        filterStyles(viewData) {
-            const styles = {};
-            viewData.cache.forEach(node => {
-                const children = node.renderChildren.filter(child => child.visible && !child.isolated && !child.relocated);
-                if (children.length > 1) {
-                    const map = {};
-                    let style = '';
-                    let valid = true;
-                    children.forEach((child, index) => {
-                        let found = false;
-                        child.combine('_', 'android').forEach(value => {
-                            if (value.startsWith('style=')) {
-                                if (index === 0) {
-                                    style = value;
-                                }
-                                else {
-                                    if (value !== style) {
-                                        valid = false;
-                                    }
-                                }
-                                found = true;
-                            }
-                            if (map[value] == null) {
-                                map[value] = 0;
-                            }
-                            map[value]++;
-                        });
-                        if (style !== '' && !found) {
-                            valid = false;
-                        }
-                    });
-                    if (valid) {
-                        for (const attr in map) {
-                            if (map[attr] !== children.length) {
-                                delete map[attr];
-                            }
-                        }
-                        if (Object.keys(map).length > 1) {
-                            if (style !== '') {
-                                style = trim(style.substring(style.indexOf('/') + 1), '"');
-                            }
-                            const common = [];
-                            for (const attr in map) {
-                                const match = attr.match(/(\w+):(\w+)="(.*?)"/);
-                                if (match != null) {
-                                    children.forEach(child => child.delete(match[1], match[2]));
-                                    common.push(match[0]);
-                                }
-                            }
-                            common.sort();
-                            let name = '';
-                            for (const index in styles) {
-                                if (styles[index].join(';') === common.join(';')) {
-                                    name = index;
-                                    break;
-                                }
-                            }
-                            if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
-                                name = (style !== '' ? `${style}.` : '') + node.nodeId;
-                                styles[name] = common;
-                            }
-                            children.forEach(child => child.add('_', 'style', `@style/${name}`));
-                        }
-                    }
-                }
-            });
-            if (Object.keys(styles).length > 0) {
-                for (const name in styles) {
-                    STORED.STYLES.set(name, { attributes: styles[name].join(';') });
-                }
-            }
-        }
-        setBoxSpacing() {
-            super.setBoxSpacing();
-            this.cache.elements.forEach(node => {
-                if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
-                    const stored = node.element.__boxSpacing;
-                    if (stored != null) {
-                        const method = METHOD_ANDROID['boxSpacing'];
-                        for (const attr in stored) {
-                            if (stored[attr] !== '0px') {
-                                node.attr(formatString(parseRTL(method[attr]), stored[attr]), (node.renderExtension == null));
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        setBoxStyle() {
-            super.setBoxStyle();
-            this.cache.elements.forEach(node => {
-                if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
-                    const element = node.element;
-                    const object = element;
-                    const stored = object.__boxStyle;
-                    if (stored != null) {
-                        const method = METHOD_ANDROID['boxStyle'];
-                        const companion = node.companion;
-                        if (companion != null && !sameAsParent(companion.element, 'backgroundColor')) {
-                            stored.backgroundColor = companion.element.__boxStyle.backgroundColor;
-                        }
-                        if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
-                            let template = null;
-                            let data;
-                            let resourceName = '';
-                            let gravity = '';
-                            let tileMode = '';
-                            let tileModeX = '';
-                            let tileModeY = '';
-                            switch (stored.backgroundPosition) {
-                                case 'left center':
-                                case '0% 50%':
-                                    gravity = 'left|center_vertical';
-                                    break;
-                                case 'left bottom':
-                                case '0% 100%':
-                                    gravity = 'left|bottom';
-                                    break;
-                                case 'right top':
-                                case '100% 0%':
-                                    gravity = 'right|top';
-                                    break;
-                                case 'right center':
-                                case '100% 50%':
-                                    gravity = 'right|center_vertical';
-                                    break;
-                                case 'right bottom':
-                                case '100% 100%':
-                                    gravity = 'right|bottom';
-                                    break;
-                                case 'center top':
-                                case '50% 0%':
-                                    gravity = 'center_horizontal|top';
-                                    break;
-                                case 'center bottom':
-                                case '50% 100%':
-                                    gravity = 'center_horizontal|bottom';
-                                    break;
-                                case 'center center':
-                                case '50% 50%':
-                                    gravity = 'center';
-                                    break;
-                            }
-                            switch (stored.backgroundRepeat) {
-                                case 'repeat-x':
-                                    tileModeX = 'repeat';
-                                    break;
-                                case 'repeat-y':
-                                    tileModeY = 'repeat';
-                                    break;
-                                case 'no-repeat':
-                                    tileMode = 'disabled';
-                                    break;
-                                default:
-                                    tileMode = 'repeat';
-                            }
-                            const image6 = [];
-                            const image7 = [];
-                            if (stored.backgroundImage !== '') {
-                                if (stored.backgroundSize.length > 0) {
-                                    image6[0] = { image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] };
-                                }
-                                else {
-                                    image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
-                                }
-                            }
-                            if (stored.border != null) {
-                                if (stored.backgroundImage === '') {
-                                    template = parseTemplate(SHAPERECTANGLE_TMPL);
-                                    data = {
-                                        '0': [{
-                                                '1': this.getShapeAttribute(stored, 'stroke'),
-                                                '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
-                                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                                        '4': this.getShapeAttribute(stored, 'radius'),
-                                                        '5': this.getShapeAttribute(stored, 'radiusInit')
-                                                    }] : false)
-                                            }]
-                                    };
-                                    if (stored.borderRadius.length > 1) {
-                                        const shape = getTemplateLevel(data, '0', '2');
-                                        const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                        shape['5'].push(borderRadius);
-                                    }
-                                }
-                                else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.size === '0px')) {
-                                    resourceName = stored.backgroundImage;
-                                }
-                                else {
-                                    template = parseTemplate(LAYERLIST_TMPL);
-                                    data = {
-                                        '0': [{
-                                                '1': [{
-                                                        '2': this.getShapeAttribute(stored, 'stroke'),
-                                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                                        '4': this.getShapeAttribute(stored, 'radius'),
-                                                        '5': this.getShapeAttribute(stored, 'radiusInit')
-                                                    }],
-                                                '6': (image6.length > 0 ? image6 : false),
-                                                '7': (image7.length > 0 ? image7 : false)
-                                            }]
-                                    };
-                                    if (stored.borderRadius.length > 1) {
-                                        const shape = getTemplateLevel(data, '0', '1');
-                                        const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                        shape['5'].push(borderRadius);
-                                    }
-                                }
-                            }
-                            else {
-                                template = parseTemplate(LAYERLIST_TMPL);
-                                data = {
-                                    '0': [{
-                                            '1': [],
-                                            '6': (image6.length > 0 ? image6 : false),
-                                            '7': (image7.length > 0 ? image7 : false)
-                                        }]
-                                };
-                                const root = getTemplateLevel(data, '0');
-                                const borders = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
-                                let valid = true;
-                                let width = '';
-                                let borderStyle = '';
-                                let radius = '';
-                                borders.some((item, index) => {
-                                    if (this.borderVisible(item)) {
-                                        if (width !== '' && width !== item.width && borderStyle !== '' && borderStyle !== this.getBorderStyle(item) && radius !== '' && radius !== stored.borderRadius[index]) {
-                                            valid = false;
-                                            return true;
-                                        }
-                                        [width, borderStyle, radius] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
-                                    }
-                                    return false;
-                                });
-                                const borderRadius = {};
-                                if (stored.borderRadius.length > 1) {
-                                    Object.assign(borderRadius, {
-                                        topLeftRadius: stored.borderRadius[0],
-                                        topRightRadius: stored.borderRadius[1],
-                                        bottomRightRadius: stored.borderRadius[2],
-                                        bottomLeftRadius: stored.borderRadius[3]
-                                    });
-                                }
-                                if (valid) {
-                                    const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
-                                    const layerList = {
-                                        'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
-                                        'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
-                                        'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
-                                        'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
-                                        '2': [{ width, borderStyle }],
-                                        '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                        '4': this.getShapeAttribute(stored, 'radius'),
-                                        '5': this.getShapeAttribute(stored, 'radiusInit')
-                                    };
-                                    if (stored.borderRadius.length > 1) {
-                                        layerList['5'].push(borderRadius);
-                                    }
-                                    root['1'].push(layerList);
-                                }
-                                else {
-                                    borders.forEach((item, index) => {
-                                        if (this.borderVisible(item)) {
-                                            const hideWidth = `-${item.width}`;
-                                            const layerList = {
-                                                'top': hideWidth,
-                                                'right': hideWidth,
-                                                'bottom': hideWidth,
-                                                'left': hideWidth,
-                                                '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
-                                                '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                                '4': this.getShapeAttribute(stored, 'radius'),
-                                                '5': this.getShapeAttribute(stored, 'radiusInit')
-                                            };
-                                            layerList[['top', 'right', 'bottom', 'left'][index]] = item.width;
-                                            if (stored.borderRadius.length > 1) {
-                                                layerList['5'].push(borderRadius);
-                                            }
-                                            root['1'].push(layerList);
-                                        }
-                                    });
-                                }
-                                if (root['1'].length === 0) {
-                                    root['1'] = false;
-                                }
-                            }
-                            if (template != null) {
-                                const xml = insertTemplateData(template, data);
-                                for (const [name, value] of STORED.DRAWABLES.entries()) {
-                                    if (value === xml) {
-                                        resourceName = name;
-                                        break;
-                                    }
-                                }
-                                if (resourceName === '') {
-                                    resourceName = `${node.tagName.toLowerCase()}_${node.nodeId}`;
-                                    STORED.DRAWABLES.set(resourceName, xml);
-                                }
-                            }
-                            node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
-                        }
-                        else if (object.__fontStyle == null && stored.backgroundColor.length > 0) {
-                            node.attr(formatString(method['backgroundColor'], stored.backgroundColor[0]), (node.renderExtension == null));
-                        }
-                    }
-                }
-            });
-        }
-        setFontStyle() {
-            super.setFontStyle();
-            const tagName = {};
-            this.cache.visible.forEach(node => {
-                if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
-                    if (node.element.__fontStyle != null) {
-                        if (tagName[node.tagName] == null) {
-                            tagName[node.tagName] = [];
-                        }
-                        tagName[node.tagName].push(node);
-                    }
-                }
-            });
-            for (const tag in tagName) {
-                const nodes = tagName[tag];
-                const sorted = [];
-                nodes.forEach(node => {
-                    let system = false;
-                    let labelFor = null;
-                    if (node.companion != null) {
-                        labelFor = node;
-                        node = node.companion;
-                    }
-                    const element = node.element;
-                    const nodeId = (labelFor || node).id;
-                    const stored = Object.assign({}, element.__fontStyle);
-                    if (stored.fontFamily != null) {
-                        let fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
-                        let fontStyle = '';
-                        let fontWeight = '';
-                        if (SETTINGS.useFontAlias && FONTREPLACE_ANDROID[fontFamily] != null) {
-                            fontFamily = FONTREPLACE_ANDROID[fontFamily];
-                        }
-                        if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
-                            system = true;
-                            stored.fontFamily = fontFamily;
-                            if (stored.fontStyle === 'normal') {
-                                delete stored.fontStyle;
-                            }
-                            if (stored.fontWeight === '400') {
-                                delete stored.fontWeight;
-                            }
-                        }
-                        else {
-                            fontFamily = convertWord(fontFamily);
-                            stored.fontFamily = `@font/${fontFamily + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
-                            fontStyle = stored.fontStyle;
-                            fontWeight = stored.fontWeight;
-                            delete stored.fontStyle;
-                            delete stored.fontWeight;
-                        }
-                        if (!system) {
-                            const fonts = STORED.FONTS.get(fontFamily) || {};
-                            Object.assign(fonts, { [`${fontStyle}-${fontWeight}`]: true });
-                            STORED.FONTS.set(fontFamily, fonts);
-                        }
-                    }
-                    const method = METHOD_ANDROID['fontStyle'];
-                    const keys = Object.keys(method);
-                    for (let i = 0; i < keys.length; i++) {
-                        if (sorted[i] == null) {
-                            sorted[i] = {};
-                        }
-                        const value = stored[keys[i]];
-                        if (hasValue(value)) {
-                            if (node.supported('android', keys[i])) {
-                                const attr = formatString(method[keys[i]], value);
-                                if (sorted[i][attr] == null) {
-                                    sorted[i][attr] = [];
-                                }
-                                sorted[i][attr].push(nodeId);
-                            }
-                        }
-                    }
-                });
-                const tagStyle = this.tagStyle[tag];
-                if (tagStyle != null) {
-                    for (let i = 0; i < tagStyle.length; i++) {
-                        for (const attr in tagStyle[i]) {
-                            if (sorted[i][attr] != null) {
-                                sorted[i][attr].push(...tagStyle[i][attr]);
-                            }
-                            else {
-                                sorted[i][attr] = tagStyle[i][attr];
-                            }
-                        }
-                    }
-                    this.tagCount[tag] += nodes.filter(item => item.visible).length;
-                }
-                else {
-                    this.tagCount[tag] = nodes.filter(item => item.visible).length;
-                }
-                this.tagStyle[tag] = sorted;
-            }
-        }
-        setImageSource() {
-            super.setImageSource();
-            this.cache.visible.filter(node => node.tagName === 'IMG').forEach(node => {
-                if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
-                    const object = node.element;
-                    const stored = object.__imageSource;
-                    if (stored != null) {
-                        const method = METHOD_ANDROID['imageSource'];
-                        node.attr(formatString(method['src'], stored), (node.renderExtension == null));
-                    }
-                }
-            });
-        }
-        setOptionArray() {
-            super.setOptionArray();
-            this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
-                if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
-                    const stored = node.element.__optionArray;
-                    const method = METHOD_ANDROID['optionArray'];
-                    let result = [];
-                    if (stored.stringArray != null) {
-                        result = stored.stringArray.map(value => `@string/${value}`);
-                    }
-                    if (stored.numberArray != null) {
-                        result = stored.numberArray;
-                    }
-                    let arrayName = '';
-                    const arrayValue = result.join('-');
-                    for (const [storedName, storedResult] of STORED.ARRAYS.entries()) {
-                        if (arrayValue === storedResult.join('-')) {
-                            arrayName = storedName;
-                            break;
-                        }
-                    }
-                    if (arrayName === '') {
-                        arrayName = `${node.nodeId}_array`;
-                        STORED.ARRAYS.set(arrayName, result);
-                    }
-                    node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
-                }
-            });
-        }
-        setValueString(supportInline) {
-            super.setValueString(supportInline);
-            this.cache.visible.forEach(node => {
-                if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
-                    const stored = node.element.__valueString;
-                    if (stored != null) {
-                        const method = METHOD_ANDROID['valueString'];
-                        let value = STORED.STRINGS.get(stored);
-                        if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
-                            const match = node.style.textDecoration.match(/(underline|line-through)/);
-                            if (match != null) {
-                                switch (match[0]) {
-                                    case 'underline':
-                                        value = `<u>${value}</u>`;
-                                        break;
-                                    case 'line-through':
-                                        value = `<strike>${value}</strike>`;
-                                        break;
-                                }
-                                STORED.STRINGS.set(stored, value);
-                            }
-                        }
-                        node.attr(formatString(method['text'], (isNaN(parseInt(stored)) || parseInt(stored).toString() !== stored ? `@string/${stored}` : stored)), (node.renderExtension == null));
-                    }
-                }
-            });
-        }
-        addTheme(template, data, options) {
-            const map = parseTemplate(template);
-            if (options.item != null) {
-                const root = getTemplateLevel(data, '0');
-                for (const name in options.item) {
-                    let value = options.item[name];
-                    const hex = parseHex(value);
-                    if (hex !== '') {
-                        value = `@color/${Resource.addColor(hex)}`;
-                    }
-                    root['1'].push({ name, value });
-                }
-            }
-            const xml = insertTemplateData(map, data);
-            this.addFile(options.output.path, options.output.file, xml);
-        }
-        processFontStyle(viewData) {
-            const style = {};
-            const layout = {};
-            for (const tag in this.tagStyle) {
-                style[tag] = {};
-                layout[tag] = {};
-                let sorted = this.tagStyle[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
-                    let maxA = 0;
-                    let maxB = 0;
-                    let countA = 0;
-                    let countB = 0;
-                    for (const attr in a) {
-                        maxA = Math.max(a[attr].length, maxA);
-                        countA += a[attr].length;
-                    }
-                    for (const attr in b) {
-                        if (b[attr] != null) {
-                            maxB = Math.max(b[attr].length, maxB);
-                            countB += b[attr].length;
-                        }
-                    }
-                    if (maxA !== maxB) {
-                        return (maxA > maxB ? -1 : 1);
-                    }
-                    else {
-                        return (countA >= countB ? -1 : 1);
-                    }
-                });
-                const count = this.tagCount[tag];
-                do {
-                    if (sorted.length === 1) {
-                        for (const attr in sorted[0]) {
-                            const value = sorted[0][attr];
-                            if (value.length > 2) {
-                                style[tag][attr] = value;
-                            }
-                            else {
-                                layout[tag][attr] = value;
-                            }
-                        }
-                        sorted.length = 0;
-                    }
-                    else {
-                        const styleKey = {};
-                        const layoutKey = {};
-                        for (let i = 0; i < sorted.length; i++) {
-                            const filtered = {};
-                            const combined = {};
-                            const deleteKeys = new Set();
-                            for (const attr1 in sorted[i]) {
-                                if (sorted[i] == null) {
-                                    continue;
-                                }
-                                const ids = sorted[i][attr1];
-                                let revalidate = false;
-                                if (ids == null || ids.length === 0) {
-                                    continue;
-                                }
-                                else if (ids.length === count) {
-                                    styleKey[attr1] = ids;
-                                    sorted[i] = null;
-                                    revalidate = true;
-                                }
-                                else if (ids.length === 1) {
-                                    layoutKey[attr1] = ids;
-                                    sorted[i][attr1] = null;
-                                    revalidate = true;
-                                }
-                                if (!revalidate) {
-                                    const found = {};
-                                    let merged = false;
-                                    for (let j = 0; j < sorted.length; j++) {
-                                        if (i !== j) {
-                                            for (const attr in sorted[j]) {
-                                                const compare$$1 = sorted[j][attr];
-                                                for (const nodeId of ids) {
-                                                    if (compare$$1.includes(nodeId)) {
-                                                        if (found[attr] == null) {
-                                                            found[attr] = [];
-                                                        }
-                                                        found[attr].push(nodeId);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    for (const attr2 in found) {
-                                        if (found[attr2].length > 1) {
-                                            filtered[[attr1, attr2].sort().join(';')] = found[attr2];
-                                            merged = true;
-                                        }
-                                    }
-                                    if (!merged) {
-                                        filtered[attr1] = ids;
-                                    }
-                                }
-                            }
-                            for (const attr1 in filtered) {
-                                for (const attr2 in filtered) {
-                                    if (attr1 !== attr2 && filtered[attr1].join('') === filtered[attr2].join('')) {
-                                        const index = filtered[attr1].join(',');
-                                        if (combined[index] != null) {
-                                            combined[index] = new Set([...combined[index], ...attr2.split(';')]);
-                                        }
-                                        else {
-                                            combined[index] = new Set([...attr1.split(';'), ...attr2.split(';')]);
-                                        }
-                                        deleteKeys.add(attr1).add(attr2);
-                                    }
-                                }
-                            }
-                            deleteKeys.forEach(value => delete filtered[value]);
-                            for (const attrs in filtered) {
-                                this.deleteStyleAttribute(sorted, attrs, filtered[attrs]);
-                                style[tag][attrs] = filtered[attrs];
-                            }
-                            for (const index in combined) {
-                                const attrs = Array.from(combined[index]).sort().join(';');
-                                const ids = index.split(',').map((value) => parseInt(value));
-                                this.deleteStyleAttribute(sorted, attrs, ids);
-                                style[tag][attrs] = ids;
-                            }
-                        }
-                        const shared = Object.keys(styleKey);
-                        if (shared.length > 0) {
-                            if (shared.length > 1 || styleKey[shared[0]].length > 1) {
-                                style[tag][shared.join(';')] = styleKey[shared[0]];
-                            }
-                            else {
-                                Object.assign(layoutKey, styleKey);
-                            }
-                        }
-                        for (const attr in layoutKey) {
-                            layout[tag][attr] = layoutKey[attr];
-                        }
-                        for (let i = 0; i < sorted.length; i++) {
-                            if (sorted[i] && Object.keys(sorted[i]).length === 0) {
-                                delete sorted[i];
-                            }
-                        }
-                        sorted = sorted.filter((item) => item && item.length > 0);
-                    }
-                } while (sorted.length > 0);
-            }
-            const resource = {};
-            for (const tagName in style) {
-                const tag = style[tagName];
-                const tagData = [];
-                for (const attributes in tag) {
-                    tagData.push({ attributes, ids: tag[attributes] });
-                }
-                tagData.sort((a, b) => {
-                    let [c, d] = [a.ids.length, b.ids.length];
-                    if (c === d) {
-                        [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
-                    }
-                    return (c >= d ? -1 : 1);
-                });
-                tagData.forEach((item, index) => item.name = capitalize(tagName) + (index > 0 ? `_${index}` : ''));
-                resource[tagName] = tagData;
-            }
-            const inherit = new Set();
-            const map = {};
-            for (const tagName in resource) {
-                for (const item of resource[tagName]) {
-                    for (const id of item.ids) {
-                        if (map[id] == null) {
-                            map[id] = { styles: [], attributes: [] };
-                        }
-                        map[id].styles.push(item.name);
-                    }
-                }
-                const tagData = layout[tagName];
-                if (tagData != null) {
-                    for (const attr in tagData) {
-                        for (const id of tagData[attr]) {
-                            if (map[id] == null) {
-                                map[id] = { styles: [], attributes: [] };
-                            }
-                            map[id].attributes.push(attr);
-                        }
-                    }
-                }
-            }
-            for (const id in map) {
-                const node = viewData.cache.find(item => item.id === parseInt(id));
-                if (node != null) {
-                    const styles = map[id].styles;
-                    const attrs = map[id].attributes;
-                    if (styles.length > 0) {
-                        inherit.add(styles.join('.'));
-                        node.add('_', 'style', `@style/${styles.pop()}`);
-                    }
-                    if (attrs.length > 0) {
-                        attrs.sort().forEach((value) => node.attr(replaceDP(value, true)));
-                    }
-                }
-            }
-            for (const styles of inherit) {
-                let parent = '';
-                styles.split('.').forEach(value => {
-                    const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
-                    if (match != null) {
-                        const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];
-                        STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
-                        parent = value;
-                    }
-                });
-            }
-        }
-        deleteStyleAttribute(sorted, attrs, ids) {
-            attrs.split(';').forEach(value => {
-                for (let i = 0; i < sorted.length; i++) {
-                    if (sorted[i] != null) {
-                        let index = -1;
-                        let key = '';
-                        for (const j in sorted[i]) {
-                            if (j === value) {
-                                index = i;
-                                key = j;
-                                i = sorted.length;
-                                break;
-                            }
-                        }
-                        if (index !== -1) {
-                            sorted[index][key] = sorted[index][key].filter((id) => !ids.includes(id));
-                            if (sorted[index][key].length === 0) {
-                                delete sorted[index][key];
-                            }
-                            break;
-                        }
-                    }
-                }
-            });
-        }
-        getShapeAttribute(stored, name) {
-            switch (name) {
-                case 'stroke':
-                    return (stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);
-                case 'backgroundColor':
-                    return (stored.backgroundColor.length > 0 ? [{ color: stored.backgroundColor[0] }] : false);
-                case 'radius':
-                    return (stored.borderRadius.length === 1 && stored.borderRadius[0] !== '0px' ? [{ radius: stored.borderRadius[0] }] : false);
-                case 'radiusInit':
-                    return (stored.borderRadius.length > 1 ? [] : false);
-                case 'radiusAll':
-                    const result = {};
-                    stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
-                    return result;
-            }
-        }
-    }
-
     class File {
         constructor(directory, processingTime, compression) {
             this.directory = directory;
@@ -7157,7 +7218,7 @@
         }
         condition() {
             return (super.condition() &&
-                (this.node.children.every(node => node.tagName === 'LI') && this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (NodeList.linearX(this.node.children) || NodeList.linearY(this.node.children))));
+                (this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (NodeList.linearX(this.node.children) || NodeList.linearY(this.node.children))));
         }
         processNode() {
             const node = this.node;
@@ -7764,25 +7825,25 @@
             const element = node.element;
             const options = Object.assign({}, this.options[element.id]);
             const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-            overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${Resource.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
+            overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${ResourceView.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
             if (includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
                 overwriteDefault(options, 'android', 'focusable', 'false');
             }
             let src = '';
             switch (element.tagName) {
                 case 'IMG':
-                    src = Resource.addImageSrcSet(element, DRAWABLE_PREFIX.DIALOG);
+                    src = ResourceView.addImageSrcSet(element, DRAWABLE_PREFIX.DIALOG);
                     break;
                 case 'INPUT':
                     if (element.type === 'image') {
-                        src = Resource.addImage({ 'mdpi': element.src }, DRAWABLE_PREFIX.DIALOG);
+                        src = ResourceView.addImage({ 'mdpi': element.src }, DRAWABLE_PREFIX.DIALOG);
                     }
                     else {
-                        src = Resource.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                        src = ResourceView.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
                     }
                     break;
                 case 'BUTTON':
-                    src = Resource.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                    src = ResourceView.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
                     break;
             }
             if (src !== '') {
@@ -7985,14 +8046,14 @@
                 case VIEW_NAVIGATION.ITEM:
                     this.parseDataSet(VALIDATE_ITEM, element, options);
                     if (node.android('icon') == null) {
-                        let src = Resource.addImageURL(element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
+                        let src = ResourceView.addImageURL(element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
                         if (src !== '') {
                             options.android.icon = `@drawable/${src}`;
                         }
                         else {
                             const image = node.children.find(item => item.element.tagName === 'IMG');
                             if (image != null) {
-                                src = Resource.addImageSrcSet(image.element, DRAWABLE_PREFIX.MENU);
+                                src = ResourceView.addImageSrcSet(image.element, DRAWABLE_PREFIX.MENU);
                                 if (src !== '') {
                                     options.android.icon = `@drawable/${src}`;
                                 }
@@ -8006,7 +8067,7 @@
             }
             if (node.android('title') == null) {
                 if (title !== '') {
-                    const name = Resource.addString(title);
+                    const name = ResourceView.addString(title);
                     if (name !== '') {
                         title = `@string/${name}`;
                     }
@@ -8146,7 +8207,7 @@
             Array.from(node.element.children).forEach((element) => {
                 if (element.tagName === 'IMG') {
                     if (element.dataset.navigationIcon != null) {
-                        const result = Resource.addImageSrcSet(element, DRAWABLE_PREFIX.MENU);
+                        const result = ResourceView.addImageSrcSet(element, DRAWABLE_PREFIX.MENU);
                         if (result !== '') {
                             overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                             if (getStyle(element).display !== 'none') {
@@ -8155,7 +8216,7 @@
                         }
                     }
                     if (element.dataset.collapseIcon != null) {
-                        const result = Resource.addImageSrcSet(element, DRAWABLE_PREFIX.MENU);
+                        const result = ResourceView.addImageSrcSet(element, DRAWABLE_PREFIX.MENU);
                         if (result !== '') {
                             overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                             if (getStyle(element).display !== 'none') {
@@ -8191,7 +8252,7 @@
                 overwriteDefault(appBar ? optionsAppBar : optionsToolbar, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
                 if (backgroundImage !== 'none') {
-                    overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${Resource.addImageURL(backgroundImage)}`);
+                    overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${ResourceView.addImageURL(backgroundImage)}`);
                     node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
                 }
                 else {
@@ -8234,7 +8295,7 @@
                             break;
                     }
                     overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
-                    overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${Resource.addImageURL(backgroundImage)}`);
+                    overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${ResourceView.addImageURL(backgroundImage)}`);
                     overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                     overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                     overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');

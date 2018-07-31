@@ -204,7 +204,7 @@ export default abstract class Node implements BoxModel {
                     }
                     break;
                 case 'style':
-                    const style: StringMap = {};
+                    const style = {};
                     for (const attr in node.style) {
                         if (attr.startsWith('font') || attr.startsWith('color')) {
                             const key = convertCamelCase(attr);
@@ -568,7 +568,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inline() {
-        return (!this.floating && (this.css('display') === 'inline' || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName))));
+        return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.css('display') === 'inline' || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
     }
 
     get dir() {

@@ -73,7 +73,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             const flex = node.flex;
             if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
                 node.setBoundsMin();
-                const LAYOUT: StringMap = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
+                const LAYOUT = LAYOUT_MAP[(relative ? 'relative' : 'constraint')];
                 const linearX = pageflow.linearX;
                 const verticalPerspective = (!SETTINGS.horizontalPerspective && !flex.enabled && !pageflow.list.some(item => item.floating));
                 function mapParent(item: T, direction: string) {
@@ -1367,7 +1367,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private setAlignParent(node: T, orientation = '', bias = false) {
-        const map: StringMap = LAYOUT_MAP.constraint;
+        const map = LAYOUT_MAP.constraint;
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {
                 node.app(map[(index === 0 ? 'left' : 'top')], 'parent');
@@ -1381,7 +1381,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private partitionChain(node: T, nodes: T[], orientation: string) {
-        const map: StringMap = LAYOUT_MAP.constraint;
+        const map = LAYOUT_MAP.constraint;
         const parent: string[] = [];
         const coordinate: string[] = [];
         const connected: string[] = [];
@@ -1428,7 +1428,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private addGuideline(parent: T, node: T, orientation = '', opposite = false, percent = -1) {
-        const map: StringMap = LAYOUT_MAP.constraint;
+        const map = LAYOUT_MAP.constraint;
         const beginPercent = `layout_constraintGuide_${(percent !== -1 ? 'percent' : 'begin')}`;
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {

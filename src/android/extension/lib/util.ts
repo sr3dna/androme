@@ -1,5 +1,5 @@
 import { StringMap } from '../../../lib/types';
-import Resource from '../../../base/resource';
+import ResourceView from '../../resource-view';
 import View from '../../view';
 import { convertPX, hasValue, includes, isNumber, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
@@ -32,7 +32,7 @@ export function formatResource(options: {}) {
                                 case 'text':
                                     if (!value.startsWith('@string/')) {
                                         if (SETTINGS.numberResourceValue || !isNumber(value)) {
-                                            value = Resource.addString(value);
+                                            value = ResourceView.addString(value);
                                             if (value !== '') {
                                                 object[attr] = `@string/${value}`;
                                                 continue;
@@ -42,7 +42,7 @@ export function formatResource(options: {}) {
                                     break;
                                 case 'src':
                                     if (/^\w+:\/\//.test(value)) {
-                                        value = Resource.addImage({ 'mdpi': value });
+                                        value = ResourceView.addImage({ 'mdpi': value });
                                         if (value !== '') {
                                             object[attr] = `@drawable/${value}`;
                                             continue;
@@ -54,7 +54,7 @@ export function formatResource(options: {}) {
                     }
                     const hex = parseHex(value);
                     if (hex !== '') {
-                        object[attr] = `@color/${Resource.addColor(hex)}`;
+                        object[attr] = `@color/${ResourceView.addColor(hex)}`;
                     }
                 }
             }
