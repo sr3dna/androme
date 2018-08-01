@@ -173,6 +173,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 const vertical = (adjacent.constraint.vertical ? AXIS_ANDROID.VERTICAL : '');
                                 const withinY = current.withinY(adjacent.linear);
                                 if (constraint) {
+                                    const parentAlign = (current.pageflow || node.viewHeight === 0 || node.viewWidth === 0);
+                                    let contentAlign = false;
                                     if (current === node || adjacent === node) {
                                         if (current === node) {
                                             current = adjacent;
@@ -181,19 +183,29 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         linear2 = node.box;
                                         stringId = 'parent';
                                     }
+                                    else {
+                                        contentAlign = (current.pageflow && adjacent.pageflow);
+                                    }
                                     if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
                                         this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                     }
                                     else {
                                         if (stringId === 'parent') {
-                                            if (linear1.left <= linear2.left || withinFraction(linear1.left, linear2.left)) {
-                                                current.anchor(layoutMap['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                            if (parentAlign || current.css('left') === '0px') {
+                                                if (linear1.left <= linear2.left || withinFraction(linear1.left, linear2.left)) {
+                                                    current.anchor(layoutMap['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                                    current.constraint.parentLeft = true;
+                                                }
                                             }
-                                            if (linear1.right >= linear2.right || withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                                current.anchor(layoutMap['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                            if (parentAlign || current.css('right') === '0px') {
+                                                if (linear1.right >= linear2.right || withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                                    current.anchor(layoutMap['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                                    current.constraint.parentRight = true;
+                                                }
                                             }
                                         }
                                         else {
+                                            const horizontalOffset = (contentAlign ? SETTINGS.whitespaceHorizontalOffset : 0);
                                             if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
                                                 if (!mapParent(current, 'right')) {
                                                     current.anchor(layoutMap['left'], stringId);
@@ -203,14 +215,16 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 }
                                             }
                                             else if (verticalPerspective) {
-                                                if (linear1.left === linear2.left) {
-                                                    current.anchor(layoutMap['left'], stringId);
-                                                }
-                                                else if (linear1.right === linear2.right) {
-                                                    current.anchor(layoutMap['right'], stringId);
+                                                if (current.pageflow === adjacent.pageflow) {
+                                                    if (linear1.left === linear2.left) {
+                                                        current.anchor(layoutMap['left'], stringId);
+                                                    }
+                                                    else if (linear1.right === linear2.right) {
+                                                        current.anchor(layoutMap['right'], stringId);
+                                                    }
                                                 }
                                             }
-                                            if (withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (withinRange(linear1.left, linear2.right, horizontalOffset)) {
                                                 if (current.float !== 'right') {
                                                     current.anchor(layoutMap['leftRight'], stringId, horizontal, current.withinX(linear2));
                                                 }
@@ -218,7 +232,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                     current.constraint.marginHorizontal = adjacent.stringId;
                                                 }
                                             }
-                                            if (withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (withinRange(linear1.right, linear2.left, horizontalOffset)) {
                                                 if (current.float !== 'left') {
                                                     current.anchor(layoutMap['rightLeft'], stringId, horizontal, current.withinX(linear2));
                                                 }
@@ -226,31 +240,40 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                     }
                                     if (stringId === 'parent') {
-                                        if (linear1.top <= linear2.top || withinFraction(linear1.top, linear2.top)) {
-                                            current.anchor(layoutMap['top'], 'parent', AXIS_ANDROID.VERTICAL);
+                                        if (parentAlign || current.css('top') === '0px') {
+                                            if (linear1.top <= linear2.top || withinFraction(linear1.top, linear2.top)) {
+                                                current.anchor(layoutMap['top'], 'parent', AXIS_ANDROID.VERTICAL);
+                                                current.constraint.parentTop = true;
+                                            }
                                         }
-                                        if (linear1.bottom >= linear2.bottom || withinFraction(linear1.bottom, linear2.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(linear1.bottom, linear2.bottom, SETTINGS.whitespaceHorizontalOffset))) {
-                                            current.anchor(layoutMap['bottom'], 'parent', AXIS_ANDROID.VERTICAL);
+                                        if (parentAlign || current.css('bottom') === '0px') {
+                                            if (linear1.bottom >= linear2.bottom || withinFraction(linear1.bottom, linear2.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(linear1.bottom, linear2.bottom, (current.pageflow ? SETTINGS.whitespaceHorizontalOffset : 0)))) {
+                                                current.anchor(layoutMap['bottom'], 'parent', AXIS_ANDROID.VERTICAL);
+                                                current.constraint.parentBottom = true;
+                                            }
                                         }
                                     }
                                     else {
                                         const parentTop = mapParent(current, 'top');
                                         const parentBottom = mapParent(current, 'bottom');
-                                        if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        const verticalOffset = (contentAlign ? SETTINGS.whitespaceVerticalOffset : 0);
+                                        if (withinRange(linear1.top, linear2.bottom, verticalOffset)) {
                                             if (withinY || !parentBottom) {
                                                 current.anchor(layoutMap['topBottom'], stringId, vertical, withinY);
                                             }
                                         }
-                                        else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
+                                        else if (withinRange(linear1.bottom, linear2.top, verticalOffset)) {
                                             if (withinY || !parentTop) {
                                                 current.anchor(layoutMap['bottomTop'], stringId, vertical, withinY);
                                             }
                                         }
-                                        if (linear1.top === linear2.top && !parentTop && !parentBottom) {
-                                            current.anchor(layoutMap['top'], stringId, vertical);
-                                        }
-                                        if (linear1.bottom === linear2.bottom && !parentTop && !parentBottom) {
-                                            current.anchor(layoutMap['bottom'], stringId, vertical);
+                                        if (current.pageflow === adjacent.pageflow) {
+                                            if (linear1.top === linear2.top && !parentTop && !parentBottom) {
+                                                current.anchor(layoutMap['top'], stringId, vertical);
+                                            }
+                                            if (linear1.bottom === linear2.bottom && !parentTop && !parentBottom) {
+                                                current.anchor(layoutMap['bottom'], stringId, vertical);
+                                            }
                                         }
                                     }
                                 }
@@ -261,15 +284,19 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     else if (adjacent === node) {
                                         if (current.linear.left <= node.box.left || withinFraction(current.linear.left, node.box.left)) {
                                             current.anchor(relativeParent['left'], 'true', AXIS_ANDROID.HORIZONTAL);
+                                            current.constraint.parentLeft = true;
                                         }
-                                        else if (current.linear.right >= node.box.right || withinFraction(current.linear.right, node.box.right)) {
+                                        if (current.linear.right >= node.box.right || withinFraction(current.linear.right, node.box.right)) {
                                             current.anchor(relativeParent['right'], 'true', AXIS_ANDROID.HORIZONTAL);
+                                            current.constraint.parentRight = true;
                                         }
                                         if (current.linear.top <= node.box.top || withinFraction(current.linear.top, node.box.top)) {
                                             current.anchor(relativeParent['top'], 'true', AXIS_ANDROID.VERTICAL);
+                                            current.constraint.parentTop = true;
                                         }
-                                        else if (current.linear.bottom >= node.box.bottom || withinFraction(current.linear.bottom, node.box.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset))) {
+                                        if (current.linear.bottom >= node.box.bottom || withinFraction(current.linear.bottom, node.box.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(current.linear.bottom, node.box.bottom, SETTINGS.whitespaceHorizontalOffset))) {
                                             current.anchor(relativeParent['bottom'], 'true', AXIS_ANDROID.VERTICAL);
+                                            current.constraint.parentBottom = true;
                                         }
                                     }
                                     else {
@@ -573,7 +600,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             }
                                             chain.constraint[orientation] = true;
                                             chain.constraint[`chain${HV}`] = true;
-                                            if (chain.styleMap[dimension] == null) {
+                                            if (!chain.isSet('styleMap', dimension)) {
                                                 const minW = chain.styleMap[`min${WH}`];
                                                 const minH = chain.styleMap[`min${HW}`];
                                                 const maxW = chain.styleMap[`max${WH}`];
@@ -973,8 +1000,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             });
                         }
                         nodes.list.forEach(current => {
-                            [['right', 'left', 'leftRight', 'Width'], ['bottom', 'top', 'topBottom', 'Height']].forEach(value => {
-                                if (mapParent(current, value[0]) && !mapParent(current, value[1])) {
+                            [['left', 'right', 'leftRight', 'Width'], ['top', 'bottom', 'topBottom', 'Height']].forEach(value => {
+                                const lower = mapParent(current, value[0]);
+                                const upper = mapParent(current, value[1]);
+                                if (!lower && upper) {
                                     if (current.anchor(layoutMap[value[2]]) == null) {
                                         if (node[`view${value[3]}`] === 0) {
                                             node.constraint[`layout${value[3]}`] = true;
@@ -982,8 +1011,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     }
                                     else {
                                         if (node[`view${value[3]}`] > 0) {
-                                            mapDelete(current, value[0]);
+                                            mapDelete(current, value[1]);
                                         }
+                                    }
+                                }
+                                else if (lower && upper) {
+                                    if (current.constraint[`parent${capitalize(value[0])}`] && current.constraint[`parent${capitalize(value[1])}`]) {
+                                        current.android(`layout_${capitalize(value[3], false)}`, 'match_parent');
                                     }
                                 }
                             });
@@ -1053,7 +1087,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     public renderGroup(node: T, parent: T, viewName: number | string, options?: ObjectMap<any>) {
-        const target = (hasValue(node.dataset.target) && !hasValue(node.dataset.include));
+        const target = (node.isSet('dataset', 'target') && !node.isSet('dataset', 'include'));
         let preXml = '';
         let postXml = '';
         let renderParent = parent;
@@ -1094,12 +1128,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         case NODE_ANDROID.SCROLL_HORIZONTAL:
                             viewGroup.css('width', node.styleMap.width);
                             viewGroup.css('minWidth', node.styleMap.minWidth);
-                            viewGroup.css('overflowX', node.styleMap.overflowX);
+                            viewGroup.css('maxWidth', node.styleMap.maxWidth);
+                            viewGroup.css('overflowX', node.css('overflowX'));
                             break;
                         default:
                             viewGroup.css('height', node.styleMap.height);
                             viewGroup.css('minHeight', node.styleMap.minHeight);
-                            viewGroup.css('overflowY', node.styleMap.overflowY);
+                            viewGroup.css('maxHeight', node.styleMap.maxHeight);
+                            viewGroup.css('overflowY', node.css('overflowY'));
                     }
                     const indent = repeat(scrollDepth--);
                     preXml = indent + `<${scrollName}{@${viewGroup.id}}>\n` + preXml;
@@ -1128,16 +1164,16 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         }
         node.apply(options);
         node.render((target ? node : renderParent));
-        return this.getEnclosingTag((target || hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), viewName, node.id, `{:${node.id}}`, preXml, postXml);
+        return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
 
     public renderNode(node: T, parent: T, nodeName: number | string, recursive = false) {
-        const element: any = node.element;
-        const target = (hasValue(node.dataset.target) && !hasValue(node.dataset.include));
+        const target = (node.isSet('dataset', 'target') && !node.isSet('dataset', 'include'));
         if (typeof nodeName === 'number') {
             nodeName = View.getViewName(nodeName);
         }
         node.setNodeId(nodeName);
+        const element: any = node.element;
         switch (element.tagName) {
             case 'IMG':
                 switch (element.style.objectFit) {
@@ -1159,6 +1195,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 if (node.viewHeight > 0 && (node.paddingTop > 0 || node.paddingBottom > 0)) {
                     node.css('height', formatPX(node.viewHeight + node.paddingTop + node.paddingBottom));
+                }
+                if ((node.isSet('styleMap', 'width') && !node.isSet('styleMap', 'height')) || (!node.isSet('styleMap', 'width') && node.isSet('styleMap', 'height'))) {
+                    node.android('adjustViewBounds', 'true');
                 }
                 break;
             case 'TEXTAREA':
@@ -1249,7 +1288,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             node.setAccessibility();
         }
         node.cascade().forEach(item => item.hide());
-        return this.getEnclosingTag((target || hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), node.nodeName, node.id);
+        return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), node.nodeName, node.id);
     }
 
     public renderNodeStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = '', height = '', node: Null<T> = null, children = false) {

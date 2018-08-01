@@ -132,7 +132,7 @@ export default abstract class Node implements BoxModel {
 
     public render(parent: T) {
         this.renderParent = parent;
-        this.renderDepth = (parent === this || this.documentRoot || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1);
+        this.renderDepth = (parent === this || this.documentRoot || parent.isSet('dataset', 'target') ? 0 : parent.renderDepth + 1);
         this.rendered = true;
     }
 
@@ -347,6 +347,10 @@ export default abstract class Node implements BoxModel {
         }
     }
 
+    public isSet(obj: string, attr: string) {
+        return (this[obj] && this[obj][attr] != null ? hasValue(this[obj][attr]) : false);
+    }
+
     public setBoundsMin() {
         const nodes = this.children.filter(node => !node.pageflow);
         if (nodes.length > 0) {
@@ -420,7 +424,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get untargeted() {
-        return this.children.filter(node => !hasValue(node.dataset.target));
+        return this.children.filter(node => !node.isSet('dataset', 'target'));
     }
 
     get namespaces() {
@@ -446,7 +450,7 @@ export default abstract class Node implements BoxModel {
                 grow: convertInt(style.flexGrow),
                 shrink: convertInt(style.flexShrink),
                 wrap: (<string> style.flexWrap),
-                alignSelf: (<string> (parent.styleMap.alignItems != null && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
+                alignSelf: (<string> (parent.isSet('styleMap', 'alignItems') && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
                 justifyContent: (<string> style.justifyContent),
                 order: convertInt(style.order)
             };
@@ -483,10 +487,10 @@ export default abstract class Node implements BoxModel {
     }
 
     get viewWidth() {
-        return (this.display === 'inline' ? 0 : convertInt(this.styleMap.width || this.styleMap.minWidth));
+        return (this.display === 'inline' ? 0 : convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth));
     }
     get viewHeight() {
-        return (this.display === 'inline' ? 0 : convertInt(this.styleMap.height || this.styleMap.lineHeight || this.styleMap.minHeight));
+        return (this.display === 'inline' ? 0 : convertInt(this.styleMap.height) || convertInt(this.styleMap.lineHeight) || convertInt(this.styleMap.minHeight));
     }
 
     get display() {

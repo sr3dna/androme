@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../../lib/types';
 import Button from '../../../extension/button';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { hasValue, includesEnum } from '../../../lib/util';
+import { includesEnum } from '../../../lib/util';
 import { overwriteDefault, positionIsolated } from '../lib/util';
 import { parseRGBA } from '../../../lib/color';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
@@ -43,7 +43,7 @@ export default class FloatingActionButton<T extends View> extends Button {
         if (src !== '') {
             overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
-        const target = hasValue(node.dataset.target);
+        const target = node.isSet('dataset', 'target');
         node.depth = (target ? node.depth : node.parent.renderDepth + 1);
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (target ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
         node.nodeType = NODE_STANDARD.BUTTON;

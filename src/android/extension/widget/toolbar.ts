@@ -47,7 +47,7 @@ export default class Toolbar extends Extension<T, U> {
         const application = this.application;
         const controller = application.controllerHandler;
         const node = (<T> this.node);
-        const target = hasValue(node.dataset.target);
+        const target = node.isSet('dataset', 'target');
         const options = Object.assign({}, this.options[node.element.id]);
         const optionsToolbar = Object.assign({}, options.toolbar);
         const optionsAppBar = Object.assign({}, options.appBar);

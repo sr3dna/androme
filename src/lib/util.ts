@@ -355,7 +355,7 @@ export function hasValue(value: any) {
     return (typeof value !== 'undefined' && value !== null && value.toString().trim() !== '');
 }
 
-export function withinRange(a: number, b: number, n = 1) {
+export function withinRange(a: number, b: number, n = 0) {
     return (b >= (a - n) && b <= (a + n));
 }
 

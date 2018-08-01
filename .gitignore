@@ -1,4 +1,5 @@
 build/
+demos-dev/books/
 node_modules/
 temp/
 *.code-workspace

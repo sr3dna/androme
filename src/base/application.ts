@@ -171,6 +171,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 else if (style[attr] === cssRule.style[attr]) {
                                     styleMap[attr] = style[attr];
                                 }
+                                else if (hasValue(cssRule.style[attr])) {
+                                    switch (attr) {
+                                        case 'width':
+                                        case 'height':
+                                            styleMap[attr] = cssRule.style[attr];
+                                            break;
+                                    }
+                                }
                             }
                             const object: any = element;
                             if (object.__styleMap != null) {
@@ -275,11 +283,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 style.verticalAlign = node.styleMap.verticalAlign || '';
                 element.style.verticalAlign = 'top';
                 if (node.overflow !== OVERFLOW_ELEMENT.NONE) {
-                    if (hasValue(node.styleMap.width)) {
+                    if (node.isSet('styleMap', 'width')) {
                         style.width = node.styleMap.width;
                         element.style.width = '';
                     }
-                    if (hasValue(node.styleMap.height)) {
+                    if (node.isSet('styleMap', 'height')) {
                         style.height = node.styleMap.height;
                         element.style.height = '';
                     }
@@ -456,7 +464,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             function renderXml(node: T, parent: T, xml: string, current = '') {
                 if (xml !== '') {
                     if (current === '' && !application.elements.has(node.element)) {
-                        if (hasValue(node.dataset.target)) {
+                        if (node.isSet('dataset', 'target')) {
                             const target = application.findByDomId(<string> node.dataset.target, true);
                             if (target == null || target !== parent) {
                                 application.addInsertQueue(<string> node.dataset.target, [xml]);
@@ -464,7 +472,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 return;
                             }
                         }
-                        else if (hasValue(parent.dataset.target)) {
+                        else if (parent.isSet('dataset', 'target')) {
                             application.addInsertQueue(parent.nodeId, [xml]);
                             node.dataset.target = parent.nodeId;
                             return;
@@ -705,7 +713,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         const root = (<T> this.cache.parent);
         const extension = (<IExtension> root.renderExtension);
-        if (extension == null || !hasValue(root.dataset.target)) {
+        if (extension == null || !root.isSet('dataset', 'target')) {
             const pathname: string = trim(optional(root, 'dataset.folder').trim(), '/');
             this.updateLayout(pathname, (!empty ? output : ''), (extension && extension.documentRoot));
         }
