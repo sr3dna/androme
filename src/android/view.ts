@@ -263,8 +263,11 @@ export default class View extends Node {
                             this.android('layout_width', 'wrap_content');
                         }
                     }
-                    else {
+                    else if (!isNaN(parseInt(styleMap.width))) {
                         this.android('layout_width', convertPX(styleMap.width));
+                    }
+                    else if (styleMap.width === 'auto') {
+                        this.android('layout_width', 'wrap_content');
                     }
                 }
                 if (hasValue(styleMap.minWidth) && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
@@ -287,12 +290,11 @@ export default class View extends Node {
                     maxRight = Math.floor(this.cascade().filter(node => node.visible).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
                     maxRightParent = Math.floor(parent.cascade().filter((node: T) => node.visible && !parent.children.includes(node)).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
                 }
-                const display = this.css('display');
-                const wrapContent = (this.nodeType <= NODE_STANDARD.INLINE || display === 'table' || display.indexOf('inline') !== -1) || (renderParent.android('layout_width') === 'wrap_content' && this.inline) || parent.flex.enabled || renderParent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal);
+                const wrapContent = (this.nodeType <= NODE_STANDARD.INLINE || this.display === 'table' || this.inline || parent.flex.enabled || renderParent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal));
                 if (convertFloat(this.android('layout_columnWeight')) > 0) {
                     this.android('layout_width', '0px', false);
                 }
-                else if (!wrapContent && ((parent.overflow === OVERFLOW_ELEMENT.NONE && (maxWidthParent > 0 || this.parentElement === document.body) && width >= widthParent) || (!this.floating && display.indexOf('inline') === -1) && BLOCK_ELEMENT.includes(this.tagName) && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight < maxRightParent)))) {
+                else if (!wrapContent && ((parent.overflow === OVERFLOW_ELEMENT.NONE && (maxWidthParent > 0 || this.parentElement === document.body) && width >= widthParent) || (!this.floating && !this.inline && BLOCK_ELEMENT.includes(this.tagName) && (this.renderChildren.length === 0 || (maxRight !== 0 && maxRight < maxRightParent))))) {
                     this.android('layout_width', 'match_parent');
                 }
                 else {
@@ -300,18 +302,29 @@ export default class View extends Node {
                 }
             }
             if (this.android('layout_height') !== '0px') {
-                if (hasValue(styleMap.height) || hasValue(styleMap.lineHeight)) {
-                    if (isPercent(styleMap.height) || isPercent(styleMap.lineHeight)) {
+                const percentHeight = isPercent(styleMap.height) || isPercent(styleMap.lineHeight);
+                if (hasValue(styleMap.height) || hasValue(styleMap.lineHeight) || percentHeight) {
+                    const layoutHeight = convertInt(styleMap.height) || convertInt(styleMap.lineHeight);
+                    if (percentHeight) {
                         if (renderParent.tagName === 'TABLE') {
-                            this.android('layout_rowWeight', (convertInt(styleMap.height || styleMap.lineHeight) / 100).toFixed(2));
+                            this.android('layout_rowWeight', (layoutHeight / 100).toFixed(2));
                             this.android('layout_height', '0px');
                         }
                         else {
                             this.android('layout_height', 'wrap_content');
                         }
                     }
-                    else {
-                        this.android('layout_height', convertPX(styleMap.height || styleMap.lineHeight));
+                    else if (layoutHeight > 0) {
+                        if (this.display === 'inline-block' && this.css('overflow') === 'visible') {
+                            this.android('minHeight', formatPX(layoutHeight));
+                            this.android('layout_height', 'wrap_content');
+                        }
+                        else {
+                            this.android('layout_height', formatPX(layoutHeight));
+                        }
+                    }
+                    else if (styleMap.height === 'auto') {
+                        this.android('layout_height', 'wrap_content');
                     }
                 }
                 if (hasValue(styleMap.minHeight) && !isPercent(styleMap.minHeight) && !constraint.minHeight) {
@@ -323,7 +336,7 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutHeight) {
-                this.android('layout_height', (this.bounds.height >= heightParent ? 'match_parent' : formatPX(this.bounds.height)), false);
+                this.android('layout_height', (this.bounds.height >= heightParent && !renderParent.documentRoot ? 'match_parent' : formatPX(this.bounds.height)), false);
             }
             else if (this.android('layout_height') == null) {
                 if (height >= heightParent && parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.nodeName) && !renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content') {
@@ -405,7 +418,7 @@ export default class View extends Node {
                     horizontal = '';
                 }
             }
-            if (vertical !== '' && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
+            if (vertical !== '' && this.viewHeight === 0 && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
                 verticalFloat = vertical;
                 vertical = '';
             }
@@ -414,10 +427,13 @@ export default class View extends Node {
                 this.android('layout_gravity', layoutGravity);
             }
         }
-        if (this.renderChildren.length > 0 && !constraintRight && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.css('display').indexOf('inline') !== -1)))) {
+        if (this.renderChildren.length > 0 && !constraintRight && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.inline)))) {
             this.android('gravity', right);
         }
         else {
+            if (this.nodeType <= NODE_STANDARD.IMAGE && horizontal === '' && horizontalParent !== '') {
+                horizontal = horizontalParent;
+            }
             const gravity = [horizontal, vertical].filter(value => value);
             if (gravity.length > 0) {
                 this.android('gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));

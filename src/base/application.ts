@@ -517,7 +517,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             const adjacent = axisY[l];
                             if (adjacent.pageflow && float === adjacent.float) {
                                 nodes.push(adjacent);
-                                if (!NodeList.linearX(nodes)) {
+                                if (!NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)) {
                                     nodes.pop();
                                     break;
                                 }
@@ -596,7 +596,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             let xml = '';
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;
-                                if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.cascade().every(node => node.inline && supportInline.includes(node.tagName)))) {
+                                if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.children.every(node => node.inline && node.children.length === 0 && supportInline.includes(node.tagName)))) {
                                     if (hasFreeFormText(nodeY.element) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.tagName))) {
                                         xml += this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
@@ -629,7 +629,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                             }
                                         }
                                         else {
-                                            const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
+                                            const [linearX, linearY] = [NodeList.linearX(nodeY.children, SETTINGS.linearHorizontalTopOffset), NodeList.linearY(nodeY.children)];
                                             if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
                                                 xml += this.writeLinearLayout(nodeY, parent, linearX);
                                             }

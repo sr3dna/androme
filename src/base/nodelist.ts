@@ -1,5 +1,5 @@
 import Node from './node';
-import { sortAsc, sortDesc } from '../lib/util';
+import { sortAsc, sortDesc, withinRange } from '../lib/util';
 
 export default abstract class NodeList<T extends Node> {
     public static intersect<T extends Node>(list: T[], dimension = 'linear') {
@@ -11,12 +11,12 @@ export default abstract class NodeList<T extends Node> {
         return false;
     }
 
-    public static linearX<T extends Node>(list: T[]) {
+    public static linearX<T extends Node>(list: T[], offset = 0) {
         const nodes = sortAsc(list.filter(node => !node.isolated), 'linear.top');
         if (nodes.length > 0 && !NodeList.intersect(nodes)) {
             if (nodes.length > 1) {
                 const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
-                const maxBottom = Math.max.apply(null, nodes.filter(node => node.linear.top === minTop).map(node => node.linear.bottom));
+                const maxBottom = Math.max.apply(null, nodes.filter(node => withinRange(node.linear.top, minTop, offset)).map(node => node.linear.bottom));
                 return !nodes.some(node => !(node.linear.top >= minTop && node.linear.bottom <= maxBottom));
             }
             return true;

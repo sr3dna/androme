@@ -84,11 +84,25 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 break;
                         }
                     }
+                    const baseline: T[] = [];
+                    function adjustBaseline() {
+                        if (baseline.length > 1) {
+                            const tallest = baseline.sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
+                            baseline.forEach(item => {
+                                if (item !== tallest) {
+                                    item.android(LAYOUT['baseline'], tallest.stringId);
+                                }
+                            });
+                        }
+                    }
                     for (let i = 0, width = 0; i < nodes.length; i++) {
                         const current = nodes.list[i];
                         if (i === 0) {
                             current.android('layout_alignParentTop', 'true');
                             current.android(parseRTL('layout_alignParentLeft'), 'true');
+                            if (current.nodeType <= NODE_STANDARD.TEXT) {
+                                baseline.push(current);
+                            }
                             width += current.linear.width;
                         }
                         else {
@@ -101,9 +115,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     current.constraint.marginVertical = previous.stringId;
                                 }
                                 width = current.linear.width;
+                                adjustBaseline();
+                                baseline.length = 0;
+                                baseline.push(current);
                             }
                             else {
                                 current.android(LAYOUT['leftRight'], previous.stringId);
+                                if (current.nodeType <= NODE_STANDARD.TEXT) {
+                                    baseline.push(current);
+                                }
                                 width += current.linear.width;
                             }
                         }
@@ -114,6 +134,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             setSingleLine(current);
                         }
                     }
+                    adjustBaseline();
                 }
                 else {
                     function mapParent(item: T, direction: string) {
@@ -417,11 +438,19 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                         }
                         else {
+                            const horizontal = pageflow.list.filter(current => !current.constraint.horizontal);
+                            const vertical = pageflow.list.filter(current => !current.constraint.vertical);
                             pageflow.list.some(current => {
-                                const horizontalChain = this.partitionChain(current, pageflow.list, AXIS_ANDROID.HORIZONTAL);
-                                const verticalChain = this.partitionChain(current, pageflow.list, AXIS_ANDROID.VERTICAL);
-                                current.constraint.horizontalChain = new ViewList(sortAsc(horizontalChain, 'linear.left'));
-                                current.constraint.verticalChain = new ViewList(sortAsc(verticalChain, 'linear.top'));
+                                let horizontalChain: T[] = [];
+                                let verticalChain: T[] = [];
+                                if (horizontal.length > 0) {
+                                    horizontalChain = this.partitionChain(current, pageflow.list, AXIS_ANDROID.HORIZONTAL);
+                                    current.constraint.horizontalChain = new ViewList(sortAsc(horizontalChain, 'linear.left'));
+                                }
+                                if (vertical.length > 0) {
+                                    verticalChain = this.partitionChain(current, pageflow.list, AXIS_ANDROID.VERTICAL);
+                                    current.constraint.verticalChain = new ViewList(sortAsc(verticalChain, 'linear.top'));
+                                }
                                 return (horizontalChain.length === pageflow.length || verticalChain.length === pageflow.length);
                             });
                         }
@@ -883,14 +912,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     opposite.constraint.vertical = true;
                                 }
                             });
-                            nodes.list.forEach(current => {
-                                if (mapParent(current, 'right') && !mapParent(current, 'left') && current.app(LAYOUT['leftRight']) == null) {
-                                    node.constraint.layoutWidth = true;
-                                }
-                                if (mapParent(current, 'bottom') && !mapParent(current, 'top') && current.app(LAYOUT['topBottom']) == null) {
-                                    node.constraint.layoutHeight = true;
-                                }
-                            });
                         }
                         else {
                             nodes.list.forEach(current => {
@@ -906,7 +927,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         current.constraint.horizontal = nodes.list.some(adjacent => {
                                             if (adjacent !== current && adjacent.constraint.horizontal) {
                                                 if (current.linear.left === adjacent.linear.left) {
-                                                    current.anchor(LAYOUT['left'], adjacent.stringId);
+                                                    current.android(LAYOUT['left'], adjacent.stringId);
                                                     return true;
                                                 }
                                             }
@@ -926,7 +947,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         current.constraint.vertical = nodes.list.some(adjacent => {
                                             if (adjacent !== current && adjacent.constraint.vertical) {
                                                 if (current.linear.top === adjacent.linear.top) {
-                                                    current.anchor(LAYOUT['top'], adjacent.stringId);
+                                                    current.android(LAYOUT['top'], adjacent.stringId);
                                                     return true;
                                                 }
                                             }
@@ -943,14 +964,24 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                     }
                                 }
-                                if (mapParent(current, 'right') && current.android(LAYOUT['leftRight']) == null) {
-                                    node.constraint.layoutWidth = true;
-                                }
-                                if (mapParent(current, 'bottom') && current.android(LAYOUT['topBottom']) == null) {
-                                    node.constraint.layoutHeight = true;
-                                }
                             });
                         }
+                        nodes.list.forEach(current => {
+                            [['right', 'left', 'leftRight', 'Width'], ['bottom', 'top', 'topBottom', 'Height']].forEach(value => {
+                                if (mapParent(current, value[0]) && !mapParent(current, value[1])) {
+                                    if (current.anchor(LAYOUT[value[2]]) == null) {
+                                        if (node[`view${value[3]}`] === 0) {
+                                            node.constraint[`layout${value[3]}`] = true;
+                                        }
+                                    }
+                                    else {
+                                        if (node[`view${value[3]}`] > 0) {
+                                            mapDelete(current, value[0]);
+                                        }
+                                    }
+                                }
+                            });
+                        });
                     }
                 }
                 pageflow.list.forEach(current => {
@@ -1116,6 +1147,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     case 'scale-down':
                         node.android('scaleType', 'fitCenter');
                         break;
+                }
+                if (node.viewWidth > 0 && (node.paddingLeft > 0 || node.paddingRight > 0)) {
+                    node.css('width', formatPX(node.viewWidth + node.paddingLeft + node.paddingRight));
+                }
+                if (node.viewHeight > 0 && (node.paddingTop > 0 || node.paddingBottom > 0)) {
+                    node.css('height', formatPX(node.viewHeight + node.paddingTop + node.paddingBottom));
                 }
                 break;
             case 'TEXTAREA':

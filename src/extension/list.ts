@@ -16,7 +16,7 @@ export default abstract class List extends Extension<T, U> {
     public condition() {
         return (
             super.condition() &&
-            (this.node.children.some(node => node.css('display') === 'list-item' && node.css('listStyleType') !== 'none') && (NodeList.linearX(this.node.children) || NodeList.linearY(this.node.children)))
+            (this.node.children.some(node => node.display === 'list-item' && node.css('listStyleType') !== 'none') && (NodeList.linearX(this.node.children) || NodeList.linearY(this.node.children)))
         );
     }
 
@@ -33,7 +33,7 @@ export default abstract class List extends Extension<T, U> {
         for (let i = 0, j = 0; i < node.children.length; i++) {
             const item = node.children[i];
             let ordinal = '0';
-            if (item.css('display') === 'list-item') {
+            if (item.display === 'list-item') {
                 const listStyle = item.css('listStyleType');
                 switch (listStyle) {
                     case 'disc':

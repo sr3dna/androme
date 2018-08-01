@@ -251,11 +251,15 @@ export default abstract class Resource<T extends Node> {
                         value = element.value.trim();
                     }
                     else if (element.nodeName === '#text') {
-                        value = <string> element.textContent;
+                        value = (<string> element.textContent);
+                        const previousSibling = (<HTMLElement> element.previousSibling);
+                        if (previousSibling && previousSibling.tagName === 'BR') {
+                            value = value.replace(/^\s+/g, '');
+                        }
                         inlineTrim = true;
                     }
                     else if (node.hasElement) {
-                        if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((child: HTMLElement) => MAP_ELEMENT[child.tagName] == null && supportInline.includes(child.tagName)))) {
+                        if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[item.tagName] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
                             name = element.innerText.trim();
                             value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText);
                             switch (node.css('whiteSpace')) {
@@ -269,10 +273,11 @@ export default abstract class Resource<T extends Node> {
                                 case 'pre-line':
                                     value = value.replace(/\s+/g, ' ');
                                 default:
+                                    value = value.replace(/^\s+/g, '');
                                     inlineTrim = true;
                                     break;
                             }
-                            value = value.replace(/<br\s*\/?>/g, '\n');
+                            value = value.replace(/<br\s*\/?>/g, '\\n');
                         }
                     }
                     if (inlineTrim) {

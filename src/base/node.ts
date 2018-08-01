@@ -482,10 +482,14 @@ export default abstract class Node implements BoxModel {
     }
 
     get viewWidth() {
-        return convertInt(this.styleMap.width || this.styleMap.minWidth);
+        return (this.display === 'inline' ? 0 : convertInt(this.styleMap.width || this.styleMap.minWidth));
     }
     get viewHeight() {
-        return convertInt(this.styleMap.height || this.styleMap.lineHeight || this.styleMap.minHeight);
+        return (this.display === 'inline' ? 0 : convertInt(this.styleMap.height || this.styleMap.lineHeight || this.styleMap.minHeight));
+    }
+
+    get display() {
+        return this.css('display') || '';
     }
 
     set top(value) {
@@ -514,7 +518,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get marginTop() {
-        return (this.inline ? 0 : convertInt(this.css('marginTop')));
+        return (this.display === 'inline' ? 0 : convertInt(this.css('marginTop')));
     }
     get marginRight() {
         let node = (<T> this);
@@ -524,7 +528,7 @@ export default abstract class Node implements BoxModel {
         return convertInt(node.css('marginRight'));
     }
     get marginBottom() {
-        return (this.inline ? 0 : convertInt(this.css('marginBottom')));
+        return (this.display === 'inline' ? 0 : convertInt(this.css('marginBottom')));
     }
     get marginLeft() {
         let node = (<T> this);
@@ -579,7 +583,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inline() {
-        return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.css('display').indexOf('inline') !== -1 || (this.css('display') === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
+        return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.display.indexOf('inline') !== -1 || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
     }
 
     get dir() {

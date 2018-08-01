@@ -1,7 +1,7 @@
 import { IExtension, Null, StringMap } from './lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
-import { convertWord, optional } from './lib/util';
+import { convertWord, hasValue, optional } from './lib/util';
 import { EXT_NAME } from './extension/lib/constants';
 import SETTINGS from './settings';
 
@@ -35,7 +35,7 @@ const ROOT_CACHE: Set<HTMLElement> = new Set();
 const EXTENSIONS = {
     [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
     [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
-    [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL']),
+    [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL', 'DIV']),
     [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
     [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
     [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
@@ -129,7 +129,15 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 image.onerror = reject;
             });
         });
-        Promise.all(queue).then(() => parseResume());
+        Promise
+            .all(queue)
+            .then(() => parseResume())
+            .catch((err: Event) => {
+                const message = (err.srcElement != null ? (<HTMLImageElement> err.srcElement).src : '');
+                if (!hasValue(message) || confirm(`FAIL: ${message}`)) {
+                    parseResume();
+                }
+            });
     }
     return {
         then: (resolve: () => void) => {

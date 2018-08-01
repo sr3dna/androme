@@ -24,6 +24,7 @@ const SETTINGS = {
     excludeBackgroundColor: ['#FFFFFF'],
     collapseUnattributedElements: false,
     horizontalPerspective: true,
+    linearHorizontalTopOffset: 4,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
     chainPackedHorizontalOffset: 4,

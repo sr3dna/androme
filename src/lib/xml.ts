@@ -46,7 +46,9 @@ export function replaceTab(value: string, preserve = false) {
 }
 
 export function replaceEntity(value: string) {
-    return value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(capture));
+    value = value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(capture));
+    value = value.replace(/&nbsp;/g, '&#160;');
+    return value;
 }
 
 export function formatDimen(tagName: string, attr: string, size: string) {

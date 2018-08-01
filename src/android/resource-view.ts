@@ -2,7 +2,7 @@ import { ArrayIndex, BorderAttribute, FontAttribute, Null, ObjectMap, StringMap,
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { cameltoLowerCase, capitalize, convertWord, formatPX, formatString, generateId, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertWord, formatPX, formatString, generateId, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { findNearestColor, parseHex } from '../lib/color';
@@ -404,7 +404,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 }
                             }
                             else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.size === '0px')) {
-                                resourceName = stored.backgroundImage;
+                                template = parseTemplate(LAYERLIST_TMPL);
+                                data = {
+                                    '0': [{
+                                        '1': false,
+                                        '6': (image6.length > 0 ? image6 : false),
+                                        '7': (image7.length > 0 ? image7 : false)
+                                    }]
+                                };
                             }
                             else {
                                 template = parseTemplate(LAYERLIST_TMPL);
@@ -700,7 +707,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             Resource.STORED.STRINGS.set(result, value);
                         }
                     }
-                    node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
+                    if (!node.hasElement || convertInt(node.css('textIndent')) > -(node.linear.width / 2)) {
+                        node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
+                    }
                 }
             }
         });

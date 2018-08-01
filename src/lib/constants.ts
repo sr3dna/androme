@@ -1,6 +1,5 @@
 export enum NODE_STANDARD {
     NONE = 0,
-    IMAGE,
     SELECT,
     RANGE,
     CHECKBOX,
@@ -9,6 +8,7 @@ export enum NODE_STANDARD {
     EDIT,
     INLINE,
     TEXT,
+    IMAGE,
     LINE,
     SPACE,
     BLOCK,
