@@ -278,6 +278,7 @@ export default abstract class Resource<T extends Node> {
                                     break;
                             }
                             value = value.replace(/<br\s*\/?>/g, '\\n');
+                            value = value.replace(/\s+style=""/, '');
                         }
                     }
                     if (inlineTrim) {

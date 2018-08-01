@@ -1356,11 +1356,11 @@ The attributes "include" and "include-end" can only be applied to elements which
 ```
 ### User Written HTML
 
-Using excessive DIV and FORM tags are not required for mobile devices which can cause additional LinearLayouts to be auto-generated. Block level elements are almost always rendered in order to preserve any CSS styles which are applied to the tag.
+Using excessive DIV and FORM tags are not required for mobile devices which can cause additional FrameLayouts or LinearLayouts to be generated. Block level elements are almost always rendered to preserve any CSS styles which are applied to the tag.
 
 https://www.w3.org/TR/html401/struct/global.html#h-7.5.3
 
-If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text might be collapsed into a TextView rather than a LinearLayout. Try to enclose everything inside an HTML container otherwise the text might be discarded. You can basically code the HTML any way you want although using reasonable techniques for mobile devices will lead you to a more accurate layout.
+If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text might be collapsed into a TextView. Try to enclose everything inside an element container otherwise the text might be discarded. You can basically code the HTML any way you want although using reasonable techniques for mobile devices will lead you to a more accurate layout.
 
 RECOMMENDED
 ```xml

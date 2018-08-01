@@ -26,6 +26,7 @@ export default abstract class Node implements BoxModel {
     public isolated = false;
     public relocated = false;
     public inlineWrap = false;
+    public inlineParent = false;
     public multiLine = false;
 
     public abstract children: T[];
@@ -299,8 +300,8 @@ export default abstract class Node implements BoxModel {
                 bounds = assignBounds(<ClientRect> this.element.getBoundingClientRect());
             }
             else {
-                const [range, multiLine] = getRangeBounds(this.element);
-                bounds = range;
+                const [rangeBounds, multiLine] = getRangeBounds(this.element);
+                bounds = rangeBounds;
                 this.multiLine = multiLine;
             }
             if (bounds != null) {

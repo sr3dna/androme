@@ -7,7 +7,7 @@ import { hasValue, convertCamelCase, includesEnum, isNumber, optional, resetId, 
 import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
 import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
-import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BLOCK_ELEMENT, BOX_STANDARD, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node, U extends NodeList<T>> {
@@ -233,7 +233,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 this.orderExt(extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
                     const supportInline = this.controllerHandler.supportInline;
-                    if (element.parentElement != null && supportInline.includes(element.tagName) && (MAP_ELEMENT[element.parentElement.tagName] != null || supportInline.includes(element.parentElement.tagName))) {
+                    if (supportInline.includes(element.tagName) && ((element.children.length === 0 && !hasFreeFormText(element)) || (element.parentElement != null  && supportInline.includes(element.parentElement.tagName) && getStyle(element).display === 'inline' && getStyle(element.parentElement).display === 'inline'))) {
                         continue;
                     }
                     let valid = true;
@@ -352,7 +352,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                 }
                 const supportInline = this.controllerHandler.supportInline;
-                if (supportInline.length === 0 || node.children.some(current => !current.pageflow || !supportInline.includes(current.tagName))) {
+                if (supportInline.length === 0 || node.children.some(item => item.children.length > 0 || !item.pageflow || !supportInline.includes(item.tagName))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
@@ -407,7 +407,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 item.setTarget(rootNode);
                 item.afterInit();
             });
-            this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
             this.cache.elements.forEach(node => {
                 let i = 0;
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
@@ -418,6 +417,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 });
                 sortAsc(node.children, 'parentIndex');
             });
+            this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
             this.addLayout(<string> root.dataset.viewName);
             return true;
         }
@@ -495,12 +495,19 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         layers.push(node);
                     }
                 }
-                axisY.sort((a, b) => {
-                    if (a.linear.left !== b.linear.left && !a.parent.flex.enabled && !b.parent.flex.enabled && a.withinX(b.linear)) {
-                        return (a.linear.left > b.linear.left ? 1 : -1);
-                    }
-                    return (a.parentIndex > b.parentIndex ? 1 : -1);
-                });
+                if (!axisY.some(node => node.multiLine)) {
+                    axisY.sort((a, b) => {
+                        if (!a.parent.flex.enabled && !b.parent.flex.enabled) {
+                            if (a.withinX(b.linear)) {
+                                return (a.linear.left <= b.linear.left ? -1 : 1);
+                            }
+                            else {
+                                return (a.linear.top <= b.linear.top ? -1 : 1);
+                            }
+                        }
+                        return (a.parentIndex < b.parentIndex ? -1 : 1);
+                    });
+                }
                 axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
                 const includes: string[] = [];
                 let current = '';
@@ -510,24 +517,48 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         continue;
                     }
                     let parent = (<T> nodeY.parent);
-                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
+                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && !parent.inlineParent && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
                         const nodes = [nodeY];
-                        const float = nodeY.float;
-                        for (let l = k + 1; l < axisY.length; l++) {
-                            const adjacent = axisY[l];
-                            if (adjacent.pageflow && float === adjacent.float) {
-                                nodes.push(adjacent);
-                                if (!NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)) {
-                                    nodes.pop();
-                                    break;
+                        if (nodeY.element.nextSibling == null || (<Element> nodeY.element.nextSibling).tagName !== 'BR') {
+                            const float = nodeY.float;
+                            for (let l = k + 1; l < axisY.length; l++) {
+                                const adjacent = axisY[l];
+                                if (adjacent.pageflow && float === adjacent.float) {
+                                    nodes.push(adjacent);
+                                    if (adjacent.element.nextSibling && (<Element> adjacent.element.nextSibling).tagName === 'BR') {
+                                        break;
+                                    }
+                                    else if ((!adjacent.inline && !adjacent.floating) || (nodes.every(item => item.hasElement) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset))) {
+                                        nodes.pop();
+                                        break;
+                                    }
                                 }
                             }
                         }
-                        if (nodes.length > 1) {
-                            const viewGroup = this.controllerHandler.createGroup(nodeY, parent, nodes);
-                            const xml = this.writeLinearLayout(viewGroup, parent, true);
-                            renderXml(viewGroup, parent, xml, current);
-                            parent = viewGroup;
+                        if (parent.inlineWrap || nodes.length > 1) {
+                            if (parent.is(NODE_STANDARD.RELATIVE) && nodes.length === parent.children.length) {
+                                parent.inlineWrap = true;
+                                parent.inlineParent = true;
+                            }
+                            else {
+                                if (nodes.length > 1) {
+                                    let xml = '';
+                                    const viewGroup = this.controllerHandler.createGroup(nodeY, parent, nodes);
+                                    if (nodes.some(item => item.multiLine)) {
+                                        viewGroup.inlineWrap = true;
+                                        viewGroup.inlineParent = true;
+                                        xml = this.writeRelativeLayout(viewGroup, parent);
+                                    }
+                                    else {
+                                        xml = this.writeLinearLayout(viewGroup, parent, true);
+                                    }
+                                    renderXml(viewGroup, parent, xml, current);
+                                    parent = viewGroup;
+                                }
+                                else {
+                                    nodeY.multiLine = false;
+                                }
+                            }
                         }
                     }
                     if (this.controllerHandler.supportInclude) {
@@ -841,7 +872,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
-        return ((linearX || linearY) && !parent.flex.enabled && children.every(node => node.pageflow) && children.every(node => children[0].float === node.float));
+        return ((linearX || linearY) && !parent.flex.enabled && children.every(node => node.pageflow && !node.multiLine) && children.every(node => children[0].float === node.float));
     }
 
     public addInclude(filename: string, content: string) {
