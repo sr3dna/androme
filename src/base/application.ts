@@ -346,38 +346,54 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                     });
                 }
-                if (node.children.some(current => !current.pageflow && ((convertInt(current.top) < 0 && convertInt(node.marginTop) > 0) || (convertInt(current.left) < 0 && convertInt(node.marginLeft) > 0)))) {
-                    let marginTop = false;
-                    let marginLeft = false;
+                if (node.children.some(current => current.float !== 'right' && ((current.marginTop < 0 && node.marginTop >= Math.abs(current.marginTop)) || (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)))) || node.children.some(current => !current.pageflow && ((convertInt(current.top) < 0 && node.marginTop >= Math.abs(convertInt(current.top))) || (convertInt(current.left) < 0 && node.marginLeft >= Math.abs(convertInt(current.left)))))) {
+                    const marginTop: number[] = [];
+                    const marginLeft: number[] = [];
                     node.children.forEach(current => {
+                        let top = current.marginTop;
+                        let left = current.marginLeft;
+                        let topType = 0;
+                        let leftType = 0;
+                        if (top < 0 && node.marginTop >= top) {
+                            topType = 1;
+                        }
+                        if (left < 0 && node.marginLeft >= left) {
+                            leftType = 1;
+                        }
                         if (!current.pageflow) {
-                            const top = convertInt(current.top);
-                            const left = convertInt(current.left);
-                            if (top < 0) {
-                                current.css('top', formatPX(top + node.marginTop));
-                                marginTop = true;
+                            if (topType === 0) {
+                                top = convertInt(current.top);
+                                if (top < 0 && node.marginTop >= top) {
+                                    current.css('top', formatPX(top + node.marginTop));
+                                    topType = 2;
+                                }
                             }
-                            if (left < 0) {
-                                current.css('left', formatPX(left + node.marginLeft));
-                                marginLeft = true;
-                            }
-                        }
-                    });
-                    node.children.forEach(current => {
-                        if (current.pageflow) {
-                            if (marginTop && node.marginTop > 0) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + node.marginTop);
-                            }
-                            if (marginLeft && node.marginLeft > 0) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft);
+                            if (leftType === 0) {
+                                left = convertInt(current.left);
+                                if (left < 0 && node.marginLeft >= left) {
+                                    current.css('left', formatPX(left + node.marginLeft));
+                                    leftType = 2;
+                                }
                             }
                         }
+                        marginTop.push(topType);
+                        marginLeft.push(leftType);
                     });
-                    if (marginTop) {
+                    const marginTopType = Math.max.apply(null, marginTop);
+                    const marginLeftType = Math.max.apply(null, marginLeft);
+                    node.children.forEach((current, index) => {
+                        if (marginTopType && marginTop[index] !== 2 && ((marginTopType === 1 && marginTop[index] === 1) || marginTopType === 2)) {
+                            current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + node.marginTop);
+                        }
+                        if (marginLeftType && marginLeft[index] !== 2 && ((marginLeftType === 1 && marginLeft[index] === 1) || marginLeftType === 2)) {
+                            current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft);
+                        }
+                    });
+                    if (marginTopType) {
                         node.box.top -= node.marginTop;
                         node.css('marginTop', '0px');
                     }
-                    if (marginLeft) {
+                    if (marginLeftType) {
                         node.box.left -= node.marginLeft;
                         node.css('marginLeft', '0px');
                     }
@@ -414,11 +430,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public createLayoutXml() {
-        let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
-        let empty = true;
+        const application = this;
+        const extensions = this.extensions;
         const mapX: ArrayIndex<ObjectIndex<T[]>> = [];
         const mapY: ArrayIndex<ObjectIndex<T[]>> = [];
-        const extensions = this.extensions;
+        let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
+        let empty = true;
         this.cache.visible.forEach(node => {
             const x = Math.floor(node.linear.left);
             const y = node.parent.id;
@@ -441,7 +458,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             const coordsY = Object.keys(mapY[i]);
             const partial = new Map();
             const external = new Map();
-            const application = this;
             function renderXml(node: T, parent: T, xml: string, current = '') {
                 if (xml !== '') {
                     if (current === '' && !application.elements.has(node.element)) {
@@ -812,11 +828,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             }
         }
-        this.layouts.forEach(view => {
+        this.layouts.forEach(value => {
             for (const id in template) {
-                view.content = view.content.replace(`{:${id}}`, template[id]);
+                value.content = value.content.replace(`{:${id}}`, template[id]);
             }
-            view.content = this.controllerHandler.insertAuxillaryViews(view.content);
+            value.content = this.controllerHandler.insertAuxillaryViews(value.content);
         });
         this.cacheInternal.list.forEach(node => {
             const extension = node.renderExtension;

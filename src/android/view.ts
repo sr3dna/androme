@@ -525,9 +525,10 @@ export default class View extends Node {
         ['layout_margin', 'padding'].forEach((value, index) => {
             const leftRtl = parseRTL(`${value}Left`);
             const rightRtl = parseRTL(`${value}Right`);
-            let top = (index === 0 && this.inline ? 0 : convertInt(this.android(`${value}Top`)));
+            const inline = (this.display === 'inline' || this.tagName === 'PLAINTEXT');
+            let top = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Top`)));
             let right = convertInt(this.android(rightRtl));
-            let bottom = (index === 0 && this.inline ? 0 : convertInt(this.android(`${value}Bottom`)));
+            let bottom = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Bottom`)));
             let left = convertInt(this.android(leftRtl));
             if (index === 1) {
                 if (this.viewWidth === 0) {
@@ -573,7 +574,7 @@ export default class View extends Node {
             case NODE_ANDROID.LINEAR:
                 [[this.horizontal, this.inline, 'layout_width'], [!this.horizontal, true, 'layout_height']].forEach((value: [boolean, boolean, string]) => {
                     if (value[0] && value[1] && this.android(value[2]) !== 'wrap_content') {
-                        if (this.renderChildren.every(node => node.android('layout_height') === 'wrap_content')) {
+                        if (this.renderChildren.every(node => node.android(value[2]) === 'wrap_content')) {
                             this.android(value[2], 'wrap_content');
                         }
                     }

@@ -407,7 +407,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 template = parseTemplate(LAYERLIST_TMPL);
                                 data = {
                                     '0': [{
-                                        '1': false,
+                                        '1': [{
+                                            '2': false,
+                                            '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                            '4': false,
+                                            '5': false
+                                        }],
                                         '6': (image6.length > 0 ? image6 : false),
                                         '7': (image7.length > 0 ? image7 : false)
                                     }]
