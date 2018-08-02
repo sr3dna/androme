@@ -171,7 +171,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 let stringId = adjacent.stringId;
                                 const horizontal = (adjacent.constraint.horizontal ? AXIS_ANDROID.HORIZONTAL : '');
                                 const vertical = (adjacent.constraint.vertical ? AXIS_ANDROID.VERTICAL : '');
-                                const withinY = current.withinY(adjacent.linear);
+                                const intersectY = current.intersectY(adjacent.linear);
                                 if (constraint) {
                                     const parentAlign = (current.pageflow || node.viewHeight === 0 || node.viewWidth === 0);
                                     let contentAlign = false;
@@ -258,13 +258,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         const parentBottom = mapParent(current, 'bottom');
                                         const verticalOffset = (contentAlign ? SETTINGS.whitespaceVerticalOffset : 0);
                                         if (withinRange(linear1.top, linear2.bottom, verticalOffset)) {
-                                            if (withinY || !parentBottom) {
-                                                current.anchor(layoutMap['topBottom'], stringId, vertical, withinY);
+                                            if (intersectY || !parentBottom) {
+                                                current.anchor(layoutMap['topBottom'], stringId, vertical, intersectY);
                                             }
                                         }
                                         else if (withinRange(linear1.bottom, linear2.top, verticalOffset)) {
-                                            if (withinY || !parentTop) {
-                                                current.anchor(layoutMap['bottomTop'], stringId, vertical, withinY);
+                                            if (intersectY || !parentTop) {
+                                                current.anchor(layoutMap['bottomTop'], stringId, vertical, intersectY);
                                             }
                                         }
                                         if (current.pageflow === adjacent.pageflow) {
@@ -318,14 +318,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             }
                                         }
                                         if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                            current.anchor(layoutMap['topBottom'], stringId, vertical, withinY);
+                                            current.anchor(layoutMap['topBottom'], stringId, vertical, intersectY);
                                             if (adjacent.constraint.vertical) {
                                                 current.delete('android', relativeParent['bottom']);
                                             }
                                         }
                                         else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
                                             if (!mapParent(current, 'top')) {
-                                                current.anchor(layoutMap['bottomTop'], stringId, vertical, withinY);
+                                                current.anchor(layoutMap['bottomTop'], stringId, vertical, intersectY);
                                             }
                                         }
                                         if (adjacent.constraint.horizontal) {
@@ -744,17 +744,19 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                     }
                                                 }
                                             }
-                                            else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === AXIS_ANDROID.HORIZONTAL && (first.linear.left === node.box.left || last.linear.right === node.box.right))) {
+                                            else if ((maxOffset <= SETTINGS[`chainPacked${HV}Offset`] || node.flex.wrap !== 'nowrap') || (orientation === AXIS_ANDROID.HORIZONTAL && (withinFraction(node.box.left, first.linear.left) || withinFraction(last.linear.right, node.box.right)))) {
                                                 first.app(chainStyle, 'packed');
                                                 let bias = '';
-                                                if (withinFraction(node.box.left, first.linear.left)) {
-                                                    bias = '0';
+                                                if (orientation === AXIS_ANDROID.HORIZONTAL) {
+                                                    if (withinFraction(node.box.left, first.linear.left)) {
+                                                        bias = '0';
+                                                    }
+                                                    else if (withinFraction(last.linear.right, node.box.right)) {
+                                                        bias = '1';
+                                                    }
                                                 }
-                                                else if (withinFraction(last.linear.right, node.box.right)) {
-                                                    bias = '1';
-                                                }
-                                                else {
-                                                    bias = first[`${orientation}Bias`];
+                                                if (bias === '') {
+                                                    bias = chainable[`${orientation}Bias`];
                                                 }
                                                 first.app(`layout_constraint${HV}_bias`, bias);
                                             }
@@ -889,8 +891,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 nodes.anchors.forEach(item => deleteConstraints(item, opposite.stringId));
                                 if (withinRange(opposite.horizontalBias, 0.5, 0.01) && withinRange(opposite.verticalBias, 0.5, 0.01)) {
                                     this.setAlignParent(opposite);
-                                    node.constraint.layoutWidth = true;
-                                    node.constraint.layoutHeight = true;
                                 }
                                 else if (SETTINGS.useConstraintGuideline) {
                                     this.addGuideline(node, opposite);
@@ -952,8 +952,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
                                         deleteConstraints(current);
                                         current.android('layout_centerInParent', 'true');
-                                        current.constraint.horizontal = true;
-                                        current.constraint.vertical = true;
                                         return;
                                     }
                                     if (!current.constraint.horizontal) {
@@ -1000,7 +998,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             });
                         }
                         nodes.list.forEach(current => {
-                            [['left', 'right', 'leftRight', 'Width'], ['top', 'bottom', 'topBottom', 'Height']].forEach(value => {
+                            [['left', 'right', 'leftRight', 'Width', 'Horizontal'], ['top', 'bottom', 'topBottom', 'Height', 'Vertical']].forEach(value => {
                                 const lower = mapParent(current, value[0]);
                                 const upper = mapParent(current, value[1]);
                                 if (!lower && upper) {
@@ -1010,7 +1008,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                     }
                                     else {
-                                        if (node[`view${value[3]}`] > 0) {
+                                        if (node[`view${value[3]}`] > 0 && !current.constraint[`chain${value[4]}`]) {
                                             mapDelete(current, value[1]);
                                         }
                                     }
@@ -1044,44 +1042,6 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         }
                     }
                 });
-            }
-        });
-    }
-
-    public adjustBoxSpacing(data: ViewData<T>) {
-        data.cache.forEach(node => {
-            if (node.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
-                switch (node.android('orientation')) {
-                    case AXIS_ANDROID.HORIZONTAL:
-                        let left = node.box.left;
-                        sortAsc(node.renderChildren.slice(), 'linear.left').forEach((item, index) => {
-                            let valid = true;
-                            if (index === 0) {
-                                const gravity = node.android('gravity');
-                                if (gravity != null && gravity !== parseRTL('left')) {
-                                    valid = false;
-                                }
-                            }
-                            if (valid && !item.floating) {
-                                const width = Math.ceil(item.linear.left - left);
-                                if (width >= 1) {
-                                    item.modifyBox(BOX_STANDARD.MARGIN_LEFT, item.marginLeft + width, true);
-                                }
-                            }
-                            left = item.linear.right;
-                        });
-                        break;
-                    case AXIS_ANDROID.VERTICAL:
-                        let top = node.box.top;
-                        sortAsc(node.renderChildren.slice(), 'linear.top').forEach(item => {
-                            const height = Math.ceil(item.linear.top - top);
-                            if (height >= 1) {
-                                item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + height, true);
-                            }
-                            top = item.linear.bottom;
-                        });
-                        break;
-                }
             }
         });
     }

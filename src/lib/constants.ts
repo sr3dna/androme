@@ -38,9 +38,11 @@ export enum NODE_RESOURCE {
 export enum NODE_PROCEDURE {
     LAYOUT = 2,
     ALIGNMENT = 4,
-    CUSTOMIZATION = 16,
-    ACCESSIBILITY = 32,
-    ALL = 54
+    BOX_SPACING = 8,
+    LAYOUT_OPTIMIZE = 16,
+    CUSTOMIZATION = 32,
+    ACCESSIBILITY = 64,
+    ALL = 126
 }
 
 export enum BOX_STANDARD {

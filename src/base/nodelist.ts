@@ -17,7 +17,7 @@ export default abstract class NodeList<T extends Node> {
             if (nodes.length > 1) {
                 const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
                 const maxBottom = Math.max.apply(null, nodes.filter(node => withinRange(node.linear.top, minTop, offset)).map(node => node.linear.bottom));
-                return !nodes.some(node => !(node.linear.top >= minTop && node.linear.bottom <= maxBottom));
+                return nodes.every(node => node.linear.height > 0 && node.linear.top >= minTop && node.linear.bottom <= maxBottom);
             }
             return true;
         }

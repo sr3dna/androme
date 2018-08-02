@@ -88,11 +88,11 @@ export function averageInt(values: number[]) {
 }
 
 export function convertInt(value: any) {
-    return parseInt(value) || 0;
+    return (value && parseInt(value)) || 0;
 }
 
 export function convertFloat(value: any) {
-    return parseFloat(value) || 0;
+    return (value && parseFloat(value)) || 0;
 }
 
 export function convertPX(value: any) {

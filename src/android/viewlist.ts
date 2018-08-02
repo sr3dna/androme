@@ -24,16 +24,16 @@ export default class ViewList<T extends View> extends NodeList<T> {
 
     get horizontalBias() {
         if (this.parent != null && this.length > 0) {
-            const left = this.first.linear.left - this.parent.box.left;
-            const right = this.parent.box.right - this.last.linear.right;
+            const left = Math.max(0, this.first.linear.left - this.parent.box.left);
+            const right = Math.max(0, this.parent.box.right - this.last.linear.right);
             return calculateBias(left, right);
         }
         return 0.5;
     }
     get verticalBias() {
         if (this.parent != null && this.length > 0) {
-            const top = this.first.linear.top - this.parent.box.top;
-            const bottom = this.parent.box.bottom - this.last.linear.bottom;
+            const top = Math.max(0, this.first.linear.top - this.parent.box.top);
+            const bottom = Math.max(0, this.parent.box.bottom - this.last.linear.bottom);
             return calculateBias(top, bottom);
         }
         return 0.5;

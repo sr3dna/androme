@@ -3,7 +3,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { hasValue, convertCamelCase, includesEnum, isNumber, optional, resetId, sortAsc, trim } from '../lib/util';
+import { convertCamelCase, convertInt, formatPX, hasValue, includesEnum, isNumber, optional, resetId, sortAsc, trim } from '../lib/util';
 import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
 import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
@@ -66,13 +66,20 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ALIGNMENT)) {
                 node.setAlignment();
             }
+            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.BOX_SPACING)) {
+                node.adjustBoxSpacing();
+            }
         });
-        this.controllerHandler.adjustBoxSpacing(this.viewData);
+        this.cacheInternal.visible.forEach(node => {
+            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.LAYOUT_OPTIMIZE)) {
+                node.optimizeLayout();
+            }
+        });
         this.controllerHandler.setDimensions(this.viewData);
         this.insertAuxillaryViews();
         this.resourceHandler.finalize(this.viewData);
+        this.resourceHandler.filterStyles(this.viewData);
         if (SETTINGS.showAttributes) {
-            this.resourceHandler.filterStyles(this.viewData);
             this.setAttributes();
         }
         this.layouts.forEach(layout => {
@@ -318,47 +325,19 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                 }
             });
-            const parents: ObjectIndex<T[]> = {};
             const visible = this.cache.visible;
             visible.forEach(parent => {
                 visible.forEach(child => {
                     if (parent !== child) {
-                        if (child.element.parentElement === parent.element) {
+                        const parentElement = child.element.parentElement;
+                        if (parentElement === parent.element) {
                             child.parent = parent;
                             parent.children.push(child);
-                        }
-                        if (child.absolute && child.linear.left >= parent.box.left && child.linear.right <= parent.box.right && child.linear.top >= parent.box.top && child.linear.bottom <= parent.box.bottom) {
-                            if (parents[child.id] == null) {
-                                parents[child.id] = [];
-                            }
-                            parents[child.id].push(parent);
                         }
                     }
                 });
             });
             visible.forEach(node => {
-                const nodes: Set<T> = new Set(parents[node.id]);
-                if (nodes.size > 0) {
-                    nodes.add(<T> node.parent);
-                    let minArea = Number.MAX_VALUE;
-                    let closest: Null<T> = null;
-                    nodes.forEach(current => {
-                        const area = (node.linear.left - current.box.left) + (current.box.right - node.linear.right) + (node.linear.top - current.box.top) + (current.box.bottom - node.linear.bottom);
-                        if (area < minArea) {
-                            closest = current;
-                            minArea = area;
-                        }
-                        else if (area === minArea) {
-                            if (current.element === node.parent.element) {
-                                closest = current;
-                            }
-                        }
-                    });
-                    if (closest != null && node.parent !== closest) {
-                        node.parent.children = node.parent.children.filter(child => child !== node);
-                        node.parent = closest;
-                    }
-                }
                 const supportInline = this.controllerHandler.supportInline;
                 if (supportInline.length === 0 || node.children.some(item => item.children.length > 0 || !item.pageflow || !supportInline.includes(item.tagName))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
@@ -367,17 +346,19 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                     });
                 }
-                if (node.children.some(current => !current.pageflow && ((current.top < 0 && node.marginTop > 0) || (current.left < 0 && node.marginLeft > 0)))) {
+                if (node.children.some(current => !current.pageflow && ((convertInt(current.top) < 0 && convertInt(node.marginTop) > 0) || (convertInt(current.left) < 0 && convertInt(node.marginLeft) > 0)))) {
                     let marginTop = false;
                     let marginLeft = false;
                     node.children.forEach(current => {
                         if (!current.pageflow) {
-                            if (current.top < 0) {
-                                current.top += node.marginTop;
+                            const top = convertInt(current.top);
+                            const left = convertInt(current.left);
+                            if (top < 0) {
+                                current.css('top', formatPX(top + node.marginTop));
                                 marginTop = true;
                             }
-                            if (current.left < 0) {
-                                current.left += node.marginLeft;
+                            if (left < 0) {
+                                current.css('left', formatPX(left + node.marginLeft));
                                 marginLeft = true;
                             }
                         }
@@ -531,12 +512,17 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             const float = nodeY.float;
                             for (let l = k + 1; l < axisY.length; l++) {
                                 const adjacent = axisY[l];
-                                if (adjacent.pageflow && float === adjacent.float) {
+                                const previous = nodes[nodes.length - 1];
+                                if (!previous.inline && !adjacent.inline && !adjacent.floating) {
+                                    break;
+                                }
+                                const nextTo = adjacent[(float === 'right' ? 'toLeftOf' : 'toRightOf')](previous, SETTINGS.whitespaceHorizontalOffset);
+                                if ((adjacent.pageflow && float === adjacent.float) || nextTo) {
                                     nodes.push(adjacent);
                                     if (adjacent.element.nextSibling && (<Element> adjacent.element.nextSibling).tagName === 'BR') {
                                         break;
                                     }
-                                    else if ((!adjacent.inline && !adjacent.floating) || (nodes.every(item => item.hasElement) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset))) {
+                                    else if (!nextTo && ((!adjacent.inline && !adjacent.floating) || (nodes.every(item => item.hasElement) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)))) {
                                         nodes.pop();
                                         break;
                                     }

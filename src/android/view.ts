@@ -1,6 +1,7 @@
 import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { calculateBias, convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, generateId, hasValue, isPercent, lastIndexOf } from '../lib/util';
+import { calculateBias, convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, generateId, hasValue, isPercent, lastIndexOf, sortAsc } from '../lib/util';
+import { getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
@@ -292,7 +293,7 @@ export default class View extends Node {
                         this.android('layout_width', (contentWidth > this.viewWidth ? 'wrap_content' : convertPX(styleMap.width)));
                     }
                     else if (styleMap.width === 'auto') {
-                        this.android('layout_width', 'wrap_content', false);
+                        this.android('layout_width', (!this.inline && BLOCK_ELEMENT.includes(this.element.tagName) ? 'match_parent' : 'wrap_content'), false);
                     }
                 }
                 if (this.isSet('styleMap', 'minWidth') && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
@@ -484,6 +485,42 @@ export default class View extends Node {
         }
     }
 
+    public adjustBoxSpacing() {
+        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
+            switch (this.android('orientation')) {
+                case AXIS_ANDROID.HORIZONTAL:
+                    let left = this.box.left;
+                    sortAsc(this.renderChildren.slice(), 'linear.left').forEach((item, index) => {
+                        let valid = true;
+                        if (index === 0) {
+                            const gravity = this.android('gravity');
+                            if (gravity != null && gravity !== parseRTL('left')) {
+                                valid = false;
+                            }
+                        }
+                        if (valid && !item.floating) {
+                            const width = Math.ceil(item.linear.left - left);
+                            if (width >= 1) {
+                                item.modifyBox(BOX_STANDARD.MARGIN_LEFT, item.marginLeft + width, true);
+                            }
+                        }
+                        left = item.linear.right;
+                    });
+                    break;
+                case AXIS_ANDROID.VERTICAL:
+                    let top = this.box.top;
+                    sortAsc(this.renderChildren.slice(), 'linear.top').forEach(item => {
+                        const height = Math.ceil(item.linear.top - top);
+                        if (height >= 1) {
+                            item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + height, true);
+                        }
+                        top = item.linear.bottom;
+                    });
+                    break;
+            }
+        }
+    }
+
     public mergeBoxSpacing() {
         ['layout_margin', 'padding'].forEach((value, index) => {
             const leftRtl = parseRTL(`${value}Left`);
@@ -529,6 +566,20 @@ export default class View extends Node {
                 }
             }
         });
+    }
+
+    public optimizeLayout() {
+        switch (this.nodeName) {
+            case NODE_ANDROID.LINEAR:
+                [[this.horizontal, this.inline, 'layout_width'], [!this.horizontal, true, 'layout_height']].forEach((value: [boolean, boolean, string]) => {
+                    if (value[0] && value[1] && this.android(value[2]) !== 'wrap_content') {
+                        if (this.renderChildren.every(node => node.android('layout_height') === 'wrap_content')) {
+                            this.android(value[2], 'wrap_content');
+                        }
+                    }
+                });
+                break;
+        }
     }
 
     public setAccessibility() {
@@ -626,19 +677,18 @@ export default class View extends Node {
         this._documentParent = value;
     }
     get documentParent() {
+        const position = this.position;
         if (this._documentParent != null) {
             return (<T> this._documentParent);
         }
         else if (this.id === 0) {
             return this;
         }
-        else if (this.absolute) {
-            return (<T> this.parent);
-        }
-        else {
+        else if (position !== 'fixed') {
+            const absolute = (position === 'absolute');
             let parent: Null<HTMLElement> = this.element.parentElement;
             while (parent != null) {
-                const node: T = (<any> parent).__node;
+                const node: T = (!absolute || getStyle(parent).position !== 'static' ? (<any> parent).__node : null);
                 if (node != null) {
                     return node;
                 }
@@ -676,8 +726,8 @@ export default class View extends Node {
     get horizontalBias() {
         const parent = this.documentParent;
         if (parent !== this) {
-            const left = this.linear.left - parent.box.left;
-            const right = parent.box.right - this.linear.right;
+            const left = Math.max(0, this.linear.left - parent.box.left);
+            const right = Math.max(0, parent.box.right - this.linear.right);
             return calculateBias(left, right);
         }
         return 0.5;
@@ -685,8 +735,8 @@ export default class View extends Node {
     get verticalBias() {
         const parent = this.documentParent;
         if (parent !== this) {
-            const top = this.linear.top - parent.box.top;
-            const bottom = parent.box.bottom - this.linear.bottom;
+            const top = Math.max(0, this.linear.top - parent.box.top);
+            const bottom = Math.max(0, parent.box.bottom - this.linear.bottom);
             return calculateBias(top, bottom);
         }
         return 0.5;

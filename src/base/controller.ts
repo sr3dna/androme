@@ -14,7 +14,6 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
 
     public abstract addXmlNs(name: string, uri: string): void;
     public abstract setConstraints(): void;
-    public abstract adjustBoxSpacing(data: ViewData<T>): void;
     public abstract setDimensions(data: ViewData<T>): void;
     public abstract parseDimensions(content: string): string;
     public abstract setAttributes(data: ViewData<T>): void;

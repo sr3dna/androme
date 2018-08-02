@@ -1,7 +1,7 @@
 import { BoxModel, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
-import { convertInt, hasValue, convertCamelCase, includesEnum, search, formatPX } from '../lib/util';
-import { assignBounds, getRangeBounds, getStyle } from '../lib/dom';
-import { INLINE_ELEMENT, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_PROCEDURE } from '../lib/constants';
+import { convertInt, convertCamelCase, hasValue, includesEnum, search } from '../lib/util';
+import { assignBounds, getRangeBounds } from '../lib/dom';
+import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
 
@@ -65,6 +65,8 @@ export default abstract class Node implements BoxModel {
     public abstract setNodeId(viewName: string): void;
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
+    public abstract adjustBoxSpacing(): void;
+    public abstract optimizeLayout(): void;
     public abstract setAccessibility(): void;
     public abstract applyCustomizations(): void;
     public abstract modifyBox(area: number, offset: number): void;
@@ -228,6 +230,14 @@ export default abstract class Node implements BoxModel {
         }
     }
 
+    public toLeftOf(node: T, offset: number) {
+        return this.withinX(node.linear) && (node.linear.left + offset <= this.linear.right);
+    }
+
+    public toRightOf(node: T, offset: number) {
+        return this.withinX(node.linear) && (node.linear.right + offset >= this.linear.left);
+    }
+
     public intersect(rect: ClientRect, dimension = 'linear') {
         const top = (rect.top > this[dimension].top && rect.top < this[dimension].bottom);
         const right = (rect.right > this[dimension].left && rect.right < this[dimension].right);
@@ -236,7 +246,7 @@ export default abstract class Node implements BoxModel {
         return (top && (left || right)) || (bottom && (left || right));
     }
 
-    public withinX(rect: ClientRect, dimension = 'linear') {
+    public intersectX(rect: ClientRect, dimension = 'linear') {
         return (
             (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
             (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
@@ -245,13 +255,21 @@ export default abstract class Node implements BoxModel {
         );
     }
 
-    public withinY(rect: ClientRect, dimension = 'linear') {
+    public intersectY(rect: ClientRect, dimension = 'linear') {
         return (
             (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
             (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
             (this[dimension].left >= rect.left && this[dimension].right <= rect.right) ||
             (rect.left >= this[dimension].left && rect.right <= this[dimension].right)
         );
+    }
+
+    public withinX(rect: ClientRect, dimension = 'linear') {
+        return (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom) || (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom);
+    }
+
+    public withinY(rect: ClientRect, dimension = 'linear') {
+        return (rect.left >= this[dimension].left && rect.left <= this[dimension].right) || (this[dimension].left >= rect.left && this[dimension].right <= rect.right);
     }
 
     public css(attr: string, value = ''): string {
@@ -497,29 +515,21 @@ export default abstract class Node implements BoxModel {
         return this.css('display') || '';
     }
 
-    set top(value) {
-        this.css('top', formatPX(value));
-    }
     get top() {
-        return convertInt(this.css('top'));
-    }
-    set right(value) {
-        this.css('right', formatPX(value));
+        const top = this.css('top');
+        return (!hasValue(top) || top === 'auto' ? null : convertInt(top));
     }
     get right() {
-        return convertInt(this.css('right'));
-    }
-    set bottom(value) {
-        this.css('bottom', formatPX(value));
+        const right = this.css('right');
+        return (!hasValue(right) || right === 'auto' ? null : convertInt(right));
     }
     get bottom() {
-        return convertInt(this.css('bottom'));
-    }
-    set left(value) {
-        this.css('left', formatPX(value));
+        const bottom = this.css('bottom');
+        return (!hasValue(bottom) || bottom === 'auto' ? null : convertInt(bottom));
     }
     get left() {
-        return convertInt(this.css('left'));
+        const left = this.css('left');
+        return (!hasValue(left) || left === 'auto' ? null : convertInt(left));
     }
 
     get marginTop() {
@@ -577,14 +587,13 @@ export default abstract class Node implements BoxModel {
         return convertInt(node.css('paddingLeft'));
     }
 
-    get pageflow() {
-        const position = this.css('position');
-        return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && this.top === 0 && this.right === 0 && this.bottom === 0 && this.left === 0));
+    get position() {
+        return this.css('position');
     }
 
-    get absolute() {
-        const position = this.css('position');
-        return (position === 'fixed' || (position === 'absolute' && getStyle(this.parentElement).position !== 'relative'));
+    get pageflow() {
+        const position = this.position;
+        return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && !this.top && !this.right && !this.bottom && !this.left) || (this.top == null && this.right == null && this.bottom == null && this.left == null));
     }
 
     get inline() {

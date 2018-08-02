@@ -249,7 +249,7 @@ Using "target" into a ConstraintLayout or RelativeLayout view will not include a
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
 
 ```xml
-<div data-exclude-procedure="LAYOUT | ALIGNMENT | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
+<div data-exclude-procedure="LAYOUT | ALIGNMENT | BOX_SPACING | LAYOUT_OPTIMIZE | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
 <div>
     <span data-exclude-resource="FONT_STYLE">content</span>
     <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>
