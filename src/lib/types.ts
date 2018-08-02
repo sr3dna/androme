@@ -94,6 +94,11 @@ export interface Flexbox {
     order: number;
 }
 
+export interface BasicData {
+    name: string;
+    value: string;
+}
+
 export interface BorderAttribute {
     style: string;
     width: string;
@@ -107,6 +112,20 @@ export interface FontAttribute {
     fontWeight: string;
     color: string[] | string;
     backgroundColor: string[] | string;
+}
+
+export interface BoxStyle {
+    border?: BorderAttribute;
+    borderTop: BorderAttribute;
+    borderRight: BorderAttribute;
+    borderBottom: BorderAttribute;
+    borderLeft: BorderAttribute;
+    borderRadius: string[];
+    backgroundColor: string[] | string;
+    backgroundImage: string;
+    backgroundSize: string[];
+    backgroundRepeat: string;
+    backgroundPosition: string;
 }
 
 export interface PlainFile {

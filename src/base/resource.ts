@@ -1,8 +1,8 @@
-import { BorderAttribute, FontAttribute, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
+import { BorderAttribute, BoxStyle, FontAttribute, Null, ResourceMap, ViewData } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertPX, hasValue, includesEnum, isNumber } from '../lib/util';
+import { convertPX, hasValue, includesEnum, isNumber, formatPX } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 import { getBoxSpacing, sameAsParent, hasFreeFormText } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
@@ -86,17 +86,18 @@ export default abstract class Resource<T extends Node> {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
                 const element = node.element;
                 const object: any = element;
-                if (!hasValue(object.__boxSpacing) || SETTINGS.alwaysReevaluateResources) {
-                    const result: any = getBoxSpacing(element);
+                if (object.__boxSpacing == null || SETTINGS.alwaysReevaluateResources) {
+                    const result = getBoxSpacing(element);
+                    const formatted = {};
                     for (const i in result) {
                         if (node.inline && (i === 'marginTop' || i === 'marginBottom')) {
-                            result[i] = '0px';
+                            formatted[i] = '0px';
                         }
                         else {
-                            result[i] += 'px';
+                            formatted[i] = formatPX(result[i]);
                         }
                     }
-                    object.__boxSpacing = result;
+                    object.__boxSpacing = formatted;
                 }
             }
         });
@@ -107,8 +108,8 @@ export default abstract class Resource<T extends Node> {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
                 const element = node.element;
                 const object: any = element;
-                if (!hasValue(object.__boxStyle) || SETTINGS.alwaysReevaluateResources) {
-                    const result: ObjectMap<any> = {
+                if (object.__boxStyle == null || SETTINGS.alwaysReevaluateResources) {
+                    let result: any = {
                         borderTop: this.parseBorderStyle,
                         borderRight: this.parseBorderStyle,
                         borderBottom: this.parseBorderStyle,
@@ -125,6 +126,7 @@ export default abstract class Resource<T extends Node> {
                             result[i] = result[i](node.css(i), node, i);
                         }
                     }
+                    result = (<BoxStyle> result as BoxStyle);
                     if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(element, 'backgroundColor')))) {
                         result.backgroundColor = [];
                     }
@@ -143,7 +145,7 @@ export default abstract class Resource<T extends Node> {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
                 const element = node.element;
                 const object: any = element;
-                if (!hasValue(object.__fontStyle) || SETTINGS.alwaysReevaluateResources) {
+                if (object.__fontStyle == null || SETTINGS.alwaysReevaluateResources) {
                     if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
                         return;
                     }
@@ -153,7 +155,7 @@ export default abstract class Resource<T extends Node> {
                             color = [];
                         }
                         let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                        if (backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')))) {
+                        if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> object.__boxStyle) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')))) {
                             backgroundColor = [];
                         }
                         let fontWeight = (<string> node.css('fontWeight'));
@@ -192,7 +194,7 @@ export default abstract class Resource<T extends Node> {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
                 const element = (<HTMLSelectElement> node.element);
                 const object: any = element;
-                if (!hasValue(object.__optionArray) || SETTINGS.alwaysReevaluateResources) {
+                if (object.__optionArray == null || SETTINGS.alwaysReevaluateResources) {
                     const stringArray: string[] = [];
                     let numberArray: Null<string[]> = [];
                     for (let i = 0; i < element.children.length; i++) {
@@ -225,7 +227,7 @@ export default abstract class Resource<T extends Node> {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const element = (<HTMLInputElement> node.element);
                 const object: any = element;
-                if (!hasValue(object.__valueString) || SETTINGS.alwaysReevaluateResources) {
+                if (object.__valueString == null || SETTINGS.alwaysReevaluateResources) {
                     let name = '';
                     let value = '';
                     let inlineTrim = false;
@@ -294,7 +296,7 @@ export default abstract class Resource<T extends Node> {
                         }
                     }
                     if (value !== '') {
-                        object.__valueString = { value, name };
+                        object.__valueString = { name, value };
                     }
                 }
             }
@@ -303,6 +305,10 @@ export default abstract class Resource<T extends Node> {
 
     protected borderVisible(border: BorderAttribute) {
         return (border != null && !(border.style === 'none' || border.width === '0px'));
+    }
+
+    protected hasDrawableBackground(object: BoxStyle) {
+        return (object && (this.borderVisible(object.borderTop) || this.borderVisible(object.borderRight) || this.borderVisible(object.borderBottom) || this.borderVisible(object.borderLeft) || object.backgroundImage !== '' || object.borderRadius.length > 0));
     }
 
     protected getBorderStyle(border: BorderAttribute) {

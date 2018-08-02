@@ -1,4 +1,4 @@
-import { ArrayIndex, BorderAttribute, FontAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, BasicData, BorderAttribute, BoxStyle, FontAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -281,7 +281,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setBoxSpacing();
         this.cache.elements.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
-                const stored = (<any> node.element).__boxSpacing;
+                const stored: StringMap = (<any> node.element).__boxSpacing;
                 if (stored != null) {
                     const method = METHOD_ANDROID['boxSpacing'];
                     for (const attr in stored) {
@@ -300,7 +300,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
                 const element = node.element;
                 const object: any = element;
-                const stored = object.__boxStyle;
+                const stored: BoxStyle = object.__boxStyle;
                 if (stored != null) {
                     if (stored.backgroundColor && stored.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
@@ -314,7 +314,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const method = METHOD_ANDROID['boxStyle'];
                     const companion = node.companion;
                     if (companion && !sameAsParent(companion.element, 'backgroundColor')) {
-                         const boxStyle = (<any> companion.element).__boxStyle;
+                         const boxStyle: BoxStyle = (<any> companion.element).__boxStyle;
                          if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
                             stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                          }
@@ -403,7 +403,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     shape['5'].push(borderRadius);
                                 }
                             }
-                            else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.size === '0px')) {
+                            else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.width === '0px')) {
                                 template = parseTemplate(LAYERLIST_TMPL);
                                 data = {
                                     '0': [{
@@ -532,7 +532,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
                     }
                     else if (object.__fontStyle == null && stored.backgroundColor.length > 0) {
-                        node.attr(formatString(method['backgroundColor'], stored.backgroundColor), (node.renderExtension == null));
+                        node.attr(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension == null));
                     }
                 }
             }
@@ -646,11 +646,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const element = (<HTMLImageElement> node.element);
             const object: any = element;
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
-                if (!hasValue(object.__imageSource) || SETTINGS.alwaysReevaluateResources) {
+                if (object.__imageSource == null || SETTINGS.alwaysReevaluateResources) {
                     const result = (node.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
-                    const method = METHOD_ANDROID['imageSource'];
-                    node.attr(formatString(method['src'], result), (node.renderExtension == null));
-                    object.__imageSource = result;
+                    if (result !== '') {
+                        const method = METHOD_ANDROID['imageSource'];
+                        node.attr(formatString(method['src'], result), (node.renderExtension == null));
+                        object.__imageSource = result;
+                    }
                 }
             }
         });
@@ -661,30 +663,32 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
                 const stored: ObjectMap<string[]> = (<any> node.element).__optionArray;
-                const method = METHOD_ANDROID['optionArray'];
-                let result: string[] = [];
-                if (stored.stringArray != null) {
-                    result = stored.stringArray.map(value => {
-                        value = ResourceView.addString(value);
-                        return (value !== '' ? `@string/${value}` : '');
-                    }).filter(value => value);
-                }
-                if (stored.numberArray != null) {
-                    result = stored.numberArray;
-                }
-                let arrayName = '';
-                const arrayValue = result.join('-');
-                for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
-                    if (arrayValue === storedResult.join('-')) {
-                        arrayName = storedName;
-                        break;
+                if (stored != null) {
+                    const method = METHOD_ANDROID['optionArray'];
+                    let result: string[] = [];
+                    if (stored.stringArray != null) {
+                        result = stored.stringArray.map(value => {
+                            value = ResourceView.addString(value);
+                            return (value !== '' ? `@string/${value}` : '');
+                        }).filter(value => value);
                     }
+                    if (stored.numberArray != null) {
+                        result = stored.numberArray;
+                    }
+                    let arrayName = '';
+                    const arrayValue = result.join('-');
+                    for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
+                        if (arrayValue === storedResult.join('-')) {
+                            arrayName = storedName;
+                            break;
+                        }
+                    }
+                    if (arrayName === '') {
+                        arrayName = `${node.nodeId}_array`;
+                        Resource.STORED.ARRAYS.set(arrayName, result);
+                    }
+                    node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
                 }
-                if (arrayName === '') {
-                    arrayName = `${node.nodeId}_array`;
-                    Resource.STORED.ARRAYS.set(arrayName, result);
-                }
-                node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
             }
         });
     }
@@ -693,27 +697,29 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setValueString(supportInline);
         this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
-                const stored = (<any> node.element).__valueString;
+                const stored: BasicData = (<any> node.element).__valueString;
                 if (stored != null) {
                     const result = ResourceView.addString(stored.value, stored.name);
-                    const method = METHOD_ANDROID['valueString'];
-                    let value = (<string> Resource.STORED.STRINGS.get(result));
-                    if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
-                        const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
-                        if (match != null) {
-                            switch (match[0]) {
-                                case 'underline':
-                                    value = `<u>${value}</u>`;
-                                    break;
-                                case 'line-through':
-                                    value = `<strike>${value}</strike>`;
-                                    break;
+                    if (result !== '') {
+                        const method = METHOD_ANDROID['valueString'];
+                        let value = (<string> Resource.STORED.STRINGS.get(result));
+                        if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
+                            const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
+                            if (match != null) {
+                                switch (match[0]) {
+                                    case 'underline':
+                                        value = `<u>${value}</u>`;
+                                        break;
+                                    case 'line-through':
+                                        value = `<strike>${value}</strike>`;
+                                        break;
+                                }
+                                Resource.STORED.STRINGS.set(result, value);
                             }
-                            Resource.STORED.STRINGS.set(result, value);
                         }
-                    }
-                    if (!node.hasElement || convertInt(node.css('textIndent')) > -(node.linear.width / 2)) {
-                        node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
+                        if (!node.hasElement || convertInt(node.css('textIndent')) > -(node.linear.width / 2)) {
+                            node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
+                        }
                     }
                 }
             }

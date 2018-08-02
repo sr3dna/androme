@@ -131,9 +131,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public setResources() {
+        this.resourceHandler.setBoxStyle();
         this.resourceHandler.setFontStyle();
         this.resourceHandler.setBoxSpacing();
-        this.resourceHandler.setBoxStyle();
         this.resourceHandler.setValueString(this.controllerHandler.supportInline);
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();

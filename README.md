@@ -1202,7 +1202,6 @@ The attributes "include" and "include-end" can only be applied to elements which
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Button">
-        <item name="android:background">@color/white_smoke_1</item>
         <item name="android:fontFamily">arial</item>
         <item name="android:textSize">10sp</item>
     </style>
@@ -1210,7 +1209,6 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item name="android:textColor">@color/gray</item>
     </style>
     <style name="H2">
-        <item name="android:background">@color/dark_blue</item>
         <item name="android:fontFamily">tahoma</item>
         <item name="android:fontWeight">700</item>
         <item name="android:textColor">@color/white</item>
