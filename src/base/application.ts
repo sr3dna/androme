@@ -511,7 +511,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 if (!axisY.some(node => node.multiLine)) {
                     axisY.sort((a, b) => {
                         if (!a.parent.flex.enabled && !b.parent.flex.enabled) {
-                            if (a.withinX(b.linear)) {
+                            if (a.intersectX(b.linear)) {
                                 return (a.linear.left <= b.linear.left ? -1 : 1);
                             }
                             else {
@@ -645,7 +645,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;
                                 if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.children.every(node => node.inline && node.children.length === 0 && supportInline.includes(node.tagName)))) {
-                                    if (hasFreeFormText(nodeY.element) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.tagName))) {
+                                    if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.tagName))) {
                                         xml += this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
                                     else {

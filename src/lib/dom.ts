@@ -93,8 +93,27 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
     return result;
 }
 
-export function hasFreeFormText(element: HTMLElement) {
-    return (element && element.childNodes && Array.from(element.childNodes).some((item: HTMLElement) => item.nodeName === '#text' && optional(item, 'textContent').trim() !== ''));
+export function hasFreeFormText(element: HTMLElement, maxDepth = 0) {
+    let valid = false;
+    let depth = 0;
+    function findFreeForm(elements: any[]) {
+        return elements.some((item: HTMLElement) => {
+            if (item.nodeName === '#text' && optional(item, 'textContent').trim() !== '') {
+                valid = true;
+                return true;
+            }
+            else if (item.childNodes && item.childNodes.length > 0) {
+                depth++;
+                return findFreeForm(Array.from(item.childNodes));
+            }
+            if (depth === maxDepth) {
+                return true;
+            }
+            return false;
+        });
+    }
+    findFreeForm(Array.from(element.childNodes));
+    return valid;
 }
 
 export function isVisible(element: HTMLElement) {

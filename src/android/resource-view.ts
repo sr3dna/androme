@@ -287,7 +287,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const method = METHOD_ANDROID['boxSpacing'];
                     for (const attr in stored) {
                         if (stored[attr] !== '0px') {
-                            node.attr(formatString(parseRTL(method[attr]), stored[attr]), (node.renderExtension == null));
+                            node.attr(formatString(parseRTL(method[attr]), node.styleMap[attr] || stored[attr]), (node.renderExtension == null));
                         }
                     }
                 }
@@ -372,17 +372,15 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             case 'no-repeat':
                                 tileMode = 'disabled';
                                 break;
-                            default:
-                                tileMode = 'repeat';
                         }
                         const image6: ArrayIndex<StringMap> = [];
                         const image7: ArrayIndex<StringMap> = [];
                         if (stored.backgroundImage !== '') {
-                            if (stored.backgroundSize.length > 0) {
-                                image6[0] = { image: stored.backgroundImage, width: stored.backgroundSize[0], height: stored.backgroundSize[1] };
+                            if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
+                                image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
                             }
                             else {
-                                image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
+                                image6[0] = { image: stored.backgroundImage, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') };
                             }
                         }
                         const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');

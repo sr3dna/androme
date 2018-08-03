@@ -262,8 +262,8 @@ export default abstract class Resource<T extends Node> {
                     }
                     else if (node.hasElement) {
                         if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[item.tagName] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
-                            name = element.innerText.trim();
-                            value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText);
+                            name = (element.innerText || element.textContent || '').trim();
+                            value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
                             switch (node.css('whiteSpace')) {
                                 case 'nowrap':
                                     value = value.replace(/\n/g, ' ');

@@ -520,19 +520,19 @@ export default abstract class Node implements BoxModel {
     }
 
     get top() {
-        const top = this.css('top');
+        const top = this.styleMap.top;
         return (!hasValue(top) || top === 'auto' ? null : convertInt(top));
     }
     get right() {
-        const right = this.css('right');
+        const right = this.styleMap.right;
         return (!hasValue(right) || right === 'auto' ? null : convertInt(right));
     }
     get bottom() {
-        const bottom = this.css('bottom');
+        const bottom = this.styleMap.bottom;
         return (!hasValue(bottom) || bottom === 'auto' ? null : convertInt(bottom));
     }
     get left() {
-        const left = this.css('left');
+        const left = this.styleMap.left;
         return (!hasValue(left) || left === 'auto' ? null : convertInt(left));
     }
 

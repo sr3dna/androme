@@ -27,7 +27,7 @@ export default class View extends Node {
 
     private static _documentBody: T;
 
-    public constraint: ObjectMap<any> = {};
+    public constraint: ObjectMap<any> = { current: {} };
     public children: T[] = [];
     public renderChildren: T[] = [];
 
@@ -82,25 +82,28 @@ export default class View extends Node {
     }
 
     public anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean) {
-        if (overwrite == null) {
-            overwrite = (adjacent === 'parent' || adjacent === 'true');
-        }
-        switch (this.renderParent.nodeName) {
-            case NODE_ANDROID.CONSTRAINT:
-                if (arguments.length === 1) {
-                    return this.app(position);
-                }
-                this.app(position, adjacent, overwrite);
-                break;
-            case NODE_ANDROID.RELATIVE:
-                if (arguments.length === 1) {
-                    return this.android(position);
-                }
-                this.android(position, adjacent, overwrite);
-                break;
-        }
-        if (hasValue(orientation)) {
-            this.constraint[<string> orientation] = true;
+        if (arguments.length === 1 || this.constraint.current[position] == null || !this.constraint.current[position].overwrite || (!this.constraint[<string> orientation] && hasValue(orientation))) {
+            if (overwrite == null) {
+                overwrite = (adjacent === 'parent' || adjacent === 'true');
+            }
+            switch (this.renderParent.nodeName) {
+                case NODE_ANDROID.CONSTRAINT:
+                    if (arguments.length === 1) {
+                        return this.app(position);
+                    }
+                    this.app(position, adjacent, overwrite);
+                    break;
+                case NODE_ANDROID.RELATIVE:
+                    if (arguments.length === 1) {
+                        return this.android(position);
+                    }
+                    this.android(position, adjacent, overwrite);
+                    break;
+            }
+            if (hasValue(orientation)) {
+                this.constraint[<string> orientation] = true;
+            }
+            this.constraint.current[position] = { adjacent, orientation, overwrite };
         }
     }
 
@@ -443,7 +446,7 @@ export default class View extends Node {
         if (renderParent.tagName === 'TABLE') {
             this.android('layout_gravity', 'fill');
         }
-        else {
+        else if (!renderParent.inlineWrap) {
             let horizontalFloat = '';
             let verticalFloat = '';
             if (!constraintRight) {
@@ -482,6 +485,9 @@ export default class View extends Node {
             if ((marginLeft === 'auto' && marginRight === 'auto') || (this.is(NODE_STANDARD.LINE) && marginLeft !== '0px' && marginLeft === marginRight && marginLeft === margin[1])) {
                 this.android('layout_gravity', 'center_horizontal');
             }
+        }
+        if (this.css('visibility') === 'hidden') {
+            this.android('visibility', 'invisible');
         }
     }
 
