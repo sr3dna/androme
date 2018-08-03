@@ -336,28 +336,15 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                     });
                 }
-                if (node.children.some(current => current.float !== 'right' && ((current.marginTop < 0 && node.marginTop >= Math.abs(current.marginTop)) || (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)))) || node.children.some(current => !current.pageflow && ((convertInt(current.top) < 0 && node.marginTop >= Math.abs(convertInt(current.top))) || (convertInt(current.left) < 0 && node.marginLeft >= Math.abs(convertInt(current.left)))))) {
-                    const marginTop: number[] = [];
+                if (node.children.some(current => current.float !== 'right' && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft))) || node.children.some(current => !current.pageflow && (convertInt(current.left) < 0 && node.marginLeft >= Math.abs(convertInt(current.left))))) {
                     const marginLeft: number[] = [];
                     node.children.forEach(current => {
-                        let top = current.marginTop;
                         let left = current.marginLeft;
-                        let topType = 0;
                         let leftType = 0;
-                        if (top < 0 && node.marginTop >= top) {
-                            topType = 1;
-                        }
                         if (left < 0 && node.marginLeft >= left) {
                             leftType = 1;
                         }
                         if (!current.pageflow) {
-                            if (topType === 0) {
-                                top = convertInt(current.top);
-                                if (top < 0 && node.marginTop >= top) {
-                                    current.css('top', formatPX(top + node.marginTop));
-                                    topType = 2;
-                                }
-                            }
                             if (leftType === 0) {
                                 left = convertInt(current.left);
                                 if (left < 0 && node.marginLeft >= left) {
@@ -366,23 +353,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 }
                             }
                         }
-                        marginTop.push(topType);
                         marginLeft.push(leftType);
                     });
-                    const marginTopType = Math.max.apply(null, marginTop);
                     const marginLeftType = Math.max.apply(null, marginLeft);
                     node.children.forEach((current, index) => {
-                        if (marginTopType && marginTop[index] !== 2 && ((marginTopType === 1 && marginTop[index] === 1) || marginTopType === 2)) {
-                            current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + node.marginTop);
-                        }
                         if (marginLeftType && marginLeft[index] !== 2 && ((marginLeftType === 1 && marginLeft[index] === 1) || marginLeftType === 2)) {
                             current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft);
                         }
                     });
-                    if (marginTopType) {
-                        node.box.top -= node.marginTop;
-                        node.css('marginTop', '0px');
-                    }
                     if (marginLeftType) {
                         node.box.left -= node.marginLeft;
                         node.css('marginLeft', '0px');
@@ -501,11 +479,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 const axisY: T[] = [];
                 const layers: T[] = [];
                 for (const node of (<T[]> mapY[i][coordsY[j]])) {
-                    if (node.pageflow) {
-                        axisY.push(node);
+                    if (!node.pageflow && convertInt(node.css('zIndex')) > 0) {
+                        layers.push(node);
                     }
                     else {
-                        layers.push(node);
+                        axisY.push(node);
                     }
                 }
                 if (!axisY.some(node => node.multiLine)) {

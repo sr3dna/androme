@@ -6,7 +6,7 @@ import View from './view';
 import ViewGroup from './viewgroup';
 import ViewList from './viewlist';
 import { capitalize, convertPX, formatPX, hasValue, includesEnum, indexOf, isPercent, repeat, same, search, sortAsc, withinFraction, withinRange, convertInt } from '../lib/util';
-import { formatDimen, generateId, replaceDP, resetId, stripId } from './lib/util';
+import { delimitDimen, generateId, replaceDP, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
 import { removePlaceholders, replaceTab } from '../lib/xml';
 import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD } from '../lib/constants';
@@ -1019,7 +1019,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         degrees = (center1.x > center2.x ? 90 : 270);
                                     }
                                     opposite.app('layout_constraintCircle', adjacent.stringId);
-                                    opposite.app('layout_constraintCircleRadius', formatDimen(`${opposite.tagName}`, 'constraintcircleradius', formatPX(radius)));
+                                    opposite.app('layout_constraintCircleRadius', delimitDimen(`${opposite.tagName}`, 'constraintcircleradius', formatPX(radius)));
                                     opposite.app('layout_constraintCircleAngle', degrees.toString());
                                     opposite.constraint.horizontal = true;
                                     opposite.constraint.vertical = true;
@@ -1351,13 +1351,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         }
         if (hasValue(width)) {
             if (!isNaN(parseInt(width))) {
-                width = formatDimen(tagName, 'width', width);
+                width = delimitDimen(tagName, 'width', width);
             }
             node.android('layout_width', width);
         }
         if (hasValue(height)) {
             if (!isNaN(parseInt(height))) {
-                height = formatDimen(tagName, 'height', height);
+                height = delimitDimen(tagName, 'height', height);
             }
             node.android('layout_height', height);
         }
@@ -1426,7 +1426,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             let name = dimen;
             if (arguments.length === 5) {
                 if (value && /(px|dp|sp)$/.test(value)) {
-                    name = `${dimen}-${attr}-${value}`;
+                    name = `${dimen},${attr},${value}`;
                 }
                 else {
                     return;
@@ -1448,7 +1448,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 for (const key of Object.keys(BOX_STANDARD)) {
                     const result = node.boxValue(parseInt(key));
                     if (result[0] !== '' && result[1] !== '0px') {
-                        const name = `${BOX_STANDARD[key].toLowerCase()}-${result[0]}-${result[1]}`;
+                        const name = `${BOX_STANDARD[key].toLowerCase()},${result[0]},${result[1]}`;
                         addToGroup(tagName, node, name);
                     }
                 }
@@ -1468,7 +1468,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
             for (const tagName in groups) {
                 const group: ObjectMap<T[]> = groups[tagName];
                 for (const name in group) {
-                    const [dimen, attr, value] = name.split('-');
+                    const [dimen, attr, value] = name.split(',');
                     const key = this.getDimenResourceKey(resource, `${tagName}_${parseRTL(dimen)}`, value);
                     group[name].forEach(node => node[(attr.indexOf('constraint') !== -1 ? 'app' : 'android')](attr, `@dimen/${key}`));
                     resource.set(key, value);
@@ -1479,7 +1479,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     public parseDimensions(content: string) {
         const resource = (<Map<string, string>> Resource.STORED.DIMENS);
-        const pattern = /\s+\w+:\w+="({%(\w+)-(\w+)-(\w+)})"/g;
+        const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(\w+)})"/g;
         let match: Null<RegExpExecArray>;
         while ((match = pattern.exec(content)) != null) {
             const key = this.getDimenResourceKey(resource, `${match[2]}_${parseRTL(match[3])}`, match[4]);
@@ -1631,7 +1631,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     },
                     app: {
                         [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
-                                                 : formatDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node.linear[LRTB] - parent.box[RLBT] : node.linear[LRTB] - parent.box[LRTB]))))
+                                                 : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node.linear[LRTB] - parent.box[RLBT] : node.linear[LRTB] - parent.box[LRTB]))))
                     }
                 };
                 const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');

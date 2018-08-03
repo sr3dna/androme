@@ -6,7 +6,7 @@ import View from '../../view';
 import ViewList from '../../viewlist';
 import { convertPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
-import { formatDimen, stripId } from '../../lib/util';
+import { delimitDimen, stripId } from '../../lib/util';
 import { getStyle } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
@@ -163,7 +163,7 @@ export default class Toolbar extends Extension<T, U> {
         let collapsingToolbarNode: Null<T> = null;
         if (appBar) {
             overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? formatDimen('appbar', 'height', convertPX(node.viewHeight)) : 'wrap_content'));
+            overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? delimitDimen('appbar', 'height', convertPX(node.viewHeight)) : 'wrap_content'));
             if (collapsingToolbar) {
                 overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             }

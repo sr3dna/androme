@@ -1,7 +1,7 @@
 import { ExtensionResult } from '../../extension/lib/types';
 import List from '../../extension/list';
 import View from '../view';
-import { formatDimen } from '../lib/util';
+import { delimitDimen } from '../lib/util';
 import { NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
@@ -24,7 +24,7 @@ export default class ListAndroid<T extends View> extends List {
                         android: {
                             gravity: parseRTL('right'),
                             layout_columnWeight: '0',
-                            [parseRTL('layout_marginRight')]: formatDimen(node.tagName, parseRTL('margin_right'), '8px'),
+                            [parseRTL('layout_marginRight')]: delimitDimen(node.tagName, parseRTL('margin_right'), '8px'),
                             text: (listStyle !== '0' ? listStyle : '')
                         }
                     },

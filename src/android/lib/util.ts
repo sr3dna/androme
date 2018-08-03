@@ -1,5 +1,4 @@
 import { ObjectMap } from '../.././lib/types';
-
 import { convertPX, hasValue } from '../../lib/util';
 import SETTINGS from '../../settings';
 
@@ -51,8 +50,8 @@ export function convertDP(value: any, dpi = 160, font = false) {
     return '0dp';
 }
 
-export function formatDimen(tagName: string, attr: string, size: string) {
-    return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()}-${attr}-${size}}` : size);
+export function delimitDimen(tagName: string, attr: string, size: string) {
+    return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()},${attr},${size}}` : size);
 }
 
 export function replaceDP(value: string, font = false) {
