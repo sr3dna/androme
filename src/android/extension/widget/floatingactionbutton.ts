@@ -1,4 +1,4 @@
-import { ExtensionResult } from '../../../lib/types';
+import { ExtensionResult } from '../../../extension/lib/types';
 import Button from '../../../extension/button';
 import ResourceView from '../../resource-view';
 import View from '../../view';

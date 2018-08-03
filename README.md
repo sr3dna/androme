@@ -97,6 +97,7 @@ androme.settings = {
     collapseUnattributedElements: false,
     horizontalPerspective: true,
     linearHorizontalTopOffset: 4,
+    constraintPercentAccuracy: 4, // eq: 1px
     whitespaceHorizontalOffset: 4, // Chrome/Safari: 3.5 | Edge:  3.5 | Firefox:  3
     whitespaceVerticalOffset: 14,  //                 13 |       13.3 |          15
     chainPackedHorizontalOffset: 4,
@@ -249,7 +250,7 @@ Using "target" into a ConstraintLayout or RelativeLayout view will not include a
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
 
 ```xml
-<div data-exclude-procedure="LAYOUT | ALIGNMENT | BOX_SPACING | LAYOUT_OPTIMIZE | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
+<div data-exclude-procedure="LAYOUT | ALIGNMENT | OPTIMIZE | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
 <div>
     <span data-exclude-resource="FONT_STYLE">content</span>
     <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>
@@ -1280,14 +1281,14 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="button_margin_start_1">8dp</dimen>
     <dimen name="button_minheight">25dp</dimen>
     <dimen name="button_minwidth">35dp</dimen>
-    <dimen name="button_padding_horizontal">8dp</dimen>
-    <dimen name="button_padding_vertical">3dp</dimen>
+    <dimen name="button_padding_horizontal">10dp</dimen>
+    <dimen name="button_padding_vertical">5dp</dimen>
     <dimen name="checkbox_margin_end">3dp</dimen>
     <dimen name="checkbox_margin_start">6dp</dimen>
     <dimen name="div_margin_start">4dp</dimen>
-    <dimen name="form_padding_horizontal">11dp</dimen>
-    <dimen name="form_padding_vertical">6dp</dimen>
-    <dimen name="h2_padding">9dp</dimen>
+    <dimen name="form_padding_horizontal">12dp</dimen>
+    <dimen name="form_padding_vertical">7dp</dimen>
+    <dimen name="h2_padding">10dp</dimen>
     <dimen name="hr_height">1dp</dimen>
     <dimen name="hr_margin_horizontal">27dp</dimen>
     <dimen name="hr_margin_vertical">10dp</dimen>
@@ -1300,14 +1301,14 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="radio_margin_start_1">7dp</dimen>
     <dimen name="select_margin_start">4dp</dimen>
     <dimen name="select_minwidth">37dp</dimen>
-    <dimen name="select_padding_vertical">3dp</dimen>
+    <dimen name="select_padding_vertical">4dp</dimen>
     <dimen name="select_width">160dp</dimen>
     <dimen name="select_width_1">200dp</dimen>
     <dimen name="select_width_2">100dp</dimen>
     <dimen name="selectgroup_margin_top">13dp</dimen>
     <dimen name="space_height">6dp</dimen>
     <dimen name="text_margin_end">5dp</dimen>
-    <dimen name="text_padding_vertical">3dp</dimen>
+    <dimen name="text_padding_vertical">5dp</dimen>
     <dimen name="text_width">40dp</dimen>
     <dimen name="text_width_1">130dp</dimen>
     <dimen name="ul_padding_bottom">11dp</dimen>

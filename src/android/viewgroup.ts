@@ -61,7 +61,7 @@ export default class ViewGroup extends View {
     }
 
     get pageflow() {
-        return !this.children.some(node => !node.pageflow);
+        return this.children.some(node => node.pageflow);
     }
 
     get childrenBox() {

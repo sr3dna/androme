@@ -1,4 +1,5 @@
-import { ExtensionResult, Null } from '../../../lib/types';
+import { Null } from '../../../lib/types';
+import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';

@@ -1,45 +1,4 @@
-import Node from '../base/node';
-
 export type Null<T> = T | null | undefined;
-
-export interface IExtension {
-    name: string;
-    application: any;
-    node: Node;
-    parent: Null<Node>;
-    element: Null<HTMLElement>;
-    tagNames: string[];
-    enabled: boolean;
-    options: ObjectMap<any>;
-    dependencies: ExtensionDependency[];
-    documentRoot: boolean;
-    setTarget(node: Node, parent?: Null<Node>, element?: Null<HTMLElement>): void;
-    getData(): void;
-    is(node: Node): void;
-    require(value: string): void;
-    included(element?: HTMLElement): boolean;
-    beforeInit(internal?: boolean): void;
-    init(element: HTMLElement): boolean;
-    afterInit(internal?: boolean): void;
-    condition(): void;
-    processNode(mapX?: ArrayIndex<ObjectIndex<Node[]>>, mapY?: ArrayIndex<ObjectIndex<Node[]>>): ExtensionResult;
-    processChild(mapX?: ArrayIndex<ObjectIndex<Node[]>>, mapY?: ArrayIndex<ObjectIndex<Node[]>>): ExtensionResult;
-    afterRender(): void;
-    beforeInsert(): void;
-    afterInsert(): void;
-    finalize(): void;
-}
-
-export interface ExtensionDependency {
-    name: string;
-    init: boolean;
-}
-
-export interface ExtensionResult {
-    xml: string;
-    proceed?: boolean;
-    parent?: Node;
-}
 
 export interface Inheritable {
     inherit: boolean;
@@ -99,35 +58,6 @@ export interface BasicData {
     value: string;
 }
 
-export interface BorderAttribute {
-    style: string;
-    width: string;
-    color: string[] | string;
-}
-
-export interface FontAttribute {
-    fontFamily: string;
-    fontStyle: string;
-    fontSize: string;
-    fontWeight: string;
-    color: string[] | string;
-    backgroundColor: string[] | string;
-}
-
-export interface BoxStyle {
-    border?: BorderAttribute;
-    borderTop: BorderAttribute;
-    borderRight: BorderAttribute;
-    borderBottom: BorderAttribute;
-    borderLeft: BorderAttribute;
-    borderRadius: string[];
-    backgroundColor: string[] | string;
-    backgroundImage: string;
-    backgroundSize: string[];
-    backgroundRepeat: string;
-    backgroundPosition: string;
-}
-
 export interface PlainFile {
     pathname: string;
     filename: string;
@@ -167,4 +97,33 @@ export interface ResourceMap {
     DIMENS: Map<string, string>;
     DRAWABLES: Map<string, string>;
     IMAGES: Map<string, {}>;
+}
+
+export interface BorderAttribute {
+    style: string;
+    width: string;
+    color: string[] | string;
+}
+
+export interface FontAttribute {
+    fontFamily: string;
+    fontStyle: string;
+    fontSize: string;
+    fontWeight: string;
+    color: string[] | string;
+    backgroundColor: string[] | string;
+}
+
+export interface BoxStyle {
+    border?: BorderAttribute;
+    borderTop: BorderAttribute;
+    borderRight: BorderAttribute;
+    borderBottom: BorderAttribute;
+    borderLeft: BorderAttribute;
+    borderRadius: string[];
+    backgroundColor: string[] | string;
+    backgroundImage: string;
+    backgroundSize: string[];
+    backgroundRepeat: string;
+    backgroundPosition: string;
 }

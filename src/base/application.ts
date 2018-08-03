@@ -1,11 +1,12 @@
-import { ArrayIndex, IExtension, Null, ObjectIndex, ObjectMap, PlainFile, ViewData } from '../lib/types';
+import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, ViewData } from '../lib/types';
+import { IExtension } from '../extension/lib/types';
 import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertCamelCase, convertInt, formatPX, hasValue, includesEnum, isNumber, optional, resetId, sortAsc, trim } from '../lib/util';
-import { placeIndent, removePlaceholders, replaceDP, replaceTab } from '../lib/xml';
-import { hasFreeFormText, getStyle, isVisible } from '../lib/dom';
+import { convertCamelCase, convertInt, formatPX, hasValue, includesEnum, isNumber, optional, sortAsc, trim } from '../lib/util';
+import { placeIndent } from '../lib/xml';
+import { getStyle, hasFreeFormText, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { BLOCK_ELEMENT, BOX_STANDARD, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -66,12 +67,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ALIGNMENT)) {
                 node.setAlignment();
             }
-            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.BOX_SPACING)) {
-                node.adjustBoxSpacing();
-            }
         });
         this.cacheInternal.visible.forEach(node => {
-            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.LAYOUT_OPTIMIZE)) {
+            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.OPTIMIZE)) {
                 node.optimizeLayout();
             }
         });
@@ -82,19 +80,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         if (SETTINGS.showAttributes) {
             this.setAttributes();
         }
-        this.layouts.forEach(layout => {
-            layout.content = removePlaceholders(layout.content).replace(/\n\n/g, '\n');
-            if (SETTINGS.dimensResourceValue) {
-                layout.content = this.controllerHandler.parseDimensions(layout.content);
-            }
-            layout.content = replaceDP(layout.content);
-            layout.content = replaceTab(layout.content);
-        });
+        this.controllerHandler.finalize(this.layouts);
         this.closed = true;
     }
 
     public reset() {
-        resetId();
         this.cacheInternal.list.forEach(node => {
             const object: any = node.element;
             delete object.__style;
@@ -399,6 +389,24 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                     node.setDimensions(['box']);
                 }
+                if (!node.pageflow && node.children.length > 0) {
+                    let calibrate = false;
+                    if (node.viewWidth === 0) {
+                        const maxRight = Math.max.apply(null, node.cascade().map(item => item.linear.right));
+                        node.bounds.right = maxRight + node.paddingRight + node.borderRightWidth;
+                        node.bounds.width = node.bounds.right - node.bounds.left;
+                        calibrate = true;
+                    }
+                    if (node.viewHeight === 0) {
+                        const maxBottom = Math.max.apply(null, node.cascade().map(item => item.linear.bottom));
+                        node.bounds.bottom = maxBottom + node.paddingBottom + node.borderBottomWidth;
+                        node.bounds.height = node.bounds.bottom - node.bounds.top;
+                        calibrate = true;
+                    }
+                    if (calibrate) {
+                        node.setBounds(true);
+                    }
+                }
             });
             this.cache.list.forEach(node => {
                 const style = preAlignment[node.id];
@@ -522,7 +530,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         continue;
                     }
                     let parent = (<T> nodeY.parent);
-                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && !parent.inlineParent && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
+                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
                         const nodes = [nodeY];
                         if (nodeY.element.nextSibling == null || (<Element> nodeY.element.nextSibling).tagName !== 'BR') {
                             const float = nodeY.float;
@@ -548,7 +556,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         if (parent.inlineWrap || nodes.length > 1) {
                             if (parent.is(NODE_STANDARD.RELATIVE) && nodes.length === parent.children.length) {
                                 parent.inlineWrap = true;
-                                parent.inlineParent = true;
                             }
                             else {
                                 if (nodes.length > 1) {
@@ -556,11 +563,11 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     const viewGroup = this.controllerHandler.createGroup(nodeY, parent, nodes);
                                     if (nodes.some(item => item.multiLine)) {
                                         viewGroup.inlineWrap = true;
-                                        viewGroup.inlineParent = true;
                                         xml = this.writeRelativeLayout(viewGroup, parent);
                                     }
                                     else {
                                         xml = this.writeLinearLayout(viewGroup, parent, true);
+                                        viewGroup.inlineWrap = (nodeY.float === 'right');
                                     }
                                     renderXml(viewGroup, parent, xml, current);
                                     parent = viewGroup;
@@ -675,7 +682,6 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                                 xml += this.writeLinearLayout(nodeY, parent, linearX);
                                             }
                                             else if (SETTINGS.horizontalPerspective && nodeY.children.every(node => node.pageflow && node.inline)) {
-                                                nodeY.inlineWrap = true;
                                                 xml += this.writeRelativeLayout(nodeY, parent);
                                             }
                                             else {

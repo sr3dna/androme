@@ -1,4 +1,5 @@
-import { ExtensionResult, IExtension, ObjectMap, StringMap } from '../../../lib/types';
+import { ObjectMap, StringMap } from '../../../lib/types';
+import { ExtensionResult, IExtension } from '../../../extension/lib/types';
 import Nav from '../../../extension/nav';
 import ResourceView from '../../resource-view';
 import View from '../../view';

@@ -1,11 +1,12 @@
-import { ExtensionResult, Null } from '../../../lib/types';
+import { Null } from '../../../lib/types';
+import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import ResourceView from '../../resource-view';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import { convertPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
-import { formatDimen, stripId } from '../../../lib/xml';
+import { formatDimen, stripId } from '../../lib/util';
 import { getStyle } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';

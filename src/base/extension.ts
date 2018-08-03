@@ -1,4 +1,5 @@
-import { ArrayIndex, ExtensionDependency, ExtensionResult, IExtension, Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
+import { ArrayIndex, Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
+import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';

@@ -2,8 +2,9 @@ import { ArrayIndex, BasicData, BorderAttribute, BoxStyle, FontAttribute, Null, 
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import { cameltoLowerCase, capitalize, convertInt, convertWord, formatPX, formatString, generateId, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
-import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP } from '../lib/xml';
+import { cameltoLowerCase, capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
+import { generateId, replaceDP } from './lib/util';
+import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { sameAsParent } from '../lib/dom';
 import { findNearestColor, parseHex } from '../lib/color';
 import { NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -384,6 +385,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
                             }
                         }
+                        const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
+                        const radius = this.getShapeAttribute(stored, 'radius');
+                        const radiusInit = this.getShapeAttribute(stored, 'radiusInit');
                         if (stored.border != null) {
                             if (stored.backgroundImage === '') {
                                 template = parseTemplate(SHAPERECTANGLE_TMPL);
@@ -391,9 +395,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     '0': [{
                                         '1': this.getShapeAttribute(stored, 'stroke'),
                                         '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
-                                            '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                            '4': this.getShapeAttribute(stored, 'radius'),
-                                            '5': this.getShapeAttribute(stored, 'radiusInit')
+                                            '3': backgroundColor,
+                                            '4': radius,
+                                            '5': radiusInit
                                         }] : false)
                                     }]
                                 };
@@ -409,7 +413,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     '0': [{
                                         '1': [{
                                             '2': false,
-                                            '3': this.getShapeAttribute(stored, 'backgroundColor'),
+                                            '3': backgroundColor,
                                             '4': false,
                                             '5': false
                                         }],
@@ -424,9 +428,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     '0': [{
                                         '1': [{
                                             '2': this.getShapeAttribute(stored, 'stroke'),
-                                            '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                            '4': this.getShapeAttribute(stored, 'radius'),
-                                            '5': this.getShapeAttribute(stored, 'radiusInit')
+                                            '3': backgroundColor,
+                                            '4': radius,
+                                            '5': radiusInit
                                         }],
                                         '6': (image6.length > 0 ? image6 : false),
                                         '7': (image7.length > 0 ? image7 : false)
@@ -453,14 +457,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             let valid = true;
                             let width = '';
                             let borderStyle = '';
-                            let radius = '';
+                            let radiusSize = '';
                             borders.some((item, index) => {
                                 if (this.borderVisible(item)) {
-                                    if (width !== '' && width !== item.width && borderStyle !== '' && borderStyle !== this.getBorderStyle(item) && radius !== '' && radius !== stored.borderRadius[index]) {
+                                    if ((width !== '' && width !== item.width) || (borderStyle !== '' && borderStyle !== this.getBorderStyle(item)) || (radiusSize !== '' && radiusSize !== stored.borderRadius[index])) {
                                         valid = false;
                                         return true;
                                     }
-                                    [width, borderStyle, radius] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
+                                    [width, borderStyle, radiusSize] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
                                 }
                                 return false;
                             });
@@ -473,6 +477,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     bottomLeftRadius: stored.borderRadius[3]
                                 });
                             }
+                            root['1'].push({ '2': false, '3': backgroundColor, '4': false, '5': false });
                             if (valid) {
                                 const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
                                 const layerList: {} = {
@@ -481,9 +486,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
                                     'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
                                     '2': [{ width, borderStyle }],
-                                    '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                    '4': this.getShapeAttribute(stored, 'radius'),
-                                    '5': this.getShapeAttribute(stored, 'radiusInit')
+                                    '3': false,
+                                    '4': radius,
+                                    '5': radiusInit
                                 };
                                 if (stored.borderRadius.length > 1) {
                                     layerList['5'].push(borderRadius);
@@ -500,11 +505,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                             'bottom': hideWidth,
                                             'left': hideWidth,
                                             '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
-                                            '3': this.getShapeAttribute(stored, 'backgroundColor'),
-                                            '4': this.getShapeAttribute(stored, 'radius'),
-                                            '5': this.getShapeAttribute(stored, 'radiusInit')
+                                            '3': false,
+                                            '4': radius,
+                                            '5': radiusInit
                                         };
-                                        layerList[['top', 'right', 'bottom', 'left'][index]] = item.width;
+                                        layerList[['top', 'right', 'bottom', 'left'][index]] = '';
                                         if (stored.borderRadius.length > 1) {
                                             layerList['5'].push(borderRadius);
                                         }
@@ -717,9 +722,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 Resource.STORED.STRINGS.set(result, value);
                             }
                         }
-                        if (!node.hasElement || convertInt(node.css('textIndent')) > -(node.linear.width / 2)) {
-                            node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
-                        }
+                        node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
                     }
                 }
             }

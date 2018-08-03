@@ -1,4 +1,5 @@
-import { ArrayIndex, ExtensionResult, ObjectIndex } from '../lib/types';
+import { ArrayIndex, ObjectIndex } from '../lib/types';
+import { ExtensionResult } from './lib/types';
 import { GridCellData, GridData } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';

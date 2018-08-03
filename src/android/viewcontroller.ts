@@ -1,13 +1,14 @@
-import { ArrayIndex, Null, ObjectIndex, ObjectMap, Point, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, Point, StringMap, ViewData } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
 import ViewList from './viewlist';
-import { capitalize, convertPX, formatPX, generateId, hasValue, includesEnum, indexOf, repeat, same, search, sortAsc, withinFraction, withinRange, convertInt } from '../lib/util';
+import { capitalize, convertPX, formatPX, hasValue, includesEnum, indexOf, isPercent, repeat, same, search, sortAsc, withinFraction, withinRange, convertInt } from '../lib/util';
+import { formatDimen, generateId, replaceDP, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
-import { formatDimen, stripId } from '../lib/xml';
+import { removePlaceholders, replaceTab } from '../lib/xml';
 import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD } from '../lib/constants';
 import { AXIS_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -49,10 +50,23 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     constructor() {
         super();
+        resetId();
+    }
+
+    public finalize(layouts: PlainFile[]) {
+        layouts.forEach(layout => {
+            layout.content = removePlaceholders(layout.content).replace(/\n\n/g, '\n');
+            if (SETTINGS.dimensResourceValue) {
+                layout.content = this.parseDimensions(layout.content);
+            }
+            layout.content = replaceDP(layout.content);
+            layout.content = replaceTab(layout.content, SETTINGS.insertSpaces);
+        });
     }
 
     public reset() {
         super.reset();
+        resetId();
         this.merge = {};
     }
 
@@ -176,8 +190,8 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 }
                 else {
                     const linearX = pageflow.linearX;
+                    const adjusted = node.setBoundsMin();
                     const verticalPerspective = (!SETTINGS.horizontalPerspective && !flex.enabled && !pageflow.list.some(item => item.floating));
-                    node.setBoundsMin();
                     nodes.list.unshift(node);
                     nodes.list.forEach(current => {
                         nodes.list.forEach(adjacent => {
@@ -210,15 +224,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     }
                                     else {
                                         if (stringId === 'parent') {
-                                            if (alignParent || current.css('left') === '0px') {
+                                            if (alignParent || current.left === 0) {
                                                 if (linear1.left <= linear2.left || withinFraction(linear1.left, linear2.left)) {
                                                     current.anchor(layoutMap['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                                     current.constraint.parentLeft = true;
                                                 }
                                             }
-                                            if (alignParent || current.css('right') === '0px') {
+                                            if (alignParent || current.right === 0) {
                                                 if (linear1.right >= linear2.right || withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                                    current.anchor(layoutMap['right'], 'parent', (node.viewWidth > 0 ? AXIS_ANDROID.HORIZONTAL : ''));
+                                                    current.anchor(layoutMap['right'], 'parent', (node.viewWidth > 0 || current.float === 'right' || current.inlineWrap || adjusted.horizontal ? AXIS_ANDROID.HORIZONTAL : ''));
                                                     current.constraint.parentRight = true;
                                                 }
                                             }
@@ -259,15 +273,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                     }
                                     if (stringId === 'parent') {
-                                        if (alignParent || current.css('top') === '0px') {
+                                        if (alignParent || current.top === 0) {
                                             if (linear1.top <= linear2.top || withinFraction(linear1.top, linear2.top)) {
                                                 current.anchor(layoutMap['top'], 'parent', AXIS_ANDROID.VERTICAL);
                                                 current.constraint.topParent = true;
                                             }
                                         }
-                                        if (alignParent || current.css('bottom') === '0px') {
+                                        if (alignParent || current.bottom === 0) {
                                             if (linear1.bottom >= linear2.bottom || withinFraction(linear1.bottom, linear2.bottom) || ((current.floating || (flex.direction === 'column' && flex.wrap !== 'nowrap')) && withinRange(linear1.bottom, linear2.bottom, (current.pageflow ? SETTINGS.whitespaceHorizontalOffset : 0)))) {
-                                                current.anchor(layoutMap['bottom'], 'parent', (node.viewHeight > 0 ? AXIS_ANDROID.VERTICAL : ''));
+                                                current.anchor(layoutMap['bottom'], 'parent', (node.viewHeight > 0 || adjusted.vertical ? AXIS_ANDROID.VERTICAL : ''));
                                                 current.constraint.bottomParent = true;
                                             }
                                         }
@@ -741,13 +755,11 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                     chainable.list.forEach(item => item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString()));
                                                     break;
                                                 case 'space-around':
-                                                    const leftTop = (index === 0 ? 'left' : 'top');
-                                                    const percent = (first.linear[leftTop] - node.box[leftTop]) / (<number> node.box[dimension]);
                                                     first.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
                                                     first.constraint[orientation] = false;
                                                     last.constraint[orientation] = false;
-                                                    this.addGuideline(node, first, orientation, false, parseFloat(percent.toFixed(2)));
-                                                    this.addGuideline(node, last, orientation, true, parseFloat((1 - percent).toFixed(2)));
+                                                    this.addGuideline(node, first, orientation, false, true);
+                                                    this.addGuideline(node, last, orientation, true, true);
                                                     break;
                                                 default:
                                                     let justifyContent = flex.justifyContent;
@@ -923,6 +935,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 }
                                             }
                                         });
+                                        current.constraint.vertical = true;
                                     }
                                 });
                             });
@@ -1189,7 +1202,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         const element: any = node.element;
         switch (element.tagName) {
             case 'IMG':
-                switch (element.style.objectFit) {
+                if (isPercent(node.css('width')) || isPercent(node.css('height'))) {
+                    node.android('scaleType', 'fitXY');
+                }
+                switch (node.css('objectFit')) {
                     case 'contain':
                         node.android('scaleType', 'centerInside');
                         break;
@@ -1570,25 +1586,34 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         return result;
     }
 
-    private addGuideline(parent: T, node: T, orientation = '', opposite = false, percent = -1) {
+    private addGuideline(parent: T, node: T, orientation = '', opposite?: boolean, percent?: boolean) {
         const map = LAYOUT_MAP.constraint;
-        const beginPercent = `layout_constraintGuide_${(percent !== -1 ? 'percent' : 'begin')}`;
+        if (node.pageflow) {
+            if (opposite == null) {
+                opposite = (node.float === 'right' || (node.left == null && node.right != null) || (node.is(NODE_STANDARD.TEXT) && node.css('textAlign') === 'right') || (node.app(LAYOUT_MAP.constraint['right']) === 'parent' && node.children.some(item => item.float === 'right')));
+            }
+            if (percent == null && opposite === true) {
+                percent = true;
+            }
+        }
+        const beginPercent = `layout_constraintGuide_${(percent ? 'percent' : 'begin')}`;
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {
-                const position = (index === 0 ? 'left' : 'top');
-                const options: ObjectMap<any> = {
+                const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
+                const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
+                const position = (percent ? Math.abs(node.linear[LRTB] - parent.box[LRTB]) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
+                const options = {
                     android: {
                         orientation: (index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL)
                     },
                     app: {
-                        [beginPercent]: (percent !== -1 ? percent : formatDimen(node.tagName, 'constraintguide_begin', formatPX(Math.max(node.bounds[position] - parent.box[position], 0))))
+                        [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
+                                                 : formatDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node.linear[LRTB] - parent.box[RLBT] : node.linear[LRTB] - parent.box[LRTB]))))
                     }
                 };
-                const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
-                const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
                 const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
                 this.appendAfter(node.id, xml);
-                node.app(map[LRTB], options.stringId);
+                node.app(map[LRTB], (<any> options).stringId);
                 node.delete('app', map[RLBT]);
                 node.constraint[value] = true;
             }

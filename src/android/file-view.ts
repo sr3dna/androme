@@ -2,7 +2,8 @@ import { Null, PlainFile, ViewData } from '../lib/types';
 import File from '../base/file';
 import View from './view';
 import { caseInsensitve, lastIndexOf } from '../lib/util';
-import { getTemplateLevel, insertTemplateData, parseTemplate, replaceDP, replaceTab } from '../lib/xml';
+import { replaceDP } from './lib/util';
+import { getTemplateLevel, insertTemplateData, parseTemplate, replaceTab } from '../lib/xml';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 import SETTINGS from '../settings';
 
@@ -100,7 +101,7 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
-            xml = replaceTab(xml, true);
+            xml = replaceTab(xml, SETTINGS.insertSpaces, true);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -131,7 +132,7 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push(arrayItem);
             }
             xml = insertTemplateData(template, data);
-            xml = replaceTab(xml, true);
+            xml = replaceTab(xml, SETTINGS.insertSpaces, true);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -165,7 +166,7 @@ export default class FileView<T extends View> extends File<T> {
                 }
                 xml += '\n\n' + insertTemplateData(template, data);
             }
-            xml = replaceTab(xml);
+            xml = replaceTab(xml, SETTINGS.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -188,7 +189,7 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
-            xml = replaceTab(xml);
+            xml = replaceTab(xml, SETTINGS.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -221,7 +222,7 @@ export default class FileView<T extends View> extends File<T> {
             }
             xml = insertTemplateData(template, data);
             xml = replaceDP(xml, true);
-            xml = replaceTab(xml);
+            xml = replaceTab(xml, SETTINGS.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -245,7 +246,7 @@ export default class FileView<T extends View> extends File<T> {
             }
             xml = insertTemplateData(template, data);
             xml = replaceDP(xml);
-            xml = replaceTab(xml);
+            xml = replaceTab(xml, SETTINGS.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -276,7 +277,7 @@ export default class FileView<T extends View> extends File<T> {
             }
             xml = insertTemplateData(template, data);
             xml = replaceDP(xml);
-            xml = replaceTab(xml);
+            xml = replaceTab(xml, SETTINGS.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk([...this.parseImageDetails(xml), ...this.parseFileDetails(xml)]);
             }

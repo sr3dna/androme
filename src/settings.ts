@@ -27,6 +27,7 @@ const SETTINGS = {
     linearHorizontalTopOffset: 4,
     whitespaceHorizontalOffset: 4,
     whitespaceVerticalOffset: 14,
+    constraintPercentAccuracy: 4,
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 14,
     showAttributes: true,

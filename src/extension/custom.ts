@@ -1,4 +1,4 @@
-import { ExtensionResult } from '../lib/types';
+import { ExtensionResult } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';

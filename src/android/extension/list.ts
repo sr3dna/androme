@@ -1,7 +1,7 @@
-import { ExtensionResult } from '../../lib/types';
+import { ExtensionResult } from '../../extension/lib/types';
 import List from '../../extension/list';
 import View from '../view';
-import { formatDimen } from '../../lib/xml';
+import { formatDimen } from '../lib/util';
 import { NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';

@@ -1,6 +1,7 @@
-import { Null, ObjectMap, StringMap } from '../lib/types';
+import { BoxRect, BoxStyle, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { calculateBias, convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, generateId, hasValue, isPercent, lastIndexOf, sortAsc } from '../lib/util';
+import { convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, hasValue, isPercent, lastIndexOf, sortAsc } from '../lib/util';
+import { calculateBias, generateId } from './lib/util';
 import { getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
@@ -116,7 +117,6 @@ export default class View extends Node {
             }
             if (styleMap) {
                 this.css(dimension.replace('layout_', ''), total);
-                this.setBounds(true);
             }
         }
     }
@@ -293,7 +293,7 @@ export default class View extends Node {
                         this.android('layout_width', (contentWidth > this.viewWidth ? 'wrap_content' : convertPX(styleMap.width)));
                     }
                     else if (styleMap.width === 'auto') {
-                        this.android('layout_width', (!this.inline && BLOCK_ELEMENT.includes(this.element.tagName) ? 'match_parent' : 'wrap_content'), false);
+                        this.android('layout_width', (!this.inline && this.pageflow && BLOCK_ELEMENT.includes(this.element.tagName) ? 'match_parent' : 'wrap_content'), false);
                     }
                 }
                 if (this.isSet('styleMap', 'minWidth') && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
@@ -485,42 +485,6 @@ export default class View extends Node {
         }
     }
 
-    public adjustBoxSpacing() {
-        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
-            switch (this.android('orientation')) {
-                case AXIS_ANDROID.HORIZONTAL:
-                    let left = this.box.left;
-                    sortAsc(this.renderChildren.slice(), 'linear.left').forEach((item, index) => {
-                        let valid = true;
-                        if (index === 0) {
-                            const gravity = this.android('gravity');
-                            if (gravity != null && gravity !== parseRTL('left')) {
-                                valid = false;
-                            }
-                        }
-                        if (valid && !item.floating) {
-                            const width = Math.ceil(item.linear.left - left);
-                            if (width >= 1) {
-                                item.modifyBox(BOX_STANDARD.MARGIN_LEFT, item.marginLeft + width, true);
-                            }
-                        }
-                        left = item.linear.right;
-                    });
-                    break;
-                case AXIS_ANDROID.VERTICAL:
-                    let top = this.box.top;
-                    sortAsc(this.renderChildren.slice(), 'linear.top').forEach(item => {
-                        const height = Math.ceil(item.linear.top - top);
-                        if (height >= 1) {
-                            item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + height, true);
-                        }
-                        top = item.linear.bottom;
-                    });
-                    break;
-            }
-        }
-    }
-
     public mergeBoxSpacing() {
         ['layout_margin', 'padding'].forEach((value, index) => {
             const leftRtl = parseRTL(`${value}Left`);
@@ -580,6 +544,42 @@ export default class View extends Node {
                     }
                 });
                 break;
+        }
+        this.adjustBoxSpacing();
+        const boxStyle = (<BoxStyle> (<any> this.element).__boxStyle);
+        let width = 0;
+        let height = 0;
+        if (boxStyle != null) {
+            const border: BoxRect = {
+                top: convertInt(boxStyle.borderTop.width),
+                right: convertInt(boxStyle.borderRight.width),
+                bottom: convertInt(boxStyle.borderBottom.width),
+                left: convertInt(boxStyle.borderLeft.width)
+            };
+            if (border.top > 0 && (this.nodeType > NODE_STANDARD.INLINE || this.paddingTop > 0)) {
+                this.modifyBox(BOX_STANDARD.PADDING_TOP, this.paddingTop + border.top);
+                height += border.top;
+            }
+            if (border.right > 0 && (this.nodeType > NODE_STANDARD.INLINE || this.paddingRight > 0)) {
+                this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.paddingRight + border.right);
+                width += border.right;
+            }
+            if (border.bottom > 0 && (this.nodeType > NODE_STANDARD.INLINE || this.paddingBottom > 0)) {
+                this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.paddingBottom + border.bottom);
+                height += border.bottom;
+            }
+            if (border.left > 0 && (this.nodeType > NODE_STANDARD.INLINE || this.paddingLeft > 0)) {
+                this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.paddingLeft + border.left);
+                width += border.left;
+            }
+            const layoutWidth = convertInt(this.android('layout_width'));
+            const layoutHeight = convertInt(this.android('layout_height'));
+            if (layoutWidth > 0 && width > 0) {
+                this.android('layout_width', formatPX(layoutWidth + width));
+            }
+            if (layoutHeight > 0 && height > 0) {
+                this.android('layout_height', formatPX(layoutHeight + height));
+            }
         }
     }
 
@@ -654,6 +654,42 @@ export default class View extends Node {
                     this.alignBaseline(this.renderChildren);
                 }
                 break;
+        }
+    }
+
+    private adjustBoxSpacing() {
+        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
+            switch (this.android('orientation')) {
+                case AXIS_ANDROID.HORIZONTAL:
+                    let left = this.box.left;
+                    sortAsc(this.renderChildren.slice(), 'linear.left').forEach((item, index) => {
+                        let valid = true;
+                        if (index === 0) {
+                            const gravity = this.android('gravity');
+                            if (gravity != null && gravity !== parseRTL('left')) {
+                                valid = false;
+                            }
+                        }
+                        if (valid && !item.floating) {
+                            const width = Math.ceil(item.linear.left - left);
+                            if (width >= 1) {
+                                item.modifyBox(BOX_STANDARD.MARGIN_LEFT, item.marginLeft + width, true);
+                            }
+                        }
+                        left = item.linear.right;
+                    });
+                    break;
+                case AXIS_ANDROID.VERTICAL:
+                    let top = this.box.top;
+                    sortAsc(this.renderChildren.slice(), 'linear.top').forEach(item => {
+                        const height = Math.ceil(item.linear.top - top);
+                        if (height >= 1) {
+                            item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + height, true);
+                        }
+                        top = item.linear.bottom;
+                    });
+                    break;
+            }
         }
     }
 

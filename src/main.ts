@@ -1,4 +1,5 @@
-import { IExtension, Null, StringMap } from './lib/types';
+import { Null, StringMap } from './lib/types';
+import { IExtension } from './extension/lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
 import { convertWord, hasValue, optional } from './lib/util';

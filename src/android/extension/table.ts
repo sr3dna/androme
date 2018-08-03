@@ -1,5 +1,5 @@
 
-import { ExtensionResult } from '../../lib/types';
+import { ExtensionResult } from '../../extension/lib/types';
 import Table from '../../extension/table';
 import View from '../view';
 import { EXT_NAME } from '../../extension/lib/constants';

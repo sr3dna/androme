@@ -1,4 +1,5 @@
-import { BoxModel, ClientRect, Flexbox, IExtension, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { IExtension } from '../extension/lib/types';
 import { convertInt, convertCamelCase, hasValue, includesEnum, search } from '../lib/util';
 import { assignBounds, getRangeBounds } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
@@ -26,7 +27,6 @@ export default abstract class Node implements BoxModel {
     public isolated = false;
     public relocated = false;
     public inlineWrap = false;
-    public inlineParent = false;
     public multiLine = false;
 
     public abstract children: T[];
@@ -65,7 +65,6 @@ export default abstract class Node implements BoxModel {
     public abstract setNodeId(viewName: string): void;
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
-    public abstract adjustBoxSpacing(): void;
     public abstract optimizeLayout(): void;
     public abstract setAccessibility(): void;
     public abstract applyCustomizations(): void;
@@ -371,9 +370,13 @@ export default abstract class Node implements BoxModel {
 
     public setBoundsMin() {
         const nodes = this.children.filter(node => !node.pageflow);
+        let horizontal = false;
+        let vertical = false;
         if (nodes.length > 0) {
             const [right, bottom] = [Math.max.apply(null, this.children.map(node => node.linear.right)), Math.max.apply(null, this.children.map(node => node.linear.bottom))];
-            if (nodes.some(node => node.linear.right === right || node.linear.bottom === bottom)) {
+            horizontal = nodes.some(node => node.linear.right === right);
+            vertical = nodes.some(node => node.linear.bottom === bottom);
+            if (horizontal || vertical) {
                 let calibrate = false;
                 if (right > this.box.right) {
                     this.bounds.right = right + (this.paddingRight + this.borderRightWidth);
@@ -390,6 +393,7 @@ export default abstract class Node implements BoxModel {
                 }
             }
         }
+        return { horizontal, vertical };
     }
 
     public setDimensions(area = ['linear', 'box']) {
@@ -505,10 +509,10 @@ export default abstract class Node implements BoxModel {
     }
 
     get viewWidth() {
-        return (this.display === 'inline' ? 0 : convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth));
+        return (this.display !== 'inline' || this.tagName === 'IMG' ? convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth) : 0) ;
     }
     get viewHeight() {
-        return (this.display === 'inline' ? 0 : convertInt(this.styleMap.height) || convertInt(this.styleMap.lineHeight) || convertInt(this.styleMap.minHeight));
+        return (this.display !== 'inline' || this.tagName === 'IMG' ? convertInt(this.styleMap.height) || convertInt(this.styleMap.lineHeight) || convertInt(this.styleMap.minHeight) : 0);
     }
 
     get display() {

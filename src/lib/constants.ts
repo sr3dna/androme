@@ -38,11 +38,10 @@ export enum NODE_RESOURCE {
 export enum NODE_PROCEDURE {
     LAYOUT = 2,
     ALIGNMENT = 4,
-    BOX_SPACING = 8,
-    LAYOUT_OPTIMIZE = 16,
-    CUSTOMIZATION = 32,
-    ACCESSIBILITY = 64,
-    ALL = 126
+    OPTIMIZE = 8,
+    CUSTOMIZATION = 16,
+    ACCESSIBILITY = 32,
+    ALL = 62
 }
 
 export enum BOX_STANDARD {
@@ -114,8 +113,8 @@ export const BLOCK_ELEMENT = [
     'P',
     'PRE',
     'SECTION',
-    'TABLE',
     'TFOOT',
+    'THEAD',
     'UL',
     'VIDEO'
 ];

@@ -1,8 +1,5 @@
 import { ObjectMap, StringMap } from './types';
 
-let ID: ObjectMap<string[]>;
-resetId();
-
 function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     return list.sort((a: T, b: T) => {
         for (const attr of attrs) {
@@ -18,36 +15,6 @@ function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
         }
         return 0;
     });
-}
-
-export function resetId() {
-    ID = {
-        android: ['parent']
-    };
-}
-
-export function generateId(section: string, name: string) {
-    let prefix = name;
-    let i = 1;
-    const match = name.match(/^(\w+)_([0-9]+)$/);
-    if (match != null) {
-        prefix = match[1];
-        i = parseInt(match[2]);
-    }
-    if (ID[section] == null) {
-        ID[section] = [];
-    }
-    do {
-        if (!ID[section].includes(name)) {
-            ID[section].push(name);
-            break;
-        }
-        else {
-            name = `${prefix}_${i++}`;
-        }
-    }
-    while (true);
-    return name;
 }
 
 export function formatString(value: string, ...params: string[]) {
@@ -77,6 +44,10 @@ export function convertCamelCase(value: string, character = '-') {
         }
     }
     return value;
+}
+
+export function convertWord(value: string) {
+    return (value != null ? value.replace(/[^\w]/g, '_').trim() : '');
 }
 
 export function capitalize(value: string, upper = true) {
@@ -119,16 +90,9 @@ export function convertPX(value: any) {
     return '0px';
 }
 
-export function convertDP(value: any, dpi = 160, font = false) {
-    if (hasValue(value)) {
-        value = parseFloat(convertPX(value));
-        if (!isNaN(value)) {
-            value /= (dpi / 160);
-            value = (value >= 1 || value === 0 ? Math.floor(value) : value.toFixed(2));
-            return value + (font ? 'sp' : 'dp');
-        }
-    }
-    return '0dp';
+export function formatPX(value: any) {
+    value = parseFloat(value);
+    return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
 }
 
 export function convertAlpha(value: number) {
@@ -177,15 +141,6 @@ export function convertEnum(base: {}, derived: {}, value: number): string {
 
 export function includesEnum(value: number, type: number) {
     return ((value & type) === type);
-}
-
-export function formatPX(value: any) {
-    value = parseFloat(value);
-    return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
-}
-
-export function convertWord(value: string) {
-    return (value != null ? value.replace(/[^\w]/g, '_').trim() : '');
 }
 
 export function isNumber(value: string) {
@@ -345,10 +300,6 @@ export function compare(obj1: {}, obj2: {}, attr: string) {
     else {
         return [current1, current2];
     }
-}
-
-export function calculateBias(start: number, end: number) {
-    return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(3));
 }
 
 export function hasValue(value: any) {

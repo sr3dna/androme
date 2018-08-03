@@ -1,6 +1,5 @@
 import { Null, ObjectMap } from './types';
-import { convertDP, hasValue, repeat } from './util';
-import SETTINGS from '../settings';
+import { hasValue, repeat } from './util';
 
 export function removePlaceholders(value: string) {
     return value.replace(/{[<:@>]{1}[0-9]+}/g, '').trim();
@@ -19,27 +18,19 @@ export function placeIndent(value: string, depth: number) {
     }).join('\n');
 }
 
-export function stripId(value: string) {
-    return value.replace(/@\+?id\//, '');
-}
-
-export function replaceDP(value: string, font = false) {
-    return (SETTINGS.useUnitDP ? value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]) : value);
-}
-
-export function replaceTab(value: string, preserve = false) {
-    if (SETTINGS.insertSpaces > 0) {
+export function replaceTab(value: string, spaces = 4, preserve = false) {
+    if (spaces > 0) {
         if (preserve) {
             value = value.split('\n').map(line => {
                 const match = line.match(/^(\t+)(.*)$/);
                 if (match != null) {
-                    return ' '.repeat(SETTINGS.insertSpaces * match[1].length) + match[2];
+                    return ' '.repeat(spaces * match[1].length) + match[2];
                 }
                 return line;
             }).join('\n');
         }
         else {
-            value = value.replace(/\t/g, ' '.repeat(SETTINGS.insertSpaces));
+            value = value.replace(/\t/g, ' '.repeat(spaces));
         }
     }
     return value;
@@ -49,10 +40,6 @@ export function replaceEntity(value: string) {
     value = value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(capture));
     value = value.replace(/&nbsp;/g, '&#160;');
     return value;
-}
-
-export function formatDimen(tagName: string, attr: string, size: string) {
-    return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()}-${attr}-${size}}` : size);
 }
 
 export function getTemplateLevel(data: {}, ...levels: string[]) {

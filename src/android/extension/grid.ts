@@ -1,4 +1,4 @@
-import { ExtensionResult } from '../../lib/types';
+import { ExtensionResult } from '../../extension/lib/types';
 import { GridCellData, GridData } from '../../extension/lib/types';
 import Grid from '../../extension/grid';
 import View from '../view';

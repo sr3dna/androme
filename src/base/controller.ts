@@ -1,4 +1,4 @@
-import { Null, ObjectIndex, ViewData } from '../lib/types';
+import { Null, ObjectIndex, PlainFile, ViewData } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import { repeat } from '../lib/util';
@@ -18,6 +18,7 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
     public abstract parseDimensions(content: string): string;
     public abstract setAttributes(data: ViewData<T>): void;
     public abstract insertAttributes(output: string, node: T): string;
+    public abstract finalize(layouts: PlainFile[]): void;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
     public abstract renderNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
