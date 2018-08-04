@@ -101,15 +101,13 @@ export default abstract class Node implements BoxModel {
         const name = `_${ns || '_'}`;
         if (this[name] != null) {
             for (const attr of attrs) {
-                if (hasValue(attr)) {
-                    if (attr.indexOf('*') !== -1) {
-                        for (const [key] of search(this[name], attr)) {
-                            delete this[name][key];
-                        }
+                if (attr.indexOf('*') !== -1) {
+                    for (const [key] of search(this[name], attr)) {
+                        delete this[name][key];
                     }
-                    else {
-                        delete this[name][attr];
-                    }
+                }
+                else {
+                    delete this[name][attr];
                 }
             }
         }
@@ -124,7 +122,7 @@ export default abstract class Node implements BoxModel {
                     this.add(ns, attr, obj[attr]);
                 }
             }
-            else if (hasValue(obj)) {
+            else if (obj) {
                 excluded[ns] = obj;
             }
         }
@@ -369,14 +367,10 @@ export default abstract class Node implements BoxModel {
     }
 
     public setBoundsMin() {
-        const nodes = this.children.filter(node => !node.pageflow);
-        let horizontal = false;
-        let vertical = false;
-        if (nodes.length > 0) {
-            const [right, bottom] = [Math.max.apply(null, this.children.map(node => node.linear.right)), Math.max.apply(null, this.children.map(node => node.linear.bottom))];
-            horizontal = nodes.some(node => node.linear.right === right);
-            vertical = nodes.some(node => node.linear.bottom === bottom);
-            if (horizontal || vertical) {
+        if (this._element !== document.body) {
+            const nodes = this.children.filter(node => !node.pageflow);
+            if (nodes.length > 0) {
+                const [right, bottom] = [Math.max.apply(null, this.children.map(node => node.linear.right)), Math.max.apply(null, this.children.map(node => node.linear.bottom))];
                 let calibrate = false;
                 if (right > this.box.right) {
                     this.bounds.right = right + (this.paddingRight + this.borderRightWidth);
@@ -393,7 +387,6 @@ export default abstract class Node implements BoxModel {
                 }
             }
         }
-        return { horizontal, vertical };
     }
 
     public setDimensions(area = ['linear', 'box']) {
@@ -509,10 +502,10 @@ export default abstract class Node implements BoxModel {
     }
 
     get viewWidth() {
-        return (this.display !== 'inline' || this.tagName === 'IMG' ? convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth) : 0) ;
+        return convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth);
     }
     get viewHeight() {
-        return (this.display !== 'inline' || this.tagName === 'IMG' ? convertInt(this.styleMap.height) || convertInt(this.styleMap.lineHeight) || convertInt(this.styleMap.minHeight) : 0);
+        return convertInt(this.styleMap.height) || convertInt(this.styleMap.lineHeight) || convertInt(this.styleMap.minHeight);
     }
 
     get display() {
@@ -521,23 +514,23 @@ export default abstract class Node implements BoxModel {
 
     get top() {
         const top = this.styleMap.top;
-        return (!hasValue(top) || top === 'auto' ? null : convertInt(top));
+        return (!top || top === 'auto' ? null : convertInt(top));
     }
     get right() {
         const right = this.styleMap.right;
-        return (!hasValue(right) || right === 'auto' ? null : convertInt(right));
+        return (!right || right === 'auto' ? null : convertInt(right));
     }
     get bottom() {
         const bottom = this.styleMap.bottom;
-        return (!hasValue(bottom) || bottom === 'auto' ? null : convertInt(bottom));
+        return (!bottom || bottom === 'auto' ? null : convertInt(bottom));
     }
     get left() {
         const left = this.styleMap.left;
-        return (!hasValue(left) || left === 'auto' ? null : convertInt(left));
+        return (!left || left === 'auto' ? null : convertInt(left));
     }
 
     get marginTop() {
-        return (this.display === 'inline' ? 0 : convertInt(this.css('marginTop')));
+        return (this.inlineMargin ? 0 : convertInt(this.css('marginTop')));
     }
     get marginRight() {
         let node = (<T> this);
@@ -547,7 +540,7 @@ export default abstract class Node implements BoxModel {
         return convertInt(node.css('marginRight'));
     }
     get marginBottom() {
-        return (this.display === 'inline' ? 0 : convertInt(this.css('marginBottom')));
+        return (this.inlineMargin ? 0 : convertInt(this.css('marginBottom')));
     }
     get marginLeft() {
         let node = (<T> this);
@@ -591,17 +584,21 @@ export default abstract class Node implements BoxModel {
         return convertInt(node.css('paddingLeft'));
     }
 
-    get position() {
-        return this.css('position');
-    }
-
     get pageflow() {
-        const position = this.position;
+        const position = this.css('position');
         return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && !this.top && !this.right && !this.bottom && !this.left) || (this.top == null && this.right == null && this.bottom == null && this.left == null));
     }
 
     get inline() {
         return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.display.indexOf('inline') !== -1 || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
+    }
+
+    get inlineMargin() {
+        return (this.display === 'inline' || this.display === 'table-cell');
+    }
+
+    get fixed() {
+        return (!this.pageflow && (this.right != null || this.bottom != null));
     }
 
     get dir() {

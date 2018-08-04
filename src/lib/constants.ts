@@ -114,7 +114,9 @@ export const BLOCK_ELEMENT = [
     'PRE',
     'SECTION',
     'TFOOT',
+    'TH',
     'THEAD',
+    'TR',
     'UL',
     'VIDEO'
 ];

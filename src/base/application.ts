@@ -4,9 +4,9 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertCamelCase, convertInt, formatPX, hasValue, includesEnum, isNumber, optional, sortAsc, trim } from '../lib/util';
+import { convertCamelCase, convertInt, formatPX, includesEnum, isNumber, optional, sortAsc, trim } from '../lib/util';
 import { placeIndent } from '../lib/xml';
-import { getStyle, hasFreeFormText, isVisible } from '../lib/dom';
+import { getNode, getStyle, hasFreeFormText, isVisible } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { BLOCK_ELEMENT, BOX_STANDARD, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -162,13 +162,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                         cssRule.style[attr] = convertRGB(color);
                                     }
                                 }
-                                if (hasValue(element.style[attr])) {
+                                if (element.style[attr]) {
                                     styleMap[attr] = element.style[attr];
                                 }
                                 else if (style[attr] === cssRule.style[attr]) {
                                     styleMap[attr] = style[attr];
                                 }
-                                else if (hasValue(cssRule.style[attr])) {
+                                else if (cssRule.style[attr]) {
                                     switch (attr) {
                                         case 'width':
                                         case 'height':
@@ -301,7 +301,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         case 'checkbox':
                             [element.previousElementSibling, element.nextElementSibling].some((sibling: HTMLLabelElement) => {
                                 if (sibling && sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
-                                    const label = (<any> sibling).__node;
+                                    const label = getNode(sibling);
                                     if (label != null) {
                                         node.companion = label;
                                         node.setBounds();
@@ -316,16 +316,27 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
             });
             const visible = this.cache.visible;
-            visible.forEach(parent => {
-                visible.forEach(child => {
-                    if (parent !== child) {
-                        const parentElement = child.element.parentElement;
-                        if (parentElement === parent.element) {
-                            child.parent = parent;
-                            parent.children.push(child);
+            visible.forEach(node => {
+                if (!node.documentRoot) {
+                    let parent = getNode(<HTMLElement> node.element.parentElement);
+                    if (parent != null) {
+                        if (!node.pageflow) {
+                            let found = false;
+                            while (parent != null && parent.id !== 0) {
+                                if (parent.intersect(node.linear, 'box')) {
+                                    found = true;
+                                    break;
+                                }
+                                parent = (<T> getNode(<HTMLElement> parent.element.parentElement));
+                            }
+                            if (!found)  {
+                                parent = (<T> this.cache.parent);
+                            }
                         }
+                        node.parent = parent;
+                        parent.children.push(node);
                     }
-                });
+                }
             });
             visible.forEach(node => {
                 const supportInline = this.controllerHandler.supportInline;
@@ -401,8 +412,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             this.cache.elements.forEach(node => {
                 let i = 0;
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
-                    const child = (<T> (<any> element).__node);
-                    if (child && child.visible && child.parent.element === node.element) {
+                    const child = getNode(element);
+                    if (child && child.visible) {
                         child.parentIndex = i++;
                     }
                 });
@@ -477,17 +488,30 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
             for (let j = 0; j < coordsY.length; j++) {
                 const axisY: T[] = [];
-                const layers: T[] = [];
+                const below: T[] = [];
+                const middle: T[] = [];
+                const above: T[] = [];
+                let parentIndex = -1;
                 for (const node of (<T[]> mapY[i][coordsY[j]])) {
-                    if (!node.pageflow && convertInt(node.css('zIndex')) > 0) {
-                        layers.push(node);
-                    }
-                    else {
+                    if (node.documentRoot) {
                         axisY.push(node);
                     }
+                    else if (node.pageflow) {
+                        middle.push(node);
+                        parentIndex = node.parentIndex;
+                    }
+                    else {
+                        const zIndex = convertInt(node.css('zIndex'));
+                        if (zIndex > 0 || node.documentParent.element !== node.element.parentElement || (zIndex === 0 && node.parentIndex > parentIndex)) {
+                            above.push(node);
+                        }
+                        else {
+                            below.push(node);
+                        }
+                    }
                 }
-                if (!axisY.some(node => node.multiLine)) {
-                    axisY.sort((a, b) => {
+                if (!middle.some(node => node.multiLine)) {
+                    middle.sort((a, b) => {
                         if (!a.parent.flex.enabled && !b.parent.flex.enabled) {
                             if (a.intersectX(b.linear)) {
                                 return (a.linear.left <= b.linear.left ? -1 : 1);
@@ -499,7 +523,9 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         return (a.parentIndex < b.parentIndex ? -1 : 1);
                     });
                 }
-                axisY.push(...sortAsc(layers, 'style.zIndex', 'parentIndex'));
+                axisY.push(...sortAsc(below, 'style.zIndex', 'parentIndex'));
+                axisY.push(...middle);
+                axisY.push(...sortAsc(above, 'style.zIndex', 'parentIndex'));
                 const includes: string[] = [];
                 let current = '';
                 for (let k = 0; k < axisY.length; k++) {

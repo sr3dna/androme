@@ -1,5 +1,5 @@
 import { ObjectMap } from '../.././lib/types';
-import { convertPX, hasValue } from '../../lib/util';
+import { convertPX } from '../../lib/util';
 import SETTINGS from '../../settings';
 
 let ID: ObjectMap<string[]>;
@@ -39,7 +39,7 @@ export function stripId(value: string) {
 }
 
 export function convertDP(value: any, dpi = 160, font = false) {
-    if (hasValue(value)) {
+    if (value) {
         value = parseFloat(convertPX(value));
         if (!isNaN(value)) {
             value /= (dpi / 160);

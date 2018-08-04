@@ -2,11 +2,11 @@ import { BoxRect, BoxStyle, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import { convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, hasValue, isPercent, lastIndexOf, sortAsc } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { getStyle } from '../lib/dom';
+import { getNode, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
-import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, FIXED_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
+import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
 
 type T = View;
 
@@ -82,7 +82,7 @@ export default class View extends Node {
     }
 
     public anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean) {
-        if (arguments.length === 1 || this.constraint.current[position] == null || !this.constraint.current[position].overwrite || (!this.constraint[<string> orientation] && hasValue(orientation))) {
+        if (arguments.length === 1 || this.constraint.current[position] == null || !this.constraint.current[position].overwrite || (orientation && !this.constraint[orientation])) {
             if (overwrite == null) {
                 overwrite = (adjacent === 'parent' || adjacent === 'true');
             }
@@ -100,8 +100,8 @@ export default class View extends Node {
                     this.android(position, adjacent, overwrite);
                     break;
             }
-            if (hasValue(orientation)) {
-                this.constraint[<string> orientation] = true;
+            if (orientation) {
+                this.constraint[orientation] = true;
             }
             this.constraint.current[position] = { adjacent, orientation, overwrite };
         }
@@ -128,7 +128,7 @@ export default class View extends Node {
         const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
         if (value !== '') {
             const dimen = parseRTL(value);
-            return [dimen, (<string> this.android(dimen)) || '0px'];
+            return [dimen, this.android(dimen) || '0px'];
         }
         return ['', '0px'];
     }
@@ -226,7 +226,7 @@ export default class View extends Node {
         if (this.nodeId == null) {
             const element = (<HTMLInputElement> this.element);
             let name = (element.id || element.name || '').trim();
-            if (hasValue(name) && RESERVED_JAVA.includes(name)) {
+            if (name && RESERVED_JAVA.includes(name)) {
                 name += '_1';
             }
             this.nodeId = convertWord(generateId('android', (name || `${lastIndexOf(this.nodeName, '.').toLowerCase()}_1`)));
@@ -247,7 +247,8 @@ export default class View extends Node {
         const widthParent = parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth);
         const heightParent = parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth);
         const renderParent = (<T> this.renderParent);
-        if ((this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE, NODE_STANDARD.SCROLL_VERTICAL, NODE_STANDARD.SCROLL_HORIZONTAL, NODE_STANDARD.SCROLL_NESTED)) || this.element === document.body) {
+        const documentBody = (this.element === document.body);
+        if ((this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE, NODE_STANDARD.SCROLL_VERTICAL, NODE_STANDARD.SCROLL_HORIZONTAL, NODE_STANDARD.SCROLL_NESTED)) || documentBody) {
             if (this.viewWidth === 0) {
                 this.android('layout_width', 'match_parent', false);
             }
@@ -269,7 +270,7 @@ export default class View extends Node {
                         }
                         else if (styleMap.width === '100%') {
                             this.android('layout_width', 'match_parent');
-                            if (!hasValue(styleMap.height)) {
+                            if (!styleMap.height) {
                                 switch (this.nodeName) {
                                     case NODE_ANDROID.IMAGE:
                                         this.android('layout_height', 'match_parent');
@@ -308,7 +309,12 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutWidth) {
-                this.android('layout_width', (this.renderChildren.some(node => node.float === 'right') || this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)), false);
+                if (constraint.layoutHorizontal) {
+                    this.android('layout_width', (this.documentRoot ? 'match_parent' : 'wrap_content'), false);
+                }
+                else {
+                    this.android('layout_width', (this.renderChildren.some(node => node.float === 'right') || this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)), false);
+                }
             }
             else if (this.android('layout_width') == null) {
                 let maxRight = 0;
@@ -319,7 +325,7 @@ export default class View extends Node {
                     maxRight = Math.floor(this.cascade().filter(node => node.visible).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
                     maxRightParent = Math.floor(parent.cascade().filter((node: T) => node.visible && !parent.children.includes(node)).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
                 }
-                const wrapContent = (this.nodeType <= NODE_STANDARD.INLINE || this.display === 'table' || this.inline || parent.flex.enabled || renderParent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal));
+                const wrapContent = (this.nodeType <= NODE_STANDARD.INLINE || this.inline || !this.pageflow || this.display === 'table' || parent.flex.enabled || renderParent.is(NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal));
                 if (convertFloat(this.android('layout_columnWeight')) > 0) {
                     this.android('layout_width', '0px', false);
                 }
@@ -341,7 +347,7 @@ export default class View extends Node {
                         }
                         else if (styleMap.height === '100%') {
                             this.android('layout_height', 'match_parent');
-                            if (!hasValue(styleMap.width)) {
+                            if (!styleMap.width) {
                                 switch (this.nodeName) {
                                     case NODE_ANDROID.IMAGE:
                                         this.android('layout_width', 'match_parent');
@@ -375,10 +381,19 @@ export default class View extends Node {
                 }
             }
             if (constraint.layoutHeight) {
-                this.android('layout_height', (this.bounds.height >= heightParent && !renderParent.documentRoot ? 'match_parent' : formatPX(this.bounds.height)), false);
+                if (constraint.layoutVertical) {
+                    this.android('layout_height', 'wrap_content', false);
+                }
+                else if (this.documentRoot) {
+                    const bottomHeight = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.pageflow).map(node => node.linear.bottom)]);
+                    this.android('layout_height', (bottomHeight > 0 ? formatPX(bottomHeight + this.paddingBottom + this.borderBottomWidth) : 'match_parent'), false);
+                }
+                else {
+                    this.android('layout_height', (this.bounds.height < heightParent ? formatPX(this.bounds.height) : 'match_parent'), false);
+                }
             }
             else if (this.android('layout_height') == null) {
-                if (height >= heightParent && parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight && !FIXED_ANDROID.includes(this.nodeName) && !renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') !== 'wrap_content') {
+                if (height >= heightParent && parent.overflow === OVERFLOW_ELEMENT.NONE && parent.viewHeight > 0 && !(this.inline && this.nodeType < NODE_STANDARD.INLINE) && !(renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.android('layout_height') === 'wrap_content')) {
                     this.android('layout_height', 'match_parent');
                 }
                 else {
@@ -413,7 +428,7 @@ export default class View extends Node {
             let parent: T = (<T> this.documentParent);
             do {
                 textAlignParent = parent.styleMap.textAlign;
-                if (parent.id === 0 || hasValue(textAlignParent)) {
+                if (parent.id === 0 || textAlignParent) {
                     break;
                 }
                 parent = (<T> parent.documentParent);
@@ -450,7 +465,7 @@ export default class View extends Node {
             let horizontalFloat = '';
             let verticalFloat = '';
             if (!constraintRight) {
-                const gravityParent = (<string> (renderParent.android('gravity') || ''));
+                const gravityParent = renderParent.android('gravity') || '';
                 horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
                 if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
                     horizontalFloat = horizontal;
@@ -700,7 +715,7 @@ export default class View extends Node {
     }
 
     get stringId() {
-        return (hasValue(this.nodeId) ? `@+id/${this.nodeId}` : '');
+        return (this.nodeId ? `@+id/${this.nodeId}` : '');
     }
 
     set nodeName(value) {
@@ -720,7 +735,7 @@ export default class View extends Node {
         this._documentParent = value;
     }
     get documentParent() {
-        const position = this.position;
+        const position = this.css('position');
         if (this._documentParent != null) {
             return (<T> this._documentParent);
         }
@@ -731,7 +746,7 @@ export default class View extends Node {
             const absolute = (position === 'absolute');
             let parent: Null<HTMLElement> = this.element.parentElement;
             while (parent != null) {
-                const node: T = (!absolute || getStyle(parent).position !== 'static' ? (<any> parent).__node : null);
+                const node = (!absolute || getStyle(parent).position !== 'static' ? <T> getNode(parent) : null);
                 if (node != null) {
                     return node;
                 }

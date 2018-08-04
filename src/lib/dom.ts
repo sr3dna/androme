@@ -1,13 +1,18 @@
 import { BoxModel, ClientRect, Null } from './types';
+import Node from '../base/node';
 import { convertInt, optional } from './util';
 import { BLOCK_ELEMENT } from './constants';
+
+export function getNode(element: HTMLElement): Null<Node> {
+    return (element != null ? <Node> (<any> element).__node : null);
+}
 
 export function previousNode(element: HTMLElement) {
     let previous: Null<HTMLElement>;
     do {
         previous = (<HTMLElement> element.previousSibling);
-        if (previous != null && (<any> previous).__node != null) {
-            return (<any> previous).__node;
+        if (previous != null && getNode(previous) != null) {
+            return getNode(previous);
         }
     }
     while (previous != null);
@@ -80,7 +85,7 @@ export function sameAsParent(element: HTMLElement, attr: string) {
 export function getBoxSpacing(element: HTMLElement, complete = false) {
     const result: BoxModel = {};
     const style = getStyle(element);
-    const node = (<any> element).__node;
+    const node = getNode(element);
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
             const attr = border + direction;

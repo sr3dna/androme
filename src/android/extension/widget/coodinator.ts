@@ -4,6 +4,7 @@ import Extension from '../../../base/extension';
 import View from '../../view';
 import ViewList from '../../viewlist';
 import { includes, optional } from '../../../lib/util';
+import { getNode } from '../../../lib/dom';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
@@ -47,6 +48,6 @@ export default class Coordinator extends Extension<T, U> {
 
     private getToolbar(node: T): Null<T> {
         const toolbar = (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext'), WIDGET_NAME.TOOLBAR)));
-        return (toolbar != null ? (<any> toolbar).__node : null);
+        return (<T> getNode(toolbar));
     }
 }

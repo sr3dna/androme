@@ -1,6 +1,6 @@
 import { PlainFile, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Node from './node';
-import { lastIndexOf, hasValue, trim } from '../lib/util';
+import { lastIndexOf, trim } from '../lib/util';
 
 export default abstract class File<T extends Node> {
     public appName = '';
@@ -15,7 +15,7 @@ export default abstract class File<T extends Node> {
         private processingTime: number,
         compression: string)
     {
-        if (hasValue(compression)) {
+        if (compression) {
             this.compression = compression;
         }
     }

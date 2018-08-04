@@ -75,7 +75,6 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
         return;
     }
     LOADING = false;
-    main.resetController();
     main.setStyleMap();
     main.elements.clear();
     if (main.appName === '' && elements.length === 0) {

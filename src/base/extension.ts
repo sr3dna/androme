@@ -122,7 +122,7 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
             const prefix = convertCamelCase(this.name, '\\.');
             for (const attr in element.dataset) {
                 if (attr.length > prefix.length && attr.startsWith(prefix)) {
-                    result[capitalize(attr.substring(prefix.length), false)] = (<string> element.dataset[attr]);
+                    result[capitalize(attr.substring(prefix.length), false)] = element.dataset[attr];
                 }
             }
         }

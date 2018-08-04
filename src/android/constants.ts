@@ -73,15 +73,6 @@ export const AXIS_ANDROID = {
     VERTICAL: 'vertical'
 };
 
-export const FIXED_ANDROID = [
-    NODE_ANDROID.EDIT,
-    NODE_ANDROID.SELECT,
-    NODE_ANDROID.CHECKBOX,
-    NODE_ANDROID.RADIO,
-    NODE_ANDROID.BUTTON,
-    NODE_ANDROID.IMAGE
-];
-
 export const XMLNS_ANDROID = {
     'android': 'http://schemas.android.com/apk/res/android',
     'app': 'http://schemas.android.com/apk/res-auto',

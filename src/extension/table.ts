@@ -34,7 +34,7 @@ export default class Table extends Extension<T, U> {
         }
         const rowCount = tableRows.length;
         let columnCount = 0;
-        const [width, height] = (node.css('borderCollapse') === 'collapse' ? ['0px', '0px'] : (<string> node.css('borderSpacing')).split(' '));
+        const [width, height] = (node.css('borderCollapse') === 'collapse' ? ['0px', '0px'] : node.css('borderSpacing').split(' '));
         for (let i = 0; i < tableRows.length; i++) {
             const tr = tableRows[i];
             tr.hide();

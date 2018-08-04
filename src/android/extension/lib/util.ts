@@ -1,7 +1,7 @@
 import { StringMap } from '../../../lib/types';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { convertPX, hasValue, includes, isNumber, optional } from '../../../lib/util';
+import { convertPX, includes, isNumber, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import parseRTL from '../../localization';
@@ -24,7 +24,7 @@ export function formatResource(options: {}) {
         const object: StringMap = options[namespace];
         if (typeof object === 'object') {
             for (const attr in object) {
-                if (hasValue(object[attr])) {
+                if (object[attr]) {
                     let value = object[attr].toString();
                     switch (namespace) {
                         case 'android':

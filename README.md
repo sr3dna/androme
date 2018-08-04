@@ -979,6 +979,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                         android:id="@+id/c4"
                         android:layout_marginEnd="@dimen/checkbox_margin_end"
                         android:layout_marginStart="@dimen/checkbox_margin_start"
+                        android:layout_marginVertical="@dimen/checkbox_margin_vertical"
                         android:text="@string/none"
                         style="@style/linearlayout_8" />
                 </LinearLayout>
@@ -1285,6 +1286,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="button_padding_vertical">5dp</dimen>
     <dimen name="checkbox_margin_end">3dp</dimen>
     <dimen name="checkbox_margin_start">6dp</dimen>
+    <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">4dp</dimen>
     <dimen name="form_padding_horizontal">12dp</dimen>
     <dimen name="form_padding_vertical">7dp</dimen>
@@ -1299,6 +1301,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="radio_margin_end">3dp</dimen>
     <dimen name="radio_margin_start">5dp</dimen>
     <dimen name="radio_margin_start_1">7dp</dimen>
+    <dimen name="radio_margin_top">3dp</dimen>
     <dimen name="select_margin_start">4dp</dimen>
     <dimen name="select_minwidth">37dp</dimen>
     <dimen name="select_padding_vertical">4dp</dimen>

@@ -1,5 +1,3 @@
-import { hasValue } from './util';
-
 interface Color {
     name: string;
     hex: string;
@@ -163,7 +161,7 @@ const HSL_SORTED: Color[] = [];
 for (const i in X11_CSS3) {
     const x11: Color = X11_CSS3[i];
     for (const j in x11) {
-        const rgb = convertHextoRGB(<string> x11[j]);
+        const rgb = convertHextoRGB(x11[j]);
         if (rgb != null) {
             x11.rgb = rgb;
             x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
@@ -259,7 +257,7 @@ export function convertRGB({ rgb }: Color) {
 }
 
 export function parseRGBA(value: string, opacity = '1'): string[] {
-    if (hasValue(value)) {
+    if (value !== '') {
         const color = getByColorName(value);
         if (color !== '') {
             return [color.hex, convertRGB(color), '1'];
@@ -297,7 +295,7 @@ export function convertHextoRGB(value: string) {
 }
 
 export function parseHex(value: string) {
-    if (hasValue(value)) {
+    if (value !== '') {
         value = value.trim();
         const color = parseRGBA(value);
         if (color.length > 0) {

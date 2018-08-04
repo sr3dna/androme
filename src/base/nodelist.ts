@@ -126,4 +126,17 @@ export default abstract class NodeList<T extends Node> {
     get linearY() {
         return NodeList.linearY(this._list);
     }
+
+    get top() {
+        return Math.max.apply(null, this._list.map(node => node.linear.top));
+    }
+    get bottom() {
+        return Math.max.apply(null, this._list.map(node => node.linear.bottom));
+    }
+    get right() {
+        return Math.max.apply(null, this._list.map(node => node.linear.right));
+    }
+    get left() {
+        return Math.max.apply(null, this._list.map(node => node.linear.left));
+    }
 }

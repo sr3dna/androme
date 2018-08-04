@@ -92,7 +92,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public static addImageSrcSet(element: HTMLImageElement, prefix = '') {
         const srcset = element.srcset.trim();
         const images = {};
-        if (hasValue(srcset)) {
+        if (srcset !== '') {
             const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
             srcset.split(',').forEach(value => {
                 const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
@@ -132,7 +132,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public static addImage(images: StringMap, prefix = '') {
         let src = '';
-        if (images && hasValue(images['mdpi'])) {
+        if (images && images['mdpi']) {
             src = lastIndexOf(images['mdpi']);
             const format = lastIndexOf(src, '.').toLowerCase();
             src = src.replace(/.\w+$/, '').replace(/-/g, '_');
@@ -705,8 +705,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const result = ResourceView.addString(stored.value, stored.name);
                     if (result !== '') {
                         const method = METHOD_ANDROID['valueString'];
-                        let value = (<string> Resource.STORED.STRINGS.get(result));
-                        if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
+                        let value = Resource.STORED.STRINGS.get(result);
+                        if (value != null && node.is(NODE_STANDARD.TEXT) && node.style != null) {
                             const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
                             if (match != null) {
                                 switch (match[0]) {
@@ -945,7 +945,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         }
         for (const styles of inherit) {
             let parent = '';
-            (<string> styles).split('.').forEach(value => {
+            styles.split('.').forEach((value: string) => {
                 const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                 if (match != null) {
                     const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];

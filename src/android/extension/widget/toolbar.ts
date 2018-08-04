@@ -7,7 +7,7 @@ import ViewList from '../../viewlist';
 import { convertPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
 import { delimitDimen, stripId } from '../../lib/util';
-import { getStyle } from '../../../lib/dom';
+import { getNode, getStyle } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
@@ -81,7 +81,7 @@ export default class Toolbar extends Extension<T, U> {
                 }
             }
             if (!hasValue(element.dataset.target)) {
-                const targetNode = (<any> element).__node;
+                const targetNode = (<T> getNode(element));
                 if (targetNode != null) {
                     switch (element.dataset.targetModule) {
                         case 'appBar':

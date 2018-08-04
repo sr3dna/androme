@@ -89,12 +89,12 @@ export default abstract class Resource<T extends Node> {
                 if (object.__boxSpacing == null || SETTINGS.alwaysReevaluateResources) {
                     const result = getBoxSpacing(element);
                     const formatted = {};
-                    for (const i in result) {
-                        if (node.inline && (i === 'marginTop' || i === 'marginBottom')) {
-                            formatted[i] = '0px';
+                    for (const attr in result) {
+                        if (node.inlineMargin && (attr === 'marginTop' || attr === 'marginBottom')) {
+                            formatted[attr] = '0px';
                         }
                         else {
-                            formatted[i] = formatPX(result[i]);
+                            formatted[attr] = formatPX(result[attr]);
                         }
                     }
                     object.__boxSpacing = formatted;
@@ -158,7 +158,7 @@ export default abstract class Resource<T extends Node> {
                         if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> object.__boxStyle) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')))) {
                             backgroundColor = [];
                         }
-                        let fontWeight = (<string> node.css('fontWeight'));
+                        let fontWeight = node.css('fontWeight');
                         if (!isNumber(fontWeight)) {
                             switch (fontWeight) {
                                 case 'lighter':
