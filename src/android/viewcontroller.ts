@@ -205,6 +205,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 const horizontal = (resolveAnchor(adjacent, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '');
                                 const vertical = (resolveAnchor(adjacent, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '');
                                 const intersectY = current.intersectY(adjacent.linear);
+                                const alignMargin = (current.alignMargin && adjacent.alignMargin);
                                 if (constraint) {
                                     if (current === node || adjacent === node) {
                                         if (current === node) {
@@ -243,7 +244,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                     current.anchor(layoutMap['right'], stringId);
                                                 }
                                             }
-                                            if (withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (withinRange(linear1.left, linear2.right, (alignMargin ? SETTINGS.whitespaceHorizontalOffset : 0))) {
                                                 if (current.float !== 'right') {
                                                     current.anchor(layoutMap['leftRight'], stringId, horizontal, current.withinX(linear2));
                                                 }
@@ -251,7 +252,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                     current.constraint.marginHorizontal = adjacent.stringId;
                                                 }
                                             }
-                                            if (withinRange(linear1.right, linear2.left, SETTINGS.whitespaceHorizontalOffset)) {
+                                            if (withinRange(linear1.right, linear2.left, (alignMargin ? SETTINGS.whitespaceHorizontalOffset : 0))) {
                                                 if (current.float !== 'left') {
                                                     current.anchor(layoutMap['rightLeft'], stringId, horizontal, current.withinX(linear2));
                                                 }
@@ -269,12 +270,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     else {
                                         const topParent = mapParent(current, 'top');
                                         const bottomParent = mapParent(current, 'bottom');
-                                        if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                        if (withinRange(linear1.top, linear2.bottom, (alignMargin ? SETTINGS.whitespaceVerticalOffset : 0))) {
                                             if (intersectY || !bottomParent) {
                                                 current.anchor(layoutMap['topBottom'], stringId, vertical, intersectY);
                                             }
                                         }
-                                        else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
+                                        else if (withinRange(linear1.bottom, linear2.top, (alignMargin ? SETTINGS.whitespaceVerticalOffset : 0))) {
                                             if (intersectY || !topParent) {
                                                 current.anchor(layoutMap['bottomTop'], stringId, vertical, intersectY);
                                             }
@@ -1039,13 +1040,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         }
                         let bottomParent: Null<boolean> = null;
                         let rightParent: Null<boolean> = null;
+                        const bottomMax = nodes.bottom;
                         nodes.list.forEach(current => {
                             const top = mapParent(current, 'top');
                             const right = mapParent(current, 'right');
                             const bottom = mapParent(current, 'bottom');
                             const left = mapParent(current, 'left');
                             if (current.pageflow) {
-                                [[left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'], [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']].forEach((value: [boolean, boolean, string, string, string, string, string]) => {
+                                [[left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'], [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']].forEach((value: [boolean, boolean, string, string, string, string, string], index) => {
                                     if (value[0] || value[1]) {
                                         let adjacent: Null<T> = current;
                                         let valid = (value[0] && value[1]);
@@ -1069,10 +1071,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             node.constraint[`layout${value[6]}`] = true;
                                         }
                                         if (value[0] && value[1] && !current.constraint[`chain${value[6]}`]) {
-                                            current.android(`layout_${capitalize(value[6], false)}`, 'match_parent');
+                                            current.android(`layout_${(index === 0 ? 'width' : 'height')}`, 'match_parent');
                                         }
                                     }
                                 });
+                                if (top && bottom && current.linear.bottom < bottomMax) {
+                                    mapDelete(current, 'bottom');
+                                }
                                 if (right) {
                                     if (!rightParent) {
                                         rightParent = false;
@@ -1087,6 +1092,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                             }
                             else {
+                                if (left && right && node.right == null && current.viewWidth > 0) {
+                                    mapDelete(current, 'right');
+                                }
+                                if (top && bottom && node.bottom == null && current.viewHeight > 0) {
+                                    mapDelete(current, 'bottom');
+                                }
                                 if (left && right && node.viewWidth === 0) {
                                     node.constraint.layoutWidth = true;
                                 }
@@ -1323,7 +1334,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                     node.android('scrollbars', scrollbars.join('|'));
                 }
-                if (node.multiLine) {
+                if (node.multiLine && parent.viewWidth === 0) {
                     node.android('singleLine', 'true');
                 }
                 break;
@@ -1486,7 +1497,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
 
     public parseDimensions(content: string) {
         const resource = (<Map<string, string>> Resource.STORED.DIMENS);
-        const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(\w+)})"/g;
+        const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
         let match: Null<RegExpExecArray>;
         while ((match = pattern.exec(content)) != null) {
             const key = this.getDimenResourceKey(resource, `${match[2]}_${parseRTL(match[3])}`, match[4]);

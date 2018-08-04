@@ -228,11 +228,11 @@ export default abstract class Node implements BoxModel {
     }
 
     public toLeftOf(node: T, offset: number) {
-        return this.withinX(node.linear) && (node.linear.left + offset <= this.linear.right);
+        return (this.withinX(node.linear) || node.withinX(this.linear)) && (node.linear.left + offset <= this.linear.right);
     }
 
     public toRightOf(node: T, offset: number) {
-        return this.withinX(node.linear) && (node.linear.right + offset >= this.linear.left);
+        return (this.withinX(node.linear) || node.withinX(this.linear)) && (node.linear.right + offset >= this.linear.left);
     }
 
     public intersect(rect: ClientRect, dimension = 'linear') {
@@ -262,11 +262,11 @@ export default abstract class Node implements BoxModel {
     }
 
     public withinX(rect: ClientRect, dimension = 'linear') {
-        return (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom) || (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom);
+        return (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom);
     }
 
     public withinY(rect: ClientRect, dimension = 'linear') {
-        return (rect.left >= this[dimension].left && rect.left <= this[dimension].right) || (this[dimension].left >= rect.left && this[dimension].right <= rect.right);
+        return (this[dimension].left >= rect.left && this[dimension].right <= rect.right);
     }
 
     public css(attr: string, value = ''): string {
@@ -585,8 +585,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get pageflow() {
-        const position = this.css('position');
-        return (position === 'static' || position === 'initial' || this.tagName === 'PLAINTEXT' || (position === 'relative' && !this.top && !this.right && !this.bottom && !this.left) || (this.top == null && this.right == null && this.bottom == null && this.left == null));
+        return (['static', 'initial', 'relative'].includes(this.css('position')) || this.tagName === 'PLAINTEXT' || this.alignMargin);
     }
 
     get inline() {
@@ -595,6 +594,10 @@ export default abstract class Node implements BoxModel {
 
     get inlineMargin() {
         return (this.display === 'inline' || this.display === 'table-cell');
+    }
+
+    get alignMargin() {
+        return (this.top == null && this.right == null && this.bottom == null && this.left == null);
     }
 
     get fixed() {

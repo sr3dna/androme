@@ -1,7 +1,6 @@
 import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
-import { convertInt, optional } from './util';
-import { BLOCK_ELEMENT } from './constants';
+import { convertInt, optional, hasValue } from './util';
 
 export function getNode(element: HTMLElement): Null<Node> {
     return (element != null ? <Node> (<any> element).__node : null);
@@ -130,7 +129,7 @@ export function isVisible(element: HTMLElement) {
     }
     if (typeof element.getBoundingClientRect === 'function') {
         const bounds = element.getBoundingClientRect();
-        if (bounds.width !== 0 && bounds.height !== 0 || (getStyle(element).display !== 'none' && BLOCK_ELEMENT.includes(element.tagName))) {
+        if (bounds.width !== 0 && bounds.height !== 0 || hasValue(element.dataset.ext)) {
             return true;
         }
         else {

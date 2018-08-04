@@ -322,11 +322,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     if (parent != null) {
                         if (!node.pageflow) {
                             let found = false;
+                            let previous: Null<Node> = null;
                             while (parent != null && parent.id !== 0) {
-                                if (parent.intersect(node.linear, 'box')) {
+                                if ((node.css('position') === 'absolute' && !['static', 'initial'].includes(parent.css('position')) && convertInt(node.top) >= 0 && convertInt(node.left) >= 0) || (node.withinX(parent.box) && node.withinY(parent.box)) || (previous != null && ((node.linear.top >= parent.linear.top && node.linear.top < previous.linear.top) || (node.linear.right <= parent.linear.right && node.linear.right > previous.linear.right) || (node.linear.bottom <= parent.linear.bottom && node.linear.bottom > previous.linear.bottom) || (node.linear.left >= parent.linear.left && node.linear.left < previous.linear.left)))) {
                                     found = true;
                                     break;
                                 }
+                                previous = parent;
                                 parent = (<T> getNode(<HTMLElement> parent.element.parentElement));
                             }
                             if (!found)  {
@@ -491,18 +493,17 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 const below: T[] = [];
                 const middle: T[] = [];
                 const above: T[] = [];
-                let parentIndex = -1;
                 for (const node of (<T[]> mapY[i][coordsY[j]])) {
+                    const zIndex = convertInt(node.css('zIndex'));
+                    const documentParent = (node.parent.element === node.element.parentElement);
                     if (node.documentRoot) {
                         axisY.push(node);
                     }
-                    else if (node.pageflow) {
+                    else if (node.pageflow || (zIndex === 0 && documentParent)) {
                         middle.push(node);
-                        parentIndex = node.parentIndex;
                     }
                     else {
-                        const zIndex = convertInt(node.css('zIndex'));
-                        if (zIndex > 0 || node.documentParent.element !== node.element.parentElement || (zIndex === 0 && node.parentIndex > parentIndex)) {
+                        if (zIndex > 0 || !documentParent) {
                             above.push(node);
                         }
                         else {
@@ -512,6 +513,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 }
                 if (!middle.some(node => node.multiLine)) {
                     middle.sort((a, b) => {
+                        if (!a.pageflow || !b.pageflow) {
+                            const indexA = convertInt(a.css('zIndex'));
+                            const indexB = convertInt(b.css('zIndex'));
+                            if (indexA !== indexB) {
+                                return (indexA <= indexB ? -1 : 1);
+                            }
+                        }
                         if (!a.parent.flex.enabled && !b.parent.flex.enabled) {
                             if (a.intersectX(b.linear)) {
                                 return (a.linear.left <= b.linear.left ? -1 : 1);
@@ -545,7 +553,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     break;
                                 }
                                 const nextTo = adjacent[(float === 'right' ? 'toLeftOf' : 'toRightOf')](previous, SETTINGS.whitespaceHorizontalOffset);
-                                if ((adjacent.pageflow && float === adjacent.float) || nextTo) {
+                                if ((adjacent.pageflow && float === adjacent.float && !adjacent.intersect(previous.linear)) || nextTo) {
                                     nodes.push(adjacent);
                                     if (adjacent.element.nextSibling && (<Element> adjacent.element.nextSibling).tagName === 'BR') {
                                         break;
