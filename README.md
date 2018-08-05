@@ -388,7 +388,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 <LinearLayout
                     android:id="@+id/linearlayout_10"
                     android:layout_below="@+id/linearlayout_9"
-                    android:layout_marginTop="@dimen/selectgroup_margin_top"
+                    android:layout_marginTop="@dimen/select_group_margin_top"
                     style="@style/relativelayout_1">
                     <Spinner
                         android:id="@+id/month1"
@@ -408,7 +408,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 <LinearLayout
                     android:id="@+id/linearlayout_11"
                     android:layout_below="@+id/linearlayout_10"
-                    android:layout_marginTop="@dimen/selectgroup_margin_top"
+                    android:layout_marginTop="@dimen/select_group_margin_top"
                     style="@style/relativelayout_1">
                     <Spinner
                         android:id="@+id/month2"
@@ -1230,6 +1230,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <style name="radiogroup_1">
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginEnd">@dimen/radio_margin_end</item>
+        <item name="android:layout_marginTop">@dimen/radio_margin_top</item>
         <item name="android:layout_width">wrap_content</item>
     </style>
     <style name="relativelayout_1">
@@ -1288,8 +1289,8 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="checkbox_margin_start">6dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">4dp</dimen>
-    <dimen name="form_padding_horizontal">12dp</dimen>
-    <dimen name="form_padding_vertical">7dp</dimen>
+    <dimen name="form_padding_horizontal">11dp</dimen>
+    <dimen name="form_padding_vertical">6dp</dimen>
     <dimen name="h2_padding">10dp</dimen>
     <dimen name="hr_height">1dp</dimen>
     <dimen name="hr_margin_horizontal">27dp</dimen>
@@ -1302,13 +1303,13 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="radio_margin_start">5dp</dimen>
     <dimen name="radio_margin_start_1">7dp</dimen>
     <dimen name="radio_margin_top">3dp</dimen>
+    <dimen name="select_group_margin_top">13dp</dimen>
     <dimen name="select_margin_start">4dp</dimen>
     <dimen name="select_minwidth">37dp</dimen>
     <dimen name="select_padding_vertical">4dp</dimen>
     <dimen name="select_width">160dp</dimen>
     <dimen name="select_width_1">200dp</dimen>
     <dimen name="select_width_2">100dp</dimen>
-    <dimen name="selectgroup_margin_top">13dp</dimen>
     <dimen name="space_height">6dp</dimen>
     <dimen name="text_margin_end">5dp</dimen>
     <dimen name="text_padding_vertical">5dp</dimen>

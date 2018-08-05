@@ -10,7 +10,7 @@ export default class ViewList<T extends View> extends NodeList<T> {
         super(nodes, parent);
     }
 
-    public slice() {
+    public clone(): NodeList<T> {
         return new ViewList(this.list.slice.apply(this.list, arguments));
     }
 
@@ -18,8 +18,12 @@ export default class ViewList<T extends View> extends NodeList<T> {
         return new ViewList(this.list.filter.call(this.list, callback));
     }
 
-    get anchors() {
-        return this.list.filter(node => node.anchored);
+    get anchored() {
+        return new ViewList(this.list.filter(node => node.anchored));
+    }
+
+    get unanchored() {
+        return new ViewList(this.list.filter(node => !node.anchored));
     }
 
     get horizontalBias() {

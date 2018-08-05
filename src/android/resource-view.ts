@@ -2,6 +2,7 @@ import { ArrayIndex, BasicData, BorderAttribute, BoxStyle, FontAttribute, Null, 
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
+import ViewList from './viewlist';
 import { cameltoLowerCase, capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
 import { generateId, replaceDP } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
@@ -556,9 +557,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
             }
         });
         for (const tag in tagName) {
-            const nodes: T[] = tagName[tag];
+            const nodes = new ViewList(<T[]> tagName[tag]);
             const sorted: StyleList = [];
-            nodes.forEach(node => {
+            for (let node of nodes) {
                 let system = false;
                 let labelFor: Null<T> = null;
                 if (node.companion != null) {
@@ -622,7 +623,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                 }
-            });
+            }
             const tagStyle = this.tagStyle[tag];
             if (tagStyle != null) {
                 for (let i = 0; i < tagStyle.length; i++) {
@@ -635,10 +636,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                 }
-                this.tagCount[tag] += nodes.filter(item => item.visible).length;
+                this.tagCount[tag] += nodes.visible.length;
             }
             else {
-                this.tagCount[tag] = nodes.filter(item => item.visible).length;
+                this.tagCount[tag] = nodes.visible.length;
             }
             this.tagStyle[tag] = sorted;
         }

@@ -184,7 +184,7 @@ export default class Toolbar extends Extension<T, U> {
                 item.depth = depth + 1;
                 item.element.dataset.target = (<T> appBarNode).nodeId;
             });
-            application.cache.list.push(appBarNode);
+            application.cache.append(appBarNode);
             outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
             if (collapsingToolbar) {
                 depth++;
@@ -201,7 +201,7 @@ export default class Toolbar extends Extension<T, U> {
                     item.depth = depth + 1;
                     item.element.dataset.target = (<T> collapsingToolbarNode).nodeId;
                 });
-                application.cache.list.push(collapsingToolbarNode);
+                application.cache.append(collapsingToolbarNode);
                 outer = outer.replace(`{:${appBarNode.id}}`, controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true) + `{:${appBarNode.id}}`);
             }
         }

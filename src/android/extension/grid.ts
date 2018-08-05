@@ -28,7 +28,7 @@ export default class GridAndroid<T extends View> extends Grid {
 
     public afterRender() {
         const extended: T[] = [];
-        this.application.cache.list.forEach((node: T) => {
+        [...this.application.cache].forEach((node: T) => {
             if (node.renderExtension === this) {
                 extended.push(node);
             }

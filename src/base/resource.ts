@@ -190,7 +190,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setOptionArray() {
-        this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
+        this.cache.list.filter(node => node.visible && node.tagName === 'SELECT').forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
                 const element = (<HTMLSelectElement> node.element);
                 const object: any = element;
@@ -286,12 +286,10 @@ export default abstract class Resource<T extends Node> {
                     if (inlineTrim) {
                         const original = value;
                         value = value.trim();
-                        const previousSibling = node.previousSibling;
-                        const nextSibling = node.nextSibling;
-                        if (previousSibling && previousSibling.inline && /^\s+/.test(original)) {
+                        if (node.previousSibling && node.previousSibling.inline && /^\s+/.test(original)) {
                             value = '&#160;' + value;
                         }
-                        if (nextSibling && nextSibling.inline && /\s+$/.test(original)) {
+                        if (node.nextSibling && node.nextSibling.inline && /\s+$/.test(original)) {
                             value = value + '&#160;';
                         }
                     }

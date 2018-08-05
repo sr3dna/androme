@@ -85,7 +85,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public reset() {
-        this.cacheInternal.list.forEach(node => {
+        for (const node of this.cacheInternal) {
             const object: any = node.element;
             delete object.__style;
             delete object.__styleMap;
@@ -95,7 +95,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             delete object.__imageSource;
             delete object.__optionArray;
             delete object.__valueString;
-        });
+        }
         this.cache.reset();
         this.cacheInternal.reset();
         this.resetController();
@@ -261,7 +261,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         if (this.cache.length > 0) {
             const preAlignment: ObjectIndex<ObjectMap<Null<string>>> = {};
-            this.cache.list.forEach(node => {
+            for (const node of this.cache) {
                 const element = node.element;
                 preAlignment[node.id] = {};
                 const style = preAlignment[node.id];
@@ -292,8 +292,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     element.style.overflow = 'visible';
                 }
                 node.setBounds();
-            });
-            this.cache.list.forEach(node => {
+            }
+            for (const node of this.cache) {
                 const element = (<HTMLInputElement> node.element);
                 if (element.tagName === 'INPUT' && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
                     switch (element.type) {
@@ -314,7 +314,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             break;
                     }
                 }
-            });
+            }
             const visible = this.cache.visible;
             visible.forEach(node => {
                 if (!node.documentRoot) {
@@ -399,14 +399,14 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     }
                 }
             });
-            this.cache.list.forEach(node => {
+            for (const node of this.cache) {
                 const style = preAlignment[node.id];
                 if (style != null) {
                     for (const attr in style) {
                         node.element.style[attr] = style[attr];
                     }
                 }
-            });
+            }
             extensions.forEach(item => {
                 item.setTarget(rootNode);
                 item.afterInit();
@@ -416,12 +416,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                     const child = getNode(element);
                     if (child && child.visible) {
-                        child.parentIndex = i++;
+                        child.siblingIndex = i++;
                     }
                 });
-                sortAsc(node.children, 'parentIndex');
+                sortAsc(node.children, 'siblingIndex');
             });
-            this.cache.sortAsc('depth', 'parent.id', 'parentIndex', 'id');
+            this.cache.sortAsc('depth', 'parent.id', 'siblingIndex', 'id');
             this.addLayout(<string> root.dataset.viewName);
             return true;
         }
@@ -528,12 +528,12 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 return (a.linear.top <= b.linear.top ? -1 : 1);
                             }
                         }
-                        return (a.parentIndex < b.parentIndex ? -1 : 1);
+                        return (a.siblingIndex < b.siblingIndex ? -1 : 1);
                     });
                 }
-                axisY.push(...sortAsc(below, 'style.zIndex', 'parentIndex'));
+                axisY.push(...sortAsc(below, 'style.zIndex', 'siblingIndex'));
                 axisY.push(...middle);
-                axisY.push(...sortAsc(above, 'style.zIndex', 'parentIndex'));
+                axisY.push(...sortAsc(above, 'style.zIndex', 'siblingIndex'));
                 const includes: string[] = [];
                 let current = '';
                 for (let k = 0; k < axisY.length; k++) {
@@ -565,7 +565,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                 }
                             }
                         }
-                        if (parent.inlineWrap || nodes.length > 1) {
+                        if (nodes.length > 1) {
                             if (parent.is(NODE_STANDARD.RELATIVE) && nodes.length === parent.children.length) {
                                 parent.inlineWrap = true;
                             }
@@ -749,7 +749,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         else if (extension == null) {
             root.visible = false;
         }
-        this.cacheInternal.list.push(...this.cache.list);
+        this.cacheInternal.append(...this.cache);
     }
 
     public writeFrameLayout(node: T, parent: T) {
@@ -798,13 +798,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public insertAuxillaryViews() {
-        this.cacheInternal.list.forEach(node => {
+        for (const node of this.cacheInternal) {
             const extension = node.renderExtension;
             if (extension != null) {
                 extension.setTarget(node);
                 extension.beforeInsert();
             }
-        });
+        }
         const template = {};
         for (const id in this.insert) {
             let replaceId = id;
@@ -852,24 +852,24 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
             value.content = this.controllerHandler.insertAuxillaryViews(value.content);
         });
-        this.cacheInternal.list.forEach(node => {
+        for (const node of this.cacheInternal) {
             const extension = node.renderExtension;
             if (extension != null) {
                 extension.setTarget(node);
                 extension.afterInsert();
             }
-        });
+        }
     }
 
     public setAttributes() {
         this.controllerHandler.setAttributes(this.viewData);
-        this.cacheInternal.list.forEach(node => {
+        for (const node of this.cacheInternal) {
             const extension = node.renderExtension;
             if (extension != null) {
                 extension.setTarget(node);
                 extension.finalize();
             }
-        });
+        }
     }
 
     public addLayout(value: string) {
@@ -900,7 +900,8 @@ export default class Application<T extends Node, U extends NodeList<T>> {
     }
 
     public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
-        return ((linearX || linearY) && !parent.flex.enabled && children.every(node => node.pageflow && !node.multiLine) && children.every(node => children[0].float === node.float));
+        const float = children[0].float;
+        return ((linearX || linearY) && !parent.flex.enabled && children.every(node => node.pageflow && !node.multiLine) && !children.some(node => float !== node.float));
     }
 
     public addInclude(filename: string, content: string) {
@@ -950,7 +951,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             node.setExcludeResource();
         }
         if (node != null) {
-            this.cache.list.push(node);
+            this.cache.append(node);
         }
         return node;
     }

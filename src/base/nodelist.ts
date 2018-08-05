@@ -1,7 +1,7 @@
 import Node from './node';
 import { sortAsc, sortDesc, withinRange } from '../lib/util';
 
-export default abstract class NodeList<T extends Node> {
+export default abstract class NodeList<T extends Node> implements Iterable<T> {
     public static intersect<T extends Node>(list: T[], dimension = 'linear') {
         list.forEach(node => {
             if (list.some(item => item !== node && node.intersect(item[dimension]))) {
@@ -49,7 +49,7 @@ export default abstract class NodeList<T extends Node> {
         return false;
     }
 
-    private static currentId = 0;
+    private currentId = 0;
     private _list: T[] = [];
 
     constructor(
@@ -62,6 +62,23 @@ export default abstract class NodeList<T extends Node> {
         this.parent = parent;
     }
 
+    public abstract clone(): NodeList<T>;
+
+    public [Symbol.iterator]() {
+        const list = this._list;
+        let i = 0;
+        return {
+            next(): IteratorResult<T> {
+                if (i < list.length) {
+                    return { done: false, value: list[i++] };
+                }
+                else {
+                    return { done: true, value: undefined } as any;
+                }
+            }
+        };
+    }
+
     public find(id: number) {
         return this._list.find(node => node.id === id) || null;
     }
@@ -71,8 +88,20 @@ export default abstract class NodeList<T extends Node> {
     }
 
     public reset() {
-        NodeList.currentId = 0;
+        this.currentId = 0;
         this.clear();
+    }
+
+    public append(...nodes: T[]) {
+        this._list.push(...nodes);
+    }
+
+    public prepend(...nodes: T[]) {
+        this._list.unshift(...nodes);
+    }
+
+    public locate(attr: string, value: any) {
+        return this._list.find(node => node[attr] === value);
     }
 
     public clear() {
@@ -117,7 +146,7 @@ export default abstract class NodeList<T extends Node> {
     }
 
     get nextId() {
-        return ++NodeList.currentId;
+        return ++this.currentId;
     }
 
     get linearX() {

@@ -4,6 +4,8 @@ import View from './view';
 type T = View;
 
 export default class ViewGroup extends View {
+    private baseNode: T;
+
     constructor(
         id: number,
         node: T,
@@ -12,6 +14,7 @@ export default class ViewGroup extends View {
     {
         super(id, node.api);
         this.documentParent = node.documentParent;
+        this.baseNode = node;
         if (parent != null) {
             this.parent = parent;
         }
@@ -19,7 +22,7 @@ export default class ViewGroup extends View {
             this.children = children;
         }
         this.depth = node.depth;
-        this.tagName = `${node.tagName}group`;
+        this.tagName = `${node.tagName}_GROUP`;
         this.css('direction', this.documentParent.dir);
     }
 
@@ -112,5 +115,17 @@ export default class ViewGroup extends View {
             }
         }
         return { top, right, bottom, left, children };
+    }
+
+    get previousSibling() {
+        return this.parent.previousSibling;
+    }
+
+    get nextSibling() {
+        return this.parent.nextSibling;
+    }
+
+    get firstChild() {
+        return this.baseNode;
     }
 }

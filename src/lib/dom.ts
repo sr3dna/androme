@@ -145,8 +145,9 @@ export function isVisible(element: HTMLElement) {
             if (valid && element.children.length > 0) {
                 return Array.from(element.children).some((item: HTMLElement) => {
                     const style = getStyle(item);
-                    const float = (<any> style).float;
-                    return ((style.position !== 'static' && style.position !== 'initial') || float === 'left' || float === 'right');
+                    const float = style.cssFloat;
+                    const position = style.position;
+                    return ((position !== 'static' && position !== 'initial') || float === 'left' || float === 'right');
                 });
             }
         }

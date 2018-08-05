@@ -126,8 +126,8 @@ export default class Grid extends Extension<T, U> {
                         let [left, right] = [nextX.linear.left, nextX.linear.right];
                         let index = l;
                         if (index > 0 && nextX.float === 'right') {
-                            const style: any = nextX.element.style;
-                            style.float = 'left';
+                            const style = nextX.element.style;
+                            style.cssFloat = 'left';
                             const bounds = nextX.element.getBoundingClientRect();
                             if (left !== (bounds.left - node.marginLeft)) {
                                 [left, right] = [bounds.left - node.marginLeft, bounds.right + node.marginRight];
@@ -138,7 +138,7 @@ export default class Grid extends Extension<T, U> {
                                     }
                                 }
                             }
-                            style.float = 'right';
+                            style.cssFloat = 'right';
                         }
                         function findRowIndex() {
                             return columns[0].findIndex(item => withinFraction(item.linear.top, nextX.linear.top) || (nextX.linear.top >= item.linear.top && nextX.linear.bottom <= item.linear.bottom));

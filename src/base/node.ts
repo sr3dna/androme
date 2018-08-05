@@ -1,7 +1,7 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertInt, convertCamelCase, hasValue, includesEnum, search } from '../lib/util';
-import { assignBounds, getRangeBounds } from '../lib/dom';
+import { assignBounds, getNode, getRangeBounds } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
@@ -13,7 +13,7 @@ export default abstract class Node implements BoxModel {
     public nodeType = 0;
     public depth = -1;
     public renderDepth = 0;
-    public parentIndex = Number.MAX_VALUE;
+    public siblingIndex = Number.MAX_VALUE;
     public bounds: ClientRect;
     public linear: ClientRect;
     public box: ClientRect;
@@ -474,12 +474,12 @@ export default abstract class Node implements BoxModel {
     }
 
     get floating() {
-        const float = (this.style != null ? (<any> this.style).float : '');
-        return (float === 'left' || float === 'right');
+        const float = this.css('cssFloat');
+        return (this.css('position') !== 'absolute' ? (float === 'left' || float === 'right') : false);
     }
 
     get float() {
-        return this.css('float') || 'none';
+        return (this.floating ? this.css('cssFloat') : null) || 'none';
     }
 
     get overflow() {
@@ -626,19 +626,22 @@ export default abstract class Node implements BoxModel {
     }
 
     get previousSibling() {
-        const index = this.parent.children.findIndex(node => node === this);
-        if (index > 0) {
-            return this.parent.children[index - 1];
-        }
-        return null;
+        return getNode(<HTMLElement> this.element.previousElementSibling);
     }
 
     get nextSibling() {
-        const index = this.parent.children.findIndex(node => node === this);
-        if (index !== -1) {
-            return this.parent.children[index + 1];
+        return getNode(<HTMLElement> this.element.nextElementSibling);
+    }
+
+    get firstChild(): Null<T> {
+        let result: any = null;
+        if (this.hasElement) {
+            Array.from(this.element.childNodes).some((element: HTMLElement) => {
+                result = getNode(element);
+                return (result != null);
+            });
         }
-        return null;
+        return result;
     }
 
     get center(): Point {

@@ -188,15 +188,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     }
                 }
                 else {
-                    const pageflow = (<U> new ViewList(nodes.list.filter(item => item.pageflow), node));
-                    const fixed = (<U> new ViewList(nodes.list.filter(item => !item.pageflow), node));
+                    const pageflow = (<U> nodes.filter(item => item.pageflow));
+                    const fixed = (<U> nodes.filter(item => !item.pageflow));
                     const linearX = pageflow.linearX;
                     const verticalPerspective = (!SETTINGS.horizontalPerspective && !flex.enabled && !pageflow.list.some(item => item.floating));
-                    pageflow.list.unshift(node);
-                    pageflow.list.forEach(current => {
-                        pageflow.list.forEach(adjacent => {
+                    pageflow.prepend(node);
+                    for (let current of pageflow) {
+                        for (const adjacent of pageflow) {
                             if (current === adjacent) {
-                                return;
+                                continue;
                             }
                             else {
                                 let linear1 = current.linear;
@@ -290,7 +290,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 }
                                 else if (relative) {
                                     if (current === node) {
-                                        return;
+                                        continue;
                                     }
                                     else if (adjacent === node) {
                                         if (current.linear.left <= node.box.left || withinFraction(current.linear.left, node.box.left)) {
@@ -348,11 +348,11 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     }
                                 }
                             }
-                        });
-                    });
+                        }
+                    }
                     if (fixed.length > 0) {
                         node.setBoundsMin();
-                        fixed.list.forEach(current => {
+                        for (const current of fixed) {
                             const map = (constraint ? layoutMap : relativeParent);
                             const stringId = (constraint ? 'parent' : 'true');
                             if (current.top != null && convertInt(current.top) === 0) {
@@ -375,10 +375,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             if (current.top === 0 && current.bottom === 0) {
                                 current.android('layout_height', 'match_parent');
                             }
-                        });
+                        }
                     }
                     pageflow.list.shift();
-                    pageflow.list.forEach(current => {
+                    for (const current of pageflow) {
                         const leftRight = current.anchor(layoutMap['leftRight']);
                         if (leftRight != null) {
                             if (!current.constraint.horizontal) {
@@ -421,13 +421,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                 mapDelete(current, 'bottomTop');
                             }
                         }
-                    });
+                    }
                     for (let i = 0; i < pageflow.length; i++) {
                         const current = pageflow.list[i];
                         if (!current.anchored) {
                             const result = (constraint ? search(current.get('app'), '*constraint*') : search(current.get('android'), layoutMap));
                             for (const [key, value] of result) {
-                                if (value !== 'parent' && pageflow.anchors.find(item => item.stringId === value) != null) {
+                                if (value !== 'parent' && pageflow.anchored.locate('stringId', value) != null) {
                                     if (indexOf(key, parseRTL('Left'), parseRTL('Right')) !== -1) {
                                         current.constraint.horizontal = true;
                                     }
@@ -445,39 +445,39 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         let flexbox: Null<any[]> = null;
                         if (flex.enabled) {
                             if (flex.wrap === 'nowrap') {
-                                let horizontalChain = pageflow.list.slice();
-                                let verticalChain = pageflow.list.slice();
+                                const horizontalChain = pageflow.clone();
+                                const verticalChain = pageflow.clone();
                                 switch (flex.direction) {
                                     case 'row-reverse':
-                                        horizontalChain.reverse();
+                                        horizontalChain.list.reverse();
                                     case 'row':
-                                        verticalChain = [];
+                                        verticalChain.clear();
                                         break;
                                     case 'column-reverse':
-                                        verticalChain.reverse();
+                                        verticalChain.list.reverse();
                                     case 'column':
-                                        horizontalChain = [];
+                                        horizontalChain.clear();
                                         break;
                                 }
-                                flexbox = [{ constraint: { horizontalChain: new ViewList(horizontalChain), verticalChain: new ViewList(verticalChain) } }];
+                                flexbox = [{ constraint: { horizontalChain, verticalChain } }];
                             }
                             else {
-                                const sorted = pageflow.list.slice();
+                                const sorted = pageflow.clone();
                                 switch (flex.direction) {
                                     case 'row-reverse':
                                     case 'column-reverse':
-                                    sorted.reverse();
+                                    sorted.list.reverse();
                                 }
                                 const map: ObjectIndex<T[]> = {};
                                 const levels: number[] = [];
-                                sorted.forEach(item => {
+                                for (const item of sorted) {
                                     const y = item.linear.top;
                                     if (map[y] == null) {
                                         map[y] = [];
                                         levels.push(y);
                                     }
-                                    map[y].push(item);
-                                });
+                                    map[y].push(<T> item);
+                                }
                                 function reverseMap() {
                                     for (const y in map) {
                                         map[y].reverse();
@@ -507,15 +507,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         else {
                             const horizontal = pageflow.list.filter(current => !current.constraint.horizontal);
                             const vertical = pageflow.list.filter(current => !current.constraint.vertical);
-                            pageflow.list.some(current => {
+                            pageflow.list.some((current: T) => {
                                 let horizontalChain: T[] = [];
                                 let verticalChain: T[] = [];
                                 if (horizontal.length > 0) {
-                                    horizontalChain = this.partitionChain(node, current, pageflow.list, AXIS_ANDROID.HORIZONTAL);
+                                    horizontalChain = this.partitionChain(node, current, <ViewList<T>> pageflow, AXIS_ANDROID.HORIZONTAL);
                                     current.constraint.horizontalChain = new ViewList(sortAsc(horizontalChain, 'linear.left'));
                                 }
                                 if (vertical.length > 0) {
-                                    verticalChain = this.partitionChain(node, current, pageflow.list, AXIS_ANDROID.VERTICAL);
+                                    verticalChain = this.partitionChain(node, current, <ViewList<T>> pageflow, AXIS_ANDROID.VERTICAL);
                                     current.constraint.verticalChain = new ViewList(sortAsc(verticalChain, 'linear.top'));
                                 }
                                 return (horizontalChain.length === pageflow.length || verticalChain.length === pageflow.length);
@@ -526,7 +526,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             direction.reverse();
                         }
                         direction.forEach((value, index) => {
-                            const connected = (flex.enabled ? flexbox : pageflow.slice().list.sort((a, b) => (a.constraint[value] != null ? a.constraint[value].length : 0) >= (b.constraint[value] != null ? b.constraint[value].length : 0) ? -1 : 1));
+                            const connected = (flex.enabled ? flexbox : pageflow.clone().list.sort((a, b) => (a.constraint[value] != null ? a.constraint[value].length : 0) >= (b.constraint[value] != null ? b.constraint[value].length : 0) ? -1 : 1));
                             if (connected != null) {
                                 if (verticalPerspective) {
                                     index = (index === 0 ? 1 : 0);
@@ -553,14 +553,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         let deleteMarginFlex = false;
                                         const attrs = (index === 0 ? [AXIS_ANDROID.HORIZONTAL, 'left', 'leftRight', 'top', AXIS_ANDROID.VERTICAL, 'viewWidth', 'right', 'marginHorizontal'] : [AXIS_ANDROID.VERTICAL, 'top', 'topBottom', 'left', AXIS_ANDROID.HORIZONTAL, 'viewHeight', 'bottom', 'marginVertical']);
                                         for (let i = 0; i < chainable.length; i++) {
+                                            const item = chainable.list[i];
                                             if (i === 0) {
-                                                if (!mapParent(first, attrs[1])) {
+                                                if (!mapParent(item, attrs[1])) {
                                                     disconnected = true;
                                                     break;
                                                 }
                                             }
                                             else {
-                                                if (chainable.list[i].app(layoutMap[attrs[2]]) == null) {
+                                                if (item.app(layoutMap[attrs[2]]) == null) {
                                                     disconnected = true;
                                                     break;
                                                 }
@@ -569,10 +570,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         if (!disconnected) {
                                             if (chainable.list.every(item => same(first, item, `linear.${attrs[3]}`))) {
                                                 for (let j = 1; j < chainable.length; j++) {
-                                                    const adjacent = chainable.list[j];
-                                                    if (!adjacent.constraint[attrs[4]]) {
-                                                        adjacent.app(layoutMap[attrs[3]], first.stringId);
-                                                        adjacent.constraint[attrs[4]] = true;
+                                                    const item = chainable.list[j];
+                                                    if (!item.constraint[attrs[4]]) {
+                                                        item.app(layoutMap[attrs[3]], first.stringId);
+                                                        item.constraint[attrs[4]] = true;
                                                     }
                                                 }
                                             }
@@ -603,7 +604,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                 }
                                                 const nextLevel = connected[level + 1];
                                                 if (nextLevel && nextLevel.constraint[value] && nextLevel.constraint[value].list[i] != null) {
-                                                    const nextChain = nextLevel.constraint[value].list[i];
+                                                    const nextChain = (<T> nextLevel.constraint[value].list[i]);
                                                     if (chain.withinY(nextChain.linear)) {
                                                         chain.anchor(layoutMap['bottomTop'], nextChain.stringId);
                                                         if (!mapParent(chain, 'bottom')) {
@@ -687,14 +688,14 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                         });
                                                         if (valid) {
                                                             mapDelete(chain, 'top', 'bottom');
-                                                            chainable.list.forEach(item => {
+                                                            for (const item of chainable) {
                                                                 if (item.app(layoutMap['top']) === chain.stringId) {
                                                                     mapDelete(item, 'top');
                                                                 }
                                                                 if (item.app(layoutMap['bottom']) === chain.stringId) {
                                                                     mapDelete(item, 'bottom');
                                                                 }
-                                                            });
+                                                            }
                                                             chain.constraint.vertical = true;
                                                         }
                                                         break;
@@ -728,7 +729,9 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                     break;
                                                 case 'space-evenly':
                                                     first.app(chainStyle, 'spread');
-                                                    chainable.list.forEach(item => item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString()));
+                                                    for (const item of chainable) {
+                                                        item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString());
+                                                    }
                                                     break;
                                                 case 'space-around':
                                                     first.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
@@ -811,11 +814,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             if (!flex.enabled) {
                                                 (index === 0 ? [[TL, BR], [BR, TL]] : [[LT, RB], [RB, LT]]).forEach(opposing => {
                                                     if (chainable.list.every(upper => same(first, upper, `linear.${opposing[0]}`) && chainable.list.some(lower => !same(first, lower, `linear.${opposing[1]}`)))) {
-                                                        chainable.list.forEach(chain => mapDelete(chain, opposing[1]));
+                                                        for (const chain of chainable) {
+                                                            mapDelete(chain, opposing[1]);
+                                                        }
                                                     }
                                                 });
-                                                chainable.list.forEach(inner => {
-                                                    pageflow.list.forEach(outer => {
+                                                for (const inner of chainable) {
+                                                    for (const outer of pageflow) {
                                                         const horizontal: U = outer.constraint.horizontalChain;
                                                         const vertical: U = outer.constraint.verticalChain;
                                                         if (horizontal && horizontal.length > 0 && horizontal.find(inner.id) != null) {
@@ -824,32 +829,32 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                         if (vertical && vertical.length > 0 && vertical.find(inner.id) != null) {
                                                             vertical.clear();
                                                         }
-                                                    });
-                                                });
+                                                    }
+                                                }
                                             }
                                             else {
                                                 deleteMarginFlex = true;
                                             }
                                         }
                                         if (deleteMarginFlex) {
-                                            chainable.list.forEach(item => {
+                                            for (const item of chainable) {
                                                 delete item.constraint.marginHorizontal;
                                                 delete item.constraint.marginVertical;
-                                            });
+                                            }
                                         }
                                     }
                                 });
                             }
                         });
                     }
-                    pageflow.list.forEach(current => {
+                    for (const current of pageflow) {
                         current.constraint.horizontal = resolveAnchor(current, AXIS_ANDROID.HORIZONTAL);
                         current.constraint.vertical = resolveAnchor(current, AXIS_ANDROID.VERTICAL);
-                    });
+                    }
                     if (flex.enabled) {
                         if (flex.wrap !== 'nowrap') {
                             ['topBottom', 'bottomTop'].forEach((value, index) => {
-                                pageflow.list.forEach(current => {
+                                for (const current of pageflow) {
                                     if (mapParent(current, (index === 0 ? 'bottom' : 'top'))) {
                                         const chain: T[] = [current];
                                         let valid = false;
@@ -871,7 +876,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             }
                                         }
                                         if (!valid) {
-                                            chain.forEach(item => {
+                                            chain.forEach((item: T) => {
                                                 pageflow.list.some(next => {
                                                     if (item !== next && next.linear.top === item.linear.top && next.linear.bottom === item.linear.bottom) {
                                                         mapDelete(item, 'topBottom', 'bottomTop');
@@ -884,7 +889,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             });
                                         }
                                     }
-                                });
+                                }
                             });
                         }
                     }
@@ -901,13 +906,13 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             item.constraint.vertical = (mapParent(item, 'top') || mapParent(item, 'bottom'));
                         }
                         if (constraint) {
-                            pageflow.list.forEach(current => {
+                            for (const current of pageflow) {
                                 [['top', 'bottom', 'topBottom'], ['bottom', 'top', 'bottomTop']].forEach(direction => {
                                     if (mapParent(current, direction[1]) && current.app(layoutMap[direction[2]]) == null) {
                                         ['leftRight', 'rightLeft'].forEach(value => {
                                             const stringId = current.app(layoutMap[value]);
                                             if (stringId != null) {
-                                                const aligned = pageflow.list.find(item => item.stringId === stringId);
+                                                const aligned = pageflow.locate('stringId', stringId);
                                                 if (aligned && aligned.app(layoutMap[direction[2]]) != null) {
                                                     if (withinFraction(current.linear[direction[0]], aligned.linear[direction[0]])) {
                                                         current.app(layoutMap[direction[0]], aligned.stringId, true);
@@ -920,16 +925,18 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         });
                                     }
                                 });
-                            });
-                            const unbound = nodes.list.filter(current => !current.anchored && (mapParent(current, 'top') || mapParent(current, 'right') || mapParent(current, 'bottom') || mapParent(current, 'left')));
-                            if (nodes.anchors.length === 0 && unbound.length === 0) {
-                                unbound.push(sortAsc(nodes.list.slice(), 'linear.top', 'linear.left')[0]);
                             }
-                            unbound.forEach(current => this.addGuideline(current, node, '', false, false));
-                            const adjacent = nodes.anchors[0];
-                            nodes.list.filter(current => !current.anchored).forEach(opposite => {
+                            const unbound = pageflow.unanchored.filter(current => (mapParent(current, 'top') || mapParent(current, 'right') || mapParent(current, 'bottom') || mapParent(current, 'left')));
+                            if (nodes.anchored.length === 0 && unbound.length === 0) {
+                                unbound.append(nodes.list[0]);
+                            }
+                            for (const current of unbound) {
+                                this.addGuideline(<T> current, node, '', false, false);
+                            }
+                            const adjacent = nodes.anchored.list[0];
+                            for (const opposite of nodes.unanchored) {
                                 deleteConstraints(opposite);
-                                nodes.anchors.forEach(item => deleteConstraints(item, opposite.stringId));
+                                nodes.anchored.list.forEach(item => deleteConstraints(item, opposite.stringId));
                                 if (withinRange(opposite.horizontalBias, 0.5, 0.01) && withinRange(opposite.verticalBias, 0.5, 0.01)) {
                                     this.setAlignParent(opposite);
                                 }
@@ -985,15 +992,15 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     opposite.constraint.horizontal = true;
                                     opposite.constraint.vertical = true;
                                 }
-                            });
+                            }
                         }
                         else {
-                            nodes.list.forEach(current => {
+                            for (const current of nodes) {
                                 if (!current.anchored) {
                                     if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
                                         deleteConstraints(current);
                                         current.android('layout_centerInParent', 'true');
-                                        return;
+                                        continue;
                                     }
                                     if (!current.constraint.horizontal) {
                                         current.constraint.horizontal = nodes.list.some(adjacent => {
@@ -1036,12 +1043,12 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         }
                                     }
                                 }
-                            });
+                            }
                         }
                         let bottomParent: Null<boolean> = null;
                         let rightParent: Null<boolean> = null;
                         const bottomMax = nodes.bottom;
-                        nodes.list.forEach(current => {
+                        for (const current of nodes) {
                             const top = mapParent(current, 'top');
                             const right = mapParent(current, 'right');
                             const bottom = mapParent(current, 'bottom');
@@ -1111,7 +1118,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                     current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, current.marginBottom + convertInt(current.bottom));
                                 }
                             }
-                        });
+                        }
                         if (rightParent === false) {
                             node.constraint.layoutWidth = true;
                         }
@@ -1120,7 +1127,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         }
                     }
                 }
-                nodes.list.forEach(current => {
+                for (const current of nodes) {
                     if (current.constraint.marginHorizontal != null) {
                         const item = this.findByStringId(current.constraint.marginHorizontal);
                         if (item != null) {
@@ -1139,7 +1146,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                         }
                     }
-                });
+                }
             }
         });
     }
@@ -1181,7 +1188,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                     viewGroup.setBounds();
                     current.inherit(viewGroup, 'data');
                     viewGroup.android('fadeScrollbars', 'false');
-                    this.cache.list.push(view);
+                    this.cache.append(view);
                     switch (scrollName) {
                         case NODE_ANDROID.SCROLL_HORIZONTAL:
                             viewGroup.css('width', node.styleMap.width);
@@ -1422,7 +1429,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         group.setBounds();
         parent.children = parent.children.filter((item: T) => !children.includes(item));
         parent.children.push(group);
-        this.cache.list.push(<View> group as T);
+        this.cache.append(<View> group as T);
         return (<View> group as T);
     }
 
@@ -1571,7 +1578,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         });
     }
 
-    private partitionChain(parent: T, node: T, nodes: T[], orientation: string) {
+    private partitionChain(parent: T, node: T, nodes: ViewList<T>, orientation: string) {
         const map = LAYOUT_MAP.constraint;
         const mapParent: string[] = [];
         const coordinate: string[] = [];
@@ -1589,7 +1596,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                 break;
         }
         const result = coordinate.map(value => {
-            const sameXY = sortAsc(nodes.filter(item => same(node, item, value)), coordinate[0]);
+            const sameXY = sortAsc(nodes.list.filter(item => same(node, item, value)), coordinate[0]);
             if (sameXY.length > 1) {
                 if (orientation === AXIS_ANDROID.HORIZONTAL && convertInt(parent.css('columnCount')) === sameXY.length) {
                     const marginLeft = convertInt(parent.css('columnGap'));
@@ -1643,16 +1650,36 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
         const beginPercent = `layout_constraintGuide_${(percent ? 'percent' : 'begin')}`;
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {
-                const LRTB = (index === 0 ? (!opposite ? 'left' : 'right') : (!opposite ? 'top' : 'bottom'));
-                const RLBT = (index === 0 ? (!opposite ? 'right' : 'left') : (!opposite ? 'bottom' : 'top'));
-                const position = (percent ? Math.abs(node.linear[LRTB] - parent.box[LRTB]) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
+                let LRTB = '';
+                let RLBT = '';
+                switch (index) {
+                    case 0:
+                        LRTB = (!opposite ? 'left' : 'right');
+                        RLBT = (!opposite ? 'right' : 'left');
+                        break;
+                    case 1:
+                        LRTB = (!opposite ? 'top' : 'bottom');
+                        RLBT = (!opposite ? 'bottom' : 'top');
+                        break;
+                }
+                let linear = node.linear;
+                const previousSibling = node.previousSibling;
+                if (index === 0 && !opposite && previousSibling != null) {
+                    if (previousSibling.float === 'left' && !['left', 'both'].includes(previousSibling.css('clear')) && !['left', 'both'].includes(node.css('clear')) && node.linear.left < previousSibling.linear.right) {
+                        const firstChild = node.firstChild;
+                        if (firstChild && firstChild.linear.left >= previousSibling.linear.right) {
+                            linear = firstChild.linear;
+                        }
+                    }
+                }
+                const position = (percent ? Math.abs(linear[LRTB] - parent.box[LRTB]) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
                 const options = {
                     android: {
                         orientation: (index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL)
                     },
                     app: {
                         [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
-                                                 : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node.linear[LRTB] - parent.box[RLBT] : node.linear[LRTB] - parent.box[LRTB]))))
+                                                 : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node.linear[LRTB] - parent.box[RLBT] : linear[LRTB] - parent.box[LRTB]))))
                     }
                 };
                 const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
@@ -1665,7 +1692,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
     }
 
     private findByStringId(id: string) {
-        return this.cache.list.find(node => node.stringId === id);
+        return this.cache.locate('stringId', id);
     }
 
     get supportInline() {
