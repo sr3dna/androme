@@ -4,7 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertPX, hasValue, includesEnum, isNumber, formatPX } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, sameAsParent, hasFreeFormText } from '../lib/dom';
+import { getBoxSpacing, getCache, sameAsParent, setCache, hasFreeFormText } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { MAP_ELEMENT, NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -84,20 +84,18 @@ export default abstract class Resource<T extends Node> {
     public setBoxSpacing() {
         this.cache.elements.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
-                const element = node.element;
-                const object: any = element;
-                if (object.__boxSpacing == null || SETTINGS.alwaysReevaluateResources) {
-                    const result = getBoxSpacing(element);
+                if (getCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
+                    const result = getBoxSpacing(node.element);
                     const formatted = {};
                     for (const attr in result) {
-                        if (node.inlineMargin && (attr === 'marginTop' || attr === 'marginBottom')) {
+                        if (node.inline && (attr === 'marginTop' || attr === 'marginBottom')) {
                             formatted[attr] = '0px';
                         }
                         else {
                             formatted[attr] = formatPX(result[attr]);
                         }
                     }
-                    object.__boxSpacing = formatted;
+                    setCache(node.element, 'boxSpacing', formatted);
                 }
             }
         });
@@ -106,9 +104,7 @@ export default abstract class Resource<T extends Node> {
     public setBoxStyle() {
         this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
-                const element = node.element;
-                const object: any = element;
-                if (object.__boxStyle == null || SETTINGS.alwaysReevaluateResources) {
+                if (getCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
                     let result: any = {
                         borderTop: this.parseBorderStyle,
                         borderRight: this.parseBorderStyle,
@@ -127,14 +123,14 @@ export default abstract class Resource<T extends Node> {
                         }
                     }
                     result = (<BoxStyle> result as BoxStyle);
-                    if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(element, 'backgroundColor')))) {
+                    if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(node.element, 'backgroundColor')))) {
                         result.backgroundColor = [];
                     }
                     const borderTop = JSON.stringify(result.borderTop);
                     if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
                         result.border = result.borderTop;
                     }
-                    object.__boxStyle = result;
+                    setCache(node.element, 'boxStyle', result);
                 }
             }
         });
@@ -143,19 +139,17 @@ export default abstract class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
-                const element = node.element;
-                const object: any = element;
-                if (object.__fontStyle == null || SETTINGS.alwaysReevaluateResources) {
+                if (getCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources) {
                     if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
                         return;
                     }
                     else {
                         let color = parseRGBA(node.css('color'), node.css('opacity'));
-                        if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
+                        if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (node.element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
                             color = [];
                         }
                         let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                        if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> object.__boxStyle) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(element, 'backgroundColor')))) {
+                        if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(node.element, 'backgroundColor')))) {
                             backgroundColor = [];
                         }
                         let fontWeight = node.css('fontWeight');
@@ -182,7 +176,7 @@ export default abstract class Resource<T extends Node> {
                             color,
                             backgroundColor
                         };
-                        object.__fontStyle = result;
+                        setCache(node.element, 'fontStyle', result);
                     }
                 }
             }
@@ -193,8 +187,7 @@ export default abstract class Resource<T extends Node> {
         this.cache.list.filter(node => node.visible && node.tagName === 'SELECT').forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
                 const element = (<HTMLSelectElement> node.element);
-                const object: any = element;
-                if (object.__optionArray == null || SETTINGS.alwaysReevaluateResources) {
+                if (getCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
                     const stringArray: string[] = [];
                     let numberArray: Null<string[]> = [];
                     for (let i = 0; i < element.children.length; i++) {
@@ -216,7 +209,7 @@ export default abstract class Resource<T extends Node> {
                             }
                         }
                     }
-                    object.__optionArray = { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray && numberArray.length > 0 ? numberArray : null) };
+                    setCache(element, 'optionArray', { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray && numberArray.length > 0 ? numberArray : null) });
                 }
             }
         });
@@ -226,8 +219,7 @@ export default abstract class Resource<T extends Node> {
         this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
                 const element = (<HTMLInputElement> node.element);
-                const object: any = element;
-                if (object.__valueString == null || SETTINGS.alwaysReevaluateResources) {
+                if (getCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
                     let name = '';
                     let value = '';
                     let inlineTrim = false;
@@ -286,15 +278,15 @@ export default abstract class Resource<T extends Node> {
                     if (inlineTrim) {
                         const original = value;
                         value = value.trim();
-                        if (node.previousSibling && node.previousSibling.inline && /^\s+/.test(original)) {
+                        if (node.previousSibling && node.previousSibling.inlineElement && /^\s+/.test(original)) {
                             value = '&#160;' + value;
                         }
-                        if (node.nextSibling && node.nextSibling.inline && /\s+$/.test(original)) {
+                        if (node.nextSibling && node.nextSibling.inlineElement && /\s+$/.test(original)) {
                             value = value + '&#160;';
                         }
                     }
                     if (value !== '') {
-                        object.__valueString = { name, value };
+                        setCache(element, 'valueString', { name, value });
                     }
                 }
             }

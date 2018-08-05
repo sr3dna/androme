@@ -1,7 +1,7 @@
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { getStyle } from '../lib/dom';
+import { getCache, getStyle, setCache } from '../lib/dom';
 import { BLOCK_ELEMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
@@ -33,7 +33,7 @@ export default abstract class Menu extends Extension<T, U> {
                 Array.from(element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                     const style = getStyle(element);
                     if (style.display === 'none') {
-                        (<any> item).__andromeExternalDisplay = 'none';
+                        setCache(item, 'andromeExternalDisplay', 'none');
                         item.style.display = 'block';
                     }
                 });
@@ -46,7 +46,7 @@ export default abstract class Menu extends Extension<T, U> {
     public afterRender() {
         if (this.included(this.node.element)) {
             Array.from(this.node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
-                const display = (<any> item).__andromeExternalDisplay;
+                const display = getCache(item, 'andromeExternalDisplay');
                 if (display != null) {
                     item.style.display = display;
                 }

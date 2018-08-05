@@ -6,7 +6,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertCamelCase, convertInt, formatPX, includesEnum, isNumber, optional, sortAsc, trim } from '../lib/util';
 import { placeIndent } from '../lib/xml';
-import { getNode, getStyle, hasFreeFormText, isVisible } from '../lib/dom';
+import { deleteCache, getCache, getNode, getStyle, hasFreeFormText, isVisible, setCache } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
 import { BLOCK_ELEMENT, BOX_STANDARD, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -86,15 +86,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
 
     public reset() {
         for (const node of this.cacheInternal) {
-            const object: any = node.element;
-            delete object.__style;
-            delete object.__styleMap;
-            delete object.__boxSpacing;
-            delete object.__boxStyle;
-            delete object.__fontStyle;
-            delete object.__imageSource;
-            delete object.__optionArray;
-            delete object.__valueString;
+            deleteCache(node.element, 'style', 'styleMap', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
         }
         this.cache.reset();
         this.cacheInternal.reset();
@@ -143,11 +135,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                         }
                         const elements = document.querySelectorAll(cssRule.selectorText);
                         if (this.appName !== '') {
-                            Array.from(elements).forEach((element: HTMLElement) => {
-                                const object: any = element;
-                                delete object.__style;
-                                delete object.__styleMap;
-                            });
+                            Array.from(elements).forEach((element: HTMLElement) => deleteCache(element, 'style', 'styleMap'));
                         }
                         Array.from(elements).forEach((element: HTMLElement) => {
                             for (const attr of Array.from(element.style)) {
@@ -177,13 +165,13 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     }
                                 }
                             }
-                            const object: any = element;
-                            if (object.__styleMap != null) {
-                                Object.assign(object.__styleMap, styleMap);
+                            const data = getCache(element, 'styleMap');
+                            if (data != null) {
+                                Object.assign(data, styleMap);
                             }
                             else {
-                                object.__style = style;
-                                object.__styleMap = styleMap;
+                                setCache(element, 'style', style);
+                                setCache(element, 'styleMap', styleMap);
                             }
                         });
                     }
@@ -549,7 +537,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             for (let l = k + 1; l < axisY.length; l++) {
                                 const adjacent = axisY[l];
                                 const previous = nodes[nodes.length - 1];
-                                if (!previous.inline && !adjacent.inline && !adjacent.floating) {
+                                if (!previous.inlineElement && !adjacent.inlineElement && !adjacent.floating) {
                                     break;
                                 }
                                 const nextTo = adjacent[(float === 'right' ? 'toLeftOf' : 'toRightOf')](previous, SETTINGS.whitespaceHorizontalOffset);
@@ -558,7 +546,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                     if (adjacent.element.nextSibling && (<Element> adjacent.element.nextSibling).tagName === 'BR') {
                                         break;
                                     }
-                                    else if (!nextTo && ((!adjacent.inline && !adjacent.floating) || (nodes.every(item => item.hasElement) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)))) {
+                                    else if (!nextTo && ((!adjacent.inlineElement && !adjacent.floating) || (nodes.every(item => item.hasElement) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)))) {
                                         nodes.pop();
                                         break;
                                     }
@@ -656,7 +644,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                             let xml = '';
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;
-                                if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.children.every(node => node.inline && node.children.length === 0 && supportInline.includes(node.tagName)))) {
+                                if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.children.every(node => node.inlineElement && node.children.length === 0 && supportInline.includes(node.tagName)))) {
                                     if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.tagName))) {
                                         xml += this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
@@ -693,7 +681,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                                             if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
                                                 xml += this.writeLinearLayout(nodeY, parent, linearX);
                                             }
-                                            else if (SETTINGS.horizontalPerspective && nodeY.children.every(node => node.pageflow && node.inline)) {
+                                            else if (SETTINGS.horizontalPerspective && nodeY.children.every(node => node.pageflow && node.inlineElement)) {
                                                 xml += this.writeRelativeLayout(nodeY, parent);
                                             }
                                             else {
@@ -816,7 +804,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
             }
             let output = this.insert[id].join('\n');
             if (replaceId !== id) {
-                const target = this.cacheInternal.find(parseInt(replaceId));
+                const target = this.cacheInternal.locate('id', parseInt(replaceId));
                 if (target != null) {
                     const depth = target.renderDepth + 1;
                     output = placeIndent(output, depth);
@@ -824,7 +812,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
                     let match: Null<RegExpExecArray> = null;
                     let i = 0;
                     while ((match = pattern.exec(output)) != null) {
-                        const node = this.cacheInternal.find(parseInt(match[1]));
+                        const node = this.cacheInternal.locate('id', parseInt(match[1]));
                         if (node != null) {
                             if (i++ === 0) {
                                 node.renderDepth = depth;
@@ -944,7 +932,7 @@ export default class Application<T extends Node, U extends NodeList<T>> {
         }
         else if (isVisible(element)) {
             node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
-            if ((<any> element).__nodeIsolated) {
+            if (getCache(element, 'nodeIsolated')) {
                 node.isolated = true;
             }
             node.setExcludeProcedure();

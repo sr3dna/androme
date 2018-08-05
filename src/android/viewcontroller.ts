@@ -114,7 +114,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                         while (parent != null) {
                             const stringId = parent.anchor(layoutMap[(orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom')]);
                             if (stringId) {
-                                parent = nodes.findByNodeId(stripId(stringId));
+                                parent = nodes.locate('nodeId', stripId(stringId));
                                 if (parent != null && parent.constraint[orientation]) {
                                     return true;
                                 }
@@ -377,7 +377,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                             }
                         }
                     }
-                    pageflow.list.shift();
+                    pageflow.remove(0);
                     for (const current of pageflow) {
                         const leftRight = current.anchor(layoutMap['leftRight']);
                         if (leftRight != null) {
@@ -773,7 +773,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                             const alignBottom = withinFraction(last.linear.bottom, node.box.bottom);
                                             if ((orientation === AXIS_ANDROID.HORIZONTAL && alignLeft && alignRight) || (orientation === AXIS_ANDROID.VERTICAL && alignTop && alignBottom)) {
                                                 if (chainable.length > 2 || flex.enabled) {
-                                                    if (!flex.enabled && (node.inline || node.floating)) {
+                                                    if (!flex.enabled && (node.inlineElement || node.floating)) {
                                                         first.app(chainStyle, 'packed');
                                                         first.app(`layout_constraint${HV}_bias`, (index === 0 && node.float === 'right' ? '1' : '0'));
                                                     }
@@ -823,10 +823,10 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                                     for (const outer of pageflow) {
                                                         const horizontal: U = outer.constraint.horizontalChain;
                                                         const vertical: U = outer.constraint.verticalChain;
-                                                        if (horizontal && horizontal.length > 0 && horizontal.find(inner.id) != null) {
+                                                        if (horizontal && horizontal.length > 0 && horizontal.locate('id', inner.id) != null) {
                                                             horizontal.clear();
                                                         }
-                                                        if (vertical && vertical.length > 0 && vertical.find(inner.id) != null) {
+                                                        if (vertical && vertical.length > 0 && vertical.locate('id', inner.id) != null) {
                                                             vertical.clear();
                                                         }
                                                     }
@@ -862,7 +862,7 @@ export default class ViewController<T extends View, U extends ViewList<T>> exten
                                         while (adjacent != null) {
                                             const topBottom = adjacent.app(layoutMap[value]);
                                             if (topBottom) {
-                                                adjacent = (<T> nodes.findByNodeId(stripId(topBottom)));
+                                                adjacent = nodes.locate('nodeId', stripId(topBottom));
                                                 if (adjacent && current.withinY(adjacent.linear)) {
                                                     chain.push(adjacent);
                                                     valid = mapParent(adjacent, (index === 0 ? 'top' : 'bottom'));

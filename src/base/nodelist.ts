@@ -37,7 +37,7 @@ export default abstract class NodeList<T extends Node> implements Iterable<T> {
                     }
                     else {
                         const previous = nodes[index - 1];
-                        if ((previous == null || (previous.pageflow && previous.inline && previous.linear.right !== maxRight)) && node.inline && node.pageflow && node.linear.right !== maxRight) {
+                        if ((previous == null || (previous.pageflow && previous.inlineElement && previous.linear.right !== maxRight)) && node.inlineElement && node.pageflow && node.linear.right !== maxRight) {
                             return;
                         }
                     }
@@ -79,14 +79,6 @@ export default abstract class NodeList<T extends Node> implements Iterable<T> {
         };
     }
 
-    public find(id: number) {
-        return this._list.find(node => node.id === id) || null;
-    }
-
-    public findByNodeId(id: string) {
-        return this._list.find(node => node.nodeId === id) || null;
-    }
-
     public reset() {
         this.currentId = 0;
         this.clear();
@@ -100,6 +92,10 @@ export default abstract class NodeList<T extends Node> implements Iterable<T> {
         this._list.unshift(...nodes);
     }
 
+    public remove(start: number, deleteCount = 1) {
+        return this._list.splice(start, deleteCount);
+    }
+
     public locate(attr: string, value: any) {
         return this._list.find(node => node[attr] === value);
     }
@@ -108,13 +104,13 @@ export default abstract class NodeList<T extends Node> implements Iterable<T> {
         this._list = [];
     }
 
-    public sortAsc(...attr: string[]) {
-        sortAsc<T>(this._list, ...attr);
+    public sortAsc(...attrs: string[]) {
+        sortAsc<T>(this._list, ...attrs);
         return this;
     }
 
-    public sortDesc(...attr: string[]) {
-        sortDesc<T>(this._list, ...attr);
+    public sortDesc(...attrs: string[]) {
+        sortDesc<T>(this._list, ...attrs);
         return this;
     }
 

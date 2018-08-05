@@ -2,10 +2,27 @@ import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
 import { convertInt, optional, hasValue } from './util';
 
-export function getNode(element: HTMLElement): Null<Node> {
-    return (element != null ? <Node> (<any> element).__node : null);
+export function setCache(element: HTMLElement, attr: string, data: any) {
+    if (element != null) {
+        element[`__${attr}`] = data;
+    }
 }
 
+export function getCache(element: HTMLElement, attr: string) {
+    return (element != null ? (<any> element)[`__${attr}`] : null);
+}
+
+export function deleteCache(element: HTMLElement, ...attrs: string[]) {
+    if (element != null) {
+        for (const attr of attrs) {
+            delete element[`__${attr}`];
+        }
+    }
+}
+
+export function getNode(element: HTMLElement): Null<Node> {
+    return getCache(element, 'node');
+}
 export function previousNode(element: HTMLElement) {
     let previous: Null<HTMLElement>;
     do {
@@ -55,18 +72,19 @@ export function assignBounds(bounds: ClientRect): ClientRect {
 
 export function getStyle(element: Null<HTMLElement>, cache = true): CSSStyleDeclaration {
     if (element != null) {
-        const object: any = element;
         if (cache) {
-            if (object.__style != null) {
-                return object.__style;
+            const node = getNode(element);
+            const style = getCache(element, 'style');
+            if (style != null) {
+                return style;
             }
-            else if (object.__node != null && object.__node.style != null) {
-                return object.__node.style;
+            else if (node && node.style != null) {
+                return node.style;
             }
         }
         if (element.nodeName !== '#text') {
             const style = getComputedStyle(element);
-            object.__style = style;
+            setCache(element, 'style', style);
             return style;
         }
     }

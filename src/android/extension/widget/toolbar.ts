@@ -7,7 +7,7 @@ import ViewList from '../../viewlist';
 import { convertPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
 import { delimitDimen, stripId } from '../../lib/util';
-import { getNode, getStyle } from '../../../lib/dom';
+import { getNode, getStyle, setCache } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
@@ -38,7 +38,7 @@ export default class Toolbar extends Extension<T, U> {
                 }
             }
             if (includes(optional(element, 'parentElement.dataset.ext'), WIDGET_NAME.COORDINATOR)) {
-                (<any> element).__nodeIsolated = true;
+                setCache(element, 'nodeIsolated', true);
             }
         }
         return false;

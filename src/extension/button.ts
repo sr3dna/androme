@@ -1,7 +1,7 @@
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { getStyle } from '../lib/dom';
+import { getStyle, setCache } from '../lib/dom';
 
 type T = Node;
 type U = NodeList<T>;
@@ -18,7 +18,7 @@ export default abstract class Button extends Extension<T, U> {
     public init(element: HTMLElement) {
         if (this.included(element)) {
             const position = getStyle(element).position;
-            (<any> element).__nodeIsolated = (position !== 'static' && position !== 'initial');
+            setCache(element, 'nodeIsolated', (position !== 'static' && position !== 'initial'));
         }
         return false;
     }

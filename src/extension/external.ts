@@ -1,7 +1,7 @@
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { getStyle } from '../lib/dom';
+import { deleteCache, getCache, getStyle, setCache } from '../lib/dom';
 
 type T = Node;
 type U = NodeList<T>;
@@ -14,8 +14,7 @@ export default class External extends Extension<T, U> {
     public beforeInit(init = false) {
         if (init || this.included()) {
             if (this.element != null) {
-                const object: any = this.element;
-                if (object.__andromeExternalDisplay == null) {
+                if (getCache(this.element, 'andromeExternalDisplay') == null) {
                     const display: string[] = [];
                     let current = this.element;
                     while (current != null) {
@@ -23,7 +22,7 @@ export default class External extends Extension<T, U> {
                         current.style.display = 'block';
                         current = (<HTMLElement> current.parentElement);
                     }
-                    object.__andromeExternalDisplay = display;
+                    setCache(this.element, 'andromeExternalDisplay', display);
                 }
             }
         }
@@ -39,9 +38,9 @@ export default class External extends Extension<T, U> {
     public afterInit(init = false) {
         if (init || this.included()) {
             if (this.element != null) {
-                const object: any = this.element;
-                if (object.__andromeExternalDisplay != null) {
-                    const display: string[] = object.__andromeExternalDisplay;
+                const data = getCache(this.element, 'andromeExternalDisplay');
+                if (data != null) {
+                    const display: string[] = data;
                     let current = this.element;
                     let i = 0;
                     while (current != null) {
@@ -49,7 +48,7 @@ export default class External extends Extension<T, U> {
                         current = (<HTMLElement> current.parentElement);
                         i++;
                     }
-                    delete object.__andromeExternalDisplay;
+                    deleteCache(this.element, 'andromeExternalDisplay');
                 }
             }
         }

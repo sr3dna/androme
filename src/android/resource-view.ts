@@ -6,7 +6,7 @@ import ViewList from './viewlist';
 import { cameltoLowerCase, capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
 import { generateId, replaceDP } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
-import { sameAsParent } from '../lib/dom';
+import { getCache, sameAsParent, setCache } from '../lib/dom';
 import { findNearestColor, parseHex } from '../lib/color';
 import { NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
@@ -283,7 +283,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setBoxSpacing();
         this.cache.elements.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
-                const stored: StringMap = (<any> node.element).__boxSpacing;
+                const stored: StringMap = getCache(node.element, 'boxSpacing');
                 if (stored != null) {
                     const method = METHOD_ANDROID['boxSpacing'];
                     for (const attr in stored) {
@@ -300,9 +300,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setBoxStyle();
         this.cache.elements.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
-                const element = node.element;
-                const object: any = element;
-                const stored: BoxStyle = object.__boxStyle;
+                const stored: BoxStyle = getCache(node.element, 'boxStyle');
                 if (stored != null) {
                     if (stored.backgroundColor && stored.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
@@ -316,7 +314,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const method = METHOD_ANDROID['boxStyle'];
                     const companion = node.companion;
                     if (companion && !sameAsParent(companion.element, 'backgroundColor')) {
-                         const boxStyle: BoxStyle = (<any> companion.element).__boxStyle;
+                         const boxStyle: BoxStyle = getCache(companion.element, 'boxStyle');
                          if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
                             stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                          }
@@ -535,7 +533,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
                     }
-                    else if (object.__fontStyle == null && stored.backgroundColor.length > 0) {
+                    else if (getCache(node.element, 'fontStyle') == null && stored.backgroundColor.length > 0) {
                         node.attr(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension == null));
                     }
                 }
@@ -548,7 +546,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         const tagName: ObjectMap<T[]> = {};
         this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
-                if ((<any> node.element).__fontStyle != null) {
+                if (getCache(node.element, 'fontStyle') != null) {
                     if (tagName[node.tagName] == null) {
                         tagName[node.tagName] = [];
                     }
@@ -568,7 +566,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
                 const element = node.element;
                 const nodeId = (labelFor || node).id;
-                const stored: FontAttribute = Object.assign({}, (<any> element).__fontStyle);
+                const stored: FontAttribute = Object.assign({}, getCache(element, 'fontStyle'));
                 if (stored.backgroundColor && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = `@color/${ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
                 }
@@ -648,14 +646,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setImageSource() {
         this.cache.visible.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')).forEach(node => {
             const element = (<HTMLImageElement> node.element);
-            const object: any = element;
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
-                if (object.__imageSource == null || SETTINGS.alwaysReevaluateResources) {
+                if (getCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
                     const result = (node.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
                     if (result !== '') {
                         const method = METHOD_ANDROID['imageSource'];
                         node.attr(formatString(method['src'], result), (node.renderExtension == null));
-                        object.__imageSource = result;
+                        setCache(element, 'imageSource', result);
                     }
                 }
             }
@@ -666,7 +663,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setOptionArray();
         this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
-                const stored: ObjectMap<string[]> = (<any> node.element).__optionArray;
+                const stored: ObjectMap<string[]> = getCache(node.element, 'optionArray');
                 if (stored != null) {
                     const method = METHOD_ANDROID['optionArray'];
                     let result: string[] = [];
@@ -701,7 +698,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setValueString(supportInline);
         this.cache.visible.forEach(node => {
             if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
-                const stored: BasicData = (<any> node.element).__valueString;
+                const stored: BasicData = getCache(node.element, 'valueString');
                 if (stored != null) {
                     const result = ResourceView.addString(stored.value, stored.name);
                     if (result !== '') {

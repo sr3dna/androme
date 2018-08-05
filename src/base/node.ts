@@ -1,7 +1,7 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertInt, convertCamelCase, hasValue, includesEnum, search } from '../lib/util';
-import { assignBounds, getNode, getRangeBounds } from '../lib/dom';
+import { convertCamelCase, convertInt, hasValue, includesEnum, search } from '../lib/util';
+import { assignBounds, getCache, getNode, getRangeBounds, setCache } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
@@ -32,12 +32,12 @@ export default abstract class Node implements BoxModel {
     public abstract children: T[];
     public abstract renderChildren: T[];
 
+    protected _namespaces = new Set<string>();
     protected _nodeName: string;
     protected _renderParent: T;
     protected _documentParent: T;
 
     private _element: HTMLElement;
-    private _namespaces = new Set<string>();
     private _parent: T;
     private _tagName: string;
     private _data: ObjectMap<any> = {};
@@ -47,17 +47,16 @@ export default abstract class Node implements BoxModel {
         element?: Null<HTMLElement>)
     {
         if (element != null) {
-            const object: any = element;
             if (element instanceof HTMLElement) {
-                const styleMap = object.__styleMap || {};
+                const styleMap = getCache(element, 'styleMap') || {};
                 for (const inline of Array.from(element.style)) {
                     styleMap[convertCamelCase(inline)] = (<any> element.style)[inline];
                 }
-                this.style = (<CSSStyleDeclaration> object.__style) || getComputedStyle(element);
+                this.style = (<CSSStyleDeclaration> getCache(element, 'style')) || getComputedStyle(element);
                 this.styleMap = styleMap;
             }
+            setCache(element, 'node', this);
             this._element = element;
-            object.__node = this;
         }
     }
 
@@ -442,16 +441,12 @@ export default abstract class Node implements BoxModel {
         return this.children.filter(node => !node.isSet('dataset', 'target'));
     }
 
-    get namespaces() {
-        return Array.from(this._namespaces);
-    }
-
     get dataset(): DOMStringMap {
         return (this.hasElement ? this.element.dataset : {});
     }
 
     get extension() {
-        return (this.dataset.ext != null ? this.dataset.ext.split(',')[0].trim() : '');
+        return (hasValue(this.dataset.ext) ? (<string> this.dataset.ext).split(',')[0].trim() : '');
     }
 
     get flex(): Flexbox {
@@ -485,10 +480,13 @@ export default abstract class Node implements BoxModel {
     get overflow() {
         let value = OVERFLOW_ELEMENT.NONE;
         if (this.hasElement) {
-            if (this.css('overflow') === 'scroll' || this.css('overflowX') === 'scroll' || (this.css('overflowX') === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+            const overflow = this.css('overflow');
+            const overflowX = this.css('overflowX');
+            const overflowY = this.css('overflowY');
+            if (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
                 value |= OVERFLOW_ELEMENT.HORIZONTAL;
             }
-            if (this.css('overflow') === 'scroll' || this.css('overflowY') === 'scroll' || (this.css('overflowY') === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+            if (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
                 value |= OVERFLOW_ELEMENT.VERTICAL;
             }
         }
@@ -530,7 +528,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get marginTop() {
-        return (this.inlineMargin ? 0 : convertInt(this.css('marginTop')));
+        return (this.inline ? 0 : convertInt(this.css('marginTop')));
     }
     get marginRight() {
         let node = (<T> this);
@@ -540,7 +538,7 @@ export default abstract class Node implements BoxModel {
         return convertInt(node.css('marginRight'));
     }
     get marginBottom() {
-        return (this.inlineMargin ? 0 : convertInt(this.css('marginBottom')));
+        return (this.inline ? 0 : convertInt(this.css('marginBottom')));
     }
     get marginLeft() {
         let node = (<T> this);
@@ -588,12 +586,12 @@ export default abstract class Node implements BoxModel {
         return (['static', 'initial', 'relative'].includes(this.css('position')) || this.tagName === 'PLAINTEXT' || this.alignMargin);
     }
 
-    get inline() {
+    get inlineElement() {
         return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.display.indexOf('inline') !== -1 || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
     }
 
-    get inlineMargin() {
-        return (this.display === 'inline' || this.display === 'table-cell');
+    get inline() {
+        return (this.display === 'inline');
     }
 
     get alignMargin() {
@@ -628,7 +626,6 @@ export default abstract class Node implements BoxModel {
     get previousSibling() {
         return getNode(<HTMLElement> this.element.previousElementSibling);
     }
-
     get nextSibling() {
         return getNode(<HTMLElement> this.element.nextElementSibling);
     }
