@@ -241,8 +241,8 @@ export default abstract class Node implements BoxModel {
 
     public intersect(rect: ClientRect, dimension = 'linear') {
         const top = (rect.top > this[dimension].top && rect.top < this[dimension].bottom);
-        const right = (rect.right > this[dimension].left && rect.right < this[dimension].right);
-        const bottom = (rect.bottom > this[dimension].top && rect.bottom < this[dimension].bottom);
+        const right = (Math.floor(rect.right) > Math.ceil(this[dimension].left) && rect.right < this[dimension].right);
+        const bottom = (Math.floor(rect.bottom) > Math.ceil(this[dimension].top) && rect.bottom < this[dimension].bottom);
         const left = (rect.left > this[dimension].left && rect.left < this[dimension].right);
         return (top && (left || right)) || (bottom && (left || right));
     }
