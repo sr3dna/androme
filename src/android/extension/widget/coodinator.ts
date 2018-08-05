@@ -1,17 +1,14 @@
-import { Null } from '../../../lib/types';
 import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
-import ViewList from '../../viewlist';
 import { includes, optional } from '../../../lib/util';
 import { getNode } from '../../../lib/dom';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 type T = View;
-type U = ViewList<T>;
 
-export default class Coordinator extends Extension<T, U> {
+export default class Coordinator extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
@@ -46,8 +43,8 @@ export default class Coordinator extends Extension<T, U> {
         }
     }
 
-    private getToolbar(node: T): Null<T> {
+    private getToolbar(node: T) {
         const toolbar = (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext'), WIDGET_NAME.TOOLBAR)));
-        return (<T> getNode(toolbar));
+        return getNode(toolbar);
     }
 }

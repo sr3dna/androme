@@ -28,7 +28,7 @@ export default class GridAndroid<T extends View> extends Grid {
 
     public afterRender() {
         const extended: T[] = [];
-        [...this.application.cache].forEach((node: T) => {
+        this.application.cache.each((node: T) => {
             if (node.renderExtension === this) {
                 extended.push(node);
             }
@@ -71,7 +71,7 @@ export default class GridAndroid<T extends View> extends Grid {
                 }
             }
         });
-        extended.forEach(node => {
+        for (const node of extended) {
             const data = (<GridData> node.data(`${EXT_NAME.GRID}:gridData`));
             if (data != null) {
                 if (data.padding.top > 0) {
@@ -87,6 +87,6 @@ export default class GridAndroid<T extends View> extends Grid {
                     node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft + averageInt(data.padding.left));
                 }
             }
-        });
+        }
     }
 }

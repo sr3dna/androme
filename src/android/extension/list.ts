@@ -13,6 +13,7 @@ export default class ListAndroid<T extends View> extends List {
 
     public processChild(): ExtensionResult {
         const node = (<T> this.node);
+        const parent = (<T> this.parent);
         const controller = this.application.controllerHandler;
         const listStyle = node.data(`${EXT_NAME.LIST}:listStyle`);
         if (listStyle != null) {
@@ -20,7 +21,7 @@ export default class ListAndroid<T extends View> extends List {
                 node.id,
                 controller.renderNodeStatic(
                     (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE),
-                    node.depth + node.renderDepth, {
+                    parent.renderDepth + 1, {
                         android: {
                             gravity: parseRTL('right'),
                             layout_columnWeight: '0',

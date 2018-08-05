@@ -60,15 +60,12 @@ export default class Menu<T extends View> extends Nav {
 
     public processChild(): ExtensionResult {
         const node = (<T> this.node);
+        const parent = (<T> this.parent);
         const element = node.element;
         if (element.nodeName === '#text') {
             node.hide();
             return { xml: '', proceed: true };
         }
-        const parent = (<T> this.parent);
-        node.renderDepth = parent.renderDepth + 1;
-        node.rendered = true;
-        node.excludeResource |= NODE_RESOURCE.ALL;
         const options: ObjectMap<StringMap> = { android: {}, app: {} };
         const children = (<HTMLElement[]> Array.from(node.element.children));
         let nodeName = VIEW_NAVIGATION.ITEM;
@@ -96,7 +93,7 @@ export default class Menu<T extends View> extends Nav {
                         return false;
                     });
                 }
-                node.children.forEach(item => item.tagName !== 'NAV' && item.hide());
+                node.each(item => item.tagName !== 'NAV' && item.hide());
             }
             else if (node.tagName === 'NAV') {
                 nodeName = VIEW_NAVIGATION.MENU;
@@ -161,7 +158,9 @@ export default class Menu<T extends View> extends Nav {
         else {
             node.nodeName = nodeName;
         }
-        const xml = this.application.controllerHandler.renderNodeStatic(nodeName, node.depth, options, '', '', node, layout);
+        const xml = this.application.controllerHandler.renderNodeStatic(nodeName, parent.renderDepth + 1, options, '', '', node, layout);
+        node.rendered = true;
+        node.excludeResource |= NODE_RESOURCE.ALL;
         return { xml, proceed };
     }
 

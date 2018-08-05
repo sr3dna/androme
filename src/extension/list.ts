@@ -6,9 +6,8 @@ import { convertAlpha, convertRoman } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;
-type U = NodeList<T>;
 
-export default abstract class List extends Extension<T, U> {
+export default abstract class List extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }

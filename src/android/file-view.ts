@@ -1,5 +1,6 @@
 import { Null, PlainFile, ViewData } from '../lib/types';
 import File from '../base/file';
+import NodeList from '../base/nodelist';
 import View from './view';
 import { caseInsensitve, lastIndexOf } from '../lib/util';
 import { replaceDP } from './lib/util';
@@ -20,7 +21,7 @@ export default class FileView<T extends View> extends File<T> {
         super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
     }
 
-    public saveAllToDisk(data: ViewData<T>) {
+    public saveAllToDisk(data: ViewData<NodeList<T>>) {
         const files: PlainFile[] = [];
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
@@ -38,7 +39,7 @@ export default class FileView<T extends View> extends File<T> {
         this.saveToDisk(files);
     }
 
-    public layoutAllToXml(data: ViewData<T>, saveToDisk = false) {
+    public layoutAllToXml(data: ViewData<NodeList<T>>, saveToDisk = false) {
         const result = {};
         const files: PlainFile[] = [];
         const views = [...data.views, ...data.includes];

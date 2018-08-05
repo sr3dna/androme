@@ -1,5 +1,6 @@
 import { PlainFile, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Node from './node';
+import NodeList from './nodelist';
 import { lastIndexOf, trim } from '../lib/util';
 
 export default abstract class File<T extends Node> {
@@ -20,8 +21,8 @@ export default abstract class File<T extends Node> {
         }
     }
 
-    public abstract saveAllToDisk(data: ViewData<T>): void;
-    public abstract layoutAllToXml(data: ViewData<T>, saveToDisk?: boolean): StringMap;
+    public abstract saveAllToDisk(data: ViewData<NodeList<T>>): void;
+    public abstract layoutAllToXml(data: ViewData<NodeList<T>>, saveToDisk?: boolean): StringMap;
     public abstract resourceAllToXml(saveToDisk?: boolean): StringMap;
     public abstract resourceStringToXml(saveToDisk?: boolean): string;
     public abstract resourceStringArrayToXml(saveToDisk?: boolean): string;

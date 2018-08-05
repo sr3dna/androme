@@ -1,52 +1,61 @@
 import Node from './node';
 import { sortAsc, sortDesc, withinRange } from '../lib/util';
 
-export default abstract class NodeList<T extends Node> implements Iterable<T> {
+export type FindPredicate<T> = (value: T, index?: number) => boolean;
+
+export default class NodeList<T extends Node> implements Iterable<T> {
     public static intersect<T extends Node>(list: T[], dimension = 'linear') {
-        list.forEach(node => {
+        return list.some(node => {
             if (list.some(item => item !== node && node.intersect(item[dimension]))) {
                 return true;
             }
+            return false;
         });
-        return false;
     }
 
     public static linearX<T extends Node>(list: T[], offset = 0) {
-        const nodes = sortAsc(list.filter(node => !node.isolated), 'linear.top');
-        if (nodes.length > 0 && !NodeList.intersect(nodes)) {
-            if (nodes.length > 1) {
-                const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
-                const maxBottom = Math.max.apply(null, nodes.filter(node => withinRange(node.linear.top, minTop, offset)).map(node => node.linear.bottom));
-                return nodes.every(node => node.linear.height > 0 && node.linear.top >= minTop && node.linear.bottom <= maxBottom);
-            }
-            return true;
+        const nodes = list.filter(node => !node.isolated);
+        switch (nodes.length) {
+            case 0:
+                return false;
+            case 1:
+                return true;
+            default:
+                if (nodes.every(node => node.pageflow && !node.floating) || !NodeList.intersect(nodes)) {
+                    const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
+                    const maxBottom = Math.max.apply(null, nodes.filter(node => withinRange(node.linear.top, minTop, offset)).map(node => node.linear.bottom));
+                    return nodes.every(node => node.linear.height > 0 && node.linear.top >= minTop && node.linear.bottom <= maxBottom);
+                }
+                return false;
         }
-        return false;
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = sortAsc(list.filter(node => !node.isolated), 'linear.left');
-        if (nodes.length > 0 && !NodeList.intersect(nodes)) {
-            let valid = true;
-            if (nodes.length > 1) {
-                const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
-                const maxRight = Math.max.apply(null, nodes.map(node => node.linear.right));
-                nodes.forEach((node, index) => {
-                    if (node.linear.left < minRight) {
-                        return;
-                    }
-                    else {
-                        const previous = nodes[index - 1];
-                        if ((previous == null || (previous.pageflow && previous.inlineElement && previous.linear.right !== maxRight)) && node.inlineElement && node.pageflow && node.linear.right !== maxRight) {
-                            return;
+        const nodes = list.filter(node => !node.isolated);
+        switch (nodes.length) {
+            case 0:
+                return false;
+            case 1:
+                return true;
+            default:
+                if (nodes.every(node => node.pageflow && !node.floating) || !NodeList.intersect(nodes)) {
+                    const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
+                    const maxRight = Math.max.apply(null, nodes.map(node => node.linear.right));
+                    return nodes.every((node, index) => {
+                        if (node.linear.left < minRight) {
+                            return true;
                         }
-                    }
-                    valid = false;
-                });
-            }
-            return valid;
+                        else {
+                            const previous = nodes[index - 1];
+                            if ((previous == null || (previous.pageflow && previous.inlineElement && previous.linear.right !== maxRight)) && node.inlineElement && node.pageflow && node.linear.right !== maxRight) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                return false;
         }
-        return false;
     }
 
     private currentId = 0;
@@ -61,8 +70,6 @@ export default abstract class NodeList<T extends Node> implements Iterable<T> {
         }
         this.parent = parent;
     }
-
-    public abstract clone(): NodeList<T>;
 
     public [Symbol.iterator]() {
         const list = this._list;
@@ -84,6 +91,13 @@ export default abstract class NodeList<T extends Node> implements Iterable<T> {
         this.clear();
     }
 
+    public get(index?: number): T {
+        if (index == null) {
+            return this._list[this._list.length - 1];
+        }
+        return this._list[index];
+    }
+
     public append(...nodes: T[]) {
         this._list.push(...nodes);
     }
@@ -96,8 +110,37 @@ export default abstract class NodeList<T extends Node> implements Iterable<T> {
         return this._list.splice(start, deleteCount);
     }
 
-    public locate(attr: string, value: any) {
-        return this._list.find(node => node[attr] === value);
+    public clone(): NodeList<T> {
+        return new NodeList<T>(this._list.slice());
+    }
+
+    public filter(predicate: (value: T) => boolean) {
+        return new NodeList<T>(this._list.filter(predicate));
+    }
+
+    public partition(predicate: (value: T) => boolean) {
+        const valid: T[] = [];
+        const invalid: T[] = [];
+        this._list.forEach((node: T) => {
+            if (predicate(node)) {
+                valid.push(node);
+            }
+            else {
+                invalid.push(node);
+            }
+        });
+        return [new NodeList<T>(valid), new NodeList<T>(invalid)];
+    }
+
+    public each(predicate: (value: T, index?: number) => void) {
+        this._list.forEach(predicate);
+    }
+
+    public locate(attr: string | FindPredicate<T>, value?: any) {
+        if (typeof attr === 'string') {
+            return this._list.find(node => node[attr] === value);
+        }
+        return this._list.find(attr);
     }
 
     public clear() {
@@ -127,18 +170,11 @@ export default abstract class NodeList<T extends Node> implements Iterable<T> {
     }
 
     get visible() {
-        return this._list.filter(node => node.visible);
+        return new NodeList<T>(this._list.filter(node => node.visible));
     }
 
     get elements() {
-        return this._list.filter(node => node.visible && node.hasElement);
-    }
-
-    get first() {
-        return this._list[0];
-    }
-    get last() {
-        return this._list[this._list.length - 1];
+        return new NodeList<T>(this._list.filter(node => node.visible && node.hasElement));
     }
 
     get nextId() {

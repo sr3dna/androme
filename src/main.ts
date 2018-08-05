@@ -12,7 +12,6 @@ import ViewController from './android/viewcontroller';
 import ResourceView from './android/resource-view';
 import FileView from './android/file-view';
 import View from './android/view';
-import ViewList from './android/viewlist';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
 
@@ -29,7 +28,6 @@ import Drawer from './android/extension/widget/drawer';
 import { WIDGET_NAME } from './android/extension/lib/constants';
 
 type T = View;
-type U = ViewList<T>;
 
 let LOADING = false;
 const ROOT_CACHE: Set<HTMLElement> = new Set();
@@ -48,26 +46,27 @@ const EXTENSIONS = {
 };
 
 const Node = View;
-const NodeList = ViewList;
 const Controller = new ViewController();
 const File = new FileView();
 const Resource = new ResourceView(File);
 
-const main = new Application<T, U>(Node, NodeList);
+const main = new Application<T>(Node);
 main.registerController(Controller);
 main.registerResource(Resource);
 
 (() => {
-    const load = new Set<IExtension>();
+    const extensions = new Set<IExtension>();
     for (let name of SETTINGS.builtInExtensions) {
         name = name.toLowerCase().trim();
         for (const extension in EXTENSIONS) {
             if (name === extension || extension.startsWith(`${name}.`)) {
-                load.add(<IExtension> EXTENSIONS[extension]);
+                extensions.add(<IExtension> EXTENSIONS[extension]);
             }
         }
     }
-    load.forEach(item => main.registerExtension(item));
+    for (const extension of extensions) {
+        main.registerExtension(extension);
+    }
 })();
 
 export function parseDocument(...elements: Null<string | HTMLElement>[]) {
@@ -80,18 +79,18 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     if (main.appName === '' && elements.length === 0) {
         elements.push(document.body);
     }
-    elements.forEach(element => {
+    for (let element of elements) {
         if (typeof element === 'string') {
             element = document.getElementById(element);
         }
         if (element instanceof HTMLElement) {
             main.elements.add(element);
         }
-    });
+    }
     let __THEN: () => void;
     function parseResume() {
         LOADING = false;
-        main.elements.forEach(element => {
+        for (const element of main.elements) {
             if (main.appName === '') {
                 if (element.id === '') {
                     element.id = 'untitled';
@@ -112,7 +111,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 main.setConstraints();
                 ROOT_CACHE.add(element);
             }
-        });
+        }
         if (typeof __THEN === 'function') {
             __THEN.call(main);
         }
@@ -193,10 +192,10 @@ export function close() {
 }
 
 export function reset() {
-    ROOT_CACHE.forEach(element => {
+    for (const element of ROOT_CACHE) {
         delete element.dataset.views;
         delete element.dataset.viewName;
-    });
+    }
     ROOT_CACHE.clear();
     main.reset();
 }

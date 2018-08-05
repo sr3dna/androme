@@ -9,9 +9,8 @@ import { BLOCK_ELEMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;
-type U = NodeList<T>;
 
-export default class Grid extends Extension<T, U> {
+export default class Grid extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }

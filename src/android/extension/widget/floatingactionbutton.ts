@@ -44,8 +44,7 @@ export default class FloatingActionButton<T extends View> extends Button {
             overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         const target = node.isSet('dataset', 'target');
-        node.depth = (target ? node.depth : node.parent.renderDepth + 1);
-        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (target ? -1 : node.depth), options, 'wrap_content', 'wrap_content', node);
+        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (target ? -1 : parent.renderDepth + 1), options, 'wrap_content', 'wrap_content', node);
         node.nodeType = NODE_STANDARD.BUTTON;
         node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
         if (node.isolated) {

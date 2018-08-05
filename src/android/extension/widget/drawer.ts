@@ -1,7 +1,6 @@
 import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
-import ViewList from '../../viewlist';
 import { hasValue, includes, optional } from '../../../lib/util';
 import { findNestedExtension, overwriteDefault } from '../lib/util';
 import { getNode } from '../../../lib/dom';
@@ -13,9 +12,8 @@ import parseRTL from '../../localization';
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
 type T = View;
-type U = ViewList<T>;
 
-export default class Drawer extends Extension<T, U> {
+export default class Drawer extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
         this.documentRoot = true;
@@ -41,7 +39,6 @@ export default class Drawer extends Extension<T, U> {
         const application = this.application;
         const controller = application.controllerHandler;
         const node = (<T> this.node);
-        node.depth = 0;
         node.documentRoot = true;
         const options = Object.assign({}, this.options.drawer);
         if (findNestedExtension(node, WIDGET_NAME.MENU) != null) {
@@ -67,7 +64,7 @@ export default class Drawer extends Extension<T, U> {
         const application = this.application;
         const node = (<T> this.node);
         if (application.insert[node.nodeId] != null) {
-            const target = application.cacheInternal.list.find(item => item.isolated && item.parent === node.parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
+            const target = application.cacheInternal.locate(item => item.isolated && item.parent === node.parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
             if (target != null) {
                 application.insert[target.nodeId] = application.insert[node.nodeId];
                 delete application.insert[node.nodeId];

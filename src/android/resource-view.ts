@@ -2,7 +2,7 @@ import { ArrayIndex, BasicData, BorderAttribute, BoxStyle, FontAttribute, Null, 
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
-import ViewList from './viewlist';
+import NodeList from '../base/nodelist';
 import { cameltoLowerCase, capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
 import { generateId, replaceDP } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
@@ -202,23 +202,24 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.tagCount = {};
     }
 
-    public finalize(viewData: ViewData<T>) {
+    public finalize(viewData: ViewData<NodeList<T>>) {
         this.processFontStyle(viewData);
     }
 
-    public filterStyles(viewData: ViewData<T>) {
+    public filterStyles(viewData: ViewData<NodeList<T>>) {
         const styles: ObjectMap<string[]> = {};
-        viewData.cache.forEach(node => {
+        for (const node of viewData.cache) {
             const children = node.renderChildren.filter(child => child.visible && !child.isolated && !child.relocated);
             if (children.length > 1) {
                 const map = {};
                 let style = '';
                 let valid = true;
-                children.forEach((child, index) => {
+                for (let i = 0; i < children.length; i++) {
+                    const child = children[i];
                     let found = false;
                     child.combine('_', 'android').forEach(value => {
                         if (value.startsWith('style=')) {
-                            if (index === 0) {
+                            if (i === 0) {
                                 style = value;
                             }
                             else {
@@ -236,7 +237,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     if (style !== '' && !found) {
                         valid = false;
                     }
-                });
+                }
                 if (valid) {
                     for (const attr in map) {
                         if (map[attr] !== children.length) {
@@ -271,7 +272,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                 }
             }
-        });
+        }
         if (Object.keys(styles).length > 0) {
             for (const name in styles) {
                 Resource.STORED.STYLES.set(name, { attributes: styles[name].join(';') });
@@ -281,15 +282,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setBoxSpacing() {
         super.setBoxSpacing();
-        this.cache.elements.forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
-                const stored: StringMap = getCache(node.element, 'boxSpacing');
-                if (stored != null) {
-                    const method = METHOD_ANDROID['boxSpacing'];
-                    for (const attr in stored) {
-                        if (stored[attr] !== '0px') {
-                            node.attr(formatString(parseRTL(method[attr]), node.styleMap[attr] || stored[attr]), (node.renderExtension == null));
-                        }
+        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)).each(node => {
+            const stored: StringMap = getCache(node.element, 'boxSpacing');
+            if (stored != null) {
+                const method = METHOD_ANDROID['boxSpacing'];
+                for (const attr in stored) {
+                    if (stored[attr] !== '0px') {
+                        node.attr(formatString(parseRTL(method[attr]), node.styleMap[attr] || stored[attr]), (node.renderExtension == null));
                     }
                 }
             }
@@ -298,244 +297,242 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setBoxStyle() {
         super.setBoxStyle();
-        this.cache.elements.forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
-                const stored: BoxStyle = getCache(node.element, 'boxStyle');
-                if (stored != null) {
-                    if (stored.backgroundColor && stored.backgroundColor.length > 0) {
-                        stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
+        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
+            const stored: BoxStyle = getCache(node.element, 'boxStyle');
+            if (stored != null) {
+                if (stored.backgroundColor && stored.backgroundColor.length > 0) {
+                    stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
+                }
+                stored.backgroundImage = ResourceView.addImageURL(stored.backgroundImage);
+                [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
+                    if (item.color && item.color.length > 0) {
+                        item.color = (<string> ResourceView.addColor(item.color[0], item.color[2]));
                     }
-                    stored.backgroundImage = ResourceView.addImageURL(stored.backgroundImage);
-                    [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
-                        if (item.color && item.color.length > 0) {
-                            item.color = (<string> ResourceView.addColor(item.color[0], item.color[2]));
-                        }
-                    });
-                    const method = METHOD_ANDROID['boxStyle'];
-                    const companion = node.companion;
-                    if (companion && !sameAsParent(companion.element, 'backgroundColor')) {
-                         const boxStyle: BoxStyle = getCache(companion.element, 'boxStyle');
-                         if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
-                            stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
-                         }
+                });
+                const method = METHOD_ANDROID['boxStyle'];
+                const companion = node.companion;
+                if (companion && !sameAsParent(companion.element, 'backgroundColor')) {
+                     const boxStyle: BoxStyle = getCache(companion.element, 'boxStyle');
+                     if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
+                        stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
+                     }
+                }
+                if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
+                    let template: Null<ObjectMap<string>> = null;
+                    let data;
+                    let resourceName = '';
+                    let gravity = '';
+                    let tileMode = '';
+                    let tileModeX = '';
+                    let tileModeY = '';
+                    switch (stored.backgroundPosition) {
+                        case 'left center':
+                        case '0% 50%':
+                            gravity = 'left|center_vertical';
+                            break;
+                        case 'left bottom':
+                        case '0% 100%':
+                            gravity = 'left|bottom';
+                            break;
+                        case 'right top':
+                        case '100% 0%':
+                            gravity = 'right|top';
+                            break;
+                        case 'right center':
+                        case '100% 50%':
+                            gravity = 'right|center_vertical';
+                            break;
+                        case 'right bottom':
+                        case '100% 100%':
+                            gravity = 'right|bottom';
+                            break;
+                        case 'center top':
+                        case '50% 0%':
+                            gravity = 'center_horizontal|top';
+                            break;
+                        case 'center bottom':
+                        case '50% 100%':
+                            gravity = 'center_horizontal|bottom';
+                            break;
+                        case 'center center':
+                        case '50% 50%':
+                            gravity = 'center';
+                            break;
                     }
-                    if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
-                        let template: Null<ObjectMap<string>> = null;
-                        let data;
-                        let resourceName = '';
-                        let gravity = '';
-                        let tileMode = '';
-                        let tileModeX = '';
-                        let tileModeY = '';
-                        switch (stored.backgroundPosition) {
-                            case 'left center':
-                            case '0% 50%':
-                                gravity = 'left|center_vertical';
-                                break;
-                            case 'left bottom':
-                            case '0% 100%':
-                                gravity = 'left|bottom';
-                                break;
-                            case 'right top':
-                            case '100% 0%':
-                                gravity = 'right|top';
-                                break;
-                            case 'right center':
-                            case '100% 50%':
-                                gravity = 'right|center_vertical';
-                                break;
-                            case 'right bottom':
-                            case '100% 100%':
-                                gravity = 'right|bottom';
-                                break;
-                            case 'center top':
-                            case '50% 0%':
-                                gravity = 'center_horizontal|top';
-                                break;
-                            case 'center bottom':
-                            case '50% 100%':
-                                gravity = 'center_horizontal|bottom';
-                                break;
-                            case 'center center':
-                            case '50% 50%':
-                                gravity = 'center';
-                                break;
+                    switch (stored.backgroundRepeat) {
+                        case 'repeat-x':
+                            tileModeX = 'repeat';
+                            break;
+                        case 'repeat-y':
+                            tileModeY = 'repeat';
+                            break;
+                        case 'no-repeat':
+                            tileMode = 'disabled';
+                            break;
+                    }
+                    const image6: ArrayIndex<StringMap> = [];
+                    const image7: ArrayIndex<StringMap> = [];
+                    if (stored.backgroundImage !== '') {
+                        if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
+                            image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
                         }
-                        switch (stored.backgroundRepeat) {
-                            case 'repeat-x':
-                                tileModeX = 'repeat';
-                                break;
-                            case 'repeat-y':
-                                tileModeY = 'repeat';
-                                break;
-                            case 'no-repeat':
-                                tileMode = 'disabled';
-                                break;
+                        else {
+                            image6[0] = { image: stored.backgroundImage, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') };
                         }
-                        const image6: ArrayIndex<StringMap> = [];
-                        const image7: ArrayIndex<StringMap> = [];
-                        if (stored.backgroundImage !== '') {
-                            if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                                image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
-                            }
-                            else {
-                                image6[0] = { image: stored.backgroundImage, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') };
+                    }
+                    const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
+                    const radius = this.getShapeAttribute(stored, 'radius');
+                    const radiusInit = this.getShapeAttribute(stored, 'radiusInit');
+                    if (stored.border != null) {
+                        if (stored.backgroundImage === '') {
+                            template = parseTemplate(SHAPERECTANGLE_TMPL);
+                            data = {
+                                '0': [{
+                                    '1': this.getShapeAttribute(stored, 'stroke'),
+                                    '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
+                                        '3': backgroundColor,
+                                        '4': radius,
+                                        '5': radiusInit
+                                    }] : false)
+                                }]
+                            };
+                            if (stored.borderRadius.length > 1) {
+                                const shape = getTemplateLevel(data, '0', '2');
+                                const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                                shape['5'].push(borderRadius);
                             }
                         }
-                        const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
-                        const radius = this.getShapeAttribute(stored, 'radius');
-                        const radiusInit = this.getShapeAttribute(stored, 'radiusInit');
-                        if (stored.border != null) {
-                            if (stored.backgroundImage === '') {
-                                template = parseTemplate(SHAPERECTANGLE_TMPL);
-                                data = {
-                                    '0': [{
-                                        '1': this.getShapeAttribute(stored, 'stroke'),
-                                        '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
-                                            '3': backgroundColor,
-                                            '4': radius,
-                                            '5': radiusInit
-                                        }] : false)
-                                    }]
-                                };
-                                if (stored.borderRadius.length > 1) {
-                                    const shape = getTemplateLevel(data, '0', '2');
-                                    const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                    shape['5'].push(borderRadius);
-                                }
-                            }
-                            else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.width === '0px')) {
-                                template = parseTemplate(LAYERLIST_TMPL);
-                                data = {
-                                    '0': [{
-                                        '1': [{
-                                            '2': false,
-                                            '3': backgroundColor,
-                                            '4': false,
-                                            '5': false
-                                        }],
-                                        '6': (image6.length > 0 ? image6 : false),
-                                        '7': (image7.length > 0 ? image7 : false)
-                                    }]
-                                };
-                            }
-                            else {
-                                template = parseTemplate(LAYERLIST_TMPL);
-                                data = {
-                                    '0': [{
-                                        '1': [{
-                                            '2': this.getShapeAttribute(stored, 'stroke'),
-                                            '3': backgroundColor,
-                                            '4': radius,
-                                            '5': radiusInit
-                                        }],
-                                        '6': (image6.length > 0 ? image6 : false),
-                                        '7': (image7.length > 0 ? image7 : false)
-                                    }]
-                                };
-                                if (stored.borderRadius.length > 1) {
-                                    const shape = getTemplateLevel(data, '0', '1');
-                                    const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                    shape['5'].push(borderRadius);
-                                }
-                            }
+                        else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.width === '0px')) {
+                            template = parseTemplate(LAYERLIST_TMPL);
+                            data = {
+                                '0': [{
+                                    '1': [{
+                                        '2': false,
+                                        '3': backgroundColor,
+                                        '4': false,
+                                        '5': false
+                                    }],
+                                    '6': (image6.length > 0 ? image6 : false),
+                                    '7': (image7.length > 0 ? image7 : false)
+                                }]
+                            };
                         }
                         else {
                             template = parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
-                                    '1': [],
+                                    '1': [{
+                                        '2': this.getShapeAttribute(stored, 'stroke'),
+                                        '3': backgroundColor,
+                                        '4': radius,
+                                        '5': radiusInit
+                                    }],
                                     '6': (image6.length > 0 ? image6 : false),
                                     '7': (image7.length > 0 ? image7 : false)
                                 }]
                             };
-                            const root = getTemplateLevel(data, '0');
-                            const borders: BorderAttribute[] = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
-                            let valid = true;
-                            let width = '';
-                            let borderStyle = '';
-                            let radiusSize = '';
-                            borders.some((item, index) => {
-                                if (this.borderVisible(item)) {
-                                    if ((width !== '' && width !== item.width) || (borderStyle !== '' && borderStyle !== this.getBorderStyle(item)) || (radiusSize !== '' && radiusSize !== stored.borderRadius[index])) {
-                                        valid = false;
-                                        return true;
-                                    }
-                                    [width, borderStyle, radiusSize] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
-                                }
-                                return false;
-                            });
-                            const borderRadius = {};
                             if (stored.borderRadius.length > 1) {
-                                Object.assign(borderRadius, {
-                                    topLeftRadius: stored.borderRadius[0],
-                                    topRightRadius: stored.borderRadius[1],
-                                    bottomRightRadius: stored.borderRadius[2],
-                                    bottomLeftRadius: stored.borderRadius[3]
-                                });
+                                const shape = getTemplateLevel(data, '0', '1');
+                                const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
+                                shape['5'].push(borderRadius);
                             }
-                            root['1'].push({ '2': false, '3': backgroundColor, '4': false, '5': false });
-                            if (valid) {
-                                const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
-                                const layerList: {} = {
-                                    'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
-                                    'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
-                                    'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
-                                    'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
-                                    '2': [{ width, borderStyle }],
-                                    '3': false,
-                                    '4': radius,
-                                    '5': radiusInit
-                                };
-                                if (stored.borderRadius.length > 1) {
-                                    layerList['5'].push(borderRadius);
+                        }
+                    }
+                    else {
+                        template = parseTemplate(LAYERLIST_TMPL);
+                        data = {
+                            '0': [{
+                                '1': [],
+                                '6': (image6.length > 0 ? image6 : false),
+                                '7': (image7.length > 0 ? image7 : false)
+                            }]
+                        };
+                        const root = getTemplateLevel(data, '0');
+                        const borders: BorderAttribute[] = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
+                        let valid = true;
+                        let width = '';
+                        let borderStyle = '';
+                        let radiusSize = '';
+                        borders.some((item, index) => {
+                            if (this.borderVisible(item)) {
+                                if ((width !== '' && width !== item.width) || (borderStyle !== '' && borderStyle !== this.getBorderStyle(item)) || (radiusSize !== '' && radiusSize !== stored.borderRadius[index])) {
+                                    valid = false;
+                                    return true;
                                 }
-                                root['1'].push(layerList);
+                                [width, borderStyle, radiusSize] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
                             }
-                            else {
-                                borders.forEach((item, index) => {
-                                    if (this.borderVisible(item)) {
-                                        const hideWidth = `-${item.width}`;
-                                        const layerList: {} = {
-                                            'top': hideWidth,
-                                            'right': hideWidth,
-                                            'bottom': hideWidth,
-                                            'left': hideWidth,
-                                            '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
-                                            '3': false,
-                                            '4': radius,
-                                            '5': radiusInit
-                                        };
-                                        layerList[['top', 'right', 'bottom', 'left'][index]] = '';
-                                        if (stored.borderRadius.length > 1) {
-                                            layerList['5'].push(borderRadius);
-                                        }
-                                        root['1'].push(layerList);
+                            return false;
+                        });
+                        const borderRadius = {};
+                        if (stored.borderRadius.length > 1) {
+                            Object.assign(borderRadius, {
+                                topLeftRadius: stored.borderRadius[0],
+                                topRightRadius: stored.borderRadius[1],
+                                bottomRightRadius: stored.borderRadius[2],
+                                bottomLeftRadius: stored.borderRadius[3]
+                            });
+                        }
+                        root['1'].push({ '2': false, '3': backgroundColor, '4': false, '5': false });
+                        if (valid) {
+                            const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
+                            const layerList: {} = {
+                                'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
+                                'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
+                                'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
+                                'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
+                                '2': [{ width, borderStyle }],
+                                '3': false,
+                                '4': radius,
+                                '5': radiusInit
+                            };
+                            if (stored.borderRadius.length > 1) {
+                                layerList['5'].push(borderRadius);
+                            }
+                            root['1'].push(layerList);
+                        }
+                        else {
+                            borders.forEach((item, index) => {
+                                if (this.borderVisible(item)) {
+                                    const hideWidth = `-${item.width}`;
+                                    const layerList: {} = {
+                                        'top': hideWidth,
+                                        'right': hideWidth,
+                                        'bottom': hideWidth,
+                                        'left': hideWidth,
+                                        '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
+                                        '3': false,
+                                        '4': radius,
+                                        '5': radiusInit
+                                    };
+                                    layerList[['top', 'right', 'bottom', 'left'][index]] = '';
+                                    if (stored.borderRadius.length > 1) {
+                                        layerList['5'].push(borderRadius);
                                     }
-                                });
-                            }
-                            if (root['1'].length === 0) {
-                                root['1'] = false;
-                            }
-                        }
-                        if (template != null) {
-                            const xml = insertTemplateData(template, data);
-                            for (const [name, value] of Resource.STORED.DRAWABLES.entries()) {
-                                if (value === xml) {
-                                    resourceName = name;
-                                    break;
+                                    root['1'].push(layerList);
                                 }
-                            }
-                            if (resourceName === '') {
-                                resourceName = `${node.tagName.toLowerCase()}_${node.nodeId}`;
-                                Resource.STORED.DRAWABLES.set(resourceName, xml);
+                            });
+                        }
+                        if (root['1'].length === 0) {
+                            root['1'] = false;
+                        }
+                    }
+                    if (template != null) {
+                        const xml = insertTemplateData(template, data);
+                        for (const [name, value] of Resource.STORED.DRAWABLES.entries()) {
+                            if (value === xml) {
+                                resourceName = name;
+                                break;
                             }
                         }
-                        node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
+                        if (resourceName === '') {
+                            resourceName = `${node.tagName.toLowerCase()}_${node.nodeId}`;
+                            Resource.STORED.DRAWABLES.set(resourceName, xml);
+                        }
                     }
-                    else if (getCache(node.element, 'fontStyle') == null && stored.backgroundColor.length > 0) {
-                        node.attr(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension == null));
-                    }
+                    node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
+                }
+                else if (getCache(node.element, 'fontStyle') == null && stored.backgroundColor.length > 0) {
+                    node.attr(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension == null));
                 }
             }
         });
@@ -544,18 +541,16 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setFontStyle() {
         super.setFontStyle();
         const tagName: ObjectMap<T[]> = {};
-        this.cache.visible.forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
-                if (getCache(node.element, 'fontStyle') != null) {
-                    if (tagName[node.tagName] == null) {
-                        tagName[node.tagName] = [];
-                    }
-                    tagName[node.tagName].push(node);
+        this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)).each(node => {
+            if (getCache(node.element, 'fontStyle') != null) {
+                if (tagName[node.tagName] == null) {
+                    tagName[node.tagName] = [];
                 }
+                tagName[node.tagName].push(node);
             }
         });
         for (const tag in tagName) {
-            const nodes = new ViewList(<T[]> tagName[tag]);
+            const nodes = new NodeList<T>(tagName[tag]);
             const sorted: StyleList = [];
             for (let node of nodes) {
                 let system = false;
@@ -644,16 +639,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public setImageSource() {
-        this.cache.visible.filter(node => node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')).forEach(node => {
+        this.cache.filter(node => node.visible && (node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
             const element = (<HTMLImageElement> node.element);
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)) {
-                if (getCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
-                    const result = (node.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
-                    if (result !== '') {
-                        const method = METHOD_ANDROID['imageSource'];
-                        node.attr(formatString(method['src'], result), (node.renderExtension == null));
-                        setCache(element, 'imageSource', result);
-                    }
+            if (getCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
+                const result = (node.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
+                if (result !== '') {
+                    const method = METHOD_ANDROID['imageSource'];
+                    node.attr(formatString(method['src'], result), (node.renderExtension == null));
+                    setCache(element, 'imageSource', result);
                 }
             }
         });
@@ -661,65 +654,61 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.visible.filter(node => node.tagName === 'SELECT').forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
-                const stored: ObjectMap<string[]> = getCache(node.element, 'optionArray');
-                if (stored != null) {
-                    const method = METHOD_ANDROID['optionArray'];
-                    let result: string[] = [];
-                    if (stored.stringArray != null) {
-                        result = stored.stringArray.map(value => {
-                            value = ResourceView.addString(value);
-                            return (value !== '' ? `@string/${value}` : '');
-                        }).filter(value => value);
-                    }
-                    if (stored.numberArray != null) {
-                        result = stored.numberArray;
-                    }
-                    let arrayName = '';
-                    const arrayValue = result.join('-');
-                    for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
-                        if (arrayValue === storedResult.join('-')) {
-                            arrayName = storedName;
-                            break;
-                        }
-                    }
-                    if (arrayName === '') {
-                        arrayName = `${node.nodeId}_array`;
-                        Resource.STORED.ARRAYS.set(arrayName, result);
-                    }
-                    node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
+        this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+            const stored: ObjectMap<string[]> = getCache(node.element, 'optionArray');
+            if (stored != null) {
+                const method = METHOD_ANDROID['optionArray'];
+                let result: string[] = [];
+                if (stored.stringArray != null) {
+                    result = stored.stringArray.map(value => {
+                        value = ResourceView.addString(value);
+                        return (value !== '' ? `@string/${value}` : '');
+                    }).filter(value => value);
                 }
+                if (stored.numberArray != null) {
+                    result = stored.numberArray;
+                }
+                let arrayName = '';
+                const arrayValue = result.join('-');
+                for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
+                    if (arrayValue === storedResult.join('-')) {
+                        arrayName = storedName;
+                        break;
+                    }
+                }
+                if (arrayName === '') {
+                    arrayName = `${node.nodeId}_array`;
+                    Resource.STORED.ARRAYS.set(arrayName, result);
+                }
+                node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
             }
         });
     }
 
     public setValueString(supportInline: string[]) {
         super.setValueString(supportInline);
-        this.cache.visible.forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
-                const stored: BasicData = getCache(node.element, 'valueString');
-                if (stored != null) {
-                    const result = ResourceView.addString(stored.value, stored.name);
-                    if (result !== '') {
-                        const method = METHOD_ANDROID['valueString'];
-                        let value = Resource.STORED.STRINGS.get(result);
-                        if (value != null && node.is(NODE_STANDARD.TEXT) && node.style != null) {
-                            const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
-                            if (match != null) {
-                                switch (match[0]) {
-                                    case 'underline':
-                                        value = `<u>${value}</u>`;
-                                        break;
-                                    case 'line-through':
-                                        value = `<strike>${value}</strike>`;
-                                        break;
-                                }
-                                Resource.STORED.STRINGS.set(result, value);
+        this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
+            const stored: BasicData = getCache(node.element, 'valueString');
+            if (stored != null) {
+                const result = ResourceView.addString(stored.value, stored.name);
+                if (result !== '') {
+                    const method = METHOD_ANDROID['valueString'];
+                    let value = Resource.STORED.STRINGS.get(result);
+                    if (value != null && node.is(NODE_STANDARD.TEXT) && node.style != null) {
+                        const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
+                        if (match != null) {
+                            switch (match[0]) {
+                                case 'underline':
+                                    value = `<u>${value}</u>`;
+                                    break;
+                                case 'line-through':
+                                    value = `<strike>${value}</strike>`;
+                                    break;
                             }
+                            Resource.STORED.STRINGS.set(result, value);
                         }
-                        node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
                     }
+                    node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
                 }
             }
         });
@@ -742,7 +731,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.addFile(options.output.path, options.output.file, xml);
     }
 
-    private processFontStyle(viewData: ViewData<T>) {
+    private processFontStyle(viewData: ViewData<NodeList<T>>) {
         const style = {};
         const layout = {};
         for (const tag in this.tagStyle) {
@@ -928,7 +917,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             }
         }
         for (const id in map) {
-            const node: Null<T> = viewData.cache.find(item => item.id === parseInt(id));
+            const node = viewData.cache.locate('id', parseInt(id));
             if (node != null) {
                 const styles: string[] = map[id].styles;
                 const attrs: string[] = map[id].attributes;
@@ -980,7 +969,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    private getShapeAttribute(stored: ObjectMap<any>, name: string) {
+    private getShapeAttribute(stored: BoxStyle, name: string) {
         switch (name) {
             case 'stroke':
                 return (stored.border && stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);

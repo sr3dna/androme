@@ -1,10 +1,10 @@
-import { Null, ObjectIndex, PlainFile, ViewData } from '../lib/types';
+import { ObjectIndex, PlainFile, ViewData } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import { repeat } from '../lib/util';
 
-export default abstract class Controller<T extends Node, U extends NodeList<T>> {
-    public cache: U;
+export default abstract class Controller<T extends Node> {
+    public cache: NodeList<T>;
 
     private before: ObjectIndex<string[]> = {};
     private after: ObjectIndex<string[]> = {};
@@ -14,14 +14,14 @@ export default abstract class Controller<T extends Node, U extends NodeList<T>> 
 
     public abstract addXmlNs(name: string, uri: string): void;
     public abstract setConstraints(): void;
-    public abstract setDimensions(data: ViewData<T>): void;
+    public abstract setDimensions(data: ViewData<NodeList<T>>): void;
     public abstract parseDimensions(content: string): string;
-    public abstract setAttributes(data: ViewData<T>): void;
+    public abstract setAttributes(data: ViewData<NodeList<T>>): void;
     public abstract insertAttributes(output: string, node: T): string;
     public abstract finalize(layouts: PlainFile[]): void;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
-    public abstract renderNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: Null<T>, children?: boolean): string;
+    public abstract renderNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract renderInclude(node: T, parent: T, name: string): string;
     public abstract renderIncludeContent(name: string, content: string[]): string;
     public abstract getIncludeRenderDepth(name: string): number;

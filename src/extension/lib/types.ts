@@ -1,18 +1,18 @@
 import Node from '../../base/node';
-import { ArrayIndex, BoxRect, Inheritable, Null, ObjectIndex, ObjectMap } from '../../lib/types';
+import { ArrayIndex, BoxRect, Inheritable, ObjectIndex, ObjectMap } from '../../lib/types';
 
 export interface IExtension {
     name: string;
     application: any;
     node: Node;
-    parent: Null<Node>;
-    element: Null<HTMLElement>;
+    parent?: Node;
+    element?: HTMLElement;
     tagNames: string[];
     enabled: boolean;
     options: ObjectMap<any>;
     dependencies: ExtensionDependency[];
     documentRoot: boolean;
-    setTarget(node: Node, parent?: Null<Node>, element?: Null<HTMLElement>): void;
+    setTarget(node: Node, parent?: Node, element?: HTMLElement): void;
     getData(): void;
     is(node: Node): void;
     require(value: string): void;

@@ -1,13 +1,11 @@
 import { ExtensionResult } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
-import NodeList from '../base/nodelist';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;
-type U = NodeList<T>;
 
-export default class Table extends Extension<T, U> {
+export default class Table extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }

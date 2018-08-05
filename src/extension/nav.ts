@@ -1,14 +1,12 @@
 import Extension from '../base/extension';
 import Node from '../base/node';
-import NodeList from '../base/nodelist';
 import { getCache, getStyle, setCache } from '../lib/dom';
 import { BLOCK_ELEMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;
-type U = NodeList<T>;
 
-export default abstract class Menu extends Extension<T, U> {
+export default abstract class Menu extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
         this.require(EXT_NAME.EXTERNAL, true);

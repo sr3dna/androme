@@ -3,7 +3,6 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import ViewList from '../../viewlist';
 import { convertPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
 import { delimitDimen, stripId } from '../../lib/util';
@@ -16,9 +15,8 @@ import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import EXTENSION_APPBAR_TMPL from '../../template/extension/appbar';
 
 type T = View;
-type U = ViewList<T>;
 
-export default class Toolbar extends Extension<T, U> {
+export default class Toolbar extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
         this.require(WIDGET_NAME.MENU);
@@ -57,7 +55,7 @@ export default class Toolbar extends Extension<T, U> {
         const collapsingToolbarChildren: T[] = [];
         const hasMenu = (findNestedExtension(node, WIDGET_NAME.MENU) != null);
         const backgroundImage = node.css('backgroundImage');
-        let depth = (target ? 0 : node.depth + node.renderDepth);
+        let depth = (target ? 0 : node.depth);
         let children = node.children.filter(item => !item.isolated).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
@@ -129,8 +127,8 @@ export default class Toolbar extends Extension<T, U> {
                 optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
             }
         }
-        node.depth = depth + (appBar ? 1 : 0) + (collapsingToolbar ? 1 : 0);
-        let xml = controller.renderNodeStatic(VIEW_SUPPORT.TOOLBAR, node.depth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
+        const renderDepth = depth + (appBar ? 1 : 0) + (collapsingToolbar ? 1 : 0);
+        let xml = controller.renderNodeStatic(VIEW_SUPPORT.TOOLBAR, renderDepth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
         if (collapsingToolbar) {
             if (backgroundImage !== 'none') {
                 const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
@@ -154,7 +152,7 @@ export default class Toolbar extends Extension<T, U> {
                 overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                xml = controller.renderNodeStatic(NODE_ANDROID.IMAGE, node.depth, optionsBackgroundImage, 'match_parent', 'match_parent') + xml;
+                xml = controller.renderNodeStatic(NODE_ANDROID.IMAGE, renderDepth, optionsBackgroundImage, 'match_parent', 'match_parent') + xml;
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
         }
@@ -178,12 +176,8 @@ export default class Toolbar extends Extension<T, U> {
                 overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
             appBarNode = createPlaceholder(application.cache.nextId, node, appBarChildren);
-            appBarNode.depth = depth;
             appBarNode.nodeId = stripId(optionsAppBar.android.id);
-            appBarNode.children.forEach(item => {
-                item.depth = depth + 1;
-                item.element.dataset.target = (<T> appBarNode).nodeId;
-            });
+            appBarNode.each(item => item.element.dataset.target = (<T> appBarNode).nodeId);
             application.cache.append(appBarNode);
             outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
             if (collapsingToolbar) {
@@ -196,11 +190,7 @@ export default class Toolbar extends Extension<T, U> {
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
                 collapsingToolbarNode = createPlaceholder(application.cache.nextId, node, collapsingToolbarChildren);
-                appBarNode.depth = depth;
-                collapsingToolbarNode.children.forEach(item => {
-                    item.depth = depth + 1;
-                    item.element.dataset.target = (<T> collapsingToolbarNode).nodeId;
-                });
+                collapsingToolbarNode.each(item => item.element.dataset.target = (<T> collapsingToolbarNode).nodeId);
                 application.cache.append(collapsingToolbarNode);
                 outer = outer.replace(`{:${appBarNode.id}}`, controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true) + `{:${appBarNode.id}}`);
             }
@@ -225,7 +215,7 @@ export default class Toolbar extends Extension<T, U> {
         }
         else {
             node.render(<T> this.parent);
-            node.renderDepth = node.depth;
+            node.renderDepth = renderDepth;
         }
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;

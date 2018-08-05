@@ -83,7 +83,7 @@ export interface ArrayIndex<T> {
 }
 
 export interface ViewData<T> {
-    cache: T[];
+    cache: T;
     views: PlainFile[];
     includes: PlainFile[];
 }

@@ -1,15 +1,14 @@
-import { ArrayIndex, Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
+import { ArrayIndex, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
 import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
 import Application from './application';
 import Node from './node';
-import NodeList from './nodelist';
 import { capitalize, convertCamelCase, includes, optional } from '../lib/util';
 
-export default abstract class Extension<T extends Node, U extends NodeList<T>> implements IExtension {
-    public application: Application<T, U>;
+export default abstract class Extension<T extends Node> implements IExtension {
+    public application: Application<T>;
     public node: T;
-    public parent: Null<T>;
-    public element: Null<HTMLElement>;
+    public parent?: T;
+    public element?: HTMLElement;
     public options: ObjectMap<any> = {};
     public tagNames: string[] = [];
     public enabled = true;
@@ -29,8 +28,8 @@ export default abstract class Extension<T extends Node, U extends NodeList<T>> i
         }
     }
 
-    public setTarget(node: T, parent?: Null<T>, element?: Null<HTMLElement>) {
-        this.node = (<T> node);
+    public setTarget(node: T, parent?: T, element?: HTMLElement) {
+        this.node = node;
         this.parent = parent;
         this.element = (element == null && this.node != null ? this.node.element : element);
     }

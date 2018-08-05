@@ -60,10 +60,10 @@ export default abstract class Resource<T extends Node> {
     constructor(public file: File<T>) {
     }
 
-    public abstract filterStyles(viewData: ViewData<T>): void;
+    public abstract filterStyles(viewData: ViewData<NodeList<T>>): void;
     public abstract setImageSource(): void;
     public abstract addTheme(template: string, data: {}, options: {}): void;
-    public abstract finalize(viewData: ViewData<T>): void;
+    public abstract finalize(viewData: ViewData<NodeList<T>>): void;
 
     public addFile(pathname: string, filename: string, content = '', uri = '') {
         this.file.addFile(pathname, filename, content, uri);
@@ -82,212 +82,202 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxSpacing() {
-        this.cache.elements.forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
-                if (getCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
-                    const result = getBoxSpacing(node.element);
-                    const formatted = {};
-                    for (const attr in result) {
-                        if (node.inline && (attr === 'marginTop' || attr === 'marginBottom')) {
-                            formatted[attr] = '0px';
-                        }
-                        else {
-                            formatted[attr] = formatPX(result[attr]);
-                        }
+        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)).each(node => {
+            if (getCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
+                const result = getBoxSpacing(node.element);
+                const formatted = {};
+                for (const attr in result) {
+                    if (node.inline && (attr === 'marginTop' || attr === 'marginBottom')) {
+                        formatted[attr] = '0px';
                     }
-                    setCache(node.element, 'boxSpacing', formatted);
+                    else {
+                        formatted[attr] = formatPX(result[attr]);
+                    }
                 }
+                setCache(node.element, 'boxSpacing', formatted);
             }
         });
     }
 
     public setBoxStyle() {
-        this.cache.visible.forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)) {
-                if (getCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
-                    let result: any = {
-                        borderTop: this.parseBorderStyle,
-                        borderRight: this.parseBorderStyle,
-                        borderBottom: this.parseBorderStyle,
-                        borderLeft: this.parseBorderStyle,
-                        borderRadius: this.parseBorderRadius,
-                        backgroundColor: this.parseBackgroundColor,
-                        backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? this.parseBackgroundImage : ''),
-                        backgroundSize: this.parseBoxDimensions,
-                        backgroundRepeat: this.parseBackgroundRepeat,
-                        backgroundPosition: this.parseBackgroundPosition
-                    };
-                    for (const i in result) {
-                        if (typeof result[i] === 'function') {
-                            result[i] = result[i](node.css(i), node, i);
-                        }
+        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
+            if (getCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
+                let result: any = {
+                    borderTop: this.parseBorderStyle,
+                    borderRight: this.parseBorderStyle,
+                    borderBottom: this.parseBorderStyle,
+                    borderLeft: this.parseBorderStyle,
+                    borderRadius: this.parseBorderRadius,
+                    backgroundColor: this.parseBackgroundColor,
+                    backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? this.parseBackgroundImage : ''),
+                    backgroundSize: this.parseBoxDimensions,
+                    backgroundRepeat: this.parseBackgroundRepeat,
+                    backgroundPosition: this.parseBackgroundPosition
+                };
+                for (const i in result) {
+                    if (typeof result[i] === 'function') {
+                        result[i] = result[i](node.css(i), node, i);
                     }
-                    result = (<BoxStyle> result as BoxStyle);
-                    if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(node.element, 'backgroundColor')))) {
-                        result.backgroundColor = [];
-                    }
-                    const borderTop = JSON.stringify(result.borderTop);
-                    if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
-                        result.border = result.borderTop;
-                    }
-                    setCache(node.element, 'boxStyle', result);
                 }
+                result = (<BoxStyle> result as BoxStyle);
+                if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(node.element, 'backgroundColor')))) {
+                    result.backgroundColor = [];
+                }
+                const borderTop = JSON.stringify(result.borderTop);
+                if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
+                    result.border = result.borderTop;
+                }
+                setCache(node.element, 'boxStyle', result);
             }
         });
     }
 
     public setFontStyle() {
-        this.cache.visible.forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)) {
-                if (getCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources) {
-                    if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
-                        return;
+        this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)).each(node => {
+            if (getCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources) {
+                if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
+                    return;
+                }
+                else {
+                    let color = parseRGBA(node.css('color'), node.css('opacity'));
+                    if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (node.element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
+                        color = [];
                     }
-                    else {
-                        let color = parseRGBA(node.css('color'), node.css('opacity'));
-                        if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (node.element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
-                            color = [];
-                        }
-                        let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                        if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(node.element, 'backgroundColor')))) {
-                            backgroundColor = [];
-                        }
-                        let fontWeight = node.css('fontWeight');
-                        if (!isNumber(fontWeight)) {
-                            switch (fontWeight) {
-                                case 'lighter':
-                                    fontWeight = '200';
-                                    break;
-                                case 'bold':
-                                    fontWeight = '700';
-                                    break;
-                                case 'bolder':
-                                    fontWeight = '900';
-                                    break;
-                                default:
-                                    fontWeight = '400';
-                            }
-                        }
-                        const result: FontAttribute = {
-                            fontFamily: node.css('fontFamily'),
-                            fontStyle: node.css('fontStyle'),
-                            fontSize: node.css('fontSize'),
-                            fontWeight,
-                            color,
-                            backgroundColor
-                        };
-                        setCache(node.element, 'fontStyle', result);
+                    let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
+                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(node.element, 'backgroundColor')))) {
+                        backgroundColor = [];
                     }
+                    let fontWeight = node.css('fontWeight');
+                    if (!isNumber(fontWeight)) {
+                        switch (fontWeight) {
+                            case 'lighter':
+                                fontWeight = '200';
+                                break;
+                            case 'bold':
+                                fontWeight = '700';
+                                break;
+                            case 'bolder':
+                                fontWeight = '900';
+                                break;
+                            default:
+                                fontWeight = '400';
+                        }
+                    }
+                    const result: FontAttribute = {
+                        fontFamily: node.css('fontFamily'),
+                        fontStyle: node.css('fontStyle'),
+                        fontSize: node.css('fontSize'),
+                        fontWeight,
+                        color,
+                        backgroundColor
+                    };
+                    setCache(node.element, 'fontStyle', result);
                 }
             }
         });
     }
 
     public setOptionArray() {
-        this.cache.list.filter(node => node.visible && node.tagName === 'SELECT').forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)) {
-                const element = (<HTMLSelectElement> node.element);
-                if (getCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
-                    const stringArray: string[] = [];
-                    let numberArray: Null<string[]> = [];
-                    for (let i = 0; i < element.children.length; i++) {
-                        const item = (<HTMLOptionElement> element.children[i]);
-                        const value = item.text.trim();
-                        if (value !== '') {
-                            if (!SETTINGS.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
-                                numberArray.push(value);
+        this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+            const element = (<HTMLSelectElement> node.element);
+            if (getCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
+                const stringArray: string[] = [];
+                let numberArray: Null<string[]> = [];
+                for (let i = 0; i < element.children.length; i++) {
+                    const item = (<HTMLOptionElement> element.children[i]);
+                    const value = item.text.trim();
+                    if (value !== '') {
+                        if (!SETTINGS.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                            numberArray.push(value);
+                        }
+                        else {
+                            if (numberArray && numberArray.length > 0) {
+                                i = -1;
+                                numberArray = null;
+                                continue;
                             }
-                            else {
-                                if (numberArray && numberArray.length > 0) {
-                                    i = -1;
-                                    numberArray = null;
-                                    continue;
-                                }
-                                if (value !== '') {
-                                    stringArray.push(value);
-                                }
+                            if (value !== '') {
+                                stringArray.push(value);
                             }
                         }
                     }
-                    setCache(element, 'optionArray', { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray && numberArray.length > 0 ? numberArray : null) });
                 }
+                setCache(element, 'optionArray', { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray && numberArray.length > 0 ? numberArray : null) });
             }
         });
     }
 
     public setValueString(supportInline: string[]) {
-        this.cache.visible.forEach(node => {
-            if (!includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)) {
-                const element = (<HTMLInputElement> node.element);
-                if (getCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
-                    let name = '';
-                    let value = '';
-                    let inlineTrim = false;
-                    if (element.tagName === 'INPUT') {
-                        switch (element.type) {
-                            case 'text':
-                            case 'number':
-                            case 'email':
-                            case 'search':
-                            case 'submit':
-                            case 'reset':
-                            case 'button':
-                                value = element.value.trim();
-                                break;
-                            default:
-                                if (node.companion != null) {
-                                    value = node.companion.element.innerText.trim();
-                                }
-                                break;
-                        }
-                    }
-                    else if (element.tagName === 'TEXTAREA') {
-                        value = element.value.trim();
-                    }
-                    else if (element.nodeName === '#text') {
-                        value = (<string> element.textContent);
-                        const previousSibling = (<HTMLElement> element.previousSibling);
-                        if (previousSibling && previousSibling.tagName === 'BR') {
-                            value = value.replace(/^\s+/g, '');
-                        }
-                        inlineTrim = true;
-                    }
-                    else if (node.hasElement) {
-                        if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[item.tagName] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
-                            name = (element.innerText || element.textContent || '').trim();
-                            value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
-                            switch (node.css('whiteSpace')) {
-                                case 'nowrap':
-                                    value = value.replace(/\n/g, ' ');
-                                    break;
-                                case 'pre':
-                                case 'pre-wrap':
-                                    value = value.replace(/\s/g, '&#160;');
-                                    break;
-                                case 'pre-line':
-                                    value = value.replace(/\s+/g, ' ');
-                                default:
-                                    value = value.replace(/^\s+/g, '');
-                                    inlineTrim = true;
-                                    break;
+        this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
+            const element = (<HTMLInputElement> node.element);
+            if (getCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
+                let name = '';
+                let value = '';
+                let inlineTrim = false;
+                if (element.tagName === 'INPUT') {
+                    switch (element.type) {
+                        case 'text':
+                        case 'number':
+                        case 'email':
+                        case 'search':
+                        case 'submit':
+                        case 'reset':
+                        case 'button':
+                            value = element.value.trim();
+                            break;
+                        default:
+                            if (node.companion != null) {
+                                value = node.companion.element.innerText.trim();
                             }
-                            value = value.replace(/<br\s*\/?>/g, '\\n');
-                            value = value.replace(/\s+style=""/, '');
-                        }
+                            break;
                     }
-                    if (inlineTrim) {
-                        const original = value;
-                        value = value.trim();
-                        if (node.previousSibling && node.previousSibling.inlineElement && /^\s+/.test(original)) {
-                            value = '&#160;' + value;
-                        }
-                        if (node.nextSibling && node.nextSibling.inlineElement && /\s+$/.test(original)) {
-                            value = value + '&#160;';
-                        }
+                }
+                else if (element.tagName === 'TEXTAREA') {
+                    value = element.value.trim();
+                }
+                else if (element.nodeName === '#text') {
+                    value = (<string> element.textContent);
+                    const previousSibling = (<HTMLElement> element.previousSibling);
+                    if (previousSibling && previousSibling.tagName === 'BR') {
+                        value = value.replace(/^\s+/g, '');
                     }
-                    if (value !== '') {
-                        setCache(element, 'valueString', { name, value });
+                    inlineTrim = true;
+                }
+                else if (node.hasElement) {
+                    if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[item.tagName] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
+                        name = (element.innerText || element.textContent || '').trim();
+                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
+                        switch (node.css('whiteSpace')) {
+                            case 'nowrap':
+                                value = value.replace(/\n/g, ' ');
+                                break;
+                            case 'pre':
+                            case 'pre-wrap':
+                                value = value.replace(/\s/g, '&#160;');
+                                break;
+                            case 'pre-line':
+                                value = value.replace(/\s+/g, ' ');
+                            default:
+                                value = value.replace(/^\s+/g, '');
+                                inlineTrim = true;
+                                break;
+                        }
+                        value = value.replace(/<br\s*\/?>/g, '\\n');
+                        value = value.replace(/\s+style=""/, '');
                     }
+                }
+                if (inlineTrim) {
+                    const original = value;
+                    value = value.trim();
+                    if (node.previousSibling && node.previousSibling.inlineElement && /^\s+/.test(original)) {
+                        value = '&#160;' + value;
+                    }
+                    if (node.nextSibling && node.nextSibling.inlineElement && /\s+$/.test(original)) {
+                        value = value + '&#160;';
+                    }
+                }
+                if (value !== '') {
+                    setCache(element, 'valueString', { name, value });
                 }
             }
         });

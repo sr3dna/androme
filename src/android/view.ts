@@ -1,6 +1,6 @@
 import { BoxRect, BoxStyle, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, hasValue, isPercent, lastIndexOf, sortAsc } from '../lib/util';
+import { convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, hasValue, isPercent, lastIndexOf } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
 import { getCache, getNode, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
@@ -37,7 +37,7 @@ export default class View extends Node {
     constructor(
         public id: number,
         public api: number,
-        element?: Null<HTMLElement>)
+        element?: HTMLElement)
     {
         super(id, element);
     }
@@ -615,8 +615,8 @@ export default class View extends Node {
         switch (this.nodeName) {
             case NODE_ANDROID.EDIT:
                 if (node.companion == null) {
-                    let parent = (<T> this.renderParent);
                     let current = (<T> this);
+                    let parent = (<T> this.renderParent);
                     let label: Null<T> = null;
                     while (parent instanceof View && parent.renderChildren.length > 0) {
                         const index = parent.renderChildren.findIndex(item => item === current);
@@ -672,8 +672,8 @@ export default class View extends Node {
         }
     }
 
-    protected appendChild(node: T) {
-        super.appendChild(node);
+    protected append(node: T) {
+        super.append(node);
         switch (this.nodeName) {
             case NODE_ANDROID.LINEAR:
                 if (this.horizontal) {
@@ -688,32 +688,33 @@ export default class View extends Node {
             switch (this.android('orientation')) {
                 case AXIS_ANDROID.HORIZONTAL:
                     let left = this.box.left;
-                    sortAsc(this.renderChildren.slice(), 'linear.left').forEach((item, index) => {
+                    for (let i = 0; i < this.renderChildren.length; i++) {
+                        const node = this.renderChildren[i];
                         let valid = true;
-                        if (index === 0) {
+                        if (i === 0) {
                             const gravity = this.android('gravity');
                             if (gravity != null && gravity !== parseRTL('left')) {
                                 valid = false;
                             }
                         }
-                        if (valid && !item.floating) {
-                            const width = Math.ceil(item.linear.left - left);
+                        if (valid && !node.floating) {
+                            const width = Math.ceil(node.linear.left - left);
                             if (width >= 1) {
-                                item.modifyBox(BOX_STANDARD.MARGIN_LEFT, item.marginLeft + width, true);
+                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + width, true);
                             }
                         }
-                        left = item.linear.right;
-                    });
+                        left = node.linear.right;
+                    }
                     break;
                 case AXIS_ANDROID.VERTICAL:
                     let top = this.box.top;
-                    sortAsc(this.renderChildren.slice(), 'linear.top').forEach(item => {
-                        const height = Math.ceil(item.linear.top - top);
+                    for (const node of this.renderChildren) {
+                        const height = Math.ceil(node.linear.top - top);
                         if (height >= 1) {
-                            item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + height, true);
+                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height, true);
                         }
-                        top = item.linear.bottom;
-                    });
+                        top = node.linear.bottom;
+                    }
                     break;
             }
         }
@@ -749,7 +750,7 @@ export default class View extends Node {
         }
         else if (position !== 'fixed') {
             const absolute = (position === 'absolute');
-            let parent: Null<HTMLElement> = this.element.parentElement;
+            let parent = this.element.parentElement;
             while (parent != null) {
                 const node = (!absolute || getStyle(parent).position !== 'static' ? <T> getNode(parent) : null);
                 if (node != null) {
@@ -763,7 +764,7 @@ export default class View extends Node {
 
     set renderParent(value: T) {
         if (value !== this && value.renderChildren.indexOf(this) === -1) {
-            value.appendChild(this);
+            value.append(this);
         }
         this._renderParent = value;
     }

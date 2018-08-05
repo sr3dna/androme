@@ -23,6 +23,7 @@ export function deleteCache(element: HTMLElement, ...attrs: string[]) {
 export function getNode(element: HTMLElement): Null<Node> {
     return getCache(element, 'node');
 }
+
 export function previousNode(element: HTMLElement) {
     let previous: Null<HTMLElement>;
     do {
@@ -70,7 +71,7 @@ export function assignBounds(bounds: ClientRect): ClientRect {
     };
 }
 
-export function getStyle(element: Null<HTMLElement>, cache = true): CSSStyleDeclaration {
+export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaration {
     if (element != null) {
         if (cache) {
             const node = getNode(element);

@@ -17,7 +17,7 @@ export default abstract class Node implements BoxModel {
     public bounds: ClientRect;
     public linear: ClientRect;
     public box: ClientRect;
-    public renderExtension: Null<IExtension>;
+    public renderExtension?: IExtension;
     public excludeProcedure = 0;
     public excludeResource = 0;
     public documentRoot = false;
@@ -44,7 +44,7 @@ export default abstract class Node implements BoxModel {
 
     constructor(
         public id: number,
-        element?: Null<HTMLElement>)
+        element?: HTMLElement)
     {
         if (element != null) {
             if (element instanceof HTMLElement) {
@@ -128,6 +128,11 @@ export default abstract class Node implements BoxModel {
         return excluded;
     }
 
+    public each(predicate: (value: T, index?: number) => void) {
+        this.children.forEach(predicate);
+        return this;
+    }
+
     public render(parent: T) {
         this.renderParent = parent;
         this.renderDepth = (parent === this || this.documentRoot || parent.isSet('dataset', 'target') ? 0 : parent.renderDepth + 1);
@@ -164,7 +169,7 @@ export default abstract class Node implements BoxModel {
     public cascade() {
         function cascade(node: T) {
             const current = [...node.children];
-            node.children.forEach(item => current.push(...cascade(item)));
+            node.each(item => current.push(...cascade(item)));
             return current;
         }
         return cascade(this);
@@ -388,15 +393,15 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public setDimensions(area = ['linear', 'box']) {
-        area.forEach(value => {
-            const dimen = this[value];
+    public setDimensions(bounds = ['linear', 'box']) {
+        for (const dimension of bounds) {
+            const dimen = this[dimension];
             dimen.width = dimen.right - dimen.left;
             dimen.height = dimen.bottom - dimen.top;
-        });
+        }
     }
 
-    protected appendChild(node: T) {
+    protected append(node: T) {
         this.renderChildren.push(node);
     }
 

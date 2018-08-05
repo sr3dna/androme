@@ -11,6 +11,7 @@ type T = View;
 
 export function createPlaceholder(nextId: number, node: T, children: T[] = []) {
     const placeHolder = new View(nextId, node.api, node.element);
+    placeHolder.depth = node.depth;
     placeHolder.parent = node.parent;
     placeHolder.inherit(node, 'base');
     placeHolder.excludeResource |= NODE_RESOURCE.ALL;

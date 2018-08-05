@@ -1,7 +1,6 @@
 import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
-import ViewList from '../../viewlist';
 import { optional } from '../../../lib/util';
 import { findNestedExtension, overwriteDefault } from '../lib/util';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
@@ -10,9 +9,8 @@ import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
 
 type T = View;
-type U = ViewList<T>;
 
-export default class BottomNavigation extends Extension<T, U> {
+export default class BottomNavigation extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
         this.require(WIDGET_NAME.MENU);
