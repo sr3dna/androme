@@ -20,6 +20,7 @@ export default class Application<T extends Node> {
     public insert: ObjectIndex<string[]> = {};
     public closed = false;
 
+    private sorted: ObjectIndex<number[]> = {};
     private views: PlainFile[] = [];
     private includes: PlainFile[] = [];
     private currentIndex = -1;
@@ -91,6 +92,7 @@ export default class Application<T extends Node> {
         this.resetController();
         this.resetResource();
         this.appName = '';
+        this.sorted = {};
         this.views = [];
         this.includes = [];
         this.insert = {};
@@ -479,13 +481,14 @@ export default class Application<T extends Node> {
                 const below: T[] = [];
                 const middle: T[] = [];
                 const above: T[] = [];
+                let parent = (<T> this.cache.locate('id', parseInt(coordsY[j])));
                 for (const node of (<T[]> mapY[i][coordsY[j]])) {
                     const zIndex = convertInt(node.css('zIndex'));
                     const documentParent = (node.parent.element === node.element.parentElement);
                     if (node.documentRoot) {
                         axisY.push(node);
                     }
-                    else if (node.pageflow || (zIndex === 0 && documentParent)) {
+                    else if (node.pageflow || (!node.alignMargin && zIndex === 0 && documentParent)) {
                         middle.push(node);
                     }
                     else {
@@ -497,25 +500,8 @@ export default class Application<T extends Node> {
                         }
                     }
                 }
-                if (!middle.some(node => node.multiLine)) {
-                    middle.sort((a, b) => {
-                        if (!a.pageflow || !b.pageflow) {
-                            const indexA = convertInt(a.css('zIndex'));
-                            const indexB = convertInt(b.css('zIndex'));
-                            if (indexA !== indexB) {
-                                return (indexA <= indexB ? -1 : 1);
-                            }
-                        }
-                        if (!a.parent.flex.enabled && !b.parent.flex.enabled) {
-                            if (a.intersectX(b.linear)) {
-                                return (a.linear.left <= b.linear.left ? -1 : 1);
-                            }
-                            else {
-                                return (a.linear.top <= b.linear.top ? -1 : 1);
-                            }
-                        }
-                        return (a.siblingIndex < b.siblingIndex ? -1 : 1);
-                    });
+                if (parent != null && !middle.some(node => node.multiLine)) {
+                    this.sortLayout(parent, middle);
                 }
                 axisY.push(...sortAsc(below, 'style.zIndex', 'siblingIndex'));
                 axisY.push(...middle);
@@ -527,7 +513,7 @@ export default class Application<T extends Node> {
                     if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
                         continue;
                     }
-                    let parent = (<T> nodeY.parent);
+                    parent = (<T> nodeY.parent);
                     if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
                         const nodes = [nodeY];
                         if (nodeY.element.nextSibling == null || (<Element> nodeY.element.nextSibling).tagName !== 'BR') {
@@ -557,18 +543,19 @@ export default class Application<T extends Node> {
                             }
                             else {
                                 if (nodes.length > 1) {
-                                    let xml = '';
-                                    const viewGroup = this.controllerHandler.createGroup(nodeY, parent, nodes);
+                                    let inlineXml = '';
+                                    const group = this.controllerHandler.createGroup(nodeY, parent, nodes);
                                     if (nodes.some(item => item.multiLine)) {
-                                        viewGroup.inlineWrap = true;
-                                        xml = this.writeRelativeLayout(viewGroup, parent);
+                                        group.inlineWrap = true;
+                                        inlineXml = this.writeRelativeLayout(group, parent);
                                     }
                                     else {
-                                        xml = this.writeLinearLayout(viewGroup, parent, true);
-                                        viewGroup.inlineWrap = (nodeY.float === 'right');
+                                        inlineXml = this.writeLinearLayout(group, parent, true);
+                                        this.sortLayout(group, <T[]> group.children, true);
+                                        group.inlineWrap = (nodeY.float === 'right');
                                     }
-                                    renderXml(viewGroup, parent, xml, current);
-                                    parent = viewGroup;
+                                    renderXml(group, parent, inlineXml, current);
+                                    parent = group;
                                 }
                                 else {
                                     nodeY.multiLine = false;
@@ -656,13 +643,14 @@ export default class Application<T extends Node> {
                                     }
                                 }
                                 else {
-                                    if (nodeY.flex.enabled || nodeY.untargeted.some(node => !node.pageflow)) {
+                                    const untargeted = nodeY.untargeted;
+                                    if (nodeY.flex.enabled || untargeted.some(node => !node.pageflow)) {
                                         xml += this.writeDefaultLayout(nodeY, parent);
                                     }
                                     else {
-                                        if (nodeY.untargeted.length === 1) {
+                                        if (untargeted.length === 1) {
                                             if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
-                                                const child = nodeY.untargeted[0];
+                                                const child = untargeted[0];
                                                 child.documentRoot = nodeY.documentRoot;
                                                 child.parent = parent;
                                                 nodeY.hide();
@@ -702,9 +690,25 @@ export default class Application<T extends Node> {
                 }
             }
             for (const [id, views] of partial.entries()) {
+                const content: string[] = [];
+                if (this.sorted[id] != null) {
+                    const parsed: string[] = [];
+                    this.sorted[id].forEach(value => {
+                        const result: string = views.find((view: string) => view.indexOf(`{@${value}}`) !== -1);
+                        if (result) {
+                            parsed.push(result);
+                        }
+                    });
+                    if (parsed.length === views.length) {
+                        content.push(...parsed);
+                    }
+                }
+                if (content.length === 0) {
+                    content.push(...views);
+                }
                 const placeholder = `{:${id}}`;
                 if (output.indexOf(placeholder) !== -1) {
-                    output = output.replace(placeholder, views.join('') + placeholder);
+                    output = output.replace(placeholder, content.join('') + placeholder);
                     empty = false;
                 }
                 else {
@@ -885,6 +889,37 @@ export default class Application<T extends Node> {
     public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
         const float = children[0].float;
         return ((linearX || linearY) && !parent.flex.enabled && children.every(node => node.pageflow && !node.multiLine) && !children.some(node => float !== node.float));
+    }
+
+    public sortLayout(parent: T, children: T[], save = false) {
+        switch (parent.nodeType) {
+            case NODE_STANDARD.LINEAR:
+                if (parent.horizontal) {
+                    sortAsc(children, 'linear.left');
+                }
+                else {
+                    sortAsc(children, 'linear.top');
+                }
+                break;
+            case NODE_STANDARD.FRAME:
+                if (children.some(node => node.floating)) {
+                    children.sort((a, b) => {
+                        if (a.floating && !b.floating) {
+                            return (a.float === 'right' ? -1 : 1);
+                        }
+                        else if (!a.floating && b.floating) {
+                            return (b.float === 'right' ? -1 : 1);
+                        }
+                        else {
+                            return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                        }
+                    });
+                }
+                break;
+        }
+        if (save) {
+            this.sorted[parent.id] = children.map(item => item.id);
+        }
     }
 
     public addInclude(filename: string, content: string) {

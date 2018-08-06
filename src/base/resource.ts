@@ -317,10 +317,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     private parseBorderRadius(value: string, node: T) {
-        const radiusTop = node.css('borderTopLeftRadius');
-        const radiusRight = node.css('borderTopRightRadius');
-        const radiusBottom = node.css('borderBottomLeftRadius');
-        const radiusLeft = node.css('borderBottomRightRadius');
+        const [radiusTop, radiusRight, radiusBottom, radiusLeft] = [node.css('borderTopLeftRadius'), node.css('borderTopRightRadius'), node.css('borderBottomLeftRadius'), node.css('borderBottomRightRadius')];
         if (radiusTop === radiusRight && radiusRight === radiusBottom && radiusBottom === radiusLeft) {
             return (radiusTop === '' || radiusTop === '0px' ? [] : [radiusTop]);
         }

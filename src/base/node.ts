@@ -273,11 +273,17 @@ export default abstract class Node implements BoxModel {
         return (this[dimension].left >= rect.left && this[dimension].right <= rect.right);
     }
 
-    public css(attr: string, value = ''): string {
-        if (arguments.length === 2) {
-            this.styleMap[attr] = (hasValue(value) ? value : '');
+    public css(attr: string | object, value = ''): string {
+        if (typeof attr === 'object') {
+            Object.assign(this.styleMap, attr);
+            return '';
         }
-        return this.styleMap[attr] || (this.style && this.style[attr]) || '';
+        else {
+            if (arguments.length === 2) {
+                this.styleMap[attr] = (hasValue(value) ? value : '');
+            }
+            return this.styleMap[attr] || (this.style && this.style[attr]) || '';
+        }
     }
 
     public setExcludeProcedure(exclude?: string) {
@@ -485,9 +491,7 @@ export default abstract class Node implements BoxModel {
     get overflow() {
         let value = OVERFLOW_ELEMENT.NONE;
         if (this.hasElement) {
-            const overflow = this.css('overflow');
-            const overflowX = this.css('overflowX');
-            const overflowY = this.css('overflowY');
+            const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
             if (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
                 value |= OVERFLOW_ELEMENT.HORIZONTAL;
             }

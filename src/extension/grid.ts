@@ -297,16 +297,16 @@ export default class Grid extends Extension<T> {
             }
             if (siblings && siblings.length > 0) {
                 siblings.unshift(node);
-                sortAsc(siblings, 'linear.left');
-                const viewGroup = this.application.controllerHandler.createGroup(node, parent, siblings);
+                const group = this.application.controllerHandler.createGroup(node, parent, siblings);
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 if (linearX || linearY) {
-                    xml = this.application.writeLinearLayout(viewGroup, parent, linearX);
+                    xml = this.application.writeLinearLayout(group, parent, linearX);
+                    this.application.sortLayout(group, group.children, true);
                 }
                 else {
-                    xml = this.application.writeDefaultLayout(viewGroup, parent);
+                    xml = this.application.writeDefaultLayout(group, parent);
                 }
-                return { xml, parent: viewGroup };
+                return { xml, parent: group };
             }
         }
         return { xml };

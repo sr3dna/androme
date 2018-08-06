@@ -1,6 +1,6 @@
 import { BoxRect, BoxStyle, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, hasValue, isPercent, lastIndexOf } from '../lib/util';
+import { convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, hasValue, isPercent, lastIndexOf, sortAsc } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
 import { getCache, getNode, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
@@ -86,20 +86,7 @@ export default class View extends Node {
             if (overwrite == null) {
                 overwrite = (adjacent === 'parent' || adjacent === 'true');
             }
-            switch (this.renderParent.nodeName) {
-                case NODE_ANDROID.CONSTRAINT:
-                    if (arguments.length === 1) {
-                        return this.app(position);
-                    }
-                    this.app(position, adjacent, overwrite);
-                    break;
-                case NODE_ANDROID.RELATIVE:
-                    if (arguments.length === 1) {
-                        return this.android(position);
-                    }
-                    this.android(position, adjacent, overwrite);
-                    break;
-            }
+            this[(this.renderParent.nodeName === NODE_ANDROID.RELATIVE ? 'android' : 'app')](position, adjacent, overwrite);
             if (orientation) {
                 this.constraint[orientation] = true;
             }
@@ -457,20 +444,17 @@ export default class View extends Node {
                     vertical = 'center_vertical';
                 }
         }
-        const constraintRight = (renderParent.app(parseRTL('layout_constraintRight_toRightOf')) === 'parent');
         if (renderParent.tagName === 'TABLE') {
             this.android('layout_gravity', 'fill');
         }
-        else if (!renderParent.inlineWrap) {
+        else if (!renderParent.inlineWrap && !renderParent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
             let horizontalFloat = '';
             let verticalFloat = '';
-            if (!constraintRight) {
-                const gravityParent = renderParent.android('gravity') || '';
-                horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
-                if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
-                    horizontalFloat = horizontal;
-                    horizontal = '';
-                }
+            const gravityParent = renderParent.android('gravity') || '';
+            horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
+            if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
+                horizontalFloat = horizontal;
+                horizontal = '';
             }
             if (vertical !== '' && this.viewHeight === 0 && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
                 verticalFloat = vertical;
@@ -481,7 +465,7 @@ export default class View extends Node {
                 this.android('layout_gravity', layoutGravity);
             }
         }
-        if (this.renderChildren.length > 0 && !constraintRight && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.inlineElement)))) {
+        if (this.renderChildren.length > 0 && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.inlineElement)))) {
             this.android('gravity', right);
         }
         else {
@@ -688,33 +672,23 @@ export default class View extends Node {
             switch (this.android('orientation')) {
                 case AXIS_ANDROID.HORIZONTAL:
                     let left = this.box.left;
-                    for (let i = 0; i < this.renderChildren.length; i++) {
-                        const node = this.renderChildren[i];
-                        let valid = true;
-                        if (i === 0) {
-                            const gravity = this.android('gravity');
-                            if (gravity != null && gravity !== parseRTL('left')) {
-                                valid = false;
-                            }
-                        }
-                        if (valid && !node.floating) {
-                            const width = Math.ceil(node.linear.left - left);
-                            if (width >= 1) {
-                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + width, true);
-                            }
+                    sortAsc(this.renderChildren, 'linear.left').forEach(node => {
+                        const width = Math.ceil(node.linear.left - left);
+                        if (width >= 1) {
+                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + width, true);
                         }
                         left = node.linear.right;
-                    }
+                    });
                     break;
                 case AXIS_ANDROID.VERTICAL:
                     let top = this.box.top;
-                    for (const node of this.renderChildren) {
+                    sortAsc(this.renderChildren, 'linear.top').forEach(node => {
                         const height = Math.ceil(node.linear.top - top);
                         if (height >= 1) {
                             node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height, true);
                         }
                         top = node.linear.bottom;
-                    }
+                    });
                     break;
             }
         }
