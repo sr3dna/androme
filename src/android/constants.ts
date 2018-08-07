@@ -1,5 +1,5 @@
 export enum BUILD_ANDROID {
-    P = 28,
+    PIE = 28,
     OREO_1 = 27,
     OREO = 26,
     NOUGAT_1 = 25,

@@ -4,7 +4,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertCamelCase, convertInt, formatPX, includesEnum, isNumber, optional, sortAsc, trim } from '../lib/util';
+import { convertCamelCase, convertInt, formatPX, includesEnum, isNumber, optional, sortAsc, trim, hasValue } from '../lib/util';
 import { placeIndent } from '../lib/xml';
 import { deleteCache, getCache, getNode, getStyle, hasFreeFormText, isVisible, setCache } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
@@ -514,26 +514,38 @@ export default class Application<T extends Node> {
                         continue;
                     }
                     parent = (<T> nodeY.parent);
-                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
+                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
                         const nodes = [nodeY];
                         if (nodeY.element.nextSibling == null || (<Element> nodeY.element.nextSibling).tagName !== 'BR') {
-                            const float = nodeY.float;
+                            const floats = new Set();
+                            if (nodeY.floating) {
+                                floats.add(nodeY.float);
+                            }
                             for (let l = k + 1; l < axisY.length; l++) {
                                 const adjacent = axisY[l];
-                                const previous = nodes[nodes.length - 1];
-                                if (!previous.inlineElement && !adjacent.inlineElement && !adjacent.floating) {
+                                if (adjacent.element.previousSibling && (<Element> adjacent.element.previousSibling).tagName === 'BR') {
                                     break;
                                 }
-                                const nextTo = adjacent[(float === 'right' ? 'toLeftOf' : 'toRightOf')](previous, SETTINGS.whitespaceHorizontalOffset);
-                                if ((adjacent.pageflow && float === adjacent.float && !adjacent.intersect(previous.linear)) || nextTo) {
+                                if (adjacent.floating) {
+                                    floats.add(adjacent.float);
+                                }
+                                if (hasValue(adjacent.dataset.target)) {
+                                    continue;
+                                }
+                                const previous = axisY[l - 1];
+                                if (!previous.inlineElement && !previous.floating && !adjacent.floating) {
+                                    break;
+                                }
+                                const clear = adjacent.css('clear');
+                                if (adjacent.pageflow && (clear === 'none' || floats.size === 0 || (floats.size > 0 && (clear !== 'both' || !floats.has(clear))))) {
                                     nodes.push(adjacent);
-                                    if (adjacent.element.nextSibling && (<Element> adjacent.element.nextSibling).tagName === 'BR') {
-                                        break;
-                                    }
-                                    else if (!nextTo && ((!adjacent.inlineElement && !adjacent.floating) || (nodes.every(item => item.hasElement) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)))) {
+                                    if (!NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)) {
                                         nodes.pop();
                                         break;
                                     }
+                                }
+                                else {
+                                    break;
                                 }
                             }
                         }
@@ -543,19 +555,23 @@ export default class Application<T extends Node> {
                             }
                             else {
                                 if (nodes.length > 1) {
-                                    let inlineXml = '';
+                                    let xml = '';
                                     const group = this.controllerHandler.createGroup(nodeY, parent, nodes);
                                     if (nodes.some(item => item.multiLine)) {
+                                        xml = this.writeRelativeLayout(group, parent);
                                         group.inlineWrap = true;
-                                        inlineXml = this.writeRelativeLayout(group, parent);
+                                    }
+                                    else if (nodes.some(item => item.floating)) {
+                                        xml = this.writeFrameLayoutGroup(group, parent, nodes);
+                                        parent.children = parent.children.filter((item: T) => !nodes.includes(item));
+                                        group.inlineWrap = true;
                                     }
                                     else {
-                                        inlineXml = this.writeLinearLayout(group, parent, true);
+                                        xml = this.writeLinearLayout(group, parent, true);
                                         this.sortLayout(group, <T[]> group.children, true);
-                                        group.inlineWrap = (nodeY.float === 'right');
                                     }
-                                    renderXml(group, parent, inlineXml, current);
-                                    parent = group;
+                                    renderXml(group, parent, xml, current);
+                                    parent = (<T> nodeY.parent);
                                 }
                                 else {
                                     nodeY.multiLine = false;
@@ -629,23 +645,23 @@ export default class Application<T extends Node> {
                             let xml = '';
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;
-                                if (nodeY.untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && nodeY.children.every(node => node.inlineElement && node.children.length === 0 && supportInline.includes(node.tagName)))) {
+                                const untargeted = nodeY.untargeted;
+                                if (untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && untargeted.every(node => node.inlineElement && node.untargeted.length === 0 && supportInline.includes(node.tagName)))) {
                                     if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.tagName))) {
-                                        xml += this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
+                                        xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
                                     else {
                                         if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
                                             continue;
                                         }
                                         else if (!nodeY.documentRoot) {
-                                            xml += this.writeFrameLayout(nodeY, parent);
+                                            xml = this.writeFrameLayout(nodeY, parent);
                                         }
                                     }
                                 }
                                 else {
-                                    const untargeted = nodeY.untargeted;
                                     if (nodeY.flex.enabled || untargeted.some(node => !node.pageflow)) {
-                                        xml += this.writeDefaultLayout(nodeY, parent);
+                                        xml = this.writeDefaultLayout(nodeY, parent);
                                     }
                                     else {
                                         if (untargeted.length === 1) {
@@ -658,26 +674,36 @@ export default class Application<T extends Node> {
                                                 k--;
                                             }
                                             else {
-                                                xml += this.writeFrameLayout(nodeY, parent);
+                                                xml = this.writeFrameLayout(nodeY, parent);
                                             }
                                         }
                                         else {
                                             const [linearX, linearY] = [NodeList.linearX(nodeY.children, SETTINGS.linearHorizontalTopOffset), NodeList.linearY(nodeY.children)];
-                                            if (this.isLinearXY(linearX, linearY, nodeY, <T[]> nodeY.children)) {
-                                                xml += this.writeLinearLayout(nodeY, parent, linearX);
+                                            if ((linearX || linearY) && !parent.flex.enabled && nodeY.children.every(node => node.pageflow && !node.multiLine && node.css('clear') === 'none')) {
+                                                if (nodeY.children.every(node => nodeY.children[0].float === node.float)) {
+                                                    xml = this.writeLinearLayout(nodeY, parent, linearX);
+                                                }
+                                                else if (linearX) {
+                                                    const group = this.controllerHandler.createGroup(nodeY, parent, <T[]> nodeY.children, nodeY.element);
+                                                    xml = this.writeFrameLayoutGroup(group, parent, <T[]> nodeY.children);
+                                                    group.inlineWrap = true;
+                                                }
+                                                else {
+                                                    xml = this.writeDefaultLayout(nodeY, parent);
+                                                }
                                             }
                                             else if (SETTINGS.horizontalPerspective && nodeY.children.every(node => node.pageflow && node.inlineElement)) {
-                                                xml += this.writeRelativeLayout(nodeY, parent);
+                                                xml = this.writeRelativeLayout(nodeY, parent);
                                             }
                                             else {
-                                                xml += this.writeDefaultLayout(nodeY, parent);
+                                                xml = this.writeDefaultLayout(nodeY, parent);
                                             }
                                         }
                                     }
                                 }
                             }
                             else {
-                                xml += this.writeNode(nodeY, parent, nodeY.nodeName);
+                                xml = this.writeNode(nodeY, parent, nodeY.nodeName);
                             }
                             renderXml(nodeY, parent, xml, current);
                         }
@@ -740,8 +766,8 @@ export default class Application<T extends Node> {
         this.cacheInternal.append(...this.cache);
     }
 
-    public writeFrameLayout(node: T, parent: T) {
-        if (node.children.length === 0) {
+    public writeFrameLayout(node: T, parent: T, children = false) {
+        if (node.children.length === 0 && !children) {
             return this.controllerHandler.renderNode(node, parent, NODE_STANDARD.FRAME);
         }
         else {
@@ -776,6 +802,32 @@ export default class Application<T extends Node> {
         else {
             return this.writeRelativeLayout(node, parent);
         }
+    }
+
+    public writeFrameLayoutGroup(group: T, parent: T, nodes: T[]) {
+        let xml = '';
+        const [floated, pageflow] = new NodeList(nodes).partition(item => item.floating);
+        const [left, right] = new NodeList(floated.list).partition(item => item.float === 'left');
+        const merged = [...left.list, ...pageflow.list];
+        if (merged.length === nodes.length) {
+            xml = this.writeLinearLayout(group, parent, true);
+            this.sortLayout(group, <T[]> group.children, true);
+        }
+        else {
+            xml = this.writeFrameLayout(group, parent, true);
+            const placeholder = `{:${group.id}}`;
+            [merged, right.list].forEach((item, index) => {
+                if (item.length > 1) {
+                    const linearGroup = this.controllerHandler.createGroup(item[0], group, item);
+                    xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, true) + (index === 0 ? placeholder : ''));
+                    this.sortLayout(linearGroup, item, true);
+                }
+                else if (item.length > 0) {
+                    item[0].inlineWrap = true;
+                }
+            });
+        }
+        return xml;
     }
 
     public addInsertQueue(id: string, views: string[]) {
@@ -886,11 +938,6 @@ export default class Application<T extends Node> {
         }
     }
 
-    public isLinearXY(linearX: boolean, linearY: boolean, parent: T, children: T[]) {
-        const float = children[0].float;
-        return ((linearX || linearY) && !parent.flex.enabled && children.every(node => node.pageflow && !node.multiLine) && !children.some(node => float !== node.float));
-    }
-
     public sortLayout(parent: T, children: T[], save = false) {
         switch (parent.nodeType) {
             case NODE_STANDARD.LINEAR:
@@ -900,25 +947,10 @@ export default class Application<T extends Node> {
                 else {
                     sortAsc(children, 'linear.top');
                 }
-                break;
-            case NODE_STANDARD.FRAME:
-                if (children.some(node => node.floating)) {
-                    children.sort((a, b) => {
-                        if (a.floating && !b.floating) {
-                            return (a.float === 'right' ? -1 : 1);
-                        }
-                        else if (!a.floating && b.floating) {
-                            return (b.float === 'right' ? -1 : 1);
-                        }
-                        else {
-                            return (a.siblingIndex < b.siblingIndex ? -1 : 1);
-                        }
-                    });
+                if (save) {
+                    this.sorted[parent.id] = children.map(item => item.id);
                 }
                 break;
-        }
-        if (save) {
-            this.sorted[parent.id] = children.map(item => item.id);
         }
     }
 

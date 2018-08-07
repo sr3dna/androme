@@ -102,7 +102,7 @@ export default abstract class Resource<T extends Node> {
     public setBoxStyle() {
         this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
             if (getCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
-                let result: any = {
+                const result: any = {
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
                     borderBottom: this.parseBorderStyle,
@@ -119,7 +119,6 @@ export default abstract class Resource<T extends Node> {
                         result[i] = result[i](node.css(i), node, i);
                     }
                 }
-                result = (<BoxStyle> result as BoxStyle);
                 if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(node.element, 'backgroundColor')))) {
                     result.backgroundColor = [];
                 }

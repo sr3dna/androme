@@ -1,4 +1,3 @@
-import { Null } from '../lib/types';
 import View from './view';
 
 type T = View;
@@ -9,8 +8,9 @@ export default class ViewGroup extends View {
     constructor(
         id: number,
         node: T,
-        parent: Null<T>,
-        children: T[])
+        parent?: T,
+        children?: T[],
+        element?: HTMLElement)
     {
         super(id, node.api);
         this.documentParent = node.documentParent;
@@ -21,8 +21,19 @@ export default class ViewGroup extends View {
         if (children != null) {
             this.children = children;
         }
+        if (element != null) {
+            this.element = element;
+            this.tagName = node.tagName;
+            this.inherit(node, 'base', 'style', 'styleMap');
+            this.documentRoot = node.documentRoot;
+            this.excludeProcedure = node.excludeProcedure;
+            this.excludeResource = node.excludeResource;
+            this.renderExtension = node.renderExtension;
+        }
+        else {
+            this.tagName = `${node.tagName}_GROUP`;
+        }
         this.depth = node.depth;
-        this.tagName = `${node.tagName}_GROUP`;
         this.css('direction', this.documentParent.dir);
     }
 

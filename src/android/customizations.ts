@@ -1,16 +1,20 @@
 import { ObjectMap, StringMap } from '../lib/types';
 import { BUILD_ANDROID as BUILD } from './constants';
 
-interface DEFAULT {
+interface UserSupport {
     [index: number]: {
         android: string[];
         app: string[];
-        customizations: ObjectMap<ObjectMap<StringMap>>;
+        customizations: Customization;
     };
 }
 
-const API_ANDROID: DEFAULT = {
-    [BUILD.P]: {
+interface Customization {
+    [namespace: string]: ObjectMap<StringMap>;
+}
+
+const API_ANDROID: UserSupport = {
+    [BUILD.PIE]: {
         android: [],
         app: [],
         customizations: {}

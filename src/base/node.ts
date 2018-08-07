@@ -77,11 +77,11 @@ export default abstract class Node implements BoxModel {
     public abstract get renderParent(): T;
     public abstract get horizontal(): boolean;
 
-    public add(ns: string, attr: string, value = '', overwrite = true) {
-        const name = `_${ns || '_'}`;
+    public add(obj: string, attr: string, value = '', overwrite = true) {
+        const name = `_${obj || '_'}`;
         if (hasValue(value)) {
             if (this[name] == null) {
-                this._namespaces.add(ns);
+                this._namespaces.add(obj);
                 this[name] = {};
             }
             if (!overwrite && this[name][attr] != null) {
@@ -91,13 +91,13 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public get(ns: string): StringMap {
-        const name = `_${ns || '_'}`;
+    public get(obj: string): StringMap {
+        const name = `_${obj || '_'}`;
         return (this[name] != null ? this[name] : {});
     }
 
-    public delete(ns: string, ...attrs: string[]) {
-        const name = `_${ns || '_'}`;
+    public delete(obj: string, ...attrs: string[]) {
+        const name = `_${obj || '_'}`;
         if (this[name] != null) {
             for (const attr of attrs) {
                 if (attr.indexOf('*') !== -1) {
@@ -112,20 +112,16 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public apply(options = {}): void | {} {
-        const excluded = {};
-        for (const ns in options) {
-            const obj = options[ns];
-            if (typeof obj === 'object') {
-                for (const attr in obj) {
-                    this.add(ns, attr, obj[attr]);
+    public apply(options = {}) {
+        for (const obj in options) {
+            const attrs = options[obj];
+            if (typeof attrs === 'object') {
+                for (const attr in attrs) {
+                    this.add(obj, attr, attrs[attr]);
                 }
-            }
-            else if (obj) {
-                excluded[ns] = obj;
+                delete options[obj];
             }
         }
-        return excluded;
     }
 
     public each(predicate: (value: T, index?: number) => void) {
@@ -436,6 +432,9 @@ export default abstract class Node implements BoxModel {
         return this._nodeName;
     }
 
+    set element(value) {
+        this._element = value;
+    }
     get element() {
         return this._element || {};
     }
@@ -596,7 +595,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineElement() {
-        return (this.tagName === 'PLAINTEXT' || (!this.floating && (this.display.indexOf('inline') !== -1 || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
+        return (this.tagName === 'PLAINTEXT' || (this.css('clear') === 'none' && (this.display.indexOf('inline') !== -1 || this.floating || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
     }
 
     get inline() {

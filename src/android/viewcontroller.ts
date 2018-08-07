@@ -120,7 +120,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         let parent: Null<T> = item;
                         while (parent != null) {
                             const stringId = mapView(parent, (orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom'));
-                            if (stringId) {
+                            if (stringId != null) {
                                 parent = nodes.locate('nodeId', stripId(stringId));
                                 if (parent != null && parent.constraint[orientation]) {
                                     return true;
@@ -885,8 +885,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 pageflow.list.some(next => {
                                                     if (item !== next && next.linear.top === item.linear.top && next.linear.bottom === item.linear.bottom) {
                                                         mapDelete(item, 'topBottom', 'bottomTop');
-                                                        item.anchor(layoutMap['top'], next.stringId);
-                                                        item.anchor(layoutMap['bottom'], next.stringId);
+                                                        item.app(layoutMap['top'], next.stringId);
+                                                        item.app(layoutMap['bottom'], next.stringId);
                                                         return true;
                                                     }
                                                     return false;
@@ -918,7 +918,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             const stringId = mapView(current, value);
                                             if (stringId != null) {
                                                 const aligned = pageflow.locate('stringId', stringId);
-                                                if (aligned && mapView(aligned, direction[2])) {
+                                                if (aligned && mapView(aligned, direction[2]) != null) {
                                                     if (withinFraction(current.linear[direction[0]], aligned.linear[direction[0]])) {
                                                         current.anchor(layoutMap[direction[0]], aligned.stringId);
                                                     }
@@ -1207,7 +1207,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         let postXml = '';
         let renderParent = parent;
         if (typeof viewName === 'number') {
-            viewName = View.getViewName(viewName);
+            viewName = View.getNodeName(viewName);
         }
         switch (viewName) {
             case NODE_ANDROID.LINEAR:
@@ -1232,7 +1232,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             let scrollDepth = parent.renderDepth + scrollView.length;
             scrollView
                 .map(nodeName => {
-                    const group = (<View> new ViewGroup(this.cache.nextId, current, null, [current]) as T);
+                    const group = (<View> new ViewGroup(this.cache.nextId, current, undefined, [current]) as T);
                     group.setNodeId(nodeName);
                     group.setBounds();
                     current.inherit(group, 'data');
@@ -1285,12 +1285,12 @@ export default class ViewController<T extends View> extends Controller<T> {
         return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), viewName, node.id, `{:${node.id}}`, preXml, postXml);
     }
 
-    public renderNode(node: T, parent: T, nodeName: number | string, recursive = false) {
+    public renderNode(node: T, parent: T, tagName: number | string, recursive = false) {
         const target = (node.isSet('dataset', 'target') && !node.isSet('dataset', 'include'));
-        if (typeof nodeName === 'number') {
-            nodeName = View.getViewName(nodeName);
+        if (typeof tagName === 'number') {
+            tagName = View.getNodeName(tagName);
         }
-        node.setNodeId(nodeName);
+        node.setNodeId(tagName);
         const element: any = node.element;
         switch (element.tagName) {
             case 'IMG':
@@ -1404,11 +1404,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
                 break;
         }
+        node.cascade().forEach(item => item.hide());
         node.render((target ? node : parent));
         if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
             node.setAccessibility();
         }
-        node.cascade().forEach(item => item.hide());
         return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), node.nodeName, node.id);
     }
 
@@ -1417,7 +1417,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             node = (<T> new View(0, SETTINGS.targetAPI));
         }
         const renderDepth = Math.max(0, depth);
-        const viewName = (typeof tagName === 'number' ? View.getViewName(tagName) : tagName);
+        const viewName = (typeof tagName === 'number' ? View.getNodeName(tagName) : tagName);
         tagName = (node.hasElement ? node.tagName : viewName);
         switch (viewName) {
             case 'include':
@@ -1473,16 +1473,21 @@ export default class ViewController<T extends View> extends Controller<T> {
         return (this.merge[name] ? 0 : -1);
     }
 
-    public createGroup(node: T, parent: T, children: T[]): T {
-        const group = (<View> new ViewGroup(this.cache.nextId, node, parent, children) as T);
+    public createGroup(node: T, parent: T, children: T[], element?: HTMLElement): T {
+        const group = (<View> new ViewGroup(this.cache.nextId, node, parent, children, element) as T);
         for (const item of children) {
             item.parent = group;
             item.inherit(group, 'data');
         }
-        group.setBounds();
         parent.children = parent.children.filter((item: T) => !children.includes(item));
         parent.children.push(group);
         this.cache.append(group);
+        if (element != null) {
+            node.hide();
+        }
+        else {
+            group.setBounds();
+        }
         return group;
     }
 

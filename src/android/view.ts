@@ -1,6 +1,6 @@
 import { BoxRect, BoxStyle, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, hasValue, isPercent, lastIndexOf, sortAsc } from '../lib/util';
+import { convertEnum, convertFloat, convertInt, convertPX, convertWord, formatPX, hasValue, isPercent, lastIndexOf, sortAsc, withinRange } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
 import { getCache, getNode, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
@@ -21,7 +21,7 @@ export default class View extends Node {
         return View._documentBody;
     }
 
-    public static getViewName(tagName: number): string {
+    public static getNodeName(tagName: number): string {
         return NODE_ANDROID[NODE_STANDARD[tagName]];
     }
 
@@ -42,11 +42,11 @@ export default class View extends Node {
         super(id, element);
     }
 
-    public add(ns: string, attr: string, value = '', overwrite = true) {
-        if (!this.supported(ns, attr)) {
+    public add(obj: string, attr: string, value = '', overwrite = true) {
+        if (!this.supported(obj, attr)) {
             return;
         }
-        super.add(ns, attr, value, overwrite);
+        super.add(obj, attr, value, overwrite);
     }
 
     public android(attr: string = '', value: string = '', overwrite = true) {
@@ -68,9 +68,9 @@ export default class View extends Node {
     }
 
     public apply(options = {}) {
-        const excluded = (<{}> super.apply(options));
-        for (const obj in excluded) {
-            this.attr(`${obj}="${excluded[obj]}"`);
+        super.apply(options);
+        for (const obj in options) {
+            this.attr(`${obj}="${options[obj]}"`);
         }
     }
 
@@ -120,11 +120,11 @@ export default class View extends Node {
         return ['', '0px'];
     }
 
-    public supported(ns: string, attr: string) {
+    public supported(obj: string, attr: string) {
         if (this.api > 0) {
             for (let i = this.api + 1; i <= BUILD_ANDROID.LATEST; i++) {
                 const version = API_ANDROID[i];
-                if (version && version[ns] && version[ns].includes(attr)) {
+                if (version && version[obj] && version[obj].includes(attr)) {
                     return false;
                 }
             }
@@ -135,14 +135,14 @@ export default class View extends Node {
     public combine(...objs: string[]) {
         const result: string[] = [];
         this._namespaces.forEach(value => {
-            const ns: StringMap = this[`_${value}`];
+            const obj: StringMap = this[`_${value}`];
             if (objs.length === 0 || objs.includes(value)) {
-                for (const attr in ns) {
+                for (const attr in obj) {
                     if (value !== '_') {
-                        result.push(`${value}:${attr}="${ns[attr]}"`);
+                        result.push(`${value}:${attr}="${obj[attr]}"`);
                     }
                     else {
-                        result.push(`${attr}="${ns[attr]}"`);
+                        result.push(`${attr}="${obj[attr]}"`);
                     }
                 }
             }
@@ -165,9 +165,9 @@ export default class View extends Node {
             if (item && item.customizations != null) {
                 const customizations = item.customizations[this.nodeName];
                 if (customizations != null) {
-                    for (const ns in customizations) {
-                        for (const attr in customizations[ns]) {
-                            this.add(ns, attr, customizations[ns][attr], false);
+                    for (const obj in customizations) {
+                        for (const attr in customizations[obj]) {
+                            this.add(obj, attr, customizations[obj][attr], false);
                         }
                     }
                 }
@@ -195,7 +195,7 @@ export default class View extends Node {
 
     public is(...views: number[]) {
         for (const value of views) {
-            if (this.nodeName === View.getViewName(value)) {
+            if (this.nodeType === value) {
                 return true;
             }
         }
@@ -300,27 +300,46 @@ export default class View extends Node {
                     this.android('layout_width', (this.documentRoot ? 'match_parent' : 'wrap_content'), false);
                 }
                 else {
-                    this.android('layout_width', (this.renderChildren.some(node => node.float === 'right') || this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)), false);
+                    this.android('layout_width', (this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)), false);
                 }
             }
             else if (this.android('layout_width') == null) {
-                let rightMax = 0;
-                let rightParentMax = 0;
-                const maxWidthParent = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0));
-                const linearParent = renderParent.is(NODE_STANDARD.LINEAR);
-                if (linearParent && !renderParent.horizontal) {
-                    rightMax = Math.floor(this.cascade().filter(node => node.visible).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
-                    rightParentMax = Math.floor(parent.cascade().filter((node: T) => node.visible && !parent.children.includes(node)).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
-                }
-                const wrapContent = (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || renderParent.is(NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal));
-                if (convertFloat(this.android('layout_columnWeight')) > 0) {
-                    this.android('layout_width', '0px', false);
-                }
-                else if (!wrapContent && ((parent.overflow === OVERFLOW_ELEMENT.NONE && (maxWidthParent > 0 || this.parentElement === document.body) && width >= widthParent) || (!this.floating && !this.inlineElement && BLOCK_ELEMENT.includes(this.tagName) && (this.renderChildren.length === 0 || (rightMax !== 0 && rightMax < rightParentMax))))) {
-                    this.android('layout_width', 'match_parent');
+                const widthRoot = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0));
+                if (this.inlineWrap && this.is(NODE_STANDARD.FRAME)) {
+                    if (widthRoot > 0) {
+                        this.android('layout_width', 'match_parent');
+                    }
+                    else {
+                        const valid = this.renderParent.renderChildren.some(item => {
+                            if ((item.nodeType > NODE_STANDARD.FRAME || (item.nodeType === NODE_STANDARD.FRAME && item.inlineElement && item.viewWidth > 0)) && withinRange(this.linear.right, item.linear.right)) {
+                                this.android('layout_width', 'match_parent');
+                                return true;
+                            }
+                            return false;
+                        });
+                        if (!valid) {
+                            this.android('layout_width', formatPX(this.bounds.width));
+                        }
+                    }
                 }
                 else {
-                    this.android('layout_width',  'wrap_content');
+                    let right = 0;
+                    let rightParent = 0;
+                    const linearParent = renderParent.is(NODE_STANDARD.LINEAR);
+                    if (linearParent && !renderParent.horizontal) {
+                        right = Math.floor(this.cascade().filter(node => node.visible).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
+                        rightParent = Math.floor(parent.cascade().filter((node: T) => node.visible && !parent.children.includes(node)).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
+                    }
+                    const wrap = (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || renderParent.is(NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal));
+                    if (convertFloat(this.android('layout_columnWeight')) > 0) {
+                        this.android('layout_width', '0px');
+                    }
+                    else if (!wrap && ((parent.overflow === OVERFLOW_ELEMENT.NONE && (widthRoot > 0 || this.parentElement === document.body) && width >= widthParent) || (!this.floating && !this.inlineElement && BLOCK_ELEMENT.includes(this.tagName) && (this.renderChildren.length === 0 || (right !== 0 && right < rightParent))))) {
+                        this.android('layout_width', 'match_parent');
+                    }
+                    else {
+                        this.android('layout_width', 'wrap_content');
+                    }
                 }
             }
             if (this.android('layout_height') !== '0px') {
@@ -391,12 +410,13 @@ export default class View extends Node {
     }
 
     public setAlignment() {
+        const left = parseRTL('left');
         const right = parseRTL('right');
         function convertHorizontal(value: string) {
             switch (value) {
                 case 'left':
                 case 'start':
-                    return parseRTL('left');
+                    return left;
                 case 'right':
                 case 'end':
                     return right;
@@ -447,25 +467,12 @@ export default class View extends Node {
         if (renderParent.tagName === 'TABLE') {
             this.android('layout_gravity', 'fill');
         }
-        else if (!renderParent.inlineWrap && !renderParent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
-            let horizontalFloat = '';
-            let verticalFloat = '';
-            const gravityParent = renderParent.android('gravity') || '';
-            horizontalFloat = ((this.float === 'right' && gravityParent !== right) || (!this.floating && this.dir === 'rtl') ? right : '');
-            if (horizontalFloat === '' && !textView && gravityParent.indexOf(horizontalParent) === -1) {
-                horizontalFloat = horizontal;
-                horizontal = '';
-            }
-            if (vertical !== '' && this.viewHeight === 0 && renderParent.is(NODE_STANDARD.LINEAR, NODE_STANDARD.GRID, NODE_STANDARD.FRAME)) {
-                verticalFloat = vertical;
-                vertical = '';
-            }
-            const layoutGravity = [horizontalFloat, verticalFloat].filter(value => value).join('|');
-            if (layoutGravity !== '') {
-                this.android('layout_gravity', layoutGravity);
+        else if (renderParent.inlineWrap) {
+            if (renderParent.is(NODE_STANDARD.FRAME)) {
+                this.android('layout_gravity', (this.float === 'right' || (this.is(NODE_STANDARD.LINEAR) && this.renderChildren.some(node => node.float === 'right')) ? right : left));
             }
         }
-        if (this.renderChildren.length > 0 && !this.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) && (this.renderChildren.every(item => item.float === 'right') || (this.css('textAlign') === 'right' && this.renderChildren.every(item => item.inlineElement)))) {
+        if (this.renderChildren.length > 0 && this.is(NODE_STANDARD.LINEAR) && !this.renderParent.inlineWrap && (this.renderChildren.every(item => item.float === 'right') || this.css('textAlign') === 'right' && this.renderChildren.every(item => item.inlineElement))) {
             this.android('gravity', right);
         }
         else {
@@ -673,9 +680,11 @@ export default class View extends Node {
                 case AXIS_ANDROID.HORIZONTAL:
                     let left = this.box.left;
                     sortAsc(this.renderChildren, 'linear.left').forEach(node => {
-                        const width = Math.ceil(node.linear.left - left);
-                        if (width >= 1) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + width, true);
+                        if (!node.floating) {
+                            const width = Math.ceil(node.linear.left - left);
+                            if (width >= 1) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + width, true);
+                            }
                         }
                         left = node.linear.right;
                     });
@@ -707,7 +716,7 @@ export default class View extends Node {
         }
         else {
             const value: number = MAP_ELEMENT[this.tagName];
-            return (value != null ? View.getViewName(value) : '');
+            return (value != null ? View.getNodeName(value) : '');
         }
     }
 
@@ -747,9 +756,7 @@ export default class View extends Node {
             return (<T> this._renderParent);
         }
         else {
-            const node = new View(0, this.api);
-            node.hide();
-            return node;
+            return View.documentBody();
         }
     }
 
