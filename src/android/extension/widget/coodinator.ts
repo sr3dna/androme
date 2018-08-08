@@ -15,7 +15,7 @@ export default class Coordinator extends Extension<T> {
 
     public processNode(): ExtensionResult {
         const controller = this.application.controllerHandler;
-        const node = (<T> this.node);
+        const node = this.node as T;
         const xml = controller.renderGroup(node, <T> this.parent, VIEW_SUPPORT.COORDINATOR);
         node.apply(this.options[node.element.id]);
         node.nodeType = NODE_STANDARD.BLOCK;
@@ -36,7 +36,7 @@ export default class Coordinator extends Extension<T> {
     }
 
     public afterInsert() {
-        const node = (<T> this.node);
+        const node = this.node as T;
         if (node.documentRoot) {
             node.android('layout_width', 'match_parent');
             node.android('layout_height', 'match_parent');
@@ -44,7 +44,7 @@ export default class Coordinator extends Extension<T> {
     }
 
     private getToolbar(node: T) {
-        const toolbar = (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext'), WIDGET_NAME.TOOLBAR)));
+        const toolbar = <HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext'), WIDGET_NAME.TOOLBAR));
         return getNode(toolbar);
     }
 }

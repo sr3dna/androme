@@ -88,6 +88,11 @@ export interface ViewData<T> {
     includes: PlainFile[];
 }
 
+export interface LayoutMap<T> {
+    [key: number]: ObjectIndex<T[]>;
+    length: number;
+}
+
 export interface ResourceMap {
     STRINGS: Map<string, string>;
     ARRAYS: Map<string, string[]>;

@@ -17,8 +17,8 @@ export default class BottomNavigation extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        const node = (<T> this.node);
-        const parent = (<T> this.parent);
+        const node = this.node as T;
+        const parent = this.parent as T;
         const options = Object.assign({}, this.options[node.element.id]);
         overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
@@ -35,7 +35,7 @@ export default class BottomNavigation extends Extension<T> {
     }
 
     public beforeInsert() {
-        const node = (<T> this.node);
+        const node = this.node as T;
         const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
@@ -45,7 +45,7 @@ export default class BottomNavigation extends Extension<T> {
     }
 
     public afterInsert() {
-        const node = (<T> this.node);
+        const node = this.node as T;
         if (node.renderParent.viewHeight === 0) {
             node.renderParent.android('layout_height', 'match_parent');
         }

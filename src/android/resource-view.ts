@@ -180,7 +180,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
             }
             else {
-                colorName = (<string> Resource.STORED.COLORS.get(opaque));
+                colorName = <string> Resource.STORED.COLORS.get(opaque);
             }
             return colorName;
         }
@@ -306,7 +306,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 stored.backgroundImage = ResourceView.addImageURL(stored.backgroundImage);
                 [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
                     if (item.color && item.color.length > 0) {
-                        item.color = (<string> ResourceView.addColor(item.color[0], item.color[2]));
+                        item.color = <string> ResourceView.addColor(item.color[0], item.color[2]);
                     }
                 });
                 const method = METHOD_ANDROID['boxStyle'];
@@ -557,7 +557,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let labelFor: Null<T> = null;
                 if (node.companion != null) {
                     labelFor = node;
-                    node = (<T> node.companion);
+                    node = node.companion as T;
                 }
                 const element = node.element;
                 const nodeId = (labelFor || node).id;
@@ -640,7 +640,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setImageSource() {
         this.cache.filter(node => node.visible && (node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
-            const element = (<HTMLImageElement> node.element);
+            const element = <HTMLImageElement> node.element;
             if (getCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
                 const result = (node.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
                 if (result !== '') {
@@ -896,7 +896,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         const inherit = new Set();
         const map = {};
         for (const tagName in resource) {
-            for (const item of (<StyleTag[]> resource[tagName])) {
+            for (const item of resource[tagName] as StyleTag[]) {
                 for (const id of item.ids) {
                     if (map[id] == null) {
                         map[id] = { styles: [], attributes: [] };
@@ -907,7 +907,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const tagData = layout[tagName];
             if (tagData != null) {
                 for (const attr in tagData) {
-                    for (const id of (<number[]> tagData[attr])) {
+                    for (const id of tagData[attr] as number[]) {
                         if (map[id] == null) {
                             map[id] = { styles: [], attributes: [] };
                         }

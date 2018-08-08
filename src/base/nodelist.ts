@@ -14,13 +14,19 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public static linearX<T extends Node>(list: T[], offset = 0) {
-        const nodes = list.filter(node => !node.isolated);
+        let nodes = list.filter(node => !node.isolated);
         switch (nodes.length) {
             case 0:
                 return false;
             case 1:
                 return true;
             default:
+                const float = new Set();
+                nodes = nodes.filter(node => {
+                    float.add(node.float);
+                    const clear = node.css('clear');
+                    return !(node.position === 'relative' && node.floating && (clear !== 'both' || float.has(clear)));
+                });
                 if (nodes.every(node => node.pageflow && !node.floating) || !NodeList.intersect(nodes)) {
                     const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
                     const maxBottom = Math.max.apply(null, nodes.filter(node => withinRange(node.linear.top, minTop, offset)).map(node => node.linear.bottom));

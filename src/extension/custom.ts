@@ -14,7 +14,7 @@ export default class Custom extends Extension<T> {
 
     public processNode(): ExtensionResult {
         const node = this.node;
-        const parent = (<T> this.parent);
+        const parent = this.parent as T;
         const data = this.getData();
         let xml = '';
         if (data.tag) {

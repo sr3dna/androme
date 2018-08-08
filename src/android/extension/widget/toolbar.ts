@@ -3,7 +3,7 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { convertPX, hasValue, includes, optional } from '../../../lib/util';
+import { formatPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
 import { delimitDimen, stripId } from '../../lib/util';
 import { getNode, getStyle, setCache } from '../../../lib/dom';
@@ -45,7 +45,7 @@ export default class Toolbar extends Extension<T> {
     public processNode(): ExtensionResult {
         const application = this.application;
         const controller = application.controllerHandler;
-        const node = (<T> this.node);
+        const node = this.node as T;
         const target = node.isSet('dataset', 'target');
         const options = Object.assign({}, this.options[node.element.id]);
         const optionsToolbar = Object.assign({}, options.toolbar);
@@ -79,7 +79,7 @@ export default class Toolbar extends Extension<T> {
                 }
             }
             if (!hasValue(element.dataset.target)) {
-                const targetNode = (<T> getNode(element));
+                const targetNode = getNode(element) as T;
                 if (targetNode != null) {
                     switch (element.dataset.targetModule) {
                         case 'appBar':
@@ -113,10 +113,10 @@ export default class Toolbar extends Extension<T> {
             }
         }
         if (appBarChildren.length > 0) {
-            overwriteDefault(optionsAppBar, 'android', 'layout_height', '?attr/actionBarSize');
+            overwriteDefault(optionsAppBar, 'android', 'layout_height', '?android:attr/actionBarSize');
         }
         else {
-            overwriteDefault(optionsToolbar, 'android', 'layout_height', '?attr/actionBarSize');
+            overwriteDefault(optionsToolbar, 'android', 'layout_height', '?android:attr/actionBarSize');
             node.excludeProcedure |= NODE_PROCEDURE.LAYOUT;
         }
         if (hasMenu) {
@@ -161,7 +161,7 @@ export default class Toolbar extends Extension<T> {
         let collapsingToolbarNode: Null<T> = null;
         if (appBar) {
             overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? delimitDimen('appbar', 'height', convertPX(node.viewHeight)) : 'wrap_content'));
+            overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? delimitDimen('appbar', 'height', formatPX(node.viewHeight)) : 'wrap_content'));
             if (collapsingToolbar) {
                 overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             }
@@ -177,7 +177,7 @@ export default class Toolbar extends Extension<T> {
             }
             appBarNode = createPlaceholder(application.cache.nextId, node, appBarChildren);
             appBarNode.nodeId = stripId(optionsAppBar.android.id);
-            appBarNode.each(item => item.dataset.target = (<T> appBarNode).nodeId);
+            appBarNode.each(item => item.dataset.target = (appBarNode as T).nodeId);
             application.cache.append(appBarNode);
             outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
             if (collapsingToolbar) {
@@ -190,7 +190,7 @@ export default class Toolbar extends Extension<T> {
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
                 collapsingToolbarNode = createPlaceholder(application.cache.nextId, node, collapsingToolbarChildren);
-                collapsingToolbarNode.each(item => item.dataset.target = (<T> collapsingToolbarNode).nodeId);
+                collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
                 application.cache.append(collapsingToolbarNode);
                 outer = outer.replace(`{:${appBarNode.id}}`, controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true) + `{:${appBarNode.id}}`);
             }
@@ -214,7 +214,7 @@ export default class Toolbar extends Extension<T> {
             node.render(node);
         }
         else {
-            node.render(<T> this.parent);
+            node.render(this.parent as T);
             node.renderDepth = renderDepth;
         }
         node.nodeType = NODE_STANDARD.BLOCK;
@@ -223,7 +223,7 @@ export default class Toolbar extends Extension<T> {
     }
 
     public processChild(): ExtensionResult {
-        const node = (<T> this.node);
+        const node = this.node as T;
         if (node.element.tagName === 'IMG' && (node.dataset.navigationIcon != null || node.dataset.collapseIcon != null)) {
             node.hide();
             return { xml: '', proceed: true };
@@ -232,7 +232,7 @@ export default class Toolbar extends Extension<T> {
     }
 
     public beforeInsert() {
-        const node = (<T> this.node);
+        const node = this.node as T;
         const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);

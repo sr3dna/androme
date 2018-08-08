@@ -1,5 +1,7 @@
 import Node from '../../base/node';
-import { ArrayIndex, BoxRect, Inheritable, ObjectIndex, ObjectMap } from '../../lib/types';
+import { BoxRect, Inheritable, LayoutMap, ObjectMap } from '../../lib/types';
+
+type T = Node;
 
 export interface IExtension {
     name: string;
@@ -21,8 +23,8 @@ export interface IExtension {
     init(element: HTMLElement): boolean;
     afterInit(internal?: boolean): void;
     condition(): void;
-    processNode(mapX?: ArrayIndex<ObjectIndex<Node[]>>, mapY?: ArrayIndex<ObjectIndex<Node[]>>): ExtensionResult;
-    processChild(mapX?: ArrayIndex<ObjectIndex<Node[]>>, mapY?: ArrayIndex<ObjectIndex<Node[]>>): ExtensionResult;
+    processNode(mapX?: LayoutMap<T>, mapY?: LayoutMap<T>): ExtensionResult;
+    processChild(mapX?: LayoutMap<T>, mapY?: LayoutMap<T>): ExtensionResult;
     afterRender(): void;
     beforeInsert(): void;
     afterInsert(): void;

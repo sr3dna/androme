@@ -1,4 +1,4 @@
-import { ArrayIndex, ObjectIndex } from '../lib/types';
+import { LayoutMap, ObjectIndex } from '../lib/types';
 import { ExtensionResult } from './lib/types';
 import { GridCellData, GridData } from './lib/types';
 import Extension from '../base/extension';
@@ -23,9 +23,9 @@ export default class Grid extends Extension<T> {
         );
     }
 
-    public processNode(mapX: ArrayIndex<ObjectIndex<T[]>>, mapY: ArrayIndex<ObjectIndex<T[]>>): ExtensionResult {
+    public processNode(mapX: LayoutMap<T>, mapY: LayoutMap<T>): ExtensionResult {
         const node = this.node;
-        const parent = (<T> this.parent);
+        const parent = this.parent as T;
         const balanceColumns = this.options.balanceColumns;
         let xml = '';
         let columns: any[] = [];
@@ -214,7 +214,7 @@ export default class Grid extends Extension<T> {
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
                 for (let m = 0, start = 0; m < columns[l].length; m++) {
-                    const item = (<T> columns[l][m]);
+                    const item = columns[l][m] as T;
                     if (!(<any> item).spacer) {
                         item.parent.hide();
                         item.parent = node;
@@ -282,10 +282,10 @@ export default class Grid extends Extension<T> {
 
     public processChild(): ExtensionResult {
         const node = this.node;
-        const parent = (<T> this.parent);
+        const parent = this.parent as T;
+        const gridData = <GridData> parent.data(`${EXT_NAME.GRID}:gridData`);
+        const gridCellData = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
         let xml = '';
-        const gridData = (<GridData> parent.data(`${EXT_NAME.GRID}:gridData`));
-        const gridCellData = (<GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`));
         if (gridData != null && gridCellData != null) {
             let siblings: T[];
             if (this.options.balanceColumns) {
@@ -297,7 +297,7 @@ export default class Grid extends Extension<T> {
             }
             if (siblings && siblings.length > 0) {
                 siblings.unshift(node);
-                const group = this.application.controllerHandler.createGroup(node, parent, siblings);
+                const group = this.application.controllerHandler.createGroup(node, siblings, parent);
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 if (linearX || linearY) {
                     xml = this.application.writeLinearLayout(group, parent, linearX);

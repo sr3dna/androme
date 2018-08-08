@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../extension/lib/types';
 import { GridCellData, GridData } from '../../extension/lib/types';
 import Grid from '../../extension/grid';
 import View from '../view';
-import { averageInt, convertInt, convertPX } from '../../lib/util';
+import { averageInt, convertInt, formatPX } from '../../lib/util';
 import { getBoxSpacing } from '../../lib/dom';
 import { BOX_STANDARD, NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
@@ -13,8 +13,8 @@ export default class GridAndroid<T extends View> extends Grid {
     }
 
     public processChild(): ExtensionResult {
-        const node = (<T> this.node);
-        const data = (<GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`));
+        const node = this.node as T;
+        const data = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
         if (data != null) {
             if (data.rowSpan > 1) {
                 node.android('layout_rowSpan', data.rowSpan.toString());
@@ -33,10 +33,10 @@ export default class GridAndroid<T extends View> extends Grid {
                 extended.push(node);
             }
             else {
-                const parent = (<T> node.renderParent);
+                const parent = node.renderParent as T;
                 if (parent.is(NODE_STANDARD.GRID)) {
-                    const gridData = (<GridData> parent.data(`${EXT_NAME.GRID}:gridData`));
-                    const gridCellData = (<GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`));
+                    const gridData = <GridData> parent.data(`${EXT_NAME.GRID}:gridData`);
+                    const gridCellData = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
                     if (gridData != null && gridCellData != null) {
                         const dimensions = getBoxSpacing(<HTMLElement> node.documentParent.element, true);
                         if (gridCellData.cellFirst) {
@@ -59,7 +59,7 @@ export default class GridAndroid<T extends View> extends Grid {
                                 }
                                 else {
                                     const controller = this.application.controllerHandler;
-                                    controller.appendAfter(node.id, controller.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { android: { layout_columnSpan: gridData.columnCount } }, 'match_parent', convertPX(heightBottom)));
+                                    controller.appendAfter(node.id, controller.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { android: { layout_columnSpan: gridData.columnCount } }, 'match_parent', formatPX(heightBottom)));
                                 }
                             }
                             const marginRight = convertInt(dimensions.marginRight) + convertInt(dimensions.paddingRight);
@@ -72,7 +72,7 @@ export default class GridAndroid<T extends View> extends Grid {
             }
         });
         for (const node of extended) {
-            const data = (<GridData> node.data(`${EXT_NAME.GRID}:gridData`));
+            const data = <GridData> node.data(`${EXT_NAME.GRID}:gridData`);
             if (data != null) {
                 if (data.padding.top > 0) {
                     node.modifyBox(BOX_STANDARD.PADDING_TOP, node.paddingTop + data.padding.top);

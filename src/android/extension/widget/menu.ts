@@ -48,26 +48,26 @@ export default class Menu<T extends View> extends Nav {
     }
 
     public processNode(): ExtensionResult {
-        const node = (<T> this.node);
+        const node = this.node as T;
         node.documentRoot = true;
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
         node.rendered = true;
-        node.cascade().forEach(item => item.renderExtension = (<IExtension> this));
+        node.cascade().forEach(item => item.renderExtension = <IExtension> this);
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ALL;
         return { xml };
     }
 
     public processChild(): ExtensionResult {
-        const node = (<T> this.node);
-        const parent = (<T> this.parent);
+        const node = this.node as T;
+        const parent = this.parent as T;
         const element = node.element;
         if (element.nodeName === '#text') {
             node.hide();
             return { xml: '', proceed: true };
         }
         const options: ObjectMap<StringMap> = { android: {}, app: {} };
-        const children = (<HTMLElement[]> Array.from(node.element.children));
+        const children = <HTMLElement[]> Array.from(node.element.children);
         let nodeName = VIEW_NAVIGATION.ITEM;
         let title = '';
         let layout = false;

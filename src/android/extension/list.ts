@@ -12,8 +12,8 @@ export default class ListAndroid<T extends View> extends List {
     }
 
     public processChild(): ExtensionResult {
-        const node = (<T> this.node);
-        const parent = (<T> this.parent);
+        const node = this.node as T;
+        const parent = this.parent as T;
         const controller = this.application.controllerHandler;
         const listStyle = node.data(`${EXT_NAME.LIST}:listStyle`);
         if (listStyle != null) {
@@ -42,7 +42,7 @@ export default class ListAndroid<T extends View> extends List {
     }
 
     public afterInsert() {
-        const node = (<T> this.node);
+        const node = this.node as T;
         if (node.is(NODE_STANDARD.GRID)) {
             node.android('layout_width', 'match_parent');
         }

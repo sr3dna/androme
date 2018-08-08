@@ -144,7 +144,7 @@ export function includesEnum(value: number, type: number) {
 }
 
 export function isNumber(value: string) {
-    return /^[0-9]+(\.[0-9]+)?$/.test(value.toString().trim());
+    return /^-?[0-9]+(\.[0-9]+)?$/.test(value.toString().trim());
 }
 
 export function isPercent(value: string) {

@@ -10,13 +10,13 @@ export default class TableAndroid<T extends View> extends Table {
     }
 
     public processChild(): ExtensionResult {
-        const node = (<T> this.node);
-        const rowSpan = (<number> node.data(`${EXT_NAME.TABLE}:rowSpan`));
-        const columnSpan = (<number> node.data(`${EXT_NAME.TABLE}:columnSpan`));
-        if (rowSpan != null && rowSpan > 1) {
+        const node = this.node as T;
+        const rowSpan: number = node.data(`${EXT_NAME.TABLE}:rowSpan`);
+        const columnSpan: number = node.data(`${EXT_NAME.TABLE}:columnSpan`);
+        if (rowSpan > 1) {
             node.android('layout_rowSpan', rowSpan.toString());
         }
-        if (columnSpan != null && columnSpan > 1) {
+        if (columnSpan > 1) {
             node.android('layout_columnSpan', columnSpan.toString());
         }
         return { xml: '' };

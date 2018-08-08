@@ -9,7 +9,7 @@ export function setCache(element: HTMLElement, attr: string, data: any) {
 }
 
 export function getCache(element: HTMLElement, attr: string) {
-    return (element != null ? (<any> element)[`__${attr}`] : null);
+    return (element != null ? element[`__${attr}`] : null);
 }
 
 export function deleteCache(element: HTMLElement, ...attrs: string[]) {
@@ -20,14 +20,14 @@ export function deleteCache(element: HTMLElement, ...attrs: string[]) {
     }
 }
 
-export function getNode(element: HTMLElement): Null<Node> {
+export function getNode<T extends Node>(element: HTMLElement): Null<T> {
     return getCache(element, 'node');
 }
 
 export function previousNode(element: HTMLElement) {
     let previous: Null<HTMLElement>;
     do {
-        previous = (<HTMLElement> element.previousSibling);
+        previous = <HTMLElement> element.previousSibling;
         if (previous != null && getNode(previous) != null) {
             return getNode(previous);
         }
@@ -41,7 +41,7 @@ export function getRangeBounds(element: HTMLElement): [ClientRect, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects());
-    const result = (<ClientRect> JSON.parse(JSON.stringify(domRect[0])));
+    const result = <ClientRect> JSON.parse(JSON.stringify(domRect[0]));
     const top = new Set([result.top]);
     const bottom = new Set([result.bottom]);
     for (let i = 1 ; i < domRect.length; i++) {
@@ -57,7 +57,7 @@ export function getRangeBounds(element: HTMLElement): [ClientRect, boolean] {
         result.height = result.bottom - result.top;
         multiLine = true;
     }
-    return [assignBounds(<ClientRect> result), multiLine];
+    return [assignBounds(result), multiLine];
 }
 
 export function assignBounds(bounds: ClientRect): ClientRect {
@@ -89,7 +89,7 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
             return style;
         }
     }
-    return (<CSSStyleDeclaration> {});
+    return {} as CSSStyleDeclaration;
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {
@@ -102,8 +102,8 @@ export function sameAsParent(element: HTMLElement, attr: string) {
 
 export function getBoxSpacing(element: HTMLElement, complete = false) {
     const result: BoxModel = {};
-    const style = getStyle(element);
     const node = getNode(element);
+    const style = getStyle(element);
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
             const attr = border + direction;
@@ -152,14 +152,14 @@ export function isVisible(element: HTMLElement) {
             return true;
         }
         else {
-            let current = (<HTMLElement> element.parentElement);
+            let current = element.parentElement;
             let valid = true;
             while (current != null) {
                 if (getStyle(current).display === 'none') {
                     valid = false;
                     break;
                 }
-                current = (<HTMLElement> current.parentElement);
+                current = current.parentElement;
             }
             if (valid && element.children.length > 0) {
                 return Array.from(element.children).some((item: HTMLElement) => {

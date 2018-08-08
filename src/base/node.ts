@@ -465,13 +465,13 @@ export default abstract class Node implements BoxModel {
         if (style != null && parent !== this) {
             return {
                 enabled: ((<string> style.display).indexOf('flex') !== -1),
-                direction: (<string> style.flexDirection),
-                basis: (<string> style.flexBasis),
+                direction: <string> style.flexDirection,
+                basis: <string> style.flexBasis,
                 grow: convertInt(style.flexGrow),
                 shrink: convertInt(style.flexShrink),
-                wrap: (<string> style.flexWrap),
-                alignSelf: (<string> (parent.isSet('styleMap', 'alignItems') && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf)),
-                justifyContent: (<string> style.justifyContent),
+                wrap: <string> style.flexWrap,
+                alignSelf: <string> (parent.isSet('styleMap', 'alignItems') && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf),
+                justifyContent: <string> style.justifyContent,
                 order: convertInt(style.order)
             };
         }
@@ -480,7 +480,7 @@ export default abstract class Node implements BoxModel {
 
     get floating() {
         const float = this.css('cssFloat');
-        return (this.css('position') !== 'absolute' ? (float === 'left' || float === 'right') : false);
+        return (this.position !== 'absolute' ? (float === 'left' || float === 'right') : false);
     }
 
     get float() {
@@ -518,6 +518,10 @@ export default abstract class Node implements BoxModel {
         return this.css('display') || '';
     }
 
+    get position() {
+        return this.css('position') || '';
+    }
+
     get top() {
         const top = this.styleMap.top;
         return (!top || top === 'auto' ? null : convertInt(top));
@@ -539,7 +543,7 @@ export default abstract class Node implements BoxModel {
         return (this.inline ? 0 : convertInt(this.css('marginTop')));
     }
     get marginRight() {
-        let node = (<T> this);
+        let node: T = this;
         if (this.companion != null && this.companion.bounds.right > this.bounds.right) {
             node = this.companion;
         }
@@ -549,7 +553,7 @@ export default abstract class Node implements BoxModel {
         return (this.inline ? 0 : convertInt(this.css('marginBottom')));
     }
     get marginLeft() {
-        let node = (<T> this);
+        let node: T = this;
         if (this.companion != null && this.companion.bounds.left < this.bounds.left) {
             node = this.companion;
         }
@@ -573,7 +577,7 @@ export default abstract class Node implements BoxModel {
         return convertInt(this.css('paddingTop'));
     }
     get paddingRight() {
-        let node = (<T> this);
+        let node: T = this;
         if (this.companion != null && this.companion.bounds.right > this.bounds.right) {
             node = this.companion;
         }
@@ -583,7 +587,7 @@ export default abstract class Node implements BoxModel {
         return convertInt(this.css('paddingBottom'));
     }
     get paddingLeft() {
-        let node = (<T> this);
+        let node: T = this;
         if (this.companion != null && this.companion.bounds.left < this.bounds.left) {
             node = this.companion;
         }
@@ -591,7 +595,8 @@ export default abstract class Node implements BoxModel {
     }
 
     get pageflow() {
-        return (['static', 'initial', 'relative'].includes(this.css('position')) || this.tagName === 'PLAINTEXT' || this.alignMargin);
+        const position = this.position;
+        return (position === 'static' || position === 'initial' || position === 'relative' || this.tagName === 'PLAINTEXT' || this.alignMargin);
     }
 
     get inlineElement() {

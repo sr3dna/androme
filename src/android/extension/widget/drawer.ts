@@ -38,7 +38,7 @@ export default class Drawer extends Extension<T> {
     public processNode(): ExtensionResult {
         const application = this.application;
         const controller = application.controllerHandler;
-        const node = (<T> this.node);
+        const node = this.node as T;
         node.documentRoot = true;
         const options = Object.assign({}, this.options.drawer);
         if (findNestedExtension(node, WIDGET_NAME.MENU) != null) {
@@ -62,7 +62,7 @@ export default class Drawer extends Extension<T> {
 
     public beforeInsert() {
         const application = this.application;
-        const node = (<T> this.node);
+        const node = this.node as T;
         if (application.insert[node.nodeId] != null) {
             const target = application.cacheInternal.locate(item => item.isolated && item.parent === node.parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
             if (target != null) {
@@ -91,7 +91,7 @@ export default class Drawer extends Extension<T> {
     public afterInsert() {
         const headerLayout = findNestedExtension(this.node, EXT_NAME.EXTERNAL);
         if (headerLayout != null) {
-            const node = (<T> getNode(headerLayout));
+            const node = getNode(headerLayout) as T;
             if (node.viewHeight === 0) {
                 node.android('layout_height', 'wrap_content');
             }

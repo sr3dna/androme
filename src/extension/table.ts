@@ -18,16 +18,16 @@ export default class Table extends Extension<T> {
         const tfoot = node.children.find(item => item.tagName === 'TFOOT');
         if (thead != null) {
             thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead, 'styleMap'));
-            tableRows.push(...(<T[]> thead.children));
+            tableRows.push(...<T[]> thead.children);
             thead.hide();
         }
         if (tbody != null) {
-            tableRows.push(...(<T[]> tbody.children));
+            tableRows.push(...<T[]> tbody.children);
             tbody.hide();
         }
         if (tfoot != null) {
             tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(tfoot, 'styleMap'));
-            tableRows.push(...(<T[]> tfoot.children));
+            tableRows.push(...<T[]> tfoot.children);
             tfoot.hide();
         }
         const rowCount = tableRows.length;
@@ -40,7 +40,7 @@ export default class Table extends Extension<T> {
             for (let j = 0; j < tr.children.length; j++) {
                 const td = tr.children[j];
                 const style = td.element.style;
-                const element = (<HTMLTableCellElement> td.element);
+                const element = <HTMLTableCellElement> td.element;
                 if (element.rowSpan > 1) {
                     td.data(`${EXT_NAME.TABLE}:rowSpan`, element.rowSpan);
                 }
@@ -48,7 +48,7 @@ export default class Table extends Extension<T> {
                     td.data(`${EXT_NAME.TABLE}:columnSpan`, element.colSpan);
                 }
                 if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
-                    td.styleMap.textAlign = (<string> style.textAlign);
+                    td.styleMap.textAlign = <string> style.textAlign;
                 }
                 if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
                     td.styleMap.verticalAlign = 'middle';
@@ -68,7 +68,7 @@ export default class Table extends Extension<T> {
             }
             caption.data(`${EXT_NAME.TABLE}:columnSpan`, columnCount);
         }
-        const xml = this.application.writeGridLayout(node, (<T> this.parent), columnCount, rowCount);
+        const xml = this.application.writeGridLayout(node, <T> this.parent, columnCount, rowCount);
         return { xml };
     }
 }

@@ -21,7 +21,7 @@ export default abstract class List extends Extension<T> {
 
     public processNode(): ExtensionResult {
         const node = this.node;
-        const parent = (<T> this.parent);
+        const parent = this.parent as T;
         let xml = '';
         if (NodeList.linearY(node.children)) {
             xml = this.application.writeGridLayout(node, parent, 2);

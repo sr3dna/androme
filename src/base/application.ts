@@ -1,10 +1,10 @@
-import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, ViewData } from '../lib/types';
+import { LayoutMap, Null, ObjectIndex, ObjectMap, PlainFile, ViewData } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertCamelCase, convertInt, formatPX, includesEnum, isNumber, optional, sortAsc, trim, hasValue } from '../lib/util';
+import { convertCamelCase, convertInt, formatPX, hasValue, includesEnum, isNumber, optional, sortAsc, trim } from '../lib/util';
 import { placeIndent } from '../lib/xml';
 import { deleteCache, getCache, getNode, getStyle, hasFreeFormText, isVisible, setCache } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
@@ -124,11 +124,11 @@ export default class Application<T extends Node> {
     public setStyleMap() {
         let warning = false;
         for (let i = 0; i < document.styleSheets.length; i++) {
-            const styleSheet = (<CSSStyleSheet> document.styleSheets[i]);
+            const styleSheet = <CSSStyleSheet> document.styleSheets[i];
             if (styleSheet.cssRules != null) {
                 for (let j = 0; j < styleSheet.cssRules.length; j++) {
                     try {
-                        const cssRule = (<CSSStyleRule> styleSheet.cssRules[j]);
+                        const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
                         const attrs: Set<string> = new Set();
                         for (const attr of Array.from(cssRule.style)) {
                             attrs.add(convertCamelCase(attr));
@@ -209,7 +209,7 @@ export default class Application<T extends Node> {
         this.cache.clear();
         const extensions = this.extensions;
         for (const extension of extensions) {
-            extension.setTarget(<T> {}, undefined, root);
+            extension.setTarget({} as T, undefined, root);
             extension.beforeInit();
         }
         const rootNode = this.insertNode(root);
@@ -221,12 +221,12 @@ export default class Application<T extends Node> {
         else {
             return false;
         }
-        for (const element of (<HTMLElement[]> Array.from(elements))) {
+        for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
                 this.orderExt(extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
                     const supportInline = this.controllerHandler.supportInline;
-                    if (supportInline.includes(element.tagName) && ((element.children.length === 0 && !hasFreeFormText(element)) || (element.parentElement != null  && supportInline.includes(element.parentElement.tagName) && getStyle(element).display === 'inline' && getStyle(element.parentElement).display === 'inline'))) {
+                    if (supportInline.includes(element.tagName) && ((element.children.length === 0 && !hasFreeFormText(element)) || (element.parentElement != null && supportInline.includes(element.parentElement.tagName) && getStyle(element).display === 'inline' && getStyle(element.parentElement).display === 'inline'))) {
                         continue;
                     }
                     let valid = true;
@@ -282,7 +282,7 @@ export default class Application<T extends Node> {
                 node.setBounds();
             }
             for (const node of this.cache) {
-                const element = (<HTMLInputElement> node.element);
+                const element = <HTMLInputElement> node.element;
                 if (element.tagName === 'INPUT' && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
                     switch (element.type) {
                         case 'radio':
@@ -310,17 +310,26 @@ export default class Application<T extends Node> {
                     if (parent != null) {
                         if (!node.pageflow) {
                             let found = false;
-                            let previous: Null<Node> = null;
+                            let previous: Null<T> = null;
                             while (parent != null && parent.id !== 0) {
-                                if ((node.css('position') === 'absolute' && !['static', 'initial'].includes(parent.css('position')) && convertInt(node.top) >= 0 && convertInt(node.left) >= 0) || (node.withinX(parent.box) && node.withinY(parent.box)) || (previous != null && ((node.linear.top >= parent.linear.top && node.linear.top < previous.linear.top) || (node.linear.right <= parent.linear.right && node.linear.right > previous.linear.right) || (node.linear.bottom <= parent.linear.bottom && node.linear.bottom > previous.linear.bottom) || (node.linear.left >= parent.linear.left && node.linear.left < previous.linear.left)))) {
-                                    found = true;
-                                    break;
+                                if (node.position === 'absolute' && convertInt(node.top) >= 0 && convertInt(node.left) >= 0) {
+                                    const position = parent.position;
+                                    if (!(position === 'static' || position === 'initial')) {
+                                        found = true;
+                                        break;
+                                    }
                                 }
-                                previous = parent;
-                                parent = (<T> getNode(<HTMLElement> parent.element.parentElement));
+                                else {
+                                    if ((node.withinX(parent.box) && node.withinY(parent.box)) || (previous != null && ((node.linear.top >= parent.linear.top && node.linear.top < previous.linear.top) || (node.linear.right <= parent.linear.right && node.linear.right > previous.linear.right) || (node.linear.bottom <= parent.linear.bottom && node.linear.bottom > previous.linear.bottom) || (node.linear.left >= parent.linear.left && node.linear.left < previous.linear.left)))) {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                previous = parent as T;
+                                parent = getNode(<HTMLElement> parent.element.parentElement) as T;
                             }
                             if (!found)  {
-                                parent = (<T> this.cache.parent);
+                                parent = this.cache.parent;
                             }
                         }
                         node.parent = parent;
@@ -419,8 +428,8 @@ export default class Application<T extends Node> {
     public createLayoutXml() {
         const application = this;
         const extensions = this.extensions;
-        const mapX: ArrayIndex<ObjectIndex<T[]>> = [];
-        const mapY: ArrayIndex<ObjectIndex<T[]>> = [];
+        const mapX: LayoutMap<T> = [];
+        const mapY: LayoutMap<T> = [];
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
         let empty = true;
         for (const node of this.cache.visible) {
@@ -482,7 +491,7 @@ export default class Application<T extends Node> {
                 const middle: T[] = [];
                 const above: T[] = [];
                 let parent = (<T> this.cache.locate('id', parseInt(coordsY[j])));
-                for (const node of (<T[]> mapY[i][coordsY[j]])) {
+                for (const node of mapY[i][coordsY[j]] as T[]) {
                     const zIndex = convertInt(node.css('zIndex'));
                     const documentParent = (node.parent.element === node.element.parentElement);
                     if (node.documentRoot) {
@@ -513,7 +522,7 @@ export default class Application<T extends Node> {
                     if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
                         continue;
                     }
-                    parent = (<T> nodeY.parent);
+                    parent = nodeY.parent as T;
                     if (SETTINGS.horizontalPerspective && nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
                         const nodes = [nodeY];
                         if (nodeY.element.nextSibling == null || (<Element> nodeY.element.nextSibling).tagName !== 'BR') {
@@ -523,9 +532,6 @@ export default class Application<T extends Node> {
                             }
                             for (let l = k + 1; l < axisY.length; l++) {
                                 const adjacent = axisY[l];
-                                if (adjacent.element.previousSibling && (<Element> adjacent.element.previousSibling).tagName === 'BR') {
-                                    break;
-                                }
                                 if (adjacent.floating) {
                                     floats.add(adjacent.float);
                                 }
@@ -539,8 +545,11 @@ export default class Application<T extends Node> {
                                 const clear = adjacent.css('clear');
                                 if (adjacent.pageflow && (clear === 'none' || floats.size === 0 || (floats.size > 0 && (clear !== 'both' || !floats.has(clear))))) {
                                     nodes.push(adjacent);
-                                    if (!NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)) {
+                                    if (!parent.is(NODE_STANDARD.RELATIVE) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)) {
                                         nodes.pop();
+                                        break;
+                                    }
+                                    else if ((adjacent.element.nextElementSibling && (<Element> adjacent.element.nextElementSibling).tagName === 'BR')) {
                                         break;
                                     }
                                 }
@@ -556,7 +565,7 @@ export default class Application<T extends Node> {
                             else {
                                 if (nodes.length > 1) {
                                     let xml = '';
-                                    const group = this.controllerHandler.createGroup(nodeY, parent, nodes);
+                                    const group = this.controllerHandler.createGroup(nodeY, nodes, parent);
                                     if (nodes.some(item => item.multiLine)) {
                                         xml = this.writeRelativeLayout(group, parent);
                                         group.inlineWrap = true;
@@ -571,7 +580,7 @@ export default class Application<T extends Node> {
                                         this.sortLayout(group, <T[]> group.children, true);
                                     }
                                     renderXml(group, parent, xml, current);
-                                    parent = (<T> nodeY.parent);
+                                    parent = nodeY.parent as T;
                                 }
                                 else {
                                     nodeY.multiLine = false;
@@ -605,7 +614,7 @@ export default class Application<T extends Node> {
                                 renderXml(nodeY, parent, result.xml, current);
                             }
                             if (result.parent) {
-                                parent = (<T> result.parent);
+                                parent = result.parent as T;
                             }
                             if (result.proceed) {
                                 continue;
@@ -622,7 +631,7 @@ export default class Application<T extends Node> {
                                         renderXml(nodeY, parent, result.xml, current);
                                     }
                                     if (result.parent) {
-                                        parent = (<T> result.parent);
+                                        parent = result.parent as T;
                                     }
                                     if (result.xml !== '' || result.proceed) {
                                         rendered.push(item);
@@ -670,7 +679,7 @@ export default class Application<T extends Node> {
                                                 child.documentRoot = nodeY.documentRoot;
                                                 child.parent = parent;
                                                 nodeY.hide();
-                                                axisY[k] = (<T> child);
+                                                axisY[k] = child as T;
                                                 k--;
                                             }
                                             else {
@@ -679,12 +688,13 @@ export default class Application<T extends Node> {
                                         }
                                         else {
                                             const [linearX, linearY] = [NodeList.linearX(nodeY.children, SETTINGS.linearHorizontalTopOffset), NodeList.linearY(nodeY.children)];
-                                            if ((linearX || linearY) && !parent.flex.enabled && nodeY.children.every(node => node.pageflow && !node.multiLine && node.css('clear') === 'none')) {
-                                                if (nodeY.children.every(node => nodeY.children[0].float === node.float)) {
+                                            if ((linearX || linearY) && !parent.flex.enabled && nodeY.children.every(node => node.pageflow && !node.multiLine)) {
+                                                const float = new Set(nodeY.children.map(node => node.css('float')));
+                                                if (float.size === 1) {
                                                     xml = this.writeLinearLayout(nodeY, parent, linearX);
                                                 }
-                                                else if (linearX) {
-                                                    const group = this.controllerHandler.createGroup(nodeY, parent, <T[]> nodeY.children, nodeY.element);
+                                                else if (linearX && nodeY.children.some(node => node.floating)) {
+                                                    const group = this.controllerHandler.createGroup(nodeY, <T[]> nodeY.children, parent, nodeY.element);
                                                     xml = this.writeFrameLayoutGroup(group, parent, <T[]> nodeY.children);
                                                     group.inlineWrap = true;
                                                 }
@@ -746,7 +756,7 @@ export default class Application<T extends Node> {
                 this.addInclude(current, xml);
             }
         }
-        const root = (<T> this.cache.parent);
+        const root = this.cache.parent as T;
         if (root.renderExtension == null || !root.isSet('dataset', 'target')) {
             const pathname: string = trim(optional(root, 'dataset.folder').trim(), '/');
             this.updateLayout(pathname, (!empty ? output : ''), (root.renderExtension != null && root.renderExtension.documentRoot));
@@ -818,7 +828,7 @@ export default class Application<T extends Node> {
             const placeholder = `{:${group.id}}`;
             [merged, right.list].forEach((item, index) => {
                 if (item.length > 1) {
-                    const linearGroup = this.controllerHandler.createGroup(item[0], group, item);
+                    const linearGroup = this.controllerHandler.createGroup(item[0], item, group);
                     xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, true) + (index === 0 ? placeholder : ''));
                     this.sortLayout(linearGroup, item, true);
                 }
@@ -940,9 +950,39 @@ export default class Application<T extends Node> {
 
     public sortLayout(parent: T, children: T[], save = false) {
         switch (parent.nodeType) {
+            case NODE_STANDARD.CONSTRAINT:
+                children.sort((a, b) => {
+                    const indexA = a.css('zIndex');
+                    const indexB = b.css('zIndex');
+                    if ((indexA === 'auto' || indexA === '' || indexA === '0') && (indexB === 'auto' || indexB === '' || indexB === '0')) {
+                        return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                    }
+                    else {
+                        return (convertInt(indexA) <= convertInt(indexB) ? -1 : 1);
+                    }
+                });
+                break;
             case NODE_STANDARD.LINEAR:
                 if (parent.horizontal) {
-                    sortAsc(children, 'linear.left');
+                    children.sort((a, b) => {
+                        if (a.floating && !b.floating) {
+                            return (a.float === 'left' ? -1 : 1);
+                        }
+                        else if (!a.floating && b.floating) {
+                            return (b.float === 'left' ? 1 : -1);
+                        }
+                        else if (a.floating && b.floating) {
+                            if (a.float === b.float) {
+                                return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                            }
+                            else {
+                                return (a.float === 'left' ? -1 : 1);
+                            }
+                        }
+                        else {
+                            return (a.linear.left <= b.linear.left ? -1 : 1);
+                        }
+                    });
                 }
                 else {
                     sortAsc(children, 'linear.top');
@@ -984,6 +1024,8 @@ export default class Application<T extends Node> {
             if (optional(element, 'textContent', 'string').trim() !== '') {
                 node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
                 node.tagName = 'PLAINTEXT';
+                node.styleMap.cssFloat = 'none';
+                node.styleMap.clear = 'none';
                 if (parent != null) {
                     node.parent = parent;
                     node.inherit(parent, 'style');

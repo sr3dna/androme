@@ -1,7 +1,7 @@
 import { StringMap } from '../../../lib/types';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { convertPX, includes, isNumber, optional } from '../../../lib/util';
+import { includes, isNumber, optional, formatPX } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import parseRTL from '../../localization';
@@ -65,7 +65,7 @@ export function formatResource(options: {}) {
 }
 
 export function findNestedExtension(node: T, extension: string) {
-    return (<HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext', 'string'), extension)));
+    return <HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext', 'string'), extension));
 }
 
 export function overwriteDefault(options: {}, namespace: string, attr: string, value: string) {
@@ -108,21 +108,21 @@ export function positionIsolated(node: T) {
         gravity.push('center_vertical');
     }
     node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
-    const parent = (<T> node.documentParent);
+    const parent = node.documentParent as T;
     if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
         if (horizontalBias < 0.5) {
-            node.css('marginLeft', convertPX(Math.floor(node.bounds.left - parent.box.left)));
+            node.css('marginLeft', formatPX(Math.floor(node.bounds.left - parent.box.left)));
         }
         else {
-            node.css('marginRight', convertPX(Math.floor(parent.box.right - node.bounds.right)));
+            node.css('marginRight', formatPX(Math.floor(parent.box.right - node.bounds.right)));
         }
     }
     if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
         if (verticalBias < 0.5) {
-            node.css('marginTop', convertPX(Math.floor(node.bounds.top - parent.box.top)));
+            node.css('marginTop', formatPX(Math.floor(node.bounds.top - parent.box.top)));
         }
         else {
-            node.css('marginBottom', convertPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
+            node.css('marginBottom', formatPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
         }
     }
 }

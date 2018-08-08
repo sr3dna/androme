@@ -14,8 +14,8 @@ export default class FloatingActionButton<T extends View> extends Button {
     }
 
     public processNode(): ExtensionResult {
-        const node = (<T> this.node);
-        const parent = (<T> this.parent);
+        const node = this.node as T;
+        const parent = this.parent as T;
         const element = node.element;
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
@@ -74,7 +74,7 @@ export default class FloatingActionButton<T extends View> extends Button {
     }
 
     public afterInsert() {
-        const node = (<T> this.node);
+        const node = this.node as T;
         node.android('layout_width', 'wrap_content');
         node.android('layout_height', 'wrap_content');
     }

@@ -18,7 +18,7 @@ export default class External extends Extension<T> {
                     while (current != null) {
                         display.push(<string> getStyle(current).display);
                         current.style.display = 'block';
-                        current = (<HTMLElement> current.parentElement);
+                        current = <HTMLElement> current.parentElement;
                     }
                     setCache(this.element, 'andromeExternalDisplay', display);
                 }
@@ -43,7 +43,7 @@ export default class External extends Extension<T> {
                     let i = 0;
                     while (current != null) {
                         current.style.display = display[i];
-                        current = (<HTMLElement> current.parentElement);
+                        current = <HTMLElement> current.parentElement;
                         i++;
                     }
                     deleteCache(this.element, 'andromeExternalDisplay');

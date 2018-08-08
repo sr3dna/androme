@@ -2,7 +2,7 @@ import { BorderAttribute, BoxStyle, FontAttribute, Null, ResourceMap, ViewData }
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertPX, hasValue, includesEnum, isNumber, formatPX } from '../lib/util';
+import { convertPX, hasValue, includesEnum, isNumber } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 import { getBoxSpacing, getCache, sameAsParent, setCache, hasFreeFormText } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
@@ -86,12 +86,13 @@ export default abstract class Resource<T extends Node> {
             if (getCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
+                const inlineChild = (node.renderChildren.length > 0 && node.renderChildren.every(item => item.inline));
                 for (const attr in result) {
-                    if (node.inline && (attr === 'marginTop' || attr === 'marginBottom')) {
+                    if ((node.inline && (attr === 'marginTop' || attr === 'marginBottom')) || (inlineChild && (attr === 'paddingTop' || attr === 'paddingBottom'))) {
                         formatted[attr] = '0px';
                     }
                     else {
-                        formatted[attr] = formatPX(result[attr]);
+                        formatted[attr] = convertPX(result[attr]);
                     }
                 }
                 setCache(node.element, 'boxSpacing', formatted);
@@ -178,12 +179,12 @@ export default abstract class Resource<T extends Node> {
 
     public setOptionArray() {
         this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
-            const element = (<HTMLSelectElement> node.element);
+            const element = <HTMLSelectElement> node.element;
             if (getCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
                 const stringArray: string[] = [];
                 let numberArray: Null<string[]> = [];
                 for (let i = 0; i < element.children.length; i++) {
-                    const item = (<HTMLOptionElement> element.children[i]);
+                    const item = <HTMLOptionElement> element.children[i];
                     const value = item.text.trim();
                     if (value !== '') {
                         if (!SETTINGS.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
@@ -208,7 +209,7 @@ export default abstract class Resource<T extends Node> {
 
     public setValueString(supportInline: string[]) {
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
-            const element = (<HTMLInputElement> node.element);
+            const element = <HTMLInputElement> node.element;
             if (getCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
                 let name = '';
                 let value = '';
@@ -235,8 +236,8 @@ export default abstract class Resource<T extends Node> {
                     value = element.value.trim();
                 }
                 else if (element.nodeName === '#text') {
-                    value = (<string> element.textContent);
-                    const previousSibling = (<HTMLElement> element.previousSibling);
+                    value = <string> element.textContent;
+                    const previousSibling = <HTMLElement> element.previousSibling;
                     if (previousSibling && previousSibling.tagName === 'BR') {
                         value = value.replace(/^\s+/g, '');
                     }

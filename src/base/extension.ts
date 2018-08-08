@@ -1,4 +1,4 @@
-import { ArrayIndex, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
+import { LayoutMap, ObjectMap, StringMap } from '../lib/types';
 import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
 import Application from './application';
 import Node from './node';
@@ -44,7 +44,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
 
     public included(element?: HTMLElement) {
         if (element == null) {
-            element = (<HTMLElement> this.element);
+            element = <HTMLElement> this.element;
         }
         return includes(optional(element, 'dataset.ext'), this.name);
     }
@@ -90,11 +90,11 @@ export default abstract class Extension<T extends Node> implements IExtension {
         return false;
     }
 
-    public processNode(mapX?: ArrayIndex<ObjectIndex<T[]>>, mapY?: ArrayIndex<ObjectIndex<T[]>>): ExtensionResult {
+    public processNode(mapX?: LayoutMap<T>, mapY?: LayoutMap<T>): ExtensionResult {
         return { xml: '' };
     }
 
-    public processChild(mapX?: ArrayIndex<ObjectIndex<T[]>>, mapY?: ArrayIndex<ObjectIndex<T[]>>): ExtensionResult {
+    public processChild(mapX?: LayoutMap<T>, mapY?: LayoutMap<T>): ExtensionResult {
         return { xml: '' };
     }
 
