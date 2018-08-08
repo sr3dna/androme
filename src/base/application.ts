@@ -515,6 +515,18 @@ export default class Application<T extends Node> {
                 axisY.push(...sortAsc(below, 'style.zIndex', 'siblingIndex'));
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'siblingIndex'));
+                const floats = new Set();
+                const cleared = new Set();
+                axisY.forEach(node => {
+                    if (node.floating) {
+                        floats.add(node.css('float'));
+                    }
+                    const clear = node.css('clear');
+                    if (floats.size > 0 && (clear === 'both' || floats.has(clear))) {
+                        cleared.add(node);
+                        floats.clear();
+                    }
+                });
                 const includes: string[] = [];
                 let current = '';
                 for (let k = 0; k < axisY.length; k++) {
@@ -526,15 +538,8 @@ export default class Application<T extends Node> {
                     if (SETTINGS.horizontalPerspective && nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
                         const nodes = [nodeY];
                         if (nodeY.element.nextSibling == null || (<Element> nodeY.element.nextSibling).tagName !== 'BR') {
-                            const floats = new Set();
-                            if (nodeY.floating) {
-                                floats.add(nodeY.float);
-                            }
                             for (let l = k + 1; l < axisY.length; l++) {
                                 const adjacent = axisY[l];
-                                if (adjacent.floating) {
-                                    floats.add(adjacent.float);
-                                }
                                 if (hasValue(adjacent.dataset.target)) {
                                     continue;
                                 }
@@ -542,8 +547,7 @@ export default class Application<T extends Node> {
                                 if (!previous.inlineElement && !previous.floating && !adjacent.floating) {
                                     break;
                                 }
-                                const clear = adjacent.css('clear');
-                                if (adjacent.pageflow && (clear === 'none' || floats.size === 0 || (floats.size > 0 && (clear !== 'both' || !floats.has(clear))))) {
+                                if (adjacent.pageflow && !cleared.has(adjacent)) {
                                     nodes.push(adjacent);
                                     if (!parent.is(NODE_STANDARD.RELATIVE) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)) {
                                         nodes.pop();
@@ -553,9 +557,6 @@ export default class Application<T extends Node> {
                                         break;
                                     }
                                 }
-                                else {
-                                    break;
-                                }
                             }
                         }
                         if (nodes.length > 1) {
@@ -563,28 +564,23 @@ export default class Application<T extends Node> {
                                 parent.inlineWrap = true;
                             }
                             else {
-                                if (nodes.length > 1) {
-                                    let xml = '';
-                                    const group = this.controllerHandler.createGroup(nodeY, nodes, parent);
-                                    if (nodes.some(item => item.multiLine)) {
-                                        xml = this.writeRelativeLayout(group, parent);
-                                        group.inlineWrap = true;
-                                    }
-                                    else if (nodes.some(item => item.floating)) {
-                                        xml = this.writeFrameLayoutGroup(group, parent, nodes);
-                                        parent.children = parent.children.filter((item: T) => !nodes.includes(item));
-                                        group.inlineWrap = true;
-                                    }
-                                    else {
-                                        xml = this.writeLinearLayout(group, parent, true);
-                                        this.sortLayout(group, <T[]> group.children, true);
-                                    }
-                                    renderXml(group, parent, xml, current);
-                                    parent = nodeY.parent as T;
+                                let xml = '';
+                                const group = this.controllerHandler.createGroup(nodeY, nodes, parent);
+                                if (nodes.some(item => item.multiLine)) {
+                                    xml = this.writeRelativeLayout(group, parent);
+                                    group.inlineWrap = true;
+                                }
+                                else if (nodes.some(item => item.floating)) {
+                                    xml = this.writeFrameLayoutGroup(group, parent, nodes);
+                                    parent.children = parent.children.filter((item: T) => !nodes.includes(item));
+                                    group.inlineWrap = true;
                                 }
                                 else {
-                                    nodeY.multiLine = false;
+                                    xml = this.writeLinearLayout(group, parent, true);
+                                    this.sortLayout(group, <T[]> group.children, true);
                                 }
+                                renderXml(group, parent, xml, current);
+                                parent = nodeY.parent as T;
                             }
                         }
                     }
