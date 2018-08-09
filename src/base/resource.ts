@@ -4,7 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertPX, hasValue, includesEnum, isNumber } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, getCache, sameAsParent, setCache, hasFreeFormText } from '../lib/dom';
+import { getBoxSpacing, getCache, getNode, sameAsParent, setCache, hasFreeFormText } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { MAP_ELEMENT, NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -135,7 +135,7 @@ export default abstract class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)).each(node => {
             if (getCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources) {
-                if (node.renderChildren.length > 0 || node.tagName === 'IMG' || node.tagName === 'HR') {
+                if (node.renderChildren.length > 0 || node.element.tagName === 'IMG' || node.element.tagName === 'HR') {
                     return;
                 }
                 else {
@@ -178,7 +178,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setOptionArray() {
-        this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+        this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
             const element = <HTMLSelectElement> node.element;
             if (getCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
                 const stringArray: string[] = [];
@@ -244,7 +244,7 @@ export default abstract class Resource<T extends Node> {
                     inlineTrim = true;
                 }
                 else if (node.hasElement) {
-                    if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[item.tagName] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
+                    if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[(getNode(item) != null ? (<T> getNode(item)).tagName : '')] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
                         name = (element.innerText || element.textContent || '').trim();
                         value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
                         switch (node.css('whiteSpace')) {

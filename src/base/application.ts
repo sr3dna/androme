@@ -256,7 +256,7 @@ export default class Application<T extends Node> {
                 const textAlign = node.css('textAlign');
                 switch (textAlign) {
                     case 'center':
-                        if (node.tagName !== 'BUTTON' && (<HTMLInputElement> element).type === 'button') {
+                        if (element.tagName !== 'BUTTON' && (<HTMLInputElement> element).type === 'button') {
                             break;
                         }
                     case 'right':
@@ -339,7 +339,7 @@ export default class Application<T extends Node> {
             }
             for (const node of visible) {
                 const supportInline = this.controllerHandler.supportInline;
-                if (supportInline.length === 0 || node.children.some(item => item.children.length > 0 || !item.pageflow || !supportInline.includes(item.tagName))) {
+                if (supportInline.length === 0 || node.children.some(item => item.children.length > 0 || !item.pageflow || !supportInline.includes(item.element.tagName))) {
                     Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                         if (element.nodeName === '#text' && optional(element, 'textContent').trim() !== '') {
                             this.insertNode(element, node);
@@ -497,7 +497,7 @@ export default class Application<T extends Node> {
                     if (node.documentRoot) {
                         axisY.push(node);
                     }
-                    else if (node.pageflow || (!node.alignMargin && zIndex === 0 && documentParent)) {
+                    else if (node.pageflow || (zIndex === 0 && documentParent && node.alignMargin)) {
                         middle.push(node);
                     }
                     else {
@@ -515,18 +515,6 @@ export default class Application<T extends Node> {
                 axisY.push(...sortAsc(below, 'style.zIndex', 'siblingIndex'));
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'siblingIndex'));
-                const floats = new Set();
-                const cleared = new Set();
-                axisY.forEach(node => {
-                    if (node.floating) {
-                        floats.add(node.css('float'));
-                    }
-                    const clear = node.css('clear');
-                    if (floats.size > 0 && (clear === 'both' || floats.has(clear))) {
-                        cleared.add(node);
-                        floats.clear();
-                    }
-                });
                 const includes: string[] = [];
                 let current = '';
                 for (let k = 0; k < axisY.length; k++) {
@@ -535,55 +523,6 @@ export default class Application<T extends Node> {
                         continue;
                     }
                     parent = nodeY.parent as T;
-                    if (SETTINGS.horizontalPerspective && nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
-                        const nodes = [nodeY];
-                        if (nodeY.element.nextSibling == null || (<Element> nodeY.element.nextSibling).tagName !== 'BR') {
-                            for (let l = k + 1; l < axisY.length; l++) {
-                                const adjacent = axisY[l];
-                                if (hasValue(adjacent.dataset.target)) {
-                                    continue;
-                                }
-                                const previous = axisY[l - 1];
-                                if (!previous.inlineElement && !previous.floating && !adjacent.floating) {
-                                    break;
-                                }
-                                if (adjacent.pageflow && !cleared.has(adjacent)) {
-                                    nodes.push(adjacent);
-                                    if (!parent.is(NODE_STANDARD.RELATIVE) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)) {
-                                        nodes.pop();
-                                        break;
-                                    }
-                                    else if ((adjacent.element.nextElementSibling && (<Element> adjacent.element.nextElementSibling).tagName === 'BR')) {
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (nodes.length > 1) {
-                            if (parent.is(NODE_STANDARD.RELATIVE) && nodes.length === parent.children.length) {
-                                parent.inlineWrap = true;
-                            }
-                            else {
-                                let xml = '';
-                                const group = this.controllerHandler.createGroup(nodeY, nodes, parent);
-                                if (nodes.some(item => item.multiLine)) {
-                                    xml = this.writeRelativeLayout(group, parent);
-                                    group.inlineWrap = true;
-                                }
-                                else if (nodes.some(item => item.floating)) {
-                                    xml = this.writeFrameLayoutGroup(group, parent, nodes);
-                                    parent.children = parent.children.filter((item: T) => !nodes.includes(item));
-                                    group.inlineWrap = true;
-                                }
-                                else {
-                                    xml = this.writeLinearLayout(group, parent, true);
-                                    this.sortLayout(group, <T[]> group.children, true);
-                                }
-                                renderXml(group, parent, xml, current);
-                                parent = nodeY.parent as T;
-                            }
-                        }
-                    }
                     if (this.controllerHandler.supportInclude) {
                         const filename: string = optional(nodeY, 'dataset.include').trim();
                         if (filename !== '' && includes.indexOf(filename) === -1) {
@@ -647,12 +586,78 @@ export default class Application<T extends Node> {
                             continue;
                         }
                         if (!nodeY.rendered) {
+                            const floats = new Set();
+                            const cleared = new Set();
+                            axisY.slice(k).forEach(node => {
+                                if (node.floating) {
+                                    floats.add(node.float);
+                                }
+                                const clear = node.css('clear');
+                                if (floats.size > 0 && (clear === 'both' || floats.has(clear))) {
+                                    cleared.add(node);
+                                    floats.clear();
+                                }
+                            });
+                            if (SETTINGS.horizontalPerspective && nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
+                                const nodes = [nodeY];
+                                if (nodeY.element.nextElementSibling == null || nodeY.element.nextElementSibling.tagName !== 'BR') {
+                                    for (let l = k + 1; l < axisY.length; l++) {
+                                        const adjacent = axisY[l];
+                                        const previous = axisY[l - 1];
+                                        if (!previous.inlineElement && !previous.floating && !adjacent.floating) {
+                                            break;
+                                        }
+                                        if (adjacent.pageflow) {
+                                            if (!cleared.has(adjacent)) {
+                                                if (hasValue(adjacent.dataset.target)) {
+                                                    continue;
+                                                }
+                                                nodes.push(adjacent);
+                                                if (!parent.is(NODE_STANDARD.RELATIVE) && !NodeList.linearX(nodes, SETTINGS.linearHorizontalTopOffset)) {
+                                                    nodes.pop();
+                                                    break;
+                                                }
+                                                else if (adjacent.element.nextElementSibling && adjacent.element.nextElementSibling.tagName === 'BR') {
+                                                    break;
+                                                }
+                                            }
+                                            else {
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (nodes.length > 1) {
+                                    if (parent.is(NODE_STANDARD.RELATIVE) && nodes.length === parent.children.length) {
+                                        parent.inlineWrap = true;
+                                    }
+                                    else {
+                                        let groupXml = '';
+                                        const group = this.controllerHandler.createGroup(nodeY, nodes, parent);
+                                        if (nodes.some(item => item.multiLine)) {
+                                            groupXml = this.writeRelativeLayout(group, parent);
+                                            group.inlineWrap = true;
+                                        }
+                                        else if (nodes.some(item => item.floating)) {
+                                            groupXml = this.writeFrameLayoutGroup(group, parent, nodes);
+                                            parent.children = parent.children.filter((item: T) => !nodes.includes(item));
+                                            group.inlineWrap = true;
+                                        }
+                                        else {
+                                            groupXml = this.writeLinearLayout(group, parent, true);
+                                            this.sortLayout(group, <T[]> group.children, true);
+                                        }
+                                        renderXml(group, parent, groupXml, current);
+                                        parent = nodeY.parent as T;
+                                    }
+                                }
+                            }
                             let xml = '';
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;
                                 const untargeted = nodeY.untargeted;
-                                if (untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && untargeted.every(node => node.inlineElement && node.untargeted.length === 0 && supportInline.includes(node.tagName)))) {
-                                    if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.tagName))) {
+                                if (untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && untargeted.every(node => node.inlineElement && node.untargeted.length === 0 && supportInline.includes(node.element.tagName)))) {
+                                    if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
                                         xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
                                     else {
@@ -685,7 +690,7 @@ export default class Application<T extends Node> {
                                         else {
                                             const [linearX, linearY] = [NodeList.linearX(nodeY.children, SETTINGS.linearHorizontalTopOffset), NodeList.linearY(nodeY.children)];
                                             if ((linearX || linearY) && !parent.flex.enabled && nodeY.children.every(node => node.pageflow && !node.multiLine)) {
-                                                const float = new Set(nodeY.children.map(node => node.css('float')));
+                                                const float = new Set(nodeY.children.map(node => node.float));
                                                 if (float.size === 1) {
                                                     xml = this.writeLinearLayout(nodeY, parent, linearX);
                                                 }

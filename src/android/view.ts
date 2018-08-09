@@ -5,7 +5,7 @@ import { calculateBias, generateId } from './lib/util';
 import { getCache, getNode, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
-import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BLOCK_ELEMENT, BOX_STANDARD, INLINE_ELEMENT, MAP_ELEMENT, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
 
 type T = View;
@@ -236,7 +236,7 @@ export default class View extends Node {
         const widthParent = parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth);
         const heightParent = parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth);
         const documentBody = (this.element === document.body);
-        if ((this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE, NODE_STANDARD.SCROLL_VERTICAL, NODE_STANDARD.SCROLL_HORIZONTAL, NODE_STANDARD.SCROLL_NESTED)) || documentBody) {
+        if ((this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.SCROLL_VERTICAL, NODE_STANDARD.SCROLL_HORIZONTAL, NODE_STANDARD.SCROLL_NESTED, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) || documentBody) {
             if (this.viewWidth === 0 && !constraint.layoutHorizontal) {
                 this.android('layout_width', 'match_parent', false);
             }
@@ -261,13 +261,13 @@ export default class View extends Node {
             if (this.android('layout_width') !== '0px') {
                 if (this.isSet('styleMap', 'width')) {
                     if (isPercent(styleMap.width)) {
-                        if (renderParent.tagName === 'TABLE') {
+                        if (renderParent.element.tagName === 'TABLE') {
                             this.android('layout_columnWeight', (convertInt(styleMap.width) / 100).toFixed(2));
                             this.android('layout_width', '0px');
                         }
                         else if (styleMap.width === '100%') {
                             this.android('layout_width', 'match_parent');
-                            if (!styleMap.height) {
+                            if (styleMap.height == null) {
                                 switch (this.nodeName) {
                                     case NODE_ANDROID.IMAGE:
                                         this.android('layout_height', 'match_parent');
@@ -279,7 +279,7 @@ export default class View extends Node {
                             this.android('layout_width', 'wrap_content', false);
                         }
                     }
-                    else if (!isNaN(parseInt(styleMap.width))) {
+                    else if (convertInt(styleMap.width) > 0) {
                         let contentWidth = this.paddingLeft + this.paddingRight;
                         if (this.renderChildren.length > 0) {
                             switch (this.nodeName) {
@@ -344,7 +344,7 @@ export default class View extends Node {
                     if (convertFloat(this.android('layout_columnWeight')) > 0) {
                         this.android('layout_width', '0px');
                     }
-                    else if (!wrap && ((parent.overflow === OVERFLOW_ELEMENT.NONE && (widthRoot > 0 || this.parentElement === document.body) && width >= widthParent) || (!this.floating && !this.inlineElement && BLOCK_ELEMENT.includes(this.tagName) && (this.renderChildren.length === 0 || (right !== 0 && right < rightParent))))) {
+                    else if (!wrap && ((parent.overflow === OVERFLOW_ELEMENT.NONE && (widthRoot > 0 || this.parentElement === document.body) && width >= widthParent) || (!this.floating && !this.inlineElement && BLOCK_ELEMENT.includes(this.element.tagName) && (this.renderChildren.length === 0 || (right !== 0 && right < rightParent))))) {
                         this.android('layout_width', 'match_parent');
                     }
                     else {
@@ -358,17 +358,17 @@ export default class View extends Node {
         }
         else {
             if (this.android('layout_height') !== '0px') {
-                const percentHeight = isPercent(styleMap.height) || isPercent(styleMap.lineHeight);
-                if (this.isSet('styleMap', 'height') || this.isSet('styleMap', 'lineHeight') || percentHeight) {
-                    const contentHeight = convertInt(styleMap.height) || convertInt(styleMap.lineHeight);
-                    if (percentHeight) {
-                        if (renderParent.tagName === 'TABLE') {
+                const contentHeight = convertInt(styleMap.height || this.lineHeight);
+                if (contentHeight > 0) {
+                    const percentHeight = (styleMap.height !== 'auto' ? styleMap.height : null) || styleMap.lineHeight;
+                    if (isPercent(percentHeight)) {
+                        if (renderParent.element.tagName === 'TABLE') {
                             this.android('layout_rowWeight', (contentHeight / 100).toFixed(2));
                             this.android('layout_height', '0px');
                         }
-                        else if (styleMap.height === '100%') {
+                        else if (percentHeight === '100%') {
                             this.android('layout_height', 'match_parent');
-                            if (!styleMap.width) {
+                            if (styleMap.width == null) {
                                 switch (this.nodeName) {
                                     case NODE_ANDROID.IMAGE:
                                         this.android('layout_width', 'match_parent');
@@ -441,11 +441,11 @@ export default class View extends Node {
                     return '';
             }
         }
-        const textView = this.is(NODE_STANDARD.TEXT);
+        const renderParent = this.renderParent;
         let textAlign = this.styleMap.textAlign;
         let textAlignParent = '';
         const verticalAlign = this.styleMap.verticalAlign;
-        if (!this.floating || textView) {
+        if (!this.floating || this.is(NODE_STANDARD.TEXT)) {
             let parent = this.documentParent;
             do {
                 textAlignParent = parent.styleMap.textAlign;
@@ -456,7 +456,7 @@ export default class View extends Node {
             }
             while (true);
         }
-        if (textAlign === '' && this.tagName === 'TH') {
+        if (textAlign === '' && this.element.tagName === 'TH') {
             textAlign = 'center';
         }
         const horizontalParent = convertHorizontal(textAlignParent);
@@ -474,12 +474,12 @@ export default class View extends Node {
                 vertical = 'bottom';
                 break;
             default:
-                if (this.hasElement && this.styleMap.lineHeight != null && (this.style.height === this.styleMap.lineHeight || convertInt(this.styleMap.lineHeight) === (this.box.bottom - this.box.top))) {
+                const lineHeight = convertInt(this.styleMap.lineHeight);
+                if (INLINE_ELEMENT.includes(this.element.tagName) && lineHeight > 0 && lineHeight >= this.viewHeight) {
                     vertical = 'center_vertical';
                 }
         }
-        const renderParent = this.renderParent;
-        if (renderParent.tagName === 'TABLE') {
+        if (renderParent.element.tagName === 'TABLE') {
             this.android('layout_gravity', 'fill');
         }
         else if (renderParent.inlineWrap) {
@@ -500,9 +500,9 @@ export default class View extends Node {
             }
         }
         if (this.android('layout_gravity') == null) {
+            const margin = this.css('margin').split(' ');
             const marginLeft = this.css('marginLeft');
             const marginRight = this.css('marginRight');
-            const margin = this.css('margin').split(' ');
             if ((marginLeft === 'auto' && marginRight === 'auto') || (this.is(NODE_STANDARD.LINE) && marginLeft !== '0px' && marginLeft === marginRight && marginLeft === margin[1])) {
                 this.android('layout_gravity', 'center_horizontal');
             }

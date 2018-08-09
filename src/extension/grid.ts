@@ -4,7 +4,7 @@ import { GridCellData, GridData } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { sortAsc, withinFraction } from '../lib/util';
+import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { BLOCK_ELEMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
@@ -19,7 +19,7 @@ export default class Grid extends Extension<T> {
         const node = this.node;
         return (
             this.included() ||
-            (node.dataset.ext == null && !node.flex.enabled && node.children.length > 1 && BLOCK_ELEMENT.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].tagName === item.tagName && NodeList.linearX(item.children)))
+            (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && BLOCK_ELEMENT.includes(node.children[0].tagName) && node.children.some(item => item.children.length > 1) && node.children.every(item => !item.flex.enabled && node.children[0].element.tagName === item.element.tagName && NodeList.linearX(item.children)))
         );
     }
 

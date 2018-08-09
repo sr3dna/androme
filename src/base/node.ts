@@ -2,7 +2,7 @@ import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasValue, includesEnum, search } from '../lib/util';
 import { assignBounds, getCache, getNode, getRangeBounds, setCache } from '../lib/dom';
-import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BLOCK_ELEMENT, INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
 
@@ -511,7 +511,10 @@ export default abstract class Node implements BoxModel {
         return convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth);
     }
     get viewHeight() {
-        return convertInt(this.styleMap.height) || convertInt(this.styleMap.lineHeight) || convertInt(this.styleMap.minHeight);
+        return convertInt(this.styleMap.height) || this.lineHeight || convertInt(this.styleMap.minHeight);
+    }
+    get lineHeight() {
+        return (BLOCK_ELEMENT.includes(this.element.tagName) ? convertInt(this.styleMap.lineHeight) : 0);
     }
 
     get display() {

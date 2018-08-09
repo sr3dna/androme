@@ -639,10 +639,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public setImageSource() {
-        this.cache.filter(node => node.visible && (node.tagName === 'IMG' || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
+        this.cache.filter(node => node.visible && (node.element.tagName === 'IMG' || (node.element.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
             const element = <HTMLImageElement> node.element;
             if (getCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
-                const result = (node.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
+                const result = (node.element.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
                 if (result !== '') {
                     const method = METHOD_ANDROID['imageSource'];
                     node.attr(formatString(method['src'], result), (node.renderExtension == null));
@@ -654,7 +654,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+        this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
             const stored: ObjectMap<string[]> = getCache(node.element, 'optionArray');
             if (stored != null) {
                 const method = METHOD_ANDROID['optionArray'];

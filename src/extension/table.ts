@@ -13,11 +13,11 @@ export default class Table extends Extension<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const tableRows: T[] = [];
-        const thead = node.children.find(item => item.tagName === 'THEAD');
-        const tbody = node.children.find(item => item.tagName === 'TBODY');
-        const tfoot = node.children.find(item => item.tagName === 'TFOOT');
+        const thead = node.children.find(item => item.element.tagName === 'THEAD');
+        const tbody = node.children.find(item => item.element.tagName === 'TBODY');
+        const tfoot = node.children.find(item => item.element.tagName === 'TFOOT');
         if (thead != null) {
-            thead.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead, 'styleMap'));
+            thead.cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(thead, 'styleMap'));
             tableRows.push(...<T[]> thead.children);
             thead.hide();
         }
@@ -26,7 +26,7 @@ export default class Table extends Extension<T> {
             tbody.hide();
         }
         if (tfoot != null) {
-            tfoot.cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(tfoot, 'styleMap'));
+            tfoot.cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(tfoot, 'styleMap'));
             tableRows.push(...<T[]> tfoot.children);
             tfoot.hide();
         }
@@ -61,7 +61,7 @@ export default class Table extends Extension<T> {
                 td.parent = node;
             }
         }
-        const caption = node.children.find(item => item.tagName === 'CAPTION');
+        const caption = node.children.find(item => item.element.tagName === 'CAPTION');
         if (caption != null) {
             if (caption.styleMap.textAlign == null) {
                 caption.styleMap.textAlign = 'center';

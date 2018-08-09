@@ -56,7 +56,7 @@ export default abstract class List extends Extension<T> {
                         ordinal = `${convertRoman(j + 1)}.`;
                         break;
                     default:
-                        if (node.tagName === 'OL') {
+                        if (node.element.tagName === 'OL') {
                             ordinal = `${(listStyle === 'decimal-leading-zero' && j < 9 ? '0' : '') + (j + 1).toString()}.`;
                         }
                         else {

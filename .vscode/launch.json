@@ -9,35 +9,10 @@
             "webRoot": "${workspaceFolder}"
         },
         {
-            "name": "Launch Firefox",
-            "type": "firefox",
-            "request": "launch",
-            "url": "http://localhost:3000/demos-dev/index.html",
-            "webRoot": "${workspaceFolder}"
-        },
-        {
-            "name": "Launch Edge",
-            "type": "edge",
-            "request": "launch",
-            "url": "http://localhost:3000/demos-dev/index.html",
-            "webRoot": "${workspaceFolder}"
-        },
-        {
             "name": "Launch Express",
             "type": "node",
             "request": "launch",
             "program": "${workspaceFolder}/app.js"
-        },
-        {
-            "name": "Launch nodemon",
-            "type": "node",
-            "request": "launch",
-            "runtimeExecutable": "nodemon",
-            "program": "${workspaceFolder}/app.js",
-            "runtimeArgs": ["--nolazy"],
-            "restart": true,
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
         }
     ]
 }

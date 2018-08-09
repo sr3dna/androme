@@ -93,9 +93,9 @@ export default class Menu<T extends View> extends Nav {
                         return false;
                     });
                 }
-                node.each(item => item.tagName !== 'NAV' && item.hide());
+                node.each(item => item.element.tagName !== 'NAV' && item.hide());
             }
-            else if (node.tagName === 'NAV') {
+            else if (node.element.tagName === 'NAV') {
                 nodeName = VIEW_NAVIGATION.MENU;
                 proceed = true;
             }
