@@ -66,8 +66,8 @@ export default abstract class Node implements BoxModel {
     public abstract setAlignment(): void;
     public abstract optimizeLayout(): void;
     public abstract setAccessibility(): void;
-    public abstract applyCustomizations(): void;
-    public abstract modifyBox(area: number, offset: number): void;
+    public abstract applyCustomizations(overwrite: boolean): void;
+    public abstract modifyBox(area: number, offset: number, styleMap?: boolean): void;
     public abstract boxValue(area: number): string[];
     public abstract clone(): T;
 
@@ -646,7 +646,7 @@ export default abstract class Node implements BoxModel {
     get previousSibling() {
         let element = this.element.previousSibling;
         while (element != null) {
-            const node = getNode(<HTMLElement> element);
+            const node = getNode(<Element> element);
             if (node) {
                 return node;
             }
@@ -657,7 +657,7 @@ export default abstract class Node implements BoxModel {
     get nextSibling() {
         let element = this.element.nextSibling;
         while (element != null) {
-            const node = getNode(<HTMLElement> element);
+            const node = getNode(<Element> element);
             if (node) {
                 return node;
             }

@@ -192,11 +192,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                     }
                     adjustBaseline();
                     for (let i = 0; i < rows.length; i++) {
-                        if (rows[i].length === 1) {
-                            const current = rows[i][0];
-                            if (current.is(NODE_STANDARD.TEXT) && withinFraction(current.linear.right, node.box.right)) {
-                                current.android('singleLine', 'true');
-                            }
+                        const current = rows[i][0];
+                        if (current.is(NODE_STANDARD.TEXT) && Math.ceil(current.linear.right) >= node.box.right) {
+                            current.android('singleLine', 'true');
                         }
                     }
                 }
@@ -1767,16 +1765,19 @@ export default class ViewController<T extends View> extends Controller<T> {
         const beginPercent = `layout_constraintGuide_${(percent ? 'percent' : 'begin')}`;
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {
-                let LRTB = '';
-                let RLBT = '';
+                let LT = '';
+                let RB = '';
+                let LTRB = '';
                 switch (index) {
                     case 0:
-                        LRTB = (!opposite ? 'left' : 'right');
-                        RLBT = (!opposite ? 'right' : 'left');
+                        LT = (!opposite ? 'left' : 'right');
+                        RB = (!opposite ? 'right' : 'left');
+                        LTRB = (!opposite ? 'leftRight' : 'rightLeft');
                         break;
                     case 1:
-                        LRTB = (!opposite ? 'top' : 'bottom');
-                        RLBT = (!opposite ? 'bottom' : 'top');
+                        LT = (!opposite ? 'top' : 'bottom');
+                        RB = (!opposite ? 'bottom' : 'top');
+                        LTRB = (!opposite ? 'topBottom' : 'bottomTop');
                         break;
                 }
                 const dimension = (index === 0 || node.top == null ? 'linear' : 'bounds');
@@ -1790,21 +1791,42 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                     }
                 }
-                const position = (percent ? Math.abs(bounds[LRTB] - parent.box[LRTB]) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
-                const options = {
-                    android: {
-                        orientation: (index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL)
-                    },
-                    app: {
-                        [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
-                                                 : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node[dimension][LRTB] - parent.box[RLBT] : bounds[LRTB] - parent.box[LRTB]))))
-                    }
-                };
-                const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
-                this.appendAfter(node.id, xml);
-                node.app(map[LRTB], (<any> options).stringId);
-                node.delete('app', map[RLBT]);
-                node.constraint[value] = true;
+                const position = (percent ? Math.abs(bounds[LT] - parent.box[LT]) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
+                let found = false;
+                if (!percent) {
+                    found = parent.renderChildren.some(item => {
+                        if (item.constraint[value] && !item.constraint[`chain${capitalize(value)}`]) {
+                            if (withinFraction(node.linear[LT], item.linear[RB])) {
+                                node.anchor(map[LTRB], item.stringId, value, true);
+                                return true;
+                            }
+                            else if (withinFraction(node.linear[LT], item.linear[LT])) {
+                                node.anchor(map[LT], item.stringId, value, true);
+                                return true;
+                            }
+                            else if (withinFraction(node.linear[RB], item.linear[RB])) {
+                                node.anchor(map[LT], item.stringId, value, true);
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+                if (!found) {
+                    const options = {
+                        android: {
+                            orientation: (index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL)
+                        },
+                        app: {
+                            [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
+                                                     : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node[dimension][LT] - parent.box[RB] : bounds[LT] - parent.box[LT]))))
+                        }
+                    };
+                    const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
+                    this.appendAfter(node.id, xml);
+                    node.anchor(map[LT], (<any> options).stringId, value, true);
+                    node.delete('app', map[RB]);
+                }
             }
         });
     }

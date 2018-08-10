@@ -4,7 +4,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertCamelCase, convertInt, formatPX, hasValue, includesEnum, isNumber, optional, sortAsc, trim } from '../lib/util';
+import { convertCamelCase, convertInt, convertPX, formatPX, hasValue, includesEnum, isNumber, isPercent, optional, sortAsc, trim } from '../lib/util';
 import { placeIndent } from '../lib/xml';
 import { deleteCache, getCache, getNode, getStyle, hasFreeFormText, isVisible, setCache } from '../lib/dom';
 import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
@@ -70,6 +70,9 @@ export default class Application<T extends Node> {
         for (const node of visible) {
             if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.OPTIMIZE)) {
                 node.optimizeLayout();
+            }
+            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.CUSTOMIZATION)) {
+                node.applyCustomizations(SETTINGS.customizationsOverwritePrivilege);
             }
         }
         this.controllerHandler.setDimensions(this.viewData);
@@ -150,13 +153,14 @@ export default class Application<T extends Node> {
                                         cssRule.style[attr] = convertRGB(color);
                                     }
                                 }
+                                const cssStyle = cssRule.style[attr];
                                 if (element.style[attr]) {
                                     styleMap[attr] = element.style[attr];
                                 }
-                                else if (style[attr] === cssRule.style[attr]) {
+                                else if (style[attr] === cssStyle) {
                                     styleMap[attr] = style[attr];
                                 }
-                                else if (cssRule.style[attr]) {
+                                else if (cssStyle) {
                                     switch (attr) {
                                         case 'width':
                                         case 'height':
@@ -164,7 +168,7 @@ export default class Application<T extends Node> {
                                         case 'marginRight':
                                         case 'marginBottom':
                                         case 'marginLeft':
-                                            styleMap[attr] = cssRule.style[attr];
+                                            styleMap[attr] = (/^[\-A-za-z]+$/.test(<string> cssStyle) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle));
                                             break;
                                     }
                                 }
@@ -230,7 +234,8 @@ export default class Application<T extends Node> {
                 this.orderExt(extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
                     const supportInline = this.controllerHandler.supportInline;
-                    if (supportInline.includes(element.tagName) && element.parentElement && Array.from(element.parentElement.children).every(item => item.children.length === 0 && supportInline.includes(item.tagName))) {
+                    const styleMap = getCache(element, 'styleMap');
+                    if ((!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.parentElement && Array.from(element.parentElement.children).every(item => item.children.length === 0 && supportInline.includes(item.tagName))) {
                         continue;
                     }
                     let valid = true;
@@ -294,37 +299,47 @@ export default class Application<T extends Node> {
                 node.setBounds();
             }
             for (const node of this.cache) {
-                const element = <HTMLInputElement> node.element;
-                if (element.tagName === 'INPUT' && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
-                    switch (element.type) {
-                        case 'radio':
-                        case 'checkbox':
-                            [element.previousElementSibling, element.nextElementSibling].some((sibling: HTMLLabelElement) => {
-                                if (sibling && sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
-                                    const label = getNode(sibling);
-                                    if (label) {
+                if (node.pageflow) {
+                    const element = <HTMLInputElement> node.element;
+                    if (element.tagName === 'INPUT' && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+                        switch (element.type) {
+                            case 'radio':
+                            case 'checkbox':
+                                const found = [element.previousElementSibling, element.nextElementSibling].some((sibling: HTMLLabelElement) => {
+                                    if (sibling && sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
+                                        const label = getNode(sibling);
+                                        if (label && label.pageflow) {
+                                            node.companion = label;
+                                            node.setBounds();
+                                            label.hide();
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                });
+                                if (!found) {
+                                    const label = getNode(element.parentElement);
+                                    if (label && label.element.tagName === 'LABEL' && label.element.children.length === 1) {
                                         node.companion = label;
                                         node.setBounds();
                                         label.hide();
-                                        return true;
                                     }
                                 }
-                                return false;
-                            });
-                            break;
+                                break;
+                        }
                     }
                 }
             }
             const visible = this.cache.visible;
             for (const node of visible) {
                 if (!node.documentRoot) {
-                    let parent = getNode(<HTMLElement> node.element.parentElement);
+                    let parent = getNode(node.element.parentElement);
                     if (parent) {
                         if (!node.pageflow) {
                             let found = false;
                             let previous: Null<T> = null;
                             while (parent && parent.id !== 0) {
-                                if (node.position === 'absolute' && convertInt(node.top) >= 0 && convertInt(node.left) >= 0) {
+                                if (node.position === 'absolute') {
                                     const position = parent.position;
                                     if (!(position === 'static' || position === 'initial')) {
                                         found = true;
@@ -338,10 +353,18 @@ export default class Application<T extends Node> {
                                     }
                                 }
                                 previous = parent as T;
-                                parent = getNode(<HTMLElement> parent.element.parentElement) as T;
+                                parent = getNode(parent.element.parentElement) as T;
                             }
                             if (!found)  {
                                 parent = this.cache.parent;
+                            }
+                        }
+                        else {
+                            if (parent === node.companion) {
+                                const container = getNode(parent.element.parentElement);
+                                if (container) {
+                                    parent = container;
+                                }
                             }
                         }
                         node.parent = parent;
@@ -388,7 +411,7 @@ export default class Application<T extends Node> {
                     const marginLeftType = Math.max.apply(null, marginLeft);
                     node.each((current, index: number) => {
                         if (marginLeftType && marginLeft[index] !== 2 && ((marginLeftType === 1 && marginLeft[index] === 1) || marginLeftType === 2)) {
-                            current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft);
+                            current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft, true);
                         }
                     });
                     if (marginLeftType) {
@@ -558,9 +581,6 @@ export default class Application<T extends Node> {
                         }
                     }
                     if (!nodeY.rendered) {
-                        if (!includesEnum(nodeY.excludeProcedure, NODE_PROCEDURE.CUSTOMIZATION)) {
-                            nodeY.applyCustomizations();
-                        }
                         const renderExtension = (<IExtension> parent.renderExtension);
                         if (renderExtension != null) {
                             renderExtension.setTarget(nodeY, parent);
@@ -699,7 +719,7 @@ export default class Application<T extends Node> {
                             if (nodeY.nodeName === '') {
                                 const supportInline = this.controllerHandler.supportInline;
                                 const untargeted = nodeY.untargeted;
-                                if (untargeted.length === 0 || (!nodeY.documentRoot && supportInline.length > 0 && untargeted.every(node => node.inlineElement && node.untargeted.length === 0 && supportInline.includes(node.element.tagName)))) {
+                                if (untargeted.length === 0 || (!nodeY.documentRoot && untargeted.every(node => node.inlineElement && node.untargeted.length === 0 && supportInline.includes(node.element.tagName)))) {
                                     if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
                                         xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }

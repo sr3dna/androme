@@ -92,7 +92,18 @@ const API_ANDROID: UserSupport = {
     [BUILD.ALL]: {
         android: [],
         app: [],
-        customizations: {}
+        customizations: {
+            SUB: {
+                android: {
+                    layout_marginTop: '4px'
+                }
+            },
+            SUP: {
+                android: {
+                    layout_marginTop: '-4px'
+                }
+            }
+        }
     }
 };
 

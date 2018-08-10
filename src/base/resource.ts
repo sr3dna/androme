@@ -4,9 +4,9 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertPX, hasValue, includesEnum, isNumber } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, getCache, getNode, sameAsParent, setCache, hasFreeFormText } from '../lib/dom';
+import { getBoxSpacing, getCache, sameAsParent, setCache, hasFreeFormText } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
-import { MAP_ELEMENT, NODE_RESOURCE } from '../lib/constants';
+import { NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
@@ -237,14 +237,13 @@ export default abstract class Resource<T extends Node> {
                 }
                 else if (element.nodeName === '#text') {
                     value = <string> element.textContent;
-                    const previousSibling = <HTMLElement> element.previousSibling;
-                    if (previousSibling && previousSibling.tagName === 'BR') {
+                    if (element.previousSibling && (<Element> element.previousSibling).tagName === 'BR') {
                         value = value.replace(/^\s+/g, '');
                     }
                     inlineTrim = true;
                 }
                 else if (node.hasElement) {
-                    if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[(getNode(item) ? (<T> getNode(item)).tagName : '')] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
+                    if (node.children.length === 0 && hasFreeFormText(element)) {
                         name = (element.innerText || element.textContent || '').trim();
                         value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
                         switch (node.css('whiteSpace')) {
@@ -253,6 +252,7 @@ export default abstract class Resource<T extends Node> {
                                 break;
                             case 'pre':
                             case 'pre-wrap':
+                                value = value.replace(/\n/g, '\\n');
                                 value = value.replace(/\s/g, '&#160;');
                                 break;
                             case 'pre-line':
@@ -267,12 +267,14 @@ export default abstract class Resource<T extends Node> {
                     }
                 }
                 if (inlineTrim) {
+                    const previousSibling = node.previousSibling;
+                    const nextSibling = node.nextSibling;
                     const original = value;
                     value = value.trim();
-                    if (node.previousSibling && node.previousSibling.inlineElement && /^\s+/.test(original)) {
+                    if (previousSibling && previousSibling.display !== 'block' && !/\s+$/.test(<string> (previousSibling.element.innerText || previousSibling.element.textContent)) && /^\s+/.test(original)) {
                         value = '&#160;' + value;
                     }
-                    if (node.nextSibling && node.nextSibling.inlineElement && /\s+$/.test(original)) {
+                    if (nextSibling && /\s+$/.test(original)) {
                         value = value + '&#160;';
                     }
                 }

@@ -678,9 +678,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let result: string[] = [];
                 if (stored.stringArray != null) {
                     result = stored.stringArray.map(value => {
-                        value = ResourceView.addString(value);
-                        return (value !== '' ? `@string/${value}` : '');
-                    }).filter(value => value);
+                        const name = ResourceView.addString(value);
+                        return (name !== '' ? `@string/${name}` : '');
+                    }).filter(name => name);
                 }
                 if (stored.numberArray != null) {
                     result = stored.numberArray;
@@ -707,25 +707,23 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
             const stored: BasicData = getCache(node.element, 'valueString');
             if (stored != null) {
-                const result = ResourceView.addString(stored.value, stored.name);
-                if (result !== '') {
-                    const method = METHOD_ANDROID['valueString'];
-                    let value = Resource.STORED.STRINGS.get(result);
-                    if (value != null && node.is(NODE_STANDARD.TEXT) && node.style != null) {
-                        const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
-                        if (match != null) {
-                            switch (match[0]) {
-                                case 'underline':
-                                    value = `<u>${value}</u>`;
-                                    break;
-                                case 'line-through':
-                                    value = `<strike>${value}</strike>`;
-                                    break;
-                            }
-                            Resource.STORED.STRINGS.set(result, value);
+                if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
+                    const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
+                    if (match != null) {
+                        switch (match[0]) {
+                            case 'underline':
+                                stored.value = `<u>${stored.value}</u>`;
+                                break;
+                            case 'line-through':
+                                stored.value = `<strike>${stored.value}</strike>`;
+                                break;
                         }
                     }
-                    node.attr(formatString(method['text'], (isNaN(parseInt(result)) || parseInt(result).toString() !== result ? `@string/${result}` : result)), (node.renderExtension == null));
+                }
+                const name = ResourceView.addString(stored.value, stored.name);
+                if (name !== '') {
+                    const method = METHOD_ANDROID['valueString'];
+                    node.attr(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension == null));
                 }
             }
         });

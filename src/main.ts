@@ -1,4 +1,4 @@
-import { Null, StringMap } from './lib/types';
+import { Null } from './lib/types';
 import { IExtension } from './extension/lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
@@ -272,7 +272,7 @@ export function writeResourceDrawableXml(saveToDisk = false) {
     return '';
 }
 
-export function customize(build: number, widget: string, options: StringMap) {
+export function customize(build: number, widget: string, options: {}) {
     if (API_ANDROID[build] != null) {
         const customizations = API_ANDROID[build].customizations;
         if (customizations[widget] == null) {

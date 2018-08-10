@@ -117,7 +117,8 @@ export default class View extends Node {
                 this.delete('android', dimension);
             }
             if (styleMap) {
-                this.css(dimension.replace('layout_', ''), total);
+                this.css(value.replace('layout_', ''), total);
+                this.setBounds(true);
             }
         }
     }
@@ -171,17 +172,19 @@ export default class View extends Node {
         });
     }
 
-    public applyCustomizations() {
-        [API_ANDROID[this.api], API_ANDROID[0]].forEach(item => {
-            if (item && item.customizations != null) {
-                const customizations = item.customizations[this.nodeName];
-                if (customizations != null) {
-                    for (const obj in customizations) {
-                        for (const attr in customizations[obj]) {
-                            this.add(obj, attr, customizations[obj][attr], false);
+    public applyCustomizations(overwrite = false) {
+        [API_ANDROID[this.api], API_ANDROID[0]].forEach(build => {
+            if (build && build.customizations != null) {
+                [this.element.tagName, this.nodeName].forEach(nodeName => {
+                    const customizations = build.customizations[nodeName];
+                    if (customizations != null) {
+                        for (const obj in customizations) {
+                            for (const attr in customizations[obj]) {
+                                this.add(obj, attr, customizations[obj][attr], overwrite);
+                            }
                         }
                     }
-                }
+                });
             }
         });
     }
@@ -295,14 +298,16 @@ export default class View extends Node {
                         if (this.renderChildren.length > 0) {
                             switch (this.nodeName) {
                                 case NODE_ANDROID.LINEAR:
+                                case NODE_ANDROID.RADIO_GROUP:
                                     contentWidth += this.renderChildren.reduce((a: number, b: T) => (this.horizontal ? a + b.viewWidth : Math.max(a, b.viewWidth)), 0);
                                     break;
                                 case NODE_ANDROID.CONSTRAINT:
-                                    contentWidth += this.renderChildren.reduce((a: number, b: T) => a + (b.app('layout_constraintTop_toTopOf') === 'parent' ? b.viewWidth : 0), 0);
+                                case NODE_ANDROID.RELATIVE:
+                                    contentWidth += this.renderChildren.reduce((a: number, b: T) => a + (b.alignParent('top') ? b.viewWidth : 0), 0);
                                     break;
                             }
                         }
-                        this.android('layout_width', (!this.overflowX && (contentWidth > this.viewWidth || this.inline) ? 'wrap_content' : styleMap.width));
+                        this.android('layout_width', (!this.overflowX && ((contentWidth > this.viewWidth) || this.inline) ? 'wrap_content' : styleMap.width));
                     }
                     else if (styleMap.width === 'auto') {
                         this.android('layout_width', (!this.inlineElement && this.pageflow && BLOCK_ELEMENT.includes(this.element.tagName) && !this.autoMargin ? 'match_parent' : 'wrap_content'), false);
@@ -516,10 +521,12 @@ export default class View extends Node {
                 if (horizontal === '') {
                     horizontal = horizontalParent;
                 }
-                if (renderParent.is(NODE_STANDARD.FRAME)) {
-                    if (horizontal !== '') {
-                        this.android('layout_gravity', horizontal);
-                        horizontal = '';
+                if (!this.floating && this.styleMap.marginLeft !== 'auto' && this.styleMap.marginRight !== 'auto') {
+                    if (renderParent.is(NODE_STANDARD.FRAME)) {
+                        if (horizontal !== '') {
+                            this.android('layout_gravity', horizontal);
+                            horizontal = '';
+                        }
                     }
                 }
             }
@@ -603,8 +610,10 @@ export default class View extends Node {
                         }
                     }
                 });
-                if (this.horizontal && this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
-                    this.android('baselineAligned', 'false');
+                if (this.horizontal) {
+                    if (this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
+                        this.android('baselineAligned', 'false');
+                    }
                 }
                 break;
             case NODE_ANDROID.IMAGE:

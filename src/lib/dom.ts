@@ -2,17 +2,17 @@ import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
 import { convertInt, optional, hasValue } from './util';
 
-export function setCache(element: Element, attr: string, data: any) {
+export function setCache(element: Null<Element>, attr: string, data: any) {
     if (element != null) {
         element[`__${attr}`] = data;
     }
 }
 
-export function getCache(element: Element, attr: string) {
+export function getCache(element: Null<Element>, attr: string) {
     return (element != null ? element[`__${attr}`] : null);
 }
 
-export function deleteCache(element: Element, ...attrs: string[]) {
+export function deleteCache(element: Null<Element>, ...attrs: string[]) {
     if (element != null) {
         for (const attr of attrs) {
             delete element[`__${attr}`];
@@ -20,7 +20,7 @@ export function deleteCache(element: Element, ...attrs: string[]) {
     }
 }
 
-export function getNode<T extends Node>(element: Element): Null<T> {
+export function getNode<T extends Node>(element: Null<Element>): Null<T> {
     return getCache(element, 'node');
 }
 

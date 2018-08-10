@@ -31,6 +31,7 @@ const SETTINGS = {
     chainPackedHorizontalOffset: 4,
     chainPackedVerticalOffset: 16,
     showAttributes: true,
+    customizationsOverwritePrivilege: false,
     autoCloseOnWrite: true,
     insertSpaces: 4,
     outputDirectory: 'app/src/main',
