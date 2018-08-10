@@ -1,4 +1,4 @@
-import { StringMap } from '../../../lib/types';
+import { Null, StringMap } from '../../../lib/types';
 import ResourceView from '../../resource-view';
 import View from '../../view';
 import { includes, isNumber, optional, formatPX } from '../../../lib/util';
@@ -64,7 +64,7 @@ export function formatResource(options: {}) {
     return options;
 }
 
-export function findNestedExtension(node: T, extension: string) {
+export function findNestedExtension(node: T, extension: string): Null<HTMLElement> {
     return <HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext', 'string'), extension));
 }
 

@@ -135,7 +135,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 function anchored(list: NodeList<T>) {
                     return list.filter(current => current.anchored);
                 }
-                if (relative && node.inlineWrap) {
+                if (relative && (node.inlineWrap || nodes.list.some(item => item.inlineWrap))) {
                     const baseline: T[] = [];
                     function adjustBaseline() {
                         if (baseline.length > 1) {
@@ -164,7 +164,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         else {
                             const previous = nodes.get(i - 1);
                             const group = (current instanceof ViewGroup);
-                            if (group || Math.floor(width + current[dimension].width) > node.box.width) {
+                            if ((node.inlineWrap && group) || Math.floor(width + current[dimension].width) > node.box.width) {
                                 current.android(mapLayout['topBottom'], previous.stringId);
                                 current.android(relativeParent['left'], 'true');
                                 if (group) {
@@ -204,158 +204,160 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const [pageflow, fixed] = nodes.partition(item => item.pageflow);
                     const linearX = pageflow.linearX;
                     const verticalPerspective = (!SETTINGS.horizontalPerspective && !flex.enabled && !pageflow.list.some(item => item.floating));
-                    pageflow.prepend(node);
-                    for (let current of pageflow) {
-                        for (const adjacent of pageflow) {
-                            if (current === adjacent) {
-                                continue;
-                            }
-                            else {
-                                let linear1 = current.linear;
-                                let linear2 = adjacent.linear;
-                                let stringId = adjacent.stringId;
-                                const horizontal = (resolveAnchor(adjacent, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '');
-                                const vertical = (resolveAnchor(adjacent, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '');
-                                const intersectY = current.intersectY(adjacent.linear);
-                                const alignMargin = (current.alignMargin && adjacent.alignMargin);
-                                if (constraint) {
-                                    if (current === node || adjacent === node) {
-                                        if (current === node) {
-                                            current = adjacent;
-                                        }
-                                        linear1 = current.linear;
-                                        linear2 = node.box;
-                                        stringId = 'parent';
-                                    }
-                                    if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
-                                        this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
-                                    }
-                                    else {
-                                        if (stringId === 'parent') {
-                                            if (linear1.left <= linear2.left || withinFraction(linear1.left, linear2.left)) {
-                                                current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
-                                            }
-                                            if (linear1.right >= linear2.right || withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                                current.anchor(mapLayout['right'], 'parent', (node.viewWidth > 0 || current.float === 'right' || current.inlineWrap ? AXIS_ANDROID.HORIZONTAL : ''));
-                                            }
-                                        }
-                                        else {
-                                            if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
-                                                if (!mapParent(current, 'right')) {
-                                                    current.anchor(mapLayout['left'], stringId);
-                                                }
-                                                if (!mapParent(current, 'left')) {
-                                                    current.anchor(mapLayout['right'], stringId);
-                                                }
-                                            }
-                                            else if (verticalPerspective) {
-                                                if (linear1.left === linear2.left) {
-                                                    current.anchor(mapLayout['left'], stringId);
-                                                }
-                                                else if (linear1.right === linear2.right) {
-                                                    current.anchor(mapLayout['right'], stringId);
-                                                }
-                                            }
-                                            if (withinRange(linear1.left, linear2.right, (alignMargin ? SETTINGS.whitespaceHorizontalOffset : 0))) {
-                                                if (current.float !== 'right') {
-                                                    current.anchor(mapLayout['leftRight'], stringId, horizontal, current.withinX(linear2));
-                                                }
-                                                else {
-                                                    current.constraint.marginHorizontal = adjacent.stringId;
-                                                }
-                                            }
-                                            if (withinRange(linear1.right, linear2.left, (alignMargin ? SETTINGS.whitespaceHorizontalOffset : 0))) {
-                                                if (current.float !== 'left') {
-                                                    current.anchor(mapLayout['rightLeft'], stringId, horizontal, current.withinX(linear2));
-                                                }
-                                            }
-                                        }
-                                    }
-                                    let topParent = mapParent(current, 'top');
-                                    const bottomParent = mapParent(current, 'bottom');
-                                    if (stringId === 'parent') {
-                                        if (linear1.top <= linear2.top || withinFraction(linear1.top, linear2.top)) {
-                                            current.anchor(mapLayout['top'], 'parent', AXIS_ANDROID.VERTICAL);
-                                            topParent = true;
-                                        }
-                                        if (linear1.bottom >= linear2.bottom || withinFraction(linear1.bottom, linear2.bottom)) {
-                                            if (!(topParent && current.inlineWrap)) {
-                                                current.anchor(mapLayout['bottom'], 'parent', (node.viewHeight > 0 ? AXIS_ANDROID.VERTICAL : ''));
-                                            }
-                                        }
-                                    }
-                                    else {
-                                        if (withinRange(linear1.top, linear2.bottom, (alignMargin ? SETTINGS.whitespaceVerticalOffset : 0))) {
-                                            if (intersectY || !bottomParent) {
-                                                current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
-                                            }
-                                        }
-                                        else if (withinRange(linear1.bottom, linear2.top, (alignMargin ? SETTINGS.whitespaceVerticalOffset : 0))) {
-                                            if (intersectY || !topParent) {
-                                                current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
-                                            }
-                                        }
-                                        if (linear1.top === linear2.top && !topParent && !bottomParent) {
-                                            current.anchor(mapLayout['top'], stringId, vertical);
-                                        }
-                                        if (linear1.bottom === linear2.bottom && !topParent && !bottomParent) {
-                                            current.anchor(mapLayout['bottom'], stringId, vertical);
-                                        }
-                                    }
+                    if (pageflow.length > 0) {
+                        pageflow.prepend(node);
+                        for (let current of pageflow) {
+                            for (const adjacent of pageflow) {
+                                if (current === adjacent) {
+                                    continue;
                                 }
-                                else if (relative) {
-                                    if (current === node) {
-                                        continue;
-                                    }
-                                    else if (adjacent === node) {
-                                        if (current.linear.left <= node.box.left || withinFraction(current.linear.left, node.box.left)) {
-                                            current.anchor(relativeParent['left'], 'true', AXIS_ANDROID.HORIZONTAL);
+                                else {
+                                    let linear1 = current.linear;
+                                    let linear2 = adjacent.linear;
+                                    let stringId = adjacent.stringId;
+                                    const horizontal = (resolveAnchor(adjacent, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '');
+                                    const vertical = (resolveAnchor(adjacent, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '');
+                                    const intersectY = current.intersectY(adjacent.linear);
+                                    const alignMargin = (current.alignMargin && adjacent.alignMargin);
+                                    if (constraint) {
+                                        if (current === node || adjacent === node) {
+                                            if (current === node) {
+                                                current = adjacent;
+                                            }
+                                            linear1 = current.linear;
+                                            linear2 = node.box;
+                                            stringId = 'parent';
                                         }
-                                        else if (current.linear.right >= node.box.right || withinFraction(current.linear.right, node.box.right)) {
-                                            current.anchor(relativeParent['right'], 'true', AXIS_ANDROID.HORIZONTAL);
-                                        }
-                                        if (current.linear.top <= node.box.top || withinFraction(current.linear.top, node.box.top)) {
-                                            current.anchor(relativeParent['top'], 'true', AXIS_ANDROID.VERTICAL);
-                                        }
-                                        else if (current.linear.bottom >= node.box.bottom || withinFraction(current.linear.bottom, node.box.bottom)) {
-                                            current.anchor(relativeParent['bottom'], 'true', AXIS_ANDROID.VERTICAL);
-                                        }
-                                    }
-                                    else {
-                                        if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
-                                            current.android('layout_centerHorizontal', 'true');
-                                            current.constraint.horizontal = true;
+                                        if (current.styleMap.width != null && current.styleMap.marginLeft === 'auto' && current.styleMap.marginRight === 'auto') {
+                                            this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                         }
                                         else {
-                                            if ((linear1.top === linear2.top || linear1.bottom === linear2.bottom) && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
-                                                if (current.float === 'right') {
-                                                    adjacent.anchor(mapLayout['rightLeft'], current.stringId, horizontal);
+                                            if (stringId === 'parent') {
+                                                if (linear1.left <= linear2.left || withinFraction(linear1.left, linear2.left)) {
+                                                    current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                                 }
-                                                else {
-                                                    current.anchor(mapLayout['leftRight'], stringId, horizontal);
-                                                    if (adjacent.constraint.horizontal) {
-                                                        current.delete('android', relativeParent['right']);
+                                                if (linear1.right >= linear2.right || withinRange(linear1.right, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                                    current.anchor(mapLayout['right'], 'parent', (node.viewWidth > 0 || current.float === 'right' || current.inlineWrap || current.styleMap.marginLeft === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
+                                                }
+                                            }
+                                            else {
+                                                if (current.viewWidth === 0 && linear1.left === linear2.left && linear1.right === linear2.right) {
+                                                    if (!mapParent(current, 'right')) {
+                                                        current.anchor(mapLayout['left'], stringId);
+                                                    }
+                                                    if (!mapParent(current, 'left')) {
+                                                        current.anchor(mapLayout['right'], stringId);
+                                                    }
+                                                }
+                                                else if (verticalPerspective) {
+                                                    if (linear1.left === linear2.left) {
+                                                        current.anchor(mapLayout['left'], stringId);
+                                                    }
+                                                    else if (linear1.right === linear2.right) {
+                                                        current.anchor(mapLayout['right'], stringId);
+                                                    }
+                                                }
+                                                if (withinRange(linear1.left, linear2.right, (alignMargin ? SETTINGS.whitespaceHorizontalOffset : 0))) {
+                                                    if (current.float !== 'right') {
+                                                        current.anchor(mapLayout['leftRight'], stringId, horizontal, current.withinX(linear2));
+                                                    }
+                                                    else {
+                                                        current.constraint.marginHorizontal = adjacent.stringId;
+                                                    }
+                                                }
+                                                if (withinRange(linear1.right, linear2.left, (alignMargin ? SETTINGS.whitespaceHorizontalOffset : 0))) {
+                                                    if (current.float !== 'left') {
+                                                        current.anchor(mapLayout['rightLeft'], stringId, horizontal, current.withinX(linear2));
                                                     }
                                                 }
                                             }
                                         }
-                                        if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
-                                            current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
-                                            if (adjacent.constraint.vertical) {
-                                                current.delete('android', relativeParent['bottom']);
+                                        let topParent = mapParent(current, 'top');
+                                        const bottomParent = mapParent(current, 'bottom');
+                                        if (stringId === 'parent') {
+                                            if (linear1.top <= linear2.top || withinFraction(linear1.top, linear2.top)) {
+                                                current.anchor(mapLayout['top'], 'parent', AXIS_ANDROID.VERTICAL);
+                                                topParent = true;
+                                            }
+                                            if (linear1.bottom >= linear2.bottom || withinFraction(linear1.bottom, linear2.bottom)) {
+                                                if (!(topParent && current.inlineWrap)) {
+                                                    current.anchor(mapLayout['bottom'], 'parent', (node.viewHeight > 0 ? AXIS_ANDROID.VERTICAL : ''));
+                                                }
                                             }
                                         }
-                                        else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
-                                            if (!mapParent(current, 'top')) {
-                                                current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
+                                        else {
+                                            if (withinRange(linear1.top, linear2.bottom, (alignMargin ? SETTINGS.whitespaceVerticalOffset : 0))) {
+                                                if (intersectY || !bottomParent) {
+                                                    current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
+                                                }
+                                            }
+                                            else if (withinRange(linear1.bottom, linear2.top, (alignMargin ? SETTINGS.whitespaceVerticalOffset : 0))) {
+                                                if (intersectY || !topParent) {
+                                                    current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
+                                                }
+                                            }
+                                            if (linear1.top === linear2.top && !topParent && !bottomParent) {
+                                                current.anchor(mapLayout['top'], stringId, vertical);
+                                            }
+                                            if (linear1.bottom === linear2.bottom && !topParent && !bottomParent) {
+                                                current.anchor(mapLayout['bottom'], stringId, vertical);
                                             }
                                         }
-                                        if (adjacent.constraint.horizontal) {
-                                            if (linear1.bottom === linear2.bottom) {
-                                                if (!linearX && !current.floating && !current.constraint.vertical) {
-                                                    current.anchor(mapLayout['bottom'], stringId, vertical);
-                                                    if (adjacent.constraint.vertical) {
-                                                        current.delete('android', relativeParent['bottom']);
+                                    }
+                                    else if (relative) {
+                                        if (current === node) {
+                                            continue;
+                                        }
+                                        else if (adjacent === node) {
+                                            if (current.linear.left <= node.box.left || withinFraction(current.linear.left, node.box.left)) {
+                                                current.anchor(relativeParent['left'], 'true', AXIS_ANDROID.HORIZONTAL);
+                                            }
+                                            else if (current.linear.right >= node.box.right || withinFraction(current.linear.right, node.box.right)) {
+                                                current.anchor(relativeParent['right'], 'true', AXIS_ANDROID.HORIZONTAL);
+                                            }
+                                            if (current.linear.top <= node.box.top || withinFraction(current.linear.top, node.box.top)) {
+                                                current.anchor(relativeParent['top'], 'true', AXIS_ANDROID.VERTICAL);
+                                            }
+                                            else if (current.linear.bottom >= node.box.bottom || withinFraction(current.linear.bottom, node.box.bottom)) {
+                                                current.anchor(relativeParent['bottom'], 'true', AXIS_ANDROID.VERTICAL);
+                                            }
+                                        }
+                                        else {
+                                            if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
+                                                current.android('layout_centerHorizontal', 'true');
+                                                current.constraint.horizontal = true;
+                                            }
+                                            else {
+                                                if ((linear1.top === linear2.top || linear1.bottom === linear2.bottom) && withinRange(linear1.left, linear2.right, SETTINGS.whitespaceHorizontalOffset)) {
+                                                    if (current.float === 'right') {
+                                                        adjacent.anchor(mapLayout['rightLeft'], current.stringId, horizontal);
+                                                    }
+                                                    else {
+                                                        current.anchor(mapLayout['leftRight'], stringId, horizontal);
+                                                        if (adjacent.constraint.horizontal) {
+                                                            current.delete('android', relativeParent['right']);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if (withinRange(linear1.top, linear2.bottom, SETTINGS.whitespaceVerticalOffset)) {
+                                                current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
+                                                if (adjacent.constraint.vertical) {
+                                                    current.delete('android', relativeParent['bottom']);
+                                                }
+                                            }
+                                            else if (withinRange(linear1.bottom, linear2.top, SETTINGS.whitespaceVerticalOffset)) {
+                                                if (!mapParent(current, 'top')) {
+                                                    current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
+                                                }
+                                            }
+                                            if (adjacent.constraint.horizontal) {
+                                                if (linear1.bottom === linear2.bottom) {
+                                                    if (!linearX && !current.floating && !current.constraint.vertical) {
+                                                        current.anchor(mapLayout['bottom'], stringId, vertical);
+                                                        if (adjacent.constraint.vertical) {
+                                                            current.delete('android', relativeParent['bottom']);
+                                                        }
                                                     }
                                                 }
                                             }
@@ -364,6 +366,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                             }
                         }
+                        pageflow.remove(0);
                     }
                     if (fixed.length > 0) {
                         node.setBoundsMin();
@@ -392,8 +395,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                         }
                     }
-                    pageflow.remove(0);
-                    for (const current of pageflow) {
+                    for (const current of nodes) {
                         const leftRight = mapView(current, 'leftRight');
                         if (leftRight != null) {
                             if (!current.constraint.horizontal) {
@@ -409,27 +411,48 @@ export default class ViewController<T extends View> extends Controller<T> {
                             current.constraint.marginVertical = topBottom;
                             mapDelete(current, 'top');
                         }
-                        if (constraint) {
-                            if (mapParent(current, 'left') && mapParent(current, 'right')) {
-                                if (current.floating) {
-                                    mapDelete(current, (current.float === 'right' ? 'left' : 'right'));
+                        if (mapParent(current, 'left') && mapParent(current, 'right')) {
+                            if (current.styleMap.marginLeft === 'auto' || current.styleMap.marginRight === 'auto') {
+                                if (current.styleMap.marginLeft === 'auto' && current.styleMap.marginRight !== 'auto') {
+                                    mapDelete(current, 'left');
                                 }
-                                else if (current.nodeType <= NODE_STANDARD.IMAGE || current.viewWidth > 0) {
+                                if (current.styleMap.marginLeft !== 'auto' && current.styleMap.marginRight === 'auto') {
+                                    mapDelete(current, 'right');
+                                }
+                                if (current.marginLeft === current.marginRight) {
+                                    if (node.viewWidth > 0) {
+                                        current.android('layout_width', 'match_parent');
+                                    }
+                                    else if (current.inlineElement && current.viewWidth === 0) {
+                                        current.android('layout_width', 'wrap_content');
+                                    }
+                                }
+                            }
+                            else if (current.floating) {
+                                mapDelete(current, (current.float === 'right' ? 'left' : 'right'));
+                            }
+                            else if (current.inlineElement) {
+                                if (current.nodeType <= NODE_STANDARD.IMAGE) {
                                     switch (current.css('textAlign')) {
-                                        case 'left':
-                                        case 'start' :
-                                            mapDelete(current, 'right');
+                                        case 'center':
                                             break;
                                         case 'right':
                                         case 'end' :
                                             mapDelete(current, 'left');
                                             break;
-                                    }
-                                    if (current.viewWidth === 0) {
-                                        current.android('layout_width', 'match_parent');
+                                        default:
+                                            mapDelete(current, 'right');
                                     }
                                 }
+                                else {
+                                    mapDelete(current, 'right');
+                                }
                             }
+                            else {
+                                mapDelete(current, 'right');
+                            }
+                        }
+                        if (constraint) {
                             if (mapView(current, 'bottomTop') != null) {
                                 mapDelete(current, 'bottom');
                             }
@@ -1107,8 +1130,20 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         if (valid) {
                                             node.constraint[`layout${value[6]}`] = true;
                                         }
-                                        if (value[0] && value[1] && !current.constraint[`chain${value[6]}`]) {
-                                            current.android(`layout_${(index === 0 ? 'width' : 'height')}`, 'match_parent');
+                                        if (!current.constraint[`chain${value[6]}`]) {
+                                            if (value[0] && value[1]) {
+                                                if (!current.autoMargin) {
+                                                    current.android(`layout_${(index === 0 ? 'width' : 'height')}`, 'match_parent', false);
+                                                }
+                                            }
+                                            else if (value[1]) {
+                                                if (valid) {
+                                                    const below = this.findByStringId(<string> mapView(current, value[3]));
+                                                    if (below && below.marginBottom === 0) {
+                                                        mapDelete(current, value[4]);
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 });
@@ -1129,10 +1164,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                             }
                             else {
-                                if (left && right && node.right == null && current.viewWidth > 0) {
+                                if (left && right && current.right == null && current.viewWidth > 0) {
                                     mapDelete(current, 'right');
                                 }
-                                if (top && bottom && node.bottom == null && current.viewHeight > 0) {
+                                if (top && bottom && current.bottom == null && current.viewHeight > 0) {
                                     mapDelete(current, 'bottom');
                                 }
                                 if (left && right && node.viewWidth === 0) {
@@ -1744,24 +1779,25 @@ export default class ViewController<T extends View> extends Controller<T> {
                         RLBT = (!opposite ? 'bottom' : 'top');
                         break;
                 }
-                let linear = node.linear;
+                const dimension = (index === 0 || node.top == null ? 'linear' : 'bounds');
+                let bounds = node[dimension];
                 const previousSibling = node.previousSibling;
                 if (index === 0 && !opposite && previousSibling != null) {
                     if (previousSibling.float === 'left' && !['left', 'both'].includes(previousSibling.css('clear')) && !['left', 'both'].includes(node.css('clear')) && node.linear.left < previousSibling.linear.right) {
                         const firstChild = node.firstChild;
                         if (firstChild && firstChild.linear.left >= previousSibling.linear.right) {
-                            linear = firstChild.linear;
+                            bounds = firstChild[dimension];
                         }
                     }
                 }
-                const position = (percent ? Math.abs(linear[LRTB] - parent.box[LRTB]) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
+                const position = (percent ? Math.abs(bounds[LRTB] - parent.box[LRTB]) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
                 const options = {
                     android: {
                         orientation: (index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL)
                     },
                     app: {
                         [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
-                                                 : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node.linear[LRTB] - parent.box[RLBT] : linear[LRTB] - parent.box[LRTB]))))
+                                                 : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node[dimension][LRTB] - parent.box[RLBT] : bounds[LRTB] - parent.box[LRTB]))))
                     }
                 };
                 const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');

@@ -3,7 +3,7 @@ import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import NodeList from '../base/nodelist';
-import { cameltoLowerCase, capitalize, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
 import { generateId, replaceDP } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { getCache, sameAsParent, setCache } from '../lib/dom';
@@ -285,6 +285,23 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)).each(node => {
             const stored: StringMap = getCache(node.element, 'boxSpacing');
             if (stored != null) {
+                if (convertInt(stored.marginLeft) > 0 && stored.marginLeft === stored.marginRight) {
+                    if (node.alignParent('left') && node.alignParent('right')) {
+                        if (node.android('layout_width') !== 'match_parent') {
+                            delete stored.marginLeft;
+                            delete stored.marginRight;
+                        }
+                    }
+                }
+                if (node.styleMap.marginLeft === 'auto') {
+                    delete stored.marginLeft;
+                }
+                if (node.styleMap.marginRight === 'auto') {
+                    delete stored.marginRight;
+                }
+                if (node.float === 'right' && convertInt(stored.marginLeft) < 0) {
+                    delete stored.marginLeft;
+                }
                 const method = METHOD_ANDROID['boxSpacing'];
                 for (const attr in stored) {
                     if (stored[attr] !== '0px') {

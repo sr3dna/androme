@@ -88,7 +88,7 @@ export default abstract class Resource<T extends Node> {
                 const formatted = {};
                 const inlineChild = (node.renderChildren.length > 0 && node.renderChildren.every(item => item.inline));
                 for (const attr in result) {
-                    if ((node.inline && (attr === 'marginTop' || attr === 'marginBottom')) || (inlineChild && (attr === 'paddingTop' || attr === 'paddingBottom'))) {
+                   if ((node.inline && (attr === 'marginTop' || attr === 'marginBottom')) || (inlineChild && (attr === 'paddingTop' || attr === 'paddingBottom'))) {
                         formatted[attr] = '0px';
                     }
                     else {
@@ -244,7 +244,7 @@ export default abstract class Resource<T extends Node> {
                     inlineTrim = true;
                 }
                 else if (node.hasElement) {
-                    if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[(getNode(item) != null ? (<T> getNode(item)).tagName : '')] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
+                    if ((node.children.length === 0 && hasFreeFormText(element)) || (element.children.length === 0 && MAP_ELEMENT[node.tagName] == null) || (element.children.length > 0 && Array.from(element.children).every((item: HTMLElement) => MAP_ELEMENT[(getNode(item) ? (<T> getNode(item)).tagName : '')] == null && item.children.length === 0 && supportInline.includes(item.tagName)))) {
                         name = (element.innerText || element.textContent || '').trim();
                         value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
                         switch (node.css('whiteSpace')) {
@@ -263,7 +263,7 @@ export default abstract class Resource<T extends Node> {
                                 break;
                         }
                         value = value.replace(/<br\s*\/?>/g, '\\n');
-                        value = value.replace(/\s+style=""/, '');
+                        value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
                 }
                 if (inlineTrim) {

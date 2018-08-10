@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+ <head>
+  <title>Header Elements</title>
+ 
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+ 
+  <!-- Include links to stylesheets -->
+  <link rel="stylesheet" href="site.css"   media="all"    type="text/css" />
+  <link rel="stylesheet" href="page.css"   media="all"    type="text/css" />
+
+ 
+  <!-- Optionally include alternate stylesheets that the user can apply. -->
+  <link rel="alternate stylesheet" type="text/css" title="cool" href="cool.css" />
+  <link rel="alternate stylesheet" type="text/css" title="hot"  href="hot.css"  />
+
+
+  
+  <!-- Optionally include style rules that apply only to this page. -->
+  <style type="text/css" media="all">
+   body  { margin:0px; padding:20px; padding-top:0px; width:702px;
+          font-family:verdana,arial,sans-serif; font-size:medium; }
+   h1    { margin:10px 0 10px 0; font-size:1.9em;  }
+  </style>
+
+
+
+  
+<script src="/node_modules/systemjs/dist/system.js"></script>
+<script src="/demos-dev/common/dev.js"></script>
+<script>
+    System.import('/build/main.js').then(function(result) {
+        androme = result;
+        androme.parseDocument().then(function() {
+            androme.close();
+            androme.saveAllToDisk();
+        });
+    });
+</script>
+  
+ </head>
+ 
+ <body>
+  <h1>Header Elements</h1> <p>Look at the source to see the header</p>
+
+</body>
+</html>

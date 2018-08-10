@@ -14,7 +14,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public static linearX<T extends Node>(list: T[], offset = 0) {
-        let nodes = list.filter(node => !node.isolated);
+        const nodes = list.filter(node => !node.isolated);
         switch (nodes.length) {
             case 0:
                 return false;
@@ -22,12 +22,14 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return true;
             default:
                 const float = new Set();
-                nodes = nodes.filter(node => {
-                    float.add(node.float);
+                const valid = !nodes.some((node, index) => {
+                    if (node.floating) {
+                        float.add(node.float);
+                    }
                     const clear = node.css('clear');
-                    return !(node.position === 'relative' && node.floating && (clear !== 'both' || float.has(clear)));
+                    return (index > 0 && float.size > 0 && (clear === 'both' || float.has(clear)));
                 });
-                if (nodes.every(node => node.pageflow && !node.floating) || !NodeList.intersect(nodes)) {
+                if (valid) {
                     const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
                     const maxBottom = Math.max.apply(null, nodes.filter(node => withinRange(node.linear.top, minTop, offset)).map(node => node.linear.bottom));
                     return nodes.every(node => node.linear.height > 0 && node.linear.top >= minTop && node.linear.bottom <= maxBottom);
@@ -37,30 +39,27 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => !node.isolated);
+        const nodes = list.filter(node => node.pageflow && !node.isolated);
         switch (nodes.length) {
             case 0:
                 return false;
             case 1:
                 return true;
             default:
-                if (nodes.every(node => node.pageflow && !node.floating) || !NodeList.intersect(nodes)) {
-                    const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
-                    const maxRight = Math.max.apply(null, nodes.map(node => node.linear.right));
-                    return nodes.every((node, index) => {
-                        if (node.linear.left < minRight) {
+                const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
+                const maxRight = Math.max.apply(null, nodes.map(node => node.linear.right));
+                return nodes.every((node, index) => {
+                    if (node.linear.left < minRight) {
+                        return true;
+                    }
+                    else {
+                        const previous = nodes[index - 1];
+                        if ((previous == null || (previous.pageflow && previous.inlineElement && previous.linear.right !== maxRight)) && node.inlineElement && node.pageflow && node.linear.right !== maxRight) {
                             return true;
                         }
-                        else {
-                            const previous = nodes[index - 1];
-                            if ((previous == null || (previous.pageflow && previous.inlineElement && previous.linear.right !== maxRight)) && node.inlineElement && node.pageflow && node.linear.right !== maxRight) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    });
-                }
-                return false;
+                    }
+                    return false;
+                });
         }
     }
 

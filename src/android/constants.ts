@@ -158,6 +158,7 @@ export const WEBVIEW_ANDROID = [
     'H6',
     'DEL',
     'LABEL',
+    'BR',
     'PLAINTEXT'
 ];
 

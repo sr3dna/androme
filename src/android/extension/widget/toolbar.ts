@@ -80,7 +80,7 @@ export default class Toolbar extends Extension<T> {
             }
             if (!hasValue(element.dataset.target)) {
                 const targetNode = getNode(element) as T;
-                if (targetNode != null) {
+                if (targetNode) {
                     switch (element.dataset.targetModule) {
                         case 'appBar':
                             appBarChildren.push(targetNode);

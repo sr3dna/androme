@@ -92,7 +92,7 @@ export default class Drawer extends Extension<T> {
         const headerLayout = findNestedExtension(this.node, EXT_NAME.EXTERNAL);
         if (headerLayout != null) {
             const node = getNode(headerLayout) as T;
-            if (node.viewHeight === 0) {
+            if (node && node.viewHeight === 0) {
                 node.android('layout_height', 'wrap_content');
             }
         }

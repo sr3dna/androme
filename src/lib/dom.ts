@@ -2,17 +2,17 @@ import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
 import { convertInt, optional, hasValue } from './util';
 
-export function setCache(element: HTMLElement, attr: string, data: any) {
+export function setCache(element: Element, attr: string, data: any) {
     if (element != null) {
         element[`__${attr}`] = data;
     }
 }
 
-export function getCache(element: HTMLElement, attr: string) {
+export function getCache(element: Element, attr: string) {
     return (element != null ? element[`__${attr}`] : null);
 }
 
-export function deleteCache(element: HTMLElement, ...attrs: string[]) {
+export function deleteCache(element: Element, ...attrs: string[]) {
     if (element != null) {
         for (const attr of attrs) {
             delete element[`__${attr}`];
@@ -20,15 +20,15 @@ export function deleteCache(element: HTMLElement, ...attrs: string[]) {
     }
 }
 
-export function getNode<T extends Node>(element: HTMLElement): Null<T> {
+export function getNode<T extends Node>(element: Element): Null<T> {
     return getCache(element, 'node');
 }
 
-export function previousNode(element: HTMLElement) {
-    let previous: Null<HTMLElement>;
+export function previousNode(element: Element) {
+    let previous: Null<Element>;
     do {
-        previous = <HTMLElement> element.previousSibling;
-        if (previous != null && getNode(previous) != null) {
+        previous = <Element> element.previousSibling;
+        if (previous != null && getNode(previous)) {
             return getNode(previous);
         }
     }
@@ -36,7 +36,7 @@ export function previousNode(element: HTMLElement) {
     return null;
 }
 
-export function getRangeBounds(element: HTMLElement): [ClientRect, boolean] {
+export function getRangeBounds(element: Element): [ClientRect, boolean] {
     let multiLine = false;
     const range = document.createRange();
     range.selectNodeContents(element);
@@ -107,7 +107,7 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
     ['padding', 'margin'].forEach(border => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
             const attr = border + direction;
-            const value = convertInt(node != null ? node[attr] : style[attr]);
+            const value = convertInt(node ? node[attr] : style[attr]);
             if (complete || value !== 0) {
                 result[attr] = value;
             }

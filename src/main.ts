@@ -107,8 +107,8 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             element.dataset.viewName = convertWord(element.dataset.views !== '1' ? `${filename}_${element.dataset.views}` : filename);
             if (main.createNodeCache(element)) {
                 main.createLayoutXml();
-                main.setResources();
                 main.setConstraints();
+                main.setResources();
                 ROOT_CACHE.add(element);
             }
         }

@@ -337,10 +337,10 @@ export default abstract class Node implements BoxModel {
         }
         if (this.bounds != null) {
             const linear: ClientRect = {
-                top: this.bounds.top - this.marginTop,
+                top: this.bounds.top - (this.marginTop > 0 ? this.marginTop : 0),
                 right: this.bounds.right + this.marginRight,
                 bottom: this.bounds.bottom + this.marginBottom,
-                left: this.bounds.left - this.marginLeft,
+                left: this.bounds.left - (this.marginLeft > 0 ? this.marginLeft : 0),
                 width: 0,
                 height: 0
             };
@@ -603,7 +603,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineElement() {
-        return (this.tagName === 'PLAINTEXT' || (this.css('clear') === 'none' && (this.display.indexOf('inline') !== -1 || this.floating || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)))));
+        return (this.tagName === 'PLAINTEXT' || (this.display.indexOf('inline') !== -1 || this.floating || ((this.display === 'initial' || this.alignMargin) && INLINE_ELEMENT.includes(this.element.tagName))));
     }
 
     get inline() {
@@ -612,6 +612,10 @@ export default abstract class Node implements BoxModel {
 
     get alignMargin() {
         return (this.top == null && this.right == null && this.bottom == null && this.left == null);
+    }
+
+    get autoMargin() {
+        return (this.styleMap.marginLeft === 'auto' || this.styleMap.marginRight === 'auto');
     }
 
     get fixed() {
@@ -640,10 +644,26 @@ export default abstract class Node implements BoxModel {
     }
 
     get previousSibling() {
-        return getNode(<HTMLElement> this.element.previousElementSibling);
+        let element = this.element.previousSibling;
+        while (element != null) {
+            const node = getNode(<HTMLElement> element);
+            if (node) {
+                return node;
+            }
+            element = element.previousSibling;
+        }
+        return null;
     }
     get nextSibling() {
-        return getNode(<HTMLElement> this.element.nextElementSibling);
+        let element = this.element.nextSibling;
+        while (element != null) {
+            const node = getNode(<HTMLElement> element);
+            if (node) {
+                return node;
+            }
+            element = element.nextSibling;
+        }
+        return null;
     }
 
     get firstChild(): Null<T> {
