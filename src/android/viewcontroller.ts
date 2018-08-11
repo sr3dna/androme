@@ -139,55 +139,67 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const baseline: T[] = [];
                     function adjustBaseline() {
                         if (baseline.length > 1) {
-                            const tallest = baseline.sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
+                            const images = baseline.filter(item => item.element.tagName === 'IMG');
+                            const tallest = (images.length > 0 ? images : baseline).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
+                            let topParent = false;
                             for (const item of baseline) {
                                 if (item !== tallest) {
-                                    item.android(mapLayout['baseline'], tallest.stringId);
+                                    item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
+                                    if (images.length > 0 && mapParent(item, 'top')) {
+                                        item.delete('android', relativeParent['top']);
+                                        topParent = true;
+                                    }
                                 }
+                            }
+                            if (topParent) {
+                                tallest.android(relativeParent['top'], 'true');
                             }
                         }
                     }
                     const rows: ArrayIndex<T[]> = [];
-                    let topBottom = '';
+                    const multiLine = nodes.list.some(item => item.multiLine);
+                    let previousRowBottom: Null<T> = null;
                     for (let i = 0, width = 0; i < nodes.length; i++) {
                         const current = nodes.get(i);
-                        const dimension = (current.multiLine ? 'bounds' : 'linear');
+                        const dimension = current[(current.multiLine ? 'bounds' : 'linear')];
                         if (i === 0) {
                             current.android(relativeParent['top'], 'true');
                             current.android(relativeParent['left'], 'true');
-                            if (current.nodeType <= NODE_STANDARD.TEXT) {
-                                baseline.push(current);
-                            }
-                            width += current[dimension].width;
+                            width += dimension.width;
                             rows[rows.length] = [current];
                         }
                         else {
-                            const previous = nodes.get(i - 1);
                             const group = (current instanceof ViewGroup);
-                            if ((node.inlineWrap && group) || Math.floor(width + current[dimension].width) > node.box.width) {
-                                current.android(mapLayout['topBottom'], previous.stringId);
-                                current.android(relativeParent['left'], 'true');
-                                if (group) {
-                                    current.constraint.marginVertical = previous.stringId;
+                            const previous = nodes.get(i - 1);
+                            if ((node.inlineWrap && group) || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                                const items = rows[rows.length - 1];
+                                previousRowBottom = items[0];
+                                for (let j = 1; j < items.length; j++) {
+                                    if (items[j].linear.bottom > previousRowBottom.linear.bottom) {
+                                        previousRowBottom = items[j];
+                                    }
                                 }
-                                width = current[dimension].width;
+                                if (group) {
+                                    current.constraint.marginVertical = previousRowBottom.stringId;
+                                }
+                                current.android(mapLayout['topBottom'], previousRowBottom.stringId);
+                                current.android(relativeParent['left'], 'true');
+                                width = (current.multiLine ? dimension.right - dimension.left : dimension.width);
                                 adjustBaseline();
                                 baseline.length = 0;
-                                baseline.push(current);
                                 rows[rows.length] = [current];
-                                topBottom = previous.stringId;
                             }
                             else {
                                 current.android(mapLayout['leftRight'], previous.stringId);
-                                if (topBottom !== '') {
-                                    current.android(mapLayout['topBottom'], topBottom);
+                                if (previousRowBottom != null) {
+                                    current.android(mapLayout['topBottom'], previousRowBottom.stringId);
                                 }
-                                if (current.nodeType <= NODE_STANDARD.TEXT) {
-                                    baseline.push(current);
-                                }
-                                width += current[dimension].width;
+                                width += dimension.width;
                                 rows[rows.length - 1].push(current);
                             }
+                        }
+                        if (current.nodeType <= NODE_STANDARD.IMAGE) {
+                            baseline.push(current);
                         }
                     }
                     adjustBaseline();

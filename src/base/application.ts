@@ -717,9 +717,8 @@ export default class Application<T extends Node> {
                             }
                             let xml = '';
                             if (nodeY.nodeName === '') {
-                                const supportInline = this.controllerHandler.supportInline;
                                 const untargeted = nodeY.untargeted;
-                                if (untargeted.length === 0 || (!nodeY.documentRoot && untargeted.every(node => node.inlineElement && node.untargeted.length === 0 && supportInline.includes(node.element.tagName)))) {
+                                if (untargeted.length === 0) {
                                     if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
                                         xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                     }
@@ -733,7 +732,6 @@ export default class Application<T extends Node> {
                                     }
                                 }
                                 else {
-
                                     if (nodeY.flex.enabled || untargeted.some(node => !node.pageflow) || nodeY.styleMap.columnCount != null) {
                                         xml = this.writeDefaultLayout(nodeY, parent);
                                     }
@@ -755,7 +753,7 @@ export default class Application<T extends Node> {
                                             const [linearX, linearY] = [NodeList.linearX(nodeY.children, SETTINGS.linearHorizontalTopOffset), NodeList.linearY(nodeY.children)];
                                             if ((linearX || linearY) && !parent.flex.enabled && nodeY.children.every(node => node.pageflow)) {
                                                 const float = new Set(nodeY.children.map(node => node.float));
-                                                if (float.size === 1 && (linearX || (linearY && !nodeY.children.some(node => node.autoMargin)))) {
+                                                if ((linearX && float.size === 1 && !nodeY.children.some(node => node.multiLine)) || (linearY && !nodeY.children.some(node => node.autoMargin))) {
                                                     xml = this.writeLinearLayout(nodeY, parent, linearX);
                                                 }
                                                 else if (linearX && nodeY.children.some(node => node.floating)) {
@@ -1014,6 +1012,7 @@ export default class Application<T extends Node> {
     }
 
     public sortLayout(parent: T, children: T[], save = false) {
+        let sorted = false;
         switch (parent.nodeType) {
             case NODE_STANDARD.CONSTRAINT:
                 children.sort((a, b) => {
@@ -1026,6 +1025,7 @@ export default class Application<T extends Node> {
                         return (convertInt(indexA) <= convertInt(indexB) ? -1 : 1);
                     }
                 });
+                sorted = true;
                 break;
             case NODE_STANDARD.LINEAR:
                 if (parent.horizontal) {
@@ -1043,14 +1043,12 @@ export default class Application<T extends Node> {
                         }
                         return (a.linear.left <= b.linear.left ? -1 : 1);
                     });
-                }
-                else {
-                    sortAsc(children, 'linear.top');
-                }
-                if (save) {
-                    this.sorted[parent.id] = children.map(item => item.id);
+                    sorted = true;
                 }
                 break;
+        }
+        if (save && sorted) {
+            this.sorted[parent.id] = children.map(item => item.id);
         }
     }
 

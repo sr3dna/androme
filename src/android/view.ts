@@ -356,14 +356,14 @@ export default class View extends Node {
                         right = Math.floor(this.cascade().filter(node => node.visible).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
                         rightParent = Math.floor(parent.cascade().filter((node: T) => node.visible && !parent.children.includes(node)).reduce((a: number, b: T) => Math.max(a, b.bounds.right), 0));
                     }
-                    const wrap = (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || renderParent.is(NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal));
+                    const wrap = (this.display !== 'block' && (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || renderParent.is(NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal)));
                     if (convertFloat(this.android('layout_columnWeight')) > 0) {
                         this.android('layout_width', '0px');
                     }
                     else if (!wrap && (
                                 (parent.overflow === OVERFLOW_ELEMENT.NONE && (widthRoot > 0 || this.parentElement === document.body) && width >= widthParent) ||
                                 (!this.inlineElement && !this.floating && this.display === 'block' && (this.renderChildren.length === 0 || (right !== 0 && right < rightParent))) ||
-                                (this.inlineWrap && this.is(NODE_STANDARD.LINEAR) && !this.horizontal && this.renderChildren.some(node => !node.inlineElement && !node.floating))
+                                (this.is(NODE_STANDARD.LINEAR) && !this.horizontal && this.renderChildren.some(node => !node.inlineElement && !node.floating))
                             ))
                     {
                         this.android('layout_width', 'match_parent');
@@ -503,8 +503,8 @@ export default class View extends Node {
         if (renderParent.element.tagName === 'TABLE') {
             this.android('layout_gravity', 'fill');
         }
-        else if (renderParent.inlineWrap) {
-            if (renderParent.is(NODE_STANDARD.FRAME)) {
+        else {
+            if (renderParent.is(NODE_STANDARD.FRAME) || (renderParent.is(NODE_STANDARD.LINEAR) && !renderParent.horizontal)) {
                 if (this.styleMap.marginLeft === 'auto' && this.styleMap.marginRight === 'auto') {
                     this.android('layout_gravity', 'center_horizontal');
                 }
@@ -603,15 +603,17 @@ export default class View extends Node {
         this.adjustBoxSpacing();
         switch (this.nodeName) {
             case NODE_ANDROID.LINEAR:
-                [[this.horizontal, this.inlineElement, 'layout_width'], [!this.horizontal, true, 'layout_height']].forEach((value: [boolean, boolean, string]) => {
-                    if (value[0] && value[1] && this.android(value[2]) !== 'wrap_content') {
-                        if (this.renderChildren.every(node => node.android(value[2]) === 'wrap_content')) {
-                            this.android(value[2], 'wrap_content');
+                if (this.display !== 'block') {
+                    [[this.horizontal, this.inlineElement, 'layout_width'], [!this.horizontal, true, 'layout_height']].forEach((value: [boolean, boolean, string]) => {
+                        if (value[0] && value[1] && this.android(value[2]) !== 'wrap_content') {
+                            if (this.renderChildren.every(node => node.android(value[2]) === 'wrap_content')) {
+                                this.android(value[2], 'wrap_content');
+                            }
                         }
-                    }
-                });
+                    });
+                }
                 if (this.horizontal) {
-                    if (this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
+                    if (this.renderChildren.some(node => node.floating) || this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
                         this.android('baselineAligned', 'false');
                     }
                 }

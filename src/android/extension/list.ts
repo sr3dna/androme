@@ -5,6 +5,7 @@ import { delimitDimen } from '../lib/util';
 import { NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
+import { formatPX } from '../../lib/util';
 
 export default class ListAndroid<T extends View> extends List {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -25,7 +26,9 @@ export default class ListAndroid<T extends View> extends List {
                         android: {
                             gravity: parseRTL('right'),
                             layout_columnWeight: '0',
+                            layout_marginTop: (node.marginTop > 0 ? delimitDimen(node.tagName, parseRTL('margin_top'), formatPX(node.marginTop)) : null),
                             [parseRTL('layout_marginRight')]: delimitDimen(node.tagName, parseRTL('margin_right'), '8px'),
+                            [parseRTL('layout_marginLeft')]: (node.marginLeft > 0 ? delimitDimen(node.tagName, parseRTL('margin_left'), formatPX(node.marginLeft)) : null),
                             text: (listStyle !== '0' ? listStyle : '')
                         }
                     },

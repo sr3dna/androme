@@ -39,7 +39,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.pageflow && !node.isolated);
+        const nodes = list.filter(node => node.pageflow && !node.floating && !node.isolated);
         switch (nodes.length) {
             case 0:
                 return false;

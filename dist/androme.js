@@ -1,4 +1,4 @@
-/* androme 1.8.25
+/* androme 1.8.27
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -343,7 +343,7 @@
             }
         }
         static linearY(list) {
-            const nodes = list.filter(node => node.pageflow && !node.isolated);
+            const nodes = list.filter(node => node.pageflow && !node.floating && !node.isolated);
             switch (nodes.length) {
                 case 0:
                     return false;
@@ -2147,9 +2147,8 @@
                                 }
                                 let xml = '';
                                 if (nodeY.nodeName === '') {
-                                    const supportInline = this.controllerHandler.supportInline;
                                     const untargeted = nodeY.untargeted;
-                                    if (untargeted.length === 0 || (!nodeY.documentRoot && untargeted.every(node => node.inlineElement && node.untargeted.length === 0 && supportInline.includes(node.element.tagName)))) {
+                                    if (untargeted.length === 0) {
                                         if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
                                             xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                         }
@@ -2184,7 +2183,7 @@
                                                 const [linearX, linearY] = [NodeList.linearX(nodeY.children, SETTINGS.linearHorizontalTopOffset), NodeList.linearY(nodeY.children)];
                                                 if ((linearX || linearY) && !parent.flex.enabled && nodeY.children.every(node => node.pageflow)) {
                                                     const float = new Set(nodeY.children.map(node => node.float));
-                                                    if (float.size === 1 && (linearX || (linearY && !nodeY.children.some(node => node.autoMargin)))) {
+                                                    if ((linearX && float.size === 1 && !nodeY.children.some(node => node.multiLine)) || (linearY && !nodeY.children.some(node => node.autoMargin))) {
                                                         xml = this.writeLinearLayout(nodeY, parent, linearX);
                                                     }
                                                     else if (linearX && nodeY.children.some(node => node.floating)) {
@@ -2429,6 +2428,7 @@
             }
         }
         sortLayout(parent, children, save = false) {
+            let sorted = false;
             switch (parent.nodeType) {
                 case NODE_STANDARD.CONSTRAINT:
                     children.sort((a, b) => {
@@ -2441,6 +2441,7 @@
                             return (convertInt(indexA) <= convertInt(indexB) ? -1 : 1);
                         }
                     });
+                    sorted = true;
                     break;
                 case NODE_STANDARD.LINEAR:
                     if (parent.horizontal) {
@@ -2458,14 +2459,12 @@
                             }
                             return (a.linear.left <= b.linear.left ? -1 : 1);
                         });
-                    }
-                    else {
-                        sortAsc(children, 'linear.top');
-                    }
-                    if (save) {
-                        this.sorted[parent.id] = children.map(item => item.id);
+                        sorted = true;
                     }
                     break;
+            }
+            if (save && sorted) {
+                this.sorted[parent.id] = children.map(item => item.id);
             }
         }
         addInclude(filename, content) {
@@ -4177,13 +4176,13 @@
                             right = Math.floor(this.cascade().filter(node => node.visible).reduce((a, b) => Math.max(a, b.bounds.right), 0));
                             rightParent = Math.floor(parent.cascade().filter((node) => node.visible && !parent.children.includes(node)).reduce((a, b) => Math.max(a, b.bounds.right), 0));
                         }
-                        const wrap = (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || renderParent.is(NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal));
+                        const wrap = (this.display !== 'block' && (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || renderParent.is(NODE_STANDARD.GRID) || (linearParent && renderParent.horizontal)));
                         if (convertFloat(this.android('layout_columnWeight')) > 0) {
                             this.android('layout_width', '0px');
                         }
                         else if (!wrap && ((parent.overflow === 0 /* NONE */ && (widthRoot > 0 || this.parentElement === document.body) && width >= widthParent) ||
                             (!this.inlineElement && !this.floating && this.display === 'block' && (this.renderChildren.length === 0 || (right !== 0 && right < rightParent))) ||
-                            (this.inlineWrap && this.is(NODE_STANDARD.LINEAR) && !this.horizontal && this.renderChildren.some(node => !node.inlineElement && !node.floating)))) {
+                            (this.is(NODE_STANDARD.LINEAR) && !this.horizontal && this.renderChildren.some(node => !node.inlineElement && !node.floating)))) {
                             this.android('layout_width', 'match_parent');
                         }
                         else {
@@ -4319,8 +4318,8 @@
             if (renderParent.element.tagName === 'TABLE') {
                 this.android('layout_gravity', 'fill');
             }
-            else if (renderParent.inlineWrap) {
-                if (renderParent.is(NODE_STANDARD.FRAME)) {
+            else {
+                if (renderParent.is(NODE_STANDARD.FRAME) || (renderParent.is(NODE_STANDARD.LINEAR) && !renderParent.horizontal)) {
                     if (this.styleMap.marginLeft === 'auto' && this.styleMap.marginRight === 'auto') {
                         this.android('layout_gravity', 'center_horizontal');
                     }
@@ -4417,15 +4416,17 @@
             this.adjustBoxSpacing();
             switch (this.nodeName) {
                 case NODE_ANDROID.LINEAR:
-                    [[this.horizontal, this.inlineElement, 'layout_width'], [!this.horizontal, true, 'layout_height']].forEach((value) => {
-                        if (value[0] && value[1] && this.android(value[2]) !== 'wrap_content') {
-                            if (this.renderChildren.every(node => node.android(value[2]) === 'wrap_content')) {
-                                this.android(value[2], 'wrap_content');
+                    if (this.display !== 'block') {
+                        [[this.horizontal, this.inlineElement, 'layout_width'], [!this.horizontal, true, 'layout_height']].forEach((value) => {
+                            if (value[0] && value[1] && this.android(value[2]) !== 'wrap_content') {
+                                if (this.renderChildren.every(node => node.android(value[2]) === 'wrap_content')) {
+                                    this.android(value[2], 'wrap_content');
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                     if (this.horizontal) {
-                        if (this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
+                        if (this.renderChildren.some(node => node.floating) || this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
                             this.android('baselineAligned', 'false');
                         }
                     }
@@ -6042,55 +6043,67 @@
                         const baseline = [];
                         function adjustBaseline() {
                             if (baseline.length > 1) {
-                                const tallest = baseline.sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
+                                const images = baseline.filter(item => item.element.tagName === 'IMG');
+                                const tallest = (images.length > 0 ? images : baseline).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
+                                let topParent = false;
                                 for (const item of baseline) {
                                     if (item !== tallest) {
-                                        item.android(mapLayout['baseline'], tallest.stringId);
+                                        item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
+                                        if (images.length > 0 && mapParent(item, 'top')) {
+                                            item.delete('android', relativeParent['top']);
+                                            topParent = true;
+                                        }
                                     }
+                                }
+                                if (topParent) {
+                                    tallest.android(relativeParent['top'], 'true');
                                 }
                             }
                         }
                         const rows = [];
-                        let topBottom = '';
+                        const multiLine = nodes.list.some(item => item.multiLine);
+                        let previousRowBottom = null;
                         for (let i = 0, width = 0; i < nodes.length; i++) {
                             const current = nodes.get(i);
-                            const dimension = (current.multiLine ? 'bounds' : 'linear');
+                            const dimension = current[(current.multiLine ? 'bounds' : 'linear')];
                             if (i === 0) {
                                 current.android(relativeParent['top'], 'true');
                                 current.android(relativeParent['left'], 'true');
-                                if (current.nodeType <= NODE_STANDARD.TEXT) {
-                                    baseline.push(current);
-                                }
-                                width += current[dimension].width;
+                                width += dimension.width;
                                 rows[rows.length] = [current];
                             }
                             else {
-                                const previous = nodes.get(i - 1);
                                 const group = (current instanceof ViewGroup);
-                                if ((node.inlineWrap && group) || Math.floor(width + current[dimension].width) > node.box.width) {
-                                    current.android(mapLayout['topBottom'], previous.stringId);
-                                    current.android(relativeParent['left'], 'true');
-                                    if (group) {
-                                        current.constraint.marginVertical = previous.stringId;
+                                const previous = nodes.get(i - 1);
+                                if ((node.inlineWrap && group) || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                                    const items = rows[rows.length - 1];
+                                    previousRowBottom = items[0];
+                                    for (let j = 1; j < items.length; j++) {
+                                        if (items[j].linear.bottom > previousRowBottom.linear.bottom) {
+                                            previousRowBottom = items[j];
+                                        }
                                     }
-                                    width = current[dimension].width;
+                                    if (group) {
+                                        current.constraint.marginVertical = previousRowBottom.stringId;
+                                    }
+                                    current.android(mapLayout['topBottom'], previousRowBottom.stringId);
+                                    current.android(relativeParent['left'], 'true');
+                                    width = (current.multiLine ? dimension.right - dimension.left : dimension.width);
                                     adjustBaseline();
                                     baseline.length = 0;
-                                    baseline.push(current);
                                     rows[rows.length] = [current];
-                                    topBottom = previous.stringId;
                                 }
                                 else {
                                     current.android(mapLayout['leftRight'], previous.stringId);
-                                    if (topBottom !== '') {
-                                        current.android(mapLayout['topBottom'], topBottom);
+                                    if (previousRowBottom != null) {
+                                        current.android(mapLayout['topBottom'], previousRowBottom.stringId);
                                     }
-                                    if (current.nodeType <= NODE_STANDARD.TEXT) {
-                                        baseline.push(current);
-                                    }
-                                    width += current[dimension].width;
+                                    width += dimension.width;
                                     rows[rows.length - 1].push(current);
                                 }
+                            }
+                            if (current.nodeType <= NODE_STANDARD.IMAGE) {
+                                baseline.push(current);
                             }
                         }
                         adjustBaseline();
@@ -8304,7 +8317,9 @@
                     android: {
                         gravity: parseRTL('right'),
                         layout_columnWeight: '0',
+                        layout_marginTop: (node.marginTop > 0 ? delimitDimen(node.tagName, parseRTL('margin_top'), formatPX(node.marginTop)) : null),
                         [parseRTL('layout_marginRight')]: delimitDimen(node.tagName, parseRTL('margin_right'), '8px'),
+                        [parseRTL('layout_marginLeft')]: (node.marginLeft > 0 ? delimitDimen(node.tagName, parseRTL('margin_left'), formatPX(node.marginLeft)) : null),
                         text: (listStyle !== '0' ? listStyle : '')
                     }
                 }, 'wrap_content', 'wrap_content'));
