@@ -3,8 +3,8 @@ import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import NodeList from '../base/nodelist';
-import { cameltoLowerCase, capitalize, convertInt, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, lastIndexOf, resolvePath, trim } from '../lib/util';
-import { generateId, replaceDP } from './lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, isPercent, lastIndexOf, resolvePath, trim } from '../lib/util';
+import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { getCache, sameAsParent, setCache } from '../lib/dom';
 import { findNearestColor, parseHex } from '../lib/color';
@@ -342,6 +342,19 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     let tileMode = '';
                     let tileModeX = '';
                     let tileModeY = '';
+                    switch (stored.backgroundRepeat) {
+                        case 'repeat-x':
+                            tileModeX = 'repeat';
+                            break;
+                        case 'repeat-y':
+                            tileModeY = 'repeat';
+                            break;
+                        case 'no-repeat':
+                            tileMode = 'disabled';
+                            break;
+                        case 'repeat':
+                            tileMode = 'repeat';
+                    }
                     switch (stored.backgroundPosition) {
                         case 'left center':
                         case '0% 50%':
@@ -376,16 +389,21 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             gravity = 'center';
                             break;
                     }
-                    switch (stored.backgroundRepeat) {
-                        case 'repeat-x':
-                            tileModeX = 'repeat';
-                            break;
-                        case 'repeat-y':
-                            tileModeY = 'repeat';
-                            break;
-                        case 'no-repeat':
-                            tileMode = 'disabled';
-                            break;
+                    if (stored.backgroundSize.length > 0) {
+                        if (isPercent(stored.backgroundSize[0]) || isPercent(stored.backgroundSize[1])) {
+                            if (stored.backgroundSize[0] === '100%' && stored.backgroundSize[1] === '100%') {
+                                tileMode = '';
+                                tileModeX = '';
+                                tileModeY = '';
+                            }
+                            else if (stored.backgroundSize[0] === '100%') {
+                                tileModeX = '';
+                            }
+                            else if (stored.backgroundSize[1] === '100%') {
+                                tileModeY = '';
+                            }
+                            stored.backgroundSize = [];
+                        }
                     }
                     const image6: ArrayIndex<StringMap> = [];
                     const image7: ArrayIndex<StringMap> = [];
@@ -589,10 +607,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     if (stored.color && stored.color.length > 0) {
                         stored.color = `@color/${ResourceView.addColor(stored.color[0], stored.color[2])}`;
                     }
-                    if (SETTINGS.useFontAlias && FONTREPLACE_ANDROID[fontFamily] != null) {
+                    if (SETTINGS.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily] != null) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
-                    if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.useFontAlias && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                    if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
                         system = true;
                         stored.fontFamily = fontFamily;
                         if (stored.fontStyle === 'normal') {
@@ -941,7 +959,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     node.add('_', 'style', `@style/${styles.pop()}`);
                 }
                 if (attrs.length > 0) {
-                    attrs.sort().forEach(value => node.attr(replaceDP(value, true), false));
+                    attrs.sort().forEach(value => node.attr(replaceUnit(value, true), false));
                 }
             }
         }

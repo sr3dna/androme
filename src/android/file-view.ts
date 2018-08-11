@@ -3,7 +3,7 @@ import File from '../base/file';
 import NodeList from '../base/nodelist';
 import View from './view';
 import { caseInsensitve, lastIndexOf } from '../lib/util';
-import { replaceDP } from './lib/util';
+import { replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate, replaceTab } from '../lib/xml';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
 import SETTINGS from '../settings';
@@ -222,7 +222,7 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push(styleItem);
             }
             xml = insertTemplateData(template, data);
-            xml = replaceDP(xml, true);
+            xml = replaceUnit(xml, true);
             xml = replaceTab(xml, SETTINGS.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
@@ -246,7 +246,7 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
-            xml = replaceDP(xml);
+            xml = replaceUnit(xml);
             xml = replaceTab(xml, SETTINGS.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
@@ -277,7 +277,7 @@ export default class FileView<T extends View> extends File<T> {
                 }
             }
             xml = insertTemplateData(template, data);
-            xml = replaceDP(xml);
+            xml = replaceUnit(xml);
             xml = replaceTab(xml, SETTINGS.insertSpaces);
             if (saveToDisk) {
                 this.saveToDisk([...this.parseImageDetails(xml), ...this.parseFileDetails(xml)]);

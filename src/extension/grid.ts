@@ -304,7 +304,7 @@ export default class Grid extends Extension<T> {
                     this.application.sortLayout(group, group.children, true);
                 }
                 else {
-                    xml = this.application.writeDefaultLayout(group, parent);
+                    xml = this.application.writeConstraintLayout(group, parent);
                 }
                 return { xml, parent: group };
             }

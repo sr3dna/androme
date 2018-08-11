@@ -29,6 +29,7 @@ export default abstract class Node implements BoxModel {
     public inlineWrap = false;
     public multiLine = false;
 
+    public abstract constraint: ObjectMap<any>;
     public abstract children: T[];
     public abstract renderChildren: T[];
 
@@ -439,16 +440,16 @@ export default abstract class Node implements BoxModel {
         return this._element || {};
     }
 
-    get hasElement() {
-        return (this._element instanceof HTMLElement);
-    }
-
     get parentElement() {
         return this._element && this._element.parentElement;
     }
 
-    get untargeted() {
-        return this.children.filter(node => !node.isSet('dataset', 'target'));
+    get hasElement() {
+        return (this._element instanceof HTMLElement);
+    }
+
+    get documentBody() {
+        return (this.element === document.body);
     }
 
     get dataset(): DOMStringMap {
@@ -475,36 +476,7 @@ export default abstract class Node implements BoxModel {
                 order: convertInt(style.order)
             };
         }
-        return (<Flexbox> {});
-    }
-
-    get floating() {
-        const float = this.css('cssFloat');
-        return (this.position !== 'absolute' ? (float === 'left' || float === 'right') : false);
-    }
-
-    get float() {
-        return (this.floating ? this.css('cssFloat') : null) || 'none';
-    }
-
-    get overflow() {
-        let value = OVERFLOW_ELEMENT.NONE;
-        if (this.hasElement) {
-            const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
-            if (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
-                value |= OVERFLOW_ELEMENT.HORIZONTAL;
-            }
-            if (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
-                value |= OVERFLOW_ELEMENT.VERTICAL;
-            }
-        }
-        return value;
-    }
-    get overflowX() {
-        return includesEnum(this.overflow, OVERFLOW_ELEMENT.HORIZONTAL);
-    }
-    get overflowY() {
-        return includesEnum(this.overflow, OVERFLOW_ELEMENT.VERTICAL);
+        return (<Flexbox> { enabled: false });
     }
 
     get viewWidth() {
@@ -602,12 +574,12 @@ export default abstract class Node implements BoxModel {
         return (position === 'static' || position === 'initial' || position === 'relative' || this.tagName === 'PLAINTEXT' || this.alignMargin);
     }
 
-    get inlineElement() {
-        return (this.tagName === 'PLAINTEXT' || (this.display.indexOf('inline') !== -1 || this.floating || ((this.display === 'initial' || this.alignMargin) && INLINE_ELEMENT.includes(this.element.tagName))));
-    }
-
     get inline() {
         return (this.display === 'inline');
+    }
+
+    get inlineElement() {
+        return (this.tagName === 'PLAINTEXT' || this.display.indexOf('inline') !== -1 || this.floating || ((this.display === 'initial' || this.alignMargin) && INLINE_ELEMENT.includes(this.element.tagName)));
     }
 
     get alignMargin() {
@@ -618,8 +590,33 @@ export default abstract class Node implements BoxModel {
         return (this.styleMap.marginLeft === 'auto' || this.styleMap.marginRight === 'auto');
     }
 
-    get fixed() {
-        return (!this.pageflow && (this.right != null || this.bottom != null));
+    get floating() {
+        const float = this.css('cssFloat');
+        return (this.position !== 'absolute' ? (float === 'left' || float === 'right') : false);
+    }
+
+    get float() {
+        return (this.floating ? this.css('cssFloat') : null) || 'none';
+    }
+
+    get overflow() {
+        let value = OVERFLOW_ELEMENT.NONE;
+        if (this.hasElement) {
+            const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
+            if (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+                value |= OVERFLOW_ELEMENT.HORIZONTAL;
+            }
+            if (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+                value |= OVERFLOW_ELEMENT.VERTICAL;
+            }
+        }
+        return value;
+    }
+    get overflowX() {
+        return includesEnum(this.overflow, OVERFLOW_ELEMENT.HORIZONTAL);
+    }
+    get overflowY() {
+        return includesEnum(this.overflow, OVERFLOW_ELEMENT.VERTICAL);
     }
 
     get dir() {

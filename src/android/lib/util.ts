@@ -53,8 +53,13 @@ export function delimitDimen(tagName: string, attr: string, size: string) {
     return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()},${attr},${size}}` : size);
 }
 
-export function replaceDP(value: string, font = false) {
-    return (SETTINGS.useUnitDP ? value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]) : value);
+export function replaceUnit(value: string, font = false) {
+    switch (SETTINGS.convertPixels) {
+        case 'dp':
+            return value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]);
+        default:
+            return value;
+    }
 }
 
 export function calculateBias(start: number, end: number, accurracy?: number) {

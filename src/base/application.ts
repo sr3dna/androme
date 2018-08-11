@@ -7,7 +7,7 @@ import NodeList from './nodelist';
 import { convertCamelCase, convertInt, convertPX, formatPX, hasValue, includesEnum, isNumber, isPercent, optional, sortAsc, trim } from '../lib/util';
 import { placeIndent } from '../lib/xml';
 import { deleteCache, getCache, getNode, getStyle, hasFreeFormText, isVisible, setCache } from '../lib/dom';
-import { convertRGB, getByColorName, parseRGBA } from '../lib/color';
+import { convertRGB, getByColorName } from '../lib/color';
 import { BLOCK_ELEMENT, BOX_STANDARD, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
@@ -625,28 +625,23 @@ export default class Application<T extends Node> {
                         if (proceed) {
                             continue;
                         }
+                        const cleared = NodeList.cleared(axisY.slice(k));
                         if (!nodeY.rendered) {
                             if (SETTINGS.horizontalPerspective) {
-                                const floats = new Set();
-                                const cleared = new Set();
-                                axisY.slice(k).forEach(node => {
-                                    if (node.floating) {
-                                        floats.add(node.float);
-                                    }
-                                    const clear = node.css('clear');
-                                    if (floats.size > 0 && (clear === 'both' || floats.has(clear))) {
-                                        cleared.add(node);
-                                        floats.clear();
-                                    }
-                                });
-                                if (nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && parent.styleMap.columnCount == null && (parent.is(NODE_STANDARD.CONSTRAINT) || (parent.is(NODE_STANDARD.RELATIVE) && !parent.inlineWrap) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
+                                if (nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && !parent.inlineWrap && parent.styleMap.columnCount == null && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
                                     const horizontal = [nodeY];
                                     let vertical = [nodeY];
                                     for (let l = k + 1; l < axisY.length; l++) {
                                         const adjacent = axisY[l];
                                         if (adjacent.pageflow) {
                                             const previous = adjacent.previousSibling;
-                                            if (previous && ((!adjacent.floating && (!previous.inlineElement || previous.autoMargin)) || (!previous.floating && adjacent.autoMargin))) {
+                                            if (previous && (
+                                                        cleared.has(adjacent) ||
+                                                        (!previous.floating && previous.autoMargin) ||
+                                                        (!adjacent.floating && (!previous.inlineElement || previous.autoMargin)) ||
+                                                        (!previous.floating && adjacent.autoMargin) ||
+                                                        (vertical.length > horizontal.length && NodeList.linearY([...horizontal.slice(), ...[adjacent]])))
+                                                    ) {
                                                 if (horizontal.length > 1 || !parent.is(NODE_STANDARD.CONSTRAINT) || vertical[0].autoMargin || adjacent.autoMargin) {
                                                     break;
                                                 }
@@ -661,7 +656,10 @@ export default class Application<T extends Node> {
                                                     if (!target) {
                                                         horizontal.push(adjacent);
                                                     }
-                                                    if (!parent.is(NODE_STANDARD.RELATIVE) && !NodeList.linearX(horizontal, SETTINGS.linearHorizontalTopOffset)) {
+                                                    if (previous == null || (((previous.inlineElement || previous.floating) && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
+                                                        continue;
+                                                    }
+                                                    if (!NodeList.linearX(horizontal)) {
                                                         if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
                                                             vertical = horizontal.slice();
                                                             horizontal.length = 1;
@@ -706,7 +704,6 @@ export default class Application<T extends Node> {
                                     else if (vertical.length > 1) {
                                         group = this.controllerHandler.createGroup(nodeY, vertical, parent);
                                         groupXml = this.writeLinearLayout(group, parent, false);
-                                        group.inlineWrap = true;
                                         this.sortLayout(group, <T[]> group.children, true);
                                     }
                                     if (group != null) {
@@ -717,7 +714,7 @@ export default class Application<T extends Node> {
                             }
                             let xml = '';
                             if (nodeY.nodeName === '') {
-                                const untargeted = nodeY.untargeted;
+                                const untargeted = nodeY.children.filter(node => !node.isSet('dataset', 'target'));
                                 if (untargeted.length === 0) {
                                     if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
                                         xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
@@ -733,11 +730,11 @@ export default class Application<T extends Node> {
                                 }
                                 else {
                                     if (nodeY.flex.enabled || untargeted.some(node => !node.pageflow) || nodeY.styleMap.columnCount != null) {
-                                        xml = this.writeDefaultLayout(nodeY, parent);
+                                        xml = this.writeConstraintLayout(nodeY, parent);
                                     }
                                     else {
                                         if (untargeted.length === 1) {
-                                            if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0 && nodeY.marginTop === 0 && nodeY.marginRight === 0 && nodeY.marginBottom === 0 && nodeY.marginLeft === 0 && nodeY.paddingTop === 0 && nodeY.paddingRight === 0 && nodeY.paddingBottom === 0 && nodeY.paddingLeft === 0 && parseRGBA(nodeY.css('background')).length === 0 && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
+                                            if (SETTINGS.collapseUnattributedElements && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
                                                 const child = untargeted[0];
                                                 child.documentRoot = nodeY.documentRoot;
                                                 child.parent = parent;
@@ -750,26 +747,33 @@ export default class Application<T extends Node> {
                                             }
                                         }
                                         else {
-                                            const [linearX, linearY] = [NodeList.linearX(nodeY.children, SETTINGS.linearHorizontalTopOffset), NodeList.linearY(nodeY.children)];
-                                            if ((linearX || linearY) && !parent.flex.enabled && nodeY.children.every(node => node.pageflow)) {
+                                            const linearX = NodeList.linearX(nodeY.children);
+                                            if (!parent.flex.enabled && nodeY.children.every(node => node.pageflow)) {
                                                 const float = new Set(nodeY.children.map(node => node.float));
-                                                if ((linearX && float.size === 1 && !nodeY.children.some(node => node.multiLine)) || (linearY && !nodeY.children.some(node => node.autoMargin))) {
-                                                    xml = this.writeLinearLayout(nodeY, parent, linearX);
-                                                }
-                                                else if (linearX && nodeY.children.some(node => node.floating)) {
-                                                    const group = this.controllerHandler.createGroup(nodeY, <T[]> nodeY.children, parent, nodeY.element);
-                                                    xml = this.writeFrameLayoutGroup(group, parent, <T[]> nodeY.children);
-                                                    group.inlineWrap = true;
+                                                if (linearX) {
+                                                    if (float.size === 1 && !nodeY.children.some(node => node.multiLine)) {
+                                                        xml = this.writeLinearLayout(nodeY, parent, true);
+                                                    }
+                                                    else if (nodeY.children.some(node => node.floating)) {
+                                                        const group = this.controllerHandler.createGroup(nodeY, <T[]> nodeY.children, parent, nodeY.element);
+                                                        xml = this.writeFrameLayoutGroup(group, parent, <T[]> nodeY.children);
+                                                        group.inlineWrap = true;
+                                                    }
                                                 }
                                                 else {
-                                                    xml = this.writeDefaultLayout(nodeY, parent);
+                                                    const blockClear = NodeList.cleared(nodeY.children);
+                                                    if (nodeY.children.some((node: T) => !node.inlineElement || blockClear.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
+                                                        xml = this.writeLinearLayout(nodeY, parent, false);
+                                                    }
                                                 }
                                             }
-                                            else if (SETTINGS.horizontalPerspective && nodeY.children.every(node => node.pageflow && node.inlineElement && node.css('clear') === 'none')) {
-                                                xml = this.writeRelativeLayout(nodeY, parent);
-                                            }
-                                            else {
-                                                xml = this.writeDefaultLayout(nodeY, parent);
+                                            if (xml === '') {
+                                                if (SETTINGS.horizontalPerspective && nodeY.children.every((node: T) => node.pageflow && node.inlineElement && !cleared.has(node))) {
+                                                    xml = this.writeRelativeLayout(nodeY, parent);
+                                                }
+                                                else {
+                                                    xml = this.writeConstraintLayout(nodeY, parent);
+                                                }
                                             }
                                         }
                                     }
@@ -868,37 +872,35 @@ export default class Application<T extends Node> {
         return this.controllerHandler.renderNode(node, parent, nodeName);
     }
 
-    public writeDefaultLayout(node: T, parent: T) {
-        if (SETTINGS.useConstraintLayout || node.flex.enabled) {
-            return this.writeConstraintLayout(node, parent);
-        }
-        else {
-            return this.writeRelativeLayout(node, parent);
-        }
-    }
-
     public writeFrameLayoutGroup(group: T, parent: T, nodes: T[]) {
         let xml = '';
         const [floated, pageflow] = new NodeList(nodes).partition(item => item.floating || item.styleMap.marginLeft === 'auto' || item.styleMap.marginRight === 'auto');
         const [right, left] = new NodeList(floated.list).partition(item => item.float === 'right' || item.styleMap.marginLeft === 'auto');
-        const merged = [...left.list, ...pageflow.list];
-        if (merged.length === nodes.length) {
-            xml = this.writeLinearLayout(group, parent, true);
-            this.sortLayout(group, <T[]> group.children, true);
+        const [linearX, linearY] = [pageflow.linearX, pageflow.linearY];
+        if (pageflow.length > 1 && !linearX && !linearY) {
+            xml = this.writeConstraintLayout(group, parent);
+            group.inlineWrap = true;
         }
         else {
-            xml = this.writeFrameLayout(group, parent, true);
-            const placeholder = `{:${group.id}}`;
-            [merged, right.list].forEach((item, index) => {
-                if (item.length > 1) {
-                    const linearGroup = this.controllerHandler.createGroup(item[0], item, group);
-                    xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, true) + (index === 0 ? placeholder : ''));
-                    this.sortLayout(linearGroup, item, true);
-                }
-                else if (item.length > 0) {
-                    item[0].inlineWrap = true;
-                }
-            });
+            const merged: T[] = [...left.list, ...pageflow.list];
+            if (merged.length === nodes.length) {
+                xml = this.writeLinearLayout(group, parent, true);
+                this.sortLayout(group, <T[]> group.children, true);
+            }
+            else {
+                xml = this.writeFrameLayout(group, parent, true);
+                const placeholder = `{:${group.id}}`;
+                [merged, right.list].forEach((item, index) => {
+                    if (item.length > 1) {
+                        const linearGroup = this.controllerHandler.createGroup(item[0], item, group);
+                        xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, true) + (index === 0 ? placeholder : ''));
+                        this.sortLayout(linearGroup, item, true);
+                    }
+                    else if (item.length > 0) {
+                        item[0].inlineWrap = true;
+                    }
+                });
+            }
         }
         return xml;
     }

@@ -83,29 +83,27 @@ androme.settings = {
     ],
     targetAPI: androme.build.OREO,
     density: androme.build.MDPI,
-    useConstraintLayout: true,
-    useConstraintGuideline: true,
-    useConstraintChain: true,
-    useUnitDP: true,
-    useFontAlias: true,
     supportRTL: true,
     dimensResourceValue: true,
     numberResourceValue: false,
+    fontAliasResourceValue: true,
     alwaysReevaluateResources: true,
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     collapseUnattributedElements: false,
     horizontalPerspective: true,
-    linearHorizontalTopOffset: 4,
     constraintPercentAccuracy: 4, // eq: 1px
-    whitespaceHorizontalOffset: 4, // Chrome/Safari: 3.5 | Edge: 3.5 | Firefox: 3
-    whitespaceVerticalOffset: 16,  // 1em
-    chainPackedHorizontalOffset: 4,
-    chainPackedVerticalOffset: 16,
+    constraintChainDisabled: false,
+    constraintWhitespaceHorizontalOffset: 4, // Chrome/Safari: 3.5 | Edge: 3.5 | Firefox: 3
+    constraintWhitespaceVerticalOffset: 16,  // 1em
+    constraintChainPackedHorizontalOffset: 4,
+    constraintChainPackedVerticalOffset: 16,
+    constraintCirclePositionAbsolute: false,
     showAttributes: true,
     customizationsOverwritePrivilege: false,
     autoCloseOnWrite: true,
     insertSpaces: 4, // tabs: 0
+    convertPixels: 'dp',
     outputDirectory: 'app/src/main',
     outputActivityMainFileName: 'activity_main.xml',
     outputArchiveFileType: 'zip', // zip | tar
@@ -114,7 +112,7 @@ androme.settings = {
 ```
 You can preview the library with the provided /demos/*.html which for the the time being is the only form of documentation.
 
-Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for removing the built-in extension "androme.grid" when the generated UI is not accurate which it will instead use LinearLayout for placement. To use Constraint circle for placement you have to disable "useConstraintChain" and "useConstraintGuideline".
+Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for removing the built-in extension "androme.grid" when the generated UI is not accurate which it will instead use LinearLayout for placement.
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using a table to create your layouts is recommended if you are not experienced with HTML.
 
@@ -329,7 +327,7 @@ The attributes "include" and "include-end" can only be applied to elements which
             android:id="@+id/gridlayout_1"
             android:columnCount="2"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
             android:paddingTop="@dimen/ul_padding_top"
@@ -381,7 +379,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_19"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol56159"
+                    android:text="@string/__symbol52030"
                     style="@style/Plaintext" />
             </LinearLayout>
             <RelativeLayout
@@ -527,7 +525,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_22"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol56159"
+                    android:text="@string/__symbol52030"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -637,7 +635,7 @@ The attributes "include" and "include-end" can only be applied to elements which
             android:id="@+id/gridlayout_2"
             android:columnCount="2"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
             android:paddingTop="@dimen/ul_padding_top"
@@ -946,7 +944,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_25"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol56159"
+                    android:text="@string/__symbol52030"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -1067,7 +1065,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol56159">):</string>
+    <string name="__symbol52030">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>

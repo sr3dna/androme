@@ -1,45 +1,42 @@
 import Node from './node';
-import { sortAsc, sortDesc, withinRange } from '../lib/util';
+import { sortAsc, sortDesc } from '../lib/util';
 
 export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
 export default class NodeList<T extends Node> implements Iterable<T> {
-    public static intersect<T extends Node>(list: T[], dimension = 'linear') {
-        return list.some(node => {
-            if (list.some(item => item !== node && node.intersect(item[dimension]))) {
-                return true;
+    public static cleared<T extends Node>(list: T[]) {
+        const result: Set<T> = new Set();
+        const floats = new Set();
+        list.forEach(node => {
+            if (node.floating) {
+                floats.add(node.float);
             }
-            return false;
+            const clear = node.css('clear');
+            if (floats.size > 0 && (clear === 'both' || floats.has(clear))) {
+                result.add(node);
+                floats.clear();
+            }
         });
+        return result;
     }
 
     public static linearX<T extends Node>(list: T[], offset = 0) {
-        const nodes = list.filter(node => !node.isolated);
+        const nodes = list.filter(node => node.pageflow);
         switch (nodes.length) {
             case 0:
                 return false;
             case 1:
                 return true;
             default:
-                const float = new Set();
-                const valid = !nodes.some((node, index) => {
-                    if (node.floating) {
-                        float.add(node.float);
-                    }
-                    const clear = node.css('clear');
-                    return (index > 0 && float.size > 0 && (clear === 'both' || float.has(clear)));
-                });
-                if (valid) {
-                    const minTop = Math.min.apply(null, nodes.map(node => node.linear.top));
-                    const maxBottom = Math.max.apply(null, nodes.filter(node => withinRange(node.linear.top, minTop, offset)).map(node => node.linear.bottom));
-                    return nodes.every(node => node.linear.height > 0 && node.linear.top >= minTop && node.linear.bottom <= maxBottom);
+                if (NodeList.cleared(nodes).size === 0) {
+                    return nodes.every((node, index) => (node.inlineElement || node.floating) && !node.autoMargin && (index === 0 || node.linear.top < nodes[index - 1].linear.bottom));
                 }
                 return false;
         }
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.pageflow && !node.floating && !node.isolated);
+        const nodes = list.filter(node => node.pageflow && !node.floating);
         switch (nodes.length) {
             case 0:
                 return false;
@@ -160,10 +157,6 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     public sortDesc(...attrs: string[]) {
         sortDesc<T>(this._list, ...attrs);
         return this;
-    }
-
-    public intersect(dimension = 'linear') {
-        return NodeList.intersect(this._list, dimension);
     }
 
     get length() {

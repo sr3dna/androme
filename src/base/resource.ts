@@ -2,7 +2,7 @@ import { BorderAttribute, BoxStyle, FontAttribute, Null, ResourceMap, ViewData }
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertPX, hasValue, includesEnum, isNumber } from '../lib/util';
+import { convertPX, hasValue, includesEnum, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 import { getBoxSpacing, getCache, sameAsParent, setCache, hasFreeFormText } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
@@ -342,13 +342,16 @@ export default abstract class Resource<T extends Node> {
 
     private parseBoxDimensions(value: string) {
         if (value !== 'auto') {
-            const match = value.match(/^([0-9]+(?:px|pt|em)|auto)(?: ([0-9]+(?:px|pt|em)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
+            const match = value.match(/^([0-9]+(?:px|pt|em|%)|auto)(?: ([0-9]+(?:px|pt|em|%)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
             if (match != null) {
                 if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
                     return [];
                 }
                 if (match[1] === 'auto' || match[2] === 'auto') {
                     return [(match[1] === 'auto' ? '' : convertPX(match[1])), (match[2] === 'auto' ? '' : convertPX(match[2]))];
+                }
+                else if (isPercent(match[1]) && match[3] == null) {
+                    return [match[1], match[2]];
                 }
                 else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
                     return [convertPX(match[1])];

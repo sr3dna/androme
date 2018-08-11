@@ -118,8 +118,11 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
 
 export function hasFreeFormText(element: HTMLElement, maxDepth = 0) {
     let valid = false;
-    let depth = 0;
+    let depth = -1;
     function findFreeForm(elements: any[]) {
+        if (depth === maxDepth) {
+            return true;
+        }
         return elements.some((item: HTMLElement) => {
             if (item.nodeName === '#text' && optional(item, 'textContent').trim() !== '') {
                 valid = true;
@@ -128,9 +131,6 @@ export function hasFreeFormText(element: HTMLElement, maxDepth = 0) {
             else if (item.childNodes && item.childNodes.length > 0) {
                 depth++;
                 return findFreeForm(Array.from(item.childNodes));
-            }
-            if (depth === maxDepth) {
-                return true;
             }
             return false;
         });
