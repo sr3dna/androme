@@ -507,7 +507,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 bottomLeftRadius: stored.borderRadius[3]
                             });
                         }
-                        root['1'].push({ '2': false, '3': backgroundColor, '4': false, '5': false });
+                        if (backgroundColor !== false) {
+                            root['1'].push({ '2': false, '3': backgroundColor, '4': false, '5': false });
+                        }
                         if (valid) {
                             const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
                             const layerList: {} = {

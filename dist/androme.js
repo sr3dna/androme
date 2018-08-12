@@ -1,4 +1,4 @@
-/* androme 1.8.29
+/* androme 1.8.30
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -334,7 +334,7 @@
                     return true;
                 default:
                     if (NodeList.cleared(nodes).size === 0) {
-                        return nodes.every((node, index) => (node.inlineElement || node.floating) && !node.autoMargin && (index === 0 || node.linear.top < nodes[index - 1].linear.bottom));
+                        return nodes.every((node, index) => node.inlineElement && !node.autoMargin && (index === 0 || node.linear.top < nodes[index - 1].linear.bottom));
                     }
                     return false;
             }
@@ -723,6 +723,24 @@
         findFreeForm(Array.from(element.childNodes));
         return valid;
     }
+    function isLineBreak(element, direction = 'previous') {
+        let found = false;
+        while (element != null) {
+            if (element.nodeName === '#text') {
+                if (element.textContent && element.textContent.trim() !== '') {
+                    break;
+                }
+                else {
+                    element = element[`${direction}Sibling`];
+                }
+            }
+            else {
+                found = (element.tagName === 'BR' || (getStyle(element).display === 'block' && !getNode(element)));
+                break;
+            }
+        }
+        return found;
+    }
     function isVisible(element) {
         switch (element.tagName) {
             case 'BR':
@@ -1083,7 +1101,7 @@
     (function (NODE_PROCEDURE) {
         NODE_PROCEDURE[NODE_PROCEDURE["LAYOUT"] = 2] = "LAYOUT";
         NODE_PROCEDURE[NODE_PROCEDURE["ALIGNMENT"] = 4] = "ALIGNMENT";
-        NODE_PROCEDURE[NODE_PROCEDURE["OPTIMIZE"] = 8] = "OPTIMIZE";
+        NODE_PROCEDURE[NODE_PROCEDURE["OPTIMIZATION"] = 8] = "OPTIMIZATION";
         NODE_PROCEDURE[NODE_PROCEDURE["CUSTOMIZATION"] = 16] = "CUSTOMIZATION";
         NODE_PROCEDURE[NODE_PROCEDURE["ACCESSIBILITY"] = 32] = "ACCESSIBILITY";
         NODE_PROCEDURE[NODE_PROCEDURE["ALL"] = 62] = "ALL";
@@ -1430,6 +1448,7 @@
         alwaysReevaluateResources: true,
         excludeTextColor: ['#000000'],
         excludeBackgroundColor: ['#FFFFFF'],
+        autoSizePaddingAndBorderWidth: true,
         collapseUnattributedElements: false,
         horizontalPerspective: true,
         constraintPercentAccuracy: 4,
@@ -1498,8 +1517,8 @@
                 }
             }
             for (const node of visible) {
-                if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.OPTIMIZE)) {
-                    node.optimizeLayout();
+                if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.OPTIMIZATION)) {
+                    node.applyOptimizations({ autoSizePaddingAndBorderWidth: SETTINGS.autoSizePaddingAndBorderWidth });
                 }
                 if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.CUSTOMIZATION)) {
                     node.applyCustomizations(SETTINGS.customizationsOverwritePrivilege);
@@ -2051,9 +2070,6 @@
                             const cleared = NodeList.cleared(axisY.slice(k));
                             if (!nodeY.rendered) {
                                 if (SETTINGS.horizontalPerspective) {
-                                    function lineBreak(element) {
-                                        return (element && (element.tagName === 'BR' || (BLOCK_ELEMENT.includes(element.tagName) && !getNode(element))));
-                                    }
                                     const linearVertical = (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal);
                                     if (nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && !parent.inlineWrap && parent.styleMap.columnCount == null && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical)) {
                                         const horizontal = [nodeY];
@@ -2062,72 +2078,76 @@
                                             const adjacent = axisY[l];
                                             if (adjacent.pageflow) {
                                                 const previous = adjacent.previousSibling;
-                                                if (previous && (cleared.has(adjacent) ||
-                                                    (adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
-                                                    (horizontal.length > 1 && lineBreak(adjacent.element.previousElementSibling)) ||
-                                                    (!previous.floating && (previous.autoMargin || !adjacent.inlineElement)) ||
-                                                    (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
-                                                    (!previous.floating && adjacent.autoMargin) ||
-                                                    (vertical.length > horizontal.length && NodeList.linearY([...vertical.slice(), ...[adjacent]])))) {
-                                                    if (horizontal.length > 1) {
-                                                        if (linearVertical) {
-                                                            for (let m = 1; m < horizontal.length; m++) {
-                                                                if (lineBreak(horizontal[m].element.previousElementSibling)) {
-                                                                    horizontal.length = 1;
-                                                                    break;
+                                                if (previous != null) {
+                                                    if (isLineBreak(previous.element.nextSibling, 'next')) {
+                                                        break;
+                                                    }
+                                                    else if (cleared.has(adjacent) ||
+                                                        (adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
+                                                        (horizontal.length > 1 && isLineBreak(adjacent.element.previousSibling)) ||
+                                                        (!previous.floating && (previous.autoMargin || !adjacent.inlineElement)) ||
+                                                        (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
+                                                        (!previous.floating && adjacent.autoMargin) ||
+                                                        (vertical.length > horizontal.length && NodeList.linearY([...vertical.slice(), ...[adjacent]]))) {
+                                                        if (horizontal.length > 1) {
+                                                            if (linearVertical) {
+                                                                for (let m = 1; m < horizontal.length; m++) {
+                                                                    if (isLineBreak(horizontal[m].element.previousSibling)) {
+                                                                        horizontal.length = 1;
+                                                                        break;
+                                                                    }
                                                                 }
                                                             }
+                                                            break;
                                                         }
-                                                        break;
+                                                        else if (linearVertical) {
+                                                            break;
+                                                        }
+                                                        vertical.push(adjacent);
+                                                        continue;
                                                     }
-                                                    else if (linearVertical) {
-                                                        break;
-                                                    }
-                                                    vertical.push(adjacent);
                                                 }
-                                                else {
-                                                    if (lineBreak(adjacent.element.previousElementSibling)) {
-                                                        if (!linearVertical) {
-                                                            if (horizontal.length > 1) {
-                                                                if (NodeList.linearY(horizontal)) {
-                                                                    vertical = horizontal.slice();
-                                                                    horizontal.length = 1;
-                                                                    continue;
-                                                                }
-                                                                else {
-                                                                    break;
-                                                                }
-                                                            }
-                                                            else {
-                                                                vertical.push(adjacent);
-                                                                continue;
-                                                            }
-                                                        }
-                                                    }
-                                                    if (!cleared.has(adjacent)) {
-                                                        const target = hasValue(adjacent.dataset.target);
-                                                        if (!target) {
-                                                            horizontal.push(adjacent);
-                                                        }
-                                                        if (previous == null || (((previous.inlineElement || previous.floating) && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
-                                                            continue;
-                                                        }
-                                                        if (!NodeList.linearX(horizontal)) {
-                                                            if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
+                                                if (isLineBreak(adjacent.element.previousSibling)) {
+                                                    if (!linearVertical) {
+                                                        if (horizontal.length > 1) {
+                                                            if (NodeList.linearY(horizontal)) {
                                                                 vertical = horizontal.slice();
                                                                 horizontal.length = 1;
+                                                                continue;
                                                             }
                                                             else {
-                                                                if (!target) {
-                                                                    horizontal.pop();
-                                                                }
                                                                 break;
                                                             }
                                                         }
+                                                        else {
+                                                            vertical.push(adjacent);
+                                                            continue;
+                                                        }
                                                     }
-                                                    else {
-                                                        break;
+                                                }
+                                                if (!cleared.has(adjacent)) {
+                                                    const target = hasValue(adjacent.dataset.target);
+                                                    if (!target) {
+                                                        horizontal.push(adjacent);
                                                     }
+                                                    if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
+                                                        continue;
+                                                    }
+                                                    if (!NodeList.linearX(horizontal)) {
+                                                        if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
+                                                            vertical = horizontal.slice();
+                                                            horizontal.length = 1;
+                                                        }
+                                                        else {
+                                                            if (!target) {
+                                                                horizontal.pop();
+                                                            }
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                else {
+                                                    break;
                                                 }
                                             }
                                         }
@@ -2345,7 +2365,7 @@
                     [merged, right.list].forEach((item, index) => {
                         if (item.length > 1) {
                             const linearGroup = this.controllerHandler.createGroup(item[0], item, group);
-                            xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, item.every(node => node.inlineElement || node.floating)) + (index === 0 ? placeholder : ''));
+                            xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, item.every(node => node.inlineElement)) + (index === 0 ? placeholder : ''));
                             this.sortLayout(linearGroup, item, true);
                         }
                         else if (item.length > 0) {
@@ -2477,21 +2497,23 @@
                     break;
                 case NODE_STANDARD.LINEAR:
                     if (parent.horizontal) {
-                        children.sort((a, b) => {
-                            if (a.floating && !b.floating) {
-                                return (a.float === 'left' ? -1 : 1);
-                            }
-                            else if (!a.floating && b.floating) {
-                                return (b.float === 'left' ? 1 : -1);
-                            }
-                            else if (a.floating && b.floating) {
-                                if (a.float !== b.float) {
+                        if (children.some(node => node.floating)) {
+                            children.sort((a, b) => {
+                                if (a.floating && !b.floating) {
                                     return (a.float === 'left' ? -1 : 1);
                                 }
-                            }
-                            return (a.linear.left <= b.linear.left ? -1 : 1);
-                        });
-                        sorted = true;
+                                else if (!a.floating && b.floating) {
+                                    return (b.float === 'left' ? 1 : -1);
+                                }
+                                else if (a.floating && b.floating) {
+                                    if (a.float !== b.float) {
+                                        return (a.float === 'left' ? -1 : 1);
+                                    }
+                                }
+                                return (a.linear.left <= b.linear.left ? -1 : 1);
+                            });
+                            sorted = true;
+                        }
                     }
                     break;
             }
@@ -3047,7 +3069,6 @@
                                 case 'pre-line':
                                     value = value.replace(/\s+/g, ' ');
                                 default:
-                                    value = value.replace(/^\s+/g, '');
                                     inlineTrim = true;
                                     break;
                             }
@@ -3635,14 +3656,17 @@
         }
         get pageflow() {
             const position = this.position;
-            return (position === 'static' || position === 'initial' || position === 'relative' || this.tagName === 'PLAINTEXT' || this.alignMargin);
+            return (position === 'static' || position === 'initial' || position === 'relative' || this.plainText || this.alignMargin);
         }
         get inline() {
             return (this.display === 'inline');
         }
         get inlineElement() {
             const position = this.position;
-            return (this.tagName === 'PLAINTEXT' || this.display.indexOf('inline') !== -1 || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin) || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
+            return (this.plainText || this.display.indexOf('inline') !== -1 || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin) || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
+        }
+        get plainText() {
+            return (this.tagName === 'PLAINTEXT');
         }
         get alignMargin() {
             return (this.top == null && this.right == null && this.bottom == null && this.left == null);
@@ -3774,7 +3798,7 @@
         }
         return '0dp';
     }
-    function delimitDimen(tagName, attr, size) {
+    function delimitDimens(tagName, attr, size) {
         return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()},${attr},${size}}` : size);
     }
     function replaceUnit(value, font = false) {
@@ -4217,10 +4241,10 @@
                         if (convertFloat(this.android('layout_columnWeight')) > 0) {
                             this.android('layout_width', '0px');
                         }
-                        else if (!wrap && ((this.display === 'block') ||
+                        else if (!wrap && ((this.display === 'block' && (right === 0 || right !== rightParent)) ||
                             (parent.overflow === 0 /* NONE */ && (widthRoot > 0 || this.documentParent.documentBody) && width >= widthParent) ||
-                            (!this.inlineElement && !this.floating && (this.renderChildren.length === 0 || (right !== 0 && right < rightParent))) ||
-                            (this.is(NODE_STANDARD.LINEAR) && !this.horizontal && this.renderChildren.some(node => !node.inlineElement && !node.floating)))) {
+                            (!this.inlineElement && (this.renderChildren.length === 0 || (right !== 0 && right < rightParent))) ||
+                            (this.is(NODE_STANDARD.LINEAR) && !this.horizontal && this.renderChildren.some(node => !node.inlineElement)))) {
                             this.android('layout_width', 'match_parent');
                         }
                         else {
@@ -4302,6 +4326,17 @@
         setAlignment() {
             const left = parseRTL('left');
             const right = parseRTL('right');
+            function setAutoMargin(node) {
+                if (node.styleMap.marginLeft === 'auto' && node.styleMap.marginRight === 'auto') {
+                    node.android('layout_gravity', 'center_horizontal');
+                    return true;
+                }
+                else if (node.styleMap.marginLeft === 'auto') {
+                    node.android('layout_gravity', right);
+                    return true;
+                }
+                return false;
+            }
             function convertHorizontal(value) {
                 switch (value) {
                     case 'left':
@@ -4373,13 +4408,13 @@
                                 }
                             }
                         }
+                        if (!this.horizontal) {
+                            setAutoMargin(this);
+                        }
                         break;
                     case NODE_ANDROID.FRAME:
-                        if (this.styleMap.marginLeft === 'auto' && this.styleMap.marginRight === 'auto') {
-                            this.android('layout_gravity', 'center_horizontal');
-                        }
-                        else {
-                            this.android('layout_gravity', (this.float === 'right' || this.styleMap.marginLeft === 'auto' || (this.is(NODE_STANDARD.LINEAR) && this.renderChildren.some(node => node.float === 'right')) ? right : left));
+                        if (!setAutoMargin(this)) {
+                            this.android('layout_gravity', (this.float === 'right' || (this.is(NODE_STANDARD.LINEAR) && this.renderChildren.some(node => node.float === 'right')) ? right : left));
                         }
                         break;
                 }
@@ -4423,7 +4458,7 @@
                 ['layout_margin', 'padding'].forEach((value, index) => {
                     const leftRtl = parseRTL(`${value}Left`);
                     const rightRtl = parseRTL(`${value}Right`);
-                    const inline = (this.display === 'inline' || this.tagName === 'PLAINTEXT');
+                    const inline = (this.inline || this.plainText);
                     let top = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Top`)));
                     let right = convertInt(this.android(rightRtl));
                     let bottom = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Bottom`)));
@@ -4467,21 +4502,11 @@
                 });
             }
         }
-        optimizeLayout() {
+        applyOptimizations(options) {
             this.adjustBoxSpacing();
             const viewWidth = convertInt(this.android('layout_width'));
             const viewHeight = convertInt(this.android('layout_height'));
             switch (this.nodeName) {
-                case NODE_ANDROID.FRAME: {
-                    if (!this.documentRoot && this.viewWidth === 0 && !this.inlineWrap && this.renderChildren.every(node => node.inlineElement || node.floating)) {
-                        const gravity = new Set();
-                        this.renderChildren.forEach(node => gravity.add(node.android('layout_gravity') || parseRTL('left')));
-                        if (gravity.size === 1) {
-                            this.android('layout_width', 'wrap_content');
-                        }
-                    }
-                    break;
-                }
                 case NODE_ANDROID.LINEAR: {
                     if (this.display !== 'block') {
                         [[this.horizontal, this.inlineElement, 'layout_width'], [!this.horizontal, true, 'layout_height']].forEach((value) => {
@@ -4496,8 +4521,8 @@
                         if (this.renderChildren.some(node => node.floating) || this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
                             this.android('baselineAligned', 'false');
                         }
+                        this.alignBaseline(this.renderChildren);
                     }
-                    break;
                 }
                 case NODE_ANDROID.SELECT:
                 case NODE_ANDROID.CHECKBOX:
@@ -4505,17 +4530,19 @@
                 case NODE_ANDROID.BUTTON:
                 case NODE_ANDROID.EDIT:
                 case NODE_ANDROID.TEXT: {
-                    if (viewWidth > 0 || viewHeight > 0) {
-                        const boxStyle = getCache(this.element, 'boxStyle');
-                        if (boxStyle != null) {
-                            if (viewWidth > 0) {
-                                this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
-                            }
-                            if (viewHeight > 0) {
-                                if (this.marginTop >= this.borderTopWidth) {
-                                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop - this.borderTopWidth);
+                    if (options.autoSizePaddingAndBorderWidth) {
+                        if (viewWidth > 0 || viewHeight > 0) {
+                            const boxStyle = getCache(this.element, 'boxStyle');
+                            if (boxStyle != null) {
+                                if (viewWidth > 0) {
+                                    this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
                                 }
-                                this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth));
+                                if (viewHeight > 0) {
+                                    if (this.marginTop >= this.borderTopWidth) {
+                                        this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop - this.borderTopWidth);
+                                    }
+                                    this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth));
+                                }
                             }
                         }
                     }
@@ -4558,9 +4585,13 @@
                     break;
                 }
             }
+            let marginTop = null;
             if (this.position === 'relative') {
                 if (convertInt(this.top) !== 0) {
-                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, convertInt(this.android('layout_marginTop')) + convertInt(this.top));
+                    marginTop = this.marginTop + convertInt(this.top);
+                }
+                else if (convertInt(this.bottom) !== 0) {
+                    marginTop = this.marginTop + (convertInt(this.bottom) * -1);
                 }
                 if (convertInt(this.left) !== 0) {
                     if (this.float === 'right' || (this.position === 'relative' && this.styleMap.marginLeft === 'auto')) {
@@ -4574,8 +4605,11 @@
             if (this.inline) {
                 const offsetTop = convertInt(this.css('verticalAlign'));
                 if (offsetTop !== 0) {
-                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, (offsetTop * -1));
+                    marginTop = (marginTop != null ? marginTop : 0) + (offsetTop * -1);
                 }
+            }
+            if (marginTop != null) {
+                this.modifyBox(BOX_STANDARD.MARGIN_TOP, marginTop);
             }
             if (this.css('visibility') === 'hidden') {
                 this.android('visibility', 'invisible');
@@ -4619,18 +4653,28 @@
                 if (item.is(NODE_STANDARD.LINEAR) && item.android('baselineAlignedChildIndex') != null) {
                     childIndex = index;
                 }
-                else if (item.nodeType <= NODE_STANDARD.TEXT) {
-                    switch (item.css('verticalAlign')) {
-                        case 'baseline':
-                        case 'sub':
-                        case 'super':
-                            if (childIndex === -1 && item.nodeType <= NODE_STANDARD.BUTTON) {
-                                childIndex = index;
+                else if (item.plainText) {
+                    if (childIndex === -1) {
+                        childIndex = index;
+                    }
+                }
+                else {
+                    if (item.nodeType <= NODE_STANDARD.TEXT) {
+                        const verticalAlign = item.css('verticalAlign');
+                        if (verticalAlign !== '') {
+                            switch (item.css('verticalAlign')) {
+                                case 'baseline':
+                                case 'sub':
+                                case 'super':
+                                    if (childIndex === -1 && item.nodeType <= NODE_STANDARD.BUTTON) {
+                                        childIndex = index;
+                                    }
+                                    break;
+                                default:
+                                    childIndex = -1;
+                                    return true;
                             }
-                            break;
-                        default:
-                            childIndex = -1;
-                            return true;
+                        }
                     }
                 }
                 return false;
@@ -4640,16 +4684,6 @@
                 if (this.renderParent.is(NODE_STANDARD.LINEAR) && this.renderParent.horizontal) {
                     this.renderParent.alignBaseline(this.renderParent.renderChildren);
                 }
-            }
-        }
-        append(node) {
-            super.append(node);
-            switch (this.nodeName) {
-                case NODE_ANDROID.LINEAR:
-                    if (this.horizontal) {
-                        this.alignBaseline(this.renderChildren);
-                    }
-                    break;
             }
         }
         adjustBoxSpacing() {
@@ -5411,7 +5445,9 @@
                                     bottomLeftRadius: stored.borderRadius[3]
                                 });
                             }
-                            root['1'].push({ '2': false, '3': backgroundColor, '4': false, '5': false });
+                            if (backgroundColor !== false) {
+                                root['1'].push({ '2': false, '3': backgroundColor, '4': false, '5': false });
+                            }
                             if (valid) {
                                 const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
                                 const layerList = {
@@ -6155,7 +6191,7 @@
                                 const tallest = (images.length > 0 ? images : baseline).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
                                 let topParent = false;
                                 for (const item of baseline) {
-                                    if (item !== tallest) {
+                                    if (item !== tallest && item.alignMargin) {
                                         item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
                                         if (images.length > 0 && mapParent(item, 'top')) {
                                             item.delete('android', relativeParent['top']);
@@ -6183,7 +6219,7 @@
                             else {
                                 const group = (current instanceof ViewGroup);
                                 const previous = nodes.get(i - 1);
-                                if ((node.inlineWrap && group) || current.multiLine || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                                if ((node.inlineWrap && group) || current.multiLine || isLineBreak(current.element.previousSibling) || isLineBreak(previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
                                     const items = rows[rows.length - 1];
                                     previousRowBottom = items[0];
                                     for (let j = 1; j < items.length; j++) {
@@ -6833,7 +6869,7 @@
                                                 const alignBottom = withinFraction(last.linear.bottom, node.box.bottom);
                                                 if ((orientation === AXIS_ANDROID.HORIZONTAL && alignLeft && alignRight) || (orientation === AXIS_ANDROID.VERTICAL && alignTop && alignBottom)) {
                                                     if (chainable.length > 2 || flex.enabled) {
-                                                        if (!flex.enabled && (node.inlineElement || node.floating)) {
+                                                        if (!flex.enabled && node.inlineElement) {
                                                             first.app(chainStyle, 'packed');
                                                             first.app(`layout_constraint${HV}_bias`, (index === 0 && node.float === 'right' ? '1' : '0'));
                                                         }
@@ -7046,7 +7082,7 @@
                                             degrees = (center1.x > center2.x ? 90 : 270);
                                         }
                                         current.app('layout_constraintCircle', opposite.stringId);
-                                        current.app('layout_constraintCircleRadius', delimitDimen(`${current.tagName}`, 'constraintcircleradius', formatPX(radius)));
+                                        current.app('layout_constraintCircleRadius', delimitDimens(`${current.tagName}`, 'constraintcircleradius', formatPX(radius)));
                                         current.app('layout_constraintCircleAngle', degrees.toString());
                                         current.constraint.horizontal = true;
                                         current.constraint.vertical = true;
@@ -7503,13 +7539,13 @@
             }
             if (hasValue(width)) {
                 if (!isNaN(parseInt(width))) {
-                    width = delimitDimen(tagName, 'width', width);
+                    width = delimitDimens(tagName, 'width', width);
                 }
                 node.android('layout_width', width);
             }
             if (hasValue(height)) {
                 if (!isNaN(parseInt(height))) {
-                    height = delimitDimen(tagName, 'height', height);
+                    height = delimitDimens(tagName, 'height', height);
                 }
                 node.android('layout_height', height);
             }
@@ -7830,7 +7866,7 @@
                             },
                             app: {
                                 [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
-                                    : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node[dimension][LT] - parent.box[RB] : bounds[LT] - (parent.documentBody ? 0 : parent.box[LT])))))
+                                    : delimitDimens(node.tagName, 'constraintguide_begin', formatPX((opposite ? node[dimension][LT] - parent.box[RB] : bounds[LT] - (parent.documentBody ? 0 : parent.box[LT])))))
                             }
                         };
                         const anchors = optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');
@@ -8456,9 +8492,9 @@
                     android: {
                         gravity: parseRTL('right'),
                         layout_columnWeight: '0',
-                        layout_marginTop: (node.marginTop > 0 ? delimitDimen(node.tagName, parseRTL('margin_top'), formatPX(node.marginTop)) : null),
-                        [parseRTL('layout_marginRight')]: delimitDimen(node.tagName, parseRTL('margin_right'), '8px'),
-                        [parseRTL('layout_marginLeft')]: (node.marginLeft > 0 ? delimitDimen(node.tagName, parseRTL('margin_left'), formatPX(node.marginLeft)) : null),
+                        layout_marginTop: (node.marginTop > 0 ? delimitDimens(node.tagName, parseRTL('margin_top'), formatPX(node.marginTop)) : null),
+                        [parseRTL('layout_marginRight')]: delimitDimens(node.tagName, parseRTL('margin_right'), '8px'),
+                        [parseRTL('layout_marginLeft')]: (node.marginLeft > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(node.marginLeft)) : null),
                         text: (listStyle !== '0' ? listStyle : '')
                     }
                 }, 'wrap_content', 'wrap_content'));
@@ -9479,7 +9515,7 @@
             let collapsingToolbarNode = null;
             if (appBar) {
                 overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-                overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? delimitDimen('appbar', 'height', formatPX(node.viewHeight)) : 'wrap_content'));
+                overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? delimitDimens('appbar', 'height', formatPX(node.viewHeight)) : 'wrap_content'));
                 if (collapsingToolbar) {
                     overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
                 }

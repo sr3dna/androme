@@ -571,7 +571,7 @@ export default abstract class Node implements BoxModel {
 
     get pageflow() {
         const position = this.position;
-        return (position === 'static' || position === 'initial' || position === 'relative' || this.tagName === 'PLAINTEXT' || this.alignMargin);
+        return (position === 'static' || position === 'initial' || position === 'relative' || this.plainText || this.alignMargin);
     }
 
     get inline() {
@@ -580,7 +580,11 @@ export default abstract class Node implements BoxModel {
 
     get inlineElement() {
         const position = this.position;
-        return (this.tagName === 'PLAINTEXT' || this.display.indexOf('inline') !== -1 || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin) || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
+        return (this.plainText || this.display.indexOf('inline') !== -1 || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin) || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
+    }
+
+    get plainText() {
+        return (this.tagName === 'PLAINTEXT');
     }
 
     get alignMargin() {

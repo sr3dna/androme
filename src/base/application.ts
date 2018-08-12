@@ -638,12 +638,12 @@ export default class Application<T extends Node> {
                                         if (adjacent.pageflow) {
                                             const previous = adjacent.previousSibling;
                                             if (previous != null) {
-                                                if (isLineBreak(previous.element.nextElementSibling)) {
+                                                if (isLineBreak(<Element> previous.element.nextSibling, 'next')) {
                                                     break;
                                                 }
                                                 else if (cleared.has(adjacent) ||
                                                         (adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
-                                                        (horizontal.length > 1 && isLineBreak(adjacent.element.previousElementSibling)) ||
+                                                        (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
                                                         (!previous.floating && (previous.autoMargin || !adjacent.inlineElement)) ||
                                                         (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
                                                         (!previous.floating && adjacent.autoMargin) ||
@@ -652,7 +652,7 @@ export default class Application<T extends Node> {
                                                     if (horizontal.length > 1) {
                                                         if (linearVertical) {
                                                             for (let m = 1; m < horizontal.length; m++) {
-                                                                if (isLineBreak(horizontal[m].element.previousElementSibling)) {
+                                                                if (isLineBreak(<Element> horizontal[m].element.previousSibling)) {
                                                                     horizontal.length = 1;
                                                                     break;
                                                                 }
@@ -667,7 +667,7 @@ export default class Application<T extends Node> {
                                                     continue;
                                                 }
                                             }
-                                            if (isLineBreak(adjacent.element.previousElementSibling)) {
+                                            if (isLineBreak(<Element> adjacent.element.previousSibling)) {
                                                 if (!linearVertical) {
                                                     if (horizontal.length > 1) {
                                                         if (NodeList.linearY(horizontal)) {
@@ -1070,21 +1070,23 @@ export default class Application<T extends Node> {
                 break;
             case NODE_STANDARD.LINEAR:
                 if (parent.horizontal) {
-                    children.sort((a, b) => {
-                        if (a.floating && !b.floating) {
-                            return (a.float === 'left' ? -1 : 1);
-                        }
-                        else if (!a.floating && b.floating) {
-                            return (b.float === 'left' ? 1 : -1);
-                        }
-                        else if (a.floating && b.floating) {
-                            if (a.float !== b.float) {
+                    if (children.some(node => node.floating)) {
+                        children.sort((a, b) => {
+                            if (a.floating && !b.floating) {
                                 return (a.float === 'left' ? -1 : 1);
                             }
-                        }
-                        return (a.linear.left <= b.linear.left ? -1 : 1);
-                    });
-                    sorted = true;
+                            else if (!a.floating && b.floating) {
+                                return (b.float === 'left' ? 1 : -1);
+                            }
+                            else if (a.floating && b.floating) {
+                                if (a.float !== b.float) {
+                                    return (a.float === 'left' ? -1 : 1);
+                                }
+                            }
+                            return (a.linear.left <= b.linear.left ? -1 : 1);
+                        });
+                        sorted = true;
+                    }
                 }
                 break;
         }

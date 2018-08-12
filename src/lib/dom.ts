@@ -139,8 +139,23 @@ export function hasFreeFormText(element: HTMLElement, maxDepth = 0) {
     return valid;
 }
 
-export function isLineBreak(element: Null<Element>) {
-    return (element && (element.tagName === 'BR' || (getStyle(<HTMLElement> element).display === 'block' && !getNode(element))));
+export function isLineBreak(element: Null<Element>, direction = 'previous') {
+    let found = false;
+    while (element != null) {
+        if (element.nodeName === '#text') {
+            if (element.textContent && element.textContent.trim() !== '') {
+                break;
+            }
+            else {
+                element = element[`${direction}Sibling`];
+            }
+        }
+        else {
+            found = (element.tagName === 'BR' || (getStyle(<HTMLElement> element).display === 'block' && !getNode(element)));
+            break;
+        }
+    }
+    return found;
 }
 
 export function isVisible(element: HTMLElement) {

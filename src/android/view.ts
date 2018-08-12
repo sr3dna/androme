@@ -582,7 +582,7 @@ export default class View extends Node {
             ['layout_margin', 'padding'].forEach((value, index) => {
                 const leftRtl = parseRTL(`${value}Left`);
                 const rightRtl = parseRTL(`${value}Right`);
-                const inline = (this.display === 'inline' || this.tagName === 'PLAINTEXT');
+                const inline = (this.inline || this.plainText);
                 let top = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Top`)));
                 let right = convertInt(this.android(rightRtl));
                 let bottom = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Bottom`)));
@@ -646,8 +646,8 @@ export default class View extends Node {
                     if (this.renderChildren.some(node => node.floating) || this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
                         this.android('baselineAligned', 'false');
                     }
+                    this.alignBaseline(this.renderChildren);
                 }
-                break;
             }
             case NODE_ANDROID.SELECT:
             case NODE_ANDROID.CHECKBOX:
@@ -780,18 +780,28 @@ export default class View extends Node {
             if (item.is(NODE_STANDARD.LINEAR) && item.android('baselineAlignedChildIndex') != null) {
                 childIndex = index;
             }
-            else if (item.nodeType <= NODE_STANDARD.TEXT) {
-                switch (item.css('verticalAlign')) {
-                    case 'baseline':
-                    case 'sub':
-                    case 'super':
-                        if (childIndex === -1 && item.nodeType <= NODE_STANDARD.BUTTON) {
-                            childIndex = index;
+            else if (item.plainText) {
+                if (childIndex === -1) {
+                    childIndex = index;
+                }
+            }
+            else {
+                if (item.nodeType <= NODE_STANDARD.TEXT) {
+                    const verticalAlign = item.css('verticalAlign');
+                    if (verticalAlign !== '') {
+                        switch (item.css('verticalAlign')) {
+                            case 'baseline':
+                            case 'sub':
+                            case 'super':
+                                if (childIndex === -1 && item.nodeType <= NODE_STANDARD.BUTTON) {
+                                    childIndex = index;
+                                }
+                                break;
+                            default:
+                                childIndex = -1;
+                                return true;
                         }
-                        break;
-                    default:
-                        childIndex = -1;
-                        return true;
+                    }
                 }
             }
             return false;
@@ -801,17 +811,6 @@ export default class View extends Node {
             if (this.renderParent.is(NODE_STANDARD.LINEAR) && this.renderParent.horizontal) {
                 this.renderParent.alignBaseline(this.renderParent.renderChildren);
             }
-        }
-    }
-
-    protected append(node: T) {
-        super.append(node);
-        switch (this.nodeName) {
-            case NODE_ANDROID.LINEAR:
-                if (this.horizontal) {
-                    this.alignBaseline(this.renderChildren);
-                }
-                break;
         }
     }
 

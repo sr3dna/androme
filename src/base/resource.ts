@@ -258,7 +258,6 @@ export default abstract class Resource<T extends Node> {
                             case 'pre-line':
                                 value = value.replace(/\s+/g, ' ');
                             default:
-                                value = value.replace(/^\s+/g, '');
                                 inlineTrim = true;
                                 break;
                         }

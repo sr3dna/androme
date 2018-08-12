@@ -6,7 +6,7 @@ Multiple views per page are supported with their resources and styles merged int
 
 Layout rendering can also be customized using extensions as the program was built to be nearly completely modular. Some of the common layouts already have built-in extensions which you can load or unload based on your preference.
 
-The ratio is about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application. The real time saver is having the resources auto-generated for the entire project.
+The ratio is about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application. The real time saver is probably having the resources auto-generated for the entire project. Using HTML best practices and techniques will also generate the fastest possible layout structure in Android.
 
 ## Installation (global js variable: androme)
 
