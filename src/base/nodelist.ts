@@ -51,7 +51,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                     }
                     else {
                         const previous = nodes[index - 1];
-                        if ((previous == null || (previous.pageflow && previous.inlineElement && previous.linear.right !== maxRight)) && node.inlineElement && node.pageflow && node.linear.right !== maxRight) {
+                        if ((previous == null || (previous.inlineElement && previous.linear.right !== maxRight)) && node.inlineElement && node.linear.right !== maxRight) {
                             return true;
                         }
                     }

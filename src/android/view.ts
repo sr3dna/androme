@@ -507,14 +507,14 @@ export default class View extends Node {
             switch (renderParent.nodeName) {
                 case NODE_ANDROID.LINEAR:
                     if (this.renderChildren.length > 0) {
-                        if (this.renderParent.horizontal) {
+                        if (this.horizontal) {
                             if (this.renderChildren.every(item => item.float === 'right')) {
                                 this.android('gravity', right);
                             }
                         }
                     }
                     else {
-                        if (!this.renderParent.horizontal) {
+                        if (!renderParent.horizontal) {
                             if (this.float === 'right') {
                                 this.android('layout_gravity', right);
                             }
@@ -622,7 +622,7 @@ export default class View extends Node {
         const viewHeight = convertInt(this.android('layout_height'));
         switch (this.nodeName) {
             case NODE_ANDROID.FRAME: {
-                if (!this.inlineWrap && this.viewWidth === 0) {
+                if (!this.documentRoot && this.viewWidth === 0 && !this.inlineWrap && this.renderChildren.every(node => node.inlineElement || node.floating)) {
                     const gravity = new Set();
                     this.renderChildren.forEach(node => gravity.add(node.android('layout_gravity') || parseRTL('left')));
                     if (gravity.size === 1) {
@@ -701,7 +701,7 @@ export default class View extends Node {
                         this.android('layout_width', formatPX(viewWidth + width));
                     }
                     if (viewHeight > 0 && height > 0) {
-                        this.android('layout_height', formatPX(viewWidth + height));
+                        this.android('layout_height', formatPX(viewHeight + height));
                     }
                 }
                 break;

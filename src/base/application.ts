@@ -236,6 +236,7 @@ export default class Application<T extends Node> {
                     const supportInline = this.controllerHandler.supportInline;
                     const styleMap = getCache(element, 'styleMap');
                     if ((!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.parentElement && Array.from(element.parentElement.children).every(item => item.children.length === 0 && supportInline.includes(item.tagName))) {
+                        setCache(element, 'supportInline', true);
                         continue;
                     }
                     let valid = true;
@@ -628,7 +629,11 @@ export default class Application<T extends Node> {
                         const cleared = NodeList.cleared(axisY.slice(k));
                         if (!nodeY.rendered) {
                             if (SETTINGS.horizontalPerspective) {
-                                if (nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && !parent.inlineWrap && parent.styleMap.columnCount == null && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal))) {
+                                function lineBreak(element: Null<Element>) {
+                                    return (element && (element.tagName === 'BR' || (BLOCK_ELEMENT.includes(element.tagName) && !getNode(element))));
+                                }
+                                const linearVertical = (parent.is(NODE_STANDARD.LINEAR) && !parent.horizontal);
+                                if (nodeY.pageflow && !nodeY.inlineWrap && !hasValue(nodeY.dataset.target) && !parent.flex.enabled && !parent.inlineWrap && parent.styleMap.columnCount == null && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical)) {
                                     const horizontal = [nodeY];
                                     let vertical = [nodeY];
                                     for (let l = k + 1; l < axisY.length; l++) {
@@ -637,19 +642,47 @@ export default class Application<T extends Node> {
                                             const previous = adjacent.previousSibling;
                                             if (previous && (
                                                         cleared.has(adjacent) ||
-                                                        (!previous.floating && previous.autoMargin) ||
-                                                        (!adjacent.floating && (!previous.inlineElement || previous.autoMargin)) ||
+                                                        (adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
+                                                        (horizontal.length > 1 && lineBreak(adjacent.element.previousElementSibling)) ||
+                                                        (!previous.floating && (previous.autoMargin || !adjacent.inlineElement)) ||
+                                                        (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
                                                         (!previous.floating && adjacent.autoMargin) ||
-                                                        (vertical.length > horizontal.length && NodeList.linearY([...horizontal.slice(), ...[adjacent]])))
-                                                    ) {
-                                                if (horizontal.length > 1 || !parent.is(NODE_STANDARD.CONSTRAINT) || vertical[0].autoMargin || adjacent.autoMargin) {
+                                                        (vertical.length > horizontal.length && NodeList.linearY([...vertical.slice(), ...[adjacent]]))))
+                                            {
+                                                if (horizontal.length > 1) {
+                                                    if (linearVertical) {
+                                                        for (let m = 1; m < horizontal.length; m++) {
+                                                            if (lineBreak(horizontal[m].element.previousElementSibling)) {
+                                                                horizontal.length = 1;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                                else if (linearVertical) {
                                                     break;
                                                 }
                                                 vertical.push(adjacent);
                                             }
                                             else {
-                                                if (vertical.length > 1 || (adjacent.element.previousElementSibling && (adjacent.element.previousElementSibling.tagName === 'BR' || (BLOCK_ELEMENT.includes(adjacent.element.previousElementSibling.tagName) && !getNode(adjacent.element.previousElementSibling))))) {
-                                                    break;
+                                                if (lineBreak(adjacent.element.previousElementSibling)) {
+                                                    if (!linearVertical) {
+                                                        if (horizontal.length > 1) {
+                                                            if (NodeList.linearY(horizontal)) {
+                                                                vertical = horizontal.slice();
+                                                                horizontal.length = 1;
+                                                                continue;
+                                                            }
+                                                            else {
+                                                                break;
+                                                            }
+                                                        }
+                                                        else {
+                                                            vertical.push(adjacent);
+                                                            continue;
+                                                        }
+                                                    }
                                                 }
                                                 if (!cleared.has(adjacent)) {
                                                     const target = hasValue(adjacent.dataset.target);
@@ -681,7 +714,7 @@ export default class Application<T extends Node> {
                                     let group: Null<T> = null;
                                     let groupXml = '';
                                     if (horizontal.length > 1) {
-                                        if (parent.is(NODE_STANDARD.RELATIVE) && horizontal.length === parent.children.length) {
+                                        if (horizontal.length === parent.children.length) {
                                             parent.inlineWrap = true;
                                         }
                                         else {
@@ -702,9 +735,14 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     else if (vertical.length > 1) {
-                                        group = this.controllerHandler.createGroup(nodeY, vertical, parent);
-                                        groupXml = this.writeLinearLayout(group, parent, false);
-                                        this.sortLayout(group, <T[]> group.children, true);
+                                        if (vertical.length === parent.children.length) {
+                                            parent.inlineWrap = true;
+                                        }
+                                        else {
+                                            group = this.controllerHandler.createGroup(nodeY, vertical, parent);
+                                            groupXml = this.writeLinearLayout(group, parent, false);
+                                            this.sortLayout(group, <T[]> group.children, true);
+                                        }
                                     }
                                     if (group != null) {
                                         renderXml(group, parent, groupXml, current);
@@ -747,7 +785,7 @@ export default class Application<T extends Node> {
                                             }
                                         }
                                         else {
-                                            const linearX = NodeList.linearX(nodeY.children);
+                                            const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                             if (!parent.flex.enabled && nodeY.children.every(node => node.pageflow)) {
                                                 const float = new Set(nodeY.children.map(node => node.float));
                                                 if (linearX) {
@@ -762,7 +800,7 @@ export default class Application<T extends Node> {
                                                 }
                                                 else {
                                                     const blockClear = NodeList.cleared(nodeY.children);
-                                                    if (nodeY.children.some((node: T) => !node.inlineElement || blockClear.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
+                                                    if ((linearY && nodeY.children.every(node => node.pageflow)) || nodeY.children.some((node: T) => !node.inlineElement || blockClear.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
                                                         xml = this.writeLinearLayout(nodeY, parent, false);
                                                     }
                                                 }
@@ -773,6 +811,7 @@ export default class Application<T extends Node> {
                                                 }
                                                 else {
                                                     xml = this.writeConstraintLayout(nodeY, parent);
+                                                    nodeY.inlineWrap = (!linearX && linearY);
                                                 }
                                             }
                                         }
@@ -893,7 +932,7 @@ export default class Application<T extends Node> {
                 [merged, right.list].forEach((item, index) => {
                     if (item.length > 1) {
                         const linearGroup = this.controllerHandler.createGroup(item[0], item, group);
-                        xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, true) + (index === 0 ? placeholder : ''));
+                        xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, item.every(node => node.inlineElement || node.floating)) + (index === 0 ? placeholder : ''));
                         this.sortLayout(linearGroup, item, true);
                     }
                     else if (item.length > 0) {

@@ -243,7 +243,7 @@ export default abstract class Resource<T extends Node> {
                     inlineTrim = true;
                 }
                 else if (node.hasElement) {
-                    if (node.children.length === 0 && hasFreeFormText(element)) {
+                    if (node.children.length === 0 && (hasFreeFormText(element) || Array.from(node.element.children).every((item: HTMLElement) => getCache(item, 'supportInline')))) {
                         name = (element.innerText || element.textContent || '').trim();
                         value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
                         switch (node.css('whiteSpace')) {

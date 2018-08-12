@@ -579,7 +579,8 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineElement() {
-        return (this.tagName === 'PLAINTEXT' || this.display.indexOf('inline') !== -1 || this.floating || ((this.display === 'initial' || this.alignMargin) && INLINE_ELEMENT.includes(this.element.tagName)));
+        const position = this.position;
+        return (this.tagName === 'PLAINTEXT' || this.display.indexOf('inline') !== -1 || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin) || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
     }
 
     get alignMargin() {

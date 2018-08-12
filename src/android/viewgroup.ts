@@ -93,7 +93,7 @@ export default class ViewGroup extends View {
     }
 
     get outerRegion() {
-        const children = this.children;
+        const children = this.children.filter(node => node.pageflow);
         let top = [children[0]];
         let right = [children[0]];
         let bottom = [children[0]];

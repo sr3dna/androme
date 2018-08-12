@@ -172,7 +172,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         else {
                             const group = (current instanceof ViewGroup);
                             const previous = nodes.get(i - 1);
-                            if ((node.inlineWrap && group) || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                            if ((node.inlineWrap && group) || current.multiLine || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
                                 const items = rows[rows.length - 1];
                                 previousRowBottom = items[0];
                                 for (let j = 1; j < items.length; j++) {
@@ -1463,9 +1463,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                         scrollbars.push(AXIS_ANDROID.VERTICAL);
                     }
                     node.android('scrollbars', scrollbars.join('|'));
-                }
-                if (node.multiLine && parent.viewWidth === 0) {
-                    node.android('singleLine', 'true');
                 }
                 break;
             case NODE_ANDROID.LINE:
