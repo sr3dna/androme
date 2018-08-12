@@ -18,6 +18,7 @@ const SETTINGS = {
     alwaysReevaluateResources: true,
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
+    autoSizePaddingAndBorderWidth: true,
     collapseUnattributedElements: false,
     horizontalPerspective: true,
     constraintPercentAccuracy: 4,

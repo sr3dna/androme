@@ -29,7 +29,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return true;
             default:
                 if (NodeList.cleared(nodes).size === 0) {
-                    return nodes.every((node, index) => (node.inlineElement || node.floating) && !node.autoMargin && (index === 0 || node.linear.top < nodes[index - 1].linear.bottom));
+                    return nodes.every((node, index) => node.inlineElement && !node.autoMargin && (index === 0 || node.linear.top < nodes[index - 1].linear.bottom));
                 }
                 return false;
         }

@@ -49,7 +49,7 @@ export function convertDP(value: any, dpi = 160, font = false) {
     return '0dp';
 }
 
-export function delimitDimen(tagName: string, attr: string, size: string) {
+export function delimitDimens(tagName: string, attr: string, size: string) {
     return (SETTINGS.dimensResourceValue ? `{%${tagName.toLowerCase()},${attr},${size}}` : size);
 }
 

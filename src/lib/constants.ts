@@ -38,7 +38,7 @@ export enum NODE_RESOURCE {
 export enum NODE_PROCEDURE {
     LAYOUT = 2,
     ALIGNMENT = 4,
-    OPTIMIZE = 8,
+    OPTIMIZATION = 8,
     CUSTOMIZATION = 16,
     ACCESSIBILITY = 32,
     ALL = 62

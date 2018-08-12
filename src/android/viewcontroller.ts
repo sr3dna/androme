@@ -5,8 +5,9 @@ import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
 import { capitalize, convertPX, formatPX, hasValue, includesEnum, indexOf, isPercent, repeat, same, search, sortAsc, withinFraction, withinRange, convertInt, optional } from '../lib/util';
-import { delimitDimen, generateId, replaceUnit, resetId, stripId } from './lib/util';
+import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
+import { isLineBreak } from '../lib/dom';
 import { removePlaceholders, replaceTab } from '../lib/xml';
 import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE } from '../lib/constants';
 import { AXIS_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
@@ -144,7 +145,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             const tallest = (images.length > 0 ? images : baseline).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
                             let topParent = false;
                             for (const item of baseline) {
-                                if (item !== tallest) {
+                                if (item !== tallest && item.alignMargin) {
                                     item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
                                     if (images.length > 0 && mapParent(item, 'top')) {
                                         item.delete('android', relativeParent['top']);
@@ -172,7 +173,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         else {
                             const group = (current instanceof ViewGroup);
                             const previous = nodes.get(i - 1);
-                            if ((node.inlineWrap && group) || current.multiLine || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                            if ((node.inlineWrap && group) || current.multiLine || isLineBreak(current.element.previousElementSibling) || isLineBreak(previous.element.nextElementSibling) || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
                                 const items = rows[rows.length - 1];
                                 previousRowBottom = items[0];
                                 for (let j = 1; j < items.length; j++) {
@@ -822,7 +823,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             const alignBottom = withinFraction(last.linear.bottom, node.box.bottom);
                                             if ((orientation === AXIS_ANDROID.HORIZONTAL && alignLeft && alignRight) || (orientation === AXIS_ANDROID.VERTICAL && alignTop && alignBottom)) {
                                                 if (chainable.length > 2 || flex.enabled) {
-                                                    if (!flex.enabled && (node.inlineElement || node.floating)) {
+                                                    if (!flex.enabled && node.inlineElement) {
                                                         first.app(chainStyle, 'packed');
                                                         first.app(`layout_constraint${HV}_bias`, (index === 0 && node.float === 'right' ? '1' : '0'));
                                                     }
@@ -1035,7 +1036,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         degrees = (center1.x > center2.x ? 90 : 270);
                                     }
                                     current.app('layout_constraintCircle', opposite.stringId);
-                                    current.app('layout_constraintCircleRadius', delimitDimen(`${current.tagName}`, 'constraintcircleradius', formatPX(radius)));
+                                    current.app('layout_constraintCircleRadius', delimitDimens(`${current.tagName}`, 'constraintcircleradius', formatPX(radius)));
                                     current.app('layout_constraintCircleAngle', degrees.toString());
                                     current.constraint.horizontal = true;
                                     current.constraint.vertical = true;
@@ -1496,13 +1497,13 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
         if (hasValue(width)) {
             if (!isNaN(parseInt(width))) {
-                width = delimitDimen(tagName, 'width', width);
+                width = delimitDimens(tagName, 'width', width);
             }
             node.android('layout_width', width);
         }
         if (hasValue(height)) {
             if (!isNaN(parseInt(height))) {
-                height = delimitDimen(tagName, 'height', height);
+                height = delimitDimens(tagName, 'height', height);
             }
             node.android('layout_height', height);
         }
@@ -1839,7 +1840,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         },
                         app: {
                             [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
-                                                     : delimitDimen(node.tagName, 'constraintguide_begin', formatPX((opposite ? node[dimension][LT] - parent.box[RB] : bounds[LT] - (parent.documentBody ? 0 : parent.box[LT])))))
+                                                     : delimitDimens(node.tagName, 'constraintguide_begin', formatPX((opposite ? node[dimension][LT] - parent.box[RB] : bounds[LT] - (parent.documentBody ? 0 : parent.box[LT])))))
                         }
                     };
                     const anchors = optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');

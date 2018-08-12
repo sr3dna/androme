@@ -5,7 +5,7 @@ import ResourceView from '../../resource-view';
 import View from '../../view';
 import { formatPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
-import { delimitDimen, stripId } from '../../lib/util';
+import { delimitDimens, stripId } from '../../lib/util';
 import { getNode, getStyle, setCache } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
@@ -161,7 +161,7 @@ export default class Toolbar extends Extension<T> {
         let collapsingToolbarNode: Null<T> = null;
         if (appBar) {
             overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? delimitDimen('appbar', 'height', formatPX(node.viewHeight)) : 'wrap_content'));
+            overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? delimitDimens('appbar', 'height', formatPX(node.viewHeight)) : 'wrap_content'));
             if (collapsingToolbar) {
                 overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             }

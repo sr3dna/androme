@@ -90,6 +90,7 @@ androme.settings = {
     alwaysReevaluateResources: true,
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
+    autoSizePaddingAndBorderWidth: true,
     collapseUnattributedElements: false,
     horizontalPerspective: true,
     constraintPercentAccuracy: 4, // eq: 1px
@@ -249,7 +250,7 @@ Using "target" into a ConstraintLayout or RelativeLayout view will not include a
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
 
 ```xml
-<div data-exclude-procedure="LAYOUT | ALIGNMENT | OPTIMIZE | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
+<div data-exclude-procedure="LAYOUT | ALIGNMENT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
 <div>
     <span data-exclude-resource="FONT_STYLE">content</span>
     <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>
@@ -302,7 +303,6 @@ The attributes "include" and "include-end" can only be applied to elements which
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/androme_ui"
     android:gravity="top"
     android:layout_height="wrap_content"
@@ -316,11 +316,12 @@ The attributes "include" and "include-end" can only be applied to elements which
         android:padding="@dimen/h2_padding"
         android:text="@string/entry"
         style="@style/H2" />
-    <android.support.constraint.ConstraintLayout
+    <LinearLayout
         android:id="@+id/entry"
         android:background="@drawable/form_entry"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
+        android:orientation="vertical"
         android:paddingHorizontal="@dimen/form_padding_horizontal"
         android:paddingVertical="@dimen/form_padding_vertical">
         <GridLayout
@@ -330,10 +331,7 @@ The attributes "include" and "include-end" can only be applied to elements which
             android:layout_width="match_parent"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
-            android:paddingTop="@dimen/ul_padding_top"
-            app:layout_constraintBottom_toTopOf="@+id/view_1"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:paddingTop="@dimen/ul_padding_top">
             <TextView
                 android:id="@+id/textview_2"
                 android:labelFor="@+id/order"
@@ -379,7 +377,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_19"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol52030"
+                    android:text="@string/__symbol30510"
                     style="@style/Plaintext" />
             </LinearLayout>
             <RelativeLayout
@@ -525,7 +523,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_22"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol52030"
+                    android:text="@string/__symbol30510"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -624,24 +622,18 @@ The attributes "include" and "include-end" can only be applied to elements which
         <View
             android:id="@+id/view_1"
             android:background="@color/light_gray_1"
+            android:layout_gravity="center_horizontal"
             android:layout_height="@dimen/hr_height"
             android:layout_marginVertical="@dimen/hr_margin_vertical"
-            android:layout_width="@dimen/hr_width"
-            app:layout_constraintBottom_toTopOf="@+id/gridlayout_2"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/gridlayout_1" />
+            android:layout_width="@dimen/hr_width" />
         <GridLayout
             android:id="@+id/gridlayout_2"
             android:columnCount="2"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
-            android:paddingTop="@dimen/ul_padding_top"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/view_1">
+            android:paddingTop="@dimen/ul_padding_top">
             <TextView
                 android:id="@+id/textview_8"
                 android:layout_height="wrap_content"
@@ -944,7 +936,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_25"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol52030"
+                    android:text="@string/__symbol30510"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -1054,7 +1046,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/Button" />
             </LinearLayout>
         </GridLayout>
-    </android.support.constraint.ConstraintLayout>
+    </LinearLayout>
 </LinearLayout>
 ```
 ### String Resources
@@ -1065,7 +1057,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol52030">):</string>
+    <string name="__symbol30510">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1375,14 +1367,14 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="select_margin_start">4dp</dimen>
     <dimen name="select_minwidth">37dp</dimen>
     <dimen name="select_padding_vertical">3dp</dimen>
-    <dimen name="select_width">160dp</dimen>
-    <dimen name="select_width_1">200dp</dimen>
-    <dimen name="select_width_2">100dp</dimen>
+    <dimen name="select_width">162dp</dimen>
+    <dimen name="select_width_1">202dp</dimen>
+    <dimen name="select_width_2">102dp</dimen>
     <dimen name="space_height">6dp</dimen>
     <dimen name="text_margin_end">5dp</dimen>
     <dimen name="text_padding_vertical">3dp</dimen>
-    <dimen name="text_width">40dp</dimen>
-    <dimen name="text_width_1">130dp</dimen>
+    <dimen name="text_width">44dp</dimen>
+    <dimen name="text_width_1">134dp</dimen>
     <dimen name="ul_padding_bottom">11dp</dimen>
     <dimen name="ul_padding_horizontal">5dp</dimen>
     <dimen name="ul_padding_top">5dp</dimen>

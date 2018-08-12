@@ -139,6 +139,10 @@ export function hasFreeFormText(element: HTMLElement, maxDepth = 0) {
     return valid;
 }
 
+export function isLineBreak(element: Null<Element>) {
+    return (element && (element.tagName === 'BR' || (getStyle(<HTMLElement> element).display === 'block' && !getNode(element))));
+}
+
 export function isVisible(element: HTMLElement) {
     switch (element.tagName) {
         case 'BR':
