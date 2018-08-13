@@ -335,7 +335,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             }
                                         }
                                         else {
-                                            if (current.css('width') != null && current.styleMap.marginRight === 'auto' && current.styleMap.marginLeft === 'auto') {
+                                            if (current.css('width') != null && current.centerMargin) {
                                                 current.android('layout_centerHorizontal', 'true');
                                                 current.constraint.horizontal = true;
                                             }
@@ -390,12 +390,24 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                             if (current.right != null && convertInt(current.right) >= 0) {
                                 current.anchor(map['right'], stringId, AXIS_ANDROID.HORIZONTAL);
+                                if (convertInt(current.left) > 0) {
+                                    if (current.centerMargin) {
+                                        current.anchor(map['left'], stringId);
+                                        current.modifyBox(BOX_STANDARD.MARGIN_LEFT, convertInt(current.left));
+                                    }
+                                }
                             }
                             if (current.bottom != null && convertInt(current.bottom) >= 0) {
                                 current.anchor(map['bottom'], stringId, AXIS_ANDROID.VERTICAL);
                             }
                             if (current.left != null && convertInt(current.left) === 0) {
                                 current.anchor(map['left'], stringId, AXIS_ANDROID.HORIZONTAL);
+                                if (convertInt(current.right) > 0) {
+                                    if (current.centerMargin) {
+                                        current.anchor(map['right'], stringId);
+                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, convertInt(current.right));
+                                    }
+                                }
                             }
                             if (current.left === 0 && current.right === 0) {
                                 if (!current.floating) {
@@ -424,14 +436,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                             mapDelete(current, 'top');
                         }
                         if (mapParent(current, 'left') && mapParent(current, 'right')) {
-                            if (current.styleMap.marginLeft === 'auto' || current.styleMap.marginRight === 'auto') {
+                            if (current.autoMargin) {
                                 if (current.styleMap.marginLeft === 'auto' && current.styleMap.marginRight !== 'auto') {
                                     mapDelete(current, 'left');
                                 }
                                 if (current.styleMap.marginLeft !== 'auto' && current.styleMap.marginRight === 'auto') {
                                     mapDelete(current, 'right');
                                 }
-                                if (current.marginLeft === current.marginRight) {
+                                if (current.centerMargin) {
                                     if (node.viewWidth > 0) {
                                         current.android('layout_width', 'match_parent');
                                     }
@@ -1796,7 +1808,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         RBLT = (!opposite ? 'bottomTop' : 'topBottom');
                         break;
                 }
-                const dimension = 'bounds';
+                const dimension = (node.pageflow ? 'bounds' : 'linear');
                 let bounds = node[dimension];
                 const previousSibling = node.previousSibling;
                 if (index === 0 && !opposite && previousSibling != null) {
@@ -1818,14 +1830,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                             else if (withinFraction(node.linear[RB], item.linear[LT])) {
                                 node.anchor(map[RBLT], item.stringId, value, true);
-                                return true;
-                            }
-                            else if (withinFraction(node.linear[LT], item.linear[LT])) {
-                                node.anchor(map[LT], item.stringId, value, true);
-                                return true;
-                            }
-                            else if (withinFraction(node.linear[RB], item.linear[RB])) {
-                                node.anchor(map[RB], item.stringId, value, true);
                                 return true;
                             }
                         }

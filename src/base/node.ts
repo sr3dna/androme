@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, includesEnum, search } from '../lib/util';
+import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, capitalize } from '../lib/util';
 import { assignBounds, getCache, getNode, getRangeBounds, setCache } from '../lib/dom';
 import { BLOCK_ELEMENT, INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
@@ -228,6 +228,20 @@ export default abstract class Node implements BoxModel {
         }
     }
 
+    public inheritCss(attr: string) {
+        let result = '';
+        let parent = this.documentParent;
+        do {
+            result = parent.styleMap[attr];
+            if (parent.id === 0 || result) {
+                break;
+            }
+            parent = parent.documentParent;
+        }
+        while (true);
+        return result;
+    }
+
     public toLeftOf(node: T, offset: number) {
         return (this.withinX(node.linear) || node.withinX(this.linear)) && (node.linear.left + offset <= this.linear.right);
     }
@@ -408,6 +422,35 @@ export default abstract class Node implements BoxModel {
         this.renderChildren.push(node);
     }
 
+    private boxDimension(area: string, direction: string) {
+        if (this.hasElement) {
+            const attr = area + capitalize(direction);
+            if (direction === 'left' || direction === 'right') {
+                const value = this.css(attr);
+                if (this.style && isPercent(value)) {
+                    return (this.style[attr] ? convertInt(this.style[attr]) : this.documentParent.box.width * (convertInt(value) / 100));
+                }
+                else {
+                    let node: T = this;
+                    if (this.companion && this.companion.linear[direction] < this.linear[direction]) {
+                        node = this.companion;
+                    }
+                    return convertInt(node.css(attr));
+                }
+            }
+            else {
+                const value = this.css(attr);
+                if (this.style && isPercent(value)) {
+                    return (this.style[attr] ? convertInt(this.style[attr]) : this.documentParent.box.height * (convertInt(value) / 100));
+                }
+                else {
+                    return convertInt(value);
+                }
+            }
+        }
+        return 0;
+    }
+
     set parent(value) {
         if (value == null || value === this._parent) {
             return;
@@ -515,24 +558,22 @@ export default abstract class Node implements BoxModel {
     }
 
     get marginTop() {
-        return (this.inline ? 0 : convertInt(this.css('marginTop')));
+        if (this.inline) {
+            return 0;
+        }
+        return this.boxDimension('margin', 'top');
     }
     get marginRight() {
-        let node: T = this;
-        if (this.companion != null && this.companion.bounds.right > this.bounds.right) {
-            node = this.companion;
-        }
-        return convertInt(node.css('marginRight'));
+        return this.boxDimension('margin', 'right');
     }
     get marginBottom() {
-        return (this.inline ? 0 : convertInt(this.css('marginBottom')));
+        if (this.inline) {
+            return 0;
+        }
+        return this.boxDimension('margin', 'bottom');
     }
     get marginLeft() {
-        let node: T = this;
-        if (this.companion != null && this.companion.bounds.left < this.bounds.left) {
-            node = this.companion;
-        }
-        return convertInt(node.css('marginLeft'));
+        return this.boxDimension('margin', 'left');
     }
 
     get borderTopWidth() {
@@ -549,24 +590,16 @@ export default abstract class Node implements BoxModel {
     }
 
     get paddingTop() {
-        return convertInt(this.css('paddingTop'));
+        return this.boxDimension('padding', 'top');
     }
     get paddingRight() {
-        let node: T = this;
-        if (this.companion != null && this.companion.bounds.right > this.bounds.right) {
-            node = this.companion;
-        }
-        return convertInt(node.css('paddingRight'));
+        return this.boxDimension('padding', 'right');
     }
     get paddingBottom() {
-        return convertInt(this.css('paddingBottom'));
+        return this.boxDimension('padding', 'bottom');
     }
     get paddingLeft() {
-        let node: T = this;
-        if (this.companion != null && this.companion.bounds.left < this.bounds.left) {
-            node = this.companion;
-        }
-        return convertInt(node.css('paddingLeft'));
+        return this.boxDimension('padding', 'left');
     }
 
     get pageflow() {
@@ -593,6 +626,10 @@ export default abstract class Node implements BoxModel {
 
     get autoMargin() {
         return (this.styleMap.marginLeft === 'auto' || this.styleMap.marginRight === 'auto');
+    }
+
+    get centerMargin() {
+        return (this.styleMap.marginLeft === 'auto' && this.styleMap.marginRight === 'auto');
     }
 
     get floating() {

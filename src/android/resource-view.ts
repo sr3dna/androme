@@ -305,7 +305,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const method = METHOD_ANDROID['boxSpacing'];
                 for (const attr in stored) {
                     if (stored[attr] !== '0px') {
-                        node.attr(formatString(parseRTL(method[attr]), node.styleMap[attr] || stored[attr]), (node.renderExtension == null));
+                        node.attr(formatString(parseRTL(method[attr]), (!isPercent(node.styleMap[attr]) ? node.styleMap[attr] : null) || stored[attr]), (node.renderExtension == null));
                     }
                 }
             }

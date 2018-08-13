@@ -390,32 +390,38 @@ export default class Application<T extends Node> {
                 if (!valid) {
                     text.forEach(element => this.insertNode(element, node));
                 }
-                if (node.children.some(current => current.float !== 'right' && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft))) || node.children.some(current => !current.pageflow && (convertInt(current.left) < 0 && node.marginLeft >= Math.abs(convertInt(current.left))))) {
+                if (node.children.some(current => current.pageflow && current.float !== 'right' && !['center', 'right'].includes(current.inheritCss('textAlign')) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft))) || node.children.some(current => !current.pageflow && (convertInt(current.left) < 0 && node.marginLeft >= Math.abs(convertInt(current.left))))) {
                     const marginLeft: number[] = [];
                     node.each(current => {
                         let left = current.marginLeft;
                         let leftType = 0;
-                        if (left < 0 && node.marginLeft >= left) {
-                            leftType = 1;
+                        if (current.pageflow) {
+                            if (left < 0 && node.marginLeft >= left) {
+                                leftType = 1;
+                            }
                         }
-                        if (!current.pageflow) {
-                            if (leftType === 0) {
-                                left = convertInt(current.left);
-                                if (left < 0 && node.marginLeft >= left) {
-                                    current.css('left', formatPX(left + node.marginLeft));
-                                    leftType = 2;
-                                }
+                        else {
+                            left = convertInt(current.left);
+                            if (left < 0 && node.marginLeft >= left) {
+                                current.css('left', formatPX(left + node.marginLeft));
+                                leftType = 2;
                             }
                         }
                         marginLeft.push(leftType);
                     });
-                    const marginLeftType = Math.max.apply(null, marginLeft);
                     node.each((current, index: number) => {
-                        if (marginLeftType && marginLeft[index] !== 2 && ((marginLeftType === 1 && marginLeft[index] === 1) || marginLeftType === 2)) {
-                            current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft, true);
+                        if (current.pageflow) {
+                            if (marginLeft.includes(1)) {
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft, true);
+                            }
+                        }
+                        else {
+                            if (marginLeft[index] === 2) {
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft, true);
+                            }
                         }
                     });
-                    if (marginLeftType) {
+                    if (Math.max.apply(null, marginLeft) > 0) {
                         node.box.left -= node.marginLeft;
                         node.css('marginLeft', '0px');
                     }

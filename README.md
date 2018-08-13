@@ -356,6 +356,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_width="match_parent" />
             <LinearLayout
                 android:id="@+id/linearlayout_1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -377,7 +378,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_19"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol30510"
+                    android:text="@string/__symbol93956"
                     style="@style/Plaintext" />
             </LinearLayout>
             <RelativeLayout
@@ -502,6 +503,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_width="match_parent" />
             <LinearLayout
                 android:id="@+id/linearlayout_3"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -523,7 +525,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_22"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol30510"
+                    android:text="@string/__symbol93956"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -915,6 +917,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_width="match_parent" />
             <LinearLayout
                 android:id="@+id/linearlayout_8"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -936,7 +939,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_25"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol30510"
+                    android:text="@string/__symbol93956"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -1057,7 +1060,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol30510">):</string>
+    <string name="__symbol93956">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1347,7 +1350,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="button_minwidth">35dp</dimen>
     <dimen name="button_padding_horizontal">8dp</dimen>
     <dimen name="button_padding_vertical">3dp</dimen>
-    <dimen name="checkbox_margin_end">3dp</dimen>
+    <dimen name="checkbox_margin_end">1dp</dimen>
     <dimen name="checkbox_margin_start">6dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">4dp</dimen>
@@ -1360,7 +1363,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="label_margin_end">5dp</dimen>
     <dimen name="label_padding_top">3dp</dimen>
     <dimen name="label_width">80dp</dimen>
-    <dimen name="radio_margin_end">3dp</dimen>
+    <dimen name="radio_margin_end">1dp</dimen>
     <dimen name="radio_margin_start">5dp</dimen>
     <dimen name="radio_margin_top">3dp</dimen>
     <dimen name="select_group_margin_top">13dp</dimen>

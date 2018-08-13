@@ -104,10 +104,10 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
     const result: BoxModel = {};
     const node = getNode(element);
     const style = getStyle(element);
-    ['padding', 'margin'].forEach(border => {
+    ['padding', 'margin'].forEach(area => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
-            const attr = border + direction;
-            const value = convertInt(node ? node[attr] : style[attr]);
+            const attr = area + direction;
+            const value = convertInt((node || style)[attr]);
             if (complete || value !== 0) {
                 result[attr] = value;
             }
