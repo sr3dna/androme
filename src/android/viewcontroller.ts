@@ -4,7 +4,7 @@ import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
-import { capitalize, convertPX, formatPX, hasValue, includesEnum, indexOf, isPercent, repeat, same, search, sortAsc, withinFraction, withinRange, convertInt, optional } from '../lib/util';
+import { capitalize, formatPX, hasValue, includesEnum, indexOf, isPercent, repeat, same, search, sortAsc, withinFraction, withinRange, convertInt, optional } from '../lib/util';
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
 import { isLineBreak } from '../lib/dom';
@@ -145,7 +145,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             const tallest = (images.length > 0 ? images : baseline).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
                             let topParent = false;
                             for (const item of baseline) {
-                                if (item !== tallest && item.alignMargin) {
+                                if (item !== tallest) {
                                     item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
                                     if (images.length > 0 && mapParent(item, 'top')) {
                                         item.delete('android', relativeParent['top']);
@@ -173,7 +173,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         else {
                             const group = (current instanceof ViewGroup);
                             const previous = nodes.get(i - 1);
-                            if ((node.inlineWrap && group) || current.multiLine || isLineBreak(<Element> current.element.previousSibling) || isLineBreak(<Element> previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                            if ((node.inlineWrap && group) || isLineBreak(<Element> current.element.previousSibling) || isLineBreak(<Element> previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
                                 const items = rows[rows.length - 1];
                                 previousRowBottom = items[0];
                                 for (let j = 1; j < items.length; j++) {
@@ -200,7 +200,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 rows[rows.length - 1].push(current);
                             }
                         }
-                        if (current.nodeType <= NODE_STANDARD.IMAGE) {
+                        if (current.nodeType <= NODE_STANDARD.IMAGE && current.alignMargin) {
                             baseline.push(current);
                         }
                     }
@@ -466,6 +466,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             break;
                                         default:
                                             mapDelete(current, 'right');
+                                            break;
                                     }
                                 }
                                 else {
@@ -770,14 +771,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                         break;
                                                 }
                                                 if (chain.flex.basis !== 'auto') {
-                                                    if (isPercent(chain.flex.basis)) {
-                                                        chain.app(`layout_constraint${WH}_percent`, chain.flex.basis);
-                                                    }
-                                                    else {
-                                                        const width = convertPX(chain.flex.basis);
-                                                        if (width !== '0px') {
-                                                            chain.app(`layout_constraintWidth_min`, width);
-                                                            delete chain.styleMap.minWidth;
+                                                    const basis = convertInt(chain.flex.basis);
+                                                    if (basis > 0) {
+                                                        if (isPercent(chain.flex.basis)) {
+                                                            chain.app(`layout_constraint${WH}_percent`, (basis / 100).toString());
+                                                        }
+                                                        else {
+                                                            chain.app(`layout_constraint${WH}_min`, formatPX(basis));
+                                                            delete chain.styleMap[`min${WH}`];
                                                         }
                                                     }
                                                 }
@@ -825,6 +826,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                     }
                                                     first.app(chainStyle, 'packed');
                                                     first.app(`layout_constraint${HV}_bias`, bias);
+                                                    break;
                                             }
                                             marginDelete = true;
                                         }
@@ -1124,7 +1126,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         for (const current of nodes) {
                             const top = mapParent(current, 'top');
                             const right = mapParent(current, 'right');
-                            const bottom = mapParent(current, 'bottom');
+                            let bottom = mapParent(current, 'bottom');
                             const left = mapParent(current, 'left');
                             connected[current.stringId] = {
                                 leftRight: mapView(current, 'leftRight'),
@@ -1132,6 +1134,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 topBottom: mapView(current, 'topBottom'),
                                 bottomTop: mapView(current, 'bottomTop'),
                             };
+                            if (top && bottom && (current.styleMap.marginTop !== 'auto' && current.linear.bottom < bottomMax)) {
+                                mapDelete(current, 'bottom');
+                                bottom = false;
+                            }
                             if (current.pageflow) {
                                 [[left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'], [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']].forEach((value: [boolean, boolean, string, string, string, string, string], index) => {
                                     if (value[0] || value[1]) {
@@ -1158,7 +1164,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         }
                                         if (!current.constraint[`chain${value[6]}`]) {
                                             if (value[0] && value[1]) {
-                                                if (!current.autoMargin) {
+                                                if (!current.autoMargin && !current.linearVertical) {
                                                     current.android(`layout_${(index === 0 ? 'width' : 'height')}`, 'match_parent', false);
                                                 }
                                             }
@@ -1173,13 +1179,21 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         }
                                     }
                                 });
-                                if (top && bottom && current.linear.bottom < bottomMax) {
-                                    mapDelete(current, 'bottom');
-                                }
                                 if (right) {
                                     if (!rightParent) {
                                         rightParent = false;
                                         rightParent = resolveAnchor(current, AXIS_ANDROID.HORIZONTAL);
+                                    }
+                                }
+                                else if (left) {
+                                    if (current.is(NODE_STANDARD.TEXT) && current.inheritCss('textAlign') === 'center') {
+                                        if (relative) {
+                                            current.delete('android', relativeParent['left']);
+                                            current.android('layout_centerHorizontal', 'true');
+                                        }
+                                        else {
+                                            current.anchor(mapLayout['right'], 'parent');
+                                        }
                                     }
                                 }
                                 if (bottom) {
@@ -1207,6 +1221,18 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 if (bottom && convertInt(current.bottom) > 0) {
                                     current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, current.marginBottom + convertInt(current.bottom));
+                                }
+                                if (right && bottom) {
+                                    if (node.documentRoot) {
+                                        if (node.viewWidth === 0) {
+                                            node.constraint.layoutWidth = false;
+                                            node.constraint.layoutHorizontal = false;
+                                        }
+                                        if (node.viewHeight === 0) {
+                                            node.constraint.layoutHeight = false;
+                                            node.constraint.layoutVertical = false;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1298,6 +1324,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 break;
             default:
                 options = {};
+                break;
         }
         node.setNodeId(viewName);
         if (node.overflow !== OVERFLOW_ELEMENT.NONE) {
@@ -1333,6 +1360,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 maxHeight: node.styleMap.maxHeight,
                                 overflowY: node.css('overflowY')
                             });
+                            break;
                     }
                     const indent = repeat(scrollDepth--);
                     preXml = indent + `<${nodeName}{@${container.id}}>\n` + preXml;
@@ -1352,12 +1380,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                             item.render(parent);
                             item.excludeProcedure = node.excludeProcedure;
                             item.excludeResource = node.excludeResource;
-                            parent.children.push(item);
                             break;
                         case 1:
+                            item.android('fadeScrollbars', 'false');
                             item.parent = current;
                             item.render(current);
-                            current.children.push(item);
+                            node.android('layout_width', 'wrap_content');
+                            node.android('layout_height', 'wrap_content');
                             break;
                     }
                     current = item;
@@ -1395,12 +1424,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                         node.android('scaleType', 'fitCenter');
                         break;
                 }
-                if (node.viewWidth > 0 && (node.paddingLeft > 0 || node.paddingRight > 0)) {
-                    node.css('width', formatPX(node.viewWidth + node.paddingLeft + node.paddingRight));
-                }
-                if (node.viewHeight > 0 && (node.paddingTop > 0 || node.paddingBottom > 0)) {
-                    node.css('height', formatPX(node.viewHeight + node.paddingTop + node.paddingBottom));
-                }
                 if ((node.isSet('styleMap', 'width') && !node.isSet('styleMap', 'height')) || (!node.isSet('styleMap', 'width') && node.isSet('styleMap', 'height'))) {
                     node.android('adjustViewBounds', 'true');
                 }
@@ -1431,7 +1454,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 group.setNodeId(NODE_ANDROID.RADIO_GROUP);
                                 group.render(parent);
                                 let checked: string = '';
-                                for (const item of result) {
+                                for (const item of group.children as T[]) {
                                     if ((<HTMLInputElement> item.element).checked) {
                                         checked = item.stringId;
                                     }
@@ -1506,6 +1529,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 break;
             default:
                 node.setNodeId(viewName);
+                break;
         }
         if (hasValue(width)) {
             if (!isNaN(parseInt(width))) {
@@ -1558,10 +1582,6 @@ export default class ViewController<T extends View> extends Controller<T> {
         for (const item of children) {
             item.parent = group;
             item.inherit(group, 'data');
-        }
-        if (parent != null) {
-            parent.children = parent.children.filter((item: T) => !children.includes(item));
-            parent.children.push(group);
         }
         this.cache.append(group);
         if (element != null) {
@@ -1669,6 +1689,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     if (node.renderChildren.length === 0) {
                         node.android('textDirection', 'rtl');
                     }
+                    break;
             }
         }
         for (const name in node.dataset) {
@@ -1844,7 +1865,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         },
                         app: {
                             [beginPercent]: (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
-                                                     : delimitDimens(node.tagName, 'constraintguide_begin', formatPX((opposite ? node[dimension][LT] - parent.box[RB] : bounds[LT] - (parent.documentBody ? 0 : parent.box[LT])))))
+                                                     : delimitDimens(node.tagName, 'constraintguide_begin', formatPX(Math.max(0, (!opposite ? bounds[LT] - (parent.documentBody ? 0 : parent.box[LT]) : node[dimension][LT] - parent.box[RB])))))
                         }
                     };
                     const anchors = optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');

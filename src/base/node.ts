@@ -2,7 +2,7 @@ import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, capitalize } from '../lib/util';
 import { assignBounds, getCache, getNode, getRangeBounds, setCache } from '../lib/dom';
-import { BLOCK_ELEMENT, INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
+import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
 
@@ -76,7 +76,8 @@ export default abstract class Node implements BoxModel {
     public abstract get documentParent(): T;
     public abstract set renderParent(value: T);
     public abstract get renderParent(): T;
-    public abstract get horizontal(): boolean;
+    public abstract get linearHorizontal(): boolean;
+    public abstract get linearVertical(): boolean;
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
@@ -198,6 +199,7 @@ export default abstract class Node implements BoxModel {
                                         break;
                                     default:
                                         inherit[attr] = data[attr];
+                                        break;
                                 }
                             }
                             else {
@@ -423,8 +425,8 @@ export default abstract class Node implements BoxModel {
     }
 
     private boxDimension(area: string, direction: string) {
+        const attr = area + capitalize(direction);
         if (this.hasElement) {
-            const attr = area + capitalize(direction);
             if (direction === 'left' || direction === 'right') {
                 const value = this.css(attr);
                 if (this.style && isPercent(value)) {
@@ -448,14 +450,22 @@ export default abstract class Node implements BoxModel {
                 }
             }
         }
-        return 0;
+        else {
+            return convertInt(this.css(attr));
+        }
     }
 
     set parent(value) {
         if (value == null || value === this._parent) {
             return;
         }
+        if (this._parent != null) {
+            this._parent.children = this._parent.children.filter(node => node !== this);
+        }
         this._parent = value;
+        if (value.children.indexOf(this) === -1) {
+            value.children.push(this);
+        }
         this.depth = value.depth + 1;
     }
     get parent() {
@@ -523,13 +533,13 @@ export default abstract class Node implements BoxModel {
     }
 
     get viewWidth() {
-        return convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth);
+        return (isPercent(this.styleMap.width) ? 0 : convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth));
     }
     get viewHeight() {
-        return convertInt(this.styleMap.height) || this.lineHeight || convertInt(this.styleMap.minHeight);
+        return (isPercent(this.styleMap.height) ? 0 : convertInt(this.styleMap.height) || this.lineHeight || convertInt(this.styleMap.minHeight));
     }
     get lineHeight() {
-        return (BLOCK_ELEMENT.includes(this.element.tagName) ? convertInt(this.styleMap.lineHeight) : 0);
+        return (this.inline ? 0 : convertInt(this.styleMap.lineHeight));
     }
 
     get display() {
@@ -608,12 +618,12 @@ export default abstract class Node implements BoxModel {
     }
 
     get inline() {
-        return (this.display === 'inline');
+        return (this.display === 'inline' || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
     }
 
     get inlineElement() {
         const position = this.position;
-        return (this.plainText || this.display.indexOf('inline') !== -1 || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin) || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
+        return (this.inline || this.display === 'inline-block' || this.plainText || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
     }
 
     get plainText() {
@@ -645,10 +655,10 @@ export default abstract class Node implements BoxModel {
         let value = OVERFLOW_ELEMENT.NONE;
         if (this.hasElement) {
             const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
-            if (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)) {
+            if (convertInt(this.styleMap.width) > 0 && (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth))) {
                 value |= OVERFLOW_ELEMENT.HORIZONTAL;
             }
-            if (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)) {
+            if (convertInt(this.styleMap.height) > 0 && (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight))) {
                 value |= OVERFLOW_ELEMENT.VERTICAL;
             }
         }

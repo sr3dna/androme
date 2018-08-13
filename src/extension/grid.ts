@@ -297,8 +297,8 @@ export default class Grid extends Extension<T> {
             }
             if (siblings && siblings.length > 0) {
                 siblings.unshift(node);
-                const group = this.application.controllerHandler.createGroup(node, siblings, parent);
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
+                const group = this.application.controllerHandler.createGroup(node, siblings, parent);
                 if (linearX || linearY) {
                     xml = this.application.writeLinearLayout(group, parent, linearX);
                     this.application.sortLayout(group, group.children, true);

@@ -148,6 +148,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     break;
                 default:
                     src = '';
+                    break;
             }
         }
         return src;

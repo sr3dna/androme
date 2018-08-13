@@ -161,6 +161,7 @@ export default abstract class Resource<T extends Node> {
                                 break;
                             default:
                                 fontWeight = '400';
+                                break;
                         }
                     }
                     const result: FontAttribute = {

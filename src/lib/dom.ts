@@ -83,7 +83,7 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
                 return node.style;
             }
         }
-        if (element.nodeName !== '#text') {
+        if (element.nodeName.charAt(0) !== '#') {
             const style = getComputedStyle(element);
             setCache(element, 'style', style);
             return style;

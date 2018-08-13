@@ -62,6 +62,7 @@ export default abstract class List extends Extension<T> {
                         else {
                             ordinal = '○';
                         }
+                        break;
                 }
                 j++;
             }

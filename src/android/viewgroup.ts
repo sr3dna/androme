@@ -19,7 +19,7 @@ export default class ViewGroup extends View {
             this.parent = parent;
         }
         if (children != null) {
-            this.children = children;
+            this.children = children.slice();
         }
         if (element != null) {
             this.element = element;
@@ -38,7 +38,7 @@ export default class ViewGroup extends View {
     }
 
     public setLayout() {
-        super.setLayout.apply(this, this.childrenBox);
+        super.setLayout.apply(this, (this.hasElement ? null : this.childrenBox));
     }
 
     public setBounds(calibrate = false) {
@@ -78,16 +78,24 @@ export default class ViewGroup extends View {
         return this.children.some(node => node.pageflow);
     }
 
+    get display() {
+        return (this.children.some(node => node.display === 'block' && !node.floating) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
+    }
+
+    get inlineElement() {
+        return false;
+    }
+
     get childrenBox() {
         let minLeft = Number.MAX_VALUE;
         let maxRight = 0;
         let minTop = Number.MAX_VALUE;
         let maxBottom = 0;
         for (const node of this.children) {
-            minLeft = Math.min(node.bounds.left, minLeft);
-            maxRight = Math.max(node.bounds.right, maxRight);
-            minTop = Math.min(node.bounds.top, minTop);
-            maxBottom = Math.max(node.bounds.bottom, maxBottom);
+            minLeft = Math.min(node.linear.left, minLeft);
+            maxRight = Math.max(node.linear.right, maxRight);
+            minTop = Math.min(node.linear.top, minTop);
+            maxBottom = Math.max(node.linear.bottom, maxBottom);
         }
         return [maxRight - minLeft, maxBottom - minTop];
     }
