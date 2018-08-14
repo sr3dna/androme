@@ -9,6 +9,7 @@ type T = Node;
 export default abstract class Node implements BoxModel {
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
+    public originalStyleMap: StringMap = {};
     public nodeId: string;
     public nodeType = 0;
     public depth = -1;
@@ -55,6 +56,7 @@ export default abstract class Node implements BoxModel {
                 }
                 this.style = (<CSSStyleDeclaration> getCache(element, 'style')) || getComputedStyle(element);
                 this.styleMap = styleMap;
+                this.originalStyleMap = Object.assign({}, styleMap);
             }
             setCache(element, 'node', this);
             this._element = element;
@@ -68,7 +70,7 @@ export default abstract class Node implements BoxModel {
     public abstract setAccessibility(): void;
     public abstract applyCustomizations(overwrite: boolean): void;
     public abstract applyOptimizations(options: ObjectMap<any>): void;
-    public abstract modifyBox(area: number, offset: number, styleMap?: boolean): void;
+    public abstract modifyBox(area: number, offset: number, bounds: boolean): void;
     public abstract boxValue(area: number): string[];
     public abstract clone(): T;
 
@@ -297,6 +299,10 @@ export default abstract class Node implements BoxModel {
             }
             return this.styleMap[attr] || (this.style && this.style[attr]) || '';
         }
+    }
+
+    public cssOriginal(attr: string, complete = false) {
+        return this.originalStyleMap[attr] || (complete ? this.css(attr) : '');
     }
 
     public setExcludeProcedure(exclude?: string) {

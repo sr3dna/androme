@@ -41,7 +41,7 @@ export function getRangeBounds(element: Element): [ClientRect, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects());
-    const result = <ClientRect> JSON.parse(JSON.stringify(domRect[0]));
+    const result = assignBounds(<ClientRect> domRect[0]);
     const top = new Set([result.top]);
     const bottom = new Set([result.bottom]);
     for (let i = 1 ; i < domRect.length; i++) {

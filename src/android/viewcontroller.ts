@@ -390,11 +390,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                             if (current.right != null && convertInt(current.right) >= 0) {
                                 current.anchor(map['right'], stringId, AXIS_ANDROID.HORIZONTAL);
-                                if (convertInt(current.left) > 0) {
-                                    if (current.centerMargin) {
-                                        current.anchor(map['left'], stringId);
-                                        current.modifyBox(BOX_STANDARD.MARGIN_LEFT, convertInt(current.left));
-                                    }
+                                if (current.centerMargin && convertInt(current.left) > 0) {
+                                    current.anchor(map['left'], stringId);
+                                    current.modifyBox(BOX_STANDARD.MARGIN_LEFT, convertInt(current.left));
                                 }
                             }
                             if (current.bottom != null && convertInt(current.bottom) >= 0) {
@@ -402,11 +400,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                             if (current.left != null && convertInt(current.left) === 0) {
                                 current.anchor(map['left'], stringId, AXIS_ANDROID.HORIZONTAL);
-                                if (convertInt(current.right) > 0) {
-                                    if (current.centerMargin) {
-                                        current.anchor(map['right'], stringId);
-                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, convertInt(current.right));
-                                    }
+                                if (current.centerMargin && convertInt(current.right) > 0) {
+                                    current.anchor(map['right'], stringId);
+                                    current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, convertInt(current.right));
                                 }
                             }
                             if (current.left === 0 && current.right === 0) {
@@ -437,10 +433,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                         if (mapParent(current, 'left') && mapParent(current, 'right')) {
                             if (current.autoMargin) {
-                                if (current.styleMap.marginLeft === 'auto' && current.styleMap.marginRight !== 'auto') {
+                                if (current.cssOriginal('marginLeft') === 'auto' && current.cssOriginal('marginRight') !== 'auto') {
                                     mapDelete(current, 'left');
                                 }
-                                if (current.styleMap.marginLeft !== 'auto' && current.styleMap.marginRight === 'auto') {
+                                if (current.cssOriginal('marginLeft') !== 'auto' && current.cssOriginal('marginRight') === 'auto') {
                                     mapDelete(current, 'right');
                                 }
                                 if (current.centerMargin) {
@@ -475,6 +471,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                             else {
                                 mapDelete(current, 'right');
+                                current.android('layout_width', 'match_parent');
                             }
                         }
                         if (constraint) {
@@ -1289,7 +1286,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         if (item != null) {
                             const offset = current.linear.left - item.linear.right;
                             if (offset >= 1) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + offset, true);
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + offset);
                             }
                         }
                     }
@@ -1298,7 +1295,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         if (item != null) {
                             const offset = current.linear.top - item.linear.bottom;
                             if (offset >= 1) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + offset, true);
+                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + offset);
                             }
                         }
                     }
