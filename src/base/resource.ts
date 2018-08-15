@@ -342,7 +342,7 @@ export default abstract class Resource<T extends Node> {
 
     private parseBoxDimensions(value: string) {
         if (value !== 'auto') {
-            const match = value.match(/^([0-9]+(?:px|pt|em|%)|auto)(?: ([0-9]+(?:px|pt|em|%)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
+            const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
             if (match != null) {
                 if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
                     return [];

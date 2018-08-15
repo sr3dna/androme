@@ -7,7 +7,7 @@ import { cameltoLowerCase, capitalize, convertInt, convertWord, formatPX, format
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { getCache, sameAsParent, setCache } from '../lib/dom';
-import { findNearestColor, parseHex } from '../lib/color';
+import { findNearestColor, parseHex, parseRGBA } from '../lib/color';
 import { NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import parseRTL from './localization';
@@ -442,12 +442,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             template = parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
-                                    '1': [{
-                                        '2': false,
-                                        '3': backgroundColor,
-                                        '4': false,
-                                        '5': false
-                                    }],
+                                    '1': (backgroundColor === false ? false
+                                                                    : [{
+                                                                        '2': false,
+                                                                        '3': backgroundColor,
+                                                                        '4': false,
+                                                                        '5': false
+                                                                    }]),
                                     '6': (image6.length > 0 ? image6 : false),
                                     '7': (image7.length > 0 ? image7 : false)
                                 }]
@@ -585,6 +586,16 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     tagName[node.tagName] = [];
                 }
                 tagName[node.tagName].push(node);
+            }
+            const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
+            if (match != null) {
+                const color = parseRGBA(match[1]);
+                if (color.length > 0) {
+                    node.android('shadowColor', `@color/${ResourceView.addColor(color[0], color[2])}`);
+                }
+                node.android('shadowDx', convertInt(match[2]).toString());
+                node.android('shadowDy', convertInt(match[3]).toString());
+                node.android('shadowRadius', convertInt(match[4]).toString());
             }
         });
         for (const tag in tagName) {
@@ -728,14 +739,20 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
             const stored: BasicData = getCache(node.element, 'valueString');
             if (stored != null) {
-                if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
-                    const match = (<any> node.style).textDecoration.match(/(underline|line-through)/);
+                if (node.hasElement && node.is(NODE_STANDARD.TEXT)) {
+                    switch (node.css('fontVariant')) {
+                        case 'small-caps':
+                            stored.value = stored.value.toUpperCase();
+                            break;
+                    }
+                    const match = node.css('textDecoration').match(/(underline|line-through)/);
                     if (match != null) {
                         switch (match[0]) {
                             case 'underline':
                                 stored.value = `<u>${stored.value}</u>`;
                                 break;
                             case 'line-through':
+                            case 'overline':
                                 stored.value = `<strike>${stored.value}</strike>`;
                                 break;
                         }
@@ -773,7 +790,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
-            let sorted = (<any> this.tagStyle[tag]).filter(item => Object.keys(item).length > 0).sort((a, b) => {
+            let sorted: StyleList = (<any> this.tagStyle[tag]).filter(item => Object.keys(item).length > 0).sort((a, b) => {
                 let maxA = 0;
                 let maxB = 0;
                 let countA = 0;
@@ -827,12 +844,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                             else if (ids.length === count) {
                                 styleKey[attr1] = ids;
-                                sorted[i] = null;
+                                sorted[i] = {};
                                 revalidate = true;
                             }
                             else if (ids.length === 1) {
                                 layoutKey[attr1] = ids;
-                                sorted[i][attr1] = null;
+                                sorted[i][attr1] = [];
                                 revalidate = true;
                             }
                             if (!revalidate) {
@@ -842,12 +859,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     if (i !== j) {
                                         for (const attr in sorted[j]) {
                                             const compare = sorted[j][attr];
-                                            for (const nodeId of ids) {
-                                                if (compare.includes(nodeId)) {
-                                                    if (found[attr] == null) {
-                                                        found[attr] = [];
+                                            if (compare.length > 0) {
+                                                for (const nodeId of ids) {
+                                                    if (compare.includes(nodeId)) {
+                                                        if (found[attr] == null) {
+                                                            found[attr] = [];
+                                                        }
+                                                        found[attr].push(nodeId);
                                                     }
-                                                    found[attr].push(nodeId);
                                                 }
                                             }
                                         }
@@ -907,7 +926,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             delete sorted[i];
                         }
                     }
-                    sorted = sorted.filter((item: number[]) => item && item.length > 0);
+                    sorted = (<any> sorted).filter((item: number[]) => item && item.length > 0);
                 }
             }
             while (sorted.length > 0);
@@ -1005,7 +1024,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    private getShapeAttribute(stored: BoxStyle, name: string) {
+    private getShapeAttribute(stored: BoxStyle, name: string): any[] | {} | boolean {
         switch (name) {
             case 'stroke':
                 return (stored.border && stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);

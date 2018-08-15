@@ -380,7 +380,7 @@ export default class View extends Node {
                         }
                     }
                     else if (contentHeight > 0) {
-                        if (!this.isSet('styleMap', 'minHeight') && ((this.display === 'inline-block' && this.css('overflow') === 'visible') || (Math.max.apply(null, [0, ...this.renderChildren.map(node => node.linear.bottom)]) - this.box.top > contentHeight))) {
+                        if (this.display === 'inline-block' && this.css('overflow') === 'visible') {
                             this.android('minHeight', formatPX(contentHeight));
                             this.android('layout_height', 'wrap_content');
                         }
@@ -676,12 +676,14 @@ export default class View extends Node {
                     }
                 }
             }
-            const lineHeight = convertInt(this.styleMap.lineHeight);
-            if (lineHeight > 0) {
-                const offsetTop = lineHeight - this.bounds.height;
-                if (offsetTop > 0) {
-                    this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_TOP' : 'PADDING_TOP')], this[(this.inline ? 'marginTop' : 'paddingTop')] + Math.ceil(offsetTop / 2));
-                    this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_BOTTOM' : 'PADDING_BOTTOM')], this[(this.inline ? 'marginBottom' : 'paddingBottom')] + Math.floor(offsetTop / 2));
+            if (this.hasElement) {
+                const lineHeight = convertInt(this.styleMap.lineHeight);
+                if (lineHeight > 0) {
+                    const offsetTop = lineHeight - this.bounds.height;
+                    if (offsetTop > 0) {
+                        this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_TOP' : 'PADDING_TOP')], this[(this.inline ? 'marginTop' : 'paddingTop')] + Math.ceil(offsetTop / 2));
+                        this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_BOTTOM' : 'PADDING_BOTTOM')], this[(this.inline ? 'marginBottom' : 'paddingBottom')] + Math.floor(offsetTop / 2));
+                    }
                 }
             }
         }

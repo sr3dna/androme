@@ -262,7 +262,7 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
         if (color !== '') {
             return [color.hex, convertRGB(color), '1'];
         }
-        const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
+        const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9\.]{1,3}))?\)/);
         if (match && match.length >= 4 && match[4] !== '0') {
             if (match[4] == null) {
                 match[4] = opacity;

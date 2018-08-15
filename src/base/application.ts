@@ -128,7 +128,7 @@ export default class Application<T extends Node> {
         let warning = false;
         for (let i = 0; i < document.styleSheets.length; i++) {
             const styleSheet = <CSSStyleSheet> document.styleSheets[i];
-            if (styleSheet.cssRules != null) {
+            if (styleSheet.cssRules) {
                 for (let j = 0; j < styleSheet.cssRules.length; j++) {
                     try {
                         const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
@@ -164,6 +164,7 @@ export default class Application<T extends Node> {
                                     switch (attr) {
                                         case 'width':
                                         case 'height':
+                                        case 'lineHeight':
                                         case 'marginTop':
                                         case 'marginRight':
                                         case 'marginBottom':
@@ -229,13 +230,16 @@ export default class Application<T extends Node> {
         else {
             return false;
         }
+        const supportInline = this.controllerHandler.supportInline;
+        function inlineElement(element: Element) {
+            const styleMap = getCache(element, 'styleMap');
+            return ((!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0);
+        }
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
                 this.orderExt(extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
-                    const supportInline = this.controllerHandler.supportInline;
-                    const styleMap = getCache(element, 'styleMap');
-                    if ((!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.parentElement && Array.from(element.parentElement.children).every(item => item.children.length === 0 && supportInline.includes(item.tagName))) {
+                    if (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))) {
                         setCache(element, 'supportInline', true);
                         continue;
                     }
@@ -373,7 +377,6 @@ export default class Application<T extends Node> {
                 }
             }
             for (const node of visible) {
-                const supportInline = this.controllerHandler.supportInline;
                 const text: HTMLElement[] = [];
                 let valid = true;
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
