@@ -752,7 +752,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 stored.value = `<u>${stored.value}</u>`;
                                 break;
                             case 'line-through':
-                            case 'overline':
                                 stored.value = `<strike>${stored.value}</strike>`;
                                 break;
                         }

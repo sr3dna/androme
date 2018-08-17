@@ -4,7 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertPX, hasValue, includesEnum, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, getCache, sameAsParent, setCache, hasFreeFormText } from '../lib/dom';
+import { getBoxSpacing, getCache, sameAsParent, setCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -209,6 +209,28 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setValueString(supportInline: string[]) {
+        function parseWhiteSpace(node: T, value: string): [string, boolean] {
+            if (node.multiLine) {
+                value = value.replace(/^\s*\n/, '');
+            }
+            switch (node.css('whiteSpace')) {
+                case 'nowrap':
+                    value = value.replace(/\n/g, ' ');
+                    break;
+                case 'pre':
+                case 'pre-wrap':
+                    value = value.replace(/\n/g, '\\n');
+                    value = value.replace(/\s/g, '&#160;');
+                    break;
+                case 'pre-line':
+                    value = value.replace(/\n/g, '\\n');
+                    value = value.replace(/\s+/g, ' ');
+                    break;
+                default:
+                    return [value, false];
+            }
+            return [value, true];
+        }
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
             const element = <HTMLInputElement> node.element;
             if (getCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
@@ -238,33 +260,17 @@ export default abstract class Resource<T extends Node> {
                 }
                 else if (element.nodeName === '#text') {
                     value = <string> element.textContent;
+                    [value, inlineTrim] = parseWhiteSpace(node, value);
                     if (element.previousSibling && (<Element> element.previousSibling).tagName === 'BR') {
                         value = value.replace(/^\s+/g, '');
                     }
-                    inlineTrim = true;
                 }
-                else if (node.hasElement) {
-                    if (node.children.length === 0 && (hasFreeFormText(element) || Array.from(node.element.children).every((item: HTMLElement) => getCache(item, 'supportInline')))) {
-                        name = (element.innerText || element.textContent || '').trim();
-                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
-                        switch (node.css('whiteSpace')) {
-                            case 'nowrap':
-                                value = value.replace(/\n/g, ' ');
-                                break;
-                            case 'pre':
-                            case 'pre-wrap':
-                                value = value.replace(/\n/g, '\\n');
-                                value = value.replace(/\s/g, '&#160;');
-                                break;
-                            case 'pre-line':
-                                value = value.replace(/\s+/g, ' ');
-                            default:
-                                inlineTrim = true;
-                                break;
-                        }
-                        value = value.replace(/<br\s*\/?>/g, '\\n');
-                        value = value.replace(/\s+(class|style)=".*?"/g, '');
-                    }
+                else if (node.inlineText) {
+                    name = (element.innerText || element.textContent || '').trim();
+                    value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
+                    [value, inlineTrim] = parseWhiteSpace(node, value);
+                    value = value.replace(/<br\s*\/?>/g, '\\n');
+                    value = value.replace(/\s+(class|style)=".*?"/g, '');
                 }
                 if (inlineTrim) {
                     const previousSibling = node.previousSibling;
@@ -277,6 +283,10 @@ export default abstract class Resource<T extends Node> {
                     if (nextSibling && /\s+$/.test(original)) {
                         value = value + '&#160;';
                     }
+                }
+                else {
+                    value = value.replace(/^\s/, '&#160;');
+                    value = value.replace(/\s$/, '&#160;');
                 }
                 if (value !== '') {
                     setCache(element, 'valueString', { name, value });
@@ -296,12 +306,10 @@ export default abstract class Resource<T extends Node> {
     protected getBorderStyle(border: BorderAttribute) {
         const result = { solid: `android:color="@color/${border.color}"` };
         Object.assign(result, {
-            inset: result.solid,
-            outset: result.solid,
             dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
             dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
         });
-        return result[border.style] || 'android:color="@android:color/black"';
+        return result[border.style] || result.solid;
     }
 
     private parseBorderStyle(value: string, node: T, attr: string): BorderAttribute {

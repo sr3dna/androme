@@ -55,9 +55,11 @@ export function getRangeBounds(element: Element): [ClientRect, boolean] {
         result.top = Math.min.apply(null, Array.from(top));
         result.bottom = Math.max.apply(null, Array.from(bottom));
         result.height = result.bottom - result.top;
-        multiLine = true;
+        if (element.textContent && (!/^\s+$/.test(element.textContent) || /^\s*\n/.test(element.textContent))) {
+            multiLine = true;
+        }
     }
-    return [assignBounds(result), multiLine];
+    return [result, multiLine];
 }
 
 export function assignBounds(bounds: ClientRect): ClientRect {
@@ -116,15 +118,23 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
     return result;
 }
 
-export function hasFreeFormText(element: HTMLElement, maxDepth = 0) {
+export function cssParent(element: Element, attr: string, ...styles: string[]) {
+    if (element.parentElement != null) {
+        const value = getStyle(element.parentElement)[attr];
+        return (value && styles.includes(value));
+    }
+    return false;
+}
+
+export function hasFreeFormText(element: Element, maxDepth = 0) {
     let valid = false;
     let depth = -1;
     function findFreeForm(elements: any[]) {
         if (depth === maxDepth) {
             return true;
         }
-        return elements.some((item: HTMLElement) => {
-            if (item.nodeName === '#text' && optional(item, 'textContent').trim() !== '') {
+        return elements.some((item: Element) => {
+            if (item.nodeName === '#text' && (optional(item, 'textContent').trim() !== '' || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap'))) {
                 valid = true;
                 return true;
             }

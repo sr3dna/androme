@@ -6,9 +6,9 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertCamelCase, convertInt, convertPX, formatPX, hasValue, includesEnum, isNumber, isPercent, optional, sortAsc, trim } from '../lib/util';
 import { placeIndent } from '../lib/xml';
-import { deleteCache, getCache, getNode, getStyle, hasFreeFormText, isLineBreak, isVisible, setCache } from '../lib/dom';
+import { cssParent, deleteCache, getCache, getNode, getStyle, hasFreeFormText, isLineBreak, isVisible, setCache } from '../lib/dom';
 import { convertRGB, getByColorName } from '../lib/color';
-import { BLOCK_ELEMENT, BOX_STANDARD, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BOX_STANDARD, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node> {
@@ -381,8 +381,11 @@ export default class Application<T extends Node> {
                 let valid = true;
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                     if (element.nodeName === '#text') {
-                        if (optional(element, 'textContent').trim() !== '') {
-                            text.push(element);
+                        switch(node.element.tagName) {
+                            case 'SELECT':
+                                return;
+                            default:
+                                text.push(element);
                         }
                     }
                     else if (!supportInline.includes(element.tagName) || getNode(element)) {
@@ -760,15 +763,23 @@ export default class Application<T extends Node> {
                             if (nodeY.nodeName === '') {
                                 const untargeted = nodeY.children.filter(node => !node.isSet('dataset', 'target'));
                                 if (untargeted.length === 0) {
-                                    if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
-                                        xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
+                                    const freeFormText = hasFreeFormText(nodeY.element, 1);
+                                    if (SETTINGS.collapseUnattributedElements && !freeFormText && Object.keys(nodeY.styleMap).length === 0 && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
+                                        parent.remove(nodeY);
+                                        nodeY.hide();
+                                        continue;
                                     }
                                     else {
-                                        if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
-                                            continue;
+                                        if (freeFormText || nodeY.inline) {
+                                            xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                         }
-                                        else if (!nodeY.documentRoot) {
-                                            xml = this.writeFrameLayout(nodeY, parent);
+                                        else if (!nodeY.inlineElement && (nodeY.borderTopWidth + nodeY.borderBottomWidth > 0 || nodeY.paddingTop + nodeY.paddingBottom > 0)) {
+                                            xml = this.writeNode(nodeY, parent, NODE_STANDARD.LINE);
+                                        }
+                                        else {
+                                            if (!nodeY.documentRoot) {
+                                                xml = this.writeFrameLayout(nodeY, parent);
+                                            }
                                         }
                                     }
                                 }
@@ -806,7 +817,7 @@ export default class Application<T extends Node> {
                                                 }
                                                 else {
                                                     const blockClear = NodeList.cleared(nodeY.children);
-                                                    if ((linearY && nodeY.children.every(node => node.pageflow)) || nodeY.children.some((node: T) => !node.inlineElement || blockClear.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
+                                                    if ((linearY && nodeY.children.every(node => node.pageflow && !node.plainText)) || nodeY.children.some((node: T) => !node.inlineElement || blockClear.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
                                                         xml = this.writeLinearLayout(nodeY, parent, false);
                                                     }
                                                 }
@@ -1129,7 +1140,7 @@ export default class Application<T extends Node> {
     private insertNode(element: HTMLElement, parent?: T) {
         let node: Null<T> = null;
         if (element.nodeName === '#text') {
-            if (optional(element, 'textContent', 'string').trim() !== '') {
+            if (optional(element, 'textContent', 'string').trim() !== '' || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
                 node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
                 node.tagName = 'PLAINTEXT';
                 node.styleMap.cssFloat = 'none';

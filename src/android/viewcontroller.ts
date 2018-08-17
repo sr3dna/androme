@@ -1,4 +1,4 @@
-import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
@@ -158,7 +158,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                         }
                     }
-                    const rows: ArrayIndex<T[]> = [];
+                    const rows: T[][] = [];
                     const multiLine = nodes.list.some(item => item.multiLine);
                     let previousRowBottom: Null<T> = null;
                     for (let i = 0, width = 0; i < nodes.length; i++) {
@@ -173,7 +173,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         else {
                             const group = (current instanceof ViewGroup);
                             const previous = nodes.get(i - 1);
-                            if ((node.inlineWrap && group) || isLineBreak(<Element> current.element.previousSibling) || isLineBreak(<Element> previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                            if ((node.inlineWrap && group) || (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) || current.multiLine || isLineBreak(<Element> current.element.previousSibling) || isLineBreak(<Element> previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
                                 const items = rows[rows.length - 1];
                                 previousRowBottom = items[0];
                                 for (let j = 1; j < items.length; j++) {
@@ -189,7 +189,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 width = (current.multiLine ? dimension.right - dimension.left : dimension.width);
                                 adjustBaseline();
                                 baseline.length = 0;
-                                rows[rows.length] = [current];
+                                rows.push([current]);
                             }
                             else {
                                 current.android(mapLayout['leftRight'], previous.stringId);
@@ -200,17 +200,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 rows[rows.length - 1].push(current);
                             }
                         }
-                        if (current.nodeType <= NODE_STANDARD.IMAGE && current.alignMargin) {
+                        if (current.alignMargin) {
                             baseline.push(current);
                         }
                     }
                     adjustBaseline();
-                    for (let i = 0; i < rows.length; i++) {
-                        const current = rows[i][0];
-                        if (current.is(NODE_STANDARD.TEXT) && Math.ceil(current.linear.right) >= node.box.right) {
-                            current.android('singleLine', 'true');
-                        }
-                    }
+                    rows.forEach(item => this.adjustLineHeight(item));
                 }
                 else {
                     const [pageflow, fixed] = nodes.partition(item => item.pageflow);
@@ -1301,6 +1296,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                     }
                 }
             }
+            else {
+                if (node.linearHorizontal) {
+                    this.adjustLineHeight(<T[]> node.renderChildren, node);
+                }
+            }
         }
     }
 
@@ -1500,9 +1500,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                 break;
             case NODE_ANDROID.LINE:
                 if (node.viewHeight === 0) {
-                    node.android('layout_height', formatPX((convertInt(node.css('borderWidth')) || 1) + 1));
+                    node.android('layout_height', formatPX(((node.borderTopWidth + node.borderBottomWidth) || 1) + ((node.paddingTop + node.paddingBottom) || 1)));
                 }
                 break;
+        }
+        if (node.css('whiteSpace') === 'nowrap' || (parent.linearHorizontal && node.multiLine)) {
+            node.android('singleLine', 'true');
         }
         node.cascade().forEach(item => item.hide());
         node.render((target ? node : parent));
@@ -1896,6 +1899,41 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
             }
         });
+    }
+
+    private adjustLineHeight(nodes: T[], parent?: T) {
+        let lineHeight = 0;
+        let marginHeight = 0;
+        nodes.forEach(item => {
+            const height = convertInt(item.styleMap.lineHeight);
+            if (height > lineHeight) {
+                const offset = height - item.bounds.height;
+                if (offset > 0) {
+                    marginHeight = offset;
+                }
+                lineHeight = height;
+            }
+        });
+        if (lineHeight > 0) {
+            let minHeight = Number.MAX_VALUE;
+            nodes.forEach(item => {
+                let offset = lineHeight - item.bounds.height;
+                if (offset > 0) {
+                    minHeight = Math.min(offset, minHeight);
+                }
+                else {
+                    offset = marginHeight;
+                }
+                if (parent == null) {
+                    item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + Math.ceil(offset / 2));
+                    item.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, item.marginBottom + Math.floor(offset / 2));
+                }
+            });
+            if (parent != null && minHeight !== Number.MAX_VALUE) {
+                parent.modifyBox(BOX_STANDARD.MARGIN_TOP, parent.marginTop + Math.ceil(minHeight / 2));
+                parent.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, parent.marginBottom + Math.floor(minHeight / 2));
+            }
+        }
     }
 
     private findByStringId(id: string) {

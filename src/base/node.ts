@@ -1,7 +1,7 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, capitalize } from '../lib/util';
-import { assignBounds, getCache, getNode, getRangeBounds, setCache } from '../lib/dom';
+import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, setCache } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
@@ -28,7 +28,6 @@ export default abstract class Node implements BoxModel {
     public isolated = false;
     public relocated = false;
     public inlineWrap = false;
-    public multiLine = false;
 
     public abstract constraint: ObjectMap<any>;
     public abstract children: T[];
@@ -43,6 +42,7 @@ export default abstract class Node implements BoxModel {
     private _parent: T;
     private _tagName: string;
     private _data: ObjectMap<any> = {};
+    private _multiLine: boolean;
 
     constructor(
         public id: number,
@@ -212,7 +212,9 @@ export default abstract class Node implements BoxModel {
                     }
                     break;
                 case 'style':
-                    const style = {};
+                    const style = {
+                        whiteSpace: node.style.whiteSpace
+                    };
                     for (const attr in node.style) {
                         if (attr.startsWith('font') || attr.startsWith('color')) {
                             const key = convertCamelCase(attr);
@@ -244,14 +246,6 @@ export default abstract class Node implements BoxModel {
         }
         while (true);
         return result;
-    }
-
-    public toLeftOf(node: T, offset: number) {
-        return (this.withinX(node.linear) || node.withinX(this.linear)) && (node.linear.left + offset <= this.linear.right);
-    }
-
-    public toRightOf(node: T, offset: number) {
-        return (this.withinX(node.linear) || node.withinX(this.linear)) && (node.linear.right + offset >= this.linear.left);
     }
 
     public intersect(rect: ClientRect, dimension = 'linear') {
@@ -421,9 +415,13 @@ export default abstract class Node implements BoxModel {
     public setDimensions(bounds = ['linear', 'box']) {
         for (const dimension of bounds) {
             const dimen = this[dimension];
-            dimen.width = dimen.right - dimen.left;
+            dimen.width = (this.multiLine ? this.bounds.width : dimen.right - dimen.left);
             dimen.height = dimen.bottom - dimen.top;
         }
+    }
+
+    public remove(node: T) {
+        this.children = this.children.filter(child => child !== node);
     }
 
     protected append(node: T) {
@@ -632,6 +630,10 @@ export default abstract class Node implements BoxModel {
         return (this.inline || this.display === 'inline-block' || this.plainText || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
     }
 
+    get inlineText() {
+        return (this.hasElement && this.children.length === 0 && (hasFreeFormText(this.element) || Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))));
+    }
+
     get plainText() {
         return (this.tagName === 'PLAINTEXT');
     }
@@ -675,6 +677,21 @@ export default abstract class Node implements BoxModel {
     }
     get overflowY() {
         return includesEnum(this.overflow, OVERFLOW_ELEMENT.VERTICAL);
+    }
+
+    set multiLine(value) {
+        this._multiLine = value;
+    }
+    get multiLine() {
+        if (this._multiLine == null) {
+            if (this.inlineText) {
+                this._multiLine = (Array.from(this.element.children).some(item => item.tagName === 'BR') || (['pre', 'pre-wrap'].includes(this.css('whiteSpace')) && /\n/.test(this.element.textContent || '')));
+            }
+            else {
+                this._multiLine = false;
+            }
+        }
+        return this._multiLine;
     }
 
     get dir() {

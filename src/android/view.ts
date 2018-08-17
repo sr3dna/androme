@@ -1,11 +1,11 @@
 import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, sortAsc, withinFraction } from '../lib/util';
+import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
 import { getNode, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
-import { BLOCK_ELEMENT, BOX_STANDARD, MAP_ELEMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { BOX_STANDARD, MAP_ELEMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
 
 type T = View;
@@ -302,7 +302,7 @@ export default class View extends Node {
                         this.android('layout_width', styleMap.width);
                     }
                     else if (styleMap.width === 'auto') {
-                        this.android('layout_width', (!this.inlineElement && this.pageflow && BLOCK_ELEMENT.includes(this.element.tagName) && !this.autoMargin ? 'match_parent' : 'wrap_content'), false);
+                        this.android('layout_width', (!this.inlineElement && this.pageflow && !this.autoMargin ? 'match_parent' : 'wrap_content'), false);
                     }
                 }
                 if (this.isSet('styleMap', 'minWidth') && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
@@ -385,7 +385,7 @@ export default class View extends Node {
                             this.android('layout_height', 'wrap_content');
                         }
                         else {
-                            this.android('layout_height', (this.inline && !this.overflowY && !this.is(NODE_STANDARD.IMAGE) ? 'wrap_content' : formatPX(contentHeight)));
+                            this.android('layout_height', (!this.overflowY && !this.is(NODE_STANDARD.IMAGE) && (this.inline || (this.styleMap.height == null && convertInt(this.styleMap.lineHeight) !== this.element.offsetHeight)) ? 'wrap_content' : formatPX(contentHeight)));
                         }
                     }
                     else if (styleMap.height === 'auto') {
@@ -479,12 +479,6 @@ export default class View extends Node {
                 if (this.linearHorizontal) {
                     if (this.viewHeight === 0 && this.renderChildren.some(node => node.is(NODE_STANDARD.IMAGE))) {
                         vertical = 'bottom';
-                    }
-                }
-                else {
-                    const lineHeight = convertInt(this.styleMap.lineHeight);
-                    if (lineHeight > 0 && lineHeight >= this.viewHeight) {
-                        vertical = 'center_vertical';
                     }
                 }
                 break;
@@ -662,27 +656,42 @@ export default class View extends Node {
                 }
             }
             else {
-                if (viewWidth > 0 || viewHeight > 0) {
-                    if (viewWidth > 0) {
-                        if (this.element.tagName !== 'TABLE') {
-                            this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
-                        }
+                if (viewWidth > 0) {
+                    if (this.element.tagName !== 'TABLE') {
+                        this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
                     }
-                    if (viewHeight > 0) {
+                }
+                else {
+                    if (this.borderLeftWidth > 0) {
+                        this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.paddingLeft + this.borderLeftWidth);
+                    }
+                    if (this.borderRightWidth > 0) {
+                        this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.paddingRight + this.borderRightWidth);
+                    }
+                }
+                if (viewHeight > 0) {
+                    if (!this.is(NODE_STANDARD.LINE) || (this.is(NODE_STANDARD.LINE) && this.viewHeight > 0)) {
                         if (this.borderTopWidth > 0 && this.marginTop >= this.borderTopWidth) {
                             this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop - this.borderTopWidth);
                         }
                         this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth));
                     }
                 }
+                else {
+                    if (this.borderTopWidth > 0) {
+                        this.modifyBox(BOX_STANDARD.PADDING_TOP, this.paddingTop + this.borderTopWidth);
+                    }
+                    if (this.borderBottomWidth > 0) {
+                        this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.paddingBottom + this.borderBottomWidth);
+                    }
+                }
             }
             if (this.hasElement) {
-                const lineHeight = convertInt(this.styleMap.lineHeight);
-                if (lineHeight > 0) {
-                    const offsetTop = lineHeight - this.bounds.height;
-                    if (offsetTop > 0) {
-                        this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_TOP' : 'PADDING_TOP')], this[(this.inline ? 'marginTop' : 'paddingTop')] + Math.ceil(offsetTop / 2));
-                        this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_BOTTOM' : 'PADDING_BOTTOM')], this[(this.inline ? 'marginBottom' : 'paddingBottom')] + Math.floor(offsetTop / 2));
+                if (!(this.renderParent.linearHorizontal || (this.renderParent.is(NODE_STANDARD.RELATIVE) && !this.inlineWrap))) {
+                    const offsetHeight = convertInt(this.styleMap.lineHeight) - this.bounds.height;
+                    if (offsetHeight > 0) {
+                        this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_TOP' : 'PADDING_TOP')], this[(this.inline ? 'marginTop' : 'paddingTop')] + Math.ceil(offsetHeight / 2));
+                        this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_BOTTOM' : 'PADDING_BOTTOM')], this[(this.inline ? 'marginBottom' : 'paddingBottom')] + Math.floor(offsetHeight / 2));
                     }
                 }
             }
@@ -792,7 +801,7 @@ export default class View extends Node {
             switch (this.android('orientation')) {
                 case AXIS_ANDROID.HORIZONTAL:
                     let left = this.box.left;
-                    sortAsc(this.renderChildren, 'linear.left').forEach(node => {
+                    this.renderChildren.forEach(node => {
                         if (!node.floating) {
                             const width = Math.ceil(node.linear.left - left);
                             if (width >= 1) {
@@ -804,7 +813,7 @@ export default class View extends Node {
                     break;
                 case AXIS_ANDROID.VERTICAL:
                     let top = this.box.top;
-                    sortAsc(this.renderChildren, 'linear.top').forEach(node => {
+                    this.renderChildren.forEach(node => {
                         const height = Math.ceil(node.linear.top - top);
                         if (height >= 1) {
                             node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height);
@@ -844,11 +853,11 @@ export default class View extends Node {
         else if (this.id === 0) {
             return this;
         }
-        else if (position !== 'fixed') {
+        else if (position !== 'fixed' || this.alignMargin) {
             const absolute = (position === 'absolute');
             let parent = this.element.parentElement;
             while (parent != null) {
-                const node = (!absolute || getStyle(parent).position !== 'static' ? getNode(parent) : null);
+                const node = (!absolute || getStyle(parent).position !== 'static' || this.alignMargin ? getNode(parent) : null);
                 if (node) {
                     return node as T;
                 }
