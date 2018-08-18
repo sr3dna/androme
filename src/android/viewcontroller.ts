@@ -1404,22 +1404,28 @@ export default class ViewController<T extends View> extends Controller<T> {
         const element: any = node.element;
         switch (element.tagName) {
             case 'IMG':
+                let scaleType = '';
                 if (isPercent(node.css('width')) || isPercent(node.css('height'))) {
-                    node.android('scaleType', 'fitXY');
+                    scaleType = 'fitXY';
                 }
-                switch (node.css('objectFit')) {
-                    case 'contain':
-                        node.android('scaleType', 'centerInside');
-                        break;
-                    case 'cover':
-                        node.android('scaleType', 'centerCrop');
-                        break;
-                    case 'fill':
-                        node.android('scaleType', 'fitXY');
-                        break;
-                    case 'scale-down':
-                        node.android('scaleType', 'fitCenter');
-                        break;
+                else {
+                    switch (node.css('objectFit')) {
+                        case 'contain':
+                            scaleType = 'centerInside';
+                            break;
+                        case 'cover':
+                            scaleType = 'centerCrop';
+                            break;
+                        case 'fill':
+                            scaleType = 'fitXY';
+                            break;
+                        case 'scale-down':
+                            scaleType = 'fitCenter';
+                            break;
+                    }
+                }
+                if (scaleType !== '') {
+                    node.android('scaleType', scaleType);
                 }
                 if ((node.isSet('styleMap', 'width') && !node.isSet('styleMap', 'height')) || (!node.isSet('styleMap', 'width') && node.isSet('styleMap', 'height'))) {
                     node.android('adjustViewBounds', 'true');
@@ -1930,8 +1936,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
             });
             if (parent != null && minHeight !== Number.MAX_VALUE) {
-                parent.modifyBox(BOX_STANDARD.MARGIN_TOP, parent.marginTop + Math.ceil(minHeight / 2));
-                parent.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, parent.marginBottom + Math.floor(minHeight / 2));
+                parent.modifyBox(BOX_STANDARD.PADDING_TOP, parent.paddingTop + Math.ceil(minHeight / 2));
+                parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, parent.paddingBottom + Math.floor(minHeight / 2));
             }
         }
     }

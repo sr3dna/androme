@@ -627,7 +627,7 @@ export default abstract class Node implements BoxModel {
 
     get inlineElement() {
         const position = this.position;
-        return (this.inline || this.display === 'inline-block' || this.plainText || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
+        return (this.inline || ['inline-block', 'table-cell'].includes(this.display) || this.plainText || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
     }
 
     get inlineText() {
@@ -684,7 +684,7 @@ export default abstract class Node implements BoxModel {
     }
     get multiLine() {
         if (this._multiLine == null) {
-            if (this.inlineText) {
+            if (this.inlineElement && !this.floating && this.viewWidth === 0 && this.inlineText) {
                 this._multiLine = (Array.from(this.element.children).some(item => item.tagName === 'BR') || (['pre', 'pre-wrap'].includes(this.css('whiteSpace')) && /\n/.test(this.element.textContent || '')));
             }
             else {

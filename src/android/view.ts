@@ -278,7 +278,7 @@ export default class View extends Node {
                 }
             }
             if (this.android('layout_width') !== '0px') {
-                if (this.isSet('styleMap', 'width')) {
+                if (convertInt(this.styleMap.width) > 0) {
                     if (isPercent(styleMap.width)) {
                         if (renderParent.element.tagName === 'TABLE') {
                             this.android('layout_columnWeight', (convertInt(styleMap.width) / 100).toFixed(2));
@@ -298,11 +298,8 @@ export default class View extends Node {
                             this.android('layout_width', this.style.width || 'wrap_content');
                         }
                     }
-                    else if (convertInt(styleMap.width) > 0) {
+                    else {
                         this.android('layout_width', styleMap.width);
-                    }
-                    else if (styleMap.width === 'auto') {
-                        this.android('layout_width', (!this.inlineElement && this.pageflow && !this.autoMargin ? 'match_parent' : 'wrap_content'), false);
                     }
                 }
                 if (this.isSet('styleMap', 'minWidth') && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
@@ -359,7 +356,7 @@ export default class View extends Node {
             if (this.android('layout_height') !== '0px') {
                 const contentHeight = convertInt(styleMap.height || this.lineHeight);
                 if (contentHeight > 0) {
-                    const percentHeight = (styleMap.height !== 'auto' ? styleMap.height : null) || styleMap.lineHeight;
+                    const percentHeight = (styleMap.height !== 'auto' ? styleMap.height : styleMap.lineHeight);
                     if (isPercent(percentHeight)) {
                         if (renderParent.element.tagName === 'TABLE') {
                             this.android('layout_rowWeight', (contentHeight / 100).toFixed(2));
@@ -379,7 +376,7 @@ export default class View extends Node {
                             this.android('layout_height', this.style.height || 'wrap_content');
                         }
                     }
-                    else if (contentHeight > 0) {
+                    else {
                         if (this.display === 'inline-block' && this.css('overflow') === 'visible') {
                             this.android('minHeight', formatPX(contentHeight));
                             this.android('layout_height', 'wrap_content');
@@ -387,9 +384,6 @@ export default class View extends Node {
                         else {
                             this.android('layout_height', (!this.overflowY && !this.is(NODE_STANDARD.IMAGE) && (this.inline || (this.styleMap.height == null && convertInt(this.styleMap.lineHeight) !== this.element.offsetHeight)) ? 'wrap_content' : formatPX(contentHeight)));
                         }
-                    }
-                    else if (styleMap.height === 'auto') {
-                        this.android('layout_height', 'wrap_content', false);
                     }
                 }
                 if (this.isSet('styleMap', 'minHeight') && !isPercent(styleMap.minHeight) && !constraint.minHeight) {
@@ -476,10 +470,11 @@ export default class View extends Node {
                 vertical = 'bottom';
                 break;
             default:
-                if (this.linearHorizontal) {
-                    if (this.viewHeight === 0 && this.renderChildren.some(node => node.is(NODE_STANDARD.IMAGE))) {
-                        vertical = 'bottom';
-                    }
+                if (this.lineHeight > 0 && this.renderParent.android('layout_height') !== 'match_parent') {
+                    vertical = 'center_vertical';
+                }
+                else if (this.viewHeight === 0 && this.linearHorizontal && this.renderChildren.some(node => node.is(NODE_STANDARD.IMAGE))) {
+                    vertical = 'bottom';
                 }
                 break;
         }
@@ -540,28 +535,10 @@ export default class View extends Node {
                 const leftRtl = parseRTL(`${value}Left`);
                 const rightRtl = parseRTL(`${value}Right`);
                 const inline = (this.inline || this.plainText);
-                let top = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Top`)));
-                let right = convertInt(this.android(rightRtl));
-                let bottom = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Bottom`)));
-                let left = convertInt(this.android(leftRtl));
-                if (index === 1) {
-                    if (this.viewWidth === 0) {
-                        if (this.borderLeftWidth > 0) {
-                            left += this.borderLeftWidth;
-                        }
-                        if (this.borderRightWidth > 0) {
-                            right += this.borderRightWidth;
-                        }
-                    }
-                    if (this.viewHeight === 0) {
-                        if (this.borderTopWidth > 0) {
-                            top += this.borderBottomWidth;
-                        }
-                        if (this.borderBottomWidth > 0) {
-                            bottom += this.borderBottomWidth;
-                        }
-                    }
-                }
+                const top = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Top`)));
+                const right = convertInt(this.android(rightRtl));
+                const bottom = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Bottom`)));
+                const left = convertInt(this.android(leftRtl));
                 if (this.api >= BUILD_ANDROID.OREO) {
                     if (top !== 0 && top === bottom && bottom === left && left === right) {
                         this.delete('android', `${value}*`);
@@ -601,6 +578,9 @@ export default class View extends Node {
                 if (this.linearHorizontal) {
                     if (this.renderChildren.some(node => node.floating) || this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
                         this.android('baselineAligned', 'false');
+                    }
+                    if (this.renderChildren.every(node => node.inlineText || node.plainText)) {
+                        this.renderChildren.forEach(node => node.android('singleLine', 'true'));
                     }
                     this.alignBaseline(this.renderChildren);
                 }
@@ -662,11 +642,13 @@ export default class View extends Node {
                     }
                 }
                 else {
-                    if (this.borderLeftWidth > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.paddingLeft + this.borderLeftWidth);
-                    }
-                    if (this.borderRightWidth > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.paddingRight + this.borderRightWidth);
+                    if (this.inlineText && this.element.innerText.trim() === '') {
+                        if (this.borderLeftWidth > 0) {
+                            this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.paddingLeft + this.borderLeftWidth);
+                        }
+                        if (this.borderRightWidth > 0) {
+                            this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.paddingRight + this.borderRightWidth);
+                        }
                     }
                 }
                 if (viewHeight > 0) {
@@ -675,14 +657,6 @@ export default class View extends Node {
                             this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop - this.borderTopWidth);
                         }
                         this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth));
-                    }
-                }
-                else {
-                    if (this.borderTopWidth > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_TOP, this.paddingTop + this.borderTopWidth);
-                    }
-                    if (this.borderBottomWidth > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.paddingBottom + this.borderBottomWidth);
                     }
                 }
             }

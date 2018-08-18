@@ -262,7 +262,7 @@ export default abstract class Resource<T extends Node> {
                     value = <string> element.textContent;
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                     if (element.previousSibling && (<Element> element.previousSibling).tagName === 'BR') {
-                        value = value.replace(/^\s+/g, '');
+                        value = value.replace(/^\s+/, '');
                     }
                 }
                 else if (node.inlineText) {
@@ -272,9 +272,12 @@ export default abstract class Resource<T extends Node> {
                     value = value.replace(/<br\s*\/?>/g, '\\n');
                     value = value.replace(/\s+(class|style)=".*?"/g, '');
                 }
+                const previousSibling = node.previousSibling;
+                const nextSibling = node.nextSibling;
+                if (previousSibling == null) {
+                    value = value.replace(/^\s+/, '');
+                }
                 if (inlineTrim) {
-                    const previousSibling = node.previousSibling;
-                    const nextSibling = node.nextSibling;
                     const original = value;
                     value = value.trim();
                     if (previousSibling && previousSibling.display !== 'block' && !/\s+$/.test(<string> (previousSibling.element.innerText || previousSibling.element.textContent)) && /^\s+/.test(original)) {
@@ -285,8 +288,8 @@ export default abstract class Resource<T extends Node> {
                     }
                 }
                 else {
-                    value = value.replace(/^\s/, '&#160;');
-                    value = value.replace(/\s$/, '&#160;');
+                    value = value.replace(/^\s+/, (previousSibling && previousSibling.display === 'block' ? '' : '&#160;'));
+                    value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
                 }
                 if (value !== '') {
                     setCache(element, 'valueString', { name, value });
