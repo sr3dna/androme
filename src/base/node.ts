@@ -2,7 +2,7 @@ import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, capitalize } from '../lib/util';
 import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, setCache } from '../lib/dom';
-import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
+import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
 
@@ -540,10 +540,19 @@ export default abstract class Node implements BoxModel {
         return (isPercent(this.styleMap.width) ? 0 : convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth));
     }
     get viewHeight() {
-        return (isPercent(this.styleMap.height) ? 0 : convertInt(this.styleMap.height) || this.lineHeight || convertInt(this.styleMap.minHeight));
+        return (isPercent(this.styleMap.height) ? 0 : convertInt(this.styleMap.height) || convertInt(this.styleMap.minHeight));
     }
     get lineHeight() {
-        return (this.inline ? 0 : convertInt(this.styleMap.lineHeight));
+        if (this.children.length === 0 && !this.renderParent.linearHorizontal) {
+            const lineHeight = convertInt(this.styleMap.lineHeight);
+            if (this.inlineElement) {
+                return lineHeight || convertInt(this.documentParent.styleMap.lineHeight);
+            }
+            else {
+                return lineHeight;
+            }
+        }
+        return 0;
     }
 
     get display() {
@@ -631,7 +640,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && this.children.length === 0 && (hasFreeFormText(this.element) || Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))));
+        return (this.hasElement && this.element.tagName !== 'SELECT' && this.children.length === 0 && (hasFreeFormText(this.element) || Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))));
     }
 
     get plainText() {
@@ -677,6 +686,10 @@ export default abstract class Node implements BoxModel {
     }
     get overflowY() {
         return includesEnum(this.overflow, OVERFLOW_ELEMENT.VERTICAL);
+    }
+
+    get relativeWrap() {
+        return (this.is(NODE_STANDARD.RELATIVE) && this.inlineWrap);
     }
 
     set multiLine(value) {

@@ -1,4 +1,4 @@
-/* androme 1.9.0
+/* androme 1.9.1
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -503,7 +503,7 @@
         return value;
     }
     function replaceEntity(value) {
-        value = value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(capture));
+        value = value.replace(/&#([0-9]+);/g, (match, capture) => String.fromCharCode(capture));
         value = value.replace(/&nbsp;/g, '&#160;');
         return value;
     }
@@ -645,9 +645,11 @@
             result.top = Math.min.apply(null, Array.from(top));
             result.bottom = Math.max.apply(null, Array.from(bottom));
             result.height = result.bottom - result.top;
-            multiLine = true;
+            if (element.textContent && (!/^\s+$/.test(element.textContent) || /^\s*\n/.test(element.textContent))) {
+                multiLine = true;
+            }
         }
-        return [assignBounds(result), multiLine];
+        return [result, multiLine];
     }
     function assignBounds(bounds) {
         return {
@@ -701,6 +703,17 @@
         });
         return result;
     }
+    function cssParent(element, attr, ...styles) {
+        if (element.nodeName.charAt(0) !== '#') {
+            if (styles.includes(getStyle(element)[attr])) {
+                return true;
+            }
+        }
+        if (element.parentElement != null) {
+            return styles.includes(getStyle(element.parentElement)[attr]);
+        }
+        return false;
+    }
     function hasFreeFormText(element, maxDepth = 0) {
         let valid = false;
         let depth = -1;
@@ -709,9 +722,11 @@
                 return true;
             }
             return elements.some((item) => {
-                if (item.nodeName === '#text' && optional(item, 'textContent').trim() !== '') {
-                    valid = true;
-                    return true;
+                if (item.nodeName === '#text') {
+                    if (optional(item, 'textContent').trim() !== '' || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap')) {
+                        valid = true;
+                        return true;
+                    }
                 }
                 else if (item.childNodes && item.childNodes.length > 0) {
                     depth++;
@@ -1017,7 +1032,7 @@
             if (color !== '') {
                 return [color.hex, convertRGB(color), '1'];
             }
-            const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9]{1,3}))?\)/);
+            const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9\.]{1,3}))?\)/);
             if (match && match.length >= 4 && match[4] !== '0') {
                 if (match[4] == null) {
                     match[4] = opacity;
@@ -1571,7 +1586,7 @@
             let warning = false;
             for (let i = 0; i < document.styleSheets.length; i++) {
                 const styleSheet = document.styleSheets[i];
-                if (styleSheet.cssRules != null) {
+                if (styleSheet.cssRules) {
                     for (let j = 0; j < styleSheet.cssRules.length; j++) {
                         try {
                             const cssRule = styleSheet.cssRules[j];
@@ -1607,6 +1622,7 @@
                                         switch (attr) {
                                             case 'width':
                                             case 'height':
+                                            case 'lineHeight':
                                             case 'marginTop':
                                             case 'marginRight':
                                             case 'marginBottom':
@@ -1671,13 +1687,16 @@
             else {
                 return false;
             }
+            const supportInline = this.controllerHandler.supportInline;
+            function inlineElement(element) {
+                const styleMap = getCache(element, 'styleMap');
+                return ((!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0);
+            }
             for (const element of Array.from(elements)) {
                 if (!this.elements.has(element)) {
                     this.orderExt(extensions, element).some(item => item.init(element));
                     if (!this.elements.has(element)) {
-                        const supportInline = this.controllerHandler.supportInline;
-                        const styleMap = getCache(element, 'styleMap');
-                        if ((!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.parentElement && Array.from(element.parentElement.children).every(item => item.children.length === 0 && supportInline.includes(item.tagName))) {
+                        if (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))) {
                             setCache(element, 'supportInline', true);
                             continue;
                         }
@@ -1815,13 +1834,15 @@
                     }
                 }
                 for (const node of visible) {
-                    const supportInline = this.controllerHandler.supportInline;
                     const text = [];
                     let valid = true;
                     Array.from(node.element.childNodes).forEach((element) => {
                         if (element.nodeName === '#text') {
-                            if (optional(element, 'textContent').trim() !== '') {
-                                text.push(element);
+                            switch (node.element.tagName) {
+                                case 'SELECT':
+                                    return;
+                                default:
+                                    text.push(element);
                             }
                         }
                         else if (!supportInline.includes(element.tagName) || getNode(element)) {
@@ -1981,7 +2002,7 @@
                         if (node.documentRoot) {
                             axisY.push(node);
                         }
-                        else if (node.pageflow || (zIndex === 0 && documentParent)) {
+                        else if (node.pageflow || node.alignMargin || (zIndex === 0 && documentParent)) {
                             middle.push(node);
                         }
                         else {
@@ -2088,7 +2109,10 @@
                                                         (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
                                                         (!previous.floating && adjacent.autoMargin) ||
                                                         (vertical.length > horizontal.length && NodeList.linearY([...vertical.slice(), adjacent]))) {
-                                                        if (horizontal.length > 1) {
+                                                        if (vertical[vertical.length - 1] !== previous) {
+                                                            continue;
+                                                        }
+                                                        else if (horizontal.length > 1) {
                                                             if (linearVertical) {
                                                                 for (let m = 1; m < horizontal.length; m++) {
                                                                     if (isLineBreak(horizontal[m].element.previousSibling)) {
@@ -2130,10 +2154,10 @@
                                                     }
                                                 }
                                                 if (!cleared.has(adjacent)) {
-                                                    const target = hasValue(adjacent.dataset.target);
-                                                    if (!target) {
-                                                        horizontal.push(adjacent);
+                                                    if (horizontal[horizontal.length - 1] !== previous) {
+                                                        continue;
                                                     }
+                                                    horizontal.push(adjacent);
                                                     if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
                                                         continue;
                                                     }
@@ -2143,9 +2167,7 @@
                                                             horizontal.length = 1;
                                                         }
                                                         else {
-                                                            if (!target) {
-                                                                horizontal.pop();
-                                                            }
+                                                            horizontal.pop();
                                                             break;
                                                         }
                                                     }
@@ -2197,15 +2219,23 @@
                                 if (nodeY.nodeName === '') {
                                     const untargeted = nodeY.children.filter(node => !node.isSet('dataset', 'target'));
                                     if (untargeted.length === 0) {
-                                        if (hasFreeFormText(nodeY.element, 1) || (!SETTINGS.collapseUnattributedElements && !BLOCK_ELEMENT.includes(nodeY.element.tagName))) {
-                                            xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
+                                        const freeFormText = hasFreeFormText(nodeY.element, 1);
+                                        if (SETTINGS.collapseUnattributedElements && !freeFormText && Object.keys(nodeY.styleMap).length === 0 && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
+                                            parent.remove(nodeY);
+                                            nodeY.hide();
+                                            continue;
                                         }
                                         else {
-                                            if (SETTINGS.collapseUnattributedElements && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
-                                                continue;
+                                            if (freeFormText || nodeY.inline) {
+                                                xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                             }
-                                            else if (!nodeY.documentRoot) {
-                                                xml = this.writeFrameLayout(nodeY, parent);
+                                            else if (!nodeY.inlineElement && (nodeY.borderTopWidth + nodeY.borderBottomWidth > 0 || nodeY.paddingTop + nodeY.paddingBottom > 0)) {
+                                                xml = this.writeNode(nodeY, parent, NODE_STANDARD.LINE);
+                                            }
+                                            else {
+                                                if (!nodeY.documentRoot) {
+                                                    xml = this.writeFrameLayout(nodeY, parent);
+                                                }
                                             }
                                         }
                                     }
@@ -2230,12 +2260,12 @@
                                             else {
                                                 const [linearX, linearY] = [NodeList.linearX(nodeY.children), NodeList.linearY(nodeY.children)];
                                                 if (!parent.flex.enabled && nodeY.children.every(node => node.pageflow)) {
-                                                    const float = new Set(nodeY.children.filter(node => node.floating).map(node => node.float));
+                                                    const float = new Set(nodeY.children.map(node => node.float));
                                                     if (linearX) {
-                                                        if (float.size <= 1 && !nodeY.children.some(node => node.multiLine)) {
+                                                        if ((float.size === 1 || !float.has('right')) && !nodeY.children.some(node => node.multiLine)) {
                                                             xml = this.writeLinearLayout(nodeY, parent, true);
                                                         }
-                                                        else if (float.size >= 1) {
+                                                        else if ((float.has('left') || float.has('none')) && float.has('right')) {
                                                             const group = this.controllerHandler.createGroup(nodeY, nodeY.children, parent, nodeY.element);
                                                             xml = this.writeFrameLayoutGroup(group, parent, group.children);
                                                             group.inlineWrap = true;
@@ -2243,7 +2273,7 @@
                                                     }
                                                     else {
                                                         const blockClear = NodeList.cleared(nodeY.children);
-                                                        if ((linearY && nodeY.children.every(node => node.pageflow)) || nodeY.children.some((node) => !node.inlineElement || blockClear.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
+                                                        if ((linearY && nodeY.children.every(node => node.pageflow && !node.plainText)) || nodeY.children.some((node) => !node.inlineElement || blockClear.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
                                                             xml = this.writeLinearLayout(nodeY, parent, false);
                                                         }
                                                     }
@@ -2547,7 +2577,7 @@
         insertNode(element, parent) {
             let node = null;
             if (element.nodeName === '#text') {
-                if (optional(element, 'textContent', 'string').trim() !== '') {
+                if (optional(element, 'textContent', 'string').trim() !== '' || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
                     node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
                     node.tagName = 'PLAINTEXT';
                     node.styleMap.cssFloat = 'none';
@@ -3023,6 +3053,28 @@
             });
         }
         setValueString(supportInline) {
+            function parseWhiteSpace(node, value) {
+                if (node.multiLine) {
+                    value = value.replace(/^\s*\n/, '');
+                }
+                switch (node.css('whiteSpace')) {
+                    case 'nowrap':
+                        value = value.replace(/\n/g, ' ');
+                        break;
+                    case 'pre':
+                    case 'pre-wrap':
+                        value = value.replace(/\n/g, '\\n');
+                        value = value.replace(/\s/g, '&#160;');
+                        break;
+                    case 'pre-line':
+                        value = value.replace(/\n/g, '\\n');
+                        value = value.replace(/\s+/g, ' ');
+                        break;
+                    default:
+                        return [value, false];
+                }
+                return [value, true];
+            }
             this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
                 const element = node.element;
                 if (getCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
@@ -3052,37 +3104,24 @@
                     }
                     else if (element.nodeName === '#text') {
                         value = element.textContent;
+                        [value, inlineTrim] = parseWhiteSpace(node, value);
                         if (element.previousSibling && element.previousSibling.tagName === 'BR') {
-                            value = value.replace(/^\s+/g, '');
+                            value = value.replace(/^\s+/, '');
                         }
-                        inlineTrim = true;
                     }
-                    else if (node.hasElement) {
-                        if (node.children.length === 0 && (hasFreeFormText(element) || Array.from(node.element.children).every((item) => getCache(item, 'supportInline')))) {
-                            name = (element.innerText || element.textContent || '').trim();
-                            value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
-                            switch (node.css('whiteSpace')) {
-                                case 'nowrap':
-                                    value = value.replace(/\n/g, ' ');
-                                    break;
-                                case 'pre':
-                                case 'pre-wrap':
-                                    value = value.replace(/\n/g, '\\n');
-                                    value = value.replace(/\s/g, '&#160;');
-                                    break;
-                                case 'pre-line':
-                                    value = value.replace(/\s+/g, ' ');
-                                default:
-                                    inlineTrim = true;
-                                    break;
-                            }
-                            value = value.replace(/<br\s*\/?>/g, '\\n');
-                            value = value.replace(/\s+(class|style)=".*?"/g, '');
-                        }
+                    else if (node.inlineText) {
+                        name = (element.innerText || element.textContent || '').trim();
+                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
+                        [value, inlineTrim] = parseWhiteSpace(node, value);
+                        value = value.replace(/<br\s*\/?>/g, '\\n');
+                        value = value.replace(/\s+(class|style)=".*?"/g, '');
+                    }
+                    const previousSibling = node.previousSibling;
+                    const nextSibling = node.nextSibling;
+                    if (previousSibling == null) {
+                        value = value.replace(/^\s+/, '');
                     }
                     if (inlineTrim) {
-                        const previousSibling = node.previousSibling;
-                        const nextSibling = node.nextSibling;
                         const original = value;
                         value = value.trim();
                         if (previousSibling && previousSibling.display !== 'block' && !/\s+$/.test((previousSibling.element.innerText || previousSibling.element.textContent)) && /^\s+/.test(original)) {
@@ -3091,6 +3130,10 @@
                         if (nextSibling && /\s+$/.test(original)) {
                             value = value + '&#160;';
                         }
+                    }
+                    else {
+                        value = value.replace(/^\s+/, (previousSibling && previousSibling.display === 'block' ? '' : '&#160;'));
+                        value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
                     }
                     if (value !== '') {
                         setCache(element, 'valueString', { name, value });
@@ -3107,12 +3150,10 @@
         getBorderStyle(border) {
             const result = { solid: `android:color="@color/${border.color}"` };
             Object.assign(result, {
-                inset: result.solid,
-                outset: result.solid,
                 dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
                 dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
             });
-            return result[border.style] || 'android:color="@android:color/black"';
+            return result[border.style] || result.solid;
         }
         parseBorderStyle(value, node, attr) {
             const style = node.css(`${attr}Style`) || 'none';
@@ -3146,7 +3187,7 @@
         }
         parseBoxDimensions(value) {
             if (value !== 'auto') {
-                const match = value.match(/^([0-9]+(?:px|pt|em|%)|auto)(?: ([0-9]+(?:px|pt|em|%)|auto))?(?: ([0-9]+(?:px|pt|em)))?(?: ([0-9]+(?:px|pt|em)))?$/);
+                const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
                 if (match != null) {
                     if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
                         return [];
@@ -3199,7 +3240,6 @@
             this.isolated = false;
             this.relocated = false;
             this.inlineWrap = false;
-            this.multiLine = false;
             this._namespaces = new Set();
             this._data = {};
             if (element != null) {
@@ -3337,7 +3377,9 @@
                         }
                         break;
                     case 'style':
-                        const style = {};
+                        const style = {
+                            whiteSpace: node.style.whiteSpace
+                        };
                         for (const attr in node.style) {
                             if (attr.startsWith('font') || attr.startsWith('color')) {
                                 const key = convertCamelCase(attr);
@@ -3367,12 +3409,6 @@
                 parent = parent.documentParent;
             } while (true);
             return result;
-        }
-        toLeftOf(node, offset) {
-            return (this.withinX(node.linear) || node.withinX(this.linear)) && (node.linear.left + offset <= this.linear.right);
-        }
-        toRightOf(node, offset) {
-            return (this.withinX(node.linear) || node.withinX(this.linear)) && (node.linear.right + offset >= this.linear.left);
         }
         intersect(rect, dimension = 'linear') {
             const top = (rect.top > this[dimension].top && rect.top < this[dimension].bottom);
@@ -3525,9 +3561,12 @@
         setDimensions(bounds = ['linear', 'box']) {
             for (const dimension of bounds) {
                 const dimen = this[dimension];
-                dimen.width = dimen.right - dimen.left;
+                dimen.width = (this.multiLine ? this.bounds.width : dimen.right - dimen.left);
                 dimen.height = dimen.bottom - dimen.top;
             }
+        }
+        remove(node) {
+            this.children = this.children.filter(child => child !== node);
         }
         append(node) {
             this.renderChildren.push(node);
@@ -3633,10 +3672,19 @@
             return (isPercent(this.styleMap.width) ? 0 : convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth));
         }
         get viewHeight() {
-            return (isPercent(this.styleMap.height) ? 0 : convertInt(this.styleMap.height) || this.lineHeight || convertInt(this.styleMap.minHeight));
+            return (isPercent(this.styleMap.height) ? 0 : convertInt(this.styleMap.height) || convertInt(this.styleMap.minHeight));
         }
         get lineHeight() {
-            return (this.inline ? 0 : convertInt(this.styleMap.lineHeight));
+            if (this.children.length === 0 && !this.renderParent.linearHorizontal) {
+                const lineHeight = convertInt(this.styleMap.lineHeight);
+                if (this.inlineElement) {
+                    return lineHeight || convertInt(this.documentParent.styleMap.lineHeight);
+                }
+                else {
+                    return lineHeight;
+                }
+            }
+            return 0;
         }
         get display() {
             return this.css('display') || '';
@@ -3711,7 +3759,10 @@
         }
         get inlineElement() {
             const position = this.position;
-            return (this.inline || this.display === 'inline-block' || this.plainText || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
+            return (this.inline || ['inline-block', 'table-cell'].includes(this.display) || this.plainText || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
+        }
+        get inlineText() {
+            return (this.hasElement && this.element.tagName !== 'SELECT' && this.children.length === 0 && (hasFreeFormText(this.element) || Array.from(this.element.children).every((item) => getCache(item, 'supportInline'))));
         }
         get plainText() {
             return (this.tagName === 'PLAINTEXT');
@@ -3750,6 +3801,23 @@
         }
         get overflowY() {
             return includesEnum(this.overflow, 4 /* VERTICAL */);
+        }
+        get relativeWrap() {
+            return (this.is(NODE_STANDARD.RELATIVE) && this.inlineWrap);
+        }
+        set multiLine(value) {
+            this._multiLine = value;
+        }
+        get multiLine() {
+            if (this._multiLine == null) {
+                if (this.inlineElement && !this.floating && this.viewWidth === 0 && this.inlineText) {
+                    this._multiLine = (Array.from(this.element.children).some(item => item.tagName === 'BR') || (['pre', 'pre-wrap'].includes(this.css('whiteSpace')) && /\n/.test(this.element.textContent || '')));
+                }
+                else {
+                    this._multiLine = false;
+                }
+            }
+            return this._multiLine;
         }
         get dir() {
             switch (this.css('direction')) {
@@ -4211,7 +4279,7 @@
                     }
                 }
                 if (this.android('layout_width') !== '0px') {
-                    if (this.isSet('styleMap', 'width')) {
+                    if (convertInt(this.styleMap.width) > 0) {
                         if (isPercent(styleMap.width)) {
                             if (renderParent.element.tagName === 'TABLE') {
                                 this.android('layout_columnWeight', (convertInt(styleMap.width) / 100).toFixed(2));
@@ -4231,11 +4299,8 @@
                                 this.android('layout_width', this.style.width || 'wrap_content');
                             }
                         }
-                        else if (convertInt(styleMap.width) > 0) {
+                        else {
                             this.android('layout_width', styleMap.width);
-                        }
-                        else if (styleMap.width === 'auto') {
-                            this.android('layout_width', (!this.inlineElement && this.pageflow && BLOCK_ELEMENT.includes(this.element.tagName) && !this.autoMargin ? 'match_parent' : 'wrap_content'), false);
                         }
                     }
                     if (this.isSet('styleMap', 'minWidth') && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
@@ -4258,7 +4323,7 @@
                     const widthRoot = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a, b) => Math.max(a, b.viewWidth), 0));
                     const rightInline = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.inlineElement).map(node => node.linear.right)]);
                     const blockElement = (!this.inlineElement || (this.display === 'block' && !this.floating));
-                    const wrap = (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID) || renderParent.linearHorizontal);
+                    const wrap = (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
                     const widestChild = [];
                     if (blockElement && renderParent.linearVertical) {
                         let widest = 0;
@@ -4287,15 +4352,13 @@
                     }
                 }
                 if (this.android('layout_height') !== '0px') {
-                    const contentHeight = convertInt(styleMap.height || this.lineHeight);
-                    if (contentHeight > 0) {
-                        const percentHeight = (styleMap.height !== 'auto' ? styleMap.height : null) || styleMap.lineHeight;
-                        if (isPercent(percentHeight)) {
+                    if (convertInt(styleMap.height) > 0) {
+                        if (isPercent(styleMap.height)) {
                             if (renderParent.element.tagName === 'TABLE') {
-                                this.android('layout_rowWeight', (contentHeight / 100).toFixed(2));
+                                this.android('layout_rowWeight', (convertInt(styleMap.height) / 100).toFixed(2));
                                 this.android('layout_height', '0px');
                             }
-                            else if (percentHeight === '100%') {
+                            else if (styleMap.height === '100%') {
                                 this.android('layout_height', 'match_parent');
                                 if (styleMap.width == null) {
                                     switch (this.nodeName) {
@@ -4309,17 +4372,8 @@
                                 this.android('layout_height', this.style.height || 'wrap_content');
                             }
                         }
-                        else if (contentHeight > 0) {
-                            if (!this.isSet('styleMap', 'minHeight') && ((this.display === 'inline-block' && this.css('overflow') === 'visible') || (Math.max.apply(null, [0, ...this.renderChildren.map(node => node.linear.bottom)]) - this.box.top > contentHeight))) {
-                                this.android('minHeight', formatPX(contentHeight));
-                                this.android('layout_height', 'wrap_content');
-                            }
-                            else {
-                                this.android('layout_height', (this.inline && !this.overflowY && !this.is(NODE_STANDARD.IMAGE) ? 'wrap_content' : formatPX(contentHeight)));
-                            }
-                        }
-                        else if (styleMap.height === 'auto') {
-                            this.android('layout_height', 'wrap_content', false);
+                        else {
+                            this.android('layout_height', styleMap.height);
                         }
                     }
                     if (this.isSet('styleMap', 'minHeight') && !isPercent(styleMap.minHeight) && !constraint.minHeight) {
@@ -4346,7 +4400,7 @@
                             this.android('layout_height', 'match_parent');
                         }
                         else {
-                            this.android('layout_height', 'wrap_content');
+                            this.android('layout_height', (this.bounds.height > 0 && this.lineHeight === this.bounds.height ? formatPX(this.bounds.height) : 'wrap_content'));
                         }
                     }
                 }
@@ -4405,16 +4459,11 @@
                     vertical = 'bottom';
                     break;
                 default:
-                    if (this.linearHorizontal) {
-                        if (this.viewHeight === 0 && this.renderChildren.some(node => node.is(NODE_STANDARD.IMAGE))) {
-                            vertical = 'bottom';
-                        }
+                    if (this.lineHeight > 0 && this.android('layout_height') !== 'match_parent') {
+                        vertical = 'center_vertical';
                     }
-                    else {
-                        const lineHeight = convertInt(this.styleMap.lineHeight);
-                        if (lineHeight > 0 && lineHeight >= this.viewHeight) {
-                            vertical = 'center_vertical';
-                        }
+                    else if (this.viewHeight === 0 && this.linearHorizontal && this.renderChildren.some(node => node.is(NODE_STANDARD.IMAGE))) {
+                        vertical = 'bottom';
                     }
                     break;
             }
@@ -4474,28 +4523,10 @@
                     const leftRtl = parseRTL(`${value}Left`);
                     const rightRtl = parseRTL(`${value}Right`);
                     const inline = (this.inline || this.plainText);
-                    let top = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Top`)));
-                    let right = convertInt(this.android(rightRtl));
-                    let bottom = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Bottom`)));
-                    let left = convertInt(this.android(leftRtl));
-                    if (index === 1) {
-                        if (this.viewWidth === 0) {
-                            if (this.borderLeftWidth > 0) {
-                                left += this.borderLeftWidth;
-                            }
-                            if (this.borderRightWidth > 0) {
-                                right += this.borderRightWidth;
-                            }
-                        }
-                        if (this.viewHeight === 0) {
-                            if (this.borderTopWidth > 0) {
-                                top += this.borderBottomWidth;
-                            }
-                            if (this.borderBottomWidth > 0) {
-                                bottom += this.borderBottomWidth;
-                            }
-                        }
-                    }
+                    const top = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Top`)));
+                    const right = convertInt(this.android(rightRtl));
+                    const bottom = (index === 0 && inline ? 0 : convertInt(this.android(`${value}Bottom`)));
+                    const left = convertInt(this.android(leftRtl));
                     if (this.api >= exports.build.OREO) {
                         if (top !== 0 && top === bottom && bottom === left && left === right) {
                             this.delete('android', `${value}*`);
@@ -4534,6 +4565,9 @@
                     if (this.linearHorizontal) {
                         if (this.renderChildren.some(node => node.floating) || this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
                             this.android('baselineAligned', 'false');
+                        }
+                        if (this.renderChildren.every(node => node.inlineText) && this.renderChildren.some(node => node.plainText)) {
+                            this.renderChildren.forEach(node => node.android('singleLine', 'true'));
                         }
                         this.alignBaseline(this.renderChildren);
                     }
@@ -4589,26 +4623,36 @@
                     }
                 }
                 else {
-                    if (viewWidth > 0 || viewHeight > 0) {
-                        if (viewWidth > 0) {
-                            if (this.element.tagName !== 'TABLE') {
-                                this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
+                    if (!this.is(NODE_STANDARD.LINE)) {
+                        if (((this.borderLeftWidth + this.borderRightWidth) > 0) && (viewWidth > 0 || !this.inlineElement || this.inlineText)) {
+                            if (viewWidth > 0 && this.element.tagName !== 'TABLE') {
+                                this.android('layout_width', formatPX(viewWidth + this.borderLeftWidth + this.borderRightWidth));
+                            }
+                            if (this.borderLeftWidth > 0) {
+                                this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.paddingLeft + this.borderLeftWidth);
+                            }
+                            if (this.borderRightWidth > 0) {
+                                this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.paddingRight + this.borderRightWidth);
                             }
                         }
-                        if (viewHeight > 0) {
-                            if (this.borderTopWidth > 0 && this.marginTop >= this.borderTopWidth) {
-                                this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop - this.borderTopWidth);
+                        if (((this.borderTopWidth + this.borderBottomWidth) > 0) && (viewHeight > 0 || !this.inlineElement || this.inlineText)) {
+                            if (viewHeight > 0 && this.element.tagName !== 'TABLE') {
+                                this.android('layout_height', formatPX(viewHeight + this.borderTopWidth + this.borderBottomWidth));
                             }
-                            this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth));
+                            if (this.borderTopWidth > 0) {
+                                this.modifyBox(BOX_STANDARD.PADDING_TOP, this.paddingTop + this.borderTopWidth);
+                            }
+                            if (this.borderBottomWidth > 0) {
+                                this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.paddingBottom + this.borderBottomWidth);
+                            }
                         }
                     }
                 }
-                const lineHeight = convertInt(this.styleMap.lineHeight);
-                if (lineHeight > 0) {
-                    const offsetTop = lineHeight - this.bounds.height;
-                    if (offsetTop > 0) {
-                        this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_TOP' : 'PADDING_TOP')], this[(this.inline ? 'marginTop' : 'paddingTop')] + Math.ceil(offsetTop / 2));
-                        this.modifyBox(BOX_STANDARD[(this.inline ? 'MARGIN_BOTTOM' : 'PADDING_BOTTOM')], this[(this.inline ? 'marginBottom' : 'paddingBottom')] + Math.floor(offsetTop / 2));
+                if (!renderParent.linearHorizontal) {
+                    const offsetHeight = this.lineHeight - this.bounds.height;
+                    if (offsetHeight > 0) {
+                        this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + Math.ceil(offsetHeight / 2));
+                        this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, this.marginBottom + Math.floor(offsetHeight / 2));
                     }
                 }
             }
@@ -4714,7 +4758,7 @@
                 switch (this.android('orientation')) {
                     case AXIS_ANDROID.HORIZONTAL:
                         let left = this.box.left;
-                        sortAsc(this.renderChildren, 'linear.left').forEach(node => {
+                        this.renderChildren.forEach(node => {
                             if (!node.floating) {
                                 const width = Math.ceil(node.linear.left - left);
                                 if (width >= 1) {
@@ -4726,7 +4770,7 @@
                         break;
                     case AXIS_ANDROID.VERTICAL:
                         let top = this.box.top;
-                        sortAsc(this.renderChildren, 'linear.top').forEach(node => {
+                        this.renderChildren.forEach(node => {
                             const height = Math.ceil(node.linear.top - top);
                             if (height >= 1) {
                                 node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height);
@@ -4763,11 +4807,11 @@
             else if (this.id === 0) {
                 return this;
             }
-            else if (position !== 'fixed') {
+            else if (position !== 'fixed' || this.alignMargin) {
                 const absolute = (position === 'absolute');
                 let parent = this.element.parentElement;
                 while (parent != null) {
-                    const node = (!absolute || getStyle(parent).position !== 'static' ? getNode(parent) : null);
+                    const node = (!absolute || getStyle(parent).position !== 'static' || this.alignMargin ? getNode(parent) : null);
                     if (node) {
                         return node;
                     }
@@ -5271,9 +5315,6 @@
                     if (node.styleMap.marginRight === 'auto') {
                         delete stored.marginRight;
                     }
-                    if (node.float === 'right' && convertInt(stored.marginLeft) < 0) {
-                        delete stored.marginLeft;
-                    }
                     const method = METHOD_ANDROID['boxSpacing'];
                     for (const attr in stored) {
                         if (stored[attr] !== '0px') {
@@ -5412,12 +5453,13 @@
                                 template = parseTemplate(LAYERLIST_TMPL);
                                 data = {
                                     '0': [{
-                                            '1': [{
-                                                    '2': false,
-                                                    '3': backgroundColor,
-                                                    '4': false,
-                                                    '5': false
-                                                }],
+                                            '1': (backgroundColor === false ? false
+                                                : [{
+                                                        '2': false,
+                                                        '3': backgroundColor,
+                                                        '4': false,
+                                                        '5': false
+                                                    }]),
                                             '6': (image6.length > 0 ? image6 : false),
                                             '7': (image7.length > 0 ? image7 : false)
                                         }]
@@ -5523,6 +5565,12 @@
                             if (root['1'].length === 0) {
                                 root['1'] = false;
                             }
+                            else if (root['1'][0] != null) {
+                                const layer = root['1'][0];
+                                if (layer.top !== '' && layer.right !== '' && layer.bottom === '' && layer.left !== '') {
+                                    layer.bottom = formatPX(node.borderBottomWidth);
+                                }
+                            }
                         }
                         if (template != null) {
                             const xml = insertTemplateData(template, data);
@@ -5554,6 +5602,16 @@
                         tagName[node.tagName] = [];
                     }
                     tagName[node.tagName].push(node);
+                }
+                const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
+                if (match != null) {
+                    const color = parseRGBA(match[1]);
+                    if (color.length > 0) {
+                        node.android('shadowColor', `@color/${ResourceView.addColor(color[0], color[2])}`);
+                    }
+                    node.android('shadowDx', convertInt(match[2]).toString());
+                    node.android('shadowDy', convertInt(match[3]).toString());
+                    node.android('shadowRadius', convertInt(match[4]).toString());
                 }
             });
             for (const tag in tagName) {
@@ -5694,8 +5752,18 @@
             this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
                 const stored = getCache(node.element, 'valueString');
                 if (stored != null) {
-                    if (node.is(NODE_STANDARD.TEXT) && node.style != null) {
-                        const match = node.style.textDecoration.match(/(underline|line-through)/);
+                    if (node.renderParent.relativeWrap) {
+                        if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                            stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
+                        }
+                    }
+                    if (node.hasElement && node.is(NODE_STANDARD.TEXT)) {
+                        switch (node.css('fontVariant')) {
+                            case 'small-caps':
+                                stored.value = stored.value.toUpperCase();
+                                break;
+                        }
+                        const match = node.css('textDecoration').match(/(underline|line-through)/);
                         if (match != null) {
                             switch (match[0]) {
                                 case 'underline':
@@ -5791,12 +5859,12 @@
                                 }
                                 else if (ids.length === count) {
                                     styleKey[attr1] = ids;
-                                    sorted[i] = null;
+                                    sorted[i] = {};
                                     revalidate = true;
                                 }
                                 else if (ids.length === 1) {
                                     layoutKey[attr1] = ids;
-                                    sorted[i][attr1] = null;
+                                    sorted[i][attr1] = [];
                                     revalidate = true;
                                 }
                                 if (!revalidate) {
@@ -5806,12 +5874,14 @@
                                         if (i !== j) {
                                             for (const attr in sorted[j]) {
                                                 const compare$$1 = sorted[j][attr];
-                                                for (const nodeId of ids) {
-                                                    if (compare$$1.includes(nodeId)) {
-                                                        if (found[attr] == null) {
-                                                            found[attr] = [];
+                                                if (compare$$1.length > 0) {
+                                                    for (const nodeId of ids) {
+                                                        if (compare$$1.includes(nodeId)) {
+                                                            if (found[attr] == null) {
+                                                                found[attr] = [];
+                                                            }
+                                                            found[attr].push(nodeId);
                                                         }
-                                                        found[attr].push(nodeId);
                                                     }
                                                 }
                                             }
@@ -6221,19 +6291,21 @@
                         function adjustBaseline() {
                             if (baseline.length > 1) {
                                 const images = baseline.filter(item => item.element.tagName === 'IMG');
-                                const tallest = (images.length > 0 ? images : baseline).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
-                                let topParent = false;
-                                for (const item of baseline) {
-                                    if (item !== tallest) {
-                                        item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
-                                        if (images.length > 0 && mapParent(item, 'top')) {
-                                            item.delete('android', relativeParent['top']);
-                                            topParent = true;
+                                const tallest = (images.length > 0 ? images : baseline).filter(item => !item.plainText).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
+                                if (tallest != null) {
+                                    let topParent = false;
+                                    for (const item of baseline) {
+                                        if (item !== tallest) {
+                                            item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
+                                            if (images.length > 0 && mapParent(item, 'top')) {
+                                                item.delete('android', relativeParent['top']);
+                                                topParent = true;
+                                            }
                                         }
                                     }
-                                }
-                                if (topParent) {
-                                    tallest.android(relativeParent['top'], 'true');
+                                    if (topParent) {
+                                        tallest.android(relativeParent['top'], 'true');
+                                    }
                                 }
                             }
                         }
@@ -6252,7 +6324,7 @@
                             else {
                                 const group = (current instanceof ViewGroup);
                                 const previous = nodes.get(i - 1);
-                                if ((node.inlineWrap && group) || isLineBreak(current.element.previousSibling) || isLineBreak(previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                                if ((node.inlineWrap && group) || (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) || current.multiLine || isLineBreak(current.element.previousSibling) || isLineBreak(previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
                                     const items = rows[rows.length - 1];
                                     previousRowBottom = items[0];
                                     for (let j = 1; j < items.length; j++) {
@@ -6268,7 +6340,7 @@
                                     width = (current.multiLine ? dimension.right - dimension.left : dimension.width);
                                     adjustBaseline();
                                     baseline.length = 0;
-                                    rows[rows.length] = [current];
+                                    rows.push([current]);
                                 }
                                 else {
                                     current.android(mapLayout['leftRight'], previous.stringId);
@@ -6279,17 +6351,11 @@
                                     rows[rows.length - 1].push(current);
                                 }
                             }
-                            if (current.nodeType <= NODE_STANDARD.IMAGE && current.alignMargin) {
+                            if (current.alignMargin) {
                                 baseline.push(current);
                             }
                         }
                         adjustBaseline();
-                        for (let i = 0; i < rows.length; i++) {
-                            const current = rows[i][0];
-                            if (current.is(NODE_STANDARD.TEXT) && Math.ceil(current.linear.right) >= node.box.right) {
-                                current.android('singleLine', 'true');
-                            }
-                        }
                     }
                     else {
                         const [pageflow, fixed] = nodes.partition(item => item.pageflow);
@@ -7210,7 +7276,7 @@
                                     topBottom: mapView(current, 'topBottom'),
                                     bottomTop: mapView(current, 'bottomTop'),
                                 };
-                                if (top && bottom && (current.styleMap.marginTop !== 'auto' && current.linear.bottom < bottomMax)) {
+                                if ((top && bottom && (current.styleMap.marginTop !== 'auto' && current.linear.bottom < bottomMax)) || (bottom && mapView(current, 'topBottom') != null && current.viewHeight > 0)) {
                                     mapDelete(current, 'bottom');
                                     bottom = false;
                                 }
@@ -7379,6 +7445,11 @@
                         }
                     }
                 }
+                else {
+                    if (node.linearHorizontal) {
+                        this.adjustLineHeight(node.renderChildren, node);
+                    }
+                }
             }
         }
         renderGroup(node, parent, viewName, options) {
@@ -7480,22 +7551,28 @@
             const element = node.element;
             switch (element.tagName) {
                 case 'IMG':
+                    let scaleType = '';
                     if (isPercent(node.css('width')) || isPercent(node.css('height'))) {
-                        node.android('scaleType', 'fitXY');
+                        scaleType = 'fitXY';
                     }
-                    switch (node.css('objectFit')) {
-                        case 'contain':
-                            node.android('scaleType', 'centerInside');
-                            break;
-                        case 'cover':
-                            node.android('scaleType', 'centerCrop');
-                            break;
-                        case 'fill':
-                            node.android('scaleType', 'fitXY');
-                            break;
-                        case 'scale-down':
-                            node.android('scaleType', 'fitCenter');
-                            break;
+                    else {
+                        switch (node.css('objectFit')) {
+                            case 'contain':
+                                scaleType = 'centerInside';
+                                break;
+                            case 'cover':
+                                scaleType = 'centerCrop';
+                                break;
+                            case 'fill':
+                                scaleType = 'fitXY';
+                                break;
+                            case 'scale-down':
+                                scaleType = 'fitCenter';
+                                break;
+                        }
+                    }
+                    if (scaleType !== '') {
+                        node.android('scaleType', scaleType);
                     }
                     if ((node.isSet('styleMap', 'width') && !node.isSet('styleMap', 'height')) || (!node.isSet('styleMap', 'width') && node.isSet('styleMap', 'height'))) {
                         node.android('adjustViewBounds', 'true');
@@ -7576,9 +7653,12 @@
                     break;
                 case NODE_ANDROID.LINE:
                     if (node.viewHeight === 0) {
-                        node.android('layout_height', formatPX((convertInt(node.css('borderWidth')) || 1) + 1));
+                        node.android('layout_height', formatPX(((node.borderTopWidth + node.borderBottomWidth) || 1) + ((node.paddingTop + node.paddingBottom) || 1)));
                     }
                     break;
+            }
+            if (node.is(NODE_STANDARD.TEXT) && (node.css('whiteSpace') === 'nowrap' || (parent.linearHorizontal && node.multiLine) || (node.inline && node.inlineText && !node.multiLine))) {
+                node.android('singleLine', 'true');
             }
             node.cascade().forEach(item => item.hide());
             node.render((target ? node : parent));
@@ -7955,6 +8035,24 @@
                     }
                 }
             });
+        }
+        adjustLineHeight(nodes, parent) {
+            const lineHeight = Math.max.apply(null, nodes.map(item => item.lineHeight));
+            if (lineHeight > 0) {
+                let minHeight = Number.MAX_VALUE;
+                const valid = nodes.every(item => {
+                    const offset = lineHeight - item.bounds.height;
+                    if (offset > 0) {
+                        minHeight = Math.min(offset, minHeight);
+                        return true;
+                    }
+                    return false;
+                });
+                if (valid) {
+                    parent.modifyBox(BOX_STANDARD.PADDING_TOP, parent.paddingTop + Math.ceil(minHeight / 2));
+                    parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, parent.paddingBottom + Math.floor(minHeight / 2));
+                }
+            }
         }
         findByStringId(id) {
             return this.cache.locate('stringId', id);

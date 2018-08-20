@@ -118,10 +118,14 @@ export function getBoxSpacing(element: HTMLElement, complete = false) {
     return result;
 }
 
-export function cssParent(element: Element, attr: string, ...styles: string[]) {
+export function cssParent(element: HTMLElement, attr: string, ...styles: string[]) {
+    if (element.nodeName.charAt(0) !== '#') {
+        if (styles.includes(getStyle(element)[attr])) {
+            return true;
+        }
+    }
     if (element.parentElement != null) {
-        const value = getStyle(element.parentElement)[attr];
-        return (value && styles.includes(value));
+        return styles.includes(getStyle(element.parentElement)[attr]);
     }
     return false;
 }
@@ -133,10 +137,12 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
         if (depth === maxDepth) {
             return true;
         }
-        return elements.some((item: Element) => {
-            if (item.nodeName === '#text' && (optional(item, 'textContent').trim() !== '' || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap'))) {
-                valid = true;
-                return true;
+        return elements.some((item: HTMLElement) => {
+            if (item.nodeName === '#text') {
+                if (optional(item, 'textContent').trim() !== '' || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap')) {
+                    valid = true;
+                    return true;
+                }
             }
             else if (item.childNodes && item.childNodes.length > 0) {
                 depth++;

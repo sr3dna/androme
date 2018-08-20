@@ -142,19 +142,21 @@ export default class ViewController<T extends View> extends Controller<T> {
                     function adjustBaseline() {
                         if (baseline.length > 1) {
                             const images = baseline.filter(item => item.element.tagName === 'IMG');
-                            const tallest = (images.length > 0 ? images : baseline).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
-                            let topParent = false;
-                            for (const item of baseline) {
-                                if (item !== tallest) {
-                                    item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
-                                    if (images.length > 0 && mapParent(item, 'top')) {
-                                        item.delete('android', relativeParent['top']);
-                                        topParent = true;
+                            const tallest = (images.length > 0 ? images : baseline).filter(item => !item.plainText).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
+                            if (tallest != null) {
+                                let topParent = false;
+                                for (const item of baseline) {
+                                    if (item !== tallest) {
+                                        item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
+                                        if (images.length > 0 && mapParent(item, 'top')) {
+                                            item.delete('android', relativeParent['top']);
+                                            topParent = true;
+                                        }
                                     }
                                 }
-                            }
-                            if (topParent) {
-                                tallest.android(relativeParent['top'], 'true');
+                                if (topParent) {
+                                    tallest.android(relativeParent['top'], 'true');
+                                }
                             }
                         }
                     }
@@ -205,7 +207,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                     }
                     adjustBaseline();
-                    rows.forEach(item => this.adjustLineHeight(item));
                 }
                 else {
                     const [pageflow, fixed] = nodes.partition(item => item.pageflow);
@@ -1126,7 +1127,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 topBottom: mapView(current, 'topBottom'),
                                 bottomTop: mapView(current, 'bottomTop'),
                             };
-                            if (top && bottom && (current.styleMap.marginTop !== 'auto' && current.linear.bottom < bottomMax)) {
+                            if ((top && bottom && (current.styleMap.marginTop !== 'auto' && current.linear.bottom < bottomMax)) || (bottom && mapView(current, 'topBottom') != null && current.viewHeight > 0)) {
                                 mapDelete(current, 'bottom');
                                 bottom = false;
                             }
@@ -1510,7 +1511,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
                 break;
         }
-        if (node.css('whiteSpace') === 'nowrap' || (parent.linearHorizontal && node.multiLine)) {
+        if (node.is(NODE_STANDARD.TEXT) && (node.css('whiteSpace') === 'nowrap' || (parent.linearHorizontal && node.multiLine) || (node.inline && node.inlineText && !node.multiLine))) {
             node.android('singleLine', 'true');
         }
         node.cascade().forEach(item => item.hide());
@@ -1907,35 +1908,19 @@ export default class ViewController<T extends View> extends Controller<T> {
         });
     }
 
-    private adjustLineHeight(nodes: T[], parent?: T) {
-        let lineHeight = 0;
-        let marginHeight = 0;
-        nodes.forEach(item => {
-            const height = convertInt(item.styleMap.lineHeight);
-            if (height > lineHeight) {
-                const offset = height - item.bounds.height;
-                if (offset > 0) {
-                    marginHeight = offset;
-                }
-                lineHeight = height;
-            }
-        });
+    private adjustLineHeight(nodes: T[], parent: T) {
+        const lineHeight = Math.max.apply(null, nodes.map(item => item.lineHeight));
         if (lineHeight > 0) {
             let minHeight = Number.MAX_VALUE;
-            nodes.forEach(item => {
-                let offset = lineHeight - item.bounds.height;
+            const valid = nodes.every(item => {
+                const offset = lineHeight - item.bounds.height;
                 if (offset > 0) {
                     minHeight = Math.min(offset, minHeight);
+                    return true;
                 }
-                else {
-                    offset = marginHeight;
-                }
-                if (parent == null) {
-                    item.modifyBox(BOX_STANDARD.MARGIN_TOP, item.marginTop + Math.ceil(offset / 2));
-                    item.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, item.marginBottom + Math.floor(offset / 2));
-                }
+                return false;
             });
-            if (parent != null && minHeight !== Number.MAX_VALUE) {
+            if (valid) {
                 parent.modifyBox(BOX_STANDARD.PADDING_TOP, parent.paddingTop + Math.ceil(minHeight / 2));
                 parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, parent.paddingBottom + Math.floor(minHeight / 2));
             }

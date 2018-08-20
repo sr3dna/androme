@@ -6,7 +6,7 @@ import NodeList from '../base/nodelist';
 import { cameltoLowerCase, capitalize, convertInt, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, isPercent, lastIndexOf, resolvePath, trim } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
-import { getCache, sameAsParent, setCache } from '../lib/dom';
+import { cssParent, getCache, sameAsParent, setCache } from '../lib/dom';
 import { findNearestColor, parseHex, parseRGBA } from '../lib/color';
 import { NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
@@ -300,9 +300,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (node.styleMap.marginRight === 'auto') {
                     delete stored.marginRight;
                 }
-                if (node.float === 'right' && convertInt(stored.marginLeft) < 0) {
-                    delete stored.marginLeft;
-                }
                 const method = METHOD_ANDROID['boxSpacing'];
                 for (const attr in stored) {
                     if (stored[attr] !== '0px') {
@@ -554,6 +551,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         if (root['1'].length === 0) {
                             root['1'] = false;
                         }
+                        else if (root['1'][0] != null) {
+                            const layer = root['1'][0];
+                            if (layer.top !== '' && layer.right !== '' && layer.bottom === '' && layer.left !== '') {
+                                layer.bottom = formatPX(node.borderBottomWidth);
+                            }
+                        }
                     }
                     if (template != null) {
                         const xml = insertTemplateData(template, data);
@@ -739,6 +742,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
             const stored: BasicData = getCache(node.element, 'valueString');
             if (stored != null) {
+                if (node.renderParent.relativeWrap) {
+                    if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                        stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
+                    }
+                }
                 if (node.hasElement && node.is(NODE_STANDARD.TEXT)) {
                     switch (node.css('fontVariant')) {
                         case 'small-caps':

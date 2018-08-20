@@ -10,7 +10,7 @@ h2  { margin:0; font-size:1.1em; font-style:italic; background-color:white; widt
 *.s2  { float:left; height:100%; width:105px; margin-left:35px;}
 *.s3  { float:left; height:100%; width:105px; margin-left:35px;}
 
-*.parent   { height:80px; width:435px; text-align:center;
+*.parent   { height:80px; /* width:435px; */ text-align:center;
              margin-top:5px; background-color:white; padding:0 134px;
              border:1px solid black; repeat-y; }
 
