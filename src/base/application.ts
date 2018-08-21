@@ -564,6 +564,7 @@ export default class Application<T extends Node> {
                 axisY.push(...sortAsc(below, 'style.zIndex', 'siblingIndex'));
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'siblingIndex'));
+                const cleared = NodeList.cleared(axisY.slice());
                 const includes: string[] = [];
                 let current = '';
                 for (let k = 0; k < axisY.length; k++) {
@@ -631,7 +632,6 @@ export default class Application<T extends Node> {
                         if (proceed) {
                             continue;
                         }
-                        const cleared = NodeList.cleared(axisY.slice(k));
                         if (!nodeY.rendered) {
                             if (SETTINGS.horizontalPerspective) {
                                 const linearVertical = parent.linearVertical;
@@ -646,14 +646,23 @@ export default class Application<T extends Node> {
                                                 if (isLineBreak(<Element> previous.element.nextSibling, 'next')) {
                                                     break;
                                                 }
-                                                else if (cleared.has(adjacent) ||
-                                                        (adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
-                                                        (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
-                                                        (!previous.floating && (previous.autoMargin || !adjacent.inlineElement)) ||
-                                                        (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
-                                                        (!previous.floating && adjacent.autoMargin))
-                                                {
+                                                const alignVertical = (adjacent.plainText && adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
+                                                                      (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
+                                                                      (!previous.floating && (previous.autoMargin || !adjacent.inlineElement)) ||
+                                                                      (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
+                                                                      (!previous.floating && adjacent.autoMargin);
+                                                if (cleared.has(adjacent)) {
+                                                    const floated = new Set(['both', ...horizontal.map(item => item.float)]);
+                                                    if (!floated.has(adjacent.css('clear')) && !alignVertical) {
+                                                        horizontal.push(adjacent);
+                                                        continue;
+                                                    }
+                                                }
+                                                if (cleared.has(adjacent) || alignVertical) {
                                                     if (vertical[vertical.length - 1] !== previous) {
+                                                        if (cleared.has(adjacent)) {
+                                                            break;
+                                                        }
                                                         continue;
                                                     }
                                                     else if (horizontal.length > 1) {
@@ -922,7 +931,7 @@ export default class Application<T extends Node> {
         return this.controllerHandler.renderNode(node, parent, nodeName);
     }
 
-    public writeFrameLayoutGroup(group: T, parent: T, nodes: T[]) {
+    public writeFrameLayoutGroup(group: T, parent: T, nodes: T[], horizontal = true) {
         let xml = '';
         const [floated, pageflow] = new NodeList(nodes).partition(item => item.floating || item.autoMargin);
         const [right, left] = new NodeList(floated.list).partition(item => item.float === 'right' || item.styleMap.marginLeft === 'auto');
@@ -934,7 +943,7 @@ export default class Application<T extends Node> {
         else {
             const merged: T[] = [...left.list, ...pageflow.list];
             if (merged.length === nodes.length) {
-                xml = this.writeLinearLayout(group, parent, true);
+                xml = this.writeLinearLayout(group, parent, horizontal);
                 this.sortLayout(group, <T[]> group.children, true);
             }
             else {
@@ -942,9 +951,8 @@ export default class Application<T extends Node> {
                 const placeholder = `{:${group.id}}`;
                 [merged, right.list].forEach((item, index) => {
                     if (item.length > 1) {
-                        const inlineElement = item.every(node => node.inlineElement);
                         const linearGroup = this.controllerHandler.createGroup(item[0], item, group);
-                        xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, inlineElement) + (index === 0 ? placeholder : ''));
+                        xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, horizontal) + (index === 0 ? placeholder : ''));
                         this.sortLayout(linearGroup, <T[]> linearGroup.children, true);
                     }
                     else if (item.length > 0) {
