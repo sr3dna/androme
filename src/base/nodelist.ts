@@ -8,13 +8,13 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         const result: Set<T> = new Set();
         const floats = new Set();
         list.forEach(node => {
-            if (node.floating) {
-                floats.add(node.float);
-            }
             const clear = node.css('clear');
             if (floats.size > 0 && (clear === 'both' || floats.has(clear))) {
                 result.add(node);
                 floats.clear();
+            }
+            if (node.floating) {
+                floats.add(node.float);
             }
         });
         return result;
@@ -29,7 +29,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return true;
             default:
                 if (NodeList.cleared(nodes).size === 0) {
-                    return nodes.every((node, index) => node.inlineElement && !node.autoMargin && (index === 0 || node.linear.top < nodes[index - 1].linear.bottom));
+                    const right = Math.min.apply(null, nodes.map(node => node.linear.right));
+                    const bottom = Math.min.apply(null, nodes.map(node => node.linear.bottom));
+                    let leftRight = 0;
+                    return nodes.every(node => {
+                        if (node.linear.left < right) {
+                            leftRight++;
+                        }
+                        return (leftRight <= 1 && node.inlineElement && !node.autoMargin && node.linear.top < bottom);
+                    });
                 }
                 return false;
         }

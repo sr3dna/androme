@@ -1,4 +1,4 @@
-/* androme 1.9.1
+/* androme 1.9.2
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -314,13 +314,13 @@
             const result = new Set();
             const floats = new Set();
             list.forEach(node => {
-                if (node.floating) {
-                    floats.add(node.float);
-                }
                 const clear = node.css('clear');
                 if (floats.size > 0 && (clear === 'both' || floats.has(clear))) {
                     result.add(node);
                     floats.clear();
+                }
+                if (node.floating) {
+                    floats.add(node.float);
                 }
             });
             return result;
@@ -334,7 +334,15 @@
                     return true;
                 default:
                     if (NodeList.cleared(nodes).size === 0) {
-                        return nodes.every((node, index) => node.inlineElement && !node.autoMargin && (index === 0 || node.linear.top < nodes[index - 1].linear.bottom));
+                        const right = Math.min.apply(null, nodes.map(node => node.linear.right));
+                        const bottom = Math.min.apply(null, nodes.map(node => node.linear.bottom));
+                        let leftRight = 0;
+                        return nodes.every(node => {
+                            if (node.linear.left < right) {
+                                leftRight++;
+                            }
+                            return (leftRight <= 1 && node.inlineElement && !node.autoMargin && node.linear.top < bottom);
+                        });
                     }
                     return false;
             }
@@ -738,6 +746,9 @@
         findFreeForm(Array.from(element.childNodes));
         return valid;
     }
+    function hasLineBreak(element) {
+        return (element instanceof HTMLElement && ((element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || ['pre', 'pre-wrap'].includes(getStyle(element).whiteSpace) && /\n/.test(element.textContent || '')));
+    }
     function isLineBreak(element, direction = 'previous') {
         let found = false;
         while (element != null) {
@@ -750,7 +761,8 @@
                 }
             }
             else {
-                found = (element.tagName === 'BR' || (getStyle(element).display === 'block' && !getNode(element)));
+                const styleMap = getCache(element, 'styleMap');
+                found = (element.tagName === 'BR' || (getStyle(element).display === 'block' && (!getNode(element) || (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))));
                 break;
             }
         }
@@ -2107,8 +2119,7 @@
                                                         (horizontal.length > 1 && isLineBreak(adjacent.element.previousSibling)) ||
                                                         (!previous.floating && (previous.autoMargin || !adjacent.inlineElement)) ||
                                                         (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
-                                                        (!previous.floating && adjacent.autoMargin) ||
-                                                        (vertical.length > horizontal.length && NodeList.linearY([...vertical.slice(), adjacent]))) {
+                                                        (!previous.floating && adjacent.autoMargin)) {
                                                         if (vertical[vertical.length - 1] !== previous) {
                                                             continue;
                                                         }
@@ -2153,27 +2164,22 @@
                                                         }
                                                     }
                                                 }
-                                                if (!cleared.has(adjacent)) {
-                                                    if (horizontal[horizontal.length - 1] !== previous) {
-                                                        continue;
-                                                    }
-                                                    horizontal.push(adjacent);
-                                                    if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
-                                                        continue;
-                                                    }
-                                                    if (!NodeList.linearX(horizontal)) {
-                                                        if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
-                                                            vertical = horizontal.slice();
-                                                            horizontal.length = 1;
-                                                        }
-                                                        else {
-                                                            horizontal.pop();
-                                                            break;
-                                                        }
-                                                    }
+                                                if (horizontal[horizontal.length - 1] !== previous) {
+                                                    continue;
                                                 }
-                                                else {
-                                                    break;
+                                                horizontal.push(adjacent);
+                                                if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
+                                                    continue;
+                                                }
+                                                if (!NodeList.linearX(horizontal)) {
+                                                    if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
+                                                        vertical = horizontal.slice();
+                                                        horizontal.length = 1;
+                                                    }
+                                                    else {
+                                                        horizontal.pop();
+                                                        break;
+                                                    }
                                                 }
                                             }
                                         }
@@ -2206,7 +2212,6 @@
                                             else {
                                                 group = this.controllerHandler.createGroup(nodeY, vertical, parent);
                                                 groupXml = this.writeLinearLayout(group, parent, false);
-                                                this.sortLayout(group, group.children, true);
                                             }
                                         }
                                         if (group != null) {
@@ -3810,8 +3815,8 @@
         }
         get multiLine() {
             if (this._multiLine == null) {
-                if (this.inlineElement && !this.floating && this.viewWidth === 0 && this.inlineText) {
-                    this._multiLine = (Array.from(this.element.children).some(item => item.tagName === 'BR') || (['pre', 'pre-wrap'].includes(this.css('whiteSpace')) && /\n/.test(this.element.textContent || '')));
+                if (this.inlineElement && this.inlineText && !this.floating && this.viewWidth === 0) {
+                    this._multiLine = hasLineBreak(this.element);
                 }
                 else {
                     this._multiLine = false;
@@ -4400,7 +4405,7 @@
                             this.android('layout_height', 'match_parent');
                         }
                         else {
-                            this.android('layout_height', (this.bounds.height > 0 && this.lineHeight === this.bounds.height ? formatPX(this.bounds.height) : 'wrap_content'));
+                            this.android('layout_height', (this.bounds.height > 0 && this.lineHeight === (this.bounds.height - (this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth)) ? formatPX(this.bounds.height) : 'wrap_content'));
                         }
                     }
                 }
@@ -4566,8 +4571,13 @@
                         if (this.renderChildren.some(node => node.floating) || this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
                             this.android('baselineAligned', 'false');
                         }
-                        if (this.renderChildren.every(node => node.inlineText) && this.renderChildren.some(node => node.plainText)) {
-                            this.renderChildren.forEach(node => node.android('singleLine', 'true'));
+                        if (this.renderChildren.length > 1 && this.renderChildren.every(node => !hasLineBreak(node.element) && (node.inlineText || node.plainText))) {
+                            for (let i = 1; i < this.renderChildren.length; i++) {
+                                const node = this.renderChildren[i];
+                                if (node.inline) {
+                                    node.android('singleLine', 'true');
+                                }
+                            }
                         }
                         this.alignBaseline(this.renderChildren);
                     }
@@ -4624,10 +4634,10 @@
                 }
                 else {
                     if (!this.is(NODE_STANDARD.LINE)) {
-                        if (((this.borderLeftWidth + this.borderRightWidth) > 0) && (viewWidth > 0 || !this.inlineElement || this.inlineText)) {
-                            if (viewWidth > 0 && this.element.tagName !== 'TABLE') {
-                                this.android('layout_width', formatPX(viewWidth + this.borderLeftWidth + this.borderRightWidth));
-                            }
+                        if (viewWidth > 0 && this.element.tagName !== 'TABLE') {
+                            this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
+                        }
+                        if (!this.inlineElement || this.inlineText) {
                             if (this.borderLeftWidth > 0) {
                                 this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.paddingLeft + this.borderLeftWidth);
                             }
@@ -4635,10 +4645,10 @@
                                 this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.paddingRight + this.borderRightWidth);
                             }
                         }
-                        if (((this.borderTopWidth + this.borderBottomWidth) > 0) && (viewHeight > 0 || !this.inlineElement || this.inlineText)) {
-                            if (viewHeight > 0 && this.element.tagName !== 'TABLE') {
-                                this.android('layout_height', formatPX(viewHeight + this.borderTopWidth + this.borderBottomWidth));
-                            }
+                        if (viewHeight > 0 && this.element.tagName !== 'TABLE') {
+                            this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth));
+                        }
+                        if (!this.inlineElement || this.inlineText) {
                             if (this.borderTopWidth > 0) {
                                 this.modifyBox(BOX_STANDARD.PADDING_TOP, this.paddingTop + this.borderTopWidth);
                             }
@@ -4676,6 +4686,11 @@
                 const verticalAlign = convertInt(this.css('verticalAlign'));
                 if (verticalAlign !== 0) {
                     this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + (verticalAlign * -1));
+                }
+            }
+            else {
+                if (this.css('whiteSpace') === 'nowrap') {
+                    this.android('singleLine', 'true');
                 }
             }
             if (this.css('visibility') === 'hidden') {
@@ -6324,7 +6339,14 @@
                             else {
                                 const group = (current instanceof ViewGroup);
                                 const previous = nodes.get(i - 1);
-                                if ((node.inlineWrap && group) || (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) || current.multiLine || isLineBreak(current.element.previousSibling) || isLineBreak(previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                                if ((node.inlineWrap && group) ||
+                                    (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) ||
+                                    current.multiLine ||
+                                    withinFraction(current.linear.left, node.box.left) ||
+                                    isLineBreak(current.element.previousSibling) ||
+                                    isLineBreak(previous.element.nextSibling, 'next') ||
+                                    (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) ||
+                                    (!multiLine && (current.linear.top >= previous.linear.bottom))) {
                                     const items = rows[rows.length - 1];
                                     previousRowBottom = items[0];
                                     for (let j = 1; j < items.length; j++) {
@@ -6444,12 +6466,12 @@
                                             }
                                             else {
                                                 if (withinRange(linear1.top, linear2.bottom, (alignMargin ? SETTINGS.constraintWhitespaceVerticalOffset : 0))) {
-                                                    if (intersectY || !bottomParent) {
+                                                    if (intersectY || !bottomParent || (!flex.enabled && !current.inlineElement)) {
                                                         current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
                                                     }
                                                 }
                                                 else if (withinRange(linear1.bottom, linear2.top, (alignMargin ? SETTINGS.constraintWhitespaceVerticalOffset : 0))) {
-                                                    if (intersectY || !topParent) {
+                                                    if (intersectY || !topParent || (!flex.enabled && !current.inlineElement)) {
                                                         current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
                                                     }
                                                 }
@@ -6744,10 +6766,6 @@
                                     connected.filter(current => current.constraint[value]).forEach((current, level) => {
                                         const chainable = current.constraint[value];
                                         if (chainable.length > (flex.enabled ? 0 : 1)) {
-                                            chainable.parent = node;
-                                            if (flex.enabled && chainable.list.some(item => item.flex.order > 0)) {
-                                                chainable[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
-                                            }
                                             const [HV, VH] = [MAP_CHAIN['horizontalVertical'][index], MAP_CHAIN['horizontalVertical'][inverse]];
                                             const [LT, TL] = [MAP_CHAIN['leftTop'][index], MAP_CHAIN['leftTop'][inverse]];
                                             const [RB, BR] = [MAP_CHAIN['rightBottom'][index], MAP_CHAIN['rightBottom'][inverse]];
@@ -6755,6 +6773,17 @@
                                             const orientation = HV.toLowerCase();
                                             const orientationInverse = VH.toLowerCase();
                                             const dimension = WH.toLowerCase();
+                                            if (flex.enabled) {
+                                                if (chainable.list.some(item => item.flex.order > 0)) {
+                                                    chainable[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
+                                                }
+                                            }
+                                            else {
+                                                if (chainable.list.every(item => resolveAnchor(item, orientation))) {
+                                                    return;
+                                                }
+                                            }
+                                            chainable.parent = node;
                                             const first = chainable.get(0);
                                             const last = chainable.get();
                                             let maxOffset = -1;
@@ -6920,7 +6949,7 @@
                                                             }
                                                             else {
                                                                 chain.app(`layout_constraint${WH}_min`, formatPX(basis));
-                                                                delete chain.styleMap[`min${WH}`];
+                                                                chain.constraint[`min${WH}`] = true;
                                                             }
                                                         }
                                                     }
@@ -7657,9 +7686,6 @@
                     }
                     break;
             }
-            if (node.is(NODE_STANDARD.TEXT) && (node.css('whiteSpace') === 'nowrap' || (parent.linearHorizontal && node.multiLine) || (node.inline && node.inlineText && !node.multiLine))) {
-                node.android('singleLine', 'true');
-            }
             node.cascade().forEach(item => item.hide());
             node.render((target ? node : parent));
             if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
@@ -8037,20 +8063,24 @@
             });
         }
         adjustLineHeight(nodes, parent) {
-            const lineHeight = Math.max.apply(null, nodes.map(item => item.lineHeight));
+            const lineHeight = Math.max.apply(null, nodes.map(item => convertInt(item.styleMap.lineHeight)));
             if (lineHeight > 0) {
                 let minHeight = Number.MAX_VALUE;
+                let offsetTop = 0;
                 const valid = nodes.every(item => {
                     const offset = lineHeight - item.bounds.height;
                     if (offset > 0) {
                         minHeight = Math.min(offset, minHeight);
+                        if (lineHeight === convertInt(item.styleMap.lineHeight)) {
+                            offsetTop = Math.max((convertInt(item.top) < 0 ? Math.abs(convertInt(item.top)) : 0), offsetTop);
+                        }
                         return true;
                     }
                     return false;
                 });
                 if (valid) {
                     parent.modifyBox(BOX_STANDARD.PADDING_TOP, parent.paddingTop + Math.ceil(minHeight / 2));
-                    parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, parent.paddingBottom + Math.floor(minHeight / 2));
+                    parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, parent.paddingBottom + Math.floor(minHeight / 2) + offsetTop);
                 }
             }
         }

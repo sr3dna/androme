@@ -651,8 +651,7 @@ export default class Application<T extends Node> {
                                                         (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
                                                         (!previous.floating && (previous.autoMargin || !adjacent.inlineElement)) ||
                                                         (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
-                                                        (!previous.floating && adjacent.autoMargin) ||
-                                                        (vertical.length > horizontal.length && NodeList.linearY([...vertical.slice(), adjacent])))
+                                                        (!previous.floating && adjacent.autoMargin))
                                                 {
                                                     if (vertical[vertical.length - 1] !== previous) {
                                                         continue;
@@ -698,27 +697,22 @@ export default class Application<T extends Node> {
                                                     }
                                                 }
                                             }
-                                            if (!cleared.has(adjacent)) {
-                                                if (horizontal[horizontal.length - 1] !== previous) {
-                                                    continue;
-                                                }
-                                                horizontal.push(adjacent);
-                                                if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
-                                                    continue;
-                                                }
-                                                if (!NodeList.linearX(horizontal)) {
-                                                    if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
-                                                        vertical = horizontal.slice();
-                                                        horizontal.length = 1;
-                                                    }
-                                                    else {
-                                                        horizontal.pop();
-                                                        break;
-                                                    }
-                                                }
+                                            if (horizontal[horizontal.length - 1] !== previous) {
+                                                continue;
                                             }
-                                            else {
-                                                break;
+                                            horizontal.push(adjacent);
+                                            if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
+                                                continue;
+                                            }
+                                            if (!NodeList.linearX(horizontal)) {
+                                                if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
+                                                    vertical = horizontal.slice();
+                                                    horizontal.length = 1;
+                                                }
+                                                else {
+                                                    horizontal.pop();
+                                                    break;
+                                                }
                                             }
                                         }
                                     }
@@ -751,7 +745,6 @@ export default class Application<T extends Node> {
                                         else {
                                             group = this.controllerHandler.createGroup(nodeY, vertical, parent);
                                             groupXml = this.writeLinearLayout(group, parent, false);
-                                            this.sortLayout(group, <T[]> group.children, true);
                                         }
                                     }
                                     if (group != null) {

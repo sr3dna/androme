@@ -2,7 +2,7 @@ import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { getNode, getStyle } from '../lib/dom';
+import { getNode, getStyle, hasLineBreak } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -402,7 +402,7 @@ export default class View extends Node {
                         this.android('layout_height', 'match_parent');
                     }
                     else {
-                        this.android('layout_height', (this.bounds.height > 0 && this.lineHeight === this.bounds.height ? formatPX(this.bounds.height) : 'wrap_content'));
+                        this.android('layout_height', (this.bounds.height > 0 && this.lineHeight === (this.bounds.height - (this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth)) ? formatPX(this.bounds.height) : 'wrap_content'));
                     }
                 }
             }
@@ -571,8 +571,13 @@ export default class View extends Node {
                     if (this.renderChildren.some(node => node.floating) || this.renderChildren.some(node => node.pageflow && ['fixed', 'absolute'].includes(node.position) && node.alignMargin)) {
                         this.android('baselineAligned', 'false');
                     }
-                    if (this.renderChildren.every(node => node.inlineText) && this.renderChildren.some(node => node.plainText)) {
-                        this.renderChildren.forEach(node => node.android('singleLine', 'true'));
+                    if (this.renderChildren.length > 1 && this.renderChildren.every(node => !hasLineBreak(node.element) && (node.inlineText || node.plainText))) {
+                        for (let i = 1; i < this.renderChildren.length; i++) {
+                            const node = this.renderChildren[i];
+                            if (node.inline) {
+                                node.android('singleLine', 'true');
+                            }
+                        }
                     }
                     this.alignBaseline(this.renderChildren);
                 }
@@ -629,10 +634,10 @@ export default class View extends Node {
             }
             else {
                 if (!this.is(NODE_STANDARD.LINE)) {
-                    if (((this.borderLeftWidth + this.borderRightWidth) > 0) && (viewWidth > 0 || !this.inlineElement || this.inlineText)) {
-                        if (viewWidth > 0 && this.element.tagName !== 'TABLE') {
-                            this.android('layout_width', formatPX(viewWidth + this.borderLeftWidth + this.borderRightWidth));
-                        }
+                    if (viewWidth > 0 && this.element.tagName !== 'TABLE') {
+                        this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
+                    }
+                    if (!this.inlineElement || this.inlineText) {
                         if (this.borderLeftWidth > 0) {
                             this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.paddingLeft + this.borderLeftWidth);
                         }
@@ -640,10 +645,10 @@ export default class View extends Node {
                             this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.paddingRight + this.borderRightWidth);
                         }
                     }
-                    if (((this.borderTopWidth + this.borderBottomWidth) > 0) && (viewHeight > 0 || !this.inlineElement || this.inlineText)) {
-                        if (viewHeight > 0 && this.element.tagName !== 'TABLE') {
-                            this.android('layout_height', formatPX(viewHeight + this.borderTopWidth + this.borderBottomWidth));
-                        }
+                    if (viewHeight > 0 && this.element.tagName !== 'TABLE') {
+                        this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth));
+                    }
+                    if (!this.inlineElement || this.inlineText) {
                         if (this.borderTopWidth > 0) {
                             this.modifyBox(BOX_STANDARD.PADDING_TOP, this.paddingTop + this.borderTopWidth);
                         }
@@ -681,6 +686,11 @@ export default class View extends Node {
             const verticalAlign = convertInt(this.css('verticalAlign'));
             if (verticalAlign !== 0) {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + (verticalAlign * -1));
+            }
+        }
+        else {
+            if (this.css('whiteSpace') === 'nowrap') {
+                this.android('singleLine', 'true');
             }
         }
         if (this.css('visibility') === 'hidden') {

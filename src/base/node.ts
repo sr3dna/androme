@@ -1,7 +1,7 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, capitalize } from '../lib/util';
-import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, setCache } from '../lib/dom';
+import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, hasLineBreak, setCache } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
@@ -697,8 +697,8 @@ export default abstract class Node implements BoxModel {
     }
     get multiLine() {
         if (this._multiLine == null) {
-            if (this.inlineElement && !this.floating && this.viewWidth === 0 && this.inlineText) {
-                this._multiLine = (Array.from(this.element.children).some(item => item.tagName === 'BR') || (['pre', 'pre-wrap'].includes(this.css('whiteSpace')) && /\n/.test(this.element.textContent || '')));
+            if (this.inlineElement && this.inlineText && !this.floating && this.viewWidth === 0) {
+                this._multiLine = hasLineBreak(this.element);
             }
             else {
                 this._multiLine = false;

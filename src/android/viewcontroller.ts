@@ -175,7 +175,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                         else {
                             const group = (current instanceof ViewGroup);
                             const previous = nodes.get(i - 1);
-                            if ((node.inlineWrap && group) || (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) || current.multiLine || isLineBreak(<Element> current.element.previousSibling) || isLineBreak(<Element> previous.element.nextSibling, 'next') || (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) || (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                            if ((node.inlineWrap && group) ||
+                                (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) ||
+                                current.multiLine ||
+                                withinFraction(current.linear.left, node.box.left) ||
+                                isLineBreak(<Element> current.element.previousSibling) ||
+                                isLineBreak(<Element> previous.element.nextSibling, 'next') ||
+                                (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) ||
+                                (!multiLine && (current.linear.top >= previous.linear.bottom))) {
                                 const items = rows[rows.length - 1];
                                 previousRowBottom = items[0];
                                 for (let j = 1; j < items.length; j++) {
@@ -295,12 +302,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         }
                                         else {
                                             if (withinRange(linear1.top, linear2.bottom, (alignMargin ? SETTINGS.constraintWhitespaceVerticalOffset : 0))) {
-                                                if (intersectY || !bottomParent) {
+                                                if (intersectY || !bottomParent || (!flex.enabled && !current.inlineElement)) {
                                                     current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
                                                 }
                                             }
                                             else if (withinRange(linear1.bottom, linear2.top, (alignMargin ? SETTINGS.constraintWhitespaceVerticalOffset : 0))) {
-                                                if (intersectY || !topParent) {
+                                                if (intersectY || !topParent || (!flex.enabled && !current.inlineElement)) {
                                                     current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
                                                 }
                                             }
@@ -595,10 +602,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 connected.filter(current => current.constraint[value]).forEach((current, level) => {
                                     const chainable: NodeList<T> = current.constraint[value];
                                     if (chainable.length > (flex.enabled ? 0 : 1)) {
-                                        chainable.parent = node;
-                                        if (flex.enabled && chainable.list.some(item => item.flex.order > 0)) {
-                                            chainable[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
-                                        }
                                         const [HV, VH] = [MAP_CHAIN['horizontalVertical'][index], MAP_CHAIN['horizontalVertical'][inverse]];
                                         const [LT, TL] = [MAP_CHAIN['leftTop'][index], MAP_CHAIN['leftTop'][inverse]];
                                         const [RB, BR] = [MAP_CHAIN['rightBottom'][index], MAP_CHAIN['rightBottom'][inverse]];
@@ -606,6 +609,17 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         const orientation = HV.toLowerCase();
                                         const orientationInverse = VH.toLowerCase();
                                         const dimension = WH.toLowerCase();
+                                        if (flex.enabled) {
+                                            if (chainable.list.some(item => item.flex.order > 0)) {
+                                                chainable[(flex.direction.indexOf('reverse') !== -1 ? 'sortDesc' : 'sortAsc')]('flex.order');
+                                            }
+                                        }
+                                        else {
+                                            if (chainable.list.every(item => resolveAnchor(item, orientation))) {
+                                                return;
+                                            }
+                                        }
+                                        chainable.parent = node;
                                         const first = chainable.get(0);
                                         const last = chainable.get();
                                         let maxOffset = -1;
@@ -771,7 +785,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                         }
                                                         else {
                                                             chain.app(`layout_constraint${WH}_min`, formatPX(basis));
-                                                            delete chain.styleMap[`min${WH}`];
+                                                            chain.constraint[`min${WH}`] = true;
                                                         }
                                                     }
                                                 }
@@ -1511,9 +1525,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
                 break;
         }
-        if (node.is(NODE_STANDARD.TEXT) && (node.css('whiteSpace') === 'nowrap' || (parent.linearHorizontal && node.multiLine) || (node.inline && node.inlineText && !node.multiLine))) {
-            node.android('singleLine', 'true');
-        }
         node.cascade().forEach(item => item.hide());
         node.render((target ? node : parent));
         if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
@@ -1909,20 +1920,24 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     private adjustLineHeight(nodes: T[], parent: T) {
-        const lineHeight = Math.max.apply(null, nodes.map(item => item.lineHeight));
+        const lineHeight = Math.max.apply(null, nodes.map(item => convertInt(item.styleMap.lineHeight)));
         if (lineHeight > 0) {
             let minHeight = Number.MAX_VALUE;
+            let offsetTop = 0;
             const valid = nodes.every(item => {
                 const offset = lineHeight - item.bounds.height;
                 if (offset > 0) {
                     minHeight = Math.min(offset, minHeight);
+                    if (lineHeight === convertInt(item.styleMap.lineHeight)) {
+                        offsetTop = Math.max((convertInt(item.top) < 0 ? Math.abs(convertInt(item.top)) : 0), offsetTop);
+                    }
                     return true;
                 }
                 return false;
             });
             if (valid) {
                 parent.modifyBox(BOX_STANDARD.PADDING_TOP, parent.paddingTop + Math.ceil(minHeight / 2));
-                parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, parent.paddingBottom + Math.floor(minHeight / 2));
+                parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, parent.paddingBottom + Math.floor(minHeight / 2) + offsetTop);
             }
         }
     }
