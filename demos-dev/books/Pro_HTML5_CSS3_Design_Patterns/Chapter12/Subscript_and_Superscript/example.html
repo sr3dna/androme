@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"> 
+	<head>
+		<title>Subscript and Superscript</title>
+  		<meta charset="utf-8" />
+  		<link rel="stylesheet" href="site.css"   media="all" />
+  		<link rel="stylesheet" href="page.css"   media="all" />
+		<script src="../../../../../node_modules/systemjs/dist/system.js"></script>
+		<script>
+			SystemJS.config({
+				packages: {
+					'../../../../../build': { defaultExtension: 'js' }
+				},
+				map: {
+					'plugin-babel': '../../../../../node_modules/systemjs-plugin-babel/plugin-babel.js',
+					'systemjs-babel-build': '../../../../../node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+				},
+				transpiler: 'plugin-babel'
+			});
+			System.import('../../../../../build/main.js').then(function(result) {
+				androme = result;
+				androme.parseDocument().then(function() {
+					androme.close();
+					androme.saveAllToDisk();
+				});
+			});
+		</script>
+ </head>
+ 
+ <body>
+  <h1>Subscript and Superscript</h1>
+  <p class="large">sub<sub>1</sub> super<sup>2</sup> M<sup>lle</sup></p>
+   
+ </body>
+</html>
