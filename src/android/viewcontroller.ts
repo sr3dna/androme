@@ -9,7 +9,7 @@ import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/
 import { formatResource } from './extension/lib/util';
 import { isLineBreak } from '../lib/dom';
 import { removePlaceholders, replaceTab } from '../lib/xml';
-import { BOX_STANDARD, OVERFLOW_ELEMENT, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE } from '../lib/constants';
+import { BOX_STANDARD, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_ALIGNMENT } from '../lib/constants';
 import { AXIS_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
@@ -87,82 +87,91 @@ export default class ViewController<T extends View> extends Controller<T> {
             leftRight: parseRTL('layout_constraintLeft_toRightOf'),
             rightLeft: parseRTL('layout_constraintRight_toLeftOf')
         });
+        const relativeParent = MAP_LAYOUT.relativeParent;
+        let constraint = false;
+        let relative = false;
+        let mapLayout;
+        function mapParent(item: T, direction: string) {
+            if (constraint) {
+                return (item.app(mapLayout[direction]) === 'parent');
+            }
+            else {
+                return (item.android(relativeParent[direction]) === 'true');
+            }
+        }
+        function mapView(item: T, direction: string) {
+            if (constraint) {
+                return item.app(mapLayout[direction]);
+            }
+            else {
+                return item.android(mapLayout[direction]);
+            }
+        }
+        function mapDelete(item: T, ...direction: string[]) {
+            item.delete((constraint ? 'app' : 'android'), ...direction.map(value => mapLayout[value]));
+        }
+        function resolveAnchor(item: T, nodes: NodeList<T>, orientation: string) {
+            if (!item.constraint[orientation]) {
+                let parent: Null<T> = item;
+                while (parent != null) {
+                    const stringId = mapView(parent, (orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom'));
+                    if (stringId != null) {
+                        parent = nodes.locate('nodeId', stripId(stringId));
+                        if (parent != null && parent.constraint[orientation]) {
+                            return true;
+                        }
+                    }
+                    else {
+                        parent = null;
+                    }
+                }
+                return false;
+            }
+            return true;
+        }
+        function anchored(list: NodeList<T>) {
+            return list.filter(current => current.anchored);
+        }
+        function adjustBaseline(nodes: T[]) {
+            if (nodes.length > 1) {
+                const images = nodes.filter(item => item.element.tagName === 'IMG');
+                const tallest = (images.length > 0 ? images : nodes).filter(item => !item.plainText).sort((a, b) => a.linear.height >= b.linear.height ? -1 : 1)[0];
+                if (tallest != null) {
+                    let topParent = false;
+                    for (const item of nodes) {
+                        if (item !== tallest) {
+                            item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
+                            if (images.length > 0 && mapParent(item, 'top')) {
+                                item.delete('android', relativeParent['top']);
+                                topParent = true;
+                            }
+                        }
+                    }
+                    if (topParent) {
+                        tallest.android(relativeParent['top'], 'true');
+                    }
+                }
+            }
+        }
         for (const node of this.cache.visible) {
             const nodes = new NodeList<T>(node.renderChildren.filter(item => !item.isolated) as T[], node);
-            const constraint = node.is(NODE_STANDARD.CONSTRAINT);
-            const relative = node.is(NODE_STANDARD.RELATIVE);
             const flex = node.flex;
+            constraint = node.is(NODE_STANDARD.CONSTRAINT);
+            relative = node.is(NODE_STANDARD.RELATIVE);
             if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
                 node.constraint.guideline = {};
-                const mapLayout = MAP_LAYOUT[(relative ? 'relative' : 'constraint')];
-                const relativeParent = MAP_LAYOUT.relativeParent;
-                function mapParent(item: T, direction: string) {
-                    if (constraint) {
-                        return (item.app(mapLayout[direction]) === 'parent');
-                    }
-                    else {
-                        return (item.android(relativeParent[direction]) === 'true');
-                    }
-                }
-                function mapView(item: T, direction: string) {
-                    if (constraint) {
-                        return item.app(mapLayout[direction]);
-                    }
-                    else {
-                        return item.android(mapLayout[direction]);
-                    }
-                }
-                function mapDelete(item: T, ...direction: string[]) {
-                    item.delete((constraint ? 'app' : 'android'), ...direction.map(value => mapLayout[value]));
-                }
-                function resolveAnchor(item: T, orientation: string) {
-                    if (!item.constraint[orientation]) {
-                        let parent: Null<T> = item;
-                        while (parent != null) {
-                            const stringId = mapView(parent, (orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom'));
-                            if (stringId != null) {
-                                parent = nodes.locate('nodeId', stripId(stringId));
-                                if (parent != null && parent.constraint[orientation]) {
-                                    return true;
-                                }
-                            }
-                            else {
-                                parent = null;
-                            }
-                        }
-                        return false;
-                    }
-                    return true;
-                }
-                function anchored(list: NodeList<T>) {
-                    return list.filter(current => current.anchored);
-                }
+                mapLayout = MAP_LAYOUT[(relative ? 'relative' : 'constraint')];
                 if (relative && (node.inlineWrap || nodes.list.some(item => item.inlineWrap))) {
-                    const baseline: T[] = [];
-                    function adjustBaseline() {
-                        if (baseline.length > 1) {
-                            const images = baseline.filter(item => item.element.tagName === 'IMG');
-                            const tallest = (images.length > 0 ? images : baseline).filter(item => !item.plainText).sort((a, b) => (a.linear.height >= b.linear.height ? -1 : 1))[0];
-                            if (tallest != null) {
-                                let topParent = false;
-                                for (const item of baseline) {
-                                    if (item !== tallest) {
-                                        item.android(mapLayout[(images.length > 0 ? 'bottom' : 'baseline')], tallest.stringId);
-                                        if (images.length > 0 && mapParent(item, 'top')) {
-                                            item.delete('android', relativeParent['top']);
-                                            topParent = true;
-                                        }
-                                    }
-                                }
-                                if (topParent) {
-                                    tallest.android(relativeParent['top'], 'true');
-                                }
-                            }
-                        }
-                    }
-                    const rows: T[][] = [];
                     const multiLine = nodes.list.some(item => item.multiLine);
+                    const baseline: T[] = [];
+                    const rows: T[][] = [];
+                    const textIndent = convertInt(node.css('textIndent'));
                     let previousRowBottom: Null<T> = null;
+                    let rowPaddingLeft = 0;
+                    if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
+                        rowPaddingLeft = node.paddingLeft;
+                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft + textIndent);
+                    }
                     for (let i = 0, width = 0; i < nodes.length; i++) {
                         const current = nodes.get(i);
                         const dimension = current[(current.multiLine ? 'bounds' : 'linear')];
@@ -170,19 +179,22 @@ export default class ViewController<T extends View> extends Controller<T> {
                             current.android(relativeParent['top'], 'true');
                             current.android(relativeParent['left'], 'true');
                             width += dimension.width;
+                            if (!node.inline && textIndent > 0) {
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + textIndent);
+                            }
                             rows[rows.length] = [current];
                         }
                         else {
                             const group = (current instanceof ViewGroup);
                             const previous = nodes.get(i - 1);
-                            if ((node.inlineWrap && group) ||
-                                (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) ||
+                            if ((group && node.inlineWrap) ||
                                 current.multiLine ||
-                                withinFraction(current.linear.left, node.box.left) ||
-                                isLineBreak(<Element> current.element.previousSibling) ||
-                                isLineBreak(<Element> previous.element.nextSibling, 'next') ||
+                                (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) ||
                                 (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) ||
-                                (!multiLine && (current.linear.top >= previous.linear.bottom))) {
+                                (!multiLine && (current.linear.top >= previous.linear.bottom || withinFraction(current.linear.left, node.box.left))) ||
+                                isLineBreak(<Element> current.element.previousSibling) ||
+                                isLineBreak(<Element> previous.element.nextSibling, 'next'))
+                            {
                                 const items = rows[rows.length - 1];
                                 previousRowBottom = items[0];
                                 for (let j = 1; j < items.length; j++) {
@@ -196,7 +208,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 current.android(mapLayout['topBottom'], previousRowBottom.stringId);
                                 current.android(relativeParent['left'], 'true');
                                 width = (current.multiLine ? dimension.right - dimension.left : dimension.width);
-                                adjustBaseline();
+                                if (rowPaddingLeft > 0) {
+                                    current.modifyBox(BOX_STANDARD.PADDING_LEFT, current.paddingLeft + rowPaddingLeft);
+                                }
+                                adjustBaseline(baseline);
                                 baseline.length = 0;
                                 rows.push([current]);
                             }
@@ -213,7 +228,50 @@ export default class ViewController<T extends View> extends Controller<T> {
                             baseline.push(current);
                         }
                     }
-                    adjustBaseline();
+                    adjustBaseline(baseline);
+                }
+                else if (node.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL)) {
+                    const baseline = nodes.filter(item => item.nodeType < NODE_STANDARD.IMAGE && item.css('verticalAlign') === 'baseline').sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1).get(0);
+                    const highest = nodes.sort((a, b) => a.linear.top <= b.linear.top ? -1 : 1).get(0);
+                    const lowest = nodes.sort((a, b) => a.linear.bottom >= b.linear.bottom ? -1 : 1).get(0);
+                    for (let i = 0; i < nodes.length; i++) {
+                        const current = nodes.get(i);
+                        const previous = nodes.get(i - 1);
+                        if (i === 0) {
+                            current.app(mapLayout['left'], 'parent');
+                            current.app(mapLayout['bottom'], 'parent');
+                        }
+                        else {
+                            current.app(mapLayout['leftRight'], previous.stringId);
+                            current.constraint.marginHorizontal = previous.stringId;
+                        }
+                        switch (current.css('verticalAlign')) {
+                            case 'text-top':
+                                if (baseline != null && current !== baseline) {
+                                    current.app(mapLayout['top'], baseline.stringId);
+                                    break;
+                                }
+                            case 'top':
+                                current.app(mapLayout['top'], highest.stringId);
+                                break;
+                            case 'middle':
+                                this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
+                                break;
+                            case 'baseline':
+                                if (baseline != null && current !== baseline) {
+                                    current.app(mapLayout['baseline'], baseline.stringId);
+                                }
+                                break;
+                            case 'text-bottom':
+                                if (baseline != null && current !== baseline) {
+                                    current.app(mapLayout['bottom'], baseline.stringId);
+                                    break;
+                                }
+                            case 'bottom':
+                                current.app(mapLayout['bottom'], lowest.stringId);
+                                break;
+                        }
+                    }
                 }
                 else {
                     const [pageflow, fixed] = nodes.partition(item => item.pageflow);
@@ -230,8 +288,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     let linear1 = current.linear;
                                     let linear2 = adjacent.linear;
                                     let stringId = adjacent.stringId;
-                                    const horizontal = (resolveAnchor(adjacent, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '');
-                                    const vertical = (resolveAnchor(adjacent, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '');
+                                    const horizontal = (resolveAnchor(adjacent, nodes, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '');
+                                    const vertical = (resolveAnchor(adjacent, nodes, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '');
                                     const intersectY = current.intersectY(adjacent.linear);
                                     const alignMargin = (current.alignMargin && adjacent.alignMargin);
                                     if (constraint) {
@@ -422,14 +480,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                         const leftRight = mapView(current, 'leftRight');
                         if (leftRight != null) {
                             if (!current.constraint.horizontal) {
-                                current.constraint.horizontal = flex.enabled || resolveAnchor(current, AXIS_ANDROID.HORIZONTAL);
+                                current.constraint.horizontal = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.HORIZONTAL);
                             }
                             current.constraint.marginHorizontal = leftRight;
                         }
                         const topBottom = mapView(current, 'topBottom');
                         if (topBottom != null) {
                             if (!current.constraint.vertical) {
-                                current.constraint.vertical = flex.enabled || resolveAnchor(current, AXIS_ANDROID.VERTICAL);
+                                current.constraint.vertical = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
                             }
                             current.constraint.marginVertical = topBottom;
                             mapDelete(current, 'top');
@@ -615,7 +673,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             }
                                         }
                                         else {
-                                            if (chainable.list.every(item => resolveAnchor(item, orientation))) {
+                                            if (chainable.list.every(item => resolveAnchor(item, nodes, orientation))) {
                                                 return;
                                             }
                                         }
@@ -919,8 +977,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                         });
                     }
                     for (const current of pageflow) {
-                        current.constraint.horizontal = resolveAnchor(current, AXIS_ANDROID.HORIZONTAL);
-                        current.constraint.vertical = resolveAnchor(current, AXIS_ANDROID.VERTICAL);
+                        current.constraint.horizontal = resolveAnchor(current, nodes, AXIS_ANDROID.HORIZONTAL);
+                        current.constraint.vertical = resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
                     }
                     if (flex.enabled) {
                         if (flex.wrap !== 'nowrap') {
@@ -1189,7 +1247,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 if (right) {
                                     if (!rightParent) {
                                         rightParent = false;
-                                        rightParent = resolveAnchor(current, AXIS_ANDROID.HORIZONTAL);
+                                        rightParent = resolveAnchor(current, nodes, AXIS_ANDROID.HORIZONTAL);
                                     }
                                 }
                                 else if (left) {
@@ -1206,7 +1264,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 if (bottom) {
                                     if (!bottomParent) {
                                         bottomParent = false;
-                                        bottomParent = resolveAnchor(current, AXIS_ANDROID.VERTICAL);
+                                        bottomParent = resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
                                     }
                                 }
                             }

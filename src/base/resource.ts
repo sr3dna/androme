@@ -259,7 +259,7 @@ export default abstract class Resource<T extends Node> {
                     value = element.value.trim();
                 }
                 else if (element.nodeName === '#text') {
-                    value = <string> element.textContent;
+                    value = element.textContent || '';
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                     if (element.previousSibling && (<Element> element.previousSibling).tagName === 'BR') {
                         value = value.replace(/^\s+/, '');

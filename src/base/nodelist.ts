@@ -128,6 +128,10 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return new NodeList<T>(this._list.filter(predicate));
     }
 
+    public sort(predicate: (a: T, b: T) => number) {
+        return new NodeList<T>(this._list.slice().sort(predicate));
+    }
+
     public partition(predicate: (value: T) => boolean) {
         const valid: T[] = [];
         const invalid: T[] = [];

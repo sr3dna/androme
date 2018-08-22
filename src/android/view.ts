@@ -5,7 +5,7 @@ import { calculateBias, generateId } from './lib/util';
 import { getNode, getStyle, hasLineBreak } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
-import { BOX_STANDARD, MAP_ELEMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { BOX_STANDARD, MAP_ELEMENT, NODE_RESOURCE, NODE_STANDARD, NODE_ALIGNMENT } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
 
 type T = View;
@@ -205,15 +205,6 @@ export default class View extends Node {
         node.children = this.children.slice();
         node.inherit(this, 'base', 'style', 'styleMap');
         return node;
-    }
-
-    public is(...views: number[]) {
-        for (const value of views) {
-            if (this.nodeType === value) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public setNodeId(nodeName: string) {
@@ -450,25 +441,28 @@ export default class View extends Node {
         const horizontalParent = convertHorizontal(textAlignParent);
         let horizontal = convertHorizontal(textAlign);
         let vertical = '';
-        switch (verticalAlign) {
-            case 'top':
-                vertical = 'top';
-                break;
-            case 'middle':
-                vertical = 'center_vertical';
-                break;
-            case 'bottom':
-            case 'text-bottom':
-                vertical = 'bottom';
-                break;
-            default:
-                if (this.lineHeight > 0 && this.android('layout_height') !== 'match_parent') {
+        if (!(this.floating || (renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL)))) {
+            switch (verticalAlign) {
+                case 'top':
+                case 'text-top':
+                    vertical = 'top';
+                    break;
+                case 'middle':
                     vertical = 'center_vertical';
-                }
-                else if (this.viewHeight === 0 && this.linearHorizontal && this.renderChildren.some(node => node.is(NODE_STANDARD.IMAGE))) {
+                    break;
+                case 'bottom':
+                case 'text-bottom':
                     vertical = 'bottom';
-                }
-                break;
+                    break;
+            }
+        }
+        if (vertical === '') {
+            if (this.lineHeight > 0 && this.android('layout_height') !== 'match_parent') {
+                vertical = 'center_vertical';
+            }
+            else if (this.viewHeight === 0 && this.linearHorizontal && this.renderChildren.some(node => node.is(NODE_STANDARD.IMAGE))) {
+                vertical = 'bottom';
+            }
         }
         if (renderParent.element.tagName === 'TABLE') {
             this.android('layout_gravity', 'fill');
@@ -507,13 +501,18 @@ export default class View extends Node {
                 horizontal = horizontalParent;
                 fromParent = !this.is(NODE_STANDARD.IMAGE);
             }
-            if (horizontal !== '' && (!fromParent || this.renderParent.renderChildren.length === 1)) {
-                if (renderParent.is(NODE_STANDARD.FRAME)) {
-                    if (!this.floating && !this.autoMargin) {
-                        this.android('layout_gravity', horizontal);
-                    }
+            if (horizontal !== '' && renderParent.is(NODE_STANDARD.FRAME) && (!fromParent || this.renderParent.renderChildren.length === 1)) {
+                if (!this.floating && !this.autoMargin) {
+                    this.android('layout_gravity', horizontal);
                 }
             }
+            if (this.is(NODE_STANDARD.IMAGE) && (renderParent.linearHorizontal || renderParent.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL))) {
+                this.android('baselineAlignBottom', 'true');
+            }
+        }
+        if (renderParent.linearHorizontal && vertical !== '') {
+            this.android('layout_gravity', vertical);
+            vertical = '';
         }
         const gravity = [horizontal, vertical].filter(value => value);
         if (gravity.length > 0) {
@@ -685,7 +684,7 @@ export default class View extends Node {
         if (this.inline) {
             const verticalAlign = convertInt(this.css('verticalAlign'));
             if (verticalAlign !== 0) {
-                this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + (verticalAlign * -1));
+                this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, this.marginBottom + verticalAlign);
             }
         }
         else {

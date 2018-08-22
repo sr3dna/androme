@@ -8,7 +8,7 @@ import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getCache, sameAsParent, setCache } from '../lib/dom';
 import { findNearestColor, parseHex, parseRGBA } from '../lib/color';
-import { NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD, NODE_ALIGNMENT } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
@@ -551,9 +551,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         if (root['1'].length === 0) {
                             root['1'] = false;
                         }
-                        else if (root['1'][0] != null) {
+                        else {
                             const layer = root['1'][0];
-                            if (layer.top !== '' && layer.right !== '' && layer.bottom === '' && layer.left !== '') {
+                            if (layer && layer.top !== '' && layer.right !== '' && layer.bottom === '' && layer.left !== '') {
                                 layer.bottom = formatPX(node.borderBottomWidth);
                             }
                         }
@@ -742,7 +742,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
             const stored: BasicData = getCache(node.element, 'valueString');
             if (stored != null) {
-                if (node.renderParent.relativeWrap) {
+                if (node.renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
                     if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                         stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
                     }

@@ -24,7 +24,17 @@ export enum NODE_STANDARD {
     SCROLL_NESTED
 }
 
+export enum NODE_ALIGNMENT {
+    NONE = 0,
+    SINGLE,
+    HORIZONTAL,
+    VERTICAL,
+    ABSOLUTE,
+    INLINE_WRAP
+}
+
 export enum NODE_RESOURCE {
+    NONE = 0,
     BOX_STYLE = 2,
     BOX_SPACING = 4,
     FONT_STYLE = 8,
@@ -32,10 +42,11 @@ export enum NODE_RESOURCE {
     OPTION_ARRAY = 32,
     IMAGE_SOURCE = 64,
     ASSET = 8 | 16 | 32 | 64,
-    ALL = 2 | 4 | ASSET
+    ALL = 126
 }
 
 export enum NODE_PROCEDURE {
+    NONE = 0,
     LAYOUT = 2,
     ALIGNMENT = 4,
     OPTIMIZATION = 8,

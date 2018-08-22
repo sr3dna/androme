@@ -2,7 +2,7 @@ import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, capitalize } from '../lib/util';
 import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, hasLineBreak, setCache } from '../lib/dom';
-import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_ALIGNMENT } from '../lib/constants';
 
 type T = Node;
 
@@ -19,15 +19,15 @@ export default abstract class Node implements BoxModel {
     public linear: ClientRect;
     public box: ClientRect;
     public renderExtension?: IExtension;
-    public excludeProcedure = 0;
-    public excludeResource = 0;
+    public excludeProcedure = NODE_PROCEDURE.NONE;
+    public excludeResource = NODE_RESOURCE.NONE;
     public documentRoot = false;
     public companion: T;
     public visible = true;
     public rendered = false;
     public isolated = false;
     public relocated = false;
-    public inlineWrap = false;
+    public alignmentType = NODE_ALIGNMENT.NONE;
 
     public abstract constraint: ObjectMap<any>;
     public abstract children: T[];
@@ -63,7 +63,6 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public abstract is(...views: number[]): boolean;
     public abstract setNodeId(viewName: string): void;
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
@@ -80,6 +79,19 @@ export default abstract class Node implements BoxModel {
     public abstract get renderParent(): T;
     public abstract get linearHorizontal(): boolean;
     public abstract get linearVertical(): boolean;
+
+    public is(...views: number[]) {
+        for (const value of views) {
+            if (this.nodeType === value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public of(nodeType: number, alignmentType: number) {
+        return (this.nodeType === nodeType && this.alignmentType === alignmentType);
+    }
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
@@ -640,7 +652,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && this.element.tagName !== 'SELECT' && this.children.length === 0 && (hasFreeFormText(this.element) || Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))));
+        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))));
     }
 
     get plainText() {
@@ -688,10 +700,6 @@ export default abstract class Node implements BoxModel {
         return includesEnum(this.overflow, OVERFLOW_ELEMENT.VERTICAL);
     }
 
-    get relativeWrap() {
-        return (this.is(NODE_STANDARD.RELATIVE) && this.inlineWrap);
-    }
-
     set multiLine(value) {
         this._multiLine = value;
     }
@@ -705,6 +713,10 @@ export default abstract class Node implements BoxModel {
             }
         }
         return this._multiLine;
+    }
+
+    get inlineWrap() {
+        return (this.alignmentType === NODE_ALIGNMENT.INLINE_WRAP);
     }
 
     get dir() {

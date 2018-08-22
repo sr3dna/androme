@@ -5,7 +5,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
-import { BLOCK_ELEMENT } from '../lib/constants';
+import { BLOCK_ELEMENT, NODE_ALIGNMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;
@@ -301,7 +301,8 @@ export default class Grid extends Extension<T> {
                 const group = this.application.controllerHandler.createGroup(node, siblings, parent);
                 if (linearX || linearY) {
                     xml = this.application.writeLinearLayout(group, parent, linearX);
-                    this.application.sortLayout(group, group.children, true);
+                    group.alignmentType = (linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
+                    this.application.sortLayout(group, group.children, NODE_ALIGNMENT.HORIZONTAL, true);
                 }
                 else {
                     xml = this.application.writeConstraintLayout(group, parent);

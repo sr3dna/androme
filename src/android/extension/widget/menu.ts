@@ -3,6 +3,7 @@ import { ExtensionResult, IExtension } from '../../../extension/lib/types';
 import Nav from '../../../extension/nav';
 import ResourceView from '../../resource-view';
 import View from '../../view';
+import { optional } from '../../../lib/util';
 import { BLOCK_ELEMENT, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
@@ -80,8 +81,8 @@ export default class Menu<T extends View> extends Nav {
                 else {
                     Array.from(node.element.childNodes).some((item: HTMLElement) => {
                         if (item.nodeName === '#text') {
-                            if (item.textContent && item.textContent.trim() !== '') {
-                                title = item.textContent.trim();
+                            title = optional(item, 'textContent').trim();
+                            if (title !== '') {
                                 return true;
                             }
                             return false;
