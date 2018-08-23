@@ -37,9 +37,9 @@ export default class Table extends Extension<T> {
             const tr = tableRows[i];
             tr.hide();
             columnCount = Math.max(tr.children.map(item => item.element).reduce((a, b: HTMLTableDataCellElement) => a + b.colSpan, 0), columnCount);
-            const children = tr.children.slice();
-            for (let j = 0; j < children.length; j++) {
-                const td = children[j];
+            const nodes = tr.children.slice();
+            for (let j = 0; j < nodes.length; j++) {
+                const td = nodes[j];
                 const style = td.element.style;
                 const element = <HTMLTableCellElement> td.element;
                 if (element.rowSpan > 1) {

@@ -1,5 +1,7 @@
 import Node from './node';
 import { sortAsc, sortDesc } from '../lib/util';
+import { NODE_STANDARD } from '../lib/constants';
+import { getNode } from '../lib/dom';
 
 export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
@@ -20,7 +22,24 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return result;
     }
 
-    public static linearX<T extends Node>(list: T[], offset = 0) {
+    public static baselineText<T extends Node>(list: T[], parent?: T) {
+        const baseline = list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline).sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1)[0];
+        if (baseline == null && parent != null) {
+            const valid = Array.from(parent.element.children).some(element => {
+                const node = getNode(element);
+                if (node != null) {
+                    return ((node.nodeType <= NODE_STANDARD.TEXT && node.baseline) || (node.linearHorizontal && node.children.some(item => item.nodeType <= NODE_STANDARD.TEXT && item.baseline)));
+                }
+                return false;
+            });
+            if (valid) {
+                return list.sort((a, b) => a.nodeType >= b.nodeType ? -1 : 1).find(node => node.nodeType <= NODE_STANDARD.TEXT && node.baseline);
+            }
+        }
+        return baseline;
+    }
+
+    public static linearX<T extends Node>(list: T[]) {
         const nodes = list.filter(node => node.pageflow);
         switch (nodes.length) {
             case 0:
@@ -29,14 +48,14 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return true;
             default:
                 if (NodeList.cleared(nodes).size === 0) {
-                    const right = Math.min.apply(null, nodes.map(node => node.linear.right));
-                    const bottom = Math.min.apply(null, nodes.map(node => node.linear.bottom));
+                    const right = Math.min.apply(null, nodes.map(node => node.bounds.right));
+                    const bottom = Math.min.apply(null, nodes.map(node => node.bounds.bottom));
                     let leftRight = 0;
                     return nodes.every(node => {
-                        if (node.linear.left < right) {
+                        if (node.bounds.left < right) {
                             leftRight++;
                         }
-                        return (leftRight <= 1 && node.inlineElement && !node.autoMargin && node.linear.top < bottom);
+                        return (leftRight <= 1 && node.inlineElement && !node.autoMargin && node.bounds.top < bottom);
                     });
                 }
                 return false;
@@ -51,15 +70,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             case 1:
                 return true;
             default:
-                const minRight = Math.min.apply(null, nodes.map(node => node.linear.right));
-                const maxRight = Math.max.apply(null, nodes.map(node => node.linear.right));
+                const minRight = Math.min.apply(null, nodes.map(node => node.bounds.right));
+                const maxRight = Math.max.apply(null, nodes.map(node => node.bounds.right));
                 return nodes.every((node, index) => {
-                    if (node.linear.left < minRight) {
+                    if (node.bounds.left < minRight) {
                         return true;
                     }
                     else {
                         const previous = nodes[index - 1];
-                        if ((previous == null || (previous.inlineElement && previous.linear.right !== maxRight)) && node.inlineElement && node.linear.right !== maxRight) {
+                        if ((previous == null || (previous.inlineElement && previous.bounds.right !== maxRight)) && node.inlineElement && node.bounds.right !== maxRight) {
                             return true;
                         }
                     }

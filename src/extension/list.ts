@@ -29,8 +29,8 @@ export default abstract class List extends Extension<T> {
         else {
             xml = this.application.writeLinearLayout(node, parent, NodeList.linearY(node.children));
         }
-        for (let i = 0, j = 0; i < node.children.length; i++) {
-            const item = node.children[i];
+        let i = 0;
+        node.each((item: T) => {
             let ordinal = '0';
             if (item.display === 'list-item') {
                 const listStyle = item.css('listStyleType');
@@ -43,31 +43,31 @@ export default abstract class List extends Extension<T> {
                         break;
                     case 'lower-alpha':
                     case 'lower-latin':
-                        ordinal = `${convertAlpha(j).toLowerCase()}.`;
+                        ordinal = `${convertAlpha(i).toLowerCase()}.`;
                         break;
                     case 'upper-alpha':
                     case 'upper-latin':
-                        ordinal = `${convertAlpha(j)}.`;
+                        ordinal = `${convertAlpha(i)}.`;
                         break;
                     case 'lower-roman':
-                        ordinal = `${convertRoman(j + 1).toLowerCase()}.`;
+                        ordinal = `${convertRoman(i + 1).toLowerCase()}.`;
                         break;
                     case 'upper-roman':
-                        ordinal = `${convertRoman(j + 1)}.`;
+                        ordinal = `${convertRoman(i + 1)}.`;
                         break;
                     default:
                         if (node.element.tagName === 'OL') {
-                            ordinal = `${(listStyle === 'decimal-leading-zero' && j < 9 ? '0' : '') + (j + 1).toString()}.`;
+                            ordinal = `${(listStyle === 'decimal-leading-zero' && i < 9 ? '0' : '') + (i + 1).toString()}.`;
                         }
                         else {
                             ordinal = '○';
                         }
                         break;
                 }
-                j++;
+                i++;
             }
             item.data(`${EXT_NAME.LIST}:listStyle`, ordinal);
-        }
+        });
         return { xml };
     }
 }

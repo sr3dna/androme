@@ -36,14 +36,14 @@ export default class Grid extends Extension<T> {
         };
         if (balanceColumns) {
             const dimensions: number[][] = [];
-            for (let l = 0; l < node.children.length; l++) {
-                const children = node.children[l].children;
-                dimensions[l] = [];
-                for (let m = 0; m < children.length; m++) {
-                    dimensions[l].push(children[m].bounds.width);
+            node.each((item: T, index: number) => {
+                const children = item.children;
+                dimensions[index] = [];
+                for (let l = 0; l < children.length; l++) {
+                    dimensions[index].push(children[l].bounds.width);
                 }
                 columns.push(children);
-            }
+            });
             const base = columns[
                 dimensions.findIndex((item: number[]) => {
                     return (item === dimensions.reduce((a, b) => {

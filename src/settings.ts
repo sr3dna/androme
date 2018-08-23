@@ -20,7 +20,6 @@ const SETTINGS = {
     excludeBackgroundColor: ['#FFFFFF'],
     autoSizePaddingAndBorderWidth: true,
     collapseUnattributedElements: false,
-    horizontalPerspective: true,
     constraintPercentAccuracy: 4,
     constraintChainDisabled: false,
     constraintWhitespaceHorizontalOffset: 4,

@@ -26,6 +26,7 @@ export enum NODE_STANDARD {
 
 export enum NODE_ALIGNMENT {
     NONE = 0,
+    OPEN,
     SINGLE,
     HORIZONTAL,
     VERTICAL,

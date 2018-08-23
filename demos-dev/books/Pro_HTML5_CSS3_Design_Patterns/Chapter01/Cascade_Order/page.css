@@ -1,5 +1,3 @@
-html, body { border-style:none!important; }
-
 *     { border:0px  solid black; }            /* Universal  Selector */
 div   { border:2px  solid black; }            /* Element    Selector */
 *.c10 { border:4px  solid black; }            /* Secondary  Selector */
@@ -9,3 +7,5 @@ div   { border:2px  solid black; }            /* Element    Selector */
 div   { border:10px solid black!important; }  /* !Element   Selector */
 *.c10 { border:12px solid black!important; }  /* !Secondary Selector */
 #i100 { border:14px solid black!important; }  /* !ID        Selector */
+
+html, body { border-style:none!important; }

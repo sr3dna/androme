@@ -175,7 +175,7 @@ export default class Application<T extends Node> {
                                         case 'paddingRight':
                                         case 'paddingBottom':
                                         case 'paddingLeft':
-                                            styleMap[attr] = (/^[A-Za-z\-]$/.test(<string> cssStyle) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle));
+                                            styleMap[attr] = (/^[A-Za-z\-]+$/.test(<string> cssStyle) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle));
                                             break;
                                         default:
                                             if (styleMap[attr] == null) {
@@ -326,7 +326,7 @@ export default class Application<T extends Node> {
                                         const label = getNode(sibling);
                                         if (label && label.pageflow) {
                                             node.companion = label;
-                                            node.setBounds();
+                                            node.setBounds(false);
                                             label.hide();
                                             return true;
                                         }
@@ -337,7 +337,7 @@ export default class Application<T extends Node> {
                                     const label = getNode(element.parentElement);
                                     if (label && label.element.tagName === 'LABEL' && label.element.children.length === 1) {
                                         node.companion = label;
-                                        node.setBounds();
+                                        node.setBounds(false);
                                         label.hide();
                                     }
                                 }
@@ -644,132 +644,130 @@ export default class Application<T extends Node> {
                             continue;
                         }
                         if (!nodeY.rendered) {
-                            if (SETTINGS.horizontalPerspective) {
-                                const linearVertical = parent.linearVertical;
-                                if (nodeY.pageflow && nodeY.alignmentType === NODE_ALIGNMENT.NONE && !parent.flex.enabled && parent.styleMap.columnCount == null && parent.alignmentType === NODE_ALIGNMENT.NONE && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical)) {
-                                    const horizontal = [nodeY];
-                                    let vertical = [nodeY];
-                                    for (let l = k + 1; l < axisY.length; l++) {
-                                        const adjacent = axisY[l];
-                                        if (adjacent.pageflow) {
-                                            const previous = adjacent.previousSibling;
-                                            if (previous != null) {
-                                                if (isLineBreak(<Element> previous.element.nextSibling, 'next')) {
-                                                    break;
+                            const linearVertical = parent.linearVertical;
+                            if (nodeY.pageflow && nodeY.alignmentType <= NODE_ALIGNMENT.OPEN && !parent.flex.enabled && parent.styleMap.columnCount == null && parent.alignmentType <= NODE_ALIGNMENT.OPEN && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical)) {
+                                const horizontal = [nodeY];
+                                let vertical = [nodeY];
+                                for (let l = k + 1; l < axisY.length; l++) {
+                                    const adjacent = axisY[l];
+                                    if (adjacent.pageflow) {
+                                        const previous = adjacent.previousSibling;
+                                        if (previous != null) {
+                                            if (isLineBreak(<Element> previous.element.nextSibling, 'next')) {
+                                                break;
+                                            }
+                                            const alignVertical = (adjacent.plainText && adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
+                                                                    (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
+                                                                    (!previous.floating && (previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
+                                                                    (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin));
+                                            if (cleared.has(adjacent)) {
+                                                const floated = new Set(['both', ...horizontal.map(item => item.float)]);
+                                                if (!floated.has(adjacent.css('clear')) && !alignVertical) {
+                                                    horizontal.push(adjacent);
+                                                    continue;
                                                 }
-                                                const alignVertical = (adjacent.plainText && adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
-                                                                      (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
-                                                                      (!previous.floating && (previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
-                                                                      (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin));
-                                                if (cleared.has(adjacent)) {
-                                                    const floated = new Set(['both', ...horizontal.map(item => item.float)]);
-                                                    if (!floated.has(adjacent.css('clear')) && !alignVertical) {
-                                                        horizontal.push(adjacent);
-                                                        continue;
+                                            }
+                                            if (cleared.has(adjacent) || alignVertical) {
+                                                if (vertical[vertical.length - 1] !== previous) {
+                                                    if (cleared.has(adjacent)) {
+                                                        break;
                                                     }
+                                                    continue;
                                                 }
-                                                if (cleared.has(adjacent) || alignVertical) {
-                                                    if (vertical[vertical.length - 1] !== previous) {
-                                                        if (cleared.has(adjacent)) {
-                                                            break;
-                                                        }
-                                                        continue;
-                                                    }
-                                                    else if (horizontal.length > 1) {
-                                                        if (linearVertical) {
-                                                            for (let m = 1; m < horizontal.length; m++) {
-                                                                if (isLineBreak(<Element> horizontal[m].element.previousSibling)) {
-                                                                    horizontal.length = 1;
-                                                                    break;
-                                                                }
+                                                else if (horizontal.length > 1) {
+                                                    if (linearVertical) {
+                                                        for (let m = 1; m < horizontal.length; m++) {
+                                                            if (isLineBreak(<Element> horizontal[m].element.previousSibling)) {
+                                                                horizontal.length = 1;
+                                                                break;
                                                             }
                                                         }
+                                                    }
+                                                    break;
+                                                }
+                                                else if (linearVertical) {
+                                                    const previousAbove = vertical[vertical.length - 1];
+                                                    if (previousAbove.parent.linearVertical) {
+                                                        adjacent.parent = previousAbove.parent;
+                                                        continue;
+                                                    }
+                                                    break;
+                                                }
+                                                vertical.push(adjacent);
+                                                continue;
+                                            }
+                                        }
+                                        if (isLineBreak(<Element> adjacent.element.previousSibling)) {
+                                            if (!linearVertical) {
+                                                if (horizontal.length > 1) {
+                                                    if (NodeList.linearY(horizontal)) {
+                                                        vertical = horizontal.slice();
+                                                        horizontal.length = 1;
+                                                        continue;
+                                                    }
+                                                    else {
                                                         break;
                                                     }
-                                                    else if (linearVertical) {
-                                                        const previousAbove = vertical[vertical.length - 1];
-                                                        if (previousAbove.parent.linearVertical) {
-                                                            adjacent.parent = previousAbove.parent;
-                                                            continue;
-                                                        }
-                                                        break;
-                                                    }
+                                                }
+                                                else {
                                                     vertical.push(adjacent);
                                                     continue;
                                                 }
                                             }
-                                            if (isLineBreak(<Element> adjacent.element.previousSibling)) {
-                                                if (!linearVertical) {
-                                                    if (horizontal.length > 1) {
-                                                        if (NodeList.linearY(horizontal)) {
-                                                            vertical = horizontal.slice();
-                                                            horizontal.length = 1;
-                                                            continue;
-                                                        }
-                                                        else {
-                                                            break;
-                                                        }
-                                                    }
-                                                    else {
-                                                        vertical.push(adjacent);
-                                                        continue;
-                                                    }
-                                                }
-                                            }
-                                            if (horizontal[horizontal.length - 1] !== previous) {
-                                                continue;
-                                            }
-                                            horizontal.push(adjacent);
-                                            if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
-                                                continue;
-                                            }
-                                            if (!NodeList.linearX(horizontal)) {
-                                                if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
-                                                    vertical = horizontal.slice();
-                                                    horizontal.length = 1;
-                                                }
-                                                else {
-                                                    horizontal.pop();
-                                                    break;
-                                                }
-                                            }
                                         }
-                                    }
-                                    let group: Null<T> = null;
-                                    let groupXml = '';
-                                    if (horizontal.length > 1) {
-                                        if (horizontal.length === parent.children.length) {
-                                            parent.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                                        if (horizontal[horizontal.length - 1] !== previous) {
+                                            continue;
                                         }
-                                        else {
-                                            group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
-                                            if (horizontal.some(node => node.floating || node.position === 'relative')) {
-                                                groupXml = this.writeFrameLayoutGroup(group, parent, horizontal);
-                                                group.alignmentType = NODE_ALIGNMENT.HORIZONTAL;
-                                            }
-                                            else if (horizontal.some(node => node.multiLine)) {
-                                                groupXml = this.writeRelativeLayout(group, parent);
-                                                group.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                                        horizontal.push(adjacent);
+                                        if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
+                                            continue;
+                                        }
+                                        if (!NodeList.linearX(horizontal)) {
+                                            if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
+                                                vertical = horizontal.slice();
+                                                horizontal.length = 1;
                                             }
                                             else {
-                                                groupXml = this.writeLinearLayout(group, parent, true);
-                                                this.sortLayout(group, <T[]> group.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                                                horizontal.pop();
+                                                break;
                                             }
                                         }
                                     }
-                                    else if (vertical.length > 1) {
-                                        if (vertical.length === parent.children.length) {
-                                            parent.alignmentType = NODE_ALIGNMENT.VERTICAL;
+                                }
+                                let group: Null<T> = null;
+                                let groupXml = '';
+                                if (horizontal.length > 1) {
+                                    if (horizontal.length === parent.children.length) {
+                                        parent.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                                    }
+                                    else {
+                                        group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
+                                        if (horizontal.some(node => node.floating || node.position === 'relative')) {
+                                            groupXml = this.writeFrameLayoutGroup(group, parent, horizontal);
+                                            group.alignmentType = NODE_ALIGNMENT.HORIZONTAL;
+                                        }
+                                        else if (horizontal.some(node => node.multiLine) || !NodeList.linearX(horizontal)) {
+                                            groupXml = this.writeRelativeLayout(group, parent);
+                                            group.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
                                         }
                                         else {
-                                            group = this.controllerHandler.createGroup(nodeY, vertical, parent);
-                                            groupXml = this.writeLinearLayout(group, parent, false);
+                                            groupXml = this.writeLinearLayout(group, parent, true);
+                                            this.sortLayout(group, <T[]> group.children, NODE_ALIGNMENT.HORIZONTAL, true);
                                         }
                                     }
-                                    if (group != null) {
-                                        renderXml(group, parent, groupXml, current);
-                                        parent = nodeY.parent as T;
+                                }
+                                else if (vertical.length > 1) {
+                                    if (vertical.length === parent.children.length) {
+                                        parent.alignmentType = NODE_ALIGNMENT.VERTICAL;
                                     }
+                                    else {
+                                        group = this.controllerHandler.createGroup(nodeY, vertical, parent);
+                                        groupXml = this.writeLinearLayout(group, parent, false);
+                                    }
+                                }
+                                if (group != null) {
+                                    renderXml(group, parent, groupXml, current);
+                                    parent = nodeY.parent as T;
                                 }
                             }
                             let xml = '';
@@ -835,15 +833,16 @@ export default class Application<T extends Node> {
                                                     }
                                                 }
                                                 else {
-                                                    const blockClear = NodeList.cleared(nodeY.children);
-                                                    if ((linearY && nodeY.children.every(node => node.pageflow && !node.plainText)) || nodeY.children.some((node: T) => !node.inlineElement || blockClear.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
+                                                    const clearedBlock = NodeList.cleared(nodeY.children);
+                                                    if ((linearY && nodeY.children.every(node => node.pageflow && !node.plainText)) || nodeY.children.some((node: T) => !node.inlineElement || clearedBlock.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
                                                         xml = this.writeLinearLayout(nodeY, parent, false);
                                                     }
                                                 }
                                             }
                                             if (xml === '') {
-                                                if (SETTINGS.horizontalPerspective && nodeY.children.every((node: T) => node.pageflow && node.inlineElement && !cleared.has(node))) {
+                                                if (nodeY.children.every((node: T) => node.pageflow && node.inlineElement && !cleared.has(node))) {
                                                     xml = this.writeRelativeLayout(nodeY, parent);
+                                                    nodeY.alignmentType = NODE_ALIGNMENT.OPEN;
                                                 }
                                                 else {
                                                     xml = this.writeConstraintLayout(nodeY, parent);
@@ -953,27 +952,45 @@ export default class Application<T extends Node> {
         let xml = '';
         const [floated, pageflow] = new NodeList(nodes).partition(item => item.floating || item.autoMargin);
         const [right, left] = new NodeList(floated.list).partition(item => item.float === 'right' || item.styleMap.marginLeft === 'auto');
-        const [linearX, linearY] = [pageflow.linearX, pageflow.linearY];
-        if (pageflow.length > 1 && !linearX && !linearY) {
+        let [linearX, linearY] = [pageflow.linearX, pageflow.linearY];
+        if (!linearX && !linearY && pageflow.length > 1 && right.length > 0) {
             xml = this.writeConstraintLayout(group, parent);
             group.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
         }
         else {
-            const merged: T[] = [...left.list, ...pageflow.list];
-            if (merged.length === nodes.length) {
+            const start: T[] = [...left.list, ...pageflow.list];
+            if (linearX && start.length === nodes.length) {
                 xml = this.writeLinearLayout(group, parent, horizontal);
-                group.alignmentType = (horizontal ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
-                this.sortLayout(group, <T[]> group.children, group.alignmentType, true);
+                this.sortLayout(group, <T[]> group.children, NODE_ALIGNMENT.HORIZONTAL, true);
             }
             else {
-                xml = this.writeFrameLayout(group, parent, true);
+                if (right.length === 0) {
+                    start.length = 0;
+                    start.push(...left);
+                    right.clear();
+                    right.append(...pageflow.list);
+                    xml = this.writeLinearLayout(group, parent, horizontal);
+                }
+                else {
+                    xml = this.writeFrameLayout(group, parent, true);
+                }
                 const placeholder = `{:${group.id}}`;
-                [merged, right.list].forEach((item, index) => {
+                [start, right.list].forEach((item, index) => {
                     if (item.length > 1) {
-                        const linearGroup = this.controllerHandler.createGroup(item[0], item, group);
-                        xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + this.writeLinearLayout(linearGroup, group, horizontal) + (index === 0 ? placeholder : ''));
-                        linearGroup.alignmentType = (horizontal ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
-                        this.sortLayout(linearGroup, <T[]> linearGroup.children, linearGroup.alignmentType, true);
+                        const subgroup = this.controllerHandler.createGroup(item[0], item, group);
+                        [linearX, linearY] = [NodeList.linearX(item), NodeList.linearY(item)];
+                        let content = '';
+                        if (linearX || linearY) {
+                            content = this.writeLinearLayout(subgroup, group, linearX);
+                            if (linearX) {
+                                this.sortLayout(subgroup, <T[]> subgroup.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                            }
+                        }
+                        else {
+                            content = this.writeConstraintLayout(subgroup, group);
+                            subgroup.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                        }
+                        xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + content + (index === 0 ? placeholder : ''));
                     }
                     else if (item.length > 0) {
                         item[0].alignmentType = NODE_ALIGNMENT.INLINE_WRAP;

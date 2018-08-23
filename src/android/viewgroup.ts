@@ -19,7 +19,7 @@ export default class ViewGroup extends View {
             this.parent = parent;
         }
         if (children != null) {
-            this.children = children.slice();
+            this.children = children;
         }
         if (element != null) {
             this.element = element;

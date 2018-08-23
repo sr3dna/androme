@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, capitalize } from '../lib/util';
+import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search } from '../lib/util';
 import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, hasLineBreak, setCache } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_ALIGNMENT } from '../lib/constants';
 
@@ -140,8 +140,8 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public each(predicate: (value: T, index?: number) => void) {
-        this.children.forEach(predicate);
+    public each(predicate: (value: T, index?: number) => void, rendered = false) {
+        (rendered ? this.renderChildren : this.children).forEach(predicate);
         return this;
     }
 
@@ -354,17 +354,15 @@ export default abstract class Node implements BoxModel {
                 bounds = rangeBounds;
                 this.multiLine = multiLine;
             }
-            if (bounds != null) {
-                this.bounds = bounds;
-                if (this.companion != null) {
-                    const outerBounds = assignBounds(<ClientRect> this.companion.element.getBoundingClientRect());
-                    this.bounds.left = Math.min(bounds.left, outerBounds.left);
-                    this.bounds.right = Math.max(bounds.right, outerBounds.right);
-                    this.bounds.width = this.bounds.right - this.bounds.left;
-                }
-            }
+            this.bounds = bounds;
         }
         if (this.bounds != null) {
+            if (this.companion != null) {
+                const outerBounds = this.companion.bounds;
+                this.bounds.left = Math.min(this.bounds.left, outerBounds.left);
+                this.bounds.right = Math.max(this.bounds.right, outerBounds.right);
+                this.bounds.width = this.bounds.right - this.bounds.left;
+            }
             const linear: ClientRect = {
                 top: this.bounds.top - (this.marginTop > 0 ? this.marginTop : 0),
                 right: this.bounds.right + this.marginRight,
@@ -440,20 +438,32 @@ export default abstract class Node implements BoxModel {
         this.renderChildren.push(node);
     }
 
-    private boxDimension(area: string, direction: string) {
-        const attr = area + capitalize(direction);
+    private boxDimension(area: string, side: string) {
+        const attr = area + side;
         if (this.hasElement) {
-            if (direction === 'left' || direction === 'right') {
-                const value = this.css(attr);
-                if (this.style && isPercent(value)) {
-                    return (this.style[attr] ? convertInt(this.style[attr]) : this.documentParent.box.width * (convertInt(value) / 100));
-                }
-                else {
-                    let node: T = this;
-                    if (this.companion && this.companion.linear[direction] < this.linear[direction]) {
+            if (side === 'Left' || side === 'Right') {
+                let node: T = this;
+                if (this.companion != null) {
+                    let valid = false;
+                    const direction = side.toLowerCase();
+                    switch (side) {
+                        case 'Left':
+                            valid = (this.companion.linear[direction] < this.linear[direction]);
+                            break;
+                        case 'Right':
+                            valid = (this.companion.linear[direction] > this.linear[direction]);
+                            break;
+                    }
+                    if (valid) {
                         node = this.companion;
                     }
-                    return convertInt(node.css(attr));
+                }
+                const value = node.css(attr);
+                if (node.style && isPercent(value)) {
+                    return (node.style[attr] ? convertInt(node.style[attr]) : node.documentParent.box.width * (convertInt(value) / 100));
+                }
+                else {
+                    return convertInt(value);
                 }
             }
             else {
@@ -596,19 +606,19 @@ export default abstract class Node implements BoxModel {
         if (this.inline) {
             return 0;
         }
-        return this.boxDimension('margin', 'top');
+        return this.boxDimension('margin', 'Top');
     }
     get marginRight() {
-        return this.boxDimension('margin', 'right');
+        return this.boxDimension('margin', 'Right');
     }
     get marginBottom() {
         if (this.inline) {
             return 0;
         }
-        return this.boxDimension('margin', 'bottom');
+        return this.boxDimension('margin', 'Bottom');
     }
     get marginLeft() {
-        return this.boxDimension('margin', 'left');
+        return this.boxDimension('margin', 'Left');
     }
 
     get borderTopWidth() {
@@ -625,16 +635,16 @@ export default abstract class Node implements BoxModel {
     }
 
     get paddingTop() {
-        return this.boxDimension('padding', 'top');
+        return this.boxDimension('padding', 'Top');
     }
     get paddingRight() {
-        return this.boxDimension('padding', 'right');
+        return this.boxDimension('padding', 'Right');
     }
     get paddingBottom() {
-        return this.boxDimension('padding', 'bottom');
+        return this.boxDimension('padding', 'Bottom');
     }
     get paddingLeft() {
-        return this.boxDimension('padding', 'left');
+        return this.boxDimension('padding', 'Left');
     }
 
     get pageflow() {
@@ -698,6 +708,10 @@ export default abstract class Node implements BoxModel {
     }
     get overflowY() {
         return includesEnum(this.overflow, OVERFLOW_ELEMENT.VERTICAL);
+    }
+
+    get baseline() {
+        return (this.css('verticalAlign') === 'baseline');
     }
 
     set multiLine(value) {
