@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"> 
+	<head>
+		<title>Block Space Remover</title>
+  		<meta charset="utf-8" />
+  		<link rel="stylesheet" href="site.css"   media="all" />
+  		<link rel="stylesheet" href="page.css"   media="all" />
+      <script src="../../../../../node_modules/systemjs/dist/system.js"></script>
+      <script>
+          SystemJS.config({
+              packages: {
+                  '../../../../../build': { defaultExtension: 'js' }
+              },
+              map: {
+                  'plugin-babel': '../../../../../node_modules/systemjs-plugin-babel/plugin-babel.js',
+                  'systemjs-babel-build': '../../../../../node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+              },
+              transpiler: 'plugin-babel'
+          });
+          System.import('../../../../../build/main.js').then(function(result) {
+              androme = result;
+              androme.parseDocument().then(function() {
+                  androme.close();
+                  androme.saveAllToDisk();
+              });
+          });
+        </script>
+        <script>
+            document.createElement('section');
+        </script>
+    </head>
+ <body>
+ 
+ <h1>Block Space Remover</h1>
+ <section>
+   <p>This paragraph has 32-pixel top and bottom margins.</p>
+   <p>This paragraph has 32-pixel top and bottom margins.</p>
+ </section>
+ 
+ <section>
+   <div class="space-remover-large" ></div>
+   <p>This paragraph has 32-pixel top and bottom margins, 
+      but it is preceded and followed by a block space remover.</p>
+   <div class="space-remover-large" ></div>
+   <p>This paragraph has 32-pixel top and bottom margins, 
+      but it is preceded and followed by a block space remover.</p>
+   <div class="space-remover-large" ></div>
+ </section>
+
+ </body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en"> 
+	<head>
+		<title>Collapsed Margins</title>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" href="site.css"   media="all" />
+		<link rel="stylesheet" href="page.css"   media="all" />
+		<script src="../../../../../node_modules/systemjs/dist/system.js"></script>
+		<script>
+			SystemJS.config({
+				packages: {
+					'../../../../../build': { defaultExtension: 'js' }
+				},
+				map: {
+					'plugin-babel': '../../../../../node_modules/systemjs-plugin-babel/plugin-babel.js',
+					'systemjs-babel-build': '../../../../../node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+				},
+				transpiler: 'plugin-babel'
+			});
+			System.import('../../../../../build/main.js').then(function(result) {
+				androme = result;
+				androme.parseDocument().then(function() {
+					androme.close();
+					androme.saveAllToDisk();
+				});
+			});
+		</script>
+</head>
+
+<body>
+
+ <h1>Collapsed Margins</h1>
+ <div><p class="collapsed" >Margins collapsed into parent's &uarr;&darr;</p></div>
+ <div class="border">
+   <p class="collapsed" >Margins not collapsed into parent's &uarr;&darr;</p></div>
+
+ <div class="border" >
+   <p class="collapsed" >Collapsed sibling margins &darr;</p>
+   <p class="collapsed" >Collapsed sibling margins &uarr;</p>
+   <p class="uncollapsed1" >Uncollapsed (transparent padding) &uarr;&darr;</p>
+   <p class="uncollapsed2" >Uncollapsed (transparent border) &uarr;</p></div>
+
+ 
+</body>
+</html>
