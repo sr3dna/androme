@@ -156,6 +156,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const baseline: T[] = [];
                     const multiLine = nodes.list.some(item => item.multiLine);
                     const textIndent = convertInt(node.css('textIndent'));
+                    const floatParent = (node.renderParent.alignmentType === NODE_ALIGNMENT.FLOAT);
                     let rowPaddingLeft = 0;
                     if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
                         rowPaddingLeft = node.paddingLeft;
@@ -180,7 +181,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                         else {
                             const previous = nodes.get(i - 1);
                             if (current instanceof ViewGroup ||
-                                current.multiLine ||
                                 (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) ||
                                 (!multiLine && (current.linear.top >= previous.linear.bottom || withinFraction(current.linear.left, node.box.left))) ||
                                 isLineBreak(<Element> current.element.previousSibling) ||
@@ -198,12 +198,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 current.android(mapLayout['topBottom'], previousRowBottom.stringId);
                                 current.android(relativeParent['left'], 'true');
-                                width = (current.multiLine ? dimension.right - dimension.left : dimension.width);
+                                width = dimension.width;
                                 if (rowPaddingLeft > 0) {
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, current.paddingLeft + rowPaddingLeft);
                                 }
-                                adjustBaseline(baseline);
-                                baseline.length = 0;
+                                if (!floatParent) {
+                                    adjustBaseline(baseline);
+                                    baseline.length = 0;
+                                }
                                 rows.push([current]);
                             }
                             else {
@@ -215,11 +217,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 rows[rows.length - 1].push(current);
                             }
                         }
-                        if (current.alignMargin) {
+                        if (!floatParent && current.alignMargin) {
                             baseline.push(current);
                         }
                     }
-                    adjustBaseline(baseline);
+                    if (!floatParent) {
+                        adjustBaseline(baseline);
+                    }
                 }
                 else if (node.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL)) {
                     const baseline =  NodeList.baselineText(nodes.list);

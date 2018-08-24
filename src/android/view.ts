@@ -3,7 +3,6 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { hasLineBreak } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -429,7 +428,7 @@ export default class View extends Node {
         let textAlign = this.styleMap.textAlign;
         let textAlignParent = '';
         const verticalAlign = this.styleMap.verticalAlign;
-        if (!this.renderParent.linearVertical && (!this.floating || this.is(NODE_STANDARD.TEXT))) {
+        if (!this.floating || this.is(NODE_STANDARD.TEXT)) {
             textAlignParent = this.inheritCss('textAlign');
         }
         if (textAlign === '' && this.element.tagName === 'TH') {
@@ -443,9 +442,14 @@ export default class View extends Node {
                 case 'top':
                 case 'text-top':
                     vertical = 'top';
+                    if (this.renderParent.linearHorizontal && this.android('layout_height') === 'wrap_content') {
+                        this.android('layout_height', 'match_parent');
+                    }
                     break;
                 case 'middle':
-                    vertical = 'center_vertical';
+                    if (this.documentParent.css('display') === 'table-cell' || this.documentParent.lineHeight > 0) {
+                        vertical = 'center_vertical';
+                    }
                     break;
                 case 'bottom':
                 case 'text-bottom':
@@ -561,26 +565,48 @@ export default class View extends Node {
                     });
                 }
                 if (this.linearHorizontal) {
-                    if (this.renderChildren.some(node => node.floating || (['fixed', 'absolute'].includes(node.position) && node.alignMargin))) {
+                    if (this.renderChildren.some(node => node.floating)) {
                         this.android('baselineAligned', 'false');
                     }
-                    else {
+                    else if (this.renderChildren.some(node => node.nodeType < NODE_STANDARD.IMAGE)) {
                         const baseline = NodeList.baselineText(this.renderChildren, false, (this.renderParent.is(NODE_STANDARD.GRID) || this.inline ? this.documentParent : undefined));
                         if (baseline != null) {
                             this.android('baselineAlignedChildIndex', this.renderChildren.indexOf(baseline).toString());
                         }
                     }
                 }
-                break;
-        }
-        if (this.alignmentType === NODE_ALIGNMENT.HORIZONTAL) {
-            if (this.renderChildren.length > 1 && this.renderChildren.every(node => !hasLineBreak(node.element) && node.is(NODE_STANDARD.TEXT))) {
-                this.each((node: T, index: number) => {
-                    if (index > 0 && node.inline) {
-                        node.android('singleLine', 'true');
+                else {
+                    const cleared = NodeList.cleared(this.renderChildren);
+                    for (let i = 1; i < this.renderChildren.length; i++) {
+                        const previous = this.renderChildren[i - 1];
+                        const current = this.renderChildren[i];
+                        const marginBottom = convertInt(previous.styleMap.marginBottom);
+                        const marginTop = convertInt(current.styleMap.marginTop);
+                        if (!previous.inlineElement && marginBottom > 0 && previous.css('overflow') === 'visible' && !cleared.has(previous) && !current.inlineElement && marginTop > 0 && current.css('overflow') === 'visible' && !cleared.has(current)) {
+                            if (marginBottom >= marginTop) {
+                                const offset = current.marginTop - marginTop;
+                                if (offset > 0) {
+                                    current.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
+                                }
+                                else {
+                                    current.css('marginTop', '0px');
+                                    current.delete('android', 'layout_marginTop');
+                                }
+                            }
+                            else {
+                                const offset = previous.marginBottom - marginBottom;
+                                if (offset > 0) {
+                                    previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, offset);
+                                }
+                                else {
+                                    previous.css('marginBottom', '0px');
+                                    previous.delete('android', 'layout_marginBottom');
+                                }
+                            }
+                        }
                     }
-                }, true);
-            }
+                }
+                break;
         }
         if (options.autoSizePaddingAndBorderWidth) {
             let viewWidth = convertInt(this.android('layout_width'));

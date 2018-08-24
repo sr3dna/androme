@@ -86,9 +86,8 @@ export default abstract class Resource<T extends Node> {
             if (getCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
-                const inlineChild = (node.renderChildren.length > 0 && node.renderChildren.every(item => item.inline));
                 for (const attr in result) {
-                   if ((node.inline && (attr === 'marginTop' || attr === 'marginBottom')) || (inlineChild && (attr === 'paddingTop' || attr === 'paddingBottom'))) {
+                   if (node.inline && (attr === 'marginTop' || attr === 'marginBottom')) {
                         formatted[attr] = '0px';
                     }
                     else {

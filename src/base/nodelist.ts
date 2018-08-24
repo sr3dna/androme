@@ -1,7 +1,7 @@
 import Node from './node';
 import { sortAsc, sortDesc } from '../lib/util';
 import { NODE_STANDARD } from '../lib/constants';
-import { getNode } from '../lib/dom';
+import { getNode, isLineBreak } from '../lib/dom';
 
 export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
@@ -24,7 +24,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     public static baselineText<T extends Node>(list: T[], text = false, parent?: T) {
         const images = (!text ? list.filter(node => node.is(NODE_STANDARD.IMAGE) && node.baseline) : []);
-        const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline)).sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1)[0];
+        const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline)).sort((a, b) => Math.max(a.bounds.height, a.lineHeight) > Math.max(b.bounds.height, b.lineHeight) ? 1 : -1)[0];
         const nodeType = (text ? NODE_STANDARD.TEXT : NODE_STANDARD.IMAGE);
         if (baseline == null && parent != null) {
             const valid = Array.from(parent.element.children).some(element => {
@@ -50,28 +50,42 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return true;
             default:
                 if (NodeList.cleared(nodes).size === 0) {
-                    const right = Math.min.apply(null, nodes.map(node => node.bounds.right));
-                    const bottom = Math.min.apply(null, nodes.map(node => node.bounds.bottom));
-                    let leftRight = 0;
-                    return nodes.every(node => {
-                        if (node.bounds.left < right) {
-                            leftRight++;
+                    let valid = true;
+                    const horizontal = nodes.filter(node => node.float !== 'left');
+                    for (let i = 1; i < horizontal.length; i++) {
+                        const previous = horizontal[i - 1];
+                        const current = horizontal[i];
+                        if (!(previous.inlineElement && current.inlineElement && previous.bounds.right <= current.bounds.left)) {
+                            valid = false;
+                            break;
                         }
-                        return (leftRight <= 1 && node.inlineElement && !node.autoMargin && node.bounds.top < bottom);
-                    });
+                    }
+                    if (valid) {
+                        return true;
+                    }
+                    const left = Math.min.apply(null, nodes.map(node => node.bounds.left));
+                    const right = Math.min.apply(null, nodes.map(node => node.bounds.right));
+                    if (nodes.filter(node => node.bounds.left === left).length > 1 || nodes.filter(node => node.bounds.right === right).length > 1) {
+                        return false;
+                    }
+                    const bottom = Math.min.apply(null, nodes.map(node => node.bounds.bottom));
+                    return nodes.every(node => node.inlineElement && !node.autoMargin && node.bounds.top < bottom);
                 }
                 return false;
         }
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.pageflow && !node.floating);
+        const nodes = list.filter(node => node.pageflow);
         switch (nodes.length) {
             case 0:
                 return false;
             case 1:
                 return true;
             default:
+                if (nodes.every((node, index) => node.inline && (index === 0 || !isLineBreak(<HTMLElement> node.element.previousElementSibling)))) {
+                    return false;
+                }
                 const minRight = Math.min.apply(null, nodes.map(node => node.bounds.right));
                 const maxRight = Math.max.apply(null, nodes.map(node => node.bounds.right));
                 return nodes.every((node, index) => {
