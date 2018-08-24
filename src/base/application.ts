@@ -294,7 +294,7 @@ export default class Application<T extends Node> {
                     ['top', 'right', 'bottom', 'left'].forEach(value => {
                         if (node.styleMap[value] != null) {
                             style[value] = node.styleMap[value];
-                            element.style[value] = '0px';
+                            element.style[value] = 'auto';
                         }
                     });
                 }
@@ -362,11 +362,8 @@ export default class Application<T extends Node> {
                 let valid = true;
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                     if (element.nodeName === '#text') {
-                        switch(node.element.tagName) {
-                            case 'SELECT':
-                                return;
-                            default:
-                                text.push(element);
+                        if (node.element.tagName !== 'SELECT') {
+                            text.push(element);
                         }
                     }
                     else if (!supportInline.includes(element.tagName) || getNode(element)) {
@@ -486,21 +483,6 @@ export default class Application<T extends Node> {
             const external = new Map();
             function renderXml(node: T, parent: T, xml: string, current = '') {
                 if (xml !== '') {
-                    if (current === '' && !application.elements.has(node.element)) {
-                        if (node.isSet('dataset', 'target')) {
-                            const target = application.findByDomId(<string> node.dataset.target, true);
-                            if (target == null || target !== parent) {
-                                application.addInsertQueue(<string> node.dataset.target, [xml]);
-                                node.relocated = true;
-                                return;
-                            }
-                        }
-                        else if (parent.isSet('dataset', 'target')) {
-                            application.addInsertQueue(parent.nodeId, [xml]);
-                            node.dataset.target = parent.nodeId;
-                            return;
-                        }
-                    }
                     if (current !== '') {
                         if (!external.has(current)) {
                             external.set(current, []);
@@ -508,6 +490,21 @@ export default class Application<T extends Node> {
                         external.get(current).push(xml);
                     }
                     else {
+                        if (!application.elements.has(node.element)) {
+                            if (node.isSet('dataset', 'target')) {
+                                const target = application.findByDomId(<string> node.dataset.target, true);
+                                if (!target || target !== parent) {
+                                    application.addInsertQueue(<string> node.dataset.target, [xml]);
+                                    node.relocated = true;
+                                    return;
+                                }
+                            }
+                            else if (parent.isSet('dataset', 'target')) {
+                                application.addInsertQueue(parent.nodeId, [xml]);
+                                node.dataset.target = parent.nodeId;
+                                return;
+                            }
+                        }
                         if (!partial.has(parent.id)) {
                             partial.set(parent.id, []);
                         }
@@ -627,12 +624,12 @@ export default class Application<T extends Node> {
                                         }
                                         previous = (() => {
                                             let node = adjacent.previousSibling;
-                                            while (node != null && !node.pageflow) {
+                                            while (node && !node.pageflow) {
                                                 node = node.previousSibling;
                                             }
                                             return node;
                                         })();
-                                        if (previous != null) {
+                                        if (previous) {
                                             const alignVertical = (adjacent.plainText && adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
                                                                   (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
                                                                   (!previous.floating && (!previous.inlineElement || previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
@@ -696,7 +693,7 @@ export default class Application<T extends Node> {
                                             continue;
                                         }
                                         horizontal.push(adjacent);
-                                        if (previous == null || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
+                                        if (!previous || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
                                             continue;
                                         }
                                         if (!NodeList.linearX(horizontal)) {
@@ -1181,6 +1178,7 @@ export default class Application<T extends Node> {
                 if (parent != null) {
                     node.parent = parent;
                     node.inherit(parent, 'style');
+                    node.styleMap.whiteSpace = parent.css('whiteSpace');
                 }
                 node.styleMap.display = 'inline';
                 node.styleMap.clear = 'none';

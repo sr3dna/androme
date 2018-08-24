@@ -156,7 +156,17 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
 }
 
 export function hasLineBreak(element: HTMLElement) {
-    return (element instanceof HTMLElement && ((element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || ['pre', 'pre-wrap'].includes(<string> getStyle(element).whiteSpace) && /\n/.test(element.textContent || '')));
+    const node = getNode(element);
+    let whiteSpace = '';
+    let styleMap = false;
+    if (node != null) {
+        whiteSpace = node.css('whiteSpace');
+        styleMap = (node.styleMap.whiteSpace != null);
+    }
+    else {
+        whiteSpace = getStyle(element).whiteSpace || '';
+    }
+    return (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || ((['pre', 'pre-wrap'].includes(whiteSpace) || (!styleMap && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))) && /\n/.test(element.textContent || ''));
 }
 
 export function isLineBreak(element: Null<Element>, direction = 'previous') {

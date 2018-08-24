@@ -24,7 +24,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     public static baselineText<T extends Node>(list: T[], text = false, parent?: T) {
         const images = (!text ? list.filter(node => node.is(NODE_STANDARD.IMAGE) && node.baseline) : []);
-        const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline)).sort((a, b) => Math.max(a.bounds.height, a.lineHeight) > Math.max(b.bounds.height, b.lineHeight) ? 1 : -1)[0];
+        const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline && !node.multiLine)).sort((a, b) => Math.max(a.bounds.height, a.lineHeight) >= Math.max(b.bounds.height, b.lineHeight) ? -1 : 1)[0];
         const nodeType = (text ? NODE_STANDARD.TEXT : NODE_STANDARD.IMAGE);
         if (baseline == null && parent != null) {
             const valid = Array.from(parent.element.children).some(element => {
@@ -76,7 +76,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.pageflow);
+        const nodes = list.filter(node => node.pageflow && !node.floating);
         switch (nodes.length) {
             case 0:
                 return false;
