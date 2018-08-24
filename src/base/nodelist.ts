@@ -22,18 +22,20 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return result;
     }
 
-    public static baselineText<T extends Node>(list: T[], parent?: T) {
-        const baseline = list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline).sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1)[0];
+    public static baselineText<T extends Node>(list: T[], text = false, parent?: T) {
+        const images = (!text ? list.filter(node => node.is(NODE_STANDARD.IMAGE) && node.baseline) : []);
+        const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline)).sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1)[0];
+        const nodeType = (text ? NODE_STANDARD.TEXT : NODE_STANDARD.IMAGE);
         if (baseline == null && parent != null) {
             const valid = Array.from(parent.element.children).some(element => {
                 const node = getNode(element);
                 if (node != null) {
-                    return ((node.nodeType <= NODE_STANDARD.TEXT && node.baseline) || (node.linearHorizontal && node.children.some(item => item.nodeType <= NODE_STANDARD.TEXT && item.baseline)));
+                    return ((node.nodeType <= nodeType && node.baseline) || (node.linearHorizontal && node.children.some(item => item.nodeType <= nodeType && item.baseline)));
                 }
                 return false;
             });
             if (valid) {
-                return list.sort((a, b) => a.nodeType >= b.nodeType ? -1 : 1).find(node => node.nodeType <= NODE_STANDARD.TEXT && node.baseline);
+                return list.slice().sort((a, b) => a.nodeType >= b.nodeType ? -1 : 1).find(node => node.nodeType <= nodeType && node.baseline);
             }
         }
         return baseline;
@@ -97,7 +99,6 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         if (Array.isArray(nodes)) {
             this._list = nodes;
         }
-        this.parent = parent;
     }
 
     public [Symbol.iterator]() {

@@ -89,8 +89,15 @@ export default abstract class Node implements BoxModel {
         return false;
     }
 
-    public of(nodeType: number, alignmentType: number) {
-        return (this.nodeType === nodeType && this.alignmentType === alignmentType);
+    public of(nodeType: number, ...alignmentType: number[]) {
+        if (this.nodeType === nodeType) {
+            for (const value of alignmentType) {
+                if (this.alignmentType === value) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public add(obj: string, attr: string, value = '', overwrite = true) {
@@ -314,8 +321,8 @@ export default abstract class Node implements BoxModel {
     public setExcludeProcedure(exclude?: string) {
         if (exclude == null && this.hasElement) {
             exclude = this.dataset.excludeProcedure || '';
-            if (this.parentElement != null) {
-                exclude += '|' + (this.parentElement.dataset.excludeProcedureChild || '');
+            if (this.element.parentElement != null) {
+                exclude += '|' + (this.element.parentElement.dataset.excludeProcedureChild || '');
             }
         }
         if (exclude != null) {
@@ -330,8 +337,8 @@ export default abstract class Node implements BoxModel {
     public setExcludeResource(exclude?: string) {
         if (exclude == null) {
             exclude = this.dataset.excludeResource;
-            if (this.parentElement != null) {
-                exclude += '|' + (this.parentElement.dataset.excludeResourceChild || '');
+            if (this.element.parentElement != null) {
+                exclude += '|' + (this.element.parentElement.dataset.excludeResourceChild || '');
             }
         }
         if (this.hasElement && exclude != null) {
@@ -434,8 +441,10 @@ export default abstract class Node implements BoxModel {
         this.children = this.children.filter(child => child !== node);
     }
 
-    protected append(node: T) {
-        this.renderChildren.push(node);
+    public append(node: T) {
+        if (this.renderChildren.indexOf(node) === -1) {
+            this.renderChildren.push(node);
+        }
     }
 
     private boxDimension(area: string, side: string) {
@@ -519,10 +528,6 @@ export default abstract class Node implements BoxModel {
         return this._element || {};
     }
 
-    get parentElement() {
-        return this._element && this._element.parentElement;
-    }
-
     get hasElement() {
         return (this._element instanceof HTMLElement);
     }
@@ -575,6 +580,44 @@ export default abstract class Node implements BoxModel {
             }
         }
         return 0;
+    }
+
+    get parentElementNode() {
+        let parent = getNode(this.element.parentElement);
+        if (parent) {
+            if (!this.pageflow) {
+                let found = false;
+                let previous: Null<T> = null;
+                while (parent && parent.id !== 0) {
+                    if (this.position === 'absolute') {
+                        if (!['static', 'initial'].includes(parent.position)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    else {
+                        if ((this.withinX(parent.box) && this.withinY(parent.box)) || (previous != null && ((this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) || (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) || (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) || (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)))) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    previous = parent as T;
+                    parent = getNode(parent.element.parentElement) as T;
+                }
+                if (!found)  {
+                    parent = null;
+                }
+            }
+            else {
+                if (parent === this.companion) {
+                    const container = getNode(parent.element.parentElement);
+                    if (container) {
+                        parent = container;
+                    }
+                }
+            }
+        }
+        return parent;
     }
 
     get display() {

@@ -1,10 +1,10 @@
 export enum NODE_STANDARD {
     NONE = 0,
-    SELECT,
     RANGE,
-    CHECKBOX,
     RADIO,
+    CHECKBOX,
     BUTTON,
+    SELECT,
     EDIT,
     INLINE,
     TEXT,
@@ -30,6 +30,7 @@ export enum NODE_ALIGNMENT {
     SINGLE,
     HORIZONTAL,
     VERTICAL,
+    FLOAT,
     ABSOLUTE,
     INLINE_WRAP
 }

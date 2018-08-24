@@ -349,42 +349,12 @@ export default class Application<T extends Node> {
             const visible = this.cache.visible;
             for (const node of visible) {
                 if (!node.documentRoot) {
-                    let parent = getNode(node.element.parentElement);
-                    if (parent) {
-                        if (!node.pageflow) {
-                            let found = false;
-                            let previous: Null<T> = null;
-                            while (parent && parent.id !== 0) {
-                                if (node.position === 'absolute') {
-                                    const position = parent.position;
-                                    if (!(position === 'static' || position === 'initial')) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                else {
-                                    if ((node.withinX(parent.box) && node.withinY(parent.box)) || (previous != null && ((node.linear.top >= parent.linear.top && node.linear.top < previous.linear.top) || (node.linear.right <= parent.linear.right && node.linear.right > previous.linear.right) || (node.linear.bottom <= parent.linear.bottom && node.linear.bottom > previous.linear.bottom) || (node.linear.left >= parent.linear.left && node.linear.left < previous.linear.left)))) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                previous = parent as T;
-                                parent = getNode(parent.element.parentElement) as T;
-                            }
-                            if (!found)  {
-                                parent = this.cache.parent;
-                            }
-                        }
-                        else {
-                            if (parent === node.companion) {
-                                const container = getNode(parent.element.parentElement);
-                                if (container) {
-                                    parent = container;
-                                }
-                            }
-                        }
-                        node.parent = parent;
+                    let parent = node.parentElementNode;
+                    if (parent == null) {
+                        parent = this.cache.parent;
                     }
+                    node.parent = parent;
+                    node.documentParent = parent;
                 }
             }
             for (const node of visible) {
@@ -579,7 +549,7 @@ export default class Application<T extends Node> {
                 const includes: string[] = [];
                 let current = '';
                 for (let k = 0; k < axisY.length; k++) {
-                    const nodeY = axisY[k];
+                    let nodeY = axisY[k];
                     if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
                         continue;
                     }
@@ -651,15 +621,22 @@ export default class Application<T extends Node> {
                                 for (let l = k + 1; l < axisY.length; l++) {
                                     const adjacent = axisY[l];
                                     if (adjacent.pageflow) {
-                                        const previous = adjacent.previousSibling;
-                                        if (previous != null) {
-                                            if (isLineBreak(<Element> previous.element.nextSibling, 'next')) {
-                                                break;
+                                        let previous = adjacent.previousSibling;
+                                        if (previous && isLineBreak(<Element> previous.element.nextSibling, 'next')) {
+                                            break;
+                                        }
+                                        previous = (() => {
+                                            let node = previous;
+                                            while (node != null && !node.pageflow) {
+                                                node = node.previousSibling;
                                             }
+                                            return node;
+                                        })();
+                                        if (previous != null) {
                                             const alignVertical = (adjacent.plainText && adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
-                                                                    (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
-                                                                    (!previous.floating && (previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
-                                                                    (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin));
+                                                                  (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
+                                                                  (!previous.floating && (previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
+                                                                  (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin));
                                             if (cleared.has(adjacent)) {
                                                 const floated = new Set(['both', ...horizontal.map(item => item.float)]);
                                                 if (!floated.has(adjacent.css('clear')) && !alignVertical) {
@@ -737,22 +714,29 @@ export default class Application<T extends Node> {
                                 let group: Null<T> = null;
                                 let groupXml = '';
                                 if (horizontal.length > 1) {
-                                    if (horizontal.length === parent.children.length) {
-                                        parent.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                                    if (horizontal.some(node => node.floating)) {
+                                        group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
+                                        groupXml = this.writeFrameLayoutGroup(group, parent, horizontal);
                                     }
                                     else {
-                                        group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
-                                        if (horizontal.some(node => node.floating || node.position === 'relative')) {
-                                            groupXml = this.writeFrameLayoutGroup(group, parent, horizontal);
-                                            group.alignmentType = NODE_ALIGNMENT.HORIZONTAL;
-                                        }
-                                        else if (horizontal.some(node => node.multiLine) || !NodeList.linearX(horizontal)) {
-                                            groupXml = this.writeRelativeLayout(group, parent);
-                                            group.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                                        if (horizontal.length === parent.children.length) {
+                                            parent.alignmentType = NODE_ALIGNMENT.HORIZONTAL;
+                                            if (parent.is(NODE_STANDARD.RELATIVE)) {
+                                                this.sortLayout(parent, axisY, NODE_ALIGNMENT.HORIZONTAL);
+                                                this.sortLayout(parent, <T[]> parent.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                                                nodeY = axisY[k];
+                                            }
                                         }
                                         else {
-                                            groupXml = this.writeLinearLayout(group, parent, true);
-                                            this.sortLayout(group, <T[]> group.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                                            group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
+                                            if (horizontal.some(node => node.multiLine) || !NodeList.linearX(horizontal)) {
+                                                groupXml = this.writeRelativeLayout(group, parent);
+                                                group.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                                            }
+                                            else {
+                                                groupXml = this.writeLinearLayout(group, parent, true);
+                                                this.sortLayout(group, <T[]> group.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                                            }
                                         }
                                     }
                                 }
@@ -829,12 +813,11 @@ export default class Application<T extends Node> {
                                                     else if ((float.has('left') || float.has('none')) && float.has('right')) {
                                                         const group = this.controllerHandler.createGroup(nodeY, <T[]> nodeY.children, parent, nodeY.element);
                                                         xml = this.writeFrameLayoutGroup(group, parent, <T[]> group.children);
-                                                        group.alignmentType = NODE_ALIGNMENT.HORIZONTAL;
                                                     }
                                                 }
                                                 else {
                                                     const clearedBlock = NodeList.cleared(nodeY.children);
-                                                    if ((linearY && nodeY.children.every(node => node.pageflow && !node.plainText)) || nodeY.children.some((node: T) => !node.inlineElement || clearedBlock.has(node)) && !nodeY.children.some(node => node.autoMargin)) {
+                                                    if (linearY || (nodeY.children.some(node => !node.inlineElement || clearedBlock.has(node)) && !nodeY.children.some(node => node.autoMargin))) {
                                                         xml = this.writeLinearLayout(nodeY, parent, false);
                                                     }
                                                 }
@@ -954,7 +937,7 @@ export default class Application<T extends Node> {
         const [right, left] = new NodeList(floated.list).partition(item => item.float === 'right' || item.styleMap.marginLeft === 'auto');
         let [linearX, linearY] = [pageflow.linearX, pageflow.linearY];
         if (!linearX && !linearY && pageflow.length > 1 && right.length > 0) {
-            xml = this.writeConstraintLayout(group, parent);
+            xml = this.writeRelativeLayout(group, parent);
             group.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
         }
         else {
@@ -970,6 +953,7 @@ export default class Application<T extends Node> {
                     right.clear();
                     right.append(...pageflow.list);
                     xml = this.writeLinearLayout(group, parent, horizontal);
+                    group.alignmentType = NODE_ALIGNMENT.FLOAT;
                 }
                 else {
                     xml = this.writeFrameLayout(group, parent, true);
@@ -987,13 +971,15 @@ export default class Application<T extends Node> {
                             }
                         }
                         else {
-                            content = this.writeConstraintLayout(subgroup, group);
+                            content = this.writeRelativeLayout(subgroup, group);
                             subgroup.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
                         }
                         xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + content + (index === 0 ? placeholder : ''));
+                        group.append(subgroup);
                     }
                     else if (item.length > 0) {
                         item[0].alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                        group.append(item[0]);
                     }
                 });
             }

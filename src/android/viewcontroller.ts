@@ -150,10 +150,8 @@ export default class ViewController<T extends View> extends Controller<T> {
             constraint = node.is(NODE_STANDARD.CONSTRAINT);
             relative = node.is(NODE_STANDARD.RELATIVE);
             if (nodes.length > 0 && (constraint || relative || flex.enabled)) {
-                node.constraint.guideline = {};
                 mapLayout = MAP_LAYOUT[(relative ? 'relative' : 'constraint')];
-                const inlineWrap = (node.inlineWrap || node.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.OPEN) || nodes.list.some(item => item.inlineWrap));
-                if (relative && inlineWrap) {
+                if (relative && (node.inlineWrap || node.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.OPEN, NODE_ALIGNMENT.HORIZONTAL) || nodes.list.some(item => item.inlineWrap))) {
                     const rows: T[][] = [];
                     const baseline: T[] = [];
                     const multiLine = nodes.list.some(item => item.multiLine);
@@ -180,11 +178,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                             rows[rows.length] = [current];
                         }
                         else {
-                            const group = (current instanceof ViewGroup);
                             const previous = nodes.get(i - 1);
-                            if ((group && inlineWrap) ||
+                            if (current instanceof ViewGroup ||
                                 current.multiLine ||
-                                (previous.multiLine && (!previous.is(NODE_STANDARD.TEXT) || (previous.element.textContent && previous.element.textContent.trim() !== '' && !/^\s*\n/.test(previous.element.textContent)))) ||
                                 (multiLine && (Math.floor(width - current.marginLeft) + dimension.width > node.box.width)) ||
                                 (!multiLine && (current.linear.top >= previous.linear.bottom || withinFraction(current.linear.left, node.box.left))) ||
                                 isLineBreak(<Element> current.element.previousSibling) ||
@@ -197,7 +193,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         previousRowBottom = items[j];
                                     }
                                 }
-                                if (group) {
+                                if (current instanceof ViewGroup) {
                                     current.constraint.marginVertical = previousRowBottom.stringId;
                                 }
                                 current.android(mapLayout['topBottom'], previousRowBottom.stringId);
@@ -227,6 +223,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
                 else if (node.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL)) {
                     const baseline =  NodeList.baselineText(nodes.list);
+                    const text =  NodeList.baselineText(nodes.list, true);
                     const highest = nodes.sort((a, b) => a.linear.top <= b.linear.top ? -1 : 1).get(0);
                     const lowest = nodes.sort((a, b) => a.linear.bottom >= b.linear.bottom ? -1 : 1).get(0);
                     for (let i = 0; i < nodes.length; i++) {
@@ -242,8 +239,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                         switch (current.css('verticalAlign')) {
                             case 'text-top':
-                                if (baseline != null && current !== baseline) {
-                                    current.app(mapLayout['top'], baseline.stringId);
+                                if (text != null && current !== text) {
+                                    current.app(mapLayout['top'], text.stringId);
                                     break;
                                 }
                             case 'top':
@@ -258,8 +255,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 break;
                             case 'text-bottom':
-                                if (baseline != null && current !== baseline) {
-                                    current.app(mapLayout['bottom'], baseline.stringId);
+                                if (text != null && current !== text) {
+                                    current.app(mapLayout['bottom'], text.stringId);
                                     break;
                                 }
                             case 'bottom':
@@ -275,11 +272,16 @@ export default class ViewController<T extends View> extends Controller<T> {
                         for (const current of pageflow) {
                             const parent = current.documentParent;
                             if (constraint) {
-                                if (current.linear.left <= parent.box.left || withinFraction(current.linear.left, parent.box.left)) {
-                                    current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                if (current.centerMargin) {
+                                    this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                 }
-                                if (current.linear.right >= parent.box.right || withinFraction(current.linear.right, parent.box.right)) {
-                                    current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.inlineWrap || current.styleMap.marginLeft === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
+                                else {
+                                    if (current.linear.left <= parent.box.left || withinFraction(current.linear.left, parent.box.left)) {
+                                        current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                    }
+                                    if (current.linear.right >= parent.box.right || withinFraction(current.linear.right, parent.box.right)) {
+                                        current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.inlineWrap || current.styleMap.marginLeft === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
+                                    }
                                 }
                                 let topParent = false;
                                 if (current.linear.top <= parent.box.top || withinFraction(current.linear.top, parent.box.top)) {
@@ -311,36 +313,31 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     continue;
                                 }
                                 else {
+                                    const stringId = adjacent.stringId;
                                     const horizontal = (resolveAnchor(adjacent, nodes, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '');
                                     const vertical = (resolveAnchor(adjacent, nodes, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '');
                                     const intersectY = current.intersectY(adjacent.linear);
                                     const alignMargin = (current.alignMargin && adjacent.alignMargin);
-                                    const stringId = adjacent.stringId;
                                     if (constraint) {
-                                        if (convertInt(current.styleMap.width) > 0 && current.autoMargin) {
-                                            this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
+                                        if (current.viewWidth === 0 && current.linear.left === adjacent.linear.left && current.linear.right === adjacent.linear.right) {
+                                            if (!mapParent(current, 'right')) {
+                                                current.anchor(mapLayout['left'], stringId);
+                                            }
+                                            if (!mapParent(current, 'left')) {
+                                                current.anchor(mapLayout['right'], stringId);
+                                            }
                                         }
-                                        else {
-                                            if (current.viewWidth === 0 && current.linear.left === adjacent.linear.left && current.linear.right === adjacent.linear.right) {
-                                                if (!mapParent(current, 'right')) {
-                                                    current.anchor(mapLayout['left'], stringId);
-                                                }
-                                                if (!mapParent(current, 'left')) {
-                                                    current.anchor(mapLayout['right'], stringId);
-                                                }
+                                        if (withinRange(current.linear.left, adjacent.linear.right, (alignMargin ? SETTINGS.constraintWhitespaceHorizontalOffset : 0))) {
+                                            if (current.float !== 'right') {
+                                                current.anchor(mapLayout['leftRight'], stringId, horizontal, current.withinX(adjacent.linear));
                                             }
-                                            if (withinRange(current.linear.left, adjacent.linear.right, (alignMargin ? SETTINGS.constraintWhitespaceHorizontalOffset : 0))) {
-                                                if (current.float !== 'right') {
-                                                    current.anchor(mapLayout['leftRight'], stringId, horizontal, current.withinX(adjacent.linear));
-                                                }
-                                                else {
-                                                    current.constraint.marginHorizontal = adjacent.stringId;
-                                                }
+                                            else {
+                                                current.constraint.marginHorizontal = adjacent.stringId;
                                             }
-                                            if (withinRange(current.linear.right, adjacent.linear.left, (alignMargin ? SETTINGS.constraintWhitespaceHorizontalOffset : 0))) {
-                                                if (current.float !== 'left') {
-                                                    current.anchor(mapLayout['rightLeft'], stringId, horizontal, current.withinX(adjacent.linear));
-                                                }
+                                        }
+                                        if (withinRange(current.linear.right, adjacent.linear.left, (alignMargin ? SETTINGS.constraintWhitespaceHorizontalOffset : 0))) {
+                                            if (current.float !== 'left') {
+                                                current.anchor(mapLayout['rightLeft'], stringId, horizontal, current.withinX(adjacent.linear));
                                             }
                                         }
                                         const topParent = mapParent(current, 'top');
@@ -999,12 +996,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                             const [adjacent, unanchored] = nodes.partition(item => item.anchored);
                             for (const current of unanchored) {
-                                adjacent.each(item => deleteConstraints(item, current.stringId));
                                 if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
-                                    deleteConstraints(current);
                                     this.setAlignParent(current);
                                 }
-                                else if (SETTINGS.constraintCirclePositionAbsolute && adjacent.length > 0) {
+                                else if (SETTINGS.constraintCirclePositionAbsolute && adjacent.length > 0 && !current.constraint.horizontal && !current.constraint.vertical) {
                                     deleteConstraints(current, '', true);
                                     const opposite = adjacent.get(0);
                                     const center1 = current.center;
@@ -1056,7 +1051,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     current.constraint.vertical = true;
                                 }
                                 else {
-                                    deleteConstraints(current);
                                     this.addGuideline(current);
                                 }
                             }
@@ -1065,7 +1059,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                             for (const current of nodes) {
                                 if (!current.anchored) {
                                     if (withinRange(current.horizontalBias, 0.5, 0.01) && withinRange(current.verticalBias, 0.5, 0.01)) {
-                                        deleteConstraints(current);
                                         current.android('layout_centerInParent', 'true');
                                         continue;
                                     }
@@ -1893,7 +1886,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     });
                 }
                 if (!found) {
-                    const guideline = parent.constraint.guideline;
+                    const guideline = parent.constraint.guideline || {};
                     const options = {
                         android: {
                             orientation: (index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL)
@@ -1930,6 +1923,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             guideline[value][beginPercent][LT] = {};
                         }
                         guideline[value][beginPercent][LT][stringId] = options.app[beginPercent];
+                        parent.constraint.guideline = guideline;
                     }
                 }
             }

@@ -3,7 +3,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { getNode, getStyle, hasLineBreak } from '../lib/dom';
+import { hasLineBreak } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -312,7 +312,7 @@ export default class View extends Node {
                 const widthRoot = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0));
                 const rightInline = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.inlineElement).map(node => node.linear.right)]);
                 const blockElement = (!this.inlineElement || (this.display === 'block' && !this.floating));
-                const wrap = (this.nodeType <= NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || this.is(NODE_STANDARD.RADIO_GROUP) || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
+                const wrap = (this.nodeType < NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || this.is(NODE_STANDARD.RADIO_GROUP) || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
                 const widestChild: T[] = [];
                 if (blockElement && renderParent.linearVertical) {
                     let widest = 0;
@@ -429,7 +429,7 @@ export default class View extends Node {
         let textAlign = this.styleMap.textAlign;
         let textAlignParent = '';
         const verticalAlign = this.styleMap.verticalAlign;
-        if (!this.floating || this.is(NODE_STANDARD.TEXT)) {
+        if (!this.renderParent.linearVertical && (!this.floating || this.is(NODE_STANDARD.TEXT))) {
             textAlignParent = this.inheritCss('textAlign');
         }
         if (textAlign === '' && this.element.tagName === 'TH') {
@@ -500,7 +500,7 @@ export default class View extends Node {
                     this.android('layout_gravity', horizontal);
                 }
             }
-            if (this.is(NODE_STANDARD.IMAGE) && (renderParent.linearHorizontal || renderParent.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL))) {
+            if (this.is(NODE_STANDARD.IMAGE) && (this.baseline || renderParent.linearHorizontal || renderParent.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL))) {
                 this.android('baselineAlignBottom', 'true');
             }
         }
@@ -564,9 +564,11 @@ export default class View extends Node {
                     if (this.renderChildren.some(node => node.floating || (['fixed', 'absolute'].includes(node.position) && node.alignMargin))) {
                         this.android('baselineAligned', 'false');
                     }
-                    const baseline = NodeList.baselineText(this.renderChildren, (this.renderParent.is(NODE_STANDARD.GRID) || this.inline ? this.documentParent : undefined));
-                    if (baseline != null) {
-                        this.android('baselineAlignedChildIndex', this.renderChildren.indexOf(baseline).toString());
+                    else {
+                        const baseline = NodeList.baselineText(this.renderChildren, false, (this.renderParent.is(NODE_STANDARD.GRID) || this.inline ? this.documentParent : undefined));
+                        if (baseline != null) {
+                            this.android('baselineAlignedChildIndex', this.renderChildren.indexOf(baseline).toString());
+                        }
                     }
                 }
                 break;
@@ -732,7 +734,7 @@ export default class View extends Node {
     }
 
     private alignBoxSpacing() {
-        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
+        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP) && this.alignmentType !== NODE_ALIGNMENT.FLOAT) {
             switch (this.android('orientation')) {
                 case AXIS_ANDROID.HORIZONTAL:
                     let left = this.box.left;
@@ -780,41 +782,26 @@ export default class View extends Node {
     set documentParent(value: T) {
         this._documentParent = value;
     }
-    get documentParent() {
-        const position = this.position;
+    get documentParent(): T {
         if (this._documentParent != null) {
             return this._documentParent as T;
         }
         else if (this.id === 0) {
             return this;
         }
-        else if (position !== 'fixed' || this.alignMargin) {
-            const absolute = (position === 'absolute');
-            let parent = this.element.parentElement;
-            while (parent != null) {
-                const node = (!absolute || getStyle(parent).position !== 'static' || this.alignMargin ? getNode(parent) : null);
-                if (node) {
-                    return node as T;
-                }
-                parent = parent.parentElement;
-            }
+        else {
+            return this.parentElementNode as T || View.documentBody();
         }
-        return View.documentBody();
     }
 
     set renderParent(value: T) {
-        if (value !== this && value.renderChildren.indexOf(this) === -1) {
+        if (value !== this) {
             value.append(this);
         }
         this._renderParent = value;
     }
     get renderParent() {
-        if (this._renderParent != null) {
-            return this._renderParent as T;
-        }
-        else {
-            return View.documentBody();
-        }
+        return this._renderParent as T || View.documentBody();
     }
 
     get anchored(): boolean {
