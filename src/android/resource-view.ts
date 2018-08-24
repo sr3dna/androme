@@ -3,7 +3,7 @@ import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import NodeList from '../base/nodelist';
-import { cameltoLowerCase, capitalize, convertInt, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, isPercent, lastIndexOf, resolvePath, trim } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, isPercent, lastIndexOf, resolvePath, trim } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getCache, sameAsParent, setCache } from '../lib/dom';
@@ -188,6 +188,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
         return '';
     }
 
+    public static parseBackgroundPosition(value: string) {
+        const match = new RegExp(/([0-9]+[a-z]{2}) ([0-9]+[a-z]{2})/).exec(value);
+        if (match != null) {
+            return [convertPX(match[1]), convertPX(match[2])];
+        }
+        return ['', ''];
+    }
+
     private tagStyle: ObjectMap<StyleList> = {};
     private tagCount: ObjectMap<number> = {};
 
@@ -340,6 +348,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     let tileMode = '';
                     let tileModeX = '';
                     let tileModeY = '';
+                    const [left, top] = ResourceView.parseBackgroundPosition(stored.backgroundPosition);
                     switch (stored.backgroundRepeat) {
                         case 'repeat-x':
                             tileModeX = 'repeat';
@@ -352,40 +361,43 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             break;
                         case 'repeat':
                             tileMode = 'repeat';
+                            break;
                     }
-                    switch (stored.backgroundPosition) {
-                        case 'left center':
-                        case '0% 50%':
-                            gravity = 'left|center_vertical';
-                            break;
-                        case 'left bottom':
-                        case '0% 100%':
-                            gravity = 'left|bottom';
-                            break;
-                        case 'right top':
-                        case '100% 0%':
-                            gravity = 'right|top';
-                            break;
-                        case 'right center':
-                        case '100% 50%':
-                            gravity = 'right|center_vertical';
-                            break;
-                        case 'right bottom':
-                        case '100% 100%':
-                            gravity = 'right|bottom';
-                            break;
-                        case 'center top':
-                        case '50% 0%':
-                            gravity = 'center_horizontal|top';
-                            break;
-                        case 'center bottom':
-                        case '50% 100%':
-                            gravity = 'center_horizontal|bottom';
-                            break;
-                        case 'center center':
-                        case '50% 50%':
-                            gravity = 'center';
-                            break;
+                    if (left === '') {
+                        switch (stored.backgroundPosition) {
+                            case 'left center':
+                            case '0% 50%':
+                                gravity = 'left|center_vertical';
+                                break;
+                            case 'left bottom':
+                            case '0% 100%':
+                                gravity = 'left|bottom';
+                                break;
+                            case 'right top':
+                            case '100% 0%':
+                                gravity = 'right|top';
+                                break;
+                            case 'right center':
+                            case '100% 50%':
+                                gravity = 'right|center_vertical';
+                                break;
+                            case 'right bottom':
+                            case '100% 100%':
+                                gravity = 'right|bottom';
+                                break;
+                            case 'center top':
+                            case '50% 0%':
+                                gravity = 'center_horizontal|top';
+                                break;
+                            case 'center bottom':
+                            case '50% 100%':
+                                gravity = 'center_horizontal|bottom';
+                                break;
+                            case 'center center':
+                            case '50% 50%':
+                                gravity = 'center';
+                                break;
+                        }
                     }
                     if (stored.backgroundSize.length > 0) {
                         if (isPercent(stored.backgroundSize[0]) || isPercent(stored.backgroundSize[1])) {
@@ -407,10 +419,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const image7: ArrayIndex<StringMap> = [];
                     if (stored.backgroundImage !== '') {
                         if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                            image7[0] = { image: stored.backgroundImage, gravity, tileMode, tileModeX, tileModeY };
+                            image7[0] = { image: stored.backgroundImage, top, left, gravity, tileMode, tileModeX, tileModeY };
                         }
                         else {
-                            image6[0] = { image: stored.backgroundImage, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') };
+                            image6[0] = { image: stored.backgroundImage, top, left, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') };
                         }
                     }
                     const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');

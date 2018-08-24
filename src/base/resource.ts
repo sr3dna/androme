@@ -109,14 +109,21 @@ export default abstract class Resource<T extends Node> {
                     borderLeft: this.parseBorderStyle,
                     borderRadius: this.parseBorderRadius,
                     backgroundColor: this.parseBackgroundColor,
-                    backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? this.parseBackgroundImage : ''),
+                    backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? true : false),
                     backgroundSize: this.parseBoxDimensions,
-                    backgroundRepeat: this.parseBackgroundRepeat,
-                    backgroundPosition: this.parseBackgroundPosition
+                    backgroundRepeat: true,
+                    backgroundPosition: true
                 };
                 for (const i in result) {
+                    const value = node.css(i);
                     if (typeof result[i] === 'function') {
-                        result[i] = result[i](node.css(i), node, i);
+                        result[i] = result[i](value, node, i);
+                    }
+                    else if (result[i] === true) {
+                        result[i] = value;
+                    }
+                    else {
+                        result[i] = '';
                     }
                 }
                 if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(node.element, 'backgroundColor')))) {
@@ -324,10 +331,6 @@ export default abstract class Resource<T extends Node> {
         return { style, width, color: (color.length > 0 ? color : ['#000000', '', '1']) };
     }
 
-    private parseBackgroundImage(value: string) {
-        return value;
-    }
-
     private parseBorderRadius(value: string, node: T) {
         const [radiusTop, radiusRight, radiusBottom, radiusLeft] = [node.css('borderTopLeftRadius'), node.css('borderTopRightRadius'), node.css('borderBottomLeftRadius'), node.css('borderBottomRightRadius')];
         if (radiusTop === radiusRight && radiusRight === radiusBottom && radiusBottom === radiusLeft) {
@@ -340,14 +343,6 @@ export default abstract class Resource<T extends Node> {
 
     private parseBackgroundColor(value: string, node: T) {
         return parseRGBA(value, node.css('opacity'));
-    }
-
-    private parseBackgroundRepeat(value: string) {
-        return value;
-    }
-
-    private parseBackgroundPosition(value: string) {
-        return value;
     }
 
     private parseBoxDimensions(value: string) {

@@ -69,7 +69,7 @@ export default abstract class Node implements BoxModel {
     public abstract setAccessibility(): void;
     public abstract applyCustomizations(overwrite: boolean): void;
     public abstract applyOptimizations(options: ObjectMap<any>): void;
-    public abstract modifyBox(area: number, offset: number, bounds: boolean): void;
+    public abstract modifyBox(area: number, offset: number, bounds?: boolean): void;
     public abstract boxValue(area: number): string[];
     public abstract clone(): T;
 
