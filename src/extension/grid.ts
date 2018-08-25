@@ -286,7 +286,7 @@ export default class Grid extends Extension<T> {
         const gridData = <GridData> parent.data(`${EXT_NAME.GRID}:gridData`);
         const gridCellData = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
         let xml = '';
-        if (gridData != null && gridCellData != null) {
+        if (gridData && gridCellData) {
             let siblings: T[];
             if (this.options.balanceColumns) {
                 siblings = node.data(`${EXT_NAME.GRID}:gridSiblings`);

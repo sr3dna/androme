@@ -22,9 +22,9 @@ export default class Coordinator extends Extension<T> {
         node.excludeResource |= NODE_RESOURCE.ASSET;
         if (node.children.filter(item => !item.isolated).length > 0) {
             const toolbar = this.getToolbar(node);
-            if (toolbar != null) {
+            if (toolbar) {
                 const extension = this.application.findExtension(WIDGET_NAME.TOOLBAR);
-                if (extension != null) {
+                if (extension) {
                     const collapsingToolbar = (extension.options[toolbar.element.id] != null ? extension.options[toolbar.element.id].collapsingToolbar : null);
                     if (collapsingToolbar != null) {
                         node.android('fitsSystemWindows', 'true');

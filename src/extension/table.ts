@@ -16,16 +16,16 @@ export default class Table extends Extension<T> {
         const thead = node.children.find(item => item.element.tagName === 'THEAD');
         const tbody = node.children.find(item => item.element.tagName === 'TBODY');
         const tfoot = node.children.find(item => item.element.tagName === 'TFOOT');
-        if (thead != null) {
+        if (thead) {
             thead.cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(thead, 'styleMap'));
             tableRows.push(...<T[]> thead.children);
             thead.hide();
         }
-        if (tbody != null) {
+        if (tbody) {
             tableRows.push(...<T[]> tbody.children);
             tbody.hide();
         }
-        if (tfoot != null) {
+        if (tfoot) {
             tfoot.cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(tfoot, 'styleMap'));
             tableRows.push(...<T[]> tfoot.children);
             tfoot.hide();
@@ -63,7 +63,7 @@ export default class Table extends Extension<T> {
             }
         }
         const caption = node.children.find(item => item.element.tagName === 'CAPTION');
-        if (caption != null) {
+        if (caption) {
             if (caption.styleMap.textAlign == null) {
                 caption.styleMap.textAlign = 'center';
             }

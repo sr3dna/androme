@@ -23,7 +23,7 @@ export default abstract class Resource<T extends Node> {
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
         const stored: Map<string, any> = Resource.STORED[asset];
-        if (stored != null) {
+        if (stored) {
             let storedName = '';
             for (const [storedKey, storedValue] of stored.entries()) {
                 if (JSON.stringify(value) === JSON.stringify(storedValue)) {
@@ -305,7 +305,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     protected borderVisible(border: BorderAttribute) {
-        return (border != null && !(border.style === 'none' || border.width === '0px'));
+        return (border && !(border.style === 'none' || border.width === '0px'));
     }
 
     protected hasDrawableBackground(object: BoxStyle) {
@@ -348,7 +348,7 @@ export default abstract class Resource<T extends Node> {
     private parseBoxDimensions(value: string) {
         if (value !== 'auto') {
             const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
-            if (match != null) {
+            if (match) {
                 if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
                     return [];
                 }

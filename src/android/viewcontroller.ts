@@ -113,9 +113,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                 let parent: Null<T> = node;
                 while (parent != null) {
                     const stringId = mapView(parent, (orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom'));
-                    if (stringId != null) {
+                    if (stringId) {
                         parent = nodes.locate('nodeId', stripId(stringId));
-                        if (parent != null && parent.constraint[orientation]) {
+                        if (parent && parent.constraint[orientation]) {
                             return true;
                         }
                     }
@@ -251,7 +251,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                             switch (current.css('verticalAlign')) {
                                 case 'text-top':
-                                    if (text != null && current !== text) {
+                                    if (text && current !== text) {
                                         current.app(mapLayout['top'], text.stringId);
                                         break;
                                     }
@@ -262,12 +262,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
                                     break;
                                 case 'baseline':
-                                    if (baseline != null && current !== baseline) {
+                                    if (baseline && current !== baseline) {
                                         current.app(mapLayout['baseline'], baseline.stringId);
                                     }
                                     break;
                                 case 'text-bottom':
-                                    if (text != null && current !== text) {
+                                    if (text && current !== text) {
                                         current.app(mapLayout['bottom'], text.stringId);
                                         break;
                                     }
@@ -388,14 +388,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                         for (const current of nodes) {
                             const leftRight = mapView(current, 'leftRight');
-                            if (leftRight != null) {
+                            if (leftRight) {
                                 if (!current.constraint.horizontal) {
                                     current.constraint.horizontal = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.HORIZONTAL);
                                 }
                                 current.constraint.marginHorizontal = leftRight;
                             }
                             const topBottom = mapView(current, 'topBottom');
-                            if (topBottom != null) {
+                            if (topBottom) {
                                 if (!current.constraint.vertical) {
                                     current.constraint.vertical = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
                                 }
@@ -445,7 +445,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     current.android('layout_width', 'match_parent');
                                 }
                             }
-                            if (mapView(current, 'bottomTop') != null) {
+                            if (mapView(current, 'bottomTop')) {
                                 mapDelete(current, 'bottom');
                             }
                         }
@@ -454,7 +454,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             if (!current.anchored) {
                                 const result = search(current.get('app'), '*constraint*');
                                 for (const [key, value] of result) {
-                                    if (value !== 'parent' && anchored(pageflow).locate('stringId', value) != null) {
+                                    if (value !== 'parent' && anchored(pageflow).locate('stringId', value)) {
                                         if (indexOf(key, parseRTL('Left'), parseRTL('Right')) !== -1) {
                                             current.constraint.horizontal = true;
                                         }
@@ -630,11 +630,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                         }
                                                     }
                                                 }
-                                                if (next != null) {
+                                                if (next) {
                                                     chain.anchor(mapLayout[MAP_CHAIN['rightLeftBottomTop'][index]], next.stringId);
                                                     maxOffset = Math.max(next.linear[LT] - chain.linear[RB], maxOffset);
                                                 }
-                                                if (previous != null) {
+                                                if (previous) {
                                                     chain.anchor(mapLayout[MAP_CHAIN['leftRightTopBottom'][index]], previous.stringId);
                                                     chain.constraint[`margin${HV}`] = previous.stringId;
                                                 }
@@ -825,10 +825,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                         for (const outer of pageflow) {
                                                             const horizontal: NodeList<T> = outer.constraint.horizontalChain;
                                                             const vertical: NodeList<T> = outer.constraint.verticalChain;
-                                                            if (horizontal && horizontal.length > 0 && horizontal.locate('id', inner.id) != null) {
+                                                            if (horizontal && horizontal.length > 0 && horizontal.locate('id', inner.id)) {
                                                                 horizontal.clear();
                                                             }
-                                                            if (vertical && vertical.length > 0 && vertical.locate('id', inner.id) != null) {
+                                                            if (vertical && vertical.length > 0 && vertical.locate('id', inner.id)) {
                                                                 vertical.clear();
                                                             }
                                                         }
@@ -863,7 +863,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             let adjacent: Null<T> = current;
                                             while (adjacent != null) {
                                                 const topBottom = mapView(adjacent, value);
-                                                if (topBottom != null) {
+                                                if (topBottom) {
                                                     adjacent = nodes.locate('nodeId', stripId(topBottom));
                                                     if (adjacent && current.withinY(adjacent.linear)) {
                                                         chain.push(adjacent);
@@ -901,9 +901,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     if (mapParent(current, direction[1]) && mapView(current, direction[2]) == null) {
                                         ['leftRight', 'rightLeft'].forEach(value => {
                                             const stringId = mapView(current, value);
-                                            if (stringId != null) {
+                                            if (stringId) {
                                                 const aligned = pageflow.locate('stringId', stringId);
-                                                if (aligned && mapView(aligned, direction[2]) != null) {
+                                                if (aligned && mapView(aligned, direction[2])) {
                                                     if (withinFraction(current.linear[direction[0]], aligned.linear[direction[0]])) {
                                                         current.anchor(mapLayout[direction[0]], aligned.stringId);
                                                     }
@@ -1002,7 +1002,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     topBottom: mapView(current, 'topBottom'),
                                     bottomTop: mapView(current, 'bottomTop'),
                                 };
-                                if ((top && bottom && (current.styleMap.marginTop !== 'auto' && current.linear.bottom < bottomMax)) || (bottom && mapView(current, 'topBottom') != null && current.viewHeight > 0)) {
+                                if ((top && bottom && (current.styleMap.marginTop !== 'auto' && current.linear.bottom < bottomMax)) || (bottom && mapView(current, 'topBottom') && current.viewHeight > 0)) {
                                     mapDelete(current, 'bottom');
                                     bottom = false;
                                 }
@@ -1014,7 +1014,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             if (!valid) {
                                                 do {
                                                     const stringId = mapView(next, (value[0] ? value[2] : value[3]));
-                                                    if (stringId != null) {
+                                                    if (stringId) {
                                                         next = this.findByStringId(stringId);
                                                         if (next && ((value[0] && mapParent(next, value[4])) || (value[1] && mapParent(next, value[5])))) {
                                                             valid = true;
@@ -1104,21 +1104,21 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         ['leftRight', 'rightLeft', 'bottomTop', 'topBottom'].forEach(value => {
                                             if (connected[left][value] && connected[left][value] === connected[right][value]) {
                                                 const conflict = nodes.locate('stringId', connected[left][value]);
-                                                if (conflict != null) {
+                                                if (conflict) {
                                                     [nodes.locate('stringId', left), nodes.locate('stringId', right)].some((item, index) => {
-                                                        if (item != null) {
+                                                        if (item) {
                                                             const stringId = (index === 0 ? left : right);
                                                             switch (value) {
                                                                 case 'leftRight':
                                                                 case 'rightLeft':
-                                                                    if ((mapView(item, 'left') != null || mapView(item, 'right') != null) && mapView(conflict, (value === 'rightLeft' ? 'leftRight' : 'rightLeft')) !== stringId) {
+                                                                    if ((mapView(item, 'left') || mapView(item, 'right')) && mapView(conflict, (value === 'rightLeft' ? 'leftRight' : 'rightLeft')) !== stringId) {
                                                                         deleteChain(item, value);
                                                                         return true;
                                                                     }
                                                                     break;
                                                                 case 'bottomTop':
                                                                 case 'topBottom':
-                                                                    if ((mapView(item, 'top') != null || mapView(item, 'bottom') != null) && mapView(conflict, (value === 'topBottom' ? 'bottomTop' : 'topBottom')) !== stringId) {
+                                                                    if ((mapView(item, 'top') || mapView(item, 'bottom')) && mapView(conflict, (value === 'topBottom' ? 'bottomTop' : 'topBottom')) !== stringId) {
                                                                         deleteChain(item, value);
                                                                         return true;
                                                                     }
@@ -1145,7 +1145,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 for (const current of nodes) {
                     if (current.constraint.marginHorizontal != null) {
                         const item = this.findByStringId(current.constraint.marginHorizontal);
-                        if (item != null) {
+                        if (item) {
                             const offset = current.linear.left - item.linear.right;
                             if (offset >= 1) {
                                 current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + offset);
@@ -1154,7 +1154,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     }
                     if (current.constraint.marginVertical != null) {
                         const item = this.findByStringId(current.constraint.marginVertical);
-                        if (item != null) {
+                        if (item) {
                             const offset = current.linear.top - item.linear.bottom;
                             if (offset >= 1) {
                                 current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + offset);
@@ -1763,7 +1763,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                     };
                     const anchors = optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');
-                    if (anchors != null) {
+                    if (anchors) {
                         for (const stringId in anchors) {
                             if (options.app[beginPercent] === anchors[stringId]) {
                                 node.anchor(map[LT], stringId, value, true);

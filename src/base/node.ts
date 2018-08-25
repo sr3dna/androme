@@ -208,7 +208,7 @@ export default abstract class Node implements BoxModel {
                         const data = this._data[attr];
                         if (typeof data === 'object' && data.inherit === true) {
                             const inherit = node.data(attr);
-                            if (inherit != null) {
+                            if (inherit) {
                                 switch (typeof node[attr]) {
                                     case 'number':
                                         inherit[attr] += data[attr];
@@ -596,7 +596,7 @@ export default abstract class Node implements BoxModel {
                         }
                     }
                     else {
-                        if ((this.withinX(parent.box) && this.withinY(parent.box)) || (previous != null && ((this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) || (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) || (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) || (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)))) {
+                        if ((this.withinX(parent.box) && this.withinY(parent.box)) || (previous && ((this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) || (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) || (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) || (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)))) {
                             found = true;
                             break;
                         }
@@ -701,7 +701,7 @@ export default abstract class Node implements BoxModel {
 
     get inlineElement() {
         const position = this.position;
-        return (this.inline || ['inline-block', 'table-cell'].includes(this.display) || this.plainText || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
+        return (this.inline || ['inline-block', 'table-cell'].includes(this.display) || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
     }
 
     get inlineText() {

@@ -115,8 +115,8 @@ export default abstract class Extension<T extends Node> implements IExtension {
     }
 
     public getData(): StringMap {
-        const element = this.element;
         const result = {};
+        const element = this.element;
         if (element != null) {
             const prefix = convertCamelCase(this.name, '\\.');
             for (const attr in element.dataset) {

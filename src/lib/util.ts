@@ -27,7 +27,7 @@ export function formatString(value: string, ...params: string[]) {
 export function cameltoLowerCase(value: string) {
     value = value.charAt(0).toLowerCase() + value.substring(1);
     const result = value.match(/([a-z]{1}[A-Z]{1})/g);
-    if (result != null) {
+    if (result) {
         for (const match of result) {
             value = value.replace(match, `${match[0]}_${match[1].toLowerCase()}`);
         }
@@ -38,7 +38,7 @@ export function cameltoLowerCase(value: string) {
 export function convertCamelCase(value: string, character = '-') {
     value = value.replace(new RegExp(`^${character}+`), '');
     const result = value.match(new RegExp(`(${character}{1}[a-z]{1})`, 'g'));
-    if (result != null) {
+    if (result) {
         for (const match of result) {
             value = value.replace(match, match[1].toUpperCase());
         }
@@ -73,7 +73,7 @@ export function convertPX(value: any) {
         }
         const match = value.match(/(pt|em)/);
         value = parseFloat(value);
-        if (match != null) {
+        if (match) {
             switch (match[0]) {
                 case 'pt':
                     value *= (4 / 3);

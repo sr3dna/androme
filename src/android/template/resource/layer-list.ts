@@ -21,7 +21,7 @@ const template = [
 '	</item>',
 '!1',
 '!6',
-'	<item android:top="{@top}" android:left="{@left} android:drawable="@drawable/{image}" width="{@width}" height="{@height}" />',
+'	<item android:top="{@top}" android:left="{@left}" android:drawable="@drawable/{image}" width="{@width}" height="{@height}" />',
 '!6',
 '!7',
 '	<item android:top="{@top}" android:left="{@left}">',

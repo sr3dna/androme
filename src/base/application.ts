@@ -43,7 +43,7 @@ export default class Application<T extends Node> {
 
     public registerExtension(extension: IExtension) {
         const found = this.findExtension(extension.name);
-        if (found != null) {
+        if (found) {
             if (Array.isArray(extension.tagNames)) {
                 found.tagNames = extension.tagNames;
             }
@@ -186,7 +186,7 @@ export default class Application<T extends Node> {
                                 }
                             }
                             const data = getCache(element, 'styleMap');
-                            if (data != null) {
+                            if (data) {
                                 Object.assign(data, styleMap);
                             }
                             else {
@@ -233,7 +233,7 @@ export default class Application<T extends Node> {
             extension.beforeInit();
         }
         const rootNode = this.insertNode(root);
-        if (rootNode != null) {
+        if (rootNode) {
             rootNode.parent = new this.TypeT(0, SETTINGS.targetAPI, root.parentElement || document.body);
             rootNode.documentRoot = true;
             this.cache.parent = rootNode;
@@ -536,7 +536,7 @@ export default class Application<T extends Node> {
                         }
                     }
                 }
-                if (parent != null) {
+                if (parent) {
                     this.sortLayout(parent, middle);
                 }
                 axisY.push(...sortAsc(below, 'style.zIndex', 'siblingIndex'));
@@ -566,7 +566,7 @@ export default class Application<T extends Node> {
                         }
                     }
                     if (!nodeY.rendered) {
-                        const renderExtension = (<IExtension> parent.renderExtension);
+                        const renderExtension = parent.renderExtension;
                         if (renderExtension != null) {
                             renderExtension.setTarget(nodeY, parent);
                             const result = renderExtension.processChild();
@@ -1006,14 +1006,14 @@ export default class Application<T extends Node> {
             let replaceId = id;
             if (!isNumber(id)) {
                 const target = this.findByDomId(id);
-                if (target != null) {
+                if (target) {
                     replaceId = target.id.toString();
                 }
             }
             let output = this.insert[id].join('\n');
             if (replaceId !== id) {
                 const target = this.cacheInternal.locate('id', parseInt(replaceId));
-                if (target != null) {
+                if (target) {
                     const depth = target.renderDepth + 1;
                     output = placeIndent(output, depth);
                     const pattern = /{@([0-9]+)}/g;
@@ -1021,7 +1021,7 @@ export default class Application<T extends Node> {
                     let i = 0;
                     while ((match = pattern.exec(output)) != null) {
                         const node = this.cacheInternal.locate('id', parseInt(match[1]));
-                        if (node != null) {
+                        if (node) {
                             if (i++ === 0) {
                                 node.renderDepth = depth;
                             }

@@ -37,7 +37,7 @@ export default class External extends Extension<T> {
         if (init || this.included()) {
             if (this.element != null) {
                 const data = getCache(this.element, 'andromeExternalDisplay');
-                if (data != null) {
+                if (data) {
                     const display: string[] = data;
                     let current = this.element;
                     let i = 0;

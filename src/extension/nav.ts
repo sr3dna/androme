@@ -45,7 +45,7 @@ export default abstract class Menu extends Extension<T> {
         if (this.included(this.node.element)) {
             Array.from(this.node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                 const display = getCache(item, 'andromeExternalDisplay');
-                if (display != null) {
+                if (display) {
                     item.style.display = display;
                 }
             });

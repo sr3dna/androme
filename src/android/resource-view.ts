@@ -97,7 +97,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
             srcset.split(',').forEach(value => {
                 const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                if (match != null) {
+                if (match) {
                     if (match[2] == null) {
                         match[2] = '1x';
                     }
@@ -156,7 +156,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public static addImageURL(value: string, prefix: string = '') {
         const match = value.match(/^url\("?(.*?)"?\)$/);
-        if (match != null) {
+        if (match) {
             return ResourceView.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
         }
         return '';
@@ -190,7 +190,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public static parseBackgroundPosition(value: string) {
         const match = new RegExp(/([0-9]+[a-z]{2}) ([0-9]+[a-z]{2})/).exec(value);
-        if (match != null) {
+        if (match) {
             return [convertPX(match[1]), convertPX(match[2])];
         }
         return ['', ''];
@@ -260,7 +260,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         const common: string[] = [];
                         for (const attr in map) {
                             const match = attr.match(/(\w+):(\w+)="(.*?)"/);
-                            if (match != null) {
+                            if (match) {
                                 children.forEach(child => child.delete(match[1], match[2]));
                                 common.push(match[0]);
                             }
@@ -293,7 +293,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setBoxSpacing();
         this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)).each(node => {
             const stored: StringMap = getCache(node.element, 'boxSpacing');
-            if (stored != null) {
+            if (stored) {
                 if (convertInt(stored.marginLeft) > 0 && stored.marginLeft === stored.marginRight) {
                     if (node.alignParent('left') && node.alignParent('right')) {
                         if (node.android('layout_width') !== 'match_parent') {
@@ -322,7 +322,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setBoxStyle();
         this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
             const stored: BoxStyle = getCache(node.element, 'boxStyle');
-            if (stored != null) {
+            if (stored) {
                 if (stored.backgroundColor && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
@@ -570,7 +570,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                         }
                     }
-                    if (template != null) {
+                    if (template) {
                         const xml = insertTemplateData(template, data);
                         for (const [name, value] of Resource.STORED.DRAWABLES.entries()) {
                             if (value === xml) {
@@ -596,14 +596,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setFontStyle();
         const tagName: ObjectMap<T[]> = {};
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)).each(node => {
-            if (getCache(node.element, 'fontStyle') != null) {
+            if (getCache(node.element, 'fontStyle')) {
                 if (tagName[node.tagName] == null) {
                     tagName[node.tagName] = [];
                 }
                 tagName[node.tagName].push(node);
             }
             const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
-            if (match != null) {
+            if (match) {
                 const color = parseRGBA(match[1]);
                 if (color.length > 0) {
                     node.android('shadowColor', `@color/${ResourceView.addColor(color[0], color[2])}`);
@@ -629,7 +629,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (stored.backgroundColor && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = `@color/${ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
                 }
-                if (stored.fontFamily != null) {
+                if (stored.fontFamily) {
                     let fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
                     let fontStyle = '';
                     let fontWeight = '';
@@ -720,7 +720,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setOptionArray();
         this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
             const stored: ObjectMap<string[]> = getCache(node.element, 'optionArray');
-            if (stored != null) {
+            if (stored) {
                 const method = METHOD_ANDROID['optionArray'];
                 let result: string[] = [];
                 if (stored.stringArray != null) {
@@ -753,7 +753,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setValueString(supportInline);
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
             const stored: BasicData = getCache(node.element, 'valueString');
-            if (stored != null) {
+            if (stored) {
                 if (node.renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
                     if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                         stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
@@ -766,7 +766,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             break;
                     }
                     const match = node.css('textDecoration').match(/(underline|line-through)/);
-                    if (match != null) {
+                    if (match) {
                         switch (match[0]) {
                             case 'underline':
                                 stored.value = `<u>${stored.value}</u>`;
@@ -992,7 +992,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         }
         for (const id in map) {
             const node = viewData.cache.locate('id', parseInt(id));
-            if (node != null) {
+            if (node) {
                 const styles: string[] = map[id].styles;
                 const attrs: string[] = map[id].attributes;
                 if (styles.length > 0) {
@@ -1008,7 +1008,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             let parent = '';
             styles.split('.').forEach((value: string) => {
                 const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
-                if (match != null) {
+                if (match) {
                     const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];
                     Resource.STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
                     parent = value;

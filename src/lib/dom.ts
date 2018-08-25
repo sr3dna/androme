@@ -28,7 +28,7 @@ export function previousNode(element: Element) {
     let previous: Null<Element>;
     do {
         previous = <Element> element.previousSibling;
-        if (previous != null && getNode(previous)) {
+        if (previous && getNode(previous)) {
             return getNode(previous);
         }
     }
@@ -78,7 +78,7 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
         if (cache) {
             const node = getNode(element);
             const style = getCache(element, 'style');
-            if (style != null) {
+            if (style) {
                 return style;
             }
             else if (node && node.style != null) {
@@ -159,7 +159,7 @@ export function hasLineBreak(element: HTMLElement) {
     const node = getNode(element);
     let whiteSpace = '';
     let styleMap = false;
-    if (node != null) {
+    if (node) {
         whiteSpace = node.css('whiteSpace');
         styleMap = (node.styleMap.whiteSpace != null);
     }

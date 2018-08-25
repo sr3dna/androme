@@ -3,6 +3,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
+import { getCache, getNode } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -77,7 +78,7 @@ export default class View extends Node {
 
     public attr(value: string, overwrite = true) {
         const match = value.match(/^(?:([a-z]+):)?(\w+)="((?:@+?[a-z]+\/)?.+)"$/);
-        if (match != null) {
+        if (match) {
             this.add(match[1] || '_', match[2], match[3], overwrite);
         }
     }
@@ -464,6 +465,9 @@ export default class View extends Node {
         }
         if (renderParent.element.tagName === 'TABLE') {
             this.android('layout_gravity', 'fill');
+            if (vertical === '') {
+                vertical = 'center_vertical';
+            }
         }
         else {
             const floatRight = (this.linearHorizontal && this.renderChildren.every(node => node.float === 'right'));
@@ -570,40 +574,60 @@ export default class View extends Node {
                     }
                     else if (this.renderChildren.some(node => node.nodeType < NODE_STANDARD.IMAGE)) {
                         const baseline = NodeList.baselineText(this.renderChildren, false, (this.renderParent.is(NODE_STANDARD.GRID) || this.inline ? this.documentParent : undefined));
-                        if (baseline != null) {
+                        if (baseline) {
                             this.android('baselineAlignedChildIndex', this.renderChildren.indexOf(baseline).toString());
                         }
                     }
                 }
                 else {
                     const cleared = NodeList.cleared(this.renderChildren);
-                    for (let i = 1; i < this.renderChildren.length; i++) {
-                        const previous = this.renderChildren[i - 1];
+                    for (let i = 0; i < this.renderChildren.length; i++) {
                         const current = this.renderChildren[i];
-                        const marginBottom = convertInt(previous.styleMap.marginBottom);
-                        const marginTop = convertInt(current.styleMap.marginTop);
-                        if (!previous.inlineElement && marginBottom > 0 && previous.css('overflow') === 'visible' && !cleared.has(previous) && !current.inlineElement && marginTop > 0 && current.css('overflow') === 'visible' && !cleared.has(current)) {
-                            if (marginBottom >= marginTop) {
-                                const offset = current.marginTop - marginTop;
-                                if (offset > 0) {
-                                    current.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
-                                }
-                                else {
-                                    current.css('marginTop', '0px');
-                                    current.delete('android', 'layout_marginTop');
-                                }
-                            }
-                            else {
-                                const offset = previous.marginBottom - marginBottom;
-                                if (offset > 0) {
-                                    previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, offset);
-                                }
-                                else {
-                                    previous.css('marginBottom', '0px');
-                                    previous.delete('android', 'layout_marginBottom');
+                        if (i > 0) {
+                            const previous = this.renderChildren[i - 1];
+                            const marginBottom = convertInt(previous.styleMap.marginBottom);
+                            const marginTop = convertInt(current.styleMap.marginTop);
+                            if (!previous.inlineElement && previous.display === 'block' && previous.css('overflow') === 'visible' && !cleared.has(previous) && !current.inlineElement && current.display === 'block' && current.css('overflow') === 'visible' && !cleared.has(current)) {
+                                if (marginBottom > 0 && marginTop > 0) {
+                                    if (marginTop >= marginBottom) {
+                                        const offset = previous.marginBottom - marginBottom;
+                                        if (offset > 0) {
+                                            previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, offset);
+                                        }
+                                        else {
+                                            previous.css('marginBottom', '0px');
+                                            previous.delete('android', 'layout_marginBottom');
+                                        }
+                                    }
+                                    else {
+                                        const offset = current.marginTop - marginTop;
+                                        if (offset > 0) {
+                                            current.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
+                                        }
+                                        else {
+                                            current.css('marginTop', '0px');
+                                            current.delete('android', 'layout_marginTop');
+                                        }
+                                    }
                                 }
                             }
                         }
+                        [current.element.previousElementSibling, (i === this.renderChildren.length - 1 ? current.element.nextElementSibling : null)].forEach((item, index) => {
+                            if (item && !getNode(item)) {
+                                const styleMap: StringMap = getCache(item, 'styleMap');
+                                if (styleMap) {
+                                    const offset = Math.min(convertInt(styleMap.marginTop), convertInt(styleMap.marginBottom));
+                                    if (offset < 0) {
+                                        if (index === 0) {
+                                            current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + offset);
+                                        }
+                                        else {
+                                            current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, Math.max(0, current.marginBottom + offset));
+                                        }
+                                    }
+                                }
+                            }
+                        });
                     }
                 }
                 break;

@@ -15,7 +15,7 @@ export default class GridAndroid<T extends View> extends Grid {
     public processChild(): ExtensionResult {
         const node = this.node as T;
         const data = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
-        if (data != null) {
+        if (data) {
             if (data.rowSpan > 1) {
                 node.android('layout_rowSpan', data.rowSpan.toString());
             }
@@ -37,7 +37,7 @@ export default class GridAndroid<T extends View> extends Grid {
                 if (parent.is(NODE_STANDARD.GRID)) {
                     const gridData = <GridData> parent.data(`${EXT_NAME.GRID}:gridData`);
                     const gridCellData = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
-                    if (gridData != null && gridCellData != null) {
+                    if (gridData && gridCellData) {
                         const dimensions = getBoxSpacing(<HTMLElement> node.documentParent.element, true);
                         if (gridCellData.cellFirst) {
                             const heightTop = convertInt(dimensions.paddingTop) + convertInt(dimensions.marginTop);
@@ -73,7 +73,7 @@ export default class GridAndroid<T extends View> extends Grid {
         });
         for (const node of extended) {
             const data = <GridData> node.data(`${EXT_NAME.GRID}:gridData`);
-            if (data != null) {
+            if (data) {
                 if (data.padding.top > 0) {
                     node.modifyBox(BOX_STANDARD.PADDING_TOP, node.paddingTop + data.padding.top);
                 }

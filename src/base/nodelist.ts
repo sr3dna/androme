@@ -29,7 +29,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         if (baseline == null && parent != null) {
             const valid = Array.from(parent.element.children).some(element => {
                 const node = getNode(element);
-                if (node != null) {
+                if (node) {
                     return ((node.nodeType <= nodeType && node.baseline) || (node.linearHorizontal && node.children.some(item => item.nodeType <= nodeType && item.baseline)));
                 }
                 return false;
@@ -76,16 +76,20 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        const nodes = list.filter(node => node.pageflow && !node.floating);
+        let nodes = list.filter(node => node.pageflow);
         switch (nodes.length) {
             case 0:
                 return false;
             case 1:
                 return true;
             default:
+                if (nodes.every(node => node.display === 'block' && !node.floating)) {
+                    return true;
+                }
                 if (nodes.every((node, index) => node.inline && (index === 0 || !isLineBreak(<HTMLElement> node.element.previousElementSibling)))) {
                     return false;
                 }
+                nodes = nodes.filter(node => !node.floating);
                 const minRight = Math.min.apply(null, nodes.map(node => node.bounds.right));
                 const maxRight = Math.max.apply(null, nodes.map(node => node.bounds.right));
                 return nodes.every((node, index) => {

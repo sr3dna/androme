@@ -31,7 +31,7 @@ export default class Toolbar extends Extension<T> {
             });
             if (hasValue(element.dataset.target)) {
                 const target = document.getElementById(<string> element.dataset.target);
-                if (target != null && element.parentElement !== target && !includes(optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR)) {
+                if (target && element.parentElement !== target && !includes(optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR)) {
                     this.application.elements.add(element);
                 }
             }
@@ -195,10 +195,8 @@ export default class Toolbar extends Extension<T> {
                 outer = outer.replace(`{:${appBarNode.id}}`, controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true) + `{:${appBarNode.id}}`);
             }
         }
-        if (appBarNode != null) {
-            xml = (collapsingToolbarNode != null ? outer.replace(`{:${collapsingToolbarNode.id}}`, xml + `{:${collapsingToolbarNode.id}}`) : outer.replace(`{:${appBarNode.id}}`, xml + `{:${appBarNode.id}}`));
-        }
-        if (appBarNode != null) {
+        if (appBarNode) {
+            xml = (collapsingToolbarNode ? outer.replace(`{:${collapsingToolbarNode.id}}`, xml + `{:${collapsingToolbarNode.id}}`) : outer.replace(`{:${appBarNode.id}}`, xml + `{:${appBarNode.id}}`));
             if (collapsingToolbarNode == null) {
                 node.parent = appBarNode;
             }
@@ -207,7 +205,7 @@ export default class Toolbar extends Extension<T> {
             }
             node.data(`${WIDGET_NAME.TOOLBAR}:outerParent`, appBarNode.stringId);
         }
-        else if (collapsingToolbarNode != null) {
+        else if (collapsingToolbarNode) {
             node.parent = collapsingToolbarNode;
         }
         if (target) {

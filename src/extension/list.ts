@@ -14,10 +14,10 @@ export default abstract class List extends Extension<T> {
     }
 
     public condition() {
-        return (super.condition() && (
+        return (super.condition() && (this.node.children.length > 0 && (
                     this.node.children.some(node => node.element.tagName === 'LI' && node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
                     this.node.children.every(node => node.element.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))
-               ));
+                )));
     }
 
     public processNode(): ExtensionResult {

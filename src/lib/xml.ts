@@ -9,7 +9,7 @@ export function placeIndent(value: string, depth: number) {
     return value.split('\n').map(line => {
         const match = /^({.*?})(.*)/g.exec(line);
         const indent = repeat(depth);
-        if (match != null) {
+        if (match) {
             return (match[2] !== '' ? match[1] + indent + match[2] : '');
         }
         else {
@@ -23,7 +23,7 @@ export function replaceTab(value: string, spaces = 4, preserve = false) {
         if (preserve) {
             value = value.split('\n').map(line => {
                 const match = line.match(/^(\t+)(.*)$/);
-                if (match != null) {
+                if (match) {
                     return ' '.repeat(spaces * match[1].length) + match[2];
                 }
                 return line;
@@ -77,7 +77,7 @@ export function parseTemplate(template: string) {
         if (!match) {
             pattern = /(!([0-9]+)\n?)[\w\W]*\1/g;
         }
-        if (pattern != null) {
+        if (pattern) {
             match = pattern.exec(template);
         }
         else {

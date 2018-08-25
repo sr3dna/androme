@@ -41,7 +41,7 @@ export default class Drawer extends Extension<T> {
         const node = this.node as T;
         node.documentRoot = true;
         const options = Object.assign({}, this.options.drawer);
-        if (findNestedExtension(node, WIDGET_NAME.MENU) != null) {
+        if (findNestedExtension(node, WIDGET_NAME.MENU)) {
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             this.createResourceTheme();
         }
@@ -65,7 +65,7 @@ export default class Drawer extends Extension<T> {
         const node = this.node as T;
         if (application.insert[node.nodeId] != null) {
             const target = application.cacheInternal.locate(item => item.isolated && item.parent === node.parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
-            if (target != null) {
+            if (target) {
                 application.insert[target.nodeId] = application.insert[node.nodeId];
                 delete application.insert[node.nodeId];
             }
@@ -90,7 +90,7 @@ export default class Drawer extends Extension<T> {
 
     public afterInsert() {
         const headerLayout = findNestedExtension(this.node, EXT_NAME.EXTERNAL);
-        if (headerLayout != null) {
+        if (headerLayout) {
             const node = getNode(headerLayout) as T;
             if (node && node.viewHeight === 0) {
                 node.android('layout_height', 'wrap_content');
