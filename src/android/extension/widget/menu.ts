@@ -63,7 +63,7 @@ export default class Menu<T extends View> extends Nav {
         const node = this.node as T;
         const parent = this.parent as T;
         const element = node.element;
-        if (element.nodeName === '#text') {
+        if (node.plainText) {
             node.hide();
             return { xml: '', proceed: true };
         }

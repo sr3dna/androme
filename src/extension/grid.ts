@@ -300,9 +300,10 @@ export default class Grid extends Extension<T> {
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 const group = this.application.controllerHandler.createGroup(node, siblings, parent);
                 if (linearX || linearY) {
-                    xml = this.application.writeLinearLayout(group, parent, linearX);
-                    group.alignmentType = (linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
-                    this.application.sortLayout(group, group.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                    const horizontal = !(linearY && !linearX);
+                    xml = this.application.writeLinearLayout(group, parent, horizontal);
+                    group.alignmentType = (horizontal ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
+                    this.application.sortLayout(group, group.children, group.alignmentType, true);
                 }
                 else {
                     xml = this.application.writeConstraintLayout(group, parent);

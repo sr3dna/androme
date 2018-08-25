@@ -215,7 +215,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.processFontStyle(viewData);
     }
 
-    public filterStyles(viewData: ViewData<NodeList<T>>) {
+    public combineStyles(viewData: ViewData<NodeList<T>>) {
         const styles: ObjectMap<string[]> = {};
         for (const node of viewData.cache) {
             const children = node.renderChildren.filter(child => child.visible && !child.isolated && !child.relocated);

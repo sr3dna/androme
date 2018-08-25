@@ -450,8 +450,9 @@ export default abstract class Node implements BoxModel {
     private boxDimension(area: string, side: string) {
         const attr = area + side;
         if (this.hasElement) {
-            if (side === 'Left' || side === 'Right') {
-                let node: T = this;
+            let node: T = this;
+            const horizontal = (side === 'Left' || side === 'Right');
+            if (horizontal) {
                 if (this.companion != null) {
                     let valid = false;
                     const direction = side.toLowerCase();
@@ -467,22 +468,13 @@ export default abstract class Node implements BoxModel {
                         node = this.companion;
                     }
                 }
-                const value = node.css(attr);
-                if (node.style && isPercent(value)) {
-                    return (node.style[attr] ? convertInt(node.style[attr]) : node.documentParent.box.width * (convertInt(value) / 100));
-                }
-                else {
-                    return convertInt(value);
-                }
+            }
+            const value = node.css(attr);
+            if (isPercent(value)) {
+                return (node.style[attr] ? convertInt(node.style[attr]) : node.documentParent.box[(horizontal ? 'width' : 'height')] * (convertInt(value) / 100));
             }
             else {
-                const value = this.css(attr);
-                if (this.style && isPercent(value)) {
-                    return (this.style[attr] ? convertInt(this.style[attr]) : this.documentParent.box.height * (convertInt(value) / 100));
-                }
-                else {
-                    return convertInt(value);
-                }
+                return convertInt(value);
             }
         }
         else {

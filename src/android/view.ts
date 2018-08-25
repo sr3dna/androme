@@ -556,7 +556,6 @@ export default class View extends Node {
 
     public applyOptimizations(options: ObjectMap<any>) {
         const renderParent = this.renderParent;
-        this.alignBoxSpacing();
         if (this.is(NODE_STANDARD.LINEAR)) {
             if (this.display !== 'block') {
                 [[this.linearHorizontal, this.inlineElement, 'layout_width'], [this.linearVertical, true, 'layout_height']].forEach((value: [boolean, boolean, string]) => {
@@ -583,7 +582,7 @@ export default class View extends Node {
             const lastIndex = this.renderChildren.length - 1;
             for (let i = 0; i < this.renderChildren.length; i++) {
                 const current = this.renderChildren[i];
-                const marginTop = convertInt(current.styleMap.marginTop);
+                const marginTop = convertInt(current.cssOriginal('marginTop', true));
                 if (!current.inlineElement && current.display === 'block') {
                     if (i === 0) {
                         if (convertInt(this.styleMap.paddingTop) === 0 && this.borderTopWidth === 0 && marginTop > 0) {
@@ -592,35 +591,21 @@ export default class View extends Node {
                     }
                     if (i > 0) {
                         const previous = this.renderChildren[i - 1];
-                        const marginBottom = convertInt(previous.styleMap.marginBottom);
+                        const marginBottom = convertInt(previous.cssOriginal('marginBottom', true));
                         if (!previous.inlineElement && previous.display === 'block') {
                             if (marginBottom > 0 && marginTop > 0) {
                                 if (marginTop >= marginBottom) {
-                                    const offset = previous.marginBottom - marginBottom;
-                                    if (offset > 0) {
-                                        previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, offset);
-                                    }
-                                    else {
-                                        previous.css('marginBottom', '0px');
-                                        previous.delete('android', 'layout_marginBottom');
-                                    }
+                                    previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, Math.max(previous.marginBottom - marginBottom, 0));
                                 }
                                 else {
-                                    const offset = current.marginTop - marginTop;
-                                    if (offset > 0) {
-                                        current.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
-                                    }
-                                    else {
-                                        current.css('marginTop', '0px');
-                                        current.delete('android', 'layout_marginTop');
-                                    }
+                                    current.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.max(current.marginTop - marginTop, 0));
                                 }
                             }
                         }
                     }
                     if (i === lastIndex) {
-                        const marginBottom = convertInt(current.styleMap.marginBottom);
-                        if (convertInt(this.styleMap.paddingBottom) === 0 && this.borderBottomWidth === 0 && marginBottom > 0) {
+                        const marginBottom = convertInt(current.cssOriginal('marginBottom', true));
+                        if (convertInt(this.cssOriginal('paddingBottom', true)) === 0 && this.borderBottomWidth === 0 && marginBottom > 0) {
                             current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, current.marginBottom - marginBottom);
                         }
                     }
@@ -643,6 +628,7 @@ export default class View extends Node {
                 });
             }
         }
+        this.alignBoxSpacing();
         if (options.autoSizePaddingAndBorderWidth) {
             let viewWidth = convertInt(this.android('layout_width'));
             let viewHeight = convertInt(this.android('layout_height'));
@@ -721,10 +707,10 @@ export default class View extends Node {
             }
         }
         if (!renderParent.linearHorizontal) {
-            const offsetHeight = this.lineHeight - this.bounds.height;
-            if (offsetHeight > 0) {
-                this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + Math.ceil(offsetHeight / 2));
-                this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, this.marginBottom + Math.floor(offsetHeight / 2));
+            const offset = this.lineHeight - this.bounds.height;
+            if (offset > 0) {
+                this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + Math.ceil(offset / 2));
+                this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, this.marginBottom + Math.floor(offset / 2));
             }
         }
         if (this.position === 'relative') {

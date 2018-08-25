@@ -78,7 +78,7 @@ export default class Application<T extends Node> {
         this.controllerHandler.setDimensions(this.viewData);
         this.insertAuxillaryViews();
         this.resourceHandler.finalize(this.viewData);
-        this.resourceHandler.filterStyles(this.viewData);
+        this.resourceHandler.combineStyles(this.viewData);
         if (SETTINGS.showAttributes) {
             this.setAttributes();
         }

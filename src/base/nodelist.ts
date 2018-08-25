@@ -50,12 +50,12 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return true;
             default:
                 if (NodeList.cleared(nodes).size === 0) {
-                    let valid = true;
                     const horizontal = nodes.filter(node => node.float !== 'left');
+                    let valid = (horizontal.length > 1);
                     for (let i = 1; i < horizontal.length; i++) {
                         const previous = horizontal[i - 1];
                         const current = horizontal[i];
-                        if (!(previous.inlineElement && current.inlineElement && previous.bounds.right <= current.bounds.left)) {
+                        if (!(previous.inlineElement && current.inlineElement && previous.bounds.right <= current.bounds.left) || !previous.inlineElement) {
                             valid = false;
                             break;
                         }

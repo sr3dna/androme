@@ -14,18 +14,21 @@ export default abstract class List extends Extension<T> {
     }
 
     public condition() {
-        return (super.condition() && (this.node.children.length > 0 && (
-                    this.node.children.some(node => node.element.tagName === 'LI' && node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
-                    this.node.children.every(node => node.element.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))
-                )));
+        const children = this.node.children;
+        return (super.condition() &&
+               children.length > 0 &&
+               (children.every(node => node.inlineElement) || children.every(node => !node.inlineElement)) && (
+                    children.some(node => node.element.tagName === 'LI' && node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
+                    children.every(node => node.element.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))
+               ));
     }
 
     public processNode(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;
         let xml = '';
-        if (!node.children.some(item => item.floating) && NodeList.linearY(node.children)) {
-            xml = this.application.writeGridLayout(node, parent, 2);
+        if (!node.children.some(item => item.floating) && (NodeList.linearY(node.children) || node.children.every(item => !item.inlineElement))) {
+            xml = this.application.writeGridLayout(node, parent, (node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2));
         }
         else {
             xml = this.application.writeLinearLayout(node, parent, true);
@@ -35,53 +38,57 @@ export default abstract class List extends Extension<T> {
         node.each((item: T) => {
             let ordinal: any = '0';
             if (item.display === 'list-item' || item.styleMap.listStyleType != null) {
-                const type = item.css('listStyleType');
-                switch (type) {
-                    case 'disc':
-                        ordinal = '●';
-                        break;
-                    case 'square':
-                        ordinal = '■';
-                        break;
-                    case 'lower-alpha':
-                    case 'lower-latin':
-                        ordinal = `${convertAlpha(i).toLowerCase()}.`;
-                        break;
-                    case 'upper-alpha':
-                    case 'upper-latin':
-                        ordinal = `${convertAlpha(i)}.`;
-                        break;
-                    case 'lower-roman':
-                        ordinal = `${convertRoman(i + 1).toLowerCase()}.`;
-                        break;
-                    case 'upper-roman':
-                        ordinal = `${convertRoman(i + 1)}.`;
-                        break;
-                    case 'none':
-                        let image = item.css('listStyleImage');
-                        let position = '';
-                        if (image === 'none') {
+                let image = item.css('listStyleImage');
+                if (image && image !== 'none') {
+                    ordinal = { image, position: '' };
+                }
+                else {
+                    switch (item.css('listStyleType')) {
+                        case 'disc':
+                            ordinal = '●';
+                            break;
+                        case 'square':
+                            ordinal = '■';
+                            break;
+                        case 'decimal':
+                            ordinal = `${(i + 1).toString()}.`;
+                            break;
+                        case 'decimal-leading-zero':
+                            ordinal = `${(i < 9 ? '0' : '') + (i + 1).toString()}.`;
+                            break;
+                        case 'lower-alpha':
+                        case 'lower-latin':
+                            ordinal = `${convertAlpha(i).toLowerCase()}.`;
+                            break;
+                        case 'upper-alpha':
+                        case 'upper-latin':
+                            ordinal = `${convertAlpha(i)}.`;
+                            break;
+                        case 'lower-roman':
+                            ordinal = `${convertRoman(i + 1).toLowerCase()}.`;
+                            break;
+                        case 'upper-roman':
+                            ordinal = `${convertRoman(i + 1)}.`;
+                            break;
+                        case 'none':
+                            image = '';
+                            let position = '';
                             const repeat = item.css('backgroundRepeat');
                             if (repeat === 'no-repeat') {
                                 image = item.css('backgroundImage');
                                 position = item.css('backgroundPosition');
                             }
-                        }
-                        if (image !== 'none') {
-                            ordinal = { image, position };
-                            item.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
-                        }
-                        break;
-                    default:
-                        if (node.element.tagName === 'OL') {
-                            ordinal = `${(type === 'decimal-leading-zero' && i < 9 ? '0' : '') + (i + 1).toString()}.`;
-                        }
-                        else {
+                            if (image && image !== 'none') {
+                                ordinal = { image, position };
+                                item.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
+                            }
+                            break;
+                        default:
                             ordinal = '○';
-                        }
-                        break;
+                            break;
+                    }
                 }
-                marginLeft = Math.min(item.marginLeft);
+                marginLeft = Math.min(item.marginLeft, marginLeft);
                 i++;
             }
             item.data(`${EXT_NAME.LIST}:listStyleType`, ordinal);

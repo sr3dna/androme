@@ -60,7 +60,7 @@ export default abstract class Resource<T extends Node> {
     constructor(public file: File<T>) {
     }
 
-    public abstract filterStyles(viewData: ViewData<NodeList<T>>): void;
+    public abstract combineStyles(viewData: ViewData<NodeList<T>>): void;
     public abstract setImageSource(): void;
     public abstract addTheme(template: string, data: {}, options: {}): void;
     public abstract finalize(viewData: ViewData<NodeList<T>>): void;
@@ -146,11 +146,11 @@ export default abstract class Resource<T extends Node> {
                 }
                 else {
                     let color = parseRGBA(node.css('color'), node.css('opacity'));
-                    if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (node.element.nodeName === '#text' || color[1] !== node.styleMap.color)) {
+                    if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (node.plainText || color[1] !== node.styleMap.color)) {
                         color = [];
                     }
                     let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.element.nodeName === '#text' || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(node.element, 'backgroundColor')))) {
+                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(node.element, 'backgroundColor')))) {
                         backgroundColor = [];
                     }
                     let fontWeight = node.css('fontWeight');
@@ -264,8 +264,8 @@ export default abstract class Resource<T extends Node> {
                 else if (element.tagName === 'TEXTAREA') {
                     value = element.value.trim();
                 }
-                else if (element.nodeName === '#text') {
-                    value = element.textContent || '';
+                else if (node.plainText) {
+                    value = replaceEntity(element.textContent || '');
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                     if (element.previousSibling && (<Element> element.previousSibling).tagName === 'BR') {
                         value = value.replace(/^\s+/, '');
