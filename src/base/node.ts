@@ -541,7 +541,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get extension() {
-        return (hasValue(this.dataset.ext) ? (<string> this.dataset.ext).split(',')[0].trim() : '');
+        return (hasValue(this.dataset.ext) ? (this.dataset.ext as string).split(',')[0].trim() : '');
     }
 
     get flex(): Flexbox {
@@ -549,7 +549,7 @@ export default abstract class Node implements BoxModel {
         const style = this.style;
         if (style != null && parent !== this) {
             return {
-                enabled: ((<string> style.display).indexOf('flex') !== -1),
+                enabled: ((style.display as string).indexOf('flex') !== -1),
                 direction: <string> style.flexDirection,
                 basis: <string> style.flexBasis,
                 grow: convertInt(style.flexGrow),
@@ -701,7 +701,8 @@ export default abstract class Node implements BoxModel {
 
     get inlineElement() {
         const position = this.position;
-        return (this.inline || ['inline-block', 'table-cell'].includes(this.display) || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
+        const display = this.display;
+        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
     }
 
     get inlineText() {

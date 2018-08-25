@@ -256,7 +256,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         break;
                                     }
                                 case 'top':
-                                    current.app(mapLayout['top'], highest.stringId);
+                                    if (highest !== current) {
+                                        current.app(mapLayout['top'], highest.stringId);
+                                    }
                                     break;
                                 case 'middle':
                                     this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
@@ -272,7 +274,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         break;
                                     }
                                 case 'bottom':
-                                    current.app(mapLayout['bottom'], lowest.stringId);
+                                    if (lowest !== current) {
+                                        current.app(mapLayout['bottom'], lowest.stringId);
+                                    }
                                     break;
                             }
                         }
@@ -1396,7 +1400,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 break;
             case NODE_ANDROID.LINE:
                 if (node.viewHeight === 0) {
-                    node.android('layout_height', formatPX(((node.borderTopWidth + node.borderBottomWidth) || 1) + ((node.paddingTop + node.paddingBottom) || 1)));
+                    node.android('layout_height', formatPX((node.borderTopWidth + node.borderBottomWidth + node.paddingTop + node.paddingBottom) || 1));
                 }
                 break;
         }
@@ -1588,7 +1592,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         for (const name in node.dataset) {
             if (/^attr[A-Z]+/.test(name)) {
                 const obj = capitalize(name.substring(4), false);
-                (<string> node.dataset[name]).split(';').forEach(values => {
+                (node.dataset[name] as string).split(';').forEach(values => {
                     const [key, value] = values.split('::');
                     if (hasValue(key) && hasValue(value)) {
                         node.add(obj, key, value);

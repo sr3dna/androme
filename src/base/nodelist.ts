@@ -86,7 +86,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 if (nodes.every(node => node.display === 'block' && !node.floating)) {
                     return true;
                 }
-                if (nodes.every((node, index) => node.inline && (index === 0 || !isLineBreak(<HTMLElement> node.element.previousElementSibling)))) {
+                if (nodes.every((node, index) => node.inlineElement && (index === 0 || !isLineBreak(<HTMLElement> node.element.previousElementSibling)))) {
                     return false;
                 }
                 nodes = nodes.filter(node => !node.floating);

@@ -328,16 +328,16 @@ export default abstract class Resource<T extends Node> {
         if (style === 'inset' && width === '0px') {
             width = '1px';
         }
-        return { style, width, color: (color.length > 0 ? color : ['#000000', '', '1']) };
+        return { style, width, color: (color.length > 0 ? color : ['#000000', '', '0']) };
     }
 
     private parseBorderRadius(value: string, node: T) {
-        const [radiusTop, radiusRight, radiusBottom, radiusLeft] = [node.css('borderTopLeftRadius'), node.css('borderTopRightRadius'), node.css('borderBottomLeftRadius'), node.css('borderBottomRightRadius')];
-        if (radiusTop === radiusRight && radiusRight === radiusBottom && radiusBottom === radiusLeft) {
-            return (radiusTop === '' || radiusTop === '0px' ? [] : [radiusTop]);
+        const [top, right, bottom, left] = [node.css('borderTopLeftRadius'), node.css('borderTopRightRadius'), node.css('borderBottomLeftRadius'), node.css('borderBottomRightRadius')];
+        if (top === right && right === bottom && bottom === left) {
+            return (top === '' || top === '0px' ? [] : [top]);
         }
         else {
-            return [radiusTop, radiusRight, radiusBottom, radiusLeft];
+            return [top, right, bottom, left];
         }
     }
 

@@ -164,7 +164,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public static addColor(value: string, opacity = '1') {
         value = value.toUpperCase().trim();
-        const opaque = (parseFloat(opacity) < 1 ? `#${opacity.substring(2) + value.substring(1)}` : value);
+        const opaque = (parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value);
         if (value !== '') {
             let colorName = '';
             if (!Resource.STORED.COLORS.has(opaque)) {

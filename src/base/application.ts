@@ -229,7 +229,7 @@ export default class Application<T extends Node> {
         this.cache.clear();
         const extensions = this.extensions;
         for (const extension of extensions) {
-            extension.setTarget({} as T, undefined, root);
+            extension.setTarget(<T> {}, undefined, root);
             extension.beforeInit();
         }
         const rootNode = this.insertNode(root);
@@ -800,7 +800,7 @@ export default class Application<T extends Node> {
                                             if (!parent.flex.enabled && children.every(node => node.pageflow)) {
                                                 const float = new Set(children.map(node => node.float));
                                                 if (linearX) {
-                                                    if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => convertInt(node.css('verticalAlign')) === 0)) {
+                                                    if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => convertInt(node.css('verticalAlign')) === 0)) {
                                                         xml = this.writeConstraintLayout(nodeY, parent);
                                                         nodeY.alignmentType = NODE_ALIGNMENT.HORIZONTAL;
                                                         this.sortLayout(nodeY, <T[]> children, nodeY.alignmentType, true);

@@ -91,7 +91,7 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
             return style;
         }
     }
-    return {} as CSSStyleDeclaration;
+    return <CSSStyleDeclaration> {};
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {
