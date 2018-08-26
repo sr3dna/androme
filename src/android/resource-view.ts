@@ -295,11 +295,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const stored: StringMap = getCache(node.element, 'boxSpacing');
             if (stored) {
                 if (convertInt(stored.marginLeft) > 0 && stored.marginLeft === stored.marginRight) {
-                    if (node.alignParent('left') && node.alignParent('right')) {
-                        if (node.android('layout_width') !== 'match_parent') {
-                            delete stored.marginLeft;
-                            delete stored.marginRight;
-                        }
+                    if (node.alignParent('left') && node.alignParent('right') && !node.blockWidth) {
+                        delete stored.marginLeft;
+                        delete stored.marginRight;
                     }
                 }
                 if (node.styleMap.marginLeft === 'auto') {
@@ -749,8 +747,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    public setValueString(supportInline: string[]) {
-        super.setValueString(supportInline);
+    public setValueString() {
+        super.setValueString();
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
             const stored: BasicData = getCache(node.element, 'valueString');
             if (stored) {

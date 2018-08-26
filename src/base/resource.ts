@@ -126,7 +126,7 @@ export default abstract class Resource<T extends Node> {
                         result[i] = '';
                     }
                 }
-                if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (node.styleMap.backgroundColor == null && node.documentParent.visible && sameAsParent(node.element, 'backgroundColor')))) {
+                if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (!node.isSet('styleMap', 'backgroundColor') && node.documentParent.visible && sameAsParent(node.element, 'backgroundColor')))) {
                     result.backgroundColor = [];
                 }
                 const borderTop = JSON.stringify(result.borderTop);
@@ -150,7 +150,7 @@ export default abstract class Resource<T extends Node> {
                         color = [];
                     }
                     let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (node.styleMap.backgroundColor == null && sameAsParent(node.element, 'backgroundColor')))) {
+                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.isSet('styleMap', 'backgroundColor') && sameAsParent(node.element, 'backgroundColor')))) {
                         backgroundColor = [];
                     }
                     let fontWeight = node.css('fontWeight');
@@ -214,7 +214,7 @@ export default abstract class Resource<T extends Node> {
         });
     }
 
-    public setValueString(supportInline: string[]) {
+    public setValueString() {
         function parseWhiteSpace(node: T, value: string): [string, boolean] {
             if (node.multiLine) {
                 value = value.replace(/^\s*\n/, '');

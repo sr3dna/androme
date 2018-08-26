@@ -46,7 +46,7 @@ const MAP_CHAIN = {
 };
 
 export default class ViewController<T extends View> extends Controller<T> {
-    private merge = {};
+    private _merge = {};
 
     constructor() {
         super();
@@ -67,7 +67,7 @@ export default class ViewController<T extends View> extends Controller<T> {
     public reset() {
         super.reset();
         resetId();
-        this.merge = {};
+        this._merge = {};
     }
 
     public setConstraints() {
@@ -1455,14 +1455,14 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     public renderInclude(node: T, parent: T, name: string) {
-        this.merge[name] = (node.dataset.includeMerge === 'true');
-        node.documentRoot = !this.merge[name];
+        this._merge[name] = (node.dataset.includeMerge === 'true');
+        node.documentRoot = !this._merge[name];
         return this.renderNodeStatic('include', parent.renderDepth + 1, { layout: `@layout/${name}` });
     }
 
     public renderIncludeContent(name: string, content: string[]) {
         let xml = content.join('');
-        if (this.merge[name]) {
+        if (this._merge[name]) {
             const node = new View(0, 0);
             node.documentRoot = true;
             xml = this.renderNodeStatic('merge', 0, {}, '', '', <T> node, true).replace('{:0}', xml);
@@ -1471,7 +1471,7 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     public getIncludeRenderDepth(name: string) {
-        return (this.merge[name] ? 0 : -1);
+        return (this._merge[name] ? 0 : -1);
     }
 
     public createGroup(node: T, children: T[], parent?: T, element?: HTMLElement): T {
@@ -1742,13 +1742,21 @@ export default class ViewController<T extends View> extends Controller<T> {
                 let found = false;
                 if (!percent) {
                     found = parent.renderChildren.some(item => {
-                        if (item.constraint[value] && !item.constraint[`chain${capitalize(value)}`]) {
+                        if (item.constraint[value] && (!item.constraint[`chain${capitalize(value)}`] || item.constraint[`margin${capitalize(value)}`] != null)) {
                             if (withinFraction(node.linear[LT], item.linear[RB])) {
                                 node.anchor(map[LTRB], item.stringId, value, true);
                                 return true;
                             }
                             else if (withinFraction(node.linear[RB], item.linear[LT])) {
                                 node.anchor(map[RBLT], item.stringId, value, true);
+                                return true;
+                            }
+                            if (withinFraction(node.linear[LT], item.linear[LT])) {
+                                node.anchor(map[(index === 1 && node.is(NODE_STANDARD.TEXT) && item.is(NODE_STANDARD.TEXT) ? 'baseline' : LT)], item.stringId, value, true);
+                                return true;
+                            }
+                            else if (withinFraction(node.linear[RB], item.linear[RB])) {
+                                node.anchor(map[RB], item.stringId, value, true);
                                 return true;
                             }
                         }

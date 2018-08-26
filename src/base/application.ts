@@ -20,13 +20,13 @@ export default class Application<T extends Node> {
     public insert: ObjectIndex<string[]> = {};
     public closed = false;
 
-    private sorted: ObjectIndex<number[]> = {};
-    private views: PlainFile[] = [];
-    private includes: PlainFile[] = [];
-    private currentIndex = -1;
+    private _views: PlainFile[] = [];
+    private _includes: PlainFile[] = [];
     private _extensions: IExtension[] = [];
+    private _sorted: ObjectIndex<number[]> = {};
+    private _currentIndex = -1;
 
-    constructor(private TypeT: { new (id: number, api: number, element?: HTMLElement, options?: {}): T }) {
+    constructor(private _TypeT: { new (id: number, api: number, element?: HTMLElement, options?: {}): T }) {
         this.cache = new NodeList<T>();
         this.cacheInternal = new NodeList<T>();
     }
@@ -95,11 +95,11 @@ export default class Application<T extends Node> {
         this.resetController();
         this.resetResource();
         this.appName = '';
-        this.sorted = {};
-        this.views = [];
-        this.includes = [];
         this.insert = {};
-        this.currentIndex = -1;
+        this._sorted = {};
+        this._views = [];
+        this._includes = [];
+        this._currentIndex = -1;
         this.closed = false;
     }
 
@@ -119,7 +119,7 @@ export default class Application<T extends Node> {
         this.resourceHandler.setBoxStyle();
         this.resourceHandler.setFontStyle();
         this.resourceHandler.setBoxSpacing();
-        this.resourceHandler.setValueString(this.controllerHandler.supportInline);
+        this.resourceHandler.setValueString();
         this.resourceHandler.setOptionArray();
         this.resourceHandler.setImageSource();
     }
@@ -234,7 +234,7 @@ export default class Application<T extends Node> {
         }
         const rootNode = this.insertNode(root);
         if (rootNode) {
-            rootNode.parent = new this.TypeT(0, SETTINGS.targetAPI, root.parentElement || document.body);
+            rootNode.parent = new this._TypeT(0, SETTINGS.targetAPI, root.parentElement || document.body);
             rootNode.documentRoot = true;
             this.cache.parent = rootNode;
         }
@@ -281,7 +281,7 @@ export default class Application<T extends Node> {
                 const textAlign = node.css('textAlign');
                 switch (textAlign) {
                     case 'center':
-                        if (element.tagName !== 'BUTTON' && (<HTMLInputElement> element).type === 'button') {
+                        if (element.tagName === 'BUTTON' || (<HTMLInputElement> element).type === 'button') {
                             break;
                         }
                     case 'right':
@@ -289,6 +289,10 @@ export default class Application<T extends Node> {
                         style.textAlign = textAlign;
                         element.style.textAlign = 'left';
                         break;
+                }
+                if (node.marginTop < 0) {
+                    style.marginTop = node.css('marginTop');
+                    element.style.marginTop = '0px';
                 }
                 if (node.position === 'relative') {
                     ['top', 'right', 'bottom', 'left'].forEach(value => {
@@ -358,8 +362,8 @@ export default class Application<T extends Node> {
                 }
             }
             for (const node of visible) {
-                const text: HTMLElement[] = [];
                 let valid = true;
+                const text: HTMLElement[] = [];
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
                     if (element.nodeName === '#text') {
                         if (node.element.tagName !== 'SELECT') {
@@ -399,10 +403,9 @@ export default class Application<T extends Node> {
                         }
                     });
                     if (marginLeftType > 0) {
-                        node.box.left -= node.marginLeft;
-                        node.css('marginLeft', '0px');
+                        node.bounds.left -= node.marginLeft;
+                        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0, true);
                     }
-                    node.setDimensions(['box']);
                 }
                 if (!node.pageflow && node.children.length > 0) {
                     let calibrate = false;
@@ -618,17 +621,26 @@ export default class Application<T extends Node> {
                                 for (let l = k + 1; l < axisY.length; l++) {
                                     const adjacent = axisY[l];
                                     if (adjacent.pageflow) {
-                                        let previous = adjacent.previousSibling;
-                                        if (previous && isLineBreak(<Element> previous.element.nextSibling, 'next')) {
-                                            break;
-                                        }
-                                        previous = (() => {
+                                        let lineBreak = false;
+                                        let previous = (() => {
                                             let node = adjacent.previousSibling;
-                                            while (node && !node.pageflow) {
-                                                node = node.previousSibling;
+                                            while (node) {
+                                                if (isLineBreak(<Element> node.element.nextSibling, 'next')) {
+                                                    lineBreak = true;
+                                                    break;
+                                                }
+                                                if (!node.pageflow) {
+                                                    node = node.previousSibling;
+                                                }
+                                                else {
+                                                    break;
+                                                }
                                             }
                                             return node;
                                         })();
+                                        if (lineBreak) {
+                                            break;
+                                        }
                                         if (previous) {
                                             const alignVertical = (adjacent.plainText && adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
                                                                   (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
@@ -851,9 +863,9 @@ export default class Application<T extends Node> {
             }
             for (const [id, views] of partial.entries()) {
                 const content: string[] = [];
-                if (this.sorted[id] != null) {
+                if (this._sorted[id] != null) {
                     const parsed: string[] = [];
-                    this.sorted[id].forEach(value => {
+                    this._sorted[id].forEach(value => {
                         const result: string = views.find((view: string) => view.indexOf(`{@${value}}`) !== -1);
                         if (result) {
                             parsed.push(result);
@@ -886,7 +898,7 @@ export default class Application<T extends Node> {
             this.updateLayout(pathname, (!empty ? output : ''), (root.renderExtension != null && root.renderExtension.documentRoot));
         }
         else {
-            this.views.pop();
+            this._views.pop();
         }
         if (!empty) {
             for (const extension of extensions) {
@@ -1068,10 +1080,10 @@ export default class Application<T extends Node> {
         }
     }
 
-    public addLayout(value: string) {
-        this.currentIndex = this.views.length;
-        this.views.push({
-            filename: value,
+    public addLayout(filename: string) {
+        this._currentIndex = this._views.length;
+        this._views.push({
+            filename,
             pathname: '',
             content: ''
         });
@@ -1079,13 +1091,13 @@ export default class Application<T extends Node> {
 
     public updateLayout(pathname = '', content: string, documentRoot = false) {
         pathname = pathname || 'res/layout';
-        if (documentRoot && this.views.length > 0 && this.views[0].content === '') {
-            const view = this.views[0];
-            const current = (<PlainFile> this.views.pop());
+        if (documentRoot && this._views.length > 0 && this._views[0].content === '') {
+            const view = this._views[0];
+            const current = <PlainFile> this._views.pop();
             view.pathname = pathname;
             view.filename = current.filename;
             view.content = content;
-            this.currentIndex = 0;
+            this._currentIndex = 0;
         }
         else {
             const view = this.current;
@@ -1141,12 +1153,12 @@ export default class Application<T extends Node> {
                 break;
         }
         if (save && sorted) {
-            this.sorted[parent.id] = children.map(item => item.id);
+            this._sorted[parent.id] = children.map(item => item.id);
         }
     }
 
     public addInclude(filename: string, content: string) {
-        this.includes.push({
+        this._includes.push({
             pathname: 'res/layout',
             filename,
             content
@@ -1166,29 +1178,31 @@ export default class Application<T extends Node> {
     }
 
     public toString() {
-        return (this.views.length > 0 ? this.views[0].content : '');
+        return (this._views.length > 0 ? this._views[0].content : '');
     }
 
     private insertNode(element: HTMLElement, parent?: T) {
         let node: Null<T> = null;
         if (element.nodeName === '#text') {
             if (optional(element, 'textContent', 'string').trim() !== '' || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
+                node = new this._TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
                 node.tagName = 'PLAINTEXT';
                 if (parent != null) {
                     node.parent = parent;
                     node.inherit(parent, 'style');
-                    node.styleMap.whiteSpace = parent.css('whiteSpace');
+                    node.css('whiteSpace', parent.css('whiteSpace'));
                 }
-                node.styleMap.display = 'inline';
-                node.styleMap.clear = 'none';
-                node.styleMap.cssFloat = 'none';
-                node.styleMap.verticalAlign = 'baseline';
+                node.css({
+                    display: 'inline',
+                    clear: 'none',
+                    cssFloat: 'none',
+                    verticalAlign: 'baseline'
+                });
                 node.setBounds();
             }
         }
         else if (isVisible(element)) {
-            node = new this.TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
+            node = new this._TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
             if (getCache(element, 'nodeIsolated')) {
                 node.isolated = true;
             }
@@ -1238,14 +1252,14 @@ export default class Application<T extends Node> {
     }
 
     set current(value) {
-        this.views[this.currentIndex] = value;
+        this._views[this._currentIndex] = value;
     }
     get current() {
-        return this.views[this.currentIndex];
+        return this._views[this._currentIndex];
     }
 
     get layouts() {
-        return [...this.views, ...this.includes];
+        return [...this._views, ...this._includes];
     }
 
     get extensions() {
@@ -1253,10 +1267,10 @@ export default class Application<T extends Node> {
     }
 
     get viewData(): ViewData<NodeList<T>> {
-        return { cache: this.cacheInternal, views: this.views, includes: this.includes };
+        return { cache: this.cacheInternal, views: this._views, includes: this._includes };
     }
 
     get size() {
-        return this.views.length + this.includes.length;
+        return this._views.length + this._includes.length;
     }
 }

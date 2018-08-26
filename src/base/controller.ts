@@ -6,8 +6,8 @@ import { repeat } from '../lib/util';
 export default abstract class Controller<T extends Node> {
     public cache: NodeList<T>;
 
-    private before: ObjectIndex<string[]> = {};
-    private after: ObjectIndex<string[]> = {};
+    private _before: ObjectIndex<string[]> = {};
+    private _after: ObjectIndex<string[]> = {};
 
     constructor() {
     }
@@ -31,46 +31,46 @@ export default abstract class Controller<T extends Node> {
     public abstract get supportInclude(): boolean;
 
     public reset() {
-        this.before = {};
-        this.after = {};
+        this._before = {};
+        this._after = {};
     }
 
     public insertAuxillaryViews(output: string) {
-        for (const id in this.before) {
-            output = output.replace(`{<${id}}`, this.before[id].join(''));
+        for (const id in this._before) {
+            output = output.replace(`{<${id}}`, this._before[id].join(''));
         }
-        for (const id in this.after) {
-            output = output.replace(`{>${id}}`, this.after[id].join(''));
+        for (const id in this._after) {
+            output = output.replace(`{>${id}}`, this._after[id].join(''));
         }
         return output;
     }
 
     public prependBefore(id: number, xml: string, index = -1) {
-        if (this.before[id] == null) {
-            this.before[id] = [];
+        if (this._before[id] == null) {
+            this._before[id] = [];
         }
-        if (index !== -1 && index < this.before[id].length) {
-            this.before[id].splice(index, 0, xml);
+        if (index !== -1 && index < this._before[id].length) {
+            this._before[id].splice(index, 0, xml);
         }
         else {
-            this.before[id].push(xml);
+            this._before[id].push(xml);
         }
     }
 
     public appendAfter(id: number, xml: string, index = -1) {
-        if (this.after[id] == null) {
-            this.after[id] = [];
+        if (this._after[id] == null) {
+            this._after[id] = [];
         }
-        if (index !== -1 && index < this.after[id].length) {
-            this.after[id].splice(index, 0, xml);
+        if (index !== -1 && index < this._after[id].length) {
+            this._after[id].splice(index, 0, xml);
         }
         else {
-            this.after[id].push(xml);
+            this._after[id].push(xml);
         }
     }
 
     public hasAppendProcessing(id: number) {
-        return (this.before[id] != null || this.after[id] != null);
+        return (this._before[id] != null || this._after[id] != null);
     }
 
     protected getEnclosingTag(depth: number, tagName: string, id: number, xml = '', preXml = '', postXml = '') {

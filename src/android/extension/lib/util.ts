@@ -11,12 +11,11 @@ type T = View;
 
 export function createPlaceholder(nextId: number, node: T, children: T[] = []) {
     const placeHolder = new View(nextId, node.api, node.element);
-    placeHolder.depth = node.depth;
     placeHolder.parent = node.parent;
-    placeHolder.inherit(node, 'base');
-    placeHolder.excludeResource |= NODE_RESOURCE.ALL;
     placeHolder.children = children;
+    placeHolder.inherit(node, 'base');
     placeHolder.isolated = true;
+    placeHolder.excludeResource |= NODE_RESOURCE.ALL;
     return placeHolder;
 }
 
@@ -31,13 +30,11 @@ export function formatResource(options: {}) {
                         case 'android':
                             switch (attr) {
                                 case 'text':
-                                    if (!value.startsWith('@string/')) {
-                                        if (SETTINGS.numberResourceValue || !isNumber(value)) {
-                                            value = ResourceView.addString(value);
-                                            if (value !== '') {
-                                                object[attr] = `@string/${value}`;
-                                                continue;
-                                            }
+                                    if (!value.startsWith('@string/') && (SETTINGS.numberResourceValue || !isNumber(value))) {
+                                        value = ResourceView.addString(value);
+                                        if (value !== '') {
+                                            object[attr] = `@string/${value}`;
+                                            continue;
                                         }
                                     }
                                     break;

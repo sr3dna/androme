@@ -161,7 +161,7 @@ export function hasLineBreak(element: HTMLElement) {
     let styleMap = false;
     if (node) {
         whiteSpace = node.css('whiteSpace');
-        styleMap = (node.styleMap.whiteSpace != null);
+        styleMap = node.isSet('styleMap', 'whiteSpace');
     }
     else {
         whiteSpace = getStyle(element).whiteSpace || '';

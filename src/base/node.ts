@@ -240,12 +240,12 @@ export default abstract class Node implements BoxModel {
                             style[key] = node.style[key];
                         }
                     }
-                    Object.assign(this.styleMap, style);
+                    this.css(style);
                     break;
                 case 'styleMap':
                     for (const attr in node.styleMap) {
                         if (this.styleMap[attr] == null) {
-                            this.styleMap[attr] = node.styleMap[attr];
+                            this.css(attr, node.styleMap[attr]);
                         }
                     }
                     break;

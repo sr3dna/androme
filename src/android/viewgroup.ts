@@ -3,7 +3,7 @@ import View from './view';
 type T = View;
 
 export default class ViewGroup extends View {
-    private baseNode: T;
+    private _baseNode: T;
 
     constructor(
         id: number,
@@ -14,7 +14,7 @@ export default class ViewGroup extends View {
     {
         super(id, node.api);
         this.documentParent = node.documentParent;
-        this.baseNode = node;
+        this._baseNode = node;
         if (parent != null) {
             this.parent = parent;
         }
@@ -145,6 +145,6 @@ export default class ViewGroup extends View {
     }
 
     get firstChild() {
-        return this.baseNode;
+        return this._baseNode;
     }
 }

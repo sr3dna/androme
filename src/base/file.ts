@@ -9,15 +9,15 @@ export default abstract class File<T extends Node> {
 
     protected queue: PlainFile[] = [];
 
-    private compression = 'zip';
+    private _compression = 'zip';
 
     constructor(
-        private directory: string,
-        private processingTime: number,
+        private _directory: string,
+        private _processingTime: number,
         compression: string)
     {
         if (compression) {
-            this.compression = compression;
+            this._compression = compression;
         }
     }
 
@@ -56,7 +56,7 @@ export default abstract class File<T extends Node> {
         }
         if (files && files.length > 0) {
             files.push(...this.queue);
-            fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this.directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.compression.toLocaleLowerCase()}&processingtime=${this.processingTime.toString().trim()}`, {
+            fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this._directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this._compression.toLocaleLowerCase()}&processingtime=${this._processingTime.toString().trim()}`, {
                     method: 'POST',
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })

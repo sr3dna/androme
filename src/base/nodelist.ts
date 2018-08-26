@@ -107,7 +107,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         }
     }
 
-    private currentId = 0;
+    private _currentId = 0;
     private _list: T[] = [];
 
     constructor(
@@ -135,7 +135,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public reset() {
-        this.currentId = 0;
+        this._currentId = 0;
         this.clear();
     }
 
@@ -226,7 +226,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     get nextId() {
-        return ++this.currentId;
+        return ++this._currentId;
     }
 
     get linearX() {

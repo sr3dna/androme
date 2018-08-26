@@ -67,7 +67,7 @@ export default class Table extends Extension<T> {
                 if (element.colSpan > 1) {
                     td.data(`${EXT_NAME.TABLE}:columnSpan`, element.colSpan);
                 }
-                if (td.styleMap.verticalAlign == null) {
+                if (!td.isSet('styleMap', 'verticalAlign')) {
                     td.css('verticalAlign', 'middle');
                 }
                 delete td.styleMap.margin;
@@ -83,8 +83,8 @@ export default class Table extends Extension<T> {
         }
         const caption = node.children.find(item => item.element.tagName === 'CAPTION');
         if (caption) {
-            if (caption.styleMap.textAlign == null) {
-                caption.styleMap.textAlign = 'center';
+            if (!caption.isSet('styleMap', 'textAlign')) {
+                caption.css('textAlign', 'center');
             }
             caption.data(`${EXT_NAME.TABLE}:columnSpan`, columnCount);
         }
