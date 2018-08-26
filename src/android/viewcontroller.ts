@@ -1188,7 +1188,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 options = { android: { orientation: (options && options.horizontal ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL) } };
                 break;
             case NODE_ANDROID.GRID:
-                options = { android: { columnCount: (options && options.columns ? options.columns.toString() : '2'), rowCount: (options && options.rows > 0 ? options.rows.toString() : '') } };
+                options = { app: { columnCount: (options && options.columns ? options.columns.toString() : '2'), rowCount: (options && options.rows > 0 ? options.rows.toString() : '') } };
                 break;
             default:
                 options = {};
@@ -1669,8 +1669,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                     return sameXY;
                 }
                 else {
-                    const chained: Set<T> = new Set([node]);
                     let valid;
+                    const chained: Set<T> = new Set([node]);
                     do {
                         valid = false;
                         Array.from(chained).some(item => {

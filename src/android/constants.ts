@@ -32,7 +32,7 @@ export const NODE_ANDROID = {
     LINEAR: 'LinearLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
     RELATIVE: 'RelativeLayout',
-    GRID: 'GridLayout',
+    GRID: 'android.support.v7.widget.GridLayout',
     SCROLL_VERTICAL: 'ScrollView',
     SCROLL_HORIZONTAL: 'HorizontalScrollView',
     SCROLL_NESTED: 'android.support.v4.widget.NestedScrollView',

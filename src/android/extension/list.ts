@@ -19,26 +19,29 @@ export default class ListAndroid<T extends View> extends List {
         const controller = this.application.controllerHandler;
         const listStyle = node.data(`${EXT_NAME.LIST}:listStyleType`);
         if (listStyle) {
-            const columnCount = convertInt(parent.android('columnCount'));
-            let image = '';
-            let [left, top] = ['0px', '0px'];
-            if (typeof listStyle === 'object') {
-                image = ResourceView.addImageURL(listStyle.image);
-                [left, top] = ResourceView.parseBackgroundPosition(listStyle.position);
-            }
+            const columnCount = (parent.is(NODE_STANDARD.GRID) ? convertInt(parent.app('columnCount')) : 0);
             const floatItem = node.children.find(item => item.float === 'left' && convertInt(item.cssOriginal('marginLeft')) < 0 && Math.abs(convertInt(item.cssOriginal('marginLeft'))) <= convertInt(item.documentParent.cssOriginal('marginLeft')));
             if (listStyle === '0' && floatItem != null) {
                 floatItem.parent = parent;
                 controller.prependBefore(
                     node.id,
-                    (floatItem.inlineText || floatItem.children.length === 0 ? this.application.controllerHandler.renderNode(floatItem, parent, NODE_STANDARD.TEXT) : this.application.controllerHandler.renderGroup(floatItem, parent, NODE_STANDARD.CONSTRAINT))
+                    (floatItem.inlineText || floatItem.children.length === 0 ? this.application.controllerHandler.renderNode(floatItem, parent, NODE_STANDARD.TEXT)
+                                                                             : this.application.controllerHandler.renderGroup(floatItem, parent, NODE_STANDARD.CONSTRAINT))
                 );
                 if (columnCount === 3) {
-                    node.android('layout_columnSpan', '2');
+                    node.app('layout_columnSpan', '2');
                 }
             }
             else {
                 const inside = (node.css('listStylePosition') === 'inside');
+                const columnWeight = (columnCount > 0 ? '0' : '');
+                const marginLeft = Math.max(node.marginLeft, 0);
+                let image = '';
+                let [left, top] = ['0px', '0px'];
+                if (typeof listStyle === 'object') {
+                    image = ResourceView.addImageURL(listStyle.image);
+                    [left, top] = ResourceView.parseBackgroundPosition(listStyle.position);
+                }
                 if (inside) {
                     controller.prependBefore(
                         node.id,
@@ -46,8 +49,10 @@ export default class ListAndroid<T extends View> extends List {
                             NODE_STANDARD.SPACE,
                             parent.renderDepth + 1, {
                                 android: {
-                                    layout_columnWeight: '0',
-                                    [parseRTL('layout_marginLeft')]: (node.marginLeft > 0 || convertInt(left) > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(Math.max(node.marginLeft, 0) + convertInt(left))) : '')
+                                    [parseRTL('layout_marginLeft')]: (marginLeft > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(marginLeft)) : '')
+                                },
+                                app: {
+                                    layout_columnWeight: columnWeight
                                 }
                             },
                             'wrap_content',
@@ -63,13 +68,15 @@ export default class ListAndroid<T extends View> extends List {
                         parent.renderDepth + 1, {
                             android: {
                                 gravity: parseRTL('right'),
-                                layout_columnWeight: '0',
                                 layout_marginTop: (node.marginTop > 0 || convertInt(top) > 0 ? delimitDimens(node.tagName, parseRTL('margin_top'), formatPX(Math.max(node.marginTop, 0) + convertInt(top))) : ''),
                                 [parseRTL('layout_marginRight')]: delimitDimens(node.tagName, parseRTL('margin_right'), '4px'),
-                                [parseRTL('layout_marginLeft')]: (!inside && (node.marginLeft > 0 || convertInt(left) > 0) ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(Math.max(node.marginLeft, 0) + convertInt(left))) : ''),
+                                [parseRTL('layout_marginLeft')]: (!inside && (marginLeft > 0 || convertInt(left) > 0) ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(marginLeft + convertInt(left))) : ''),
                                 text: (image === '' && listStyle !== '0' ? listStyle : ''),
                                 src: (image !== '' ? `@drawable/${image}` : ''),
                                 baselineAlignBottom: (image !== '' ? 'true' : '')
+                            },
+                            app: {
+                                layout_columnWeight: columnWeight
                             }
                         },
                         'wrap_content',
@@ -77,14 +84,15 @@ export default class ListAndroid<T extends View> extends List {
                     )
                 );
                 if (columnCount === 3 && !inside) {
-                    node.android('layout_columnSpan', '2');
+                    node.app('layout_columnSpan', '2');
                 }
             }
-            if (node.viewWidth === 0) {
-                node.android('layout_width', 'wrap_content');
+            if (columnCount > 0) {
+                node.app('layout_columnWeight', '1');
             }
-            node.android('layout_columnWeight', '1');
-            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
+            if (node.marginLeft > 0) {
+                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
+            }
         }
         return { xml: '' };
     }

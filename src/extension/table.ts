@@ -1,6 +1,7 @@
 import { ExtensionResult } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
+import { isPercent, convertInt } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;
@@ -35,12 +36,30 @@ export default class Table extends Extension<T> {
         const [width, height] = (node.css('borderCollapse') === 'collapse' ? ['0px', '0px'] : node.css('borderSpacing').split(' '));
         for (let i = 0; i < tableRows.length; i++) {
             const tr = tableRows[i];
-            tr.hide();
             columnCount = Math.max(tr.children.map(item => item.element).reduce((a, b: HTMLTableDataCellElement) => a + b.colSpan, 0), columnCount);
-            const nodes = tr.children.slice();
-            for (let j = 0; j < nodes.length; j++) {
-                const td = nodes[j];
-                const style = td.element.style;
+            let percent = 0;
+            let percentCount = 0;
+            tr.each(td => {
+                const percentWidth = td.styleMap.width;
+                if (convertInt(percentWidth) > 0) {
+                    if (isPercent(percentWidth)) {
+                        percent += convertInt(percentWidth);
+                    }
+                    percentCount++;
+                }
+            });
+            if (percentCount > 0 && percentCount < tr.children.length && percent < 100) {
+                const remainder = Math.floor((100 - percent) / (tr.children.length - percentCount));
+                if (remainder >= 1) {
+                    tr.each(td => {
+                        if (convertInt(td.styleMap.width) === 0) {
+                            td.css('width', `${(--percentCount === 0 ? 100 - percent : remainder)}%`);
+                            percent += remainder;
+                        }
+                    });
+                }
+            }
+            tr.each(td => {
                 const element = <HTMLTableCellElement> td.element;
                 if (element.rowSpan > 1) {
                     td.data(`${EXT_NAME.TABLE}:rowSpan`, element.rowSpan);
@@ -48,19 +67,19 @@ export default class Table extends Extension<T> {
                 if (element.colSpan > 1) {
                     td.data(`${EXT_NAME.TABLE}:columnSpan`, element.colSpan);
                 }
-                if (td.styleMap.textAlign == null && !(style.textAlign === 'left' || style.textAlign === 'start')) {
-                    td.styleMap.textAlign = <string> style.textAlign;
-                }
-                if (td.styleMap.verticalAlign == null && style.verticalAlign === '') {
-                    td.styleMap.verticalAlign = 'middle';
+                if (td.styleMap.verticalAlign == null) {
+                    td.css('verticalAlign', 'middle');
                 }
                 delete td.styleMap.margin;
-                td.styleMap.marginTop = height;
-                td.styleMap.marginRight = width;
-                td.styleMap.marginBottom = height;
-                td.styleMap.marginLeft = width;
-                td.parent = node;
-            }
+                td.css({
+                    marginTop: height,
+                    marginRight: width,
+                    marginBottom: height,
+                    marginLeft: width
+                });
+            });
+            tr.children.slice().forEach(td => td.parent = node);
+            tr.hide();
         }
         const caption = node.children.find(item => item.element.tagName === 'CAPTION');
         if (caption) {

@@ -14,10 +14,10 @@ export default class TableAndroid<T extends View> extends Table {
         const rowSpan: number = node.data(`${EXT_NAME.TABLE}:rowSpan`);
         const columnSpan: number = node.data(`${EXT_NAME.TABLE}:columnSpan`);
         if (rowSpan > 1) {
-            node.android('layout_rowSpan', rowSpan.toString());
+            node.app('layout_rowSpan', rowSpan.toString());
         }
         if (columnSpan > 1) {
-            node.android('layout_columnSpan', columnSpan.toString());
+            node.app('layout_columnSpan', columnSpan.toString());
         }
         return { xml: '' };
     }

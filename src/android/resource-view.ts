@@ -61,8 +61,8 @@ interface StyleTag {
 type StyleList = ArrayIndex<ObjectMap<number[]>>;
 
 export default class ResourceView<T extends View> extends Resource<T> {
-    public static addString(value: string, name = '') {
-        if (value != null && value !== '') {
+    public static addString(value = '', name = '') {
+        if (value !== '') {
             if (name === '') {
                 name = value;
             }
@@ -154,7 +154,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         return src;
     }
 
-    public static addImageURL(value: string, prefix: string = '') {
+    public static addImageURL(value = '', prefix = '') {
         const match = value.match(/^url\("?(.*?)"?\)$/);
         if (match) {
             return ResourceView.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
@@ -162,7 +162,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         return '';
     }
 
-    public static addColor(value: string, opacity = '1') {
+    public static addColor(value = '', opacity = '1') {
         value = value.toUpperCase().trim();
         const opaque = (parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value);
         if (value !== '') {
@@ -188,7 +188,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         return '';
     }
 
-    public static parseBackgroundPosition(value: string) {
+    public static parseBackgroundPosition(value = '') {
         const match = new RegExp(/([0-9]+[a-z]{2}) ([0-9]+[a-z]{2})/).exec(value);
         if (match) {
             return [convertPX(match[1]), convertPX(match[2])];

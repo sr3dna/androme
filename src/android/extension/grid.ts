@@ -17,10 +17,10 @@ export default class GridAndroid<T extends View> extends Grid {
         const data = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
         if (data) {
             if (data.rowSpan > 1) {
-                node.android('layout_rowSpan', data.rowSpan.toString());
+                node.app('layout_rowSpan', data.rowSpan.toString());
             }
             if (data.columnSpan > 1) {
-                node.android('layout_columnSpan', data.columnSpan.toString());
+                node.app('layout_columnSpan', data.columnSpan.toString());
             }
         }
         return super.processChild();
@@ -59,7 +59,7 @@ export default class GridAndroid<T extends View> extends Grid {
                                 }
                                 else {
                                     const controller = this.application.controllerHandler;
-                                    controller.appendAfter(node.id, controller.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { android: { layout_columnSpan: gridData.columnCount } }, 'match_parent', formatPX(heightBottom)));
+                                    controller.appendAfter(node.id, controller.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { app: { layout_columnSpan: gridData.columnCount } }, 'match_parent', formatPX(heightBottom)));
                                 }
                             }
                             const marginRight = convertInt(dimensions.marginRight) + convertInt(dimensions.paddingRight);
