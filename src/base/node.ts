@@ -231,9 +231,7 @@ export default abstract class Node implements BoxModel {
                     }
                     break;
                 case 'style':
-                    const style = {
-                        whiteSpace: node.style.whiteSpace
-                    };
+                    const style = { whiteSpace: node.css('whiteSpace') };
                     for (const attr in node.style) {
                         if (attr.startsWith('font') || attr.startsWith('color')) {
                             const key = convertCamelCase(attr);
@@ -547,7 +545,7 @@ export default abstract class Node implements BoxModel {
                 grow: convertInt(style.flexGrow),
                 shrink: convertInt(style.flexShrink),
                 wrap: <string> style.flexWrap,
-                alignSelf: <string> (parent.isSet('styleMap', 'alignItems') && (this.styleMap.alignSelf == null || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf),
+                alignSelf: <string> (parent.isSet('styleMap', 'alignItems') && (!this.isSet('styleMap', 'alignSelf') || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf),
                 justifyContent: <string> style.justifyContent,
                 order: convertInt(style.order)
             };

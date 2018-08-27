@@ -73,8 +73,8 @@ export function assignBounds(bounds: ClientRect): ClientRect {
     };
 }
 
-export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaration {
-    if (element != null) {
+export function getStyle(element?: HTMLElement, cache = true): CSSStyleDeclaration {
+    if (element) {
         if (cache) {
             const node = getNode(element);
             const style = getCache(element, 'style');
@@ -95,7 +95,7 @@ export function getStyle(element: HTMLElement, cache = true): CSSStyleDeclaratio
 }
 
 export function sameAsParent(element: HTMLElement, attr: string) {
-    if (element.parentElement != null) {
+    if (element && element.parentElement != null) {
         const style = getStyle(element);
         return (style && style[attr] === getStyle(element.parentElement)[attr]);
     }

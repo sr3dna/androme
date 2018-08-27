@@ -147,7 +147,7 @@ export default class View extends Node {
 
     public combine(...objs: string[]) {
         const result: string[] = [];
-        this._namespaces.forEach(value => {
+        for (const value of this._namespaces.values()) {
             const obj: StringMap = this[`_${value}`];
             if (objs.length === 0 || objs.includes(value)) {
                 for (const attr in obj) {
@@ -159,7 +159,7 @@ export default class View extends Node {
                     }
                 }
             }
-        });
+        }
         return result.sort((a, b) => {
             if (a.startsWith('android:id=')) {
                 return -1;
@@ -270,7 +270,7 @@ export default class View extends Node {
                 }
             }
             if (this.android('layout_width') !== '0px') {
-                if (convertInt(this.styleMap.width) > 0) {
+                if (convertInt(styleMap.width) > 0) {
                     if (isPercent(styleMap.width)) {
                         const percent = convertInt(styleMap.width) / 100;
                         if (renderParent.element.tagName === 'TABLE' && !renderParent.inlineWidth) {
@@ -279,7 +279,7 @@ export default class View extends Node {
                         }
                         else if (styleMap.width === '100%') {
                             this.android('layout_width', 'match_parent');
-                            if (styleMap.height == null && this.is(NODE_STANDARD.IMAGE)) {
+                            if (!this.isSet('styleMap', 'height') && this.is(NODE_STANDARD.IMAGE)) {
                                 this.android('layout_height', 'match_parent');
                             }
                         }
@@ -292,11 +292,11 @@ export default class View extends Node {
                         this.android('layout_width', styleMap.width);
                     }
                 }
-                if (this.isSet('styleMap', 'minWidth') && !isPercent(styleMap.minWidth) && !constraint.minWidth) {
+                if (this.isSet('styleMap', 'minWidth') && !isPercent(styleMap.minWidth)) {
                     this.android('layout_width', 'wrap_content', false);
                     this.android('minWidth', styleMap.minWidth, false);
                 }
-                if (this.isSet('styleMap', 'maxWidth') && !isPercent(styleMap.maxWidth) && !constraint.maxWidth) {
+                if (this.isSet('styleMap', 'maxWidth') && !isPercent(styleMap.maxWidth)) {
                     this.android('maxWidth', styleMap.maxWidth, false);
                 }
             }
@@ -316,7 +316,7 @@ export default class View extends Node {
                 const widestChild: T[] = [];
                 if (blockElement && renderParent.linearVertical) {
                     let widest = 0;
-                    renderParent.children.forEach(node => {
+                    for (const node of renderParent.children) {
                         const widthInside = node.cascade().filter(item => item.visible).reduce((a: number, b: T) => Math.max(a, b.linear.right), 0) + node.paddingRight + node.borderRightWidth + node.marginRight;
                         if (widthInside > widest) {
                             widestChild.length = 0;
@@ -326,7 +326,7 @@ export default class View extends Node {
                         else if (widthInside === widest) {
                             widestChild.push(node);
                         }
-                    });
+                    }
                 }
                 if (convertFloat(this.app('layout_columnWeight')) > 0) {
                     this.android('layout_width', '0px');
@@ -353,7 +353,7 @@ export default class View extends Node {
                         }
                         else if (styleMap.height === '100%') {
                             this.android('layout_height', 'match_parent');
-                            if (styleMap.width == null && this.is(NODE_STANDARD.IMAGE)) {
+                            if (!this.isSet('styleMap', 'width') && this.is(NODE_STANDARD.IMAGE)) {
                                 this.android('layout_width', 'match_parent');
                             }
                         }
@@ -366,11 +366,11 @@ export default class View extends Node {
                         this.android('layout_height', styleMap.height);
                     }
                 }
-                if (this.isSet('styleMap', 'minHeight') && !isPercent(styleMap.minHeight) && !constraint.minHeight) {
+                if (this.isSet('styleMap', 'minHeight') && !isPercent(styleMap.minHeight)) {
                     this.android('layout_height', 'wrap_content', false);
                     this.android('minHeight', styleMap.minHeight, false);
                 }
-                if (this.isSet('styleMap', 'maxHeight') && !isPercent(styleMap.maxHeight) && !constraint.maxHeight) {
+                if (this.isSet('styleMap', 'maxHeight') && !isPercent(styleMap.maxHeight)) {
                     this.android('maxHeight', styleMap.maxHeight, false);
                 }
                 if (constraint.layoutHeight) {

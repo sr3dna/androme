@@ -17,12 +17,12 @@ export default class Application<T extends Node> {
     public controllerHandler: Controller<T>;
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
+    public extensions: IExtension[] = [];
     public insert: ObjectIndex<string[]> = {};
     public closed = false;
 
     private _views: PlainFile[] = [];
     private _includes: PlainFile[] = [];
-    private _extensions: IExtension[] = [];
     private _sorted: ObjectIndex<number[]> = {};
     private _currentIndex = -1;
 
@@ -52,7 +52,7 @@ export default class Application<T extends Node> {
         else {
             if (extension.dependencies.every(item => this.findExtension(item.name) != null)) {
                 extension.application = this;
-                this._extensions.push(extension);
+                this.extensions.push(extension);
             }
         }
     }
@@ -227,10 +227,9 @@ export default class Application<T extends Node> {
         const elements = (root !== document.body ? root.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         this.cache.parent = undefined;
         this.cache.clear();
-        const extensions = this.extensions;
-        for (const extension of extensions) {
-            extension.setTarget(<T> {}, undefined, root);
-            extension.beforeInit();
+        for (const ext of this.extensions) {
+            ext.setTarget(<T> {}, undefined, root);
+            ext.beforeInit();
         }
         const rootNode = this.insertNode(root);
         if (rootNode) {
@@ -248,7 +247,7 @@ export default class Application<T extends Node> {
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
-                this.orderExt(extensions, element).some(item => item.init(element));
+                this.orderExt(this.extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
                     if (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))) {
                         setCache(element, 'supportInline', true);
@@ -377,32 +376,70 @@ export default class Application<T extends Node> {
                 if (!valid) {
                     text.forEach(element => this.insertNode(element, node));
                 }
-                if (node.children.some(current => current.pageflow && current.float !== 'right' && !['center', 'right'].includes(current.inheritCss('textAlign')) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft))) || node.children.some(current => !current.pageflow && (convertInt(current.left) < 0 && node.marginLeft >= Math.abs(convertInt(current.left))))) {
+                if (node.children.some((current: T) => {
+                        if (current.pageflow) {
+                            return (current.float !== 'right' && !['center', 'right'].includes(current.inheritCss('textAlign')) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)));
+                        }
+                        else {
+                            return ((convertInt(current.left) < 0 && node.marginLeft >= Math.abs(convertInt(current.left))) || (convertInt(current.right) < 0 && Math.abs(convertInt(current.right)) >= current.bounds.width));
+                        }
+                    }))
+                {
                     const marginLeft: number[] = [];
-                    node.each(current => {
-                        let left = current.marginLeft;
+                    const marginRight: T[] = [];
+                    node.each((current: T) => {
                         let leftType = 0;
                         if (current.pageflow) {
+                            const left = current.marginLeft;
                             if (left < 0 && node.marginLeft >= left) {
                                 leftType = 1;
                             }
                         }
                         else {
-                            left = convertInt(current.left);
-                            if (left < 0 && node.marginLeft >= left) {
-                                current.css('left', formatPX(left + node.marginLeft));
-                                leftType = 2;
+                            const left = convertInt(current.left);
+                            const right = convertInt(current.right);
+                            if (left < 0) {
+                                if (node.marginLeft >= left) {
+                                    current.css('left', formatPX(left + node.marginLeft));
+                                    leftType = 2;
+                                }
+                            }
+                            else if (right < 0) {
+                                if (Math.abs(right) >= current.bounds.width) {
+                                    marginRight.push(current);
+                                }
                             }
                         }
                         marginLeft.push(leftType);
                     });
+                    if (marginRight.length > 0) {
+                        const [panelLeft, panelRight] = new NodeList<T>(<T[]> node.children).partition((item: T) => !marginRight.includes(item));
+                        if (panelLeft.length > 0 && panelRight.length > 0) {
+                            if (node.styleMap.marginLeft === 'auto') {
+                                node.css('marginLeft', <string> node.style.marginLeft);
+                            }
+                            node.css('marginRight', '0px');
+                            const widthLeft = (node.styleMap.width != null ? convertInt(node.styleMap.width) : Math.max.apply(null, panelLeft.list.map(item => item.linear.width)));
+                            const widthRight = Math.max.apply(null, panelRight.list.map(item => Math.abs(convertInt(item.right))));
+                            panelLeft.each((item: T) => {
+                                if (item.pageflow && item.viewWidth === 0) {
+                                    item.css('maxWidth', formatPX(widthLeft));
+                                }
+                            });
+                            node.css('width', formatPX(widthLeft + widthRight));
+                        }
+                    }
                     const marginLeftType = Math.max.apply(null, marginLeft);
-                    node.each((current, index: number) => {
+                    node.each((current: T, index: number) => {
                         if (marginLeftType && marginLeft[index] !== 2 && ((current.pageflow && !current.plainText && marginLeft.includes(1)) || marginLeftType === 2)) {
                             current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft, true);
                         }
                     });
                     if (marginLeftType > 0) {
+                        const width = convertInt(node.styleMap.width);
+                        if (width > 0) {
+                            node.css('width', formatPX(width + node.marginLeft));
+                        }
                         node.bounds.left -= node.marginLeft;
                         node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0, true);
                     }
@@ -434,9 +471,9 @@ export default class Application<T extends Node> {
                     }
                 }
             }
-            for (const extension of extensions) {
-                extension.setTarget(rootNode);
-                extension.afterInit();
+            for (const ext of this.extensions) {
+                ext.setTarget(rootNode);
+                ext.afterInit();
             }
             for (const node of this.cache.elements) {
                 let i = 0;
@@ -457,7 +494,6 @@ export default class Application<T extends Node> {
 
     public createLayoutXml() {
         const application = this;
-        const extensions = this.extensions;
         const mapX: LayoutMap<T> = [];
         const mapY: LayoutMap<T> = [];
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
@@ -520,7 +556,7 @@ export default class Application<T extends Node> {
                 const below: T[] = [];
                 const middle: T[] = [];
                 const above: T[] = [];
-                let parent = (<T> this.cache.locate('id', parseInt(coordsY[j])));
+                let parent = this.cache.locate('id', parseInt(coordsY[j])) as T;
                 for (const node of mapY[i][coordsY[j]] as T[]) {
                     const zIndex = convertInt(node.css('zIndex'));
                     const documentParent = (node.parent.element === node.element.parentElement);
@@ -562,7 +598,7 @@ export default class Application<T extends Node> {
                         }
                         current = (includes.length > 0 ? includes[includes.length - 1] : '');
                         if (current !== '') {
-                            const cloneParent = (<T> parent.clone());
+                            const cloneParent = parent.clone() as T;
                             cloneParent.renderDepth = this.controllerHandler.getIncludeRenderDepth(current);
                             nodeY.parent = cloneParent;
                             parent = cloneParent;
@@ -585,7 +621,7 @@ export default class Application<T extends Node> {
                         }
                         const rendered: IExtension[] = [];
                         let proceed = false;
-                        this.orderExt(extensions, nodeY.element).some(item => {
+                        this.orderExt(this.extensions, nodeY.element).some(item => {
                             if (item.is(nodeY)) {
                                 item.setTarget(nodeY, parent);
                                 if (item.condition()) {
@@ -622,7 +658,7 @@ export default class Application<T extends Node> {
                                     const adjacent = axisY[l];
                                     if (adjacent.pageflow) {
                                         let lineBreak = false;
-                                        let previous = (() => {
+                                        const previous = (() => {
                                             let node = adjacent.previousSibling;
                                             while (node) {
                                                 if (isLineBreak(<Element> node.element.nextSibling, 'next')) {
@@ -901,9 +937,9 @@ export default class Application<T extends Node> {
             this._views.pop();
         }
         if (!empty) {
-            for (const extension of extensions) {
-                extension.setTarget(root);
-                extension.afterRender();
+            for (const ext of this.extensions) {
+                ext.setTarget(root);
+                ext.afterRender();
             }
         }
         else if (root.renderExtension == null) {
@@ -1166,7 +1202,7 @@ export default class Application<T extends Node> {
     }
 
     public findExtension(name: string) {
-        return this._extensions.find(item => item.name === name);
+        return this.extensions.find(item => item.name === name);
     }
 
     public addXmlNs(name: string, uri: string) {
@@ -1190,7 +1226,9 @@ export default class Application<T extends Node> {
                 if (parent != null) {
                     node.parent = parent;
                     node.inherit(parent, 'style');
-                    node.css('whiteSpace', parent.css('whiteSpace'));
+                }
+                else {
+                    node.css('whiteSpace', (element.parentElement ? getStyle(element.parentElement).whiteSpace : null) || 'normal');
                 }
                 node.css({
                     display: 'inline',
@@ -1260,10 +1298,6 @@ export default class Application<T extends Node> {
 
     get layouts() {
         return [...this._views, ...this._includes];
-    }
-
-    get extensions() {
-        return this._extensions.filter(item => item.enabled);
     }
 
     get viewData(): ViewData<NodeList<T>> {

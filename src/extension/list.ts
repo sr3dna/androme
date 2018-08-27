@@ -15,9 +15,7 @@ export default abstract class List extends Extension<T> {
 
     public condition() {
         const children = this.node.children;
-        return (super.condition() &&
-               children.length > 0 &&
-               (children.every(node => node.inlineElement) || children.every(node => !node.inlineElement)) && (
+        return (super.condition() && children.length > 0 && (children.every(node => node.inlineElement) || children.every(node => !node.inlineElement)) && (
                     children.some(node => node.element.tagName === 'LI' && node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
                     children.every(node => node.element.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))
                ));

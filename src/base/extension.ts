@@ -11,7 +11,6 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public element?: HTMLElement;
     public options: ObjectMap<any> = {};
     public tagNames: string[] = [];
-    public enabled = true;
     public dependencies: ExtensionDependency[] = [];
     public documentRoot = false;
 
@@ -116,12 +115,11 @@ export default abstract class Extension<T extends Node> implements IExtension {
 
     public getData(): StringMap {
         const result = {};
-        const element = this.element;
-        if (element != null) {
+        if (this.element != null) {
             const prefix = convertCamelCase(this.name, '\\.');
-            for (const attr in element.dataset) {
+            for (const attr in this.element.dataset) {
                 if (attr.length > prefix.length && attr.startsWith(prefix)) {
-                    result[capitalize(attr.substring(prefix.length), false)] = element.dataset[attr];
+                    result[capitalize(attr.substring(prefix.length), false)] = this.element.dataset[attr];
                 }
             }
         }

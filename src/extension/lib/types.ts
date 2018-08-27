@@ -10,7 +10,6 @@ export interface IExtension {
     parent?: Node;
     element?: HTMLElement;
     tagNames: string[];
-    enabled: boolean;
     options: ObjectMap<any>;
     dependencies: ExtensionDependency[];
     documentRoot: boolean;

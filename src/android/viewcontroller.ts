@@ -644,25 +644,16 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 }
                                                 chain.constraint[`chain${HV}`] = true;
                                                 if (!chain.isSet('styleMap', dimension)) {
-                                                    const minW = chain.styleMap[`min${WH}`];
-                                                    const minH = chain.styleMap[`min${HW}`];
-                                                    const maxW = chain.styleMap[`max${WH}`];
-                                                    const maxH = chain.styleMap[`max${HW}`];
-                                                    if (minW) {
-                                                        chain.app(`layout_constraint${WH}_min`, minW);
-                                                        chain.constraint[`min${WH}`] = true;
+                                                    const minWH = chain.styleMap[`min${WH}`];
+                                                    const maxWH = chain.styleMap[`max${WH}`];
+                                                    if (minWH) {
+                                                        chain.app(`layout_constraint${WH}_min`, minWH);
                                                     }
-                                                    if (maxW) {
-                                                        chain.app(`layout_constraint${WH}_max`, maxW);
-                                                        chain.constraint[`max${WH}`] = true;
+                                                    if (maxWH) {
+                                                        chain.app(`layout_constraint${WH}_max`, maxWH);
                                                     }
-                                                    if (minH) {
-                                                        chain.app(`layout_constraint${HW}_min`, minH);
-                                                        chain.constraint[`min${HW}`] = true;
-                                                    }
-                                                    if (maxH) {
-                                                        chain.app(`layout_constraint${HW}_max`, maxH);
-                                                        chain.constraint[`max${HW}`] = true;
+                                                    if (minWH || maxWH) {
+                                                        chain.android(`layout_${dimension}`, '0px');
                                                     }
                                                 }
                                                 if (flex.enabled) {

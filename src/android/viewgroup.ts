@@ -13,7 +13,6 @@ export default class ViewGroup extends View {
         element?: HTMLElement)
     {
         super(id, node.api);
-        this.documentParent = node.documentParent;
         this._baseNode = node;
         if (parent != null) {
             this.parent = parent;
@@ -21,6 +20,7 @@ export default class ViewGroup extends View {
         if (children != null) {
             this.children = children;
         }
+        this.documentParent = node.documentParent;
         if (element != null) {
             this.element = element;
             this.tagName = node.tagName;
@@ -75,7 +75,7 @@ export default class ViewGroup extends View {
     }
 
     get pageflow() {
-        return this.children.some(node => node.pageflow);
+        return (this.element != null ? super.pageflow : this.children.some(node => node.pageflow));
     }
 
     get display() {
@@ -83,7 +83,8 @@ export default class ViewGroup extends View {
     }
 
     get inlineElement() {
-        return false;
+        const float = this.styleMap.cssFloat;
+        return (float === 'left' || float === 'right' ? true : false);
     }
 
     get childrenBox() {
@@ -101,39 +102,45 @@ export default class ViewGroup extends View {
     }
 
     get outerRegion() {
-        const children = this.children.filter(node => node.pageflow);
-        let top = [children[0]];
-        let right = [children[0]];
-        let bottom = [children[0]];
-        let left = [children[0]];
-        for (let i = 1; i < children.length; i++) {
-            const node = children[i];
-            if (top[0].linear.top === node.linear.top) {
+        let top: T[] = [];
+        let right: T[] = [];
+        let bottom: T[] = [];
+        let left: T[] = [];
+        this.each((node: T, index: number) => {
+            if (index === 0) {
                 top.push(node);
-            }
-            else if (node.linear.top < top[0].linear.top) {
-                top = [node];
-            }
-            if (right[0].linear.right === node.linear.right) {
                 right.push(node);
-            }
-            else if (node.linear.right > right[0].linear.right) {
-                right = [node];
-            }
-            if (bottom[0].linear.bottom === node.linear.bottom) {
                 bottom.push(node);
-            }
-            else if (node.linear.bottom > bottom[0].linear.bottom) {
-                bottom = [node];
-            }
-            if (left[0].linear.left === node.linear.left) {
                 left.push(node);
             }
-            else if (node.linear.left < left[0].linear.left) {
-                left = [node];
+            else {
+                if (top[0].linear.top === node.linear.top) {
+                    top.push(node);
+                }
+                else if (node.linear.top < top[0].linear.top) {
+                    top = [node];
+                }
+                if (right[0].linear.right === node.linear.right) {
+                    right.push(node);
+                }
+                else if (node.linear.right > right[0].linear.right) {
+                    right = [node];
+                }
+                if (bottom[0].linear.bottom === node.linear.bottom) {
+                    bottom.push(node);
+                }
+                else if (node.linear.bottom > bottom[0].linear.bottom) {
+                    bottom = [node];
+                }
+                if (left[0].linear.left === node.linear.left) {
+                    left.push(node);
+                }
+                else if (node.linear.left < left[0].linear.left) {
+                    left = [node];
+                }
             }
-        }
-        return { top, right, bottom, left, children };
+        });
+        return { top, right, bottom, left };
     }
 
     get previousSibling() {
