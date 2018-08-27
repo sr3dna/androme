@@ -79,7 +79,7 @@ export default class ViewGroup extends View {
     }
 
     get display() {
-        return (this.children.some(node => node.display === 'block' && !node.floating) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
+        return (this.children.some(node => node.block && !node.floating) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
     }
 
     get inlineElement() {

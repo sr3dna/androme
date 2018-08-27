@@ -795,6 +795,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (name !== '') {
                     const method = METHOD_ANDROID['valueString'];
                     node.attr(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension == null));
+                    node.textContent = stored.value;
                 }
             }
         });

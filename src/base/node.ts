@@ -28,6 +28,7 @@ export default abstract class Node implements BoxModel {
     public isolated = false;
     public relocated = false;
     public alignmentType = NODE_ALIGNMENT.NONE;
+    public textContent: string;
 
     public abstract constraint: ObjectMap<any>;
     public abstract children: T[];
@@ -704,11 +705,16 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline')))));
+        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))) || (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0)));
     }
 
     get plainText() {
         return (this.tagName === 'PLAINTEXT');
+    }
+
+    get block() {
+        const display = this.display;
+        return (display === 'block' || display === 'list-item');
     }
 
     get alignMargin() {

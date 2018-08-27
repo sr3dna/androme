@@ -280,13 +280,17 @@ export default abstract class Resource<T extends Node> {
                 }
                 const previousSibling = node.previousSibling;
                 const nextSibling = node.nextSibling;
+                let previousSpaceEnd = false;
                 if (previousSibling == null) {
                     value = value.replace(/^\s+/, '');
+                }
+                else {
+                    previousSpaceEnd = /\s+$/.test(<string> (previousSibling.element.innerText || previousSibling.element.textContent));
                 }
                 if (inlineTrim) {
                     const original = value;
                     value = value.trim();
-                    if (previousSibling && previousSibling.display !== 'block' && !/\s+$/.test(<string> (previousSibling.element.innerText || previousSibling.element.textContent)) && /^\s+/.test(original)) {
+                    if (previousSibling && previousSibling.display !== 'block' && !previousSpaceEnd && /^\s+/.test(original)) {
                         value = '&#160;' + value;
                     }
                     if (nextSibling && /\s+$/.test(original)) {
@@ -294,8 +298,13 @@ export default abstract class Resource<T extends Node> {
                     }
                 }
                 else {
-                    value = value.replace(/^\s+/, (previousSibling && previousSibling.display === 'block' ? '' : '&#160;'));
-                    value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
+                    if (!/^\s+$/.test(value)) {
+                        value = value.replace(/^\s+/, (previousSibling && (previousSibling.block || (previousSibling.hasElement && previousSpaceEnd)) ? '' : '&#160;'));
+                        value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
+                    }
+                    else if (value.length > 0) {
+                        value = '&#160;' + value.substring(1);
+                    }
                 }
                 if (value !== '') {
                     setCache(element, 'valueString', { name, value });
