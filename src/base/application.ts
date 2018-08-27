@@ -8,7 +8,7 @@ import { convertCamelCase, convertInt, convertPX, formatPX, includesEnum, isNumb
 import { placeIndent } from '../lib/xml';
 import { cssParent, deleteCache, getCache, getNode, getStyle, hasFreeFormText, isLineBreak, isVisible, setCache } from '../lib/dom';
 import { convertRGB, getByColorName } from '../lib/color';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT, NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node> {
@@ -375,6 +375,12 @@ export default class Application<T extends Node> {
                 });
                 if (!valid) {
                     text.forEach(element => this.insertNode(element, node));
+                }
+                if (node.children.length === 1) {
+                    const firstChild = node.children[0];
+                    if (!firstChild.pageflow && convertInt(firstChild.top) === 0 && convertInt(firstChild.right) === 0 && convertInt(firstChild.bottom) === 0 && convertInt(firstChild.left) === 0) {
+                        firstChild.pageflow = true;
+                    }
                 }
                 if (node.children.some((current: T) => {
                         if (current.pageflow) {
@@ -816,6 +822,11 @@ export default class Application<T extends Node> {
                                         else if (!nodeY.inlineElement && (nodeY.borderTopWidth + nodeY.borderBottomWidth > 0 || nodeY.paddingTop + nodeY.paddingBottom > 0)) {
                                             xml = this.writeNode(nodeY, parent, NODE_STANDARD.LINE);
                                         }
+                                        else if (!nodeY.inlineText && /url(.*?)/.test(nodeY.css('backgroundImage')) && nodeY.css('backgroundRepeat') === 'no-repeat') {
+                                            nodeY.alignmentType = NODE_ALIGNMENT.SINGLE;
+                                            nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE;
+                                            xml = this.writeNode(nodeY, parent, NODE_STANDARD.IMAGE);
+                                        }
                                         else {
                                             if (!nodeY.documentRoot) {
                                                 xml = this.writeFrameLayout(nodeY, parent);
@@ -839,7 +850,6 @@ export default class Application<T extends Node> {
                                             }
                                             else {
                                                 xml = this.writeFrameLayout(nodeY, parent);
-                                                nodeY.alignmentType = NODE_ALIGNMENT.SINGLE;
                                             }
                                         }
                                         else {

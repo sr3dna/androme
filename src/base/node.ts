@@ -42,6 +42,7 @@ export default abstract class Node implements BoxModel {
     private _parent: T;
     private _tagName: string;
     private _data: ObjectMap<any> = {};
+    private _pageflow: boolean;
     private _multiLine: boolean;
 
     constructor(
@@ -680,13 +681,20 @@ export default abstract class Node implements BoxModel {
         return this.boxDimension('padding', 'Left');
     }
 
+    set pageflow(value) {
+        this._pageflow = value;
+    }
     get pageflow() {
-        const position = this.position;
-        return (position === 'static' || position === 'initial' || position === 'relative' || this.plainText || this.alignMargin);
+        if (this._pageflow == null) {
+            const position = this.position;
+            return (position === 'static' || position === 'initial' || position === 'relative' || this.plainText || this.alignMargin);
+        }
+        return this._pageflow;
     }
 
     get inline() {
-        return (this.display === 'inline' || (this.display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
+        const display = this.display;
+        return (display === 'inline' || (display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
     }
 
     get inlineElement() {
@@ -696,7 +704,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))));
+        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline')))));
     }
 
     get plainText() {

@@ -1059,6 +1059,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             bottomParent = resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
                                         }
                                     }
+                                    if ((current.inlineText || current.plainText) && withinRange(current.linear.right, node.box.right, SETTINGS.constraintWhitespaceHorizontalOffset) && !nodes.list.some(item => mapView(item, 'rightLeft') === current.stringId)) {
+                                        current.android('layout_width', 'match_parent');
+                                    }
                                 }
                                 else {
                                     if (left && right && current.right == null && current.viewWidth > 0) {
@@ -1392,6 +1395,11 @@ export default class ViewController<T extends View> extends Controller<T> {
             case NODE_ANDROID.LINE:
                 if (node.viewHeight === 0) {
                     node.android('layout_height', formatPX((node.borderTopWidth + node.borderBottomWidth + node.paddingTop + node.paddingBottom) || 1));
+                }
+                break;
+            case NODE_ANDROID.IMAGE:
+                if (node.alignmentType === NODE_ALIGNMENT.SINGLE) {
+                    node.android('scaleType', 'fitStart');
                 }
                 break;
         }

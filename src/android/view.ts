@@ -310,21 +310,21 @@ export default class View extends Node {
             }
             else if (this.android('layout_width') == null) {
                 const widthRoot = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0));
-                const rightInline = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.inlineElement).map(node => node.linear.right)]);
+                const inlineRight = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.inlineElement).map(node => node.linear.right)]);
                 const blockElement = (!this.inlineElement || (this.display === 'block' && !this.floating));
                 const wrap = (this.nodeType < NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || this.is(NODE_STANDARD.RADIO_GROUP) || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
-                const widestChild: T[] = [];
+                const widest: T[] = [];
                 if (blockElement && renderParent.linearVertical) {
-                    let widest = 0;
+                    let widestRight = 0;
                     for (const node of renderParent.children) {
-                        const widthInside = node.cascade().filter(item => item.visible).reduce((a: number, b: T) => Math.max(a, b.linear.right), 0) + node.paddingRight + node.borderRightWidth + node.marginRight;
-                        if (widthInside > widest) {
-                            widestChild.length = 0;
-                            widestChild.push(node);
-                            widest = widthInside;
+                        const inside = node.cascade().filter(item => item.visible).reduce((a: number, b: T) => Math.max(a, b.linear.right), 0) + node.paddingRight + node.borderRightWidth + node.marginRight;
+                        if (inside > widestRight) {
+                            widest.length = 0;
+                            widest.push(node);
+                            widestRight = inside;
                         }
-                        else if (widthInside === widest) {
-                            widestChild.push(node);
+                        else if (inside === widestRight) {
+                            widest.push(node);
                         }
                     }
                 }
@@ -332,9 +332,9 @@ export default class View extends Node {
                     this.android('layout_width', '0px');
                 }
                 else if (!wrap && (
-                            (blockElement && (this.is(NODE_STANDARD.TEXT) || !widestChild.includes(this) || renderParent.blockWidth)) ||
+                            (blockElement && (this.is(NODE_STANDARD.TEXT) || !widest.includes(this) || renderParent.blockWidth)) ||
                             (width >= widthParent && (widthRoot > 0 || parent.documentBody || renderParent.documentRoot)) ||
-                            (rightInline > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(rightInline, this.box.right)))
+                            (inlineRight > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(inlineRight, this.box.right)))
                         ))
                 {
                     this.android('layout_width', 'match_parent');
@@ -575,9 +575,9 @@ export default class View extends Node {
                     if (i === 0) {
                         let valid = true;
                         let element: Null<HTMLElement> = this.element;
-                        while (element != null && element !== document.body) {
+                        while (element != null) {
                             const style = getStyle(element);
-                            if (convertInt(style.paddingTop) !== 0 || convertInt(style.borderTopWidth) !== 0) {
+                            if (convertInt(style.paddingTop) !== 0 || convertInt(style.borderTopWidth) !== 0 || element === document.body) {
                                 valid = false;
                                 break;
                             }
@@ -630,7 +630,7 @@ export default class View extends Node {
         if (options.autoSizePaddingAndBorderWidth) {
             let viewWidth = convertInt(this.android('layout_width'));
             let viewHeight = convertInt(this.android('layout_height'));
-            if (this.is(NODE_STANDARD.IMAGE)) {
+            if (this.element.tagName === 'IMG') {
                 const top = this.paddingTop + this.borderTopWidth;
                 const right = this.paddingRight + this.borderRightWidth;
                 const bottom = this.paddingBottom + this.borderBottomWidth;

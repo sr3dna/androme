@@ -8,7 +8,7 @@ import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getCache, sameAsParent, setCache } from '../lib/dom';
 import { findNearestColor, parseHex, parseRGBA } from '../lib/color';
-import { NODE_RESOURCE, NODE_STANDARD, NODE_ALIGNMENT } from '../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD, NODE_ALIGNMENT, BOX_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
@@ -338,7 +338,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                      }
                 }
-                if (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.backgroundImage !== '' || stored.borderRadius.length > 0) {
+                const hasBorder = (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.borderRadius.length > 0);
+                if (hasBorder || stored.backgroundImage !== '') {
                     let template: Null<ObjectMap<string>> = null;
                     let data;
                     let resourceName = '';
@@ -416,11 +417,26 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const image6: ArrayIndex<StringMap> = [];
                     const image7: ArrayIndex<StringMap> = [];
                     if (stored.backgroundImage !== '') {
-                        if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                            image7[0] = { image: stored.backgroundImage, top, left, gravity, tileMode, tileModeX, tileModeY };
+                        if (node.of(NODE_STANDARD.IMAGE, NODE_ALIGNMENT.SINGLE)) {
+                            node.android('src', `@drawable/${stored.backgroundImage}`);
+                            if (convertInt(left) > 0) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + convertInt(left));
+                            }
+                            if (convertInt(top) > 0) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + convertInt(top));
+                            }
+                            if (!hasBorder) {
+                                return;
+                            }
+                            stored.backgroundImage = '';
                         }
                         else {
-                            image6[0] = { image: stored.backgroundImage, top, left, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') };
+                            if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
+                                image7[0] = { image: stored.backgroundImage, top, left, gravity, tileMode, tileModeX, tileModeY };
+                            }
+                            else {
+                                image6[0] = { image: stored.backgroundImage, top, left, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') };
+                            }
                         }
                     }
                     const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
