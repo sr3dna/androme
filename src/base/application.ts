@@ -8,7 +8,7 @@ import { convertCamelCase, convertInt, convertPX, formatPX, includesEnum, isNumb
 import { placeIndent } from '../lib/xml';
 import { cssParent, deleteCache, getCache, getNode, getStyle, hasFreeFormText, isLineBreak, isVisible, setCache } from '../lib/dom';
 import { convertRGB, getByColorName } from '../lib/color';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, OVERFLOW_ELEMENT, NODE_RESOURCE } from '../lib/constants';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node> {

@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
-import { convertInt, optional, hasValue } from './util';
+import { convertInt, hasValue, optional } from './util';
 
 export function setCache(element: Null<Element>, attr: string, data: any) {
     if (element != null) {

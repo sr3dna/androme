@@ -225,7 +225,7 @@ function sortHSL(a: Color, b: Color) {
     return 0;
 }
 
-export function findNearestColor(value: string) {
+export function getColorNearest(value: string) {
     const result = HSL_SORTED.slice();
     let index = result.findIndex(item => item.hex === value);
     if (index !== -1) {

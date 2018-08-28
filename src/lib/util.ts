@@ -35,9 +35,9 @@ export function cameltoLowerCase(value: string) {
     return value;
 }
 
-export function convertCamelCase(value: string, character = '-') {
-    value = value.replace(new RegExp(`^${character}+`), '');
-    const result = value.match(new RegExp(`(${character}{1}[a-z]{1})`, 'g'));
+export function convertCamelCase(value: string, char = '-') {
+    value = value.replace(new RegExp(`^${char}+`), '');
+    const result = value.match(new RegExp(`(${char}{1}[a-z]{1})`, 'g'));
     if (result) {
         for (const match of result) {
             value = value.replace(match, match[1].toUpperCase());
@@ -52,10 +52,6 @@ export function convertWord(value: string) {
 
 export function capitalize(value: string, upper = true) {
     return value.charAt(0)[(upper ? 'toUpperCase' : 'toLowerCase')]() + value.substring(1)[(upper ? 'toLowerCase' : 'toString')]();
-}
-
-export function averageInt(values: number[]) {
-    return Math.floor(values.reduce((a, b) => a + b) / values.length);
 }
 
 export function convertInt(value: any) {
@@ -211,8 +207,8 @@ export function resolvePath(value: string) {
     return value;
 }
 
-export function trim(value: string, character: string) {
-    return value.replace(new RegExp(`^${character}+`, 'g'), '').replace(new RegExp(`${character}+$`, 'g'), '');
+export function trim(value: string, char: string) {
+    return value.replace(new RegExp(`^${char}+`, 'g'), '').replace(new RegExp(`${char}+$`, 'g'), '');
 }
 
 export function repeat(n: number, value = '\t') {
@@ -231,8 +227,8 @@ export function indexOf(value: string, ...terms: string[]) {
     return -1;
 }
 
-export function lastIndexOf(value: string, character = '/') {
-    return value.substring(value.lastIndexOf(character) + 1);
+export function lastIndexOf(value: string, char = '/') {
+    return value.substring(value.lastIndexOf(char) + 1);
 }
 
 export function same(obj1: {}, obj2: {}, ...attrs: string[]) {

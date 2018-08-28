@@ -7,7 +7,7 @@ import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, forma
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getCache, sameAsParent, setCache } from '../lib/dom';
-import { findNearestColor, parseHex, parseRGBA } from '../lib/color';
+import { getColorNearest, parseHex, parseRGBA } from '../lib/color';
 import { NODE_RESOURCE, NODE_STANDARD, NODE_ALIGNMENT, BOX_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import parseRTL from './localization';
@@ -168,7 +168,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         if (value !== '') {
             let colorName = '';
             if (!Resource.STORED.COLORS.has(opaque)) {
-                const color = findNearestColor(value);
+                const color = getColorNearest(value);
                 if (color !== '') {
                     color.name = cameltoLowerCase(<string> color.name);
                     if (value === color.hex && value === opaque) {

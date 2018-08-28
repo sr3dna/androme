@@ -20,10 +20,10 @@ export interface BoxModel {
 }
 
 export interface BoxRect {
-    top: any;
-    right: any;
-    bottom: any;
-    left: any;
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
 }
 
 export interface ClientRect {

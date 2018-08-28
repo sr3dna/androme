@@ -1,4 +1,4 @@
-import { Null, ObjectMap } from './types';
+import { ObjectMap, Null } from './types';
 import { hasValue, repeat } from './util';
 
 export function removePlaceholders(value: string) {

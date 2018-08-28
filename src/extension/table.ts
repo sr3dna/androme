@@ -1,7 +1,7 @@
 import { ExtensionResult } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
-import { isPercent, convertInt } from '../lib/util';
+import { convertInt, isPercent } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 
 type T = Node;

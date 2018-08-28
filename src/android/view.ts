@@ -604,9 +604,6 @@ export default class View extends Node {
                 }
             }
         }
-        if (this.stringId === '@+id/wrapper') {
-            console.log(1);
-        }
         if (this.blockStatic) {
             if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                 [['firstElement', 'paddingTop', 'borderTopWidth', 'marginTop', BOX_STANDARD.MARGIN_TOP], ['lastElement', 'paddingBottom', 'borderBottomWidth', 'marginBottom', BOX_STANDARD.MARGIN_BOTTOM]].forEach((item: [string, string, string, string, number]) => {

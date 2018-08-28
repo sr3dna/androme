@@ -32,7 +32,7 @@ export default class Grid extends Extension<T> {
         const gridData: GridData = {
             columnEnd: [],
             columnCount: 0,
-            padding: { top: 0, right: [], bottom: 0, left: [] }
+            padding: { top: 0, right: 0, bottom: 0, left: 0 }
         };
         if (balanceColumns) {
             const dimensions: number[][] = [];

@@ -2,11 +2,11 @@ import { ExtensionResult } from '../../extension/lib/types';
 import ResourceView from '../../android/resource-view';
 import List from '../../extension/list';
 import View from '../view';
+import { convertInt, formatPX } from '../../lib/util';
 import { delimitDimens } from '../lib/util';
 import { NODE_STANDARD, BOX_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
-import { formatPX, convertInt } from '../../lib/util';
 
 export default class ListAndroid<T extends View> extends List {
     constructor(name: string, tagNames?: string[], options?: {}) {

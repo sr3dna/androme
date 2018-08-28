@@ -1,7 +1,7 @@
 import { Null, StringMap } from '../../../lib/types';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { includes, isNumber, optional, formatPX } from '../../../lib/util';
+import { formatPX, includes, isNumber, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import parseRTL from '../../localization';

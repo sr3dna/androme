@@ -1,8 +1,8 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, optional } from '../lib/util';
+import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, optional, search } from '../lib/util';
 import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, hasLineBreak, setCache } from '../lib/dom';
-import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_ALIGNMENT } from '../lib/constants';
+import { INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
 
