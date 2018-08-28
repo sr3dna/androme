@@ -60,6 +60,18 @@ interface StyleTag {
 
 type StyleList = ArrayIndex<ObjectMap<number[]>>;
 
+interface BackgroundImage {
+    image: string;
+    top: string;
+    left: string;
+    gravity: string;
+    tileMode: string;
+    tileModeX: string;
+    tileModeY: string;
+    width: string;
+    height: string;
+}
+
 export default class ResourceView<T extends View> extends Resource<T> {
     public static addString(value = '', name = '') {
         if (value !== '') {
@@ -74,7 +86,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                 }
                 name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
-                if (numeric || /^[0-9]/.test(value) || RESERVED_JAVA.includes(name)) {
+                if (numeric || /^[0-9]/.test(name) || RESERVED_JAVA.includes(name)) {
                     name = `__${name}`;
                 }
                 else if (name === '') {
@@ -94,14 +106,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
         const srcset = element.srcset.trim();
         const images = {};
         if (srcset !== '') {
-            const filePath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
+            const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
             srcset.split(',').forEach(value => {
                 const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
                 if (match) {
                     if (match[2] == null) {
                         match[2] = '1x';
                     }
-                    const image = filePath + lastIndexOf(match[1]);
+                    const image = filepath + lastIndexOf(match[1]);
                     switch (match[2]) {
                         case '0.75x':
                             images['ldpi'] = image;
@@ -321,10 +333,25 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
             const stored: BoxStyle = getCache(node.element, 'boxStyle');
             if (stored) {
-                if (stored.backgroundColor && stored.backgroundColor.length > 0) {
+                if (stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
-                stored.backgroundImage = ResourceView.addImageURL(stored.backgroundImage);
+                let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
+                let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
+                let backgroundPosition = stored.backgroundPosition.split(',').map(value => value.trim());
+                for (let i = 0; i < backgroundImage.length; i++) {
+                    if (backgroundImage[i] !== 'none') {
+                        backgroundImage[i] = ResourceView.addImageURL(backgroundImage[i]);
+                    }
+                    else {
+                        backgroundImage[i] = '';
+                        backgroundRepeat[i] = '';
+                        backgroundPosition[i] = '';
+                    }
+                }
+                backgroundImage = backgroundImage.filter(value => value !== '');
+                backgroundRepeat = backgroundRepeat.filter(value => value !== '');
+                backgroundPosition = backgroundPosition.filter(value => value !== '');
                 [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
                     if (item.color && item.color.length > 0) {
                         item.color = <string> ResourceView.addColor(item.color[0], item.color[2]);
@@ -339,86 +366,140 @@ export default class ResourceView<T extends View> extends Resource<T> {
                      }
                 }
                 const hasBorder = (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.borderRadius.length > 0);
-                if (hasBorder || stored.backgroundImage !== '') {
-                    let template: Null<ObjectMap<string>> = null;
+                if (hasBorder || backgroundImage.length > 0) {
                     let data;
+                    const image6: BackgroundImage[] = [];
+                    const image7: BackgroundImage[] = [];
+                    let template: Null<ObjectMap<string>> = null;
                     let resourceName = '';
-                    let gravity = '';
-                    let tileMode = '';
-                    let tileModeX = '';
-                    let tileModeY = '';
-                    const [left, top] = ResourceView.parseBackgroundPosition(stored.backgroundPosition);
-                    switch (stored.backgroundRepeat) {
-                        case 'repeat-x':
-                            tileModeX = 'repeat';
-                            break;
-                        case 'repeat-y':
-                            tileModeY = 'repeat';
-                            break;
-                        case 'no-repeat':
-                            tileMode = 'disabled';
-                            break;
-                        case 'repeat':
-                            tileMode = 'repeat';
-                            break;
-                    }
-                    if (left === '') {
-                        switch (stored.backgroundPosition) {
-                            case 'left center':
-                            case '0% 50%':
-                                gravity = 'left|center_vertical';
+                    for (let i = 0; i < backgroundPosition.length; i++) {
+                        let gravity = '';
+                        let tileMode = '';
+                        let tileModeX = '';
+                        let tileModeY = '';
+                        let [left, top] = ResourceView.parseBackgroundPosition(backgroundPosition[i]);
+                        switch (backgroundRepeat[i]) {
+                            case 'repeat-x':
+                                tileModeX = 'repeat';
                                 break;
-                            case 'left bottom':
-                            case '0% 100%':
-                                gravity = 'left|bottom';
+                            case 'repeat-y':
+                                tileModeY = 'repeat';
                                 break;
-                            case 'right top':
-                            case '100% 0%':
-                                gravity = 'right|top';
+                            case 'no-repeat':
+                                tileMode = 'disabled';
                                 break;
-                            case 'right center':
-                            case '100% 50%':
-                                gravity = 'right|center_vertical';
-                                break;
-                            case 'right bottom':
-                            case '100% 100%':
-                                gravity = 'right|bottom';
-                                break;
-                            case 'center top':
-                            case '50% 0%':
-                                gravity = 'center_horizontal|top';
-                                break;
-                            case 'center bottom':
-                            case '50% 100%':
-                                gravity = 'center_horizontal|bottom';
-                                break;
-                            case 'center center':
-                            case '50% 50%':
-                                gravity = 'center';
+                            case 'repeat':
+                                tileMode = 'repeat';
                                 break;
                         }
-                    }
-                    if (stored.backgroundSize.length > 0) {
-                        if (isPercent(stored.backgroundSize[0]) || isPercent(stored.backgroundSize[1])) {
-                            if (stored.backgroundSize[0] === '100%' && stored.backgroundSize[1] === '100%') {
-                                tileMode = '';
-                                tileModeX = '';
-                                tileModeY = '';
+                        if (left === '') {
+                            switch (backgroundPosition[i]) {
+                                case 'left top':
+                                case '0% 0%':
+                                    gravity = 'left|top';
+                                    break;
+                                case 'left center':
+                                case '0% 50%':
+                                    gravity = 'left|center_vertical';
+                                    break;
+                                case 'left bottom':
+                                case '0% 100%':
+                                    gravity = 'left|bottom';
+                                    break;
+                                case 'right top':
+                                case '100% 0%':
+                                    gravity = 'right|top';
+                                    break;
+                                case 'right center':
+                                case '100% 50%':
+                                    gravity = 'right|center_vertical';
+                                    break;
+                                case 'right bottom':
+                                case '100% 100%':
+                                    gravity = 'right|bottom';
+                                    break;
+                                case 'center top':
+                                case '50% 0%':
+                                    gravity = 'center_horizontal|top';
+                                    break;
+                                case 'center bottom':
+                                case '50% 100%':
+                                    gravity = 'center_horizontal|bottom';
+                                    break;
+                                case 'center center':
+                                case '50% 50%':
+                                    gravity = 'center';
+                                    break;
+                                default:
+                                    const position = backgroundPosition[i].split(' ');
+                                    if (position.length === 2) {
+                                        function mergeGravity(original: string, alignment: string) {
+                                            return original + (original !== '' ? '|' : '') + alignment;
+                                        }
+                                        position.forEach((value, index) => {
+                                            if (isPercent(value)) {
+                                                switch (index) {
+                                                    case 0:
+                                                        if (value === '0%') {
+                                                            gravity = mergeGravity(gravity, 'left');
+                                                        }
+                                                        else if (value === '100%') {
+                                                            gravity = mergeGravity(gravity, 'right');
+                                                        }
+                                                        else {
+                                                            left = formatPX(node.bounds.width * (convertInt(value) / 100));
+                                                        }
+                                                        break;
+                                                    case 1:
+                                                        if (value === '0%') {
+                                                            gravity = mergeGravity(gravity, 'top');
+                                                        }
+                                                        else if (value === '100%') {
+                                                            gravity = mergeGravity(gravity, 'bottom');
+                                                        }
+                                                        else {
+                                                            top = formatPX(node.bounds.height * (convertInt(value) / 100));
+                                                        }
+                                                        break;
+                                                }
+                                            }
+                                            else if (/^[a-z]+$/.test(value)) {
+                                                gravity = mergeGravity(gravity, value);
+                                            }
+                                            else {
+                                                const xy = convertPX(value);
+                                                if (xy !== '0px') {
+                                                    if (index === 0) {
+                                                        left = xy;
+                                                    }
+                                                    else {
+                                                        top = xy;
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+                                    break;
                             }
-                            else if (stored.backgroundSize[0] === '100%') {
-                                tileModeX = '';
-                            }
-                            else if (stored.backgroundSize[1] === '100%') {
-                                tileModeY = '';
-                            }
-                            stored.backgroundSize = [];
                         }
-                    }
-                    const image6: ArrayIndex<StringMap> = [];
-                    const image7: ArrayIndex<StringMap> = [];
-                    if (stored.backgroundImage !== '') {
-                        if (node.of(NODE_STANDARD.IMAGE, NODE_ALIGNMENT.SINGLE)) {
-                            node.android('src', `@drawable/${stored.backgroundImage}`);
+                        if (stored.backgroundSize.length > 0) {
+                            if (isPercent(stored.backgroundSize[0]) || isPercent(stored.backgroundSize[1])) {
+                                if (stored.backgroundSize[0] === '100%' && stored.backgroundSize[1] === '100%') {
+                                    tileMode = '';
+                                    tileModeX = '';
+                                    tileModeY = '';
+                                }
+                                else if (stored.backgroundSize[0] === '100%') {
+                                    tileModeX = '';
+                                }
+                                else if (stored.backgroundSize[1] === '100%') {
+                                    tileModeY = '';
+                                }
+                                stored.backgroundSize = [];
+                            }
+                        }
+                        if (node.of(NODE_STANDARD.IMAGE, NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
+                            node.android('src', `@drawable/${backgroundImage[0]}`);
                             if (convertInt(left) > 0) {
                                 node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + convertInt(left));
                             }
@@ -428,22 +509,41 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             if (!hasBorder) {
                                 return;
                             }
-                            stored.backgroundImage = '';
+                            backgroundImage.length = 0;
                         }
                         else {
                             if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                                image7[0] = { image: stored.backgroundImage, top, left, gravity, tileMode, tileModeX, tileModeY };
+                                image7.push({ image: backgroundImage[i], top, left, gravity, tileMode, tileModeX, tileModeY, width: '', height: '' });
                             }
                             else {
-                                image6[0] = { image: stored.backgroundImage, top, left, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') };
+                                image6.push({ image: backgroundImage[i], top, left, gravity, tileMode, tileModeX, tileModeY, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') });
                             }
                         }
                     }
+                    image7.sort((a, b) => {
+                        if (!(a.tileModeX === 'repeat' || a.tileModeY === 'repeat' || a.tileMode === 'repeat')) {
+                            return 1;
+                        }
+                        else if (!(b.tileModeX === 'repeat' || b.tileModeY === 'repeat' || b.tileMode === 'repeat')) {
+                            return -1;
+                        }
+                        else {
+                            if (a.tileMode === 'repeat') {
+                                return -1;
+                            }
+                            else if (b.tileMode === 'repeat') {
+                                return 1;
+                            }
+                            else {
+                                return (b.tileModeX === 'repeat' || b.tileModeY === 'repeat' ? 1 : -1);
+                            }
+                        }
+                    });
                     const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
                     const radius = this.getShapeAttribute(stored, 'radius');
                     const radiusInit = this.getShapeAttribute(stored, 'radiusInit');
                     if (stored.border != null) {
-                        if (stored.backgroundImage === '') {
+                        if (backgroundImage.length === 0) {
                             template = parseTemplate(SHAPERECTANGLE_TMPL);
                             data = {
                                 '0': [{
@@ -461,7 +561,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 shape['5'].push(borderRadius);
                             }
                         }
-                        else if (stored.backgroundImage !== '' && (stored.border.style === 'none' || stored.border.width === '0px')) {
+                        else if (backgroundImage.length > 0 && (stored.border.style === 'none' || stored.border.width === '0px')) {
                             template = parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
@@ -598,6 +698,28 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
+                    if (backgroundImage.length > 0) {
+                        let resize = true;
+                        let current = node;
+                        while (current != null && !current.documentBody) {
+                            if (current.viewHeight > 0) {
+                                resize = false;
+                                break;
+                            }
+                            if (!current.pageflow) {
+                                break;
+                            }
+                            current = current.documentParent as T;
+                        }
+                        if (resize) {
+                            if (node.viewWidth === 0) {
+                                node.css('width', formatPX(node.bounds.width));
+                            }
+                            if (node.viewHeight === 0) {
+                                node.css('height', formatPX(node.bounds.height));
+                            }
+                        }
+                    }
                 }
                 else if (getCache(node.element, 'fontStyle') == null && stored.backgroundColor.length > 0) {
                     node.attr(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension == null));

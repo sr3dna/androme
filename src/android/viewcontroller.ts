@@ -1262,37 +1262,81 @@ export default class ViewController<T extends View> extends Controller<T> {
             tagName = View.getNodeName(tagName);
         }
         node.setNodeId(tagName);
-        const element: any = node.element;
-        switch (element.tagName) {
-            case 'IMG':
-                let scaleType = '';
-                if (isPercent(node.css('width')) || isPercent(node.css('height'))) {
-                    scaleType = 'fitXY';
-                }
-                else {
-                    switch (node.css('objectFit')) {
-                        case 'contain':
-                            scaleType = 'centerInside';
-                            break;
-                        case 'cover':
-                            scaleType = 'centerCrop';
-                            break;
-                        case 'fill':
-                            scaleType = 'fitXY';
-                            break;
-                        case 'scale-down':
-                            scaleType = 'fitCenter';
-                            break;
+        switch (node.element.tagName) {
+            case 'IMG': {
+                if (!recursive) {
+                    const element = <HTMLImageElement> node.element;
+                    let width = convertInt(node.styleMap.width);
+                    let height = convertInt(node.styleMap.height);
+                    const top = convertInt(node.top);
+                    const left = convertInt(node.left);
+                    let scaleType = '';
+                    if (isPercent(node.css('width')) || isPercent(node.css('height'))) {
+                        scaleType = 'fitXY';
+                    }
+                    else {
+                        if (width === 0) {
+                            const match = /width="([0-9]+)"/.exec(element.outerHTML);
+                            if (match) {
+                                width = parseInt(match[1]);
+                                node.css('width', formatPX(match[1]));
+                            }
+                        }
+                        if (height === 0) {
+                            const match = /height="([0-9]+)"/.exec(element.outerHTML);
+                            if (match) {
+                                height = parseInt(match[1]);
+                                node.css('height', formatPX(match[1]));
+                            }
+                        }
+                        switch (node.css('objectFit')) {
+                            case 'contain':
+                                scaleType = 'centerInside';
+                                break;
+                            case 'cover':
+                                scaleType = 'centerCrop';
+                                break;
+                            case 'scale-down':
+                                scaleType = 'fitCenter';
+                                break;
+                            case 'none':
+                                scaleType = 'matrix';
+                                break;
+                            default:
+                                scaleType = 'fitXY';
+                                break;
+                        }
+                    }
+                    if (scaleType !== '') {
+                        node.android('scaleType', scaleType);
+                    }
+                    if ((width > 0 && height === 0) || (width === 0 && height > 0)) {
+                        node.android('adjustViewBounds', 'true');
+                    }
+                    if (top < 0 || left < 0) {
+                        const container = new View(this.cache.nextId, SETTINGS.targetAPI, node.element) as T;
+                        container.excludeProcedure |= NODE_PROCEDURE.ALL;
+                        container.excludeResource |= NODE_RESOURCE.ALL;
+                        container.android('layout_width', (width > 0 ? formatPX(width) : 'wrap_content'));
+                        container.android('layout_height', (height > 0 ? formatPX(height) : 'wrap_content'));
+                        container.setBounds();
+                        container.setNodeId(NODE_ANDROID.FRAME);
+                        container.render(parent);
+                        if (left < 0) {
+                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + left);
+                        }
+                        if (top < 0) {
+                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + top);
+                        }
+                        node.parent = container;
+                        this.cache.append(container);
+                        return this.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, this.renderNode(node, container, tagName, true));
                     }
                 }
-                if (scaleType !== '') {
-                    node.android('scaleType', scaleType);
-                }
-                if ((node.isSet('styleMap', 'width') && !node.isSet('styleMap', 'height')) || (!node.isSet('styleMap', 'width') && node.isSet('styleMap', 'height'))) {
-                    node.android('adjustViewBounds', 'true');
-                }
                 break;
-            case 'TEXTAREA':
+            }
+            case 'TEXTAREA': {
+                const element = <HTMLTextAreaElement> node.element;
                 node.android('minLines', '2');
                 if (element.rows > 2) {
                     node.android('maxLines', element.rows.toString());
@@ -1313,7 +1357,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                     node.android('scrollHorizontally', 'true');
                 }
                 break;
-            case 'INPUT':
+            }
+            case 'INPUT': {
+                const element = <HTMLInputElement> node.element;
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
@@ -1374,6 +1420,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         break;
                 }
                 break;
+            }
         }
         switch (node.nodeName) {
             case NODE_ANDROID.TEXT:
@@ -1751,45 +1798,50 @@ export default class ViewController<T extends View> extends Controller<T> {
                 if (!found) {
                     const guideline = parent.constraint.guideline || {};
                     const location = (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy)) : formatPX(Math.max(0, (!opposite ? node[dimension][LT] - (parent.documentBody ? 0 : parent.box[LT]) : node[dimension][LT] - parent.box[RB]))));
-                    const options = {
-                        android: {
-                            orientation: (index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL)
-                        },
-                        app: {
-                            [beginPercent]: location
-                        }
-                    };
-                    const anchors: {} = optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');
-                    if (anchors) {
-                        for (const stringId in anchors) {
-                            if (anchors[stringId] === location) {
-                                node.anchor(map[LT], stringId, value, true);
-                                node.delete('app', map[RB]);
-                                found = true;
-                                break;
+                    if (location === 0 || location === '0px') {
+                        node.anchor(map[LT], 'parent', value, true);
+                    }
+                    else {
+                        const options = {
+                            android: {
+                                orientation: (index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL)
+                            },
+                            app: {
+                                [beginPercent]: location
+                            }
+                        };
+                        const anchors: {} = optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');
+                        if (anchors) {
+                            for (const stringId in anchors) {
+                                if (anchors[stringId] === location) {
+                                    node.anchor(map[LT], stringId, value, true);
+                                    node.delete('app', map[RB]);
+                                    found = true;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    if (!found) {
-                        if (!percent) {
-                            options.app[beginPercent] = delimitDimens(node.tagName, 'constraintguide_begin', <string> location);
+                        if (!found) {
+                            if (!percent) {
+                                options.app[beginPercent] = delimitDimens(node.tagName, 'constraintguide_begin', <string> location);
+                            }
+                            const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
+                            const stringId = (<any> options).stringId;
+                            this.appendAfter(node.id, xml);
+                            node.anchor(map[LT], stringId, value, true);
+                            node.delete('app', map[RB]);
+                            if (guideline[value] == null) {
+                                guideline[value] = {};
+                            }
+                            if (guideline[value][beginPercent] == null) {
+                                guideline[value][beginPercent] = {};
+                            }
+                            if (guideline[value][beginPercent][LT] == null) {
+                                guideline[value][beginPercent][LT] = {};
+                            }
+                            guideline[value][beginPercent][LT][stringId] = location;
+                            parent.constraint.guideline = guideline;
                         }
-                        const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
-                        const stringId = (<any> options).stringId;
-                        this.appendAfter(node.id, xml);
-                        node.anchor(map[LT], stringId, value, true);
-                        node.delete('app', map[RB]);
-                        if (guideline[value] == null) {
-                            guideline[value] = {};
-                        }
-                        if (guideline[value][beginPercent] == null) {
-                            guideline[value][beginPercent] = {};
-                        }
-                        if (guideline[value][beginPercent][LT] == null) {
-                            guideline[value][beginPercent][LT] = {};
-                        }
-                        guideline[value][beginPercent][LT][stringId] = location;
-                        parent.constraint.guideline = guideline;
                     }
                 }
             }

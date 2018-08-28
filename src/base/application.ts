@@ -564,16 +564,14 @@ export default class Application<T extends Node> {
                 const above: T[] = [];
                 let parent = this.cache.locate('id', parseInt(coordsY[j])) as T;
                 for (const node of mapY[i][coordsY[j]] as T[]) {
-                    const zIndex = convertInt(node.css('zIndex'));
-                    const documentParent = (node.parent.element === node.element.parentElement);
                     if (node.documentRoot) {
                         axisY.push(node);
                     }
-                    else if (node.pageflow || node.alignMargin || (zIndex === 0 && documentParent)) {
+                    else if (node.pageflow || node.alignMargin) {
                         middle.push(node);
                     }
                     else {
-                        if (zIndex > 0 || !documentParent) {
+                        if (convertInt(node.css('zIndex')) >= 0 || node.parent.element !== node.element.parentElement) {
                             above.push(node);
                         }
                         else {
@@ -660,11 +658,12 @@ export default class Application<T extends Node> {
                             if (nodeY.pageflow && nodeY.alignmentType <= NODE_ALIGNMENT.OPEN && !parent.flex.enabled && parent.styleMap.columnCount == null && parent.alignmentType <= NODE_ALIGNMENT.OPEN && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical)) {
                                 const horizontal = [nodeY];
                                 let vertical = [nodeY];
+                                const floatSize = new Set(axisY.map(node => node.float)).size;
                                 for (let l = k + 1; l < axisY.length; l++) {
                                     const adjacent = axisY[l];
                                     if (adjacent.pageflow) {
                                         let lineBreak = false;
-                                        const previous = (() => {
+                                        const previous = <Null<T>> (() => {
                                             let node = adjacent.previousSibling;
                                             while (node) {
                                                 if (isLineBreak(<Element> node.element.nextSibling, 'next')) {
@@ -687,42 +686,48 @@ export default class Application<T extends Node> {
                                             const alignVertical = (adjacent.plainText && adjacent.multiLine && !parent.is(NODE_STANDARD.RELATIVE)) ||
                                                                   (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
                                                                   (!previous.floating && (!previous.inlineElement || previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
-                                                                  (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin));
+                                                                  (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
+                                                                  (floatSize === 1 && previous.floating && adjacent.floating && adjacent.linear.top >= previous.linear.bottom);
                                             if (cleared.has(adjacent)) {
                                                 const floated = new Set(['both', ...horizontal.map(item => item.float)]);
                                                 if (!floated.has(adjacent.css('clear')) && !alignVertical) {
                                                     horizontal.push(adjacent);
                                                     continue;
                                                 }
-                                            }
-                                            if (cleared.has(adjacent) || alignVertical) {
-                                                if (vertical[vertical.length - 1] !== previous) {
-                                                    if (cleared.has(adjacent)) {
+                                                if (horizontal.length === 1) {
+                                                    if (vertical[vertical.length - 1] !== previous) {
                                                         break;
                                                     }
+                                                    vertical.push(adjacent);
                                                     continue;
                                                 }
-                                                else if (horizontal.length > 1) {
+                                            }
+                                            if (cleared.has(adjacent) || alignVertical) {
+                                                if (horizontal.length > 1) {
                                                     if (linearVertical) {
                                                         for (let m = 1; m < horizontal.length; m++) {
                                                             if (isLineBreak(<Element> horizontal[m].element.previousSibling)) {
-                                                                horizontal.length = 1;
+                                                                horizontal.length = m;
                                                                 break;
                                                             }
                                                         }
                                                     }
                                                     break;
                                                 }
-                                                else if (linearVertical) {
-                                                    const previousAbove = vertical[vertical.length - 1];
-                                                    if (previousAbove.parent.linearVertical) {
-                                                        adjacent.parent = previousAbove.parent;
-                                                        continue;
-                                                    }
+                                                if (vertical[vertical.length - 1] !== previous) {
                                                     break;
                                                 }
-                                                vertical.push(adjacent);
-                                                continue;
+                                                else {
+                                                    if (linearVertical) {
+                                                        const previousAbove = vertical[vertical.length - 1];
+                                                        if (previousAbove.parent.linearVertical) {
+                                                            adjacent.parent = previousAbove.parent;
+                                                            continue;
+                                                        }
+                                                    }
+                                                    vertical.push(adjacent);
+                                                    continue;
+                                                }
                                             }
                                         }
                                         if (isLineBreak(<Element> adjacent.element.previousSibling)) {
@@ -738,26 +743,33 @@ export default class Application<T extends Node> {
                                                     }
                                                 }
                                                 else {
-                                                    vertical.push(adjacent);
-                                                    continue;
+                                                    if (vertical[vertical.length - 1] !== previous) {
+                                                        break;
+                                                    }
+                                                    else {
+                                                        vertical.push(adjacent);
+                                                        continue;
+                                                    }
                                                 }
                                             }
                                         }
-                                        if (horizontal[horizontal.length - 1] !== previous) {
-                                            continue;
+                                        if ((previous && cleared.has(previous)) || horizontal[horizontal.length - 1] !== previous) {
+                                            break;
                                         }
-                                        horizontal.push(adjacent);
-                                        if (!previous || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
-                                            continue;
-                                        }
-                                        if (!NodeList.linearX(horizontal)) {
-                                            if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
-                                                vertical = horizontal.slice();
-                                                horizontal.length = 1;
+                                        else {
+                                            horizontal.push(adjacent);
+                                            if (!previous || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
+                                                continue;
                                             }
-                                            else {
-                                                horizontal.pop();
-                                                break;
+                                            if (!NodeList.linearX(horizontal)) {
+                                                if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
+                                                    vertical = horizontal.slice();
+                                                    horizontal.length = 1;
+                                                }
+                                                else {
+                                                    horizontal.pop();
+                                                    break;
+                                                }
                                             }
                                         }
                                     }

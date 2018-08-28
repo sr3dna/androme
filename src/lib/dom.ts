@@ -210,6 +210,7 @@ export function isVisible(element: HTMLElement) {
     switch (element.tagName) {
         case 'BR':
         case 'OPTION':
+        case 'MAP':
         case 'AREA':
             return false;
     }

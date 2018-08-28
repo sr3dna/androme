@@ -604,7 +604,7 @@ export default class View extends Node {
                 }
             }
         }
-        if (this.blockStatic) {
+        if (this.pageflow && this.blockStatic) {
             if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                 [['firstElement', 'paddingTop', 'borderTopWidth', 'marginTop', BOX_STANDARD.MARGIN_TOP], ['lastElement', 'paddingBottom', 'borderBottomWidth', 'marginBottom', BOX_STANDARD.MARGIN_BOTTOM]].forEach((item: [string, string, string, string, number]) => {
                     if (getNode(renderParent[item[0]]) === this) {
@@ -715,7 +715,7 @@ export default class View extends Node {
             }
             else {
                 if (this.hasElement && this.element.tagName !== 'TABLE' && !this.is(NODE_STANDARD.LINE) && !includesEnum(this.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
-                    if (viewWidth > 0) {
+                    if (convertInt(this.cssOriginal('width')) > 0) {
                         this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + (renderParent.element.tagName !== 'TABLE' ? this.borderLeftWidth + this.borderRightWidth : 0)));
                     }
                     if (!this.inlineElement || this.inlineText) {
@@ -728,7 +728,7 @@ export default class View extends Node {
                     }
                     const lineHeight = this.lineHeight;
                     if (lineHeight === 0 || lineHeight < this.box.height || lineHeight === convertInt(this.styleMap.height)) {
-                        if (viewHeight > 0) {
+                        if (convertInt(this.cssOriginal('height')) > 0) {
                             this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + (renderParent.element.tagName !== 'TABLE' ? this.borderTopWidth + this.borderBottomWidth : 0)));
                         }
                         if (!this.inlineElement || this.inlineText) {
