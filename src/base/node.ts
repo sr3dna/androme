@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search } from '../lib/util';
+import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search, optional } from '../lib/util';
 import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, hasLineBreak, setCache } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT, NODE_ALIGNMENT } from '../lib/constants';
 
@@ -705,7 +705,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))) || (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0)));
+        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
     }
 
     get plainText() {
@@ -715,6 +715,10 @@ export default abstract class Node implements BoxModel {
     get block() {
         const display = this.display;
         return (display === 'block' || display === 'list-item');
+    }
+
+    get blockStatic() {
+        return (this.block && !this.floating);
     }
 
     get alignMargin() {
@@ -825,15 +829,38 @@ export default abstract class Node implements BoxModel {
         return null;
     }
 
-    get firstChild(): Null<T> {
-        let result: any = null;
+    get firstElement(): Null<HTMLElement> {
         if (this.hasElement) {
-            Array.from(this.element.childNodes).some((element: HTMLElement) => {
-                result = getNode(element);
-                return (result != null);
-            });
+            for (let i = 0; i < this.element.childNodes.length; i++) {
+                const element = <HTMLElement> this.element.childNodes[i];
+                if (element.nodeName.charAt(0) === '#') {
+                    if (element.nodeName === '#text' && (optional(element, 'textContent') as string).trim() !== '') {
+                        return element;
+                    }
+                }
+                else {
+                    return element;
+                }
+            }
         }
-        return result;
+        return null;
+    }
+
+    get lastElement(): Null<HTMLElement> {
+        if (this.hasElement) {
+            for (let i = this.element.childNodes.length - 1; i >= 0; i--) {
+                const element = <HTMLElement> this.element.childNodes[i];
+                if (element.nodeName.charAt(0) === '#') {
+                    if (element.nodeName === '#text' && (optional(element, 'textContent') as string).trim() !== '') {
+                        return element;
+                    }
+                }
+                else {
+                    return element;
+                }
+            }
+        }
+        return null;
     }
 
     get center(): Point {

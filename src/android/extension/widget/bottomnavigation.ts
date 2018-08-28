@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import { optional } from '../../../lib/util';
-import { findNestedExtension, overwriteDefault } from '../lib/util';
+import { locateExtension, overwriteDefault } from '../lib/util';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
@@ -36,7 +36,7 @@ export default class BottomNavigation extends Extension<T> {
 
     public beforeInsert() {
         const node = this.node as T;
-        const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
             overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);

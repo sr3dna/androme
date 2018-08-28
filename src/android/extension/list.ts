@@ -19,7 +19,15 @@ export default class ListAndroid<T extends View> extends List {
         const controller = this.application.controllerHandler;
         const listStyle = node.data(`${EXT_NAME.LIST}:listStyleType`);
         if (listStyle) {
-            const columnCount = (parent.is(NODE_STANDARD.GRID) ? convertInt(parent.app('columnCount')) : 0);
+            let columnCount = 0;
+            let paddingLeft = 0;
+            if (parent.is(NODE_STANDARD.GRID)) {
+                columnCount = convertInt(parent.app('columnCount'));
+                paddingLeft = convertInt(parent.cssOriginal('paddingLeft'));
+                if (parent.paddingLeft === paddingLeft) {
+                    paddingLeft = 0;
+                }
+            }
             const floatItem = node.children.find(item => item.float === 'left' && convertInt(item.cssOriginal('marginLeft')) < 0 && Math.abs(convertInt(item.cssOriginal('marginLeft'))) <= convertInt(item.documentParent.cssOriginal('marginLeft')));
             if (listStyle === '0' && floatItem != null) {
                 floatItem.parent = parent;
@@ -60,25 +68,45 @@ export default class ListAndroid<T extends View> extends List {
                         )
                     );
                 }
+                const options = {
+                    android: {
+                        layout_marginTop: (node.marginTop > 0 || convertInt(top) > 0 ? delimitDimens(node.tagName, parseRTL('margin_top'), formatPX(Math.max(node.marginTop, 0) + convertInt(top))) : ''),
+                        [parseRTL('layout_marginRight')]: delimitDimens(node.tagName, parseRTL('margin_right'), '4px'),
+                        [parseRTL('layout_marginLeft')]: (!inside && (marginLeft > 0 || convertInt(left) > 0) ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(marginLeft + convertInt(left))) : ''),
+                    },
+                    app: {
+                        layout_columnWeight: columnWeight
+                    }
+                };
+                if (image !== '') {
+                    let minWidth = 0;
+                    if (paddingLeft === 0) {
+                        minWidth = node.paddingLeft;
+                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, 0);
+                    }
+                    else {
+                        minWidth = paddingLeft;
+                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft - paddingLeft);
+                    }
+                    Object.assign(options.android, {
+                        src: `@drawable/${image}`,
+                        minWidth: (minWidth > 0 ? formatPX(minWidth) : ''),
+                        baselineAlignBottom: 'true'
+                    });
+                }
+                else {
+                    Object.assign(options.android, {
+                        gravity: parseRTL('right'),
+                        text: (listStyle !== '0' ? listStyle : '')
+                    });
+                }
                 controller.prependBefore(
                     node.id,
                     controller.renderNodeStatic(
                         (image !== '' ? NODE_STANDARD.IMAGE
                                       : (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE)),
-                        parent.renderDepth + 1, {
-                            android: {
-                                gravity: parseRTL('right'),
-                                layout_marginTop: (node.marginTop > 0 || convertInt(top) > 0 ? delimitDimens(node.tagName, parseRTL('margin_top'), formatPX(Math.max(node.marginTop, 0) + convertInt(top))) : ''),
-                                [parseRTL('layout_marginRight')]: delimitDimens(node.tagName, parseRTL('margin_right'), '4px'),
-                                [parseRTL('layout_marginLeft')]: (!inside && (marginLeft > 0 || convertInt(left) > 0) ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(marginLeft + convertInt(left))) : ''),
-                                text: (image === '' && listStyle !== '0' ? listStyle : ''),
-                                src: (image !== '' ? `@drawable/${image}` : ''),
-                                baselineAlignBottom: (image !== '' ? 'true' : '')
-                            },
-                            app: {
-                                layout_columnWeight: columnWeight
-                            }
-                        },
+                        parent.renderDepth + 1,
+                        options,
                         'wrap_content',
                         'wrap_content'
                     )
@@ -90,7 +118,10 @@ export default class ListAndroid<T extends View> extends List {
             if (columnCount > 0) {
                 node.app('layout_columnWeight', '1');
             }
-            if (node.marginLeft > 0) {
+            if (paddingLeft !== 0 && node.marginLeft < 0) {
+                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + paddingLeft);
+            }
+            else {
                 node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
             }
         }

@@ -24,18 +24,6 @@ export function getNode<T extends Node>(element: Null<Element>): Null<T> {
     return getCache(element, 'node');
 }
 
-export function previousNode(element: Element) {
-    let previous: Null<Element>;
-    do {
-        previous = <Element> element.previousSibling;
-        if (previous && getNode(previous)) {
-            return getNode(previous);
-        }
-    }
-    while (previous != null);
-    return null;
-}
-
 export function getRangeBounds(element: Element): [ClientRect, boolean] {
     let multiLine = false;
     const range = document.createRange();
@@ -73,8 +61,8 @@ export function assignBounds(bounds: ClientRect): ClientRect {
     };
 }
 
-export function getStyle(element?: HTMLElement, cache = true): CSSStyleDeclaration {
-    if (element) {
+export function getStyle(element?: Element, cache = true): CSSStyleDeclaration {
+    if (element && element instanceof Element) {
         if (cache) {
             const node = getNode(element);
             const style = getCache(element, 'style');
@@ -139,7 +127,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
         }
         return elements.some((item: HTMLElement) => {
             if (item.nodeName === '#text') {
-                if (optional(item, 'textContent').trim() !== '' || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap')) {
+                if ((optional(item, 'textContent') as string).trim() !== '' || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap')) {
                     valid = true;
                     return true;
                 }
@@ -187,6 +175,35 @@ export function isLineBreak(element: Null<Element>, direction = 'previous') {
         }
     }
     return found;
+}
+
+export function getElementsBetween(firstElement: Null<Element>, secondElement: Element, cacheNode = false, whiteSpace = false) {
+    if (firstElement == null || firstElement.parentElement === secondElement.parentElement) {
+        const parentElement = secondElement.parentElement;
+        if (parentElement != null) {
+            const firstIndex = (firstElement != null ? Array.from(parentElement.childNodes).findIndex((element: Element) => element === firstElement) : 0);
+            const secondIndex = Array.from(parentElement.childNodes).findIndex((element: Element) => element === secondElement);
+            if (firstIndex !== -1 && secondIndex !== -1 && firstIndex !== secondIndex) {
+                let elements = <Element[]> Array.from(parentElement.childNodes).slice(Math.min(firstIndex, secondIndex) + 1, Math.max(firstIndex, secondIndex));
+                if (!whiteSpace) {
+                    elements = elements.filter((element: Element) => {
+                        if (element.nodeName.charAt(0) === '#') {
+                            if (element.nodeName === '#text' && (optional(element, 'textContent') as string).trim() !== '') {
+                                return true;
+                            }
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+                if (cacheNode) {
+                    elements = elements.filter((element: Element) => getNode(element));
+                }
+                return elements;
+            }
+        }
+    }
+    return [];
 }
 
 export function isVisible(element: HTMLElement) {

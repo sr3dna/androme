@@ -4,7 +4,7 @@ import Extension from '../../../base/extension';
 import ResourceView from '../../resource-view';
 import View from '../../view';
 import { formatPX, hasValue, includes, optional } from '../../../lib/util';
-import { createPlaceholder, findNestedExtension, overwriteDefault } from '../lib/util';
+import { createPlaceholder, locateExtension, overwriteDefault } from '../lib/util';
 import { delimitDimens, stripId } from '../../lib/util';
 import { getNode, getStyle, setCache } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
@@ -31,11 +31,11 @@ export default class Toolbar extends Extension<T> {
             });
             if (hasValue(element.dataset.target)) {
                 const target = document.getElementById(<string> element.dataset.target);
-                if (target && element.parentElement !== target && !includes(optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR)) {
+                if (target && element.parentElement !== target && !includes(<string> optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR)) {
                     this.application.elements.add(element);
                 }
             }
-            if (includes(optional(element, 'parentElement.dataset.ext'), WIDGET_NAME.COORDINATOR)) {
+            if (includes(<string> optional(element, 'parentElement.dataset.ext'), WIDGET_NAME.COORDINATOR)) {
                 setCache(element, 'nodeIsolated', true);
             }
         }
@@ -53,7 +53,7 @@ export default class Toolbar extends Extension<T> {
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
-        const hasMenu = (findNestedExtension(node, WIDGET_NAME.MENU) != null);
+        const hasMenu = (locateExtension(node, WIDGET_NAME.MENU) != null);
         const backgroundImage = node.css('backgroundImage');
         let depth = (target ? 0 : node.depth);
         let children = node.children.filter(item => !item.isolated).length;
@@ -231,7 +231,7 @@ export default class Toolbar extends Extension<T> {
 
     public beforeInsert() {
         const node = this.node as T;
-        const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = Object.assign({}, options.toolbar);

@@ -45,13 +45,13 @@ export default abstract class Extension<T extends Node> implements IExtension {
         if (element == null) {
             element = <HTMLElement> this.element;
         }
-        return includes(optional(element, 'dataset.ext'), this.name);
+        return includes(<string> optional(element, 'dataset.ext'), this.name);
     }
 
     public beforeInit(internal = false) {
         if (!internal && this.included()) {
             this.dependencies.filter(item => item.init).forEach(item => {
-                const extension = this.application.findExtension(item.name);
+                const extension = this.application.getExtension(item.name);
                 if (extension != null) {
                     extension.setTarget(this.node, this.parent, this.element);
                     extension.beforeInit(true);
@@ -67,7 +67,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public afterInit(internal = false) {
         if (!internal && this.included()) {
             this.dependencies.filter(item => item.init).forEach(item => {
-                const extension = this.application.findExtension(item.name);
+                const extension = this.application.getExtension(item.name);
                 if (extension != null) {
                     extension.setTarget(this.node, this.parent, this.element);
                     extension.afterInit(true);

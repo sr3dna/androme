@@ -42,7 +42,7 @@ export default class Application<T extends Node> {
     }
 
     public registerExtension(extension: IExtension) {
-        const found = this.findExtension(extension.name);
+        const found = this.getExtension(extension.name);
         if (found) {
             if (Array.isArray(extension.tagNames)) {
                 found.tagNames = extension.tagNames;
@@ -50,7 +50,7 @@ export default class Application<T extends Node> {
             Object.assign(found.options, extension.options);
         }
         else {
-            if (extension.dependencies.every(item => this.findExtension(item.name) != null)) {
+            if (extension.dependencies.every(item => this.getExtension(item.name) != null)) {
                 extension.application = this;
                 this.extensions.push(extension);
             }
@@ -213,7 +213,7 @@ export default class Application<T extends Node> {
         if (root === document.body) {
             Array.from(document.body.childNodes).forEach((item: HTMLElement) => {
                 if (item.nodeName === '#text') {
-                    if (optional(item, 'textContent').trim() !== '') {
+                    if ((optional(item, 'textContent') as string).trim() !== '') {
                         nodeTotal++;
                     }
                 }
@@ -597,7 +597,7 @@ export default class Application<T extends Node> {
                     }
                     parent = nodeY.parent as T;
                     if (this.controllerHandler.supportInclude) {
-                        const filename: string = optional(nodeY, 'dataset.include').trim();
+                        const filename = (optional(nodeY, 'dataset.include') as string).trim();
                         if (filename !== '' && includes.indexOf(filename) === -1) {
                             renderXml(nodeY, parent, this.controllerHandler.renderInclude(nodeY, parent, filename), (includes.length > 0 ? includes[includes.length - 1] : ''));
                             includes.push(filename);
@@ -858,7 +858,7 @@ export default class Application<T extends Node> {
                                             if (!parent.flex.enabled && children.every(node => node.pageflow)) {
                                                 const float = new Set(children.map(node => node.float));
                                                 if (linearX) {
-                                                    if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => convertInt(node.css('verticalAlign')) === 0)) {
+                                                    if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'middle', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => convertInt(node.css('verticalAlign')) === 0)) {
                                                         xml = this.writeConstraintLayout(nodeY, parent);
                                                         nodeY.alignmentType = NODE_ALIGNMENT.HORIZONTAL;
                                                         this.sortLayout(nodeY, <T[]> children, nodeY.alignmentType, true);
@@ -901,7 +901,7 @@ export default class Application<T extends Node> {
                         }
                     }
                     if (this.controllerHandler.supportInclude) {
-                        if (includes.length > 0 && optional(nodeY, 'dataset.includeEnd') === 'true') {
+                        if (includes.length > 0 && (optional(nodeY, 'dataset.includeEnd') as string) === 'true') {
                             includes.pop();
                         }
                     }
@@ -940,7 +940,7 @@ export default class Application<T extends Node> {
         }
         const root = this.cache.parent as T;
         if (root.renderExtension == null || !root.isSet('dataset', 'target')) {
-            const pathname: string = trim(optional(root, 'dataset.folder').trim(), '/');
+            const pathname = trim((optional(root, 'dataset.folder') as string).trim(), '/');
             this.updateLayout(pathname, (!empty ? output : ''), (root.renderExtension != null && root.renderExtension.documentRoot));
         }
         else {
@@ -991,14 +991,14 @@ export default class Application<T extends Node> {
         let xml = '';
         const [floated, pageflow] = new NodeList(nodes).partition(item => item.floating || item.autoMargin);
         const [right, left] = new NodeList(floated.list).partition(item => item.float === 'right' || item.styleMap.marginLeft === 'auto');
-        let [linearX, linearY] = [pageflow.linearX, pageflow.linearY];
-        if (!linearX && !linearY && pageflow.length > 1 && right.length > 0) {
+        const [linearX, linearY] = [pageflow.linearX, pageflow.linearY];
+        if (!linearX && !linearY && pageflow.length > 1 && right.length === 0) {
             xml = this.writeRelativeLayout(group, parent);
             group.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
         }
         else {
             const start: T[] = [...left.list, ...pageflow.list];
-            if (linearX && start.length === nodes.length) {
+            if (start.length === nodes.length) {
                 xml = this.writeLinearLayout(group, parent, horizontal);
                 this.sortLayout(group, <T[]> group.children, NODE_ALIGNMENT.HORIZONTAL, true);
             }
@@ -1018,18 +1018,17 @@ export default class Application<T extends Node> {
                 [start, right.list].forEach((item, index) => {
                     if (item.length > 1) {
                         const subgroup = this.controllerHandler.createGroup(item[0], item, group);
-                        [linearX, linearY] = [NodeList.linearX(item), NodeList.linearY(item)];
                         let content = '';
-                        if (linearX || linearY) {
-                            content = this.writeLinearLayout(subgroup, group, linearX);
-                            if (linearX) {
-                                this.sortLayout(subgroup, <T[]> subgroup.children, NODE_ALIGNMENT.HORIZONTAL, true);
-                                subgroup.alignmentType = NODE_ALIGNMENT.HORIZONTAL;
-                            }
-                        }
-                        else {
+                        if (item.some(node => node.multiLine) && item.every(node => !node.floating)) {
                             content = this.writeRelativeLayout(subgroup, group);
                             subgroup.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+                        }
+                        else {
+                            content = this.writeLinearLayout(subgroup, group, horizontal);
+                            if (horizontal) {
+                                this.sortLayout(subgroup, <T[]> subgroup.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                            }
+                            subgroup.alignmentType = (horizontal ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
                         }
                         xml = xml.replace(placeholder, (index === 0 ? '' : placeholder) + content + (index === 0 ? placeholder : ''));
                         group.append(subgroup);
@@ -1211,7 +1210,7 @@ export default class Application<T extends Node> {
         });
     }
 
-    public findExtension(name: string) {
+    public getExtension(name: string) {
         return this.extensions.find(item => item.name === name);
     }
 
@@ -1230,7 +1229,7 @@ export default class Application<T extends Node> {
     private insertNode(element: HTMLElement, parent?: T) {
         let node: Null<T> = null;
         if (element.nodeName === '#text') {
-            if (optional(element, 'textContent', 'string').trim() !== '' || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
+            if ((optional(element, 'textContent') as string).trim() !== '' || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
                 node = new this._TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
                 node.tagName = 'PLAINTEXT';
                 if (parent != null) {
@@ -1267,7 +1266,7 @@ export default class Application<T extends Node> {
         let extensions: string[] = [];
         let current: Null<HTMLElement> = element;
         while (current != null) {
-            extensions = [...extensions, ...optional(current, 'dataset.ext').split(',').map(value => value.trim())];
+            extensions = [...extensions, ...(optional(current, 'dataset.ext') as string).split(',').map(value => value.trim())];
             current = current.parentElement;
         }
         extensions = extensions.filter(value => value);

@@ -102,8 +102,8 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                     element.id = `content_${main.size}`;
                 }
             }
-            const filename: string = optional(element, 'dataset.filename').trim().replace(/\.xml$/, '') || element.id;
-            element.dataset.views = (optional(element, 'dataset.views', 'number') + 1).toString();
+            const filename = (optional(element, 'dataset.filename') as string).trim().replace(/\.xml$/, '') || element.id;
+            element.dataset.views = ((optional(element, 'dataset.views', 'number') as number) + 1).toString();
             element.dataset.viewName = convertWord(element.dataset.views !== '1' ? `${filename}_${element.dataset.views}` : filename);
             if (main.createNodeCache(element)) {
                 main.createLayoutXml();
@@ -158,7 +158,7 @@ export function registerExtension(extension: IExtension) {
 
 export function configureExtension(name: string, options: {}) {
     if (options != null) {
-        const extension = main.findExtension(name);
+        const extension = main.getExtension(name);
         if (extension != null) {
             Object.assign(extension.options, options);
         }
@@ -166,7 +166,7 @@ export function configureExtension(name: string, options: {}) {
 }
 
 export function getExtension(name: string) {
-    return main.findExtension(name);
+    return main.getExtension(name);
 }
 
 export function ext(name: any, options: {}) {

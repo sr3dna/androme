@@ -61,8 +61,8 @@ export function formatResource(options: {}) {
     return options;
 }
 
-export function findNestedExtension(node: T, extension: string): Null<HTMLElement> {
-    return <HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(optional(element, 'dataset.ext'), extension));
+export function locateExtension(node: T, extension: string): Null<HTMLElement> {
+    return <HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(<string> optional(element, 'dataset.ext'), extension));
 }
 
 export function overwriteDefault(options: {}, namespace: string, attr: string, value: string) {

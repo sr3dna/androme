@@ -4,7 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertPX, hasValue, includesEnum, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, getCache, sameAsParent, setCache } from '../lib/dom';
+import { getBoxSpacing, getCache, hasLineBreak, sameAsParent, setCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -265,7 +265,9 @@ export default abstract class Resource<T extends Node> {
                     value = element.value.trim();
                 }
                 else if (node.plainText) {
+                    name = (element.textContent || '').trim();
                     value = replaceEntity(element.textContent || '');
+                    value = value.replace(/&[A-Za-z]+;/g, (match => match.replace('&', '&amp;')));
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                     if (element.previousSibling && (<Element> element.previousSibling).tagName === 'BR') {
                         value = value.replace(/^\s+/, '');
@@ -278,36 +280,38 @@ export default abstract class Resource<T extends Node> {
                     value = value.replace(/<br\s*\/?>/g, '\\n');
                     value = value.replace(/\s+(class|style)=".*?"/g, '');
                 }
-                const previousSibling = node.previousSibling;
-                const nextSibling = node.nextSibling;
-                let previousSpaceEnd = false;
-                if (previousSibling == null) {
-                    value = value.replace(/^\s+/, '');
-                }
-                else {
-                    previousSpaceEnd = /\s+$/.test(<string> (previousSibling.element.innerText || previousSibling.element.textContent));
-                }
-                if (inlineTrim) {
-                    const original = value;
-                    value = value.trim();
-                    if (previousSibling && previousSibling.display !== 'block' && !previousSpaceEnd && /^\s+/.test(original)) {
-                        value = '&#160;' + value;
-                    }
-                    if (nextSibling && /\s+$/.test(original)) {
-                        value = value + '&#160;';
-                    }
-                }
-                else {
-                    if (!/^\s+$/.test(value)) {
-                        value = value.replace(/^\s+/, (previousSibling && (previousSibling.block || (previousSibling.hasElement && previousSpaceEnd)) ? '' : '&#160;'));
-                        value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
-                    }
-                    else if (value.length > 0) {
-                        value = '&#160;' + value.substring(1);
-                    }
-                }
                 if (value !== '') {
-                    setCache(element, 'valueString', { name, value });
+                    const previousSibling = node.previousSibling;
+                    const nextSibling = node.nextSibling;
+                    let previousSpaceEnd = false;
+                    if (previousSibling == null) {
+                        value = value.replace(/^\s+/, '');
+                    }
+                    else {
+                        previousSpaceEnd = /\s+$/.test(<string> (previousSibling.element.innerText || previousSibling.element.textContent));
+                    }
+                    if (inlineTrim) {
+                        const original = value;
+                        value = value.trim();
+                        if (previousSibling && previousSibling.display !== 'block' && !previousSpaceEnd && /^\s+/.test(original)) {
+                            value = '&#160;' + value;
+                        }
+                        if (nextSibling && /\s+$/.test(original)) {
+                            value = value + '&#160;';
+                        }
+                    }
+                    else {
+                        if (!/^\s+$/.test(value)) {
+                            value = value.replace(/^\s+/, (previousSibling && (previousSibling.block || (previousSibling.hasElement && previousSpaceEnd && previousSibling.element.innerText.length > 1) || (node.multiLine && (hasLineBreak(element) || node.renderParent.renderParent.linearHorizontal))) ? '' : '&#160;'));
+                            value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
+                        }
+                        else if (value.length > 0) {
+                            value = '&#160;' + value.substring(1);
+                        }
+                    }
+                    if (value !== '') {
+                        setCache(element, 'valueString', { name, value });
+                    }
                 }
             }
         });

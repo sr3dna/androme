@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import { hasValue, includes, optional } from '../../../lib/util';
-import { findNestedExtension, overwriteDefault } from '../lib/util';
+import { locateExtension, overwriteDefault } from '../lib/util';
 import { getNode } from '../../../lib/dom';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
@@ -41,7 +41,7 @@ export default class Drawer extends Extension<T> {
         const node = this.node as T;
         node.documentRoot = true;
         const options = Object.assign({}, this.options.drawer);
-        if (findNestedExtension(node, WIDGET_NAME.MENU)) {
+        if (locateExtension(node, WIDGET_NAME.MENU)) {
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             this.createResourceTheme();
         }
@@ -70,8 +70,8 @@ export default class Drawer extends Extension<T> {
                 delete application.insert[node.nodeId];
             }
         }
-        const menu: string = optional(findNestedExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
-        const headerLayout: string = optional(findNestedExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
+        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const headerLayout: string = optional(locateExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
         const options: {} = Object.assign({}, this.options.navigation);
         if (menu !== '') {
             overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
@@ -89,7 +89,7 @@ export default class Drawer extends Extension<T> {
     }
 
     public afterInsert() {
-        const headerLayout = findNestedExtension(this.node, EXT_NAME.EXTERNAL);
+        const headerLayout = locateExtension(this.node, EXT_NAME.EXTERNAL);
         if (headerLayout) {
             const node = getNode(headerLayout) as T;
             if (node && node.viewHeight === 0) {

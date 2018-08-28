@@ -16,7 +16,7 @@ export default abstract class List extends Extension<T> {
     public condition() {
         const children = this.node.children;
         return (super.condition() && children.length > 0 && (children.every(node => node.inlineElement || node.display === 'list-item') || children.every(node => !node.inlineElement)) && (
-                    children.some(node => node.element.tagName === 'LI' && node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
+                    children.some(node => node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
                     children.every(node => node.element.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))
                ));
     }
@@ -25,7 +25,8 @@ export default abstract class List extends Extension<T> {
         const node = this.node;
         const parent = this.parent as T;
         let xml = '';
-        if (!node.children.some(item => item.floating) && (NodeList.linearY(node.children) || node.children.every(item => !item.inlineElement))) {
+        const vertical = (!node.children.some(item => item.floating) && (NodeList.linearY(node.children) || node.children.every(item => !item.inlineElement)));
+        if (vertical) {
             xml = this.application.writeGridLayout(node, parent, (node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2));
         }
         else {
@@ -91,8 +92,8 @@ export default abstract class List extends Extension<T> {
             }
             item.data(`${EXT_NAME.LIST}:listStyleType`, ordinal);
         });
-        if (marginLeft < 0) {
-            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + marginLeft);
+        if (vertical && marginLeft < 0) {
+            node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft + marginLeft);
         }
         return { xml };
     }
