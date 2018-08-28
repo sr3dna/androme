@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"> 
+	<head>
+		<title>Semi-transparent</title>
+  		<meta charset="utf-8" />
+  		<link rel="stylesheet" href="site.css"   media="all" />
+  		<link rel="stylesheet" href="page.css"   media="all" />
+          <script src="../../../../../node_modules/systemjs/dist/system.js"></script>
+          <script>
+              SystemJS.config({
+                  packages: {
+                      '../../../../../build': { defaultExtension: 'js' }
+                  },
+                  map: {
+                      'plugin-babel': '../../../../../node_modules/systemjs-plugin-babel/plugin-babel.js',
+                      'systemjs-babel-build': '../../../../../node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+                  },
+                  transpiler: 'plugin-babel'
+              });
+              System.import('../../../../../build/main.js').then(function(result) {
+                  androme = result;
+                  androme.parseDocument().then(function() {
+                      androme.close();
+                      androme.saveAllToDisk();
+                  });
+              });
+          </script>
+
+</head>
+ 
+ <body>
+
+ <h1>Semi-transparent</h1>
+
+ <div id="nw">
+  <img src="nw.gif" alt="Northwest" width="437" height="328" />
+  
+  <span id="washington"  class="overlay">Washington</span>
+  <span id="oregon"      class="overlay">Oregon</span>
+  <span id="idaho"       class="overlay">Idaho</span>
+
+  <p id="note1">
+     Semi-transparent backgrounds are gray in Internet Explorer 6, but they are 
+     semi-transparent in Internet Explorer 7 and all other major browsers.</p>
+ </div>
+
+ 
+ </body>
+</html>

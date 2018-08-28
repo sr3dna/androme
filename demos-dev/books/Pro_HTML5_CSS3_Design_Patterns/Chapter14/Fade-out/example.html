@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en"> 
+	<head>
+		<title>Fade-out</title>
+  		<meta charset="utf-8" />
+  		<link rel="stylesheet" href="site.css"   media="all" />
+  		<link rel="stylesheet" href="page.css"   media="all" />
+		<script src="../../../../../node_modules/systemjs/dist/system.js"></script>
+		<script>
+			SystemJS.config({
+				packages: {
+					'../../../../../build': { defaultExtension: 'js' }
+				},
+				map: {
+					'plugin-babel': '../../../../../node_modules/systemjs-plugin-babel/plugin-babel.js',
+					'systemjs-babel-build': '../../../../../node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+				},
+				transpiler: 'plugin-babel'
+			});
+			System.import('../../../../../build/main.js').then(function(result) {
+				androme = result;
+				androme.parseDocument().then(function() {
+					androme.close();
+					androme.saveAllToDisk();
+				});
+			});
+		</script>
+
+</head>
+ 
+ <body>
+ 
+<h1>Fade-out</h1>
+
+<h2 class="g1" >g1 Horizontal Fade-out of GIF image to gold background color.</h2>
+<h2 class="g2" >g2 Horizontal Fade-out of any background color to PNG image.</h2>
+
+<h2 class="g3" >g3 Vertical Fade-out of GIF image to white background color.</h2>
+<h2 class="g4" >g4 Vertical Fade-out of JPG image to white background color.</h2>
+<h2 class="g5" >g5 Vertical Fade-out of any background color to PNG image.</h2>
+<h2 class="g6" >g6 Vertical Fade-out of PNG image to any background color.</h2>
+
+<p class="g7" >g7 Vertical Fade-In and Fade-out of PNG image to any background color.
+	<span class="spacer"></span>
+</p>
+
+ </body>
+</html>
