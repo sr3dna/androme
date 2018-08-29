@@ -294,7 +294,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                     }
                                     if (current.linear.right >= parent.box.right || withinFraction(current.linear.right, parent.box.right)) {
-                                        current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.inlineWrap || current.styleMap.marginLeft === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
+                                        current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.inlineWrap || current.cssOriginal('marginLeft') === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
                                     }
                                 }
                                 let topParent = false;
@@ -995,7 +995,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     topBottom: mapView(current, 'topBottom'),
                                     bottomTop: mapView(current, 'bottomTop'),
                                 };
-                                if ((top && bottom && (current.styleMap.marginTop !== 'auto' && current.linear.bottom < bottomMax)) || (bottom && mapView(current, 'topBottom') && current.viewHeight > 0)) {
+                                if ((top && bottom && (current.cssOriginal('marginTop') !== 'auto' && current.linear.bottom < bottomMax)) || (bottom && mapView(current, 'topBottom') && current.viewHeight > 0)) {
                                     mapDelete(current, 'bottom');
                                     bottom = false;
                                 }
@@ -1512,7 +1512,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         return xml;
     }
 
-    public getIncludeRenderDepth(name: string) {
+    public currentRenderDepth(name: string) {
         return (this._merge[name] ? 0 : -1);
     }
 

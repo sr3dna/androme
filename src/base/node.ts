@@ -14,6 +14,7 @@ export default abstract class Node implements BoxModel {
     public nodeType = 0;
     public depth = -1;
     public renderDepth = 0;
+    public renderIndex = -1;
     public siblingIndex = Number.MAX_VALUE;
     public bounds: ClientRect;
     public linear: ClientRect;

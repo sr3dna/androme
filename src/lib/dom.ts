@@ -61,8 +61,8 @@ export function assignBounds(bounds: ClientRect): ClientRect {
     };
 }
 
-export function getStyle(element?: Element, cache = true): CSSStyleDeclaration {
-    if (element && element instanceof Element) {
+export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclaration {
+    if (element instanceof Element) {
         if (cache) {
             const node = getNode(element);
             const style = getCache(element, 'style');
@@ -143,7 +143,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
     return valid;
 }
 
-export function hasLineBreak(element: HTMLElement) {
+export function hasLineBreak(element: Null<Element>) {
     const node = getNode(element);
     let whiteSpace = '';
     let styleMap = false;
@@ -152,9 +152,9 @@ export function hasLineBreak(element: HTMLElement) {
         styleMap = node.isSet('styleMap', 'whiteSpace');
     }
     else {
-        whiteSpace = getStyle(element).whiteSpace || '';
+        whiteSpace = getStyle(<HTMLElement> element).whiteSpace || '';
     }
-    return (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || ((['pre', 'pre-wrap'].includes(whiteSpace) || (!styleMap && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))) && /\n/.test(element.textContent || ''));
+    return (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || (element != null && ((['pre', 'pre-wrap'].includes(whiteSpace) || (!styleMap && cssParent(<HTMLElement> element, 'whiteSpace', 'pre', 'pre-wrap'))) && /\n/.test(element.textContent || '')));
 }
 
 export function isLineBreak(element: Null<Element>, direction = 'previous') {

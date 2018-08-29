@@ -2,7 +2,7 @@ import { ObjectMap, Null } from './types';
 import { hasValue, repeat } from './util';
 
 export function removePlaceholders(value: string) {
-    return value.replace(/{[<:@>]{1}[0-9]+}/g, '').trim();
+    return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
 }
 
 export function placeIndent(value: string, depth: number) {

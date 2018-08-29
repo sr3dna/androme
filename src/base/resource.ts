@@ -4,7 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertPX, hasValue, includesEnum, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, getCache, hasLineBreak, sameAsParent, setCache } from '../lib/dom';
+import { getBoxSpacing, getCache, hasLineBreak, isLineBreak, sameAsParent, setCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -233,6 +233,12 @@ export default abstract class Resource<T extends Node> {
                     value = value.replace(/\s+/g, ' ');
                     break;
                 default:
+                    if (isLineBreak(<Element> node.element.previousSibling)) {
+                        value = value.replace(/^\s+/, '');
+                    }
+                    if (isLineBreak(<Element> node.element.nextSibling)) {
+                        value = value.replace(/\s+$/, '');
+                    }
                     return [value, false];
             }
             return [value, true];
@@ -269,9 +275,6 @@ export default abstract class Resource<T extends Node> {
                     value = replaceEntity(element.textContent || '');
                     value = value.replace(/&[A-Za-z]+;/g, (match => match.replace('&', '&amp;')));
                     [value, inlineTrim] = parseWhiteSpace(node, value);
-                    if (element.previousSibling && (<Element> element.previousSibling).tagName === 'BR') {
-                        value = value.replace(/^\s+/, '');
-                    }
                 }
                 else if (node.inlineText) {
                     name = (element.innerText || element.textContent || '').trim();

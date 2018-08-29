@@ -3,7 +3,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { getCache, getElementsBetween, getNode, getStyle } from '../lib/dom';
+import { getCache, getElementsBetween, getNode, getStyle, isLineBreak } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -440,10 +440,10 @@ export default class View extends Node {
             if (node.centerMargin) {
                 alignment.push('center_horizontal');
             }
-            else if (node.styleMap.marginLeft === 'auto') {
+            else if (node.cssOriginal('marginLeft') === 'auto') {
                 alignment.push(right);
             }
-            if (node.styleMap.marginTop === 'auto' &&  node.styleMap.marginBottom === 'auto') {
+            if (node.cssOriginal('marginTop') === 'auto' &&  node.cssOriginal('marginBottom') === 'auto') {
                 alignment.push('center_vertical');
             }
             if (alignment.length > 0) {
@@ -484,7 +484,7 @@ export default class View extends Node {
                     }
                     break;
                 case 'middle':
-                    if (this.documentParent.css('display') === 'table-cell' || this.documentParent.lineHeight > 0 || linearHorizontalParent) {
+                    if (this.documentParent.css('display') === 'table-cell' || this.documentParent.lineHeight > 0) {
                         vertical = 'center_vertical';
                     }
                     break;
@@ -625,7 +625,7 @@ export default class View extends Node {
                     }
                 });
             }
-            if (this.linearVertical || this.is(NODE_STANDARD.FRAME)) {
+            if ((this.linearVertical || this.is(NODE_STANDARD.FRAME, NODE_STANDARD.GRID)) && this.renderChildren.every(node => this.renderChildren[0].documentParent === node.documentParent)) {
                 const lastIndex = this.renderChildren.length - 1;
                 for (let i = 0; i < this.renderChildren.length; i++) {
                     const current = this.renderChildren[i];
@@ -715,7 +715,7 @@ export default class View extends Node {
             }
             else {
                 if (this.hasElement && this.element.tagName !== 'TABLE' && !this.is(NODE_STANDARD.LINE) && !includesEnum(this.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
-                    if (convertInt(this.cssOriginal('width')) > 0) {
+                    if (viewWidth > 0 && convertInt(this.cssOriginal('width')) > 0) {
                         this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + (renderParent.element.tagName !== 'TABLE' ? this.borderLeftWidth + this.borderRightWidth : 0)));
                     }
                     if (!this.inlineElement || this.inlineText) {
@@ -728,7 +728,7 @@ export default class View extends Node {
                     }
                     const lineHeight = this.lineHeight;
                     if (lineHeight === 0 || lineHeight < this.box.height || lineHeight === convertInt(this.styleMap.height)) {
-                        if (convertInt(this.cssOriginal('height')) > 0) {
+                        if (viewHeight > 0 && convertInt(this.cssOriginal('height')) > 0) {
                             this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + (renderParent.element.tagName !== 'TABLE' ? this.borderTopWidth + this.borderBottomWidth : 0)));
                         }
                         if (!this.inlineElement || this.inlineText) {
@@ -758,7 +758,7 @@ export default class View extends Node {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + (convertInt(this.bottom) * -1));
             }
             if (convertInt(this.left) !== 0) {
-                if (this.float === 'right' || (this.position === 'relative' && this.styleMap.marginLeft === 'auto')) {
+                if (this.float === 'right' || (this.position === 'relative' && this.cssOriginal('marginLeft') === 'auto')) {
                     this.modifyBox(BOX_STANDARD.MARGIN_RIGHT, this.marginRight + (convertInt(this.left) * -1));
                 }
                 else {
@@ -833,12 +833,17 @@ export default class View extends Node {
                 case AXIS_ANDROID.VERTICAL:
                     let top = this.box.top;
                     let previous: Null<T> = null;
-                    this.each((node: T) => {
-                        const elements = getElementsBetween((previous != null ? previous.element : null), node.element);
-                        if (elements.filter(element => element.tagName === 'BR').length > 0) {
-                            const height = Math.round(node.linear.top - top);
-                            if (height >= 1) {
-                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height);
+                    this.each((node: T, index: number) => {
+                        if (previous && !previous.hasElement && previous.renderChildren.includes(<T> node.previousSibling)) {
+                            previous = node.previousSibling as T;
+                        }
+                        if (index === 0 || previous != null) {
+                            const elements = getElementsBetween((previous != null ? previous.element : null), node.element);
+                            if (elements.filter(element => isLineBreak(element)).length > 0) {
+                                const height = Math.round(node.linear.top - top);
+                                if (height >= 1) {
+                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height);
+                                }
                             }
                         }
                         top = node.linear.bottom;

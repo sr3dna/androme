@@ -24,7 +24,7 @@ export default abstract class Controller<T extends Node> {
     public abstract renderNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract renderInclude(node: T, parent: T, name: string): string;
     public abstract renderIncludeContent(name: string, content: string[]): string;
-    public abstract getIncludeRenderDepth(name: string): number;
+    public abstract currentRenderDepth(name: string): number;
     public abstract createGroup(node: T, children: T[], parent?: T, element?: HTMLElement): T;
 
     public abstract get supportInline(): string[];
