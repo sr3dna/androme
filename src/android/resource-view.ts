@@ -698,7 +698,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
-                    if (backgroundImage.length > 0) {
+                    if (!node.documentRoot && backgroundImage.length > 0) {
                         let resize = true;
                         let current = node;
                         while (current != null && !current.documentBody) {

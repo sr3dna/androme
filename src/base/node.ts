@@ -257,7 +257,7 @@ export default abstract class Node implements BoxModel {
         let result = '';
         let parent = this.documentParent;
         do {
-            result = parent.styleMap[attr];
+            result = parent.styleMap[attr] || '';
             if (parent.id === 0 || result) {
                 break;
             }

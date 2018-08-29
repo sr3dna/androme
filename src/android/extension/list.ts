@@ -19,16 +19,17 @@ export default class ListAndroid<T extends View> extends List {
         const controller = this.application.controllerHandler;
         const listStyle = node.data(`${EXT_NAME.LIST}:listStyleType`);
         if (listStyle) {
+            const parentLeft = convertInt(parent.cssOriginal('paddingLeft', true)) + convertInt(parent.cssOriginal('marginLeft', true));
             let columnCount = 0;
-            let paddingLeft = 0;
+            let paddingLeft = node.marginLeft;
             if (parent.is(NODE_STANDARD.GRID)) {
                 columnCount = convertInt(parent.app('columnCount'));
-                paddingLeft = convertInt(parent.cssOriginal('paddingLeft'));
-                if (parent.paddingLeft === paddingLeft) {
-                    paddingLeft = 0;
-                }
+                paddingLeft += parentLeft;
             }
-            const floatItem = node.children.find(item => item.float === 'left' && convertInt(item.cssOriginal('marginLeft')) < 0 && Math.abs(convertInt(item.cssOriginal('marginLeft'))) <= convertInt(item.documentParent.cssOriginal('marginLeft')));
+            else if (parent.children[0] === node) {
+                paddingLeft += parentLeft;
+            }
+            const floatItem = node.children.find(item => item.float === 'left' && convertInt(item.cssOriginal('marginLeft', true)) < 0 && Math.abs(convertInt(item.cssOriginal('marginLeft', true))) <= convertInt(item.documentParent.cssOriginal('marginLeft', true)));
             if (listStyle === '0' && floatItem != null) {
                 floatItem.parent = parent;
                 controller.prependBefore(
@@ -39,25 +40,46 @@ export default class ListAndroid<T extends View> extends List {
                 if (columnCount === 3) {
                     node.app('layout_columnSpan', '2');
                 }
+                floatItem.android('minWidth', formatPX(paddingLeft));
             }
             else {
-                const inside = (node.css('listStylePosition') === 'inside');
                 const columnWeight = (columnCount > 0 ? '0' : '');
-                const marginLeft = Math.max(node.marginLeft, 0);
+                const positionInside = (node.css('listStylePosition') === 'inside');
+                const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
                 let image = '';
-                let [left, top] = ['0px', '0px'];
+                let [left, top] = [0, 0];
                 if (typeof listStyle === 'object') {
                     image = ResourceView.addImageURL(listStyle.image);
-                    [left, top] = ResourceView.parseBackgroundPosition(listStyle.position);
+                    [left, top] = ResourceView.parseBackgroundPosition(listStyle.position).map(value => convertInt(value));
                 }
-                if (inside) {
+                const gravity = (image !== '' && !listStyleImage ? '' : 'right');
+                if (gravity === '') {
+                    paddingLeft += node.paddingLeft;
+                }
+                if (left > 0 && paddingLeft > left) {
+                    paddingLeft -= left;
+                }
+                const minWidth = (paddingLeft > 0 ? delimitDimens(node.tagName, parseRTL('minwidth'), formatPX(paddingLeft)) : '');
+                const marginLeftValue = (left > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(left)) : '');
+                const paddingRightValue = (gravity === 'right' ? delimitDimens(node.tagName, parseRTL('margin_right'), formatPX(8)) : '');
+                const options = {
+                    android: {
+                        layout_marginTop: (node.marginTop + top > 0 ? delimitDimens(node.tagName, 'margin_top', formatPX(node.marginTop + top)) : '')
+                    },
+                    app: {
+                        layout_columnWeight: columnWeight
+                    }
+                };
+                if (positionInside) {
                     controller.prependBefore(
                         node.id,
                         controller.renderNodeStatic(
                             NODE_STANDARD.SPACE,
                             parent.renderDepth + 1, {
                                 android: {
-                                    [parseRTL('layout_marginLeft')]: (marginLeft > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(marginLeft)) : '')
+                                    minWidth,
+                                    [parseRTL('layout_marginLeft')]: marginLeftValue,
+                                    [parseRTL('paddingRight')]: paddingRightValue
                                 },
                                 app: {
                                     layout_columnWeight: columnWeight
@@ -67,36 +89,30 @@ export default class ListAndroid<T extends View> extends List {
                             'wrap_content'
                         )
                     );
-                }
-                const options = {
-                    android: {
-                        layout_marginTop: (node.marginTop > 0 || convertInt(top) > 0 ? delimitDimens(node.tagName, parseRTL('margin_top'), formatPX(Math.max(node.marginTop, 0) + convertInt(top))) : ''),
-                        [parseRTL('layout_marginRight')]: delimitDimens(node.tagName, parseRTL('margin_right'), '4px'),
-                        [parseRTL('layout_marginLeft')]: (!inside && (marginLeft > 0 || convertInt(left) > 0) ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(marginLeft + convertInt(left))) : ''),
-                    },
-                    app: {
-                        layout_columnWeight: columnWeight
-                    }
-                };
-                if (image !== '') {
-                    let minWidth = 0;
-                    if (paddingLeft === 0) {
-                        minWidth = node.paddingLeft;
-                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, 0);
-                    }
-                    else {
-                        minWidth = paddingLeft;
-                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft - paddingLeft);
-                    }
                     Object.assign(options.android, {
-                        src: `@drawable/${image}`,
-                        minWidth: (minWidth > 0 ? formatPX(minWidth) : ''),
-                        baselineAlignBottom: 'true'
+                        minWidth: delimitDimens(node.tagName, parseRTL('minwidth'), formatPX(24))
                     });
                 }
                 else {
                     Object.assign(options.android, {
-                        gravity: parseRTL('right'),
+                        minWidth,
+                        gravity: parseRTL(gravity),
+                        [parseRTL('layout_marginLeft')]: marginLeftValue,
+                        [parseRTL('paddingRight')]: paddingRightValue
+                    });
+                    if (columnCount === 3) {
+                        node.app('layout_columnSpan', '2');
+                    }
+                }
+                if (image !== '') {
+                    Object.assign(options.android, {
+                        src: `@drawable/${image}`,
+                        baselineAlignBottom: 'true',
+                        scaleType: (!positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart')
+                    });
+                }
+                else {
+                    Object.assign(options.android, {
                         text: (listStyle !== '0' ? listStyle : '')
                     });
                 }
@@ -111,19 +127,12 @@ export default class ListAndroid<T extends View> extends List {
                         'wrap_content'
                     )
                 );
-                if (columnCount === 3 && !inside) {
-                    node.app('layout_columnSpan', '2');
-                }
             }
             if (columnCount > 0) {
                 node.app('layout_columnWeight', '1');
             }
-            if (paddingLeft !== 0 && node.marginLeft < 0) {
-                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + paddingLeft);
-            }
-            else {
-                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
-            }
+            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
+            node.modifyBox(BOX_STANDARD.PADDING_LEFT, 0);
         }
         return { xml: '' };
     }

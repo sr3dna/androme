@@ -470,7 +470,7 @@ export default class View extends Node {
         const linearHorizontalParent = renderParent.linearHorizontal;
         const frameParent = renderParent.is(NODE_STANDARD.FRAME);
         const tableParent = (renderParent.element.tagName === 'TABLE');
-        let textAlign = this.styleMap.textAlign;
+        let textAlign = this.styleMap.textAlign || '';
         const verticalAlign = this.styleMap.verticalAlign;
         let textAlignParent = '';
         let vertical = '';
@@ -494,7 +494,7 @@ export default class View extends Node {
                     break;
             }
         }
-        if (vertical === '') {
+        if (!vertical) {
             if (this.lineHeight > 0 && !this.blockHeight) {
                 vertical = 'center_vertical';
             }
@@ -504,10 +504,10 @@ export default class View extends Node {
         }
         if (tableParent) {
             this[obj]('layout_gravity', 'fill');
-            if (textAlign === '' && textAlignParent === '' && this.element.tagName === 'TH') {
+            if (!textAlign && !textAlignParent && this.element.tagName === 'TH') {
                 textAlign = 'center';
             }
-            if (vertical === '') {
+            if (!vertical) {
                 vertical = 'center_vertical';
             }
         }
@@ -529,7 +529,7 @@ export default class View extends Node {
         if (this.nodeType <= NODE_STANDARD.IMAGE) {
             const image = this.is(NODE_STANDARD.IMAGE);
             let fromParent = false;
-            if (horizontal === '' && horizontalParent !== '') {
+            if (!horizontal && horizontalParent !== '') {
                 horizontal = horizontalParent;
                 fromParent = !image;
             }

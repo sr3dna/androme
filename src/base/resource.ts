@@ -100,7 +100,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxStyle() {
-        this.cache.elements.filter(node => !node.inline && !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
+        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
             if (getCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
                 const result: any = {
                     borderTop: this.parseBorderStyle,

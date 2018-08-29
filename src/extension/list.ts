@@ -33,7 +33,6 @@ export default abstract class List extends Extension<T> {
             xml = this.application.writeLinearLayout(node, parent, true);
         }
         let i = 0;
-        let marginLeft = 0;
         node.each((item: T) => {
             let ordinal: any = '0';
             if (item.display === 'list-item' || item.isSet('styleMap', 'listStyleType')) {
@@ -87,15 +86,16 @@ export default abstract class List extends Extension<T> {
                             break;
                     }
                 }
-                marginLeft = Math.min(item.marginLeft, marginLeft);
                 i++;
             }
             item.data(`${EXT_NAME.LIST}:listStyleType`, ordinal);
         });
-        if (vertical && marginLeft < 0) {
-            node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft + marginLeft);
-        }
         return { xml };
+    }
+
+    public beforeInsert() {
+        this.node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
+        this.node.modifyBox(BOX_STANDARD.PADDING_LEFT, 0);
     }
 
     private hasSingleImage(node: T) {
