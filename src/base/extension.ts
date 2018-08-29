@@ -51,10 +51,10 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public beforeInit(internal = false) {
         if (!internal && this.included()) {
             this.dependencies.filter(item => item.init).forEach(item => {
-                const extension = this.application.getExtension(item.name);
-                if (extension != null) {
-                    extension.setTarget(this.node, this.parent, this.element);
-                    extension.beforeInit(true);
+                const ext = this.application.getExtension(item.name);
+                if (ext != null) {
+                    ext.setTarget(this.node, this.parent, this.element);
+                    ext.beforeInit(true);
                 }
             });
         }
@@ -67,10 +67,10 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public afterInit(internal = false) {
         if (!internal && this.included()) {
             this.dependencies.filter(item => item.init).forEach(item => {
-                const extension = this.application.getExtension(item.name);
-                if (extension != null) {
-                    extension.setTarget(this.node, this.parent, this.element);
-                    extension.afterInit(true);
+                const ext = this.application.getExtension(item.name);
+                if (ext) {
+                    ext.setTarget(this.node, this.parent, this.element);
+                    ext.afterInit(true);
                 }
             });
         }
@@ -78,8 +78,8 @@ export default abstract class Extension<T extends Node> implements IExtension {
 
     public condition() {
         if (this.node && this.node.hasElement) {
-            const extension: string = optional(this.node.element, 'dataset.ext');
-            if (extension === '') {
+            const ext: string = optional(this.node.element, 'dataset.ext');
+            if (ext === '') {
                 return (this.tagNames.length > 0);
             }
             else {

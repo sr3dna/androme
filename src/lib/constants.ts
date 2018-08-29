@@ -26,13 +26,14 @@ export enum NODE_STANDARD {
 
 export enum NODE_ALIGNMENT {
     NONE = 0,
-    OPEN,
-    SINGLE,
-    HORIZONTAL,
-    VERTICAL,
-    FLOAT,
-    ABSOLUTE,
-    INLINE_WRAP
+    OPEN = 2,
+    SINGLE = 4,
+    HORIZONTAL = 8,
+    VERTICAL = 16,
+    ABSOLUTE = 32,
+    FLOAT = 64,
+    INLINE_WRAP = 128,
+    SEGMENTED = 256
 }
 
 export enum NODE_RESOURCE {

@@ -55,17 +55,17 @@ main.registerController(Controller);
 main.registerResource(Resource);
 
 (() => {
-    const extensions = new Set<IExtension>();
+    const extension = new Set<IExtension>();
     for (let name of SETTINGS.builtInExtensions) {
         name = name.toLowerCase().trim();
-        for (const extension in EXTENSIONS) {
-            if (name === extension || extension.startsWith(`${name}.`)) {
-                extensions.add(<IExtension> EXTENSIONS[extension]);
+        for (const ext in EXTENSIONS) {
+            if (ext === name || ext.startsWith(`${name}.`)) {
+                extension.add(<IExtension> EXTENSIONS[ext]);
             }
         }
     }
-    for (const extension of extensions) {
-        main.registerExtension(extension);
+    for (const ext of extension) {
+        main.registerExtension(ext);
     }
 })();
 
@@ -150,17 +150,17 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     };
 }
 
-export function registerExtension(extension: IExtension) {
-    if (extension instanceof Extension && extension.name !== '' && Array.isArray(extension.tagNames)) {
-        main.registerExtension(extension);
+export function registerExtension(ext: IExtension) {
+    if (ext instanceof Extension && ext.name !== '' && Array.isArray(ext.tagNames)) {
+        main.registerExtension(ext);
     }
 }
 
 export function configureExtension(name: string, options: {}) {
     if (options != null) {
-        const extension = main.getExtension(name);
-        if (extension != null) {
-            Object.assign(extension.options, options);
+        const ext = main.getExtension(name);
+        if (ext != null) {
+            Object.assign(ext.options, options);
         }
     }
 }

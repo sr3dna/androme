@@ -26,7 +26,8 @@
     "no-console": false,
     "no-empty": false,
     "interface-name": false,
-    "array-type": [true, "array"]
+    "array-type": [true, "array"],
+    "no-shadowed-variable": [true, { "function": false } ]
   },
   "rulesDirectory": []
 }

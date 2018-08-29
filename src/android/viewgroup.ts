@@ -1,4 +1,6 @@
 import View from './view';
+import { includesEnum } from '../lib/util';
+import { NODE_ALIGNMENT } from '../lib/constants';
 
 type T = View;
 
@@ -83,8 +85,7 @@ export default class ViewGroup extends View {
     }
 
     get inlineElement() {
-        const float = this.styleMap.cssFloat;
-        return (float === 'left' || float === 'right' ? true : false);
+        return includesEnum(this.alignmentType, NODE_ALIGNMENT.SEGMENTED);
     }
 
     get childrenBox() {

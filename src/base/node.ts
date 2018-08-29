@@ -95,7 +95,7 @@ export default abstract class Node implements BoxModel {
     public of(nodeType: number, ...alignmentType: number[]) {
         if (this.nodeType === nodeType) {
             for (const value of alignmentType) {
-                if (this.alignmentType === value) {
+                if (includesEnum(this.alignmentType, value)) {
                     return true;
                 }
             }
@@ -783,7 +783,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineWrap() {
-        return (this.alignmentType === NODE_ALIGNMENT.INLINE_WRAP);
+        return includesEnum(this.alignmentType, NODE_ALIGNMENT.INLINE_WRAP);
     }
 
     get dir() {

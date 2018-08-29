@@ -311,8 +311,8 @@ export default class View extends Node {
             else if (this.android('layout_width') == null) {
                 const widthRoot = (parent.documentRoot ? parent.viewWidth : this.ascend().reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0));
                 const inlineRight = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.inlineElement).map(node => node.linear.right)]);
-                const blockElement = (!this.inlineElement || (this.block && !this.floating));
-                const wrap = (this.nodeType < NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || this.is(NODE_STANDARD.RADIO_GROUP) || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
+                const blockElement = (!this.inlineElement || this.blockStatic);
+                const wrap = (this.nodeType < NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
                 const widest: T[] = [];
                 if (blockElement && renderParent.linearVertical) {
                     let widestRight = 0;
@@ -332,7 +332,7 @@ export default class View extends Node {
                     this.android('layout_width', '0px');
                 }
                 else if (!wrap && (
-                            (blockElement && (this.is(NODE_STANDARD.TEXT) || !widest.includes(this) || renderParent.blockWidth)) ||
+                            (blockElement && (this.is(NODE_STANDARD.TEXT) || (widest.length > 0 && !widest.includes(this)) || renderParent.blockWidth)) ||
                             (width >= widthParent && (widthRoot > 0 || parent.documentBody || renderParent.documentRoot)) ||
                             (inlineRight > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(inlineRight, this.box.right)))
                         ))
@@ -816,19 +816,21 @@ export default class View extends Node {
     }
 
     private alignBoxSpacing() {
-        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP) && this.alignmentType !== NODE_ALIGNMENT.FLOAT) {
+        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
             switch (this.android('orientation')) {
                 case AXIS_ANDROID.HORIZONTAL:
-                    let left = this.box.left;
-                    this.each((node: T) => {
-                        if (!node.floating) {
-                            const width = Math.round(node.linear.left - left);
-                            if (width >= 1) {
-                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + width);
+                    if (!includesEnum(this.alignmentType, NODE_ALIGNMENT.FLOAT)) {
+                        let left = this.box.left;
+                        this.each((node: T) => {
+                            if (!node.floating) {
+                                const width = Math.round(node.linear.left - left);
+                                if (width >= 1) {
+                                    node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + width);
+                                }
                             }
-                        }
-                        left = node.linear.right;
-                    }, true);
+                            left = node.linear.right;
+                        }, true);
+                    }
                     break;
                 case AXIS_ANDROID.VERTICAL:
                     let top = this.box.top;

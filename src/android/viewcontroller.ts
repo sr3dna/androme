@@ -160,7 +160,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const rows: T[][] = [];
                     const baseline: T[] = [];
                     const multiLine = nodes.list.some(item => item.multiLine);
-                    const floatParent = (node.renderParent.alignmentType === NODE_ALIGNMENT.FLOAT);
+                    const floatParent = includesEnum(node.alignmentType, NODE_ALIGNMENT.FLOAT);
                     const textIndent = convertInt(node.css('textIndent'));
                     let rowPaddingLeft = 0;
                     if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
@@ -1378,7 +1378,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     xml += this.renderNode(<T> item, group, NODE_STANDARD.RADIO, true);
                                 }
                                 group.android('orientation', linearX ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
-                                group.alignmentType = (linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
+                                group.alignmentType |= (linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL) | NODE_ALIGNMENT.SEGMENTED;
                                 if (checked !== '') {
                                     group.android('checkedButton', checked);
                                 }
@@ -1441,7 +1441,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
                 break;
             case NODE_ANDROID.IMAGE:
-                if (node.alignmentType === NODE_ALIGNMENT.SINGLE) {
+                if (includesEnum(node.alignmentType, NODE_ALIGNMENT.SINGLE)) {
                     node.android('scaleType', 'fitStart');
                 }
                 break;
