@@ -437,13 +437,13 @@ export default class View extends Node {
         }
         function setAutoMargin(node: T) {
             const alignment: string[] = [];
-            if (node.centerMargin) {
+            if (node.centerHorizontal) {
                 alignment.push('center_horizontal');
             }
             else if (node.cssOriginal('marginLeft') === 'auto') {
                 alignment.push(right);
             }
-            if (node.cssOriginal('marginTop') === 'auto' &&  node.cssOriginal('marginBottom') === 'auto') {
+            if (node.centerVertical) {
                 alignment.push('center_vertical');
             }
             if (alignment.length > 0) {
@@ -519,7 +519,7 @@ export default class View extends Node {
                 setAutoMargin(this);
             }
         }
-        const floatRight = (this.linearHorizontal && this.renderChildren.every(node => node.float === 'right'));
+        const floatRight = ((includesEnum(this.alignmentType, NODE_ALIGNMENT.SEGMENTED) || this.linearHorizontal) && this.renderChildren.some(node => node.float === 'right'));
         const singleChild = (renderParent.renderChildren.length === 1);
         if (frameParent && !setAutoMargin(this) && (this.float === 'right' || floatRight)) {
             (singleChild ? renderParent : this).android('layout_gravity', right);

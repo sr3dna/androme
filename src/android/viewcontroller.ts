@@ -286,7 +286,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         if (pageflow.length > 0) {
                             for (const current of pageflow) {
                                 const parent = current.documentParent;
-                                if (current.centerMargin) {
+                                if (current.centerHorizontal) {
                                     this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                 }
                                 else {
@@ -297,13 +297,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.inlineWrap || current.cssOriginal('marginLeft') === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
                                     }
                                 }
-                                let topParent = false;
+                                let alignTop = false;
                                 if (current.linear.top <= parent.box.top || withinFraction(current.linear.top, parent.box.top)) {
                                     current.anchor(mapLayout['top'], 'parent', AXIS_ANDROID.VERTICAL);
-                                    topParent = true;
+                                    alignTop = true;
                                 }
                                 if (current.linear.bottom >= parent.box.bottom || withinFraction(current.linear.bottom, parent.box.bottom)) {
-                                    if (!(topParent && current.inlineWrap)) {
+                                    if (!(alignTop && current.inlineWrap)) {
                                         current.anchor(mapLayout['bottom'], 'parent', (parent.viewHeight > 0 ? AXIS_ANDROID.VERTICAL : ''));
                                     }
                                 }
@@ -322,36 +322,36 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 current.anchor(mapLayout['right'], stringId);
                                             }
                                         }
-                                        if (withinRange(current.linear.left, adjacent.linear.right, (alignMargin ? SETTINGS.constraintWhitespaceHorizontalOffset : 0))) {
-                                            if (current.float !== 'right') {
-                                                current.anchor(mapLayout['leftRight'], stringId, horizontal, current.withinX(adjacent.linear));
+                                        if (!current.centerHorizontal) {
+                                            if ((!current.constraint.horizontal && alignMargin && withinRange(current.linear.left, adjacent.linear.right, SETTINGS.constraintWhitespaceHorizontalOffset)) || withinFraction(current.linear.left, adjacent.linear.right)) {
+                                                if (current.float !== 'right' || current.float === adjacent.float) {
+                                                    current.anchor(mapLayout['leftRight'], stringId, horizontal, current.withinX(adjacent.linear));
+                                                }
                                             }
-                                            else {
-                                                current.constraint.marginHorizontal = adjacent.stringId;
-                                            }
-                                        }
-                                        if (withinRange(current.linear.right, adjacent.linear.left, (alignMargin ? SETTINGS.constraintWhitespaceHorizontalOffset : 0))) {
-                                            if (current.float !== 'left') {
+                                            if ((!current.constraint.horizontal && alignMargin && withinRange(current.linear.right, adjacent.linear.left, SETTINGS.constraintWhitespaceHorizontalOffset)) || withinFraction(current.linear.right, adjacent.linear.left)) {
                                                 current.anchor(mapLayout['rightLeft'], stringId, horizontal, current.withinX(adjacent.linear));
                                             }
                                         }
-                                        topParent = mapParent(current, 'top');
+                                        const topParent = mapParent(current, 'top');
                                         const bottomParent = mapParent(current, 'bottom');
-                                        if (withinRange(current.linear.top, adjacent.linear.bottom, (alignMargin ? SETTINGS.constraintWhitespaceVerticalOffset : 0))) {
-                                            if (intersectY || !bottomParent || (!flex.enabled && !current.inlineElement)) {
+                                        const blockElement = (!flex.enabled && !current.inlineElement);
+                                        if ((!current.constraint.vertical && alignMargin && withinRange(current.linear.top, adjacent.linear.bottom, SETTINGS.constraintWhitespaceVerticalOffset)) || withinFraction(current.linear.top, adjacent.linear.bottom)) {
+                                            if (intersectY || !bottomParent || blockElement) {
                                                 current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
                                             }
                                         }
-                                        else if (withinRange(current.linear.bottom, adjacent.linear.top, (alignMargin ? SETTINGS.constraintWhitespaceVerticalOffset : 0))) {
-                                            if (intersectY || !topParent || (!flex.enabled && !current.inlineElement)) {
+                                        if ((!current.constraint.vertical && alignMargin && withinRange(current.linear.bottom, adjacent.linear.top, SETTINGS.constraintWhitespaceVerticalOffset)) || withinFraction(current.linear.bottom, adjacent.linear.top)) {
+                                            if (intersectY || !topParent || blockElement) {
                                                 current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
                                             }
                                         }
-                                        if (current.linear.top === adjacent.linear.top && !topParent && !bottomParent) {
-                                            current.anchor(mapLayout['top'], stringId, vertical);
-                                        }
-                                        if (current.linear.bottom === adjacent.linear.bottom && !topParent && !bottomParent) {
-                                            current.anchor(mapLayout['bottom'], stringId, vertical);
+                                        if (!topParent && !bottomParent) {
+                                            if (current.linear.top === adjacent.linear.top) {
+                                                current.anchor(mapLayout['top'], stringId, vertical);
+                                            }
+                                            if (current.linear.bottom === adjacent.linear.bottom) {
+                                                current.anchor(mapLayout['bottom'], stringId, vertical);
+                                            }
                                         }
                                     }
                                 }
@@ -365,7 +365,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 if (current.right != null && convertInt(current.right) >= 0) {
                                     current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
-                                    if (current.centerMargin && convertInt(current.left) > 0) {
+                                    if (current.centerHorizontal && convertInt(current.left) > 0) {
                                         current.anchor(mapLayout['left'], 'parent');
                                         current.modifyBox(BOX_STANDARD.MARGIN_LEFT, convertInt(current.left));
                                     }
@@ -375,7 +375,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 if (current.left != null && convertInt(current.left) === 0) {
                                     current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
-                                    if (current.centerMargin && convertInt(current.right) > 0) {
+                                    if (current.centerHorizontal && convertInt(current.right) > 0) {
                                         current.anchor(mapLayout['right'], 'parent');
                                         current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, convertInt(current.right));
                                     }
@@ -412,7 +412,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     if (current.cssOriginal('marginLeft') !== 'auto' && current.cssOriginal('marginRight') === 'auto') {
                                         mapDelete(current, 'right');
                                     }
-                                    if (current.centerMargin) {
+                                    if (current.centerHorizontal) {
                                         if (node.viewWidth > 0) {
                                             current.android('layout_width', 'match_parent');
                                         }

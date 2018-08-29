@@ -289,6 +289,10 @@ export default class Application<T extends Node> {
                         element.style.textAlign = 'left';
                         break;
                 }
+                if (node.marginLeft < 0) {
+                    style.marginLeft = node.css('marginLeft');
+                    element.style.marginLeft = '0px';
+                }
                 if (node.marginTop < 0) {
                     style.marginTop = node.css('marginTop');
                     element.style.marginTop = '0px';
@@ -688,6 +692,7 @@ export default class Application<T extends Node> {
                                                                   (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
                                                                   (!previous.floating && (!previous.inlineElement || previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
                                                                   (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
+                                                                  (cleared.has(previous) && !adjacent.floating) ||
                                                                   (floatSize === 1 && previous.floating && adjacent.floating && adjacent.linear.top >= previous.linear.bottom);
                                             if (cleared.has(adjacent)) {
                                                 const floated = new Set(['both', ...horizontal.map(item => item.float)]);
@@ -754,7 +759,7 @@ export default class Application<T extends Node> {
                                                 }
                                             }
                                         }
-                                        if ((previous && cleared.has(previous) && previous.float !== adjacent.float) || horizontal[horizontal.length - 1] !== previous) {
+                                        if (horizontal[horizontal.length - 1] !== previous) {
                                             break;
                                         }
                                         else {
@@ -1020,13 +1025,42 @@ export default class Application<T extends Node> {
             if (item.length > 1) {
                 const subgroup = this.controllerHandler.createGroup(item.list[0], item.list, group);
                 let content = '';
-                if (!item.linearX || (item.list.some(node => node.multiLine) && !item.list.some(node => node.floating))) {
+                if (index !== 2 && (!item.linearX || item.list.some(node => node.plainText && node.multiLine))) {
                     content = this.writeRelativeLayout(subgroup, group);
                     subgroup.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP | NODE_ALIGNMENT.SEGMENTED;
                 }
                 else {
                     content = this.writeLinearLayout(subgroup, group, true);
                     this.sortLayout(subgroup, <T[]> subgroup.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                    if (index === 2 && subgroup.children.some(node => node.marginLeft < 0)) {
+                        let marginRight = 0;
+                        const sorted: T[] = [];
+                        subgroup.children.slice().reverse().forEach((node: T) => {
+                            let prepend = false;
+                            if (marginRight < 0) {
+                                if (Math.abs(marginRight) > node.bounds.width) {
+                                    marginRight += node.bounds.width;
+                                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, node.bounds.width * -1);
+                                    prepend = true;
+                                }
+                                else {
+                                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, node.marginRight + marginRight);
+                                }
+                            }
+                            if (node.marginLeft < 0) {
+                                marginRight += Math.max(node.marginLeft, node.bounds.width * -1);
+                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
+                            }
+                            if (prepend) {
+                                sorted.splice(sorted.length - 1, 0, node);
+                            }
+                            else {
+                                sorted.push(node);
+                            }
+                        });
+                        subgroup.children = sorted.reverse();
+                        this.preserveSortOrder(subgroup.id, <T[]> subgroup.children);
+                    }
                     subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.SEGMENTED;
                 }
                 if (index === 0 || index === 2) {
@@ -1155,7 +1189,7 @@ export default class Application<T extends Node> {
         }
     }
 
-    public sortLayout(parent: T, children: T[], alignmentType = NODE_ALIGNMENT.NONE, save = false) {
+    public sortLayout(parent: T, children: T[], alignmentType = NODE_ALIGNMENT.NONE, preserve = false) {
         let sorted = false;
         if (alignmentType === NODE_ALIGNMENT.NONE) {
             if (parent.linearHorizontal) {
@@ -1199,9 +1233,13 @@ export default class Application<T extends Node> {
                 sorted = true;
             }
         }
-        if (save && sorted) {
-            this._sorted[parent.id.toString()] = children.map(item => item.id);
+        if (preserve && sorted) {
+            this.preserveSortOrder(parent.id, children);
         }
+    }
+
+    public preserveSortOrder(id: string | number, nodes: T[]) {
+        this._sorted[id.toString()] = nodes.map(node => node.id);
     }
 
     public addInclude(filename: string, content: string) {
@@ -1242,6 +1280,7 @@ export default class Application<T extends Node> {
                     node.css('whiteSpace', (element.parentElement ? getStyle(element.parentElement).whiteSpace : null) || 'normal');
                 }
                 node.css({
+                    position: 'static',
                     display: 'inline',
                     clear: 'none',
                     cssFloat: 'none',
@@ -1255,8 +1294,7 @@ export default class Application<T extends Node> {
             if (getCache(element, 'nodeIsolated')) {
                 node.isolated = true;
             }
-            node.setExcludeProcedure();
-            node.setExcludeResource();
+            node.setExclusions();
         }
         if (node != null) {
             this.cache.append(node);

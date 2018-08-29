@@ -319,34 +319,18 @@ export default abstract class Node implements BoxModel {
         return this.originalStyleMap[attr] || (complete ? this.css(attr) : '');
     }
 
-    public setExcludeProcedure(exclude?: string) {
-        if (exclude == null && this.hasElement) {
-            exclude = this.dataset.excludeProcedure || '';
-            if (this.element.parentElement != null) {
-                exclude += '|' + (this.element.parentElement.dataset.excludeProcedureChild || '');
-            }
-        }
-        if (exclude != null) {
-            exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
-                if (value !== '' && NODE_PROCEDURE[value] != null) {
-                    this.excludeProcedure |= NODE_PROCEDURE[value];
+    public setExclusions() {
+        if (this.hasElement) {
+            [['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item: [string, any]) => {
+                let exclude = this.dataset[item[0]] || '';
+                if (this.element.parentElement != null) {
+                    exclude += '|' + (this.element.parentElement.dataset[`${item[0]}Child`] || '');
                 }
-            });
-        }
-    }
-
-    public setExcludeResource(exclude?: string) {
-        if (exclude == null) {
-            exclude = this.dataset.excludeResource;
-            if (this.element.parentElement != null) {
-                exclude += '|' + (this.element.parentElement.dataset.excludeResourceChild || '');
-            }
-        }
-        if (this.hasElement && exclude != null) {
-            exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
-                if (value !== '' && NODE_RESOURCE[value] != null) {
-                    this.excludeResource |= NODE_RESOURCE[value];
-                }
+                exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
+                    if (item[1][value] != null) {
+                        this[item[0]] |= item[1][value];
+                    }
+                });
             });
         }
     }
@@ -689,7 +673,7 @@ export default abstract class Node implements BoxModel {
     get pageflow() {
         if (this._pageflow == null) {
             const position = this.position;
-            return (position === 'static' || position === 'initial' || position === 'relative' || this.plainText || this.alignMargin);
+            return (position === 'static' || position === 'initial' || position === 'relative' || this.alignMargin);
         }
         return this._pageflow;
     }
@@ -730,8 +714,12 @@ export default abstract class Node implements BoxModel {
         return (this.styleMap.marginLeft === 'auto' || this.styleMap.marginRight === 'auto');
     }
 
-    get centerMargin() {
+    get centerHorizontal() {
         return (this.styleMap.marginLeft === 'auto' && this.styleMap.marginRight === 'auto');
+    }
+
+    get centerVertical() {
+        return (this.styleMap.marginTop === 'auto' && this.styleMap.marginBottom === 'auto');
     }
 
     get floating() {
