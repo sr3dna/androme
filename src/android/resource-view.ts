@@ -306,11 +306,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)).each(node => {
             const stored: StringMap = getCache(node.element, 'boxSpacing');
             if (stored) {
-                if (convertInt(stored.marginLeft) > 0 && stored.marginLeft === stored.marginRight) {
-                    if (node.alignParent('left') && node.alignParent('right') && !node.blockWidth) {
-                        delete stored.marginLeft;
-                        delete stored.marginRight;
-                    }
+                if (stored.marginLeft === stored.marginRight && node.alignParent('left') && node.alignParent('right') && !node.blockWidth) {
+                    delete stored.marginLeft;
+                    delete stored.marginRight;
                 }
                 if (node.styleMap.marginLeft === 'auto') {
                     delete stored.marginLeft;

@@ -299,7 +299,7 @@ export default class Application<T extends Node> {
                 }
                 if (node.position === 'relative') {
                     ['top', 'right', 'bottom', 'left'].forEach(value => {
-                        if (node.isSet('styleMap', value)) {
+                        if (node.has(value)) {
                             style[value] = node.styleMap[value];
                             element.style[value] = 'auto';
                         }
@@ -308,11 +308,11 @@ export default class Application<T extends Node> {
                 style.verticalAlign = node.styleMap.verticalAlign || '';
                 element.style.verticalAlign = 'top';
                 if (node.overflow !== OVERFLOW_ELEMENT.NONE) {
-                    if (node.isSet('styleMap', 'width')) {
+                    if (node.has('width')) {
                         style.width = node.styleMap.width;
                         element.style.width = 'auto';
                     }
-                    if (node.isSet('styleMap', 'height')) {
+                    if (node.has('height')) {
                         style.height = node.styleMap.height;
                         element.style.height = 'auto';
                     }
@@ -382,7 +382,7 @@ export default class Application<T extends Node> {
                 }
                 if (node.children.length === 1) {
                     const firstChild = node.children[0];
-                    if (!firstChild.pageflow && convertInt(firstChild.top) === 0 && convertInt(firstChild.right) === 0 && convertInt(firstChild.bottom) === 0 && convertInt(firstChild.left) === 0) {
+                    if (!firstChild.pageflow && firstChild.toInt('top') === 0 && firstChild.toInt('right') === 0 && firstChild.toInt('bottom') === 0 && firstChild.toInt('left') === 0) {
                         firstChild.pageflow = true;
                     }
                 }
@@ -391,7 +391,9 @@ export default class Application<T extends Node> {
                             return (current.float !== 'right' && !['center', 'right'].includes(current.inheritCss('textAlign')) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)));
                         }
                         else {
-                            return ((convertInt(current.left) < 0 && node.marginLeft >= Math.abs(convertInt(current.left))) || (convertInt(current.right) < 0 && Math.abs(convertInt(current.right)) >= current.bounds.width));
+                            const left = current.toInt('left');
+                            const right = current.toInt('right');
+                            return ((left < 0 && node.marginLeft >= Math.abs(left)) || (right < 0 && Math.abs(right) >= current.bounds.width));
                         }
                     }))
                 {
@@ -429,8 +431,8 @@ export default class Application<T extends Node> {
                                 node.css('marginLeft', <string> node.style.marginLeft);
                             }
                             node.css('marginRight', '0px');
-                            const widthLeft = (node.styleMap.width != null ? convertInt(node.styleMap.width) : Math.max.apply(null, panelLeft.list.map(item => item.linear.width)));
-                            const widthRight = Math.max.apply(null, panelRight.list.map(item => Math.abs(convertInt(item.right))));
+                            const widthLeft = (node.has('width') ? node.toInt('width') : Math.max.apply(null, panelLeft.list.map(item => item.linear.width)));
+                            const widthRight = Math.max.apply(null, panelRight.list.map(item => Math.abs(node.toInt('right'))));
                             panelLeft.each((item: T) => {
                                 if (item.pageflow && item.viewWidth === 0) {
                                     item.css('maxWidth', formatPX(widthLeft));
@@ -446,7 +448,7 @@ export default class Application<T extends Node> {
                         }
                     });
                     if (marginLeftType > 0) {
-                        const width = convertInt(node.styleMap.width);
+                        const width = node.toInt('width');
                         if (width > 0) {
                             node.css('width', formatPX(width + node.marginLeft));
                         }
@@ -576,7 +578,7 @@ export default class Application<T extends Node> {
                         middle.push(node);
                     }
                     else {
-                        if (convertInt(node.css('zIndex')) >= 0 || node.parent.element !== node.element.parentElement) {
+                        if (node.toInt('zIndex') >= 0 || node.parent.element !== node.element.parentElement) {
                             above.push(node);
                         }
                         else {
@@ -877,7 +879,7 @@ export default class Application<T extends Node> {
                                                 const float = new Set(children.map(node => node.float));
                                                 if (linearX) {
                                                     const horizontalAlign = children.some(node => !['baseline', 'initial', 'sub', 'sup'].includes(node.css('verticalAlign')));
-                                                    if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'middle', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => convertInt(node.css('verticalAlign')) === 0)) {
+                                                    if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'middle', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => node.toInt('verticalAlign') === 0)) {
                                                         xml = this.writeConstraintLayout(nodeY, parent);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         this.sortLayout(nodeY, <T[]> children, nodeY.alignmentType, true);
@@ -1223,7 +1225,7 @@ export default class Application<T extends Node> {
             }
         }
         if (includesEnum(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
-            if (children.some(node => convertInt(node.css('zIndex')) !== 0)) {
+            if (children.some(node => node.toInt('zIndex') !== 0)) {
                 children.sort((a, b) => {
                     const indexA = a.css('zIndex');
                     const indexB = b.css('zIndex');

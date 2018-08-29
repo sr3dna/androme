@@ -52,7 +52,7 @@ export default class Table extends Extension<T> {
                 const remainder = Math.floor((100 - percent) / (tr.children.length - percentCount));
                 if (remainder >= 1) {
                     tr.each(td => {
-                        if (convertInt(td.styleMap.width) === 0) {
+                        if (td.toInt('width') === 0) {
                             td.css('width', `${(--percentCount === 0 ? 100 - percent : remainder)}%`);
                             percent += remainder;
                         }
@@ -67,7 +67,7 @@ export default class Table extends Extension<T> {
                 if (element.colSpan > 1) {
                     td.data(`${EXT_NAME.TABLE}:columnSpan`, element.colSpan);
                 }
-                if (!td.isSet('styleMap', 'verticalAlign')) {
+                if (!td.has('verticalAlign')) {
                     td.css('verticalAlign', 'middle');
                 }
                 delete td.styleMap.margin;
@@ -83,7 +83,7 @@ export default class Table extends Extension<T> {
         }
         const caption = node.children.find(item => item.element.tagName === 'CAPTION');
         if (caption) {
-            if (!caption.isSet('styleMap', 'textAlign')) {
+            if (!caption.has('textAlign')) {
                 caption.css('textAlign', 'center');
             }
             caption.data(`${EXT_NAME.TABLE}:columnSpan`, columnCount);

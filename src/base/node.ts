@@ -319,6 +319,14 @@ export default abstract class Node implements BoxModel {
         return this.originalStyleMap[attr] || (complete ? this.css(attr) : '');
     }
 
+    public has(attr: string) {
+        return this.isSet('styleMap', attr);
+    }
+
+    public toInt(attr: string, defaultValue = 0) {
+        return parseInt(this.styleMap[attr]) || defaultValue;
+    }
+
     public setExclusions() {
         if (this.hasElement) {
             [['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item: [string, any]) => {
@@ -387,10 +395,6 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public isSet(obj: string, attr: string) {
-        return (this[obj] && this[obj][attr] != null ? hasValue(this[obj][attr]) : false);
-    }
-
     public setBoundsMin() {
         if (this._element !== document.body) {
             const nodes = this.children.filter(node => !node.pageflow);
@@ -430,6 +434,10 @@ export default abstract class Node implements BoxModel {
         if (this.renderChildren.indexOf(node) === -1) {
             this.renderChildren.push(node);
         }
+    }
+
+    public isSet(obj: string, attr: string) {
+        return (this[obj] && this[obj][attr] != null ? hasValue(this[obj][attr]) : false);
     }
 
     private boxDimension(area: string, side: string) {
@@ -513,52 +521,6 @@ export default abstract class Node implements BoxModel {
         return (this.element === document.body);
     }
 
-    get dataset(): DOMStringMap {
-        return (this.hasElement ? this.element.dataset : {});
-    }
-
-    get extension() {
-        return (hasValue(this.dataset.ext) ? (this.dataset.ext as string).split(',')[0].trim() : '');
-    }
-
-    get flex(): Flexbox {
-        const parent = this.documentParent;
-        const style = this.style;
-        if (style != null && parent !== this) {
-            return {
-                enabled: ((style.display as string).indexOf('flex') !== -1),
-                direction: <string> style.flexDirection,
-                basis: <string> style.flexBasis,
-                grow: convertInt(style.flexGrow),
-                shrink: convertInt(style.flexShrink),
-                wrap: <string> style.flexWrap,
-                alignSelf: <string> (parent.isSet('styleMap', 'alignItems') && (!this.isSet('styleMap', 'alignSelf') || style.alignSelf === 'auto') ? parent.styleMap.alignItems : style.alignSelf),
-                justifyContent: <string> style.justifyContent,
-                order: convertInt(style.order)
-            };
-        }
-        return (<Flexbox> { enabled: false });
-    }
-
-    get viewWidth() {
-        return (isPercent(this.styleMap.width) ? 0 : convertInt(this.styleMap.width) || convertInt(this.styleMap.minWidth));
-    }
-    get viewHeight() {
-        return (isPercent(this.styleMap.height) ? 0 : convertInt(this.styleMap.height) || convertInt(this.styleMap.minHeight));
-    }
-    get lineHeight() {
-        if (this.children.length === 0 && !this.renderParent.linearHorizontal) {
-            const lineHeight = convertInt(this.styleMap.lineHeight);
-            if (this.inlineElement) {
-                return lineHeight || convertInt(this.documentParent.styleMap.lineHeight);
-            }
-            else {
-                return lineHeight;
-            }
-        }
-        return 0;
-    }
-
     get parentElementNode() {
         let parent = getNode(this.element.parentElement);
         if (parent) {
@@ -595,6 +557,53 @@ export default abstract class Node implements BoxModel {
             }
         }
         return parent;
+    }
+
+    get dataset(): DOMStringMap {
+        return (this.hasElement ? this.element.dataset : {});
+    }
+
+    get extension() {
+        return (hasValue(this.dataset.ext) ? (this.dataset.ext as string).split(',')[0].trim() : '');
+    }
+
+    get flex(): Flexbox {
+        const parent = this.documentParent;
+        const style = this.style;
+        if (style != null && parent !== this) {
+            return {
+                enabled: ((style.display as string).indexOf('flex') !== -1),
+                direction: <string> style.flexDirection,
+                basis: <string> style.flexBasis,
+                grow: convertInt(style.flexGrow),
+                shrink: convertInt(style.flexShrink),
+                wrap: <string> style.flexWrap,
+                alignSelf: <string> (parent.has('alignItems') && (!this.has('alignSelf') || style.alignSelf === 'auto') ? parent.css('alignItems') : style.alignSelf),
+                justifyContent: <string> style.justifyContent,
+                order: convertInt(style.order)
+            };
+        }
+        return (<Flexbox> { enabled: false });
+    }
+
+    get viewWidth() {
+        return (isPercent(this.styleMap.width) ? 0 : this.toInt('width') || this.toInt('minWidth'));
+    }
+    get viewHeight() {
+        return (isPercent(this.styleMap.height) ? 0 : this.toInt('height') || this.toInt('minHeight'));
+    }
+
+    get lineHeight() {
+        if (this.children.length === 0 && !this.renderParent.linearHorizontal) {
+            const lineHeight = this.toInt('lineHeight');
+            if (this.inlineElement) {
+                return lineHeight || this.documentParent.toInt('lineHeight');
+            }
+            else {
+                return lineHeight;
+            }
+        }
+        return 0;
     }
 
     get display() {
@@ -735,10 +744,10 @@ export default abstract class Node implements BoxModel {
         let value = OVERFLOW_ELEMENT.NONE;
         if (this.hasElement) {
             const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
-            if (convertInt(this.styleMap.width) > 0 && (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth))) {
+            if (this.toInt('width') > 0 && (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth))) {
                 value |= OVERFLOW_ELEMENT.HORIZONTAL;
             }
-            if (convertInt(this.styleMap.height) > 0 && (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight))) {
+            if (this.toInt('height') > 0 && (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight))) {
                 value |= OVERFLOW_ELEMENT.VERTICAL;
             }
         }

@@ -35,7 +35,7 @@ export default abstract class List extends Extension<T> {
         let i = 0;
         node.each((item: T) => {
             let ordinal: any = '0';
-            if (item.display === 'list-item' || item.isSet('styleMap', 'listStyleType')) {
+            if (item.display === 'list-item' || item.has('listStyleType')) {
                 let image = item.css('listStyleImage');
                 if (image && image !== 'none') {
                     ordinal = { image, position: '' };

@@ -270,16 +270,16 @@ export default class View extends Node {
                 }
             }
             if (this.android('layout_width') !== '0px') {
-                if (convertInt(styleMap.width) > 0) {
+                if (this.toInt('width') > 0) {
                     if (isPercent(styleMap.width)) {
-                        const percent = convertInt(styleMap.width) / 100;
+                        const percent = this.toInt('width') / 100;
                         if (renderParent.element.tagName === 'TABLE' && !renderParent.inlineWidth) {
                             this.app('layout_columnWeight', percent.toFixed(2));
                             this.android('layout_width', '0px');
                         }
                         else if (styleMap.width === '100%') {
                             this.android('layout_width', 'match_parent');
-                            if (!this.isSet('styleMap', 'height') && this.is(NODE_STANDARD.IMAGE)) {
+                            if (!this.has('height') && this.is(NODE_STANDARD.IMAGE)) {
                                 this.android('layout_height', 'match_parent');
                             }
                         }
@@ -292,11 +292,11 @@ export default class View extends Node {
                         this.android('layout_width', styleMap.width);
                     }
                 }
-                if (this.isSet('styleMap', 'minWidth') && !isPercent(styleMap.minWidth)) {
+                if (this.has('minWidth') && !isPercent(styleMap.minWidth)) {
                     this.android('layout_width', 'wrap_content', false);
                     this.android('minWidth', styleMap.minWidth, false);
                 }
-                if (this.isSet('styleMap', 'maxWidth') && !isPercent(styleMap.maxWidth)) {
+                if (this.has('maxWidth') && !isPercent(styleMap.maxWidth)) {
                     this.android('maxWidth', styleMap.maxWidth, false);
                 }
             }
@@ -344,16 +344,16 @@ export default class View extends Node {
                 }
             }
             if (this.android('layout_height') !== '0px') {
-                if (convertInt(styleMap.height) > 0) {
+                if (this.toInt('height') > 0) {
                     if (isPercent(styleMap.height)) {
-                        const percent = convertInt(styleMap.height) / 100;
+                        const percent = this.toInt('height') / 100;
                         if (renderParent.element.tagName === 'TABLE' && !renderParent.inlineHeight) {
                             this.android('layout_rowWeight', percent.toFixed(2));
                             this.android('layout_height', '0px');
                         }
                         else if (styleMap.height === '100%') {
                             this.android('layout_height', 'match_parent');
-                            if (!this.isSet('styleMap', 'width') && this.is(NODE_STANDARD.IMAGE)) {
+                            if (!this.has('width') && this.is(NODE_STANDARD.IMAGE)) {
                                 this.android('layout_width', 'match_parent');
                             }
                         }
@@ -366,11 +366,11 @@ export default class View extends Node {
                         this.android('layout_height', styleMap.height);
                     }
                 }
-                if (this.isSet('styleMap', 'minHeight') && !isPercent(styleMap.minHeight)) {
+                if (this.has('minHeight') && !isPercent(styleMap.minHeight)) {
                     this.android('layout_height', 'wrap_content', false);
                     this.android('minHeight', styleMap.minHeight, false);
                 }
-                if (this.isSet('styleMap', 'maxHeight') && !isPercent(styleMap.maxHeight)) {
+                if (this.has('maxHeight') && !isPercent(styleMap.maxHeight)) {
                     this.android('maxHeight', styleMap.maxHeight, false);
                 }
                 if (constraint.layoutHeight) {
@@ -727,7 +727,7 @@ export default class View extends Node {
                         }
                     }
                     const lineHeight = this.lineHeight;
-                    if (lineHeight === 0 || lineHeight < this.box.height || lineHeight === convertInt(this.styleMap.height)) {
+                    if (lineHeight === 0 || lineHeight < this.box.height || lineHeight === this.toInt('height')) {
                         if (viewHeight > 0 && convertInt(this.cssOriginal('height')) > 0) {
                             this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + (renderParent.element.tagName !== 'TABLE' ? this.borderTopWidth + this.borderBottomWidth : 0)));
                         }
@@ -751,23 +751,26 @@ export default class View extends Node {
             }
         }
         if (this.position === 'relative') {
-            if (convertInt(this.top) !== 0) {
-                this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + convertInt(this.top));
+            const top = this.toInt('top');
+            const bottom = this.toInt('bottom');
+            const left = this.toInt('left');
+            if (top !== 0) {
+                this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + top);
             }
-            else if (convertInt(this.bottom) !== 0) {
-                this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + (convertInt(this.bottom) * -1));
+            else if (bottom !== 0) {
+                this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginTop + (bottom * -1));
             }
-            if (convertInt(this.left) !== 0) {
+            if (left !== 0) {
                 if (this.float === 'right' || (this.position === 'relative' && this.cssOriginal('marginLeft') === 'auto')) {
-                    this.modifyBox(BOX_STANDARD.MARGIN_RIGHT, this.marginRight + (convertInt(this.left) * -1));
+                    this.modifyBox(BOX_STANDARD.MARGIN_RIGHT, this.marginRight + (left * -1));
                 }
                 else {
-                    this.modifyBox(BOX_STANDARD.MARGIN_LEFT, this.marginLeft + convertInt(this.left));
+                    this.modifyBox(BOX_STANDARD.MARGIN_LEFT, this.marginLeft + left);
                 }
             }
         }
         if (this.inline) {
-            const verticalAlign = convertInt(this.css('verticalAlign'));
+            const verticalAlign = this.toInt('verticalAlign');
             if (verticalAlign !== 0) {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, this.marginBottom + (verticalAlign * -1));
             }

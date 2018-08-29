@@ -132,7 +132,7 @@ export default class ListAndroid<T extends View> extends List {
                 node.app('layout_columnWeight', '1');
             }
             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
-            if (parent.isSet('styleMap', 'paddingLeft')) {
+            if (parent.has('paddingLeft')) {
                 node.modifyBox(BOX_STANDARD.PADDING_LEFT, 0);
             }
         }

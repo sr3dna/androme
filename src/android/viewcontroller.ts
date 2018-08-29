@@ -4,7 +4,7 @@ import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
-import { capitalize, convertInt, formatPX, hasValue, includesEnum, indexOf, isPercent, optional, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
+import { capitalize, convertInt, convertPX, formatPX, hasValue, includesEnum, indexOf, isPercent, optional, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
 import { hasLineBreak, isLineBreak } from '../lib/dom';
@@ -161,7 +161,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const baseline: T[] = [];
                     const multiLine = nodes.list.some(item => item.multiLine);
                     const floatParent = includesEnum(node.alignmentType, NODE_ALIGNMENT.FLOAT);
-                    const textIndent = convertInt(node.css('textIndent'));
+                    const textIndent = node.toInt('textIndent');
                     let rowPaddingLeft = 0;
                     if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
                         rowPaddingLeft = node.paddingLeft;
@@ -360,24 +360,24 @@ export default class ViewController<T extends View> extends Controller<T> {
                         if (absolute.length > 0) {
                             node.setBoundsMin();
                             for (const current of absolute) {
-                                if (current.top != null && convertInt(current.top) === 0) {
+                                if (current.top != null && current.toInt('top') === 0) {
                                     current.anchor(mapLayout['top'], 'parent', AXIS_ANDROID.VERTICAL);
                                 }
-                                if (current.right != null && convertInt(current.right) >= 0) {
+                                if (current.right != null && current.toInt('right') >= 0) {
                                     current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
-                                    if (current.centerHorizontal && convertInt(current.left) > 0) {
+                                    if (current.centerHorizontal && current.toInt('left') > 0) {
                                         current.anchor(mapLayout['left'], 'parent');
-                                        current.modifyBox(BOX_STANDARD.MARGIN_LEFT, convertInt(current.left));
+                                        current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.toInt('left'));
                                     }
                                 }
-                                if (current.bottom != null && convertInt(current.bottom) >= 0) {
+                                if (current.bottom != null && current.toInt('bottom') >= 0) {
                                     current.anchor(mapLayout['bottom'], 'parent', AXIS_ANDROID.VERTICAL);
                                 }
-                                if (current.left != null && convertInt(current.left) === 0) {
+                                if (current.left != null && current.toInt('left') === 0) {
                                     current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
-                                    if (current.centerHorizontal && convertInt(current.right) > 0) {
+                                    if (current.centerHorizontal && current.toInt('right') > 0) {
                                         current.anchor(mapLayout['right'], 'parent');
-                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, convertInt(current.right));
+                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, current.toInt('right'));
                                     }
                                 }
                                 if (current.left === 0 && current.right === 0 && !current.floating) {
@@ -641,7 +641,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                     chain.constraint[`margin${HV}`] = previous.stringId;
                                                 }
                                                 chain.constraint[`chain${HV}`] = true;
-                                                if (!chain.isSet('styleMap', dimension)) {
+                                                if (!chain.has(dimension)) {
                                                     const minWH = chain.styleMap[`min${WH}`];
                                                     const maxWH = chain.styleMap[`max${WH}`];
                                                     if (minWH) {
@@ -1074,11 +1074,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     if (top && bottom && node.viewHeight === 0) {
                                         node.constraint.layoutHeight = true;
                                     }
-                                    if (right && convertInt(current.right) > 0) {
-                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, current.marginRight + convertInt(current.right));
+                                    if (right && current.toInt('right') > 0) {
+                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, current.marginRight + current.toInt('right'));
                                     }
-                                    if (bottom && convertInt(current.bottom) > 0) {
-                                        current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, current.marginBottom + convertInt(current.bottom));
+                                    if (bottom && current.toInt('bottom') > 0) {
+                                        current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, current.marginBottom + current.toInt('bottom'));
                                     }
                                     if (right && bottom) {
                                         if (node.documentRoot) {
@@ -1266,10 +1266,10 @@ export default class ViewController<T extends View> extends Controller<T> {
             case 'IMG': {
                 if (!recursive) {
                     const element = <HTMLImageElement> node.element;
-                    let width = convertInt(node.styleMap.width);
-                    let height = convertInt(node.styleMap.height);
-                    const top = convertInt(node.top);
-                    const left = convertInt(node.left);
+                    let width = node.toInt('width');
+                    let height = node.toInt('height');
+                    const top = node.toInt('top');
+                    const left = node.toInt('left');
                     let scaleType = '';
                     if (isPercent(node.css('width')) || isPercent(node.css('height'))) {
                         scaleType = 'fitXY';
@@ -1698,8 +1698,8 @@ export default class ViewController<T extends View> extends Controller<T> {
             const sameXY = sortAsc(nodes.list.filter(item => same(node, item, value)), coordinate[0]);
             if (sameXY.length > 1) {
                 const parent = node.documentParent;
-                if (orientation === AXIS_ANDROID.HORIZONTAL && convertInt(parent.css('columnCount')) === sameXY.length) {
-                    const marginLeft = convertInt(parent.css('columnGap'));
+                if (orientation === AXIS_ANDROID.HORIZONTAL && parent.toInt('columnCount') === sameXY.length) {
+                    const marginLeft = convertInt(convertPX(parent.css('columnGap')));
                     if (marginLeft > 0) {
                         for (let i = 1; i < sameXY.length; i++) {
                             sameXY[i].android(`layout_${parseRTL('marginLeft')}`, formatPX(sameXY[i].marginLeft + marginLeft));
@@ -1849,16 +1849,16 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     private adjustLineHeight(nodes: T[], parent: T) {
-        const lineHeight = Math.max.apply(null, nodes.map(item => convertInt(item.styleMap.lineHeight)));
+        const lineHeight = Math.max.apply(null, nodes.map(node => node.toInt('lineHeight')));
         if (lineHeight > 0) {
             let minHeight = Number.MAX_VALUE;
             let offsetTop = 0;
-            const valid = nodes.every(item => {
-                const offset = lineHeight - item.bounds.height;
+            const valid = nodes.every(node => {
+                const offset = lineHeight - node.bounds.height;
                 if (offset > 0) {
                     minHeight = Math.min(offset, minHeight);
-                    if (lineHeight === convertInt(item.styleMap.lineHeight)) {
-                        offsetTop = Math.max((convertInt(item.top) < 0 ? Math.abs(convertInt(item.top)) : 0), offsetTop);
+                    if (lineHeight === node.toInt('lineHeight')) {
+                        offsetTop = Math.max((node.toInt('top') < 0 ? Math.abs(node.toInt('top')) : 0), offsetTop);
                     }
                     return true;
                 }
