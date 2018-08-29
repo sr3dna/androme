@@ -75,8 +75,8 @@ export default class Application<T extends Node> {
                 node.applyCustomizations(SETTINGS.customizationsOverwritePrivilege);
             }
         }
-        this.controllerHandler.setDimensions(this.viewData);
         this.insertAuxillaryViews();
+        this.controllerHandler.setDimensions(this.viewData);
         this.resourceHandler.finalize(this.viewData);
         this.resourceHandler.combineStyles(this.viewData);
         if (SETTINGS.showAttributes) {
@@ -299,7 +299,7 @@ export default class Application<T extends Node> {
                 }
                 if (node.position === 'relative') {
                     ['top', 'right', 'bottom', 'left'].forEach(value => {
-                        if (node.styleMap[value] != null) {
+                        if (node.isSet('styleMap', value)) {
                             style[value] = node.styleMap[value];
                             element.style[value] = 'auto';
                         }
@@ -876,13 +876,17 @@ export default class Application<T extends Node> {
                                             if (!parent.flex.enabled && children.every(node => node.pageflow)) {
                                                 const float = new Set(children.map(node => node.float));
                                                 if (linearX) {
+                                                    const horizontalAlign = children.some(node => !['baseline', 'initial', 'sub', 'sup'].includes(node.css('verticalAlign')));
                                                     if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'middle', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => convertInt(node.css('verticalAlign')) === 0)) {
                                                         xml = this.writeConstraintLayout(nodeY, parent);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         this.sortLayout(nodeY, <T[]> children, nodeY.alignmentType, true);
                                                     }
-                                                    else if (((float.size === 1 || !float.has('right')) && !children.some(node => node.multiLine)) || children.some(node => !['baseline', 'initial', 'sub', 'sup'].includes(node.css('verticalAlign')))) {
+                                                    else if (((float.size === 1 || !float.has('right')) && !children.some(node => node.multiLine)) || horizontalAlign) {
                                                         xml = this.writeLinearLayout(nodeY, parent, true);
+                                                        if (horizontalAlign) {
+                                                            nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                                                        }
                                                     }
                                                     else if ((float.has('left') || float.has('none')) && float.has('right')) {
                                                         const group = this.controllerHandler.createGroup(nodeY, <T[]> children, parent, nodeY.element);

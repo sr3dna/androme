@@ -19,6 +19,7 @@ const SETTINGS = {
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     autoSizePaddingAndBorderWidth: true,
+    autoSizeBackgroundImage: true,
     collapseUnattributedElements: false,
     constraintPercentAccuracy: 4,
     constraintChainDisabled: false,

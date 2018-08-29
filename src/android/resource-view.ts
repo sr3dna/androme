@@ -8,7 +8,7 @@ import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getCache, sameAsParent, setCache } from '../lib/dom';
 import { getColorNearest, parseHex, parseRGBA } from '../lib/color';
-import { NODE_RESOURCE, NODE_STANDARD, NODE_ALIGNMENT, BOX_STANDARD } from '../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD, NODE_ALIGNMENT, BOX_STANDARD, NODE_PROCEDURE } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
@@ -372,7 +372,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const image7: BackgroundImage[] = [];
                     let template: Null<ObjectMap<string>> = null;
                     let resourceName = '';
-                    for (let i = 0; i < backgroundPosition.length; i++) {
+                    for (let i = 0; i < backgroundImage.length; i++) {
                         let gravity = '';
                         let tileMode = '';
                         let tileModeX = '';
@@ -488,6 +488,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     tileMode = '';
                                     tileModeX = '';
                                     tileModeY = '';
+                                    gravity = '';
                                 }
                                 else if (stored.backgroundSize[0] === '100%') {
                                     tileModeX = '';
@@ -698,7 +699,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
-                    if (!node.documentRoot && backgroundImage.length > 0) {
+                    if (SETTINGS.autoSizeBackgroundImage && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.AUTOFIT) && !node.documentRoot && backgroundImage.length > 0) {
                         let resize = true;
                         let current = node;
                         while (current != null && !current.documentBody) {
@@ -713,10 +714,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         if (resize) {
                             if (node.viewWidth === 0) {
-                                node.css('width', formatPX(node.bounds.width));
+                                node.css('width', formatPX(node.bounds.width + node.borderLeftWidth + node.borderRightWidth));
                             }
                             if (node.viewHeight === 0) {
-                                node.css('height', formatPX(node.bounds.height));
+                                node.css('height', formatPX(node.bounds.height + node.borderTopWidth + node.borderBottomWidth));
                             }
                         }
                     }

@@ -6,7 +6,7 @@ import { calculateBias, generateId } from './lib/util';
 import { getCache, getElementsBetween, getNode, getStyle, isLineBreak } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
-import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
 
 type T = View;
@@ -440,7 +440,7 @@ export default class View extends Node {
             if (node.centerHorizontal) {
                 alignment.push('center_horizontal');
             }
-            else if (node.cssOriginal('marginLeft') === 'auto') {
+            else if (node.css('marginLeft') === 'auto') {
                 alignment.push(right);
             }
             if (node.centerVertical) {
@@ -484,7 +484,7 @@ export default class View extends Node {
                     }
                     break;
                 case 'middle':
-                    if (this.documentParent.css('display') === 'table-cell' || this.documentParent.lineHeight > 0) {
+                    if (this.documentParent.css('display') === 'table-cell' || this.documentParent.lineHeight > 0 || renderParent.of(NODE_STANDARD.LINEAR, NODE_ALIGNMENT.HORIZONTAL)) {
                         vertical = 'center_vertical';
                     }
                     break;
@@ -522,7 +522,7 @@ export default class View extends Node {
         const floatRight = ((includesEnum(this.alignmentType, NODE_ALIGNMENT.SEGMENTED) || this.linearHorizontal) && this.renderChildren.some(node => node.float === 'right'));
         const singleChild = (renderParent.renderChildren.length === 1);
         if (frameParent && !setAutoMargin(this) && (this.float === 'right' || floatRight)) {
-            (singleChild ? renderParent : this).android('layout_gravity', right);
+            (singleChild && !floatRight ? renderParent : this).android('layout_gravity', right);
         }
         const horizontalParent = convertHorizontal(textAlignParent);
         let horizontal = (floatRight ? right : convertHorizontal(textAlign));
@@ -596,7 +596,7 @@ export default class View extends Node {
                 if (this.renderChildren.some(node => node.floating)) {
                     this.android('baselineAligned', 'false');
                 }
-                else if (this.renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT) || gridParent) {
+                else if (this.renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT) || gridParent || this.of(NODE_STANDARD.LINEAR, NODE_ALIGNMENT.HORIZONTAL)) {
                     const baseline = NodeList.baselineText(this.renderChildren, false, (gridParent || this.inline ? this.documentParent : undefined));
                     if (baseline) {
                         this.android('baselineAlignedChildIndex', this.renderChildren.indexOf(baseline).toString());
@@ -664,7 +664,7 @@ export default class View extends Node {
             }
         }
         this.alignBoxSpacing();
-        if (options.autoSizePaddingAndBorderWidth) {
+        if (options.autoSizePaddingAndBorderWidth && !includesEnum(this.excludeProcedure, NODE_PROCEDURE.AUTOFIT)) {
             let viewWidth = convertInt(this.android('layout_width'));
             let viewHeight = convertInt(this.android('layout_height'));
             if (this.element.tagName === 'IMG') {

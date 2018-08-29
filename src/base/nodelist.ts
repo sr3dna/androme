@@ -1,5 +1,5 @@
 import Node from './node';
-import { sortAsc, sortDesc } from '../lib/util';
+import { convertInt, convertPX, sortAsc, sortDesc } from '../lib/util';
 import { NODE_STANDARD } from '../lib/constants';
 import { getNode, isLineBreak } from '../lib/dom';
 
@@ -25,10 +25,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     public static baselineText<T extends Node>(list: T[], text = false, parent?: T) {
         const images = (!text ? list.filter(node => node.is(NODE_STANDARD.IMAGE) && node.baseline) : []);
         const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline && !node.multiLine)).sort((a, b) => {
-            if (a.hasElement && !b.hasElement) {
+            const fontSizeA = convertInt(convertPX(a.css('fontSize')));
+            const fontSizeB = convertInt(convertPX(b.css('fontSize')));
+            if (fontSizeA !== 0 && fontSizeB !== 0) {
+                return (fontSizeA >= fontSizeB ? -1 : 1);
+            }
+            else if ((a.hasElement && !b.hasElement) || fontSizeA) {
                 return -1;
             }
-            else if (!a.hasElement && b.hasElement) {
+            else if ((!a.hasElement && b.hasElement) || fontSizeB) {
                 return 1;
             }
             else {

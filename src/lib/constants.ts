@@ -52,10 +52,11 @@ export enum NODE_PROCEDURE {
     NONE = 0,
     LAYOUT = 2,
     ALIGNMENT = 4,
-    OPTIMIZATION = 8,
-    CUSTOMIZATION = 16,
-    ACCESSIBILITY = 32,
-    ALL = 62
+    AUTOFIT = 8,
+    OPTIMIZATION = 16,
+    CUSTOMIZATION = 32,
+    ACCESSIBILITY = 64,
+    ALL = 126
 }
 
 export enum BOX_STANDARD {

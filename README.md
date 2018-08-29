@@ -91,6 +91,7 @@ androme.settings = {
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
     autoSizePaddingAndBorderWidth: true,
+    autoSizeBackgroundImage: true,
     collapseUnattributedElements: false,
     constraintPercentAccuracy: 4, // eq: 1px
     constraintChainDisabled: false,
@@ -249,7 +250,7 @@ Using "target" into a ConstraintLayout or RelativeLayout view will not include a
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
 
 ```xml
-<div data-exclude-procedure="LAYOUT | ALIGNMENT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
+<div data-exclude-procedure="LAYOUT | ALIGNMENT | AUTOFIT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
 <div>
     <span data-exclude-resource="FONT_STYLE">content</span>
     <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>
@@ -379,7 +380,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_19"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol46938"
+                    android:text="@string/__symbol5571"
                     style="@style/Plaintext" />
             </LinearLayout>
             <RelativeLayout
@@ -526,7 +527,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_22"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol46938"
+                    android:text="@string/__symbol5571"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -941,7 +942,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_25"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol46938"
+                    android:text="@string/__symbol5571"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -1063,7 +1064,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol46938">):</string>
+    <string name="__symbol5571">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
