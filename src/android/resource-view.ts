@@ -505,6 +505,25 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             if (convertInt(top) > 0) {
                                 node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + convertInt(top));
                             }
+                            let scaleType = '';
+                            switch (gravity) {
+                                case 'left|top':
+                                case 'left|center_vertical':
+                                case 'left|bottom':
+                                    scaleType = 'fitStart';
+                                    break;
+                                case 'right|top':
+                                case 'right|center_vertical':
+                                case 'right|bottom':
+                                    scaleType = 'fitEnd';
+                                    break;
+                                case 'center':
+                                case 'center_horizontal|top':
+                                case 'center_horizontal|bottom':
+                                    scaleType = 'center';
+                                    break;
+                            }
+                            node.android('scaleType', scaleType);
                             if (!hasBorder) {
                                 return;
                             }
@@ -712,10 +731,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         if (resize) {
                             if (node.viewWidth === 0) {
-                                node.css('width', formatPX(node.bounds.width + node.borderLeftWidth + node.borderRightWidth));
+                                node.css('width', formatPX(node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0)));
                             }
                             if (node.viewHeight === 0) {
-                                node.css('height', formatPX(node.bounds.height + node.borderTopWidth + node.borderBottomWidth));
+                                node.css('height', formatPX(node.bounds.height + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0)));
                             }
                         }
                     }

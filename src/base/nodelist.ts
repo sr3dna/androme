@@ -27,13 +27,14 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline && !node.multiLine)).sort((a, b) => {
             const fontSizeA = convertInt(convertPX(a.css('fontSize')));
             const fontSizeB = convertInt(convertPX(b.css('fontSize')));
-            if (fontSizeA !== 0 && fontSizeB !== 0) {
-                return (fontSizeA >= fontSizeB ? -1 : 1);
+            const sameSize = (fontSizeA === fontSizeB);
+            if (!sameSize && fontSizeA !== 0 && fontSizeB !== 0) {
+                return (fontSizeA > fontSizeB ? -1 : 1);
             }
-            else if ((a.hasElement && !b.hasElement) || fontSizeA) {
+            else if ((a.hasElement && !b.hasElement) || (fontSizeA > 0 && fontSizeB === 0)) {
                 return -1;
             }
-            else if ((!a.hasElement && b.hasElement) || fontSizeB) {
+            else if ((!a.hasElement && b.hasElement) || (fontSizeA === 0 && fontSizeB > 0)) {
                 return 1;
             }
             else {

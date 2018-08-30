@@ -1050,15 +1050,15 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         if (current.is(NODE_STANDARD.TEXT) && current.inheritCss('textAlign') === 'center') {
                                             current.anchor(mapLayout['right'], 'parent');
                                         }
+                                        if ((current.inlineText || current.plainText) && current.viewWidth === 0 && current.toInt('maxWidth') === 0 && current.multiLine && !hasLineBreak(current.element) && !nodes.list.some(item => mapView(item, 'rightLeft') === current.stringId)) {
+                                            current.android('layout_width', 'match_parent');
+                                        }
                                     }
                                     if (bottom) {
                                         if (!bottomParent) {
                                             bottomParent = false;
                                             bottomParent = resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
                                         }
-                                    }
-                                    if ((current.inlineText || current.plainText) && withinRange(current.linear.right, node.box.right, SETTINGS.constraintWhitespaceHorizontalOffset) && !nodes.list.some(item => mapView(item, 'rightLeft') === current.stringId)) {
-                                        current.android('layout_width', 'match_parent');
                                     }
                                 }
                                 else {
@@ -1438,11 +1438,6 @@ export default class ViewController<T extends View> extends Controller<T> {
             case NODE_ANDROID.LINE:
                 if (node.viewHeight === 0) {
                     node.android('layout_height', formatPX((node.borderTopWidth + node.borderBottomWidth + node.paddingTop + node.paddingBottom) || 1));
-                }
-                break;
-            case NODE_ANDROID.IMAGE:
-                if (includesEnum(node.alignmentType, NODE_ALIGNMENT.SINGLE)) {
-                    node.android('scaleType', 'fitStart');
                 }
                 break;
         }
@@ -1830,6 +1825,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             this.appendAfter(node.id, xml);
                             node.anchor(map[LT], stringId, value, true);
                             node.delete('app', map[RB]);
+                            node.constraint[`${value}Guideline`] = stringId;
                             if (guideline[value] == null) {
                                 guideline[value] = {};
                             }

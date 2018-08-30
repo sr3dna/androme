@@ -432,7 +432,7 @@ export default class Application<T extends Node> {
                             }
                             node.css('marginRight', '0px');
                             const widthLeft = (node.has('width') ? node.toInt('width') : Math.max.apply(null, panelLeft.list.map(item => item.linear.width)));
-                            const widthRight = Math.max.apply(null, panelRight.list.map(item => Math.abs(node.toInt('right'))));
+                            const widthRight = Math.max.apply(null, panelRight.list.map(item => Math.abs(item.toInt('right'))));
                             panelLeft.each((item: T) => {
                                 if (item.pageflow && item.viewWidth === 0) {
                                     item.css('maxWidth', formatPX(widthLeft));
@@ -836,16 +836,16 @@ export default class Application<T extends Node> {
                                         continue;
                                     }
                                     else {
-                                        if (freeFormText || nodeY.inline) {
+                                        if ((!nodeY.inlineText || (nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) && /url(.*?)/.test(nodeY.css('backgroundImage')) && nodeY.css('backgroundRepeat') === 'no-repeat') {
+                                            nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
+                                            nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
+                                            xml = this.writeNode(nodeY, parent, NODE_STANDARD.IMAGE);
+                                        }
+                                        else if (freeFormText || nodeY.inline) {
                                             xml = this.writeNode(nodeY, parent, NODE_STANDARD.TEXT);
                                         }
                                         else if (!nodeY.inlineElement && (nodeY.borderTopWidth + nodeY.borderBottomWidth > 0 || nodeY.paddingTop + nodeY.paddingBottom > 0)) {
                                             xml = this.writeNode(nodeY, parent, NODE_STANDARD.LINE);
-                                        }
-                                        else if (!nodeY.inlineText && /url(.*?)/.test(nodeY.css('backgroundImage')) && nodeY.css('backgroundRepeat') === 'no-repeat') {
-                                            nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
-                                            nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE;
-                                            xml = this.writeNode(nodeY, parent, NODE_STANDARD.IMAGE);
                                         }
                                         else {
                                             if (!nodeY.documentRoot) {

@@ -55,6 +55,7 @@ export default class ListAndroid<T extends View> extends List {
                 const gravity = (image !== '' && !listStyleImage ? '' : 'right');
                 if (gravity === '') {
                     paddingLeft += node.paddingLeft;
+                    node.modifyBox(BOX_STANDARD.PADDING_LEFT, 0);
                 }
                 if (left > 0 && paddingLeft > left) {
                     paddingLeft -= left;
@@ -132,9 +133,6 @@ export default class ListAndroid<T extends View> extends List {
                 node.app('layout_columnWeight', '1');
             }
             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
-            if (parent.has('paddingLeft')) {
-                node.modifyBox(BOX_STANDARD.PADDING_LEFT, 0);
-            }
         }
         return { xml: '' };
     }
