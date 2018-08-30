@@ -6,7 +6,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertCamelCase, convertInt, convertPX, formatPX, includesEnum, isNumber, isPercent, optional, sortAsc, trim } from '../lib/util';
 import { placeIndent } from '../lib/xml';
-import { cssParent, deleteCache, getCache, getNode, getStyle, hasFreeFormText, isLineBreak, isVisible, setCache } from '../lib/dom';
+import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { convertRGB, getByColorName } from '../lib/color';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -89,7 +89,7 @@ export default class Application<T extends Node> {
 
     public reset() {
         for (const node of this.cacheInternal) {
-            deleteCache(node.element, 'style', 'styleMap', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
+            deleteElementCache(node.element, 'style', 'styleMap', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
         }
         this.cache.reset();
         this.cacheInternal.reset();
@@ -139,7 +139,7 @@ export default class Application<T extends Node> {
                         }
                         const elements = document.querySelectorAll(cssRule.selectorText);
                         if (this.appName !== '') {
-                            Array.from(elements).forEach((element: HTMLElement) => deleteCache(element, 'style', 'styleMap'));
+                            Array.from(elements).forEach((element: HTMLElement) => deleteElementCache(element, 'style', 'styleMap'));
                         }
                         Array.from(elements).forEach((element: HTMLElement) => {
                             for (const attr of Array.from(element.style)) {
@@ -186,13 +186,13 @@ export default class Application<T extends Node> {
                                     }
                                 }
                             }
-                            const data = getCache(element, 'styleMap');
+                            const data = getElementCache(element, 'styleMap');
                             if (data) {
                                 Object.assign(data, styleMap);
                             }
                             else {
-                                setCache(element, 'style', style);
-                                setCache(element, 'styleMap', styleMap);
+                                setElementCache(element, 'style', style);
+                                setElementCache(element, 'styleMap', styleMap);
                             }
                         });
                     }
@@ -212,18 +212,7 @@ export default class Application<T extends Node> {
     public createNodeCache(root: HTMLElement) {
         let nodeTotal = 0;
         if (root === document.body) {
-            Array.from(document.body.childNodes).forEach((item: HTMLElement) => {
-                if (item.nodeName === '#text') {
-                    if ((optional(item, 'textContent') as string).trim() !== '') {
-                        nodeTotal++;
-                    }
-                }
-                else {
-                    if (isVisible(item)) {
-                        nodeTotal++;
-                    }
-                }
-            });
+            Array.from(document.body.childNodes).some((item: Element) => (isElementVisible(item) && ++nodeTotal > 1));
         }
         const elements = (root !== document.body ? root.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         this.cache.parent = undefined;
@@ -243,7 +232,7 @@ export default class Application<T extends Node> {
         }
         const supportInline = this.controllerHandler.supportInline;
         function inlineElement(element: Element) {
-            const styleMap = getCache(element, 'styleMap');
+            const styleMap = getElementCache(element, 'styleMap');
             return ((!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0);
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
@@ -251,7 +240,7 @@ export default class Application<T extends Node> {
                 this.orderExt(this.extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
                     if (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))) {
-                        setCache(element, 'supportInline', true);
+                        setElementCache(element, 'supportInline', true);
                         continue;
                     }
                     let valid = true;
@@ -331,7 +320,7 @@ export default class Application<T extends Node> {
                             case 'checkbox':
                                 const found = [element.previousElementSibling, element.nextElementSibling].some((sibling: HTMLLabelElement) => {
                                     if (sibling && sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
-                                        const label = getNode(sibling);
+                                        const label = getNodeFromElement(sibling);
                                         if (label && label.pageflow) {
                                             node.companion = label;
                                             node.setBounds(false);
@@ -342,7 +331,7 @@ export default class Application<T extends Node> {
                                     return false;
                                 });
                                 if (!found) {
-                                    const label = getNode(element.parentElement);
+                                    const label = getNodeFromElement(element.parentElement);
                                     if (label && label.element.tagName === 'LABEL' && label.element.children.length === 1) {
                                         node.companion = label;
                                         node.setBounds(false);
@@ -374,7 +363,7 @@ export default class Application<T extends Node> {
                             text.push(element);
                         }
                     }
-                    else if (!supportInline.includes(element.tagName) || getNode(element)) {
+                    else if (!supportInline.includes(element.tagName) || getNodeFromElement(element)) {
                         valid = false;
                     }
                 });
@@ -491,7 +480,7 @@ export default class Application<T extends Node> {
             for (const node of this.cache.elements) {
                 let i = 0;
                 Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
-                    const child = getNode(element);
+                    const child = getNodeFromElement(element);
                     if (child && child.visible) {
                         child.siblingIndex = i++;
                     }
@@ -693,6 +682,7 @@ export default class Application<T extends Node> {
                                                                   (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
                                                                   (!previous.floating && (!previous.inlineElement || previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
                                                                   (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
+                                                                  (cleared.has(previous) && adjacent.blockStatic) ||
                                                                   (floatSize === 1 && previous.floating && adjacent.floating && adjacent.linear.top >= previous.linear.bottom);
                                             if (cleared.has(adjacent)) {
                                                 const floated = new Set(['both', ...horizontal.map(item => item.float)]);
@@ -1381,7 +1371,7 @@ export default class Application<T extends Node> {
     private insertNode(element: HTMLElement, parent?: T) {
         let node: Null<T> = null;
         if (element.nodeName === '#text') {
-            if ((optional(element, 'textContent') as string).trim() !== '' || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
+            if (isPlainText(element) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
                 node = new this._TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
                 node.tagName = 'PLAINTEXT';
                 if (parent) {
@@ -1401,9 +1391,9 @@ export default class Application<T extends Node> {
                 node.setBounds();
             }
         }
-        else if (isVisible(element)) {
+        else if (isElementVisible(element)) {
             node = new this._TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
-            if (getCache(element, 'nodeIsolated')) {
+            if (getElementCache(element, 'nodeIsolated')) {
                 node.isolated = true;
             }
             node.setExclusions();

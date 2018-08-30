@@ -1,6 +1,6 @@
 import Extension from '../base/extension';
 import Node from '../base/node';
-import { deleteCache, getCache, getStyle, setCache } from '../lib/dom';
+import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
 import { BLOCK_ELEMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
@@ -29,7 +29,7 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
                 Array.from(element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                     const style = getStyle(element);
                     if (style.display === 'none') {
-                        setCache(item, 'andromeExternalDisplay', 'none');
+                        setElementCache(item, 'andromeExternalDisplay', 'none');
                         item.style.display = 'block';
                     }
                 });
@@ -42,10 +42,10 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
     public afterRender() {
         if (this.included(this.node.element)) {
             Array.from(this.node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
-                const display = getCache(item, 'andromeExternalDisplay');
+                const display = getElementCache(item, 'andromeExternalDisplay');
                 if (display) {
                     item.style.display = display;
-                    deleteCache(item, 'andromeExternalDisplay');
+                    deleteElementCache(item, 'andromeExternalDisplay');
                 }
             });
         }

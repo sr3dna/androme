@@ -1,6 +1,6 @@
 import Extension from '../base/extension';
 import Node from '../base/node';
-import { deleteCache, getCache, getStyle, setCache } from '../lib/dom';
+import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
 
 export default class External<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -10,7 +10,7 @@ export default class External<T extends Node> extends Extension<T> {
     public beforeInit(init = false) {
         if (init || this.included()) {
             if (this.element != null) {
-                if (getCache(this.element, 'andromeExternalDisplay') == null) {
+                if (getElementCache(this.element, 'andromeExternalDisplay') == null) {
                     const display: string[] = [];
                     let current = this.element;
                     while (current != null) {
@@ -18,7 +18,7 @@ export default class External<T extends Node> extends Extension<T> {
                         current.style.display = 'block';
                         current = <HTMLElement> current.parentElement;
                     }
-                    setCache(this.element, 'andromeExternalDisplay', display);
+                    setElementCache(this.element, 'andromeExternalDisplay', display);
                 }
             }
         }
@@ -34,7 +34,7 @@ export default class External<T extends Node> extends Extension<T> {
     public afterInit(init = false) {
         if (init || this.included()) {
             if (this.element != null) {
-                const data = getCache(this.element, 'andromeExternalDisplay');
+                const data = getElementCache(this.element, 'andromeExternalDisplay');
                 if (data) {
                     const display: string[] = data;
                     let current = this.element;
@@ -44,7 +44,7 @@ export default class External<T extends Node> extends Extension<T> {
                         current = <HTMLElement> current.parentElement;
                         i++;
                     }
-                    deleteCache(this.element, 'andromeExternalDisplay');
+                    deleteElementCache(this.element, 'andromeExternalDisplay');
                 }
             }
         }

@@ -6,7 +6,7 @@ import View from '../../view';
 import { formatPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, locateExtension, overwriteDefault } from '../lib/util';
 import { delimitDimens, stripId } from '../../lib/util';
-import { getNode, getStyle, setCache } from '../../../lib/dom';
+import { getNodeFromElement, getStyle, setElementCache } from '../../../lib/dom';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
@@ -34,7 +34,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 }
             }
             if (includes(<string> optional(element, 'parentElement.dataset.ext'), WIDGET_NAME.COORDINATOR)) {
-                setCache(element, 'nodeIsolated', true);
+                setElementCache(element, 'nodeIsolated', true);
             }
         }
         return false;
@@ -76,7 +76,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 }
             }
             if (!hasValue(element.dataset.target)) {
-                const targetNode = getNode(element) as T;
+                const targetNode = getNodeFromElement(element) as T;
                 if (targetNode) {
                     switch (element.dataset.targetModule) {
                         case 'appBar':

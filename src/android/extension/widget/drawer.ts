@@ -3,7 +3,7 @@ import Extension from '../../../base/extension';
 import View from '../../view';
 import { hasValue, includes, optional } from '../../../lib/util';
 import { locateExtension, overwriteDefault } from '../lib/util';
-import { getNode } from '../../../lib/dom';
+import { getNodeFromElement } from '../../../lib/dom';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -87,7 +87,7 @@ export default class Drawer<T extends View> extends Extension<T> {
     public afterInsert() {
         const headerLayout = locateExtension(this.node, EXT_NAME.EXTERNAL);
         if (headerLayout) {
-            const node = getNode(headerLayout) as T;
+            const node = getNodeFromElement(headerLayout) as T;
             if (node && node.viewHeight === 0) {
                 node.android('layout_height', 'wrap_content');
             }

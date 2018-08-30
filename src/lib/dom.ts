@@ -1,18 +1,18 @@
 import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
-import { convertInt, hasValue, optional } from './util';
+import { convertInt, hasValue } from './util';
 
-export function setCache(element: Null<Element>, attr: string, data: any) {
+export function setElementCache(element: Null<Element>, attr: string, data: any) {
     if (element != null) {
         element[`__${attr}`] = data;
     }
 }
 
-export function getCache(element: Null<Element>, attr: string) {
+export function getElementCache(element: Null<Element>, attr: string) {
     return (element != null ? element[`__${attr}`] : null);
 }
 
-export function deleteCache(element: Null<Element>, ...attrs: string[]) {
+export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
     if (element != null) {
         for (const attr of attrs) {
             delete element[`__${attr}`];
@@ -20,18 +20,18 @@ export function deleteCache(element: Null<Element>, ...attrs: string[]) {
     }
 }
 
-export function getNode<T extends Node>(element: Null<Element>): Null<T> {
-    return getCache(element, 'node');
+export function getNodeFromElement<T extends Node>(element: Null<Element>): Null<T> {
+    return getElementCache(element, 'node');
 }
 
-export function getRangeBounds(element: Element): [ClientRect, boolean] {
-    let multiLine = false;
+export function getRangeClientRect(element: Element): [ClientRect, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects());
     const result = assignBounds(<ClientRect> domRect[0]);
     const top = new Set([result.top]);
     const bottom = new Set([result.bottom]);
+    let multiLine = false;
     for (let i = 1 ; i < domRect.length; i++) {
         const rect = domRect[i];
         top.add(rect.top);
@@ -64,8 +64,8 @@ export function assignBounds(bounds: ClientRect): ClientRect {
 export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclaration {
     if (element instanceof Element) {
         if (cache) {
-            const node = getNode(element);
-            const style = getCache(element, 'style');
+            const node = getNodeFromElement(element);
+            const style = getElementCache(element, 'style');
             if (style) {
                 return style;
             }
@@ -75,7 +75,7 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
         }
         if (element.nodeName.charAt(0) !== '#') {
             const style = getComputedStyle(element);
-            setCache(element, 'style', style);
+            setElementCache(element, 'style', style);
             return style;
         }
     }
@@ -92,7 +92,7 @@ export function sameAsParent(element: HTMLElement, attr: string) {
 
 export function getBoxSpacing(element: HTMLElement, complete = false) {
     const result: BoxModel = {};
-    const node = getNode(element);
+    const node = getNodeFromElement(element);
     const style = getStyle(element);
     ['padding', 'margin'].forEach(area => {
         ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
@@ -127,7 +127,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
         }
         return elements.some((item: HTMLElement) => {
             if (item.nodeName === '#text') {
-                if ((optional(item, 'textContent') as string).trim() !== '' || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap')) {
+                if (isPlainText(item) || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap')) {
                     valid = true;
                     return true;
                 }
@@ -144,7 +144,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
 }
 
 export function hasLineBreak(element: Null<Element>) {
-    const node = getNode(element);
+    const node = getNodeFromElement(element);
     let whiteSpace = '';
     let styleMap = false;
     if (node) {
@@ -157,11 +157,15 @@ export function hasLineBreak(element: Null<Element>) {
     return (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || (element != null && ((['pre', 'pre-wrap'].includes(whiteSpace) || (!styleMap && cssParent(<HTMLElement> element, 'whiteSpace', 'pre', 'pre-wrap'))) && /\n/.test(element.textContent || '')));
 }
 
+export function isPlainText(element: Null<Element>) {
+    return (element != null && element.nodeName === '#text' && (element.textContent || '').trim() !== '');
+}
+
 export function isLineBreak(element: Null<Element>, direction = 'previous') {
     let found = false;
     while (element != null) {
         if (element.nodeName === '#text') {
-            if (element.textContent && element.textContent.trim() !== '') {
+            if (isPlainText(element)) {
                 break;
             }
             else {
@@ -169,15 +173,15 @@ export function isLineBreak(element: Null<Element>, direction = 'previous') {
             }
         }
         else {
-            const styleMap = getCache(element, 'styleMap');
-            found = (element.tagName === 'BR' || (getStyle(<HTMLElement> element).display === 'block' && (!getNode(element) || (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))));
+            const styleMap = getElementCache(element, 'styleMap');
+            found = (element.tagName === 'BR' || (getStyle(<HTMLElement> element).display === 'block' && (!getNodeFromElement(element) || (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))));
             break;
         }
     }
     return found;
 }
 
-export function getElementsBetween(firstElement: Null<Element>, secondElement: Element, cacheNode = false, whiteSpace = false) {
+export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode = false, whiteSpace = false) {
     if (firstElement == null || firstElement.parentElement === secondElement.parentElement) {
         const parentElement = secondElement.parentElement;
         if (parentElement != null) {
@@ -188,16 +192,13 @@ export function getElementsBetween(firstElement: Null<Element>, secondElement: E
                 if (!whiteSpace) {
                     elements = elements.filter((element: Element) => {
                         if (element.nodeName.charAt(0) === '#') {
-                            if (element.nodeName === '#text' && (optional(element, 'textContent') as string).trim() !== '') {
-                                return true;
-                            }
-                            return false;
+                            return isPlainText(element);
                         }
                         return true;
                     });
                 }
                 if (cacheNode) {
-                    elements = elements.filter((element: Element) => getNode(element));
+                    elements = elements.filter((element: Element) => getNodeFromElement(element));
                 }
                 return elements;
             }
@@ -206,38 +207,49 @@ export function getElementsBetween(firstElement: Null<Element>, secondElement: E
     return [];
 }
 
-export function isVisible(element: HTMLElement) {
-    switch (element.tagName) {
-        case 'BR':
-        case 'OPTION':
-        case 'MAP':
-        case 'AREA':
-            return false;
-    }
-    if (typeof element.getBoundingClientRect === 'function') {
-        const bounds = element.getBoundingClientRect();
-        if (bounds.width !== 0 && bounds.height !== 0 || hasValue(element.dataset.ext)) {
-            return true;
+export function isElementVisible(element: Element) {
+    if (element instanceof HTMLElement) {
+        switch (element.tagName) {
+            case 'BR':
+            case 'OPTION':
+            case 'MAP':
+            case 'AREA':
+                return false;
         }
-        else {
-            let current = element.parentElement;
-            let valid = true;
-            while (current != null) {
-                if (getStyle(current).display === 'none') {
-                    valid = false;
-                    break;
+        if (typeof element.getBoundingClientRect === 'function') {
+            const bounds = element.getBoundingClientRect();
+            if (bounds.width !== 0 && bounds.height !== 0 || hasValue(element.dataset.ext)) {
+                return true;
+            }
+            else {
+                let current = element.parentElement;
+                let valid = true;
+                while (current != null) {
+                    if (getStyle(current).display === 'none') {
+                        valid = false;
+                        break;
+                    }
+                    current = current.parentElement;
                 }
-                current = current.parentElement;
-            }
-            if (valid && element.children.length > 0) {
-                return Array.from(element.children).some((item: HTMLElement) => {
-                    const style = getStyle(item);
-                    const float = style.cssFloat;
-                    const position = style.position;
-                    return ((position !== 'static' && position !== 'initial') || float === 'left' || float === 'right');
-                });
+                if (valid) {
+                    switch (element.tagName) {
+                        case 'TD':
+                            return true;
+                    }
+                    if (element.children.length > 0) {
+                        return Array.from(element.children).some((item: HTMLElement) => {
+                            const style = getStyle(item);
+                            const float = style.cssFloat;
+                            const position = style.position;
+                            return ((position !== 'static' && position !== 'initial') || float === 'left' || float === 'right');
+                        });
+                    }
+                }
             }
         }
+        return false;
     }
-    return false;
+    else {
+        return isPlainText(element);
+    }
 }

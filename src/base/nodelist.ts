@@ -1,7 +1,7 @@
 import Node from './node';
 import { convertInt, convertPX, sortAsc, sortDesc } from '../lib/util';
 import { NODE_STANDARD } from '../lib/constants';
-import { getNode, isLineBreak } from '../lib/dom';
+import { getNodeFromElement, isLineBreak } from '../lib/dom';
 
 export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
@@ -44,7 +44,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         const nodeType = (text ? NODE_STANDARD.TEXT : NODE_STANDARD.IMAGE);
         if (baseline == null && parent != null) {
             const valid = Array.from(parent.element.children).some(element => {
-                const node = getNode(element);
+                const node = getNodeFromElement(element);
                 if (node) {
                     return ((node.nodeType <= nodeType && node.baseline) || (node.linearHorizontal && node.children.some(item => item.nodeType <= nodeType && item.baseline)));
                 }

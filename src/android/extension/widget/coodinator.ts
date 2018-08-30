@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import { locateExtension } from '../lib/util';
-import { getNode } from '../../../lib/dom';
+import { getNodeFromElement } from '../../../lib/dom';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
@@ -21,7 +21,7 @@ export default class Coordinator<T extends View> extends Extension<T> {
             node.nodeType = NODE_STANDARD.BLOCK;
             node.excludeResource |= NODE_RESOURCE.ASSET;
             if (node.children.filter(item => !item.isolated).length > 0) {
-                const toolbar = getNode(locateExtension(node, WIDGET_NAME.TOOLBAR));
+                const toolbar = getNodeFromElement(locateExtension(node, WIDGET_NAME.TOOLBAR));
                 if (toolbar) {
                     const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
                     if (ext) {

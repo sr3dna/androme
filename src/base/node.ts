@@ -1,7 +1,7 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, optional, search } from '../lib/util';
-import { assignBounds, getCache, getNode, getRangeBounds, hasFreeFormText, hasLineBreak, setCache } from '../lib/dom';
+import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search } from '../lib/util';
+import { assignBounds, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
@@ -79,15 +79,15 @@ export default abstract class Node implements BoxModel {
         if (!this._initalized) {
             const element = this._element;
             if (element instanceof HTMLElement) {
-                const styleMap = getCache(element, 'styleMap') || {};
+                const styleMap = getElementCache(element, 'styleMap') || {};
                 for (const inline of Array.from(element.style)) {
                     styleMap[convertCamelCase(inline)] = (<any> element.style)[inline];
                 }
-                this.style = (<CSSStyleDeclaration> getCache(element, 'style')) || getComputedStyle(element);
+                this.style = (<CSSStyleDeclaration> getElementCache(element, 'style')) || getComputedStyle(element);
                 this.styleMap = styleMap;
                 this.originalStyleMap = Object.assign({}, styleMap);
             }
-            setCache(element, 'node', this);
+            setElementCache(element, 'node', this);
             this._initalized = true;
         }
     }
@@ -361,7 +361,7 @@ export default abstract class Node implements BoxModel {
                 bounds = assignBounds(<ClientRect> this.element.getBoundingClientRect());
             }
             else {
-                const [rangeBounds, multiLine] = getRangeBounds(this.element);
+                const [rangeBounds, multiLine] = getRangeClientRect(this.element);
                 bounds = rangeBounds;
                 this.multiLine = multiLine;
             }
@@ -533,7 +533,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get parentElementNode() {
-        let parent = getNode(this.element.parentElement);
+        let parent = getNodeFromElement(this.element.parentElement);
         if (parent) {
             if (!this.pageflow) {
                 let found = false;
@@ -552,7 +552,7 @@ export default abstract class Node implements BoxModel {
                         }
                     }
                     previous = parent;
-                    parent = getNode(parent.element.parentElement);
+                    parent = getNodeFromElement(parent.element.parentElement);
                 }
                 if (!found)  {
                     parent = null;
@@ -560,7 +560,7 @@ export default abstract class Node implements BoxModel {
             }
             else {
                 if (parent === this.companion) {
-                    const container = getNode(parent.element.parentElement);
+                    const container = getNodeFromElement(parent.element.parentElement);
                     if (container) {
                         parent = container;
                     }
@@ -710,7 +710,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: HTMLElement) => getCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
+        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: HTMLElement) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
     }
 
     get plainText() {
@@ -818,7 +818,7 @@ export default abstract class Node implements BoxModel {
     get previousSibling() {
         let element = this.element.previousSibling;
         while (element != null) {
-            const node = getNode(<Element> element);
+            const node = getNodeFromElement(<Element> element);
             if (node) {
                 return node;
             }
@@ -829,7 +829,7 @@ export default abstract class Node implements BoxModel {
     get nextSibling() {
         let element = this.element.nextSibling;
         while (element != null) {
-            const node = getNode(<Element> element);
+            const node = getNodeFromElement(<Element> element);
             if (node) {
                 return node;
             }
@@ -843,7 +843,7 @@ export default abstract class Node implements BoxModel {
             for (let i = 0; i < this.element.childNodes.length; i++) {
                 const element = <HTMLElement> this.element.childNodes[i];
                 if (element.nodeName.charAt(0) === '#') {
-                    if (element.nodeName === '#text' && (optional(element, 'textContent') as string).trim() !== '') {
+                    if (isPlainText(element)) {
                         return element;
                     }
                 }
@@ -860,7 +860,7 @@ export default abstract class Node implements BoxModel {
             for (let i = this.element.childNodes.length - 1; i >= 0; i--) {
                 const element = <HTMLElement> this.element.childNodes[i];
                 if (element.nodeName.charAt(0) === '#') {
-                    if (element.nodeName === '#text' && (optional(element, 'textContent') as string).trim() !== '') {
+                    if (isPlainText(element)) {
                         return element;
                     }
                 }

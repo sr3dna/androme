@@ -4,7 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertPX, hasValue, includesEnum, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, getCache, hasLineBreak, isLineBreak, sameAsParent, setCache } from '../lib/dom';
+import { getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, sameAsParent, setElementCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -83,7 +83,7 @@ export default abstract class Resource<T extends Node> {
 
     public setBoxSpacing() {
         this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)).each(node => {
-            if (getCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
+            if (getElementCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
                 for (const attr in result) {
@@ -94,14 +94,14 @@ export default abstract class Resource<T extends Node> {
                         formatted[attr] = convertPX(result[attr]);
                     }
                 }
-                setCache(node.element, 'boxSpacing', formatted);
+                setElementCache(node.element, 'boxSpacing', formatted);
             }
         });
     }
 
     public setBoxStyle() {
         this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
-            if (getCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
+            if (getElementCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
                 const result: any = {
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
@@ -133,14 +133,14 @@ export default abstract class Resource<T extends Node> {
                 if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
                     result.border = result.borderTop;
                 }
-                setCache(node.element, 'boxStyle', result);
+                setElementCache(node.element, 'boxStyle', result);
             }
         });
     }
 
     public setFontStyle() {
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)).each(node => {
-            if (getCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources) {
+            if (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources) {
                 if (node.renderChildren.length > 0 || node.element.tagName === 'IMG' || node.element.tagName === 'HR') {
                     return;
                 }
@@ -150,7 +150,7 @@ export default abstract class Resource<T extends Node> {
                         color = [];
                     }
                     let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && sameAsParent(node.element, 'backgroundColor')))) {
+                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && sameAsParent(node.element, 'backgroundColor')))) {
                         backgroundColor = [];
                     }
                     let fontWeight = node.css('fontWeight');
@@ -178,7 +178,7 @@ export default abstract class Resource<T extends Node> {
                         color,
                         backgroundColor
                     };
-                    setCache(node.element, 'fontStyle', result);
+                    setElementCache(node.element, 'fontStyle', result);
                 }
             }
         });
@@ -187,7 +187,7 @@ export default abstract class Resource<T extends Node> {
     public setOptionArray() {
         this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
             const element = <HTMLSelectElement> node.element;
-            if (getCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
+            if (getElementCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
                 const stringArray: string[] = [];
                 let numberArray: Null<string[]> = [];
                 for (let i = 0; i < element.children.length; i++) {
@@ -209,7 +209,7 @@ export default abstract class Resource<T extends Node> {
                         }
                     }
                 }
-                setCache(element, 'optionArray', { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray && numberArray.length > 0 ? numberArray : null) });
+                setElementCache(element, 'optionArray', { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray && numberArray.length > 0 ? numberArray : null) });
             }
         });
     }
@@ -245,7 +245,7 @@ export default abstract class Resource<T extends Node> {
         }
         this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
             const element = <HTMLInputElement> node.element;
-            if (getCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
+            if (getElementCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -313,7 +313,7 @@ export default abstract class Resource<T extends Node> {
                         }
                     }
                     if (value !== '') {
-                        setCache(element, 'valueString', { name, value });
+                        setElementCache(element, 'valueString', { name, value });
                     }
                 }
             }

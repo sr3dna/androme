@@ -3,7 +3,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { getCache, getElementsBetween, getNode, getStyle, isLineBreak } from '../lib/dom';
+import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, isLineBreak } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -22,7 +22,7 @@ export default class View extends Node {
         return View._documentBody;
     }
 
-    public static getNodeName(tagName: number): string {
+    public static getNodeFromElementName(tagName: number): string {
         return NODE_ANDROID[NODE_STANDARD[tagName]];
     }
 
@@ -607,7 +607,7 @@ export default class View extends Node {
         if (this.pageflow && this.blockStatic) {
             if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                 [['firstElement', 'paddingTop', 'borderTopWidth', 'marginTop', BOX_STANDARD.MARGIN_TOP], ['lastElement', 'paddingBottom', 'borderBottomWidth', 'marginBottom', BOX_STANDARD.MARGIN_BOTTOM]].forEach((item: [string, string, string, string, number]) => {
-                    if (getNode(renderParent[item[0]]) === this) {
+                    if (getNodeFromElement(renderParent[item[0]]) === this) {
                         let valid = true;
                         let element: Null<HTMLElement> = renderParent.element;
                         while (element != null) {
@@ -645,8 +645,8 @@ export default class View extends Node {
                         }
                     }
                     [current.element.previousElementSibling, (i === lastIndex ? current.element.nextElementSibling : null)].forEach((item, index) => {
-                        if (!getNode(item)) {
-                            const styleMap: StringMap = getCache(item, 'styleMap');
+                        if (!getNodeFromElement(item)) {
+                            const styleMap: StringMap = getElementCache(item, 'styleMap');
                             if (styleMap) {
                                 const offset = Math.min(convertInt(styleMap.marginTop), convertInt(styleMap.marginBottom));
                                 if (offset < 0) {
@@ -842,7 +842,7 @@ export default class View extends Node {
                         if (previous && !previous.hasElement && previous.renderChildren.includes(<T> node.previousSibling)) {
                             previous = node.previousSibling as T;
                         }
-                        if ((!node.hasElement && !node.plainText) || getElementsBetween((previous != null ? previous.element : null), node.element).filter(element => isLineBreak(element)).length > 0) {
+                        if ((!node.hasElement && !node.plainText) || getElementsBetweenSiblings((previous != null ? previous.element : null), node.element).filter(element => isLineBreak(element)).length > 0) {
                             const height = Math.round(node.linear.top - top);
                             if (height >= 1) {
                                 node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height);
@@ -874,7 +874,7 @@ export default class View extends Node {
         }
         else {
             const value: number = MAP_ELEMENT[this.tagName];
-            return (value != null ? View.getNodeName(value) : '');
+            return (value != null ? View.getNodeFromElementName(value) : '');
         }
     }
 

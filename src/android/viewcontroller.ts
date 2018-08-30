@@ -1173,7 +1173,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         let postXml = '';
         let renderParent = parent;
         if (typeof viewName === 'number') {
-            viewName = View.getNodeName(viewName);
+            viewName = View.getNodeFromElementName(viewName);
         }
         switch (viewName) {
             case NODE_ANDROID.LINEAR:
@@ -1259,7 +1259,7 @@ export default class ViewController<T extends View> extends Controller<T> {
     public renderNode(node: T, parent: T, tagName: number | string, recursive = false) {
         const target = (node.isSet('dataset', 'target') && !node.isSet('dataset', 'include'));
         if (typeof tagName === 'number') {
-            tagName = View.getNodeName(tagName);
+            tagName = View.getNodeFromElementName(tagName);
         }
         node.setNodeId(tagName);
         switch (node.element.tagName) {
@@ -1454,7 +1454,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             node = new View(0, SETTINGS.targetAPI) as T;
         }
         const renderDepth = Math.max(0, depth);
-        const viewName = (typeof tagName === 'number' ? View.getNodeName(tagName) : tagName);
+        const viewName = (typeof tagName === 'number' ? View.getNodeFromElementName(tagName) : tagName);
         tagName = (node.hasElement ? node.tagName : viewName);
         switch (viewName) {
             case 'include':
