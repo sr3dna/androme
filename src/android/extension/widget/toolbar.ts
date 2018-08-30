@@ -200,7 +200,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             else {
                 collapsingToolbarNode.parent = appBarNode;
             }
-            node.data(`${WIDGET_NAME.TOOLBAR}:outerParent`, appBarNode.stringId);
+            node.data(WIDGET_NAME.TOOLBAR, 'outerParent', appBarNode.stringId);
         }
         else if (collapsingToolbarNode) {
             node.parent = collapsingToolbarNode;

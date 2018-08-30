@@ -87,7 +87,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
                     }
                     i++;
                 }
-                item.data(`${EXT_NAME.LIST}:listStyleType`, ordinal);
+                item.data(EXT_NAME.LIST, 'listStyleType', ordinal);
             });
         }
         return { xml };

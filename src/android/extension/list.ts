@@ -18,7 +18,7 @@ export default class ListAndroid<T extends View> extends List<T> {
         if (parent) {
             const controller = this.application.controllerHandler;
             const node = this.node;
-            const listStyle = this.node.data(`${EXT_NAME.LIST}:listStyleType`) || '0';
+            const listStyle = this.node.data(EXT_NAME.LIST, 'listStyleType') || '0';
             const parentLeft = convertInt(parent.cssOriginal('paddingLeft', true)) + convertInt(parent.cssOriginal('marginLeft', true));
             let columnCount = 0;
             let paddingLeft = node.marginLeft;

@@ -289,7 +289,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             name = (style !== '' ? `${style}.` : '') + node.nodeId;
                             styles[name] = common;
                         }
-                        children.forEach(child => child.add('_', 'style', `@style/${name}`));
+                        children.forEach(child => child.attr('_', 'style', `@style/${name}`));
                     }
                 }
             }
@@ -319,7 +319,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const method = METHOD_ANDROID['boxSpacing'];
                 for (const attr in stored) {
                     if (stored[attr] !== '0px') {
-                        node.attr(formatString(parseRTL(method[attr]), (!isPercent(node.styleMap[attr]) ? node.styleMap[attr] : null) || stored[attr]), (node.renderExtension == null));
+                        node.formatted(formatString(parseRTL(method[attr]), (!isPercent(node.styleMap[attr]) ? node.styleMap[attr] : null) || stored[attr]), (node.renderExtension == null));
                     }
                 }
             }
@@ -715,7 +715,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             Resource.STORED.DRAWABLES.set(resourceName, xml);
                         }
                     }
-                    node.attr(formatString(method['background'], resourceName), (node.renderExtension == null));
+                    node.formatted(formatString(method['background'], resourceName), (node.renderExtension == null));
                     if (SETTINGS.autoSizeBackgroundImage && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.AUTOFIT) && !node.documentRoot && backgroundImage.length > 0) {
                         let resize = true;
                         let current = node;
@@ -740,7 +740,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                 }
                 else if (getElementCache(node.element, 'fontStyle') == null && stored.backgroundColor.length > 0) {
-                    node.attr(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension == null));
+                    node.formatted(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension == null));
                 }
             }
         });
@@ -772,22 +772,22 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const sorted: StyleList = [];
             for (let node of nodes) {
                 let system = false;
-                let labelFor: Null<T> = null;
+                let label: Null<T> = null;
                 if (node.companion != null) {
-                    labelFor = node;
+                    label = node;
                     node = node.companion as T;
                 }
                 const element = node.element;
-                const nodeId = (labelFor || node).id;
+                const nodeId = (label || node).id;
                 const stored: FontAttribute = Object.assign({}, getElementCache(element, 'fontStyle'));
-                if (stored.backgroundColor && stored.backgroundColor.length > 0) {
+                if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = `@color/${ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
                 }
                 if (stored.fontFamily) {
                     let fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
                     let fontStyle = '';
                     let fontWeight = '';
-                    if (stored.color && stored.color.length > 0) {
+                    if (Array.isArray(stored.color) && stored.color.length > 0) {
                         stored.color = `@color/${ResourceView.addColor(stored.color[0], stored.color[2])}`;
                     }
                     if (SETTINGS.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily] != null) {
@@ -836,7 +836,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
             }
             const tagStyle = this.tagStyle[tag];
-            if (tagStyle != null) {
+            if (tagStyle) {
                 for (let i = 0; i < tagStyle.length; i++) {
                     for (const attr in tagStyle[i]) {
                         if (sorted[i][attr] != null) {
@@ -863,7 +863,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const result = (node.element.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
                 if (result !== '') {
                     const method = METHOD_ANDROID['imageSource'];
-                    node.attr(formatString(method['src'], result), (node.renderExtension == null));
+                    node.formatted(formatString(method['src'], result), (node.renderExtension == null));
                     setElementCache(element, 'imageSource', result);
                 }
             }
@@ -898,7 +898,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     arrayName = `${node.nodeId}_array`;
                     Resource.STORED.ARRAYS.set(arrayName, result);
                 }
-                node.attr(formatString(method['entries'], arrayName), (node.renderExtension == null));
+                node.formatted(formatString(method['entries'], arrayName), (node.renderExtension == null));
             }
         });
     }
@@ -934,7 +934,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const name = ResourceView.addString(stored.value, stored.name);
                 if (name !== '') {
                     const method = METHOD_ANDROID['valueString'];
-                    node.attr(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension == null));
+                    node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension == null));
                     node.textContent = stored.value;
                 }
             }
@@ -1152,10 +1152,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const attrs: string[] = map[id].attributes;
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
-                    node.add('_', 'style', `@style/${styles.pop()}`);
+                    node.attr('_', 'style', `@style/${styles.pop()}`);
                 }
                 if (attrs.length > 0) {
-                    attrs.sort().forEach(value => node.attr(replaceUnit(value, true), false));
+                    attrs.sort().forEach(value => node.formatted(replaceUnit(value, true), false));
                 }
             }
         }

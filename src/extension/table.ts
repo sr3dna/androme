@@ -37,9 +37,10 @@ export default class Table<T extends Node> extends Extension<T> {
                 const tr = table[i];
                 for (let j = 0; j < tr.children.length; j++) {
                     const element = <HTMLTableCellElement> tr.children[j].element;
-                    if (element.rowSpan > 1) {
-                        for (let k = 0; k < element.rowSpan - 1; k++)  {
-                            columnIndex[i + k + 1]++;
+                    for (let k = 0; k < element.rowSpan - 1; k++)  {
+                        const l = (i + 1) + k;
+                        if (columnIndex[l] != null) {
+                            columnIndex[l]++;
                         }
                     }
                     columnIndex[i] += element.colSpan;
@@ -54,10 +55,10 @@ export default class Table<T extends Node> extends Extension<T> {
                 tr.each(td => {
                     const element = <HTMLTableCellElement> td.element;
                     if (element.rowSpan > 1) {
-                        td.data(`${EXT_NAME.TABLE}:rowSpan`, element.rowSpan);
+                        td.data(EXT_NAME.TABLE, 'rowSpan', element.rowSpan);
                     }
                     if (element.colSpan > 1) {
-                        td.data(`${EXT_NAME.TABLE}:colSpan`, element.colSpan);
+                        td.data(EXT_NAME.TABLE, 'colSpan', element.colSpan);
                     }
                     if (!td.has('verticalAlign')) {
                         td.css('verticalAlign', 'middle');
@@ -72,7 +73,7 @@ export default class Table<T extends Node> extends Extension<T> {
                 });
                 if (columnIndex[i] < columnCount) {
                     const td = tr.children[tr.children.length - 1];
-                    td.data(`${EXT_NAME.TABLE}:spaceSpan`, columnCount - columnIndex[i]);
+                    td.data(EXT_NAME.TABLE, 'spaceSpan', columnCount - columnIndex[i]);
                 }
                 else {
                     let percent = 0;
@@ -106,7 +107,7 @@ export default class Table<T extends Node> extends Extension<T> {
                 if (!caption.has('textAlign')) {
                     caption.css('textAlign', 'center');
                 }
-                caption.data(`${EXT_NAME.TABLE}:colSpan`, columnCount);
+                caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);
             }
             if (collapse) {
                 node.css({

@@ -54,7 +54,7 @@ export default abstract class File<T extends Node> {
             alert('SERVER (required): See README for instructions');
             return;
         }
-        if (files && files.length > 0) {
+        if (Array.isArray(files) && files.length > 0) {
             files.push(...this.queue);
             fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this._directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this._compression.toLocaleLowerCase()}&processingtime=${this._processingTime.toString().trim()}`, {
                     method: 'POST',

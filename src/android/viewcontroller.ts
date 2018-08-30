@@ -1625,7 +1625,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 (node.dataset[name] as string).split(';').forEach(values => {
                     const [key, value] = values.split('::');
                     if (hasValue(key) && hasValue(value)) {
-                        node.add(obj, key, value);
+                        node.attr(obj, key, value);
                     }
                 });
             }

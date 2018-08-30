@@ -82,7 +82,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                             for (let m = 0; m < columns.length; m++) {
                                 if (columns[m].length > base.length) {
                                     const removed = columns[m].splice(assigned[m] + (every ? 2 : 1), columns[m].length - base.length);
-                                    columns[m][assigned[m] + (every ? 1 : 0)].data(`${EXT_NAME.GRID}:gridSiblings`, [...removed]);
+                                    columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'gridSiblings', [...removed]);
                                 }
                             }
                         }
@@ -93,7 +93,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                                 for (let m = 0; m < columns.length; m++) {
                                     if (found[m] > minIndex) {
                                         const removed = columns[m].splice(minIndex, found[m] - minIndex);
-                                        columns[m][assigned[m] + (every ? 1 : 0)].data(`${EXT_NAME.GRID}:gridSiblings`, [...removed]);
+                                        columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'gridSiblings', [...removed]);
                                     }
                                 }
                             }
@@ -266,14 +266,14 @@ export default class Grid<T extends Node> extends Extension<T> {
                                 data.index = l;
                                 spacer = 0;
                             }
-                            item.data(`${EXT_NAME.GRID}:gridCellData`, data);
+                            item.data(EXT_NAME.GRID, 'gridCellData', data);
                         }
                         else if ((<any> item).spacer === 1) {
                             spacer++;
                         }
                     }
                 }
-                node.data(`${EXT_NAME.GRID}:gridData`, gridData);
+                node.data(EXT_NAME.GRID, 'gridData', gridData);
                 node.render(parent);
             }
         }
@@ -285,12 +285,12 @@ export default class Grid<T extends Node> extends Extension<T> {
         const parent = this.parent;
         if (parent) {
             const node = this.node;
-            const gridData = <GridData> parent.data(`${EXT_NAME.GRID}:gridData`);
-            const gridCellData = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
+            const gridData = <GridData> parent.data(EXT_NAME.GRID, 'gridData');
+            const gridCellData = <GridCellData> node.data(EXT_NAME.GRID, 'gridCellData');
             if (gridData && gridCellData) {
                 let siblings: T[];
                 if (this.options.balanceColumns) {
-                    siblings = node.data(`${EXT_NAME.GRID}:gridSiblings`) as T[];
+                    siblings = node.data(EXT_NAME.GRID, 'gridSiblings') as T[];
                 }
                 else {
                     const columnEnd = gridData.columnEnd[Math.min(gridCellData.index + (gridCellData.columnSpan - 1), gridData.columnEnd.length - 1)];

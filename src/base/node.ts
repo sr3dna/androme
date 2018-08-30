@@ -35,10 +35,11 @@ export default abstract class Node implements BoxModel {
     public abstract children: T[];
     public abstract renderChildren: T[];
 
-    protected _namespaces = new Set<string>();
     protected _nodeName: string;
     protected _renderParent: T;
     protected _documentParent: T;
+
+    protected abstract _namespaces: Set<string>;
 
     private _element: HTMLElement;
     private _parent: T;
@@ -112,7 +113,7 @@ export default abstract class Node implements BoxModel {
         return false;
     }
 
-    public add(obj: string, attr: string, value = '', overwrite = true) {
+    public attr(obj: string, attr: string, value = '', overwrite = true) {
         const name = `_${obj || '_'}`;
         if (hasValue(value)) {
             if (this[name] == null) {
@@ -152,7 +153,7 @@ export default abstract class Node implements BoxModel {
             const attrs = options[obj];
             if (typeof attrs === 'object') {
                 for (const attr in attrs) {
-                    this.add(obj, attr, attrs[attr]);
+                    this.attr(obj, attr, attrs[attr]);
                 }
                 delete options[obj];
             }
@@ -177,11 +178,16 @@ export default abstract class Node implements BoxModel {
         this.visible = false;
     }
 
-    public data(attr: string, value?: any, overwrite = true) {
-        if (hasValue(value) && (overwrite || this._data[attr] == null)) {
-            this._data[attr] = value;
+    public data(obj: string, attr: string, value?: any, overwrite = true) {
+        if (hasValue(value)) {
+            if (this._data[obj] == null) {
+                this._data[obj] = {};
+            }
+            if (overwrite || this._data[obj][attr] == null) {
+                this._data[obj][attr] = value;
+            }
         }
-        return this._data[attr];
+        return (this._data[obj] != null ? this._data[obj][attr] : null);
     }
 
     public ascend() {
@@ -218,29 +224,33 @@ export default abstract class Node implements BoxModel {
                     this.box = node.box;
                     break;
                 case 'data':
-                    for (const attr in this._data) {
-                        const data = this._data[attr];
-                        if (typeof data === 'object' && data.inherit === true) {
-                            const inherit = node.data(attr);
-                            if (inherit) {
-                                switch (typeof node[attr]) {
-                                    case 'number':
-                                        inherit[attr] += data[attr];
-                                        break;
-                                    case 'boolean':
-                                        if (data[attr] !== false) {
-                                            inherit[attr] = true;
+                    for (const obj in this._data) {
+                        for (const name in this._data[obj]) {
+                            const source = this._data[obj][name];
+                            if (typeof source === 'object' && source.inherit === true) {
+                                const destination = node.data(obj, name);
+                                if (destination) {
+                                    for (const attr in source) {
+                                        switch (typeof source[attr]) {
+                                            case 'number':
+                                                destination[attr] += source[attr];
+                                                break;
+                                            case 'boolean':
+                                                if (source[attr] === true) {
+                                                    destination[attr] = true;
+                                                }
+                                                break;
+                                            default:
+                                                destination[attr] = source[attr];
+                                                break;
                                         }
-                                        break;
-                                    default:
-                                        inherit[attr] = data[attr];
-                                        break;
+                                    }
                                 }
+                                else {
+                                    node.data(obj, name, source);
+                                }
+                                delete this._data[obj][name];
                             }
-                            else {
-                                node.data(attr, data);
-                            }
-                            delete this._data[attr];
                         }
                     }
                     break;

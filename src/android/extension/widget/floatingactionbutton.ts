@@ -54,7 +54,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
                 if (target) {
                     let anchor = parent.stringId;
                     if (parent.nodeName === VIEW_SUPPORT.TOOLBAR) {
-                        const outerParent = parent.data(`${WIDGET_NAME.TOOLBAR}:outerParent`);
+                        const outerParent = parent.data(WIDGET_NAME.TOOLBAR, 'outerParent');
                         if (outerParent) {
                             anchor = outerParent;
                         }

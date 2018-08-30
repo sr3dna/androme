@@ -32,8 +32,10 @@ export default class View extends Node {
     public children: T[] = [];
     public renderChildren: T[] = [];
 
-    private _android: StringMap;
-    private _app: StringMap;
+    protected _namespaces = new Set(['android', 'app']);
+
+    private _android: StringMap = {};
+    private _app: StringMap = {};
 
     constructor(
         public id: number,
@@ -43,28 +45,28 @@ export default class View extends Node {
         super(id, element);
     }
 
-    public add(obj: string, attr: string, value = '', overwrite = true) {
+    public attr(obj: string, attr: string, value = '', overwrite = true) {
         if (!this.supported(obj, attr)) {
             return;
         }
-        super.add(obj, attr, value, overwrite);
+        super.attr(obj, attr, value, overwrite);
     }
 
     public android(attr: string = '', value: string = '', overwrite = true) {
         if (hasValue(value)) {
-            this.add('android', attr, value, overwrite);
+            this.attr('android', attr, value, overwrite);
         }
         else {
-            return (this._android && this._android[attr] != null ? this._android[attr] : null);
+            return (this._android[attr] != null ? this._android[attr] : null);
         }
     }
 
     public app(attr: string = '', value: string = '', overwrite = true) {
         if (hasValue(value)) {
-            this.add('app', attr, value, overwrite);
+            this.attr('app', attr, value, overwrite);
         }
         else {
-            return (this._app && this._app[attr] != null ? this._app[attr] : null);
+            return (this._app[attr] != null ? this._app[attr] : null);
         }
     }
 
@@ -72,14 +74,14 @@ export default class View extends Node {
         const local = Object.assign({}, options);
         super.apply(local);
         for (const obj in local) {
-            this.attr(`${obj}="${local[obj]}"`);
+            this.formatted(`${obj}="${local[obj]}"`);
         }
     }
 
-    public attr(value: string, overwrite = true) {
+    public formatted(value: string, overwrite = true) {
         const match = value.match(/^(?:([a-z]+):)?(\w+)="((?:@+?[a-z]+\/)?.+)"$/);
         if (match) {
-            this.add(match[1] || '_', match[2], match[3], overwrite);
+            this.attr(match[1] || '_', match[2], match[3], overwrite);
         }
     }
 
@@ -181,7 +183,7 @@ export default class View extends Node {
                     if (customizations != null) {
                         for (const obj in customizations) {
                             for (const attr in customizations[obj]) {
-                                this.add(obj, attr, customizations[obj][attr], overwrite);
+                                this.attr(obj, attr, customizations[obj][attr], overwrite);
                             }
                         }
                     }

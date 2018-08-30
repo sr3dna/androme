@@ -14,9 +14,9 @@ export default class TableAndroid<T extends View> extends Table<T> {
     public processChild(): ExtensionResult {
         const parent = this.parent;
         if (parent) {
-            const rowSpan = convertInt(this.node.data(`${EXT_NAME.TABLE}:rowSpan`));
-            const columnSpan = convertInt(this.node.data(`${EXT_NAME.TABLE}:colSpan`));
-            const spaceSpan = convertInt(this.node.data(`${EXT_NAME.TABLE}:spaceSpan`));
+            const rowSpan = convertInt(this.node.data(EXT_NAME.TABLE, 'rowSpan'));
+            const columnSpan = convertInt(this.node.data(EXT_NAME.TABLE, 'colSpan'));
+            const spaceSpan = convertInt(this.node.data(EXT_NAME.TABLE, 'spaceSpan'));
             if (rowSpan > 1) {
                 this.node.app('layout_rowSpan', rowSpan.toString());
             }
