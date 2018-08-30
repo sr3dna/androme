@@ -4,9 +4,7 @@ import Node from '../base/node';
 import { convertInt, isPercent } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 
-type T = Node;
-
-export default class Table extends Extension<T> {
+export default class Table<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }

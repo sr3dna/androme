@@ -1161,7 +1161,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             }
             else {
                 if (node.linearHorizontal) {
-                    this.adjustLineHeight(<T[]> node.renderChildren, node);
+                    this.adjustLineHeight(node.renderChildren, node);
                 }
             }
         }
@@ -1364,8 +1364,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                     case 'radio':
                         if (!recursive) {
                             const result = parent.children.filter(item => (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name) as T[];
-                            let xml = '';
                             if (result.length > 1) {
+                                let xml = '';
                                 const linearX = NodeList.linearX(result);
                                 const group = this.createGroup(node, (linearX ? sortAsc(result, 'linear.left') : result), parent);
                                 group.setNodeId(NODE_ANDROID.RADIO_GROUP);
@@ -1837,7 +1837,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         });
     }
 
-    private adjustLineHeight(nodes: T[], parent: T) {
+    private adjustLineHeight<T extends View>(nodes: T[], parent: T) {
         const lineHeight = Math.max.apply(null, nodes.map(node => node.toInt('lineHeight')));
         if (lineHeight > 0) {
             let minHeight = Number.MAX_VALUE;

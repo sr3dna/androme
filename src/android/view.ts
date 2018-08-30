@@ -786,7 +786,7 @@ export default class View extends Node {
     }
 
     public setAccessibility() {
-        const node = this as T;
+        const node = this;
         const element = this.element;
         switch (this.nodeName) {
             case NODE_ANDROID.EDIT:

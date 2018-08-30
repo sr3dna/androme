@@ -11,9 +11,7 @@ import parseRTL from '../../localization';
 
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
-type T = View;
-
-export default class Drawer extends Extension<T> {
+export default class Drawer<T extends View> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
         this.documentRoot = true;
@@ -36,9 +34,7 @@ export default class Drawer extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        const application = this.application;
-        const controller = application.controllerHandler;
-        const node = this.node as T;
+        const node = this.node;
         node.documentRoot = true;
         const options = Object.assign({}, this.options.drawer);
         if (locateExtension(node, WIDGET_NAME.MENU)) {
@@ -53,7 +49,7 @@ export default class Drawer extends Extension<T> {
             navView.android('layout_height', 'match_parent');
             navView.isolated = true;
         }
-        const xml = controller.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
+        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
         node.rendered = true;
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
@@ -62,7 +58,7 @@ export default class Drawer extends Extension<T> {
 
     public beforeInsert() {
         const application = this.application;
-        const node = this.node as T;
+        const node = this.node;
         if (application.insert[node.nodeId] != null) {
             const target = application.cacheInternal.locate(item => item.isolated && item.parent === node.parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
             if (target) {

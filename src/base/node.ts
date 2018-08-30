@@ -164,10 +164,12 @@ export default abstract class Node implements BoxModel {
         return this;
     }
 
-    public render(parent: T) {
-        this.renderParent = parent;
-        this.renderDepth = (parent === this || this.documentRoot || parent.isSet('dataset', 'target') ? 0 : parent.renderDepth + 1);
-        this.rendered = true;
+    public render(parent?: T) {
+        if (parent) {
+            this.renderParent = parent;
+            this.renderDepth = (parent === this || this.documentRoot || parent.isSet('dataset', 'target') ? 0 : parent.renderDepth + 1);
+            this.rendered = true;
+        }
     }
 
     public hide() {
@@ -549,8 +551,8 @@ export default abstract class Node implements BoxModel {
                             break;
                         }
                     }
-                    previous = parent as T;
-                    parent = getNode(parent.element.parentElement) as T;
+                    previous = parent;
+                    parent = getNode(parent.element.parentElement);
                 }
                 if (!found)  {
                     parent = null;

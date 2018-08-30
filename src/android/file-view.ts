@@ -85,8 +85,8 @@ export default class FileView<T extends View> extends File<T> {
     }
 
     public resourceStringToXml(saveToDisk = false) {
-        this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
         let xml = '';
+        this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
         if (this.stored.STRINGS.size > 0) {
             const template = parseTemplate(STRING_TMPL);
             const data: {} = {
@@ -111,8 +111,8 @@ export default class FileView<T extends View> extends File<T> {
     }
 
     public resourceStringArrayToXml(saveToDisk = false) {
-        this.stored.ARRAYS = new Map([...this.stored.ARRAYS.entries()].sort());
         let xml = '';
+        this.stored.ARRAYS = new Map([...this.stored.ARRAYS.entries()].sort());
         if (this.stored.ARRAYS.size > 0) {
             const template = parseTemplate(STRINGARRAY_TMPL);
             const data: {} = {
@@ -142,8 +142,8 @@ export default class FileView<T extends View> extends File<T> {
     }
 
     public resourceFontToXml(saveToDisk = false) {
-        this.stored.FONTS = new Map([...this.stored.FONTS.entries()].sort());
         let xml = '';
+        this.stored.FONTS = new Map([...this.stored.FONTS.entries()].sort());
         if (this.stored.FONTS.size > 0) {
             const template = parseTemplate(FONT_TMPL);
             for (const [name, font] of this.stored.FONTS.entries()) {
@@ -232,8 +232,8 @@ export default class FileView<T extends View> extends File<T> {
     }
 
     public resourceDimenToXml(saveToDisk = false) {
-        this.stored.DIMENS = new Map([...this.stored.DIMENS.entries()].sort());
         let xml = '';
+        this.stored.DIMENS = new Map([...this.stored.DIMENS.entries()].sort());
         if (this.stored.DIMENS.size > 0) {
             const template = parseTemplate(DIMEN_TMPL);
             const data: {} = {

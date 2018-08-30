@@ -2,9 +2,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import { getStyle, setCache } from '../lib/dom';
 
-type T = Node;
-
-export default abstract class Button extends Extension<T> {
+export default abstract class Button<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }

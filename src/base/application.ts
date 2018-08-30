@@ -20,6 +20,7 @@ export default class Application<T extends Node> {
     public extensions: IExtension[] = [];
     public insert: ObjectIndex<string[]> = {};
     public closed = false;
+    public processing: T[];
 
     private _views: PlainFile[] = [];
     private _includes: PlainFile[] = [];
@@ -505,7 +506,6 @@ export default class Application<T extends Node> {
     }
 
     public createLayoutXml() {
-        const application = this;
         const mapX: LayoutMap<T> = [];
         const mapY: LayoutMap<T> = [];
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
@@ -528,6 +528,7 @@ export default class Application<T extends Node> {
             mapX[node.depth][x].push(node);
             mapY[node.depth][y].push(node);
         }
+        const application = this;
         for (let i = 0; i < mapY.length; i++) {
             const coordsY = Object.keys(mapY[i]);
             const partial = new Map();
@@ -569,7 +570,6 @@ export default class Application<T extends Node> {
                 const below: T[] = [];
                 const middle: T[] = [];
                 const above: T[] = [];
-                let parent = this.cache.locate('id', parseInt(coordsY[j])) as T;
                 for (const node of mapY[i][coordsY[j]] as T[]) {
                     if (node.documentRoot) {
                         axisY.push(node);
@@ -586,13 +586,12 @@ export default class Application<T extends Node> {
                         }
                     }
                 }
-                if (parent) {
-                    this.sortLayout(parent, middle);
-                }
+                this.sortLayout(middle, this.cache.locate('id', parseInt(coordsY[j])));
                 axisY.push(...sortAsc(below, 'style.zIndex', 'siblingIndex'));
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'siblingIndex'));
-                const cleared = NodeList.cleared(axisY.slice());
+                this.processing = axisY;
+                const cleared = NodeList.cleared(axisY);
                 const includes: string[] = [];
                 let current = '';
                 for (let k = 0; k < axisY.length; k++) {
@@ -600,7 +599,7 @@ export default class Application<T extends Node> {
                     if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
                         continue;
                     }
-                    parent = nodeY.parent as T;
+                    let parent = nodeY.parent as T;
                     if (this.controllerHandler.supportInclude) {
                         const filename = (optional(nodeY, 'dataset.include') as string).trim();
                         if (filename !== '' && includes.indexOf(filename) === -1) {
@@ -793,8 +792,8 @@ export default class Application<T extends Node> {
                                         if (horizontal.length === parent.children.length) {
                                             parent.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                             if (parent.is(NODE_STANDARD.RELATIVE)) {
-                                                this.sortLayout(parent, axisY, NODE_ALIGNMENT.HORIZONTAL);
-                                                this.sortLayout(parent, <T[]> parent.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                                                this.sortLayout(axisY, parent, NODE_ALIGNMENT.HORIZONTAL);
+                                                this.sortLayout(parent.children, parent, NODE_ALIGNMENT.HORIZONTAL, true);
                                                 nodeY = axisY[k];
                                             }
                                         }
@@ -806,7 +805,7 @@ export default class Application<T extends Node> {
                                             }
                                             else {
                                                 groupXml = this.writeLinearLayout(group, parent, true);
-                                                this.sortLayout(group, <T[]> group.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                                                this.sortLayout(group.children, group, NODE_ALIGNMENT.HORIZONTAL, true);
                                             }
                                         }
                                     }
@@ -867,11 +866,11 @@ export default class Application<T extends Node> {
                                     else {
                                         if (untargeted.length === 1) {
                                             if (SETTINGS.collapseUnattributedElements && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
-                                                const child = untargeted[0];
+                                                const child = untargeted[0] as T;
                                                 child.documentRoot = nodeY.documentRoot;
                                                 child.parent = parent;
                                                 nodeY.hide();
-                                                axisY[k] = child as T;
+                                                axisY[k] = child;
                                                 k--;
                                             }
                                             else {
@@ -888,7 +887,7 @@ export default class Application<T extends Node> {
                                                     if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'middle', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => node.toInt('verticalAlign') === 0)) {
                                                         xml = this.writeConstraintLayout(nodeY, parent);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                                                        this.sortLayout(nodeY, children, nodeY.alignmentType, true);
+                                                        this.sortLayout(children, nodeY, nodeY.alignmentType, true);
                                                     }
                                                     else if (((float.size === 1 || !float.has('right')) && !children.some(node => node.multiLine)) || horizontalAlign) {
                                                         xml = this.writeLinearLayout(nodeY, parent, true);
@@ -1046,7 +1045,7 @@ export default class Application<T extends Node> {
                 }
                 else {
                     content = this.writeLinearLayout(subgroup, group, true);
-                    this.sortLayout(subgroup, <T[]> subgroup.children, NODE_ALIGNMENT.HORIZONTAL, true);
+                    this.sortLayout(subgroup.children, subgroup, NODE_ALIGNMENT.HORIZONTAL, true);
                     if (index === 2 && subgroup.children.some(node => node.marginLeft < 0)) {
                         let marginRight = 0;
                         const sorted: T[] = [];
@@ -1074,7 +1073,7 @@ export default class Application<T extends Node> {
                             }
                         });
                         subgroup.children = sorted.reverse();
-                        this.preserveSortOrder(subgroup.id, <T[]> subgroup.children);
+                        this.saveSortOrder(subgroup.id, <T[]> subgroup.children);
                     }
                     subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.SEGMENTED;
                 }
@@ -1096,6 +1095,7 @@ export default class Application<T extends Node> {
     }
 
     public writeFrameLayoutVertical(parent: T, nodes: T[], cleared: Set<T>) {
+        let xml = '';
         const rowsCurrent: T[][] = [];
         const rowsFloated: T[][] = [];
         const current: T[] = [];
@@ -1138,7 +1138,6 @@ export default class Application<T extends Node> {
         }
         rowsFloated.push(floated);
         rowsCurrent.push(current);
-        let xml = '';
         for (let i = 0; i < Math.max(rowsFloated.length, rowsCurrent.length); i++) {
             const floating = rowsFloated[i] || [];
             const pageflow = rowsCurrent[i] || [];
@@ -1298,56 +1297,61 @@ export default class Application<T extends Node> {
         }
     }
 
-    public sortLayout(parent: T, children: T[], alignmentType = NODE_ALIGNMENT.NONE, preserve = false) {
-        let sorted = false;
-        if (alignmentType === NODE_ALIGNMENT.NONE) {
-            if (parent.linearHorizontal) {
-                alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+    public sortLayout<T extends Node>(children: T[], parent?: T, alignmentType = NODE_ALIGNMENT.NONE, preserve = false) {
+        if (parent) {
+            let sorted = false;
+            if (alignmentType === NODE_ALIGNMENT.NONE) {
+                if (parent.linearHorizontal) {
+                    alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                }
+                else if (parent.is(NODE_STANDARD.CONSTRAINT)) {
+                    alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
+                }
             }
-            else if (parent.is(NODE_STANDARD.CONSTRAINT)) {
-                alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
-            }
-        }
-        if (includesEnum(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
-            if (children.some(node => node.floating)) {
-                children.sort((a, b) => {
-                    if (a.floating && !b.floating) {
-                        return (a.float === 'left' ? -1 : 1);
-                    }
-                    else if (!a.floating && b.floating) {
-                        return (b.float === 'left' ? 1 : -1);
-                    }
-                    else if (a.floating && b.floating) {
-                        if (a.float !== b.float) {
+            if (includesEnum(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
+                if (children.some(node => node.floating)) {
+                    children.sort((a, b) => {
+                        if (a.floating && !b.floating) {
                             return (a.float === 'left' ? -1 : 1);
                         }
-                    }
-                    return (a.linear.left <= b.linear.left ? -1 : 1);
-                });
-                sorted = true;
+                        else if (!a.floating && b.floating) {
+                            return (b.float === 'left' ? 1 : -1);
+                        }
+                        else if (a.floating && b.floating) {
+                            if (a.float !== b.float) {
+                                return (a.float === 'left' ? -1 : 1);
+                            }
+                        }
+                        return (a.linear.left <= b.linear.left ? -1 : 1);
+                    });
+                    sorted = true;
+                }
+            }
+            if (includesEnum(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
+                if (children.some(node => node.toInt('zIndex') !== 0)) {
+                    children.sort((a, b) => {
+                        const indexA = a.css('zIndex');
+                        const indexB = b.css('zIndex');
+                        if ((indexA === 'auto' || indexA === '' || indexA === '0') && (indexB === 'auto' || indexB === '' || indexB === '0')) {
+                            return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                        }
+                        else {
+                            return (convertInt(indexA) <= convertInt(indexB) ? -1 : 1);
+                        }
+                    });
+                    sorted = true;
+                }
+            }
+            if (preserve && sorted) {
+                this.saveSortOrder(parent.id, children);
             }
         }
-        if (includesEnum(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
-            if (children.some(node => node.toInt('zIndex') !== 0)) {
-                children.sort((a, b) => {
-                    const indexA = a.css('zIndex');
-                    const indexB = b.css('zIndex');
-                    if ((indexA === 'auto' || indexA === '' || indexA === '0') && (indexB === 'auto' || indexB === '' || indexB === '0')) {
-                        return (a.siblingIndex < b.siblingIndex ? -1 : 1);
-                    }
-                    else {
-                        return (convertInt(indexA) <= convertInt(indexB) ? -1 : 1);
-                    }
-                });
-                sorted = true;
-            }
-        }
-        if (preserve && sorted) {
-            this.preserveSortOrder(parent.id, children);
+        else {
+            sortAsc(children, 'siblingIndex');
         }
     }
 
-    public preserveSortOrder(id: string | number, nodes: T[]) {
+    public saveSortOrder<T extends Node>(id: string | number, nodes: T[]) {
         this._sorted[id.toString()] = nodes.map(node => node.id);
     }
 
@@ -1381,7 +1385,7 @@ export default class Application<T extends Node> {
             if ((optional(element, 'textContent') as string).trim() !== '' || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
                 node = new this._TypeT(this.cache.nextId, SETTINGS.targetAPI, element);
                 node.tagName = 'PLAINTEXT';
-                if (parent != null) {
+                if (parent) {
                     node.parent = parent;
                     node.inherit(parent, 'style');
                 }

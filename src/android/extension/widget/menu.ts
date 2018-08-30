@@ -1,5 +1,5 @@
 import { ObjectMap, StringMap } from '../../../lib/types';
-import { ExtensionResult, IExtension } from '../../../extension/lib/types';
+import { ExtensionResult } from '../../../extension/lib/types';
 import Nav from '../../../extension/nav';
 import ResourceView from '../../resource-view';
 import View from '../../view';
@@ -39,7 +39,7 @@ const VALIDATE_GROUP = {
 
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
-export default class Menu<T extends View> extends Nav {
+export default class Menu<T extends View> extends Nav<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
@@ -49,119 +49,121 @@ export default class Menu<T extends View> extends Nav {
     }
 
     public processNode(): ExtensionResult {
-        const node = this.node as T;
-        node.documentRoot = true;
-        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
-        node.rendered = true;
-        node.cascade().forEach(item => item.renderExtension = <IExtension> this);
-        node.nodeType = NODE_STANDARD.BLOCK;
-        node.excludeResource |= NODE_RESOURCE.ALL;
+        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', this.node, true);
+        this.node.documentRoot = true;
+        this.node.rendered = true;
+        this.node.cascade().forEach(item => item.renderExtension = this);
+        this.node.nodeType = NODE_STANDARD.BLOCK;
+        this.node.excludeResource |= NODE_RESOURCE.ALL;
         return { xml };
     }
 
     public processChild(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
-        const element = node.element;
-        if (node.plainText) {
-            node.hide();
-            return { xml: '', proceed: true };
-        }
-        const options: ObjectMap<StringMap> = { android: {}, app: {} };
-        const children = <HTMLElement[]> Array.from(node.element.children);
-        let nodeName = VIEW_NAVIGATION.ITEM;
-        let title = '';
-        let layout = false;
+        let xml = '';
         let proceed = false;
-        if (children.some(item => BLOCK_ELEMENT.includes(item.tagName) && item.children.length > 0)) {
-            if (children.some(item => item.tagName === 'NAV')) {
-                if (element.title !== '') {
-                    title = element.title.trim();
-                }
-                else {
-                    Array.from(node.element.childNodes).some((item: HTMLElement) => {
-                        if (item.nodeName === '#text') {
-                            title = (optional(item, 'textContent') as string).trim();
-                            if (title !== '') {
+        const parent = this.parent;
+        if (parent) {
+            const node = this.node;
+            if (node.plainText) {
+                node.hide();
+                return { xml, proceed: true };
+            }
+            const element = node.element;
+            const options: ObjectMap<StringMap> = { android: {}, app: {} };
+            const children = <HTMLElement[]> Array.from(node.element.children);
+            let nodeName = VIEW_NAVIGATION.ITEM;
+            let title = '';
+            let layout = false;
+            if (children.some(item => BLOCK_ELEMENT.includes(item.tagName) && item.children.length > 0)) {
+                if (children.some(item => item.tagName === 'NAV')) {
+                    if (element.title !== '') {
+                        title = element.title.trim();
+                    }
+                    else {
+                        Array.from(node.element.childNodes).some((item: HTMLElement) => {
+                            if (item.nodeName === '#text') {
+                                title = (optional(item, 'textContent') as string).trim();
+                                if (title !== '') {
+                                    return true;
+                                }
+                                return false;
+                            }
+                            else if (item.tagName !== 'NAV') {
+                                title = item.innerText.trim();
                                 return true;
                             }
                             return false;
-                        }
-                        else if (item.tagName !== 'NAV') {
-                            title = item.innerText.trim();
-                            return true;
-                        }
-                        return false;
-                    });
+                        });
+                    }
+                    node.each(item => item.element.tagName !== 'NAV' && item.hide());
                 }
-                node.each(item => item.element.tagName !== 'NAV' && item.hide());
-            }
-            else if (node.element.tagName === 'NAV') {
-                nodeName = VIEW_NAVIGATION.MENU;
-                proceed = true;
+                else if (node.element.tagName === 'NAV') {
+                    nodeName = VIEW_NAVIGATION.MENU;
+                    proceed = true;
+                }
+                else {
+                    nodeName = VIEW_NAVIGATION.GROUP;
+                    let checkable = '';
+                    if (node.children.every((item: T) => this.hasInputType(item, 'radio'))) {
+                        checkable = 'single';
+                    }
+                    else if (node.children.every((item: T) => this.hasInputType(item, 'checkbox'))) {
+                        checkable = 'all';
+                    }
+                    options.android.checkableBehavior = checkable;
+                }
+                layout = true;
             }
             else {
-                nodeName = VIEW_NAVIGATION.GROUP;
-                let checkable = '';
-                if (node.children.every((item: T) => this.hasInputType(item, 'radio'))) {
-                    checkable = 'single';
-                }
-                else if (node.children.every((item: T) => this.hasInputType(item, 'checkbox'))) {
-                    checkable = 'all';
-                }
-                options.android.checkableBehavior = checkable;
-            }
-            layout = true;
-        }
-        else {
-            if (parent.android('checkableBehavior') == null) {
-                if (this.hasInputType(node, 'checkbox')) {
-                    options.android.checkable = 'true';
-                }
-            }
-            title = (element.title !== '' ? element.title : element.innerText).trim();
-        }
-        switch (nodeName) {
-            case VIEW_NAVIGATION.ITEM:
-                this.parseDataSet(VALIDATE_ITEM, element, options);
-                if (node.android('icon') == null) {
-                    let src = ResourceView.addImageURL(<string> element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
-                    if (src !== '') {
-                        options.android.icon = `@drawable/${src}`;
+                if (parent.android('checkableBehavior') == null) {
+                    if (this.hasInputType(node, 'checkbox')) {
+                        options.android.checkable = 'true';
                     }
-                    else {
-                        const image = node.children.find(item => item.element.tagName === 'IMG');
-                        if (image) {
-                            src = ResourceView.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
-                            if (src !== '') {
-                                options.android.icon = `@drawable/${src}`;
+                }
+                title = (element.title !== '' ? element.title : element.innerText).trim();
+            }
+            switch (nodeName) {
+                case VIEW_NAVIGATION.ITEM:
+                    this.parseDataSet(VALIDATE_ITEM, element, options);
+                    if (node.android('icon') == null) {
+                        let src = ResourceView.addImageURL(<string> element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
+                        if (src !== '') {
+                            options.android.icon = `@drawable/${src}`;
+                        }
+                        else {
+                            const image = node.children.find(item => item.element.tagName === 'IMG');
+                            if (image) {
+                                src = ResourceView.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
+                                if (src !== '') {
+                                    options.android.icon = `@drawable/${src}`;
+                                }
                             }
                         }
                     }
-                }
-                break;
-            case VIEW_NAVIGATION.GROUP:
-                this.parseDataSet(VALIDATE_GROUP, element, options);
-                break;
-        }
-        if (node.android('title') == null) {
-            if (title !== '') {
-                const name = ResourceView.addString(title);
-                if (name !== '') {
-                    title = `@string/${name}`;
-                }
-                options.android.title = title;
+                    break;
+                case VIEW_NAVIGATION.GROUP:
+                    this.parseDataSet(VALIDATE_GROUP, element, options);
+                    break;
             }
+            if (node.android('title') == null) {
+                if (title !== '') {
+                    const name = ResourceView.addString(title);
+                    if (name !== '') {
+                        title = `@string/${name}`;
+                    }
+                    options.android.title = title;
+                }
+            }
+            if (options.android.id == null) {
+                node.setNodeId(nodeName);
+            }
+            else {
+                node.nodeName = nodeName;
+            }
+            xml = this.application.controllerHandler.renderNodeStatic(nodeName, parent.renderDepth + 1, options, '', '', node, layout);
+            node.rendered = true;
+            node.excludeResource |= NODE_RESOURCE.ALL;
         }
-        if (options.android.id == null) {
-            node.setNodeId(nodeName);
-        }
-        else {
-            node.nodeName = nodeName;
-        }
-        const xml = this.application.controllerHandler.renderNodeStatic(nodeName, parent.renderDepth + 1, options, '', '', node, layout);
-        node.rendered = true;
-        node.excludeResource |= NODE_RESOURCE.ALL;
         return { xml, proceed };
     }
 

@@ -8,17 +8,17 @@ import { NODE_STANDARD, BOX_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
 
-export default class ListAndroid<T extends View> extends List {
+export default class ListAndroid<T extends View> extends List<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
 
     public processChild(): ExtensionResult {
-        const node = this.node as T;
-        const parent = this.parent as T;
-        const controller = this.application.controllerHandler;
-        const listStyle = node.data(`${EXT_NAME.LIST}:listStyleType`);
-        if (listStyle) {
+        const parent = this.parent;
+        const listStyle = this.node.data(`${EXT_NAME.LIST}:listStyleType`);
+        if (parent && listStyle) {
+            const controller = this.application.controllerHandler;
+            const node = this.node;
             const parentLeft = convertInt(parent.cssOriginal('paddingLeft', true)) + convertInt(parent.cssOriginal('marginLeft', true));
             let columnCount = 0;
             let paddingLeft = node.marginLeft;
@@ -29,8 +29,8 @@ export default class ListAndroid<T extends View> extends List {
             else if (parent.children[0] === node) {
                 paddingLeft += parentLeft;
             }
-            const floatItem = node.children.find(item => item.float === 'left' && convertInt(item.cssOriginal('marginLeft', true)) < 0 && Math.abs(convertInt(item.cssOriginal('marginLeft', true))) <= convertInt(item.documentParent.cssOriginal('marginLeft', true)));
-            if (listStyle === '0' && floatItem != null) {
+            const floatItem = node.children.find(item => item.float === 'left' && convertInt(item.cssOriginal('marginLeft', true)) < 0 && Math.abs(convertInt(item.cssOriginal('marginLeft', true))) <= convertInt(item.documentParent.cssOriginal('marginLeft', true))) as T;
+            if (floatItem && listStyle === '0') {
                 floatItem.parent = parent;
                 controller.prependBefore(
                     node.id,
@@ -138,9 +138,8 @@ export default class ListAndroid<T extends View> extends List {
     }
 
     public afterInsert() {
-        const node = this.node as T;
-        if (node.is(NODE_STANDARD.GRID)) {
-            node.android('layout_width', 'match_parent');
+        if (this.node.is(NODE_STANDARD.GRID)) {
+            this.node.android('layout_width', 'match_parent');
         }
     }
 }

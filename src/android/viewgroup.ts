@@ -2,9 +2,7 @@ import View from './view';
 import { includesEnum } from '../lib/util';
 import { NODE_ALIGNMENT } from '../lib/constants';
 
-type T = View;
-
-export default class ViewGroup extends View {
+export default class ViewGroup<T extends View> extends View {
     public baseNode: T;
 
     constructor(

@@ -7,20 +7,19 @@ import { getBoxSpacing } from '../../lib/dom';
 import { BOX_STANDARD, NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 
-export default class GridAndroid<T extends View> extends Grid {
+export default class GridAndroid<T extends View> extends Grid<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
 
     public processChild(): ExtensionResult {
-        const node = this.node as T;
-        const data = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);
+        const data = <GridCellData> this.node.data(`${EXT_NAME.GRID}:gridCellData`);
         if (data) {
             if (data.rowSpan > 1) {
-                node.app('layout_rowSpan', data.rowSpan.toString());
+                this.node.app('layout_rowSpan', data.rowSpan.toString());
             }
             if (data.columnSpan > 1) {
-                node.app('layout_columnSpan', data.columnSpan.toString());
+                this.node.app('layout_columnSpan', data.columnSpan.toString());
             }
         }
         return super.processChild();
@@ -33,7 +32,7 @@ export default class GridAndroid<T extends View> extends Grid {
                 extended.push(node);
             }
             else {
-                const parent = node.renderParent as T;
+                const parent = node.renderParent;
                 if (parent.is(NODE_STANDARD.GRID)) {
                     const gridData = <GridData> parent.data(`${EXT_NAME.GRID}:gridData`);
                     const gridCellData = <GridCellData> node.data(`${EXT_NAME.GRID}:gridCellData`);

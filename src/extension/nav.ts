@@ -4,9 +4,7 @@ import { deleteCache, getCache, getStyle, setCache } from '../lib/dom';
 import { BLOCK_ELEMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
-type T = Node;
-
-export default abstract class Menu extends Extension<T> {
+export default abstract class Menu<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
         this.require(EXT_NAME.EXTERNAL, true);
@@ -42,9 +40,8 @@ export default abstract class Menu extends Extension<T> {
     }
 
     public afterRender() {
-        const element = this.node.element;
-        if (this.included(element)) {
-            Array.from(element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
+        if (this.included(this.node.element)) {
+            Array.from(this.node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
                 const display = getCache(item, 'andromeExternalDisplay');
                 if (display) {
                     item.style.display = display;
