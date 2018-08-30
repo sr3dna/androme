@@ -351,8 +351,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 backgroundRepeat = backgroundRepeat.filter(value => value !== '');
                 backgroundPosition = backgroundPosition.filter(value => value !== '');
                 [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
-                    if (item.color && item.color.length > 0) {
-                        item.color = <string> ResourceView.addColor(item.color[0], item.color[2]);
+                    if (Array.isArray(item.color) && item.color.length > 0) {
+                        item.color = ResourceView.addColor(item.color[0], item.color[2]);
                     }
                 });
                 const method = METHOD_ANDROID['boxStyle'];

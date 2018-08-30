@@ -84,7 +84,7 @@ export default class Drawer extends Extension<T> {
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
             const xml = application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');
-            application.addInsertQueue(node.id.toString(), [xml]);
+            application.addLateInsert(node.id.toString(), [xml]);
         }
     }
 

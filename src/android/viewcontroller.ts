@@ -1497,8 +1497,8 @@ export default class ViewController<T extends View> extends Controller<T> {
         return this.renderNodeStatic('include', parent.renderDepth + 1, { layout: `@layout/${name}` });
     }
 
-    public renderIncludeContent(name: string, content: string[]) {
-        let xml = content.join('');
+    public renderMerge(name: string, value: string[]) {
+        let xml = value.join('');
         if (this._merge[name]) {
             const node = new View(0, 0);
             node.documentRoot = true;
@@ -1507,23 +1507,16 @@ export default class ViewController<T extends View> extends Controller<T> {
         return xml;
     }
 
-    public currentRenderDepth(name: string) {
+    public baseRenderDepth(name: string) {
         return (this._merge[name] ? 0 : -1);
     }
 
-    public createGroup(node: T, children: T[], parent?: T, element?: HTMLElement): T {
+    public createGroup(node: T, children?: T[], parent?: T, element?: HTMLElement): T {
         const group = <View> new ViewGroup(this.cache.nextId, node, parent, children, element) as T;
-        for (const item of children) {
-            item.parent = group;
-            item.inherit(group, 'data');
+        if (children != null) {
+            children.forEach(item => item.inherit(group, 'data'));
         }
         this.cache.append(group);
-        if (element != null) {
-            node.hide();
-        }
-        else {
-            group.setBounds();
-        }
         return group;
     }
 

@@ -5,7 +5,7 @@ import { NODE_ALIGNMENT } from '../lib/constants';
 type T = View;
 
 export default class ViewGroup extends View {
-    private _baseNode: T;
+    public baseNode: T;
 
     constructor(
         id: number,
@@ -15,16 +15,25 @@ export default class ViewGroup extends View {
         element?: HTMLElement)
     {
         super(id, node.api);
-        this._baseNode = node;
+        this.baseNode = node;
         if (parent != null) {
             this.parent = parent;
         }
-        if (children != null) {
-            this.children = children;
-        }
-        this.documentParent = node.documentParent;
         if (element != null) {
             this.element = element;
+        }
+        if (children != null) {
+            this.children = children;
+            this.lateInit();
+        }
+    }
+
+    public lateInit() {
+        super.lateInit();
+        const node = this.baseNode;
+        this.children.forEach(item => item.parent = this);
+        this.documentParent = node.documentParent;
+        if (this.hasElement) {
             this.tagName = node.tagName;
             this.inherit(node, 'base', 'style', 'styleMap');
             this.documentRoot = node.documentRoot;
@@ -34,6 +43,10 @@ export default class ViewGroup extends View {
         }
         else {
             this.tagName = `${node.tagName}_GROUP`;
+            this.setBounds();
+        }
+        if (this.element == null) {
+            node.hide();
         }
         this.depth = node.depth;
         this.css('direction', this.documentParent.dir);
@@ -145,14 +158,10 @@ export default class ViewGroup extends View {
     }
 
     get previousSibling() {
-        return this.parent.previousSibling;
+        return (this.children.length > 0 ? this.children[0].previousSibling : null);
     }
 
     get nextSibling() {
-        return this.parent.nextSibling;
-    }
-
-    get firstChild() {
-        return this._baseNode;
+        return (this.children.length > 0 ? this.children[this.children.length - 1].nextSibling : null);
     }
 }

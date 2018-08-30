@@ -46,23 +46,15 @@ export default abstract class Node implements BoxModel {
     private _data: ObjectMap<any> = {};
     private _pageflow: boolean;
     private _multiLine: boolean;
+    private _initalized = false;
 
     constructor(
         public id: number,
         element?: HTMLElement)
     {
         if (element != null) {
-            if (element instanceof HTMLElement) {
-                const styleMap = getCache(element, 'styleMap') || {};
-                for (const inline of Array.from(element.style)) {
-                    styleMap[convertCamelCase(inline)] = (<any> element.style)[inline];
-                }
-                this.style = (<CSSStyleDeclaration> getCache(element, 'style')) || getComputedStyle(element);
-                this.styleMap = styleMap;
-                this.originalStyleMap = Object.assign({}, styleMap);
-            }
-            setCache(element, 'node', this);
             this._element = element;
+            this.lateInit();
         }
     }
 
@@ -82,6 +74,23 @@ export default abstract class Node implements BoxModel {
     public abstract get renderParent(): T;
     public abstract get linearHorizontal(): boolean;
     public abstract get linearVertical(): boolean;
+
+    public lateInit() {
+        if (!this._initalized) {
+            const element = this._element;
+            if (element instanceof HTMLElement) {
+                const styleMap = getCache(element, 'styleMap') || {};
+                for (const inline of Array.from(element.style)) {
+                    styleMap[convertCamelCase(inline)] = (<any> element.style)[inline];
+                }
+                this.style = (<CSSStyleDeclaration> getCache(element, 'style')) || getComputedStyle(element);
+                this.styleMap = styleMap;
+                this.originalStyleMap = Object.assign({}, styleMap);
+            }
+            setCache(element, 'node', this);
+            this._initalized = true;
+        }
+    }
 
     public is(...views: number[]) {
         for (const value of views) {

@@ -358,7 +358,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 app:layout_columnSpan="2" />
             <LinearLayout
                 android:id="@+id/linearlayout_1"
-                android:baselineAlignedChildIndex="0"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -380,7 +380,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_19"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol5571"
+                    android:text="@string/__symbol19355"
                     style="@style/Plaintext" />
             </LinearLayout>
             <RelativeLayout
@@ -505,7 +505,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 app:layout_columnSpan="2" />
             <LinearLayout
                 android:id="@+id/linearlayout_3"
-                android:baselineAlignedChildIndex="0"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -527,7 +527,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_22"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol5571"
+                    android:text="@string/__symbol19355"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -920,7 +920,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 app:layout_columnSpan="2" />
             <LinearLayout
                 android:id="@+id/linearlayout_8"
-                android:baselineAlignedChildIndex="0"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -942,7 +942,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_25"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol5571"
+                    android:text="@string/__symbol19355"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -1064,7 +1064,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol5571">):</string>
+    <string name="__symbol19355">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
