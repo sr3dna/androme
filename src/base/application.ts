@@ -693,7 +693,6 @@ export default class Application<T extends Node> {
                                                                   (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
                                                                   (!previous.floating && (!previous.inlineElement || previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
                                                                   (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
-                                                                  (cleared.has(previous) && !adjacent.floating) ||
                                                                   (floatSize === 1 && previous.floating && adjacent.floating && adjacent.linear.top >= previous.linear.bottom);
                                             if (cleared.has(adjacent)) {
                                                 const floated = new Set(['both', ...horizontal.map(item => item.float)]);
@@ -811,7 +810,7 @@ export default class Application<T extends Node> {
                                     }
                                 }
                                 else if (vertical.length > 1) {
-                                    if (vertical.some(node => cleared.has(node)) && !vertical.every(node => cleared.has(node))) {
+                                    if (vertical.some(node => cleared.has(node) && node !== vertical[vertical.length - 1]) && !vertical.every(node => cleared.has(node))) {
                                         group = this.controllerHandler.createGroup(nodeY, vertical, parent);
                                         groupXml = this.writeFrameLayoutVertical(group, vertical, cleared);
                                     }

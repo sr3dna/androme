@@ -6,10 +6,10 @@ function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
             const result = compare(a, b, attr);
             if (result && result[0] !== result[1]) {
                 if (asc === 0) {
-                    return (result[0] >= result[1] ? 1 : -1);
+                    return (result[0] > result[1] ? 1 : -1);
                 }
                 else {
-                    return (result[0] <= result[1] ? 1 : -1);
+                    return (result[0] < result[1] ? 1 : -1);
                 }
             }
         }

@@ -4,7 +4,7 @@ import List from '../../extension/list';
 import View from '../view';
 import { convertInt, formatPX } from '../../lib/util';
 import { delimitDimens } from '../lib/util';
-import { NODE_STANDARD, BOX_STANDARD } from '../../lib/constants';
+import { BOX_STANDARD, NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
 
@@ -15,10 +15,10 @@ export default class ListAndroid<T extends View> extends List<T> {
 
     public processChild(): ExtensionResult {
         const parent = this.parent;
-        const listStyle = this.node.data(`${EXT_NAME.LIST}:listStyleType`);
-        if (parent && listStyle) {
+        if (parent) {
             const controller = this.application.controllerHandler;
             const node = this.node;
+            const listStyle = this.node.data(`${EXT_NAME.LIST}:listStyleType`) || '0';
             const parentLeft = convertInt(parent.cssOriginal('paddingLeft', true)) + convertInt(parent.cssOriginal('marginLeft', true));
             let columnCount = 0;
             let paddingLeft = node.marginLeft;

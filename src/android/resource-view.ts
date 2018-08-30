@@ -8,7 +8,7 @@ import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getCache, sameAsParent, setCache } from '../lib/dom';
 import { getColorNearest, parseHex, parseRGBA } from '../lib/color';
-import { NODE_RESOURCE, NODE_STANDARD, NODE_ALIGNMENT, BOX_STANDARD, NODE_PROCEDURE } from '../lib/constants';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';

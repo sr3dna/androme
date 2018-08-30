@@ -663,7 +663,7 @@ export default class View extends Node {
                 }
             }
         }
-        this.alignBoxSpacing();
+        this.adjustWhiteSpace();
         if (options.autoSizePaddingAndBorderWidth && !includesEnum(this.excludeProcedure, NODE_PROCEDURE.AUTOFIT)) {
             let viewWidth = convertInt(this.android('layout_width'));
             let viewHeight = convertInt(this.android('layout_height'));
@@ -818,7 +818,7 @@ export default class View extends Node {
         }
     }
 
-    private alignBoxSpacing() {
+    private adjustWhiteSpace() {
         if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
             switch (this.android('orientation')) {
                 case AXIS_ANDROID.HORIZONTAL:
@@ -838,20 +838,22 @@ export default class View extends Node {
                 case AXIS_ANDROID.VERTICAL:
                     let top = this.box.top;
                     let previous: Null<T> = null;
-                    this.each((node: T, index: number) => {
+                    this.each((node: T) => {
                         if (previous && !previous.hasElement && previous.renderChildren.includes(<T> node.previousSibling)) {
                             previous = node.previousSibling as T;
                         }
-                        if (index === 0 || previous != null) {
-                            const elements = getElementsBetween((previous != null ? previous.element : null), node.element);
-                            if (elements.filter(element => isLineBreak(element)).length > 0) {
-                                const height = Math.round(node.linear.top - top);
-                                if (height >= 1) {
-                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height);
-                                }
+                        if ((!node.hasElement && !node.plainText) || getElementsBetween((previous != null ? previous.element : null), node.element).filter(element => isLineBreak(element)).length > 0) {
+                            const height = Math.round(node.linear.top - top);
+                            if (height >= 1) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height);
                             }
                         }
-                        top = node.linear.bottom;
+                        top = (() => {
+                            if (node.linearHorizontal && node.renderChildren.some(item => !item.floating)) {
+                                return node.renderChildren.filter(item => !item.floating).sort((a, b) => (a.linear.bottom < b.linear.bottom ? 1 : -1))[0].linear.bottom;
+                            }
+                            return node.linear.bottom;
+                        })();
                         previous = node;
                     }, true);
                     break;
