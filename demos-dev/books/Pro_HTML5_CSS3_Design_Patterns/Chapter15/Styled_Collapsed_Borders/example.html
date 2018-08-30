@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en"> 
+	<head>
+		<title>Styled Collapsed Borders</title>
+  		<meta charset="utf-8" />
+  		<link rel="stylesheet" href="site.css"   media="all" />
+  		<link rel="stylesheet" href="page.css"   media="all" />
+        <script>
+            SystemJS.config({
+                packages: {
+                    '/build': { defaultExtension: 'js' }
+                },
+                map: {
+                    'plugin-babel': '/node_modules/systemjs-plugin-babel/plugin-babel.js',
+                    'systemjs-babel-build': '/node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+                },
+                transpiler: 'plugin-babel'
+            });
+            System.import('/build/main.js').then(function(result) {
+                androme = result;
+                androme.parseDocument().then(function() {
+                    androme.close();
+                    androme.saveAllToDisk();
+                });
+            });
+        </script>
+
+</head>
+ <body>
+ 
+<h1>Styled Collapsed Borders</h1>
+
+<table id="t1">
+ <tr class="r1" >  <td class="c1">1</td>     <td class="c2">2</td>  </tr>
+ <tr class="r2" >  <td class="c1">1</td>     <td class="c2">2</td>  </tr> </table>
+
+
+</body>
+</html>

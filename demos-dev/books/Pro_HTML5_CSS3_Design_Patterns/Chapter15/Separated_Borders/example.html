@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"> 
+	<head>
+		<title>Collapsed Borders</title>
+  		<meta charset="utf-8" />
+  		<link rel="stylesheet" href="site.css"   media="all" />
+  		<link rel="stylesheet" href="page.css"   media="all" />
+        <script>
+            SystemJS.config({
+                packages: {
+                    '/build': { defaultExtension: 'js' }
+                },
+                map: {
+                    'plugin-babel': '/node_modules/systemjs-plugin-babel/plugin-babel.js',
+                    'systemjs-babel-build': '/node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+                },
+                transpiler: 'plugin-babel'
+            });
+            System.import('/build/main.js').then(function(result) {
+                androme = result;
+                androme.parseDocument().then(function() {
+                    androme.close();
+                    androme.saveAllToDisk();
+                });
+            });
+        </script>
+
+</head>
+ 
+ <body>
+ 
+<h1>Collapsed Borders</h1>
+<h2>Boxed Table</h2>
+ <table class="boxed-table" cellspacing="5"> 
+ <tr><td rowspan="2">1</td><td colspan="5">2-6</td>                    </tr> 
+ <tr><td>7</td><td>8</td><td> </td><td>&nbsp;</td><td class="x">11</td></tr></table>
+ 
+<h2>Boxed Cells</h2>
+<table class="boxed-cells" cellspacing="5"> 
+ <tr><td rowspan="2">1</td><td colspan="5">2-6</td>                    </tr> 
+ <tr><td>7</td><td>8</td><td> </td><td>&nbsp;</td><td class="x">11</td></tr></table>
+
+<h2>Boxed Table and Cells</h2>
+<table class="boxed-table boxed-cells" cellspacing="5"> 
+ <tr><td rowspan="2">1</td><td colspan="5">2-6</td>                    </tr> 
+ <tr><td>7</td><td>8</td><td> </td><td>&nbsp;</td><td class="x">11</td></tr></table>
+  
+  
+  
+</body>
+</html>
