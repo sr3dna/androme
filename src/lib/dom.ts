@@ -232,10 +232,6 @@ export function isElementVisible(element: Element) {
                     current = current.parentElement;
                 }
                 if (valid) {
-                    switch (element.tagName) {
-                        case 'TD':
-                            return true;
-                    }
                     if (element.children.length > 0) {
                         return Array.from(element.children).some((item: HTMLElement) => {
                             const style = getStyle(item);

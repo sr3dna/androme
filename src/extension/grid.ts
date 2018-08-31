@@ -304,7 +304,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                         const horizontal = !(linearY && !linearX);
                         xml = this.application.writeLinearLayout(group, parent, horizontal);
                         group.alignmentType |= (horizontal ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
-                        this.application.sortLayout(group.children, group, group.alignmentType, true);
+                        this.application.sortByAlignment(group.children, group, group.alignmentType, true);
                     }
                     else {
                         xml = this.application.writeConstraintLayout(group, parent);

@@ -132,3 +132,7 @@ export interface BoxStyle {
     backgroundRepeat: string;
     backgroundPosition: string;
 }
+
+export interface ControllerSettings {
+    folderLayout: string;
+}

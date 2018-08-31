@@ -170,8 +170,7 @@ export default class Menu<T extends View> extends Nav<T> {
     public afterRender() {
         super.afterRender();
         if (this.included(this.node.element)) {
-            const view = this.application.current;
-            view.pathname = 'res/menu';
+            this.application.currentLayout.pathname = 'res/menu';
         }
     }
 

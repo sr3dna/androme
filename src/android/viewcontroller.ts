@@ -1,4 +1,4 @@
-import { Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { ControllerSettings, Null, ObjectIndex, ObjectMap, StringMap, ViewData } from '../lib/types';
 import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
@@ -53,8 +53,9 @@ export default class ViewController<T extends View> extends Controller<T> {
         resetId();
     }
 
-    public finalize(layouts: PlainFile[]) {
-        for (const value of layouts) {
+    public finalize(data: ViewData<NodeList<T>>) {
+        this.setAttributes(data);
+        for (const value of [...data.views, ...data.includes]) {
             value.content = removePlaceholders(value.content).replace(/\n\n/g, '\n');
             if (SETTINGS.dimensResourceValue) {
                 value.content = this.parseDimensions(value.content);
@@ -1520,18 +1521,6 @@ export default class ViewController<T extends View> extends Controller<T> {
         return group;
     }
 
-    public setAttributes(data: ViewData<NodeList<T>>) {
-        const cache: StringMap[] = data.cache.visible.list.map(node => ({ pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) }));
-        [...data.views, ...data.includes].forEach(value => {
-            cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
-            value.content = value.content.replace(`{#0}`, this.getRootNamespace(value.content));
-        });
-    }
-
-    public insertAttributes(output: string, node: T) {
-        return output.replace(`{@${node.id}}`, this.parseAttributes(node));
-    }
-
     public setDimensions(data: ViewData<NodeList<T>>) {
         function addToGroup(tagName: string, node: T, dimen: string, attr?: string, value?: string) {
             const group: ObjectMap<T[]> = groups[tagName];
@@ -1589,7 +1578,21 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
     }
 
-    public parseDimensions(content: string) {
+    public addXmlNs(name: string, uri: string) {
+        XMLNS_ANDROID[name] = uri;
+    }
+
+    private setAttributes(data: ViewData<NodeList<T>>) {
+        if (SETTINGS.showAttributes) {
+            const cache: StringMap[] = data.cache.visible.list.map(node => ({ pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) }));
+            [...data.views, ...data.includes].forEach(value => {
+                cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
+                value.content = value.content.replace(`{#0}`, this.getRootNamespace(value.content));
+            });
+        }
+    }
+
+    private parseDimensions(content: string) {
         const resource = <Map<string, string>> Resource.STORED.DIMENS;
         const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
         let match: Null<RegExpExecArray>;
@@ -1599,10 +1602,6 @@ export default class ViewController<T extends View> extends Controller<T> {
             content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
         }
         return content;
-    }
-
-    public addXmlNs(name: string, uri: string) {
-        XMLNS_ANDROID[name] = uri;
     }
 
     private parseAttributes(node: T) {
@@ -1870,5 +1869,11 @@ export default class ViewController<T extends View> extends Controller<T> {
 
     get supportInclude() {
         return true;
+    }
+
+    get settings(): ControllerSettings {
+        return {
+            folderLayout: 'res/layout'
+        };
     }
 }

@@ -225,9 +225,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public finalize(viewData: ViewData<NodeList<T>>) {
         this.processFontStyle(viewData);
-    }
-
-    public combineStyles(viewData: ViewData<NodeList<T>>) {
         const styles: ObjectMap<string[]> = {};
         for (const node of viewData.cache) {
             const children = node.renderChildren.filter(child => child.visible && !child.isolated && !child.relocated);
@@ -935,7 +932,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (name !== '') {
                     const method = METHOD_ANDROID['valueString'];
                     node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension == null));
-                    node.textContent = stored.value;
                 }
             }
         });

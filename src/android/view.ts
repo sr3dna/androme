@@ -192,11 +192,12 @@ export default class View extends Node {
         });
     }
 
-    public clone(): T {
-        const node = new View(this.id, this.api, this.element);
+    public clone(id?: number): T {
+        const node = new View(id || this.id, this.api, this.element);
         node.nodeId = this.nodeId;
         node.nodeType = this.nodeType;
         node.nodeName = this.nodeName;
+        node.alignmentType = this.alignmentType;
         node.depth = this.depth;
         node.rendered = this.rendered;
         node.renderDepth = this.renderDepth;
@@ -781,6 +782,9 @@ export default class View extends Node {
             if (this.is(NODE_STANDARD.TEXT) && this.css('whiteSpace') === 'nowrap') {
                 this.android('singleLine', 'true');
             }
+        }
+        if (this.css('display') === 'none') {
+            this.android('visibility', 'gone');
         }
         if (this.css('visibility') === 'hidden') {
             this.android('visibility', 'invisible');

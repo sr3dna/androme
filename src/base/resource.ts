@@ -60,7 +60,6 @@ export default abstract class Resource<T extends Node> {
     constructor(public file: File<T>) {
     }
 
-    public abstract combineStyles(viewData: ViewData<NodeList<T>>): void;
     public abstract setImageSource(): void;
     public abstract addTheme(template: string, data: {}, options: {}): void;
     public abstract finalize(viewData: ViewData<NodeList<T>>): void;
@@ -145,13 +144,13 @@ export default abstract class Resource<T extends Node> {
                     return;
                 }
                 else {
-                    let color = parseRGBA(node.css('color'), node.css('opacity'));
-                    if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (node.plainText || color[1] !== node.styleMap.color)) {
-                        color = [];
+                    const color = parseRGBA(node.css('color'), node.css('opacity'));
+                    if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (node.plainText || node.styleMap.color !== color[1])) {
+                        color.length = 0;
                     }
-                    let backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
+                    const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
                     if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && sameAsParent(node.element, 'backgroundColor')))) {
-                        backgroundColor = [];
+                        backgroundColor.length = 0;
                     }
                     let fontWeight = node.css('fontWeight');
                     if (!isNumber(fontWeight)) {

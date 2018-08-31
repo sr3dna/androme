@@ -15,22 +15,24 @@ export default class Table<T extends Node> extends Extension<T> {
         if (parent) {
             const node = this.node;
             const table: T[] = [];
-            const thead = node.children.find(item => item.element.tagName === 'THEAD');
-            const tbody = node.children.find(item => item.element.tagName === 'TBODY');
-            const tfoot = node.children.find(item => item.element.tagName === 'TFOOT');
-            if (thead) {
-                thead.cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(thead, 'styleMap'));
-                table.push(...<T[]> thead.children);
-                thead.hide();
+            const thead = node.children.filter(item => item.element.tagName === 'THEAD');
+            const tbody = node.children.filter(item => item.element.tagName === 'TBODY');
+            const tfoot = node.children.filter(item => item.element.tagName === 'TFOOT');
+            if (thead.length > 0) {
+                thead[0].cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(thead[0], 'styleMap'));
+                table.push(...<T[]> thead[0].children);
+                thead.forEach(item => item.hide());
             }
-            if (tbody) {
-                table.push(...<T[]> tbody.children);
-                tbody.hide();
+            if (tbody.length > 0) {
+                tbody.forEach(item => {
+                    table.push(...<T[]> item.children);
+                    item.hide();
+                });
             }
-            if (tfoot) {
-                tfoot.cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(tfoot, 'styleMap'));
-                table.push(...<T[]> tfoot.children);
-                tfoot.hide();
+            if (tfoot.length > 0) {
+                tfoot[0].cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(tfoot[0], 'styleMap'));
+                table.push(...<T[]> tfoot[0].children);
+                tfoot.forEach(item => item.hide());
             }
             const columnIndex = new Array(table.length).fill(0);
             for (let i = 0; i < table.length; i++) {
@@ -40,7 +42,7 @@ export default class Table<T extends Node> extends Extension<T> {
                     for (let k = 0; k < element.rowSpan - 1; k++)  {
                         const l = (i + 1) + k;
                         if (columnIndex[l] != null) {
-                            columnIndex[l]++;
+                            columnIndex[l] += element.colSpan;
                         }
                     }
                     columnIndex[i] += element.colSpan;
@@ -50,6 +52,7 @@ export default class Table<T extends Node> extends Extension<T> {
             const columnCount = Math.max.apply(null, columnIndex);
             const collapse = (node.css('borderCollapse') === 'collapse');
             const [width, height] = (collapse ? ['0px', '0px'] : node.css('borderSpacing').split(' '));
+            let borderInside = false;
             for (let i = 0; i < table.length; i++) {
                 const tr = table[i];
                 tr.each(td => {
@@ -62,6 +65,9 @@ export default class Table<T extends Node> extends Extension<T> {
                     }
                     if (!td.has('verticalAlign')) {
                         td.css('verticalAlign', 'middle');
+                    }
+                    if (convertInt(td.css('border-width')) > 0 && td.css('borderStyle') !== 'none') {
+                        borderInside = true;
                     }
                     delete td.styleMap.margin;
                     td.css({
@@ -109,7 +115,7 @@ export default class Table<T extends Node> extends Extension<T> {
                 }
                 caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);
             }
-            if (collapse) {
+            if (collapse && borderInside) {
                 node.css({
                     borderTopWidth: '0px',
                     borderRightWidth: '0px',

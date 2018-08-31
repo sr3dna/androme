@@ -12,6 +12,7 @@ export default abstract class Node implements BoxModel {
     public originalStyleMap: StringMap = {};
     public nodeId: string;
     public nodeType = 0;
+    public alignmentType = NODE_ALIGNMENT.NONE;
     public depth = -1;
     public renderDepth = 0;
     public renderIndex = -1;
@@ -28,8 +29,6 @@ export default abstract class Node implements BoxModel {
     public rendered = false;
     public isolated = false;
     public relocated = false;
-    public alignmentType = NODE_ALIGNMENT.NONE;
-    public textContent: string;
 
     public abstract constraint: ObjectMap<any>;
     public abstract children: T[];
@@ -589,9 +588,9 @@ export default abstract class Node implements BoxModel {
     }
 
     get flex(): Flexbox {
-        const parent = this.documentParent;
         const style = this.style;
-        if (style != null && parent !== this) {
+        if (style != null) {
+            const parent = this.documentParent;
             return {
                 enabled: ((style.display as string).indexOf('flex') !== -1),
                 direction: <string> style.flexDirection,

@@ -1,4 +1,4 @@
-import { ObjectIndex, PlainFile, ViewData } from '../lib/types';
+import { ControllerSettings, ObjectIndex, ViewData } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import { repeat } from '../lib/util';
@@ -13,29 +13,27 @@ export default abstract class Controller<T extends Node> {
     }
 
     public abstract addXmlNs(name: string, uri: string): void;
-    public abstract setConstraints(): void;
-    public abstract setDimensions(data: ViewData<NodeList<T>>): void;
-    public abstract parseDimensions(content: string): string;
-    public abstract setAttributes(data: ViewData<NodeList<T>>): void;
-    public abstract insertAttributes(output: string, node: T): string;
-    public abstract finalize(layouts: PlainFile[]): void;
+    public abstract createGroup(node: T, children?: T[], parent?: T, element?: HTMLElement): T;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
     public abstract renderNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract renderInclude(node: T, parent: T, name: string): string;
     public abstract renderMerge(name: string, content: string[]): string;
     public abstract baseRenderDepth(name: string): number;
-    public abstract createGroup(node: T, children?: T[], parent?: T, element?: HTMLElement): T;
+    public abstract setConstraints(): void;
+    public abstract setDimensions(data: ViewData<NodeList<T>>): void;
+    public abstract finalize(data: ViewData<NodeList<T>>): void;
 
     public abstract get supportInline(): string[];
     public abstract get supportInclude(): boolean;
+    public abstract get settings(): ControllerSettings;
 
     public reset() {
         this._before = {};
         this._after = {};
     }
 
-    public insertAuxillaryViews(output: string) {
+    public appendLateInsert(output: string) {
         for (const id in this._before) {
             output = output.replace(`{<${id}}`, this._before[id].join(''));
         }
