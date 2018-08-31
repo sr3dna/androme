@@ -20,6 +20,7 @@ const SETTINGS = {
     excludeBackgroundColor: ['#FFFFFF'],
     autoSizePaddingAndBorderWidth: true,
     autoSizeBackgroundImage: true,
+    ellipsisOnTextOverflow: true,
     collapseUnattributedElements: false,
     constraintPercentAccuracy: 4,
     constraintChainDisabled: false,

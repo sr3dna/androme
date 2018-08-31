@@ -43,6 +43,7 @@ export default class ViewGroup<T extends View> extends View {
             this.tagName = `${node.tagName}_GROUP`;
             this.setBounds();
         }
+        this.setNodeId(this.tagName);
         if (this.element == null) {
             node.hide();
         }

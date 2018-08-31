@@ -3,7 +3,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, isLineBreak } from '../lib/dom';
+import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -449,6 +449,9 @@ export default class View extends Node {
             if (node.centerVertical) {
                 alignment.push('center_vertical');
             }
+            else if (node.css('marginTop') === 'auto') {
+                alignment.push('bottom');
+            }
             if (alignment.length > 0) {
                 node[obj]('layout_gravity', mergeGravity(alignment));
                 return true;
@@ -584,11 +587,12 @@ export default class View extends Node {
 
     public applyOptimizations(options: ObjectMap<any>) {
         const renderParent = this.renderParent;
+        const renderChildren = this.renderChildren;
         if (this.is(NODE_STANDARD.LINEAR)) {
             if (this.display !== 'block') {
                 [[this.linearHorizontal, this.inlineElement, 'layout_width'], [this.linearVertical, true, 'layout_height']].forEach((value: [boolean, boolean, string]) => {
                     if (value[0] && value[1] && this.android(value[2]) !== 'wrap_content') {
-                        if (this.renderChildren.every(node => node.android(value[2]) === 'wrap_content')) {
+                        if (renderChildren.every(node => node.android(value[2]) === 'wrap_content')) {
                             this.android(value[2], 'wrap_content');
                         }
                     }
@@ -596,14 +600,23 @@ export default class View extends Node {
             }
             if (this.linearHorizontal) {
                 const gridParent = this.renderParent.is(NODE_STANDARD.GRID);
-                if (this.renderChildren.some(node => node.floating)) {
+                if (renderChildren.some(node => node.floating)) {
                     this.android('baselineAligned', 'false');
                 }
-                else if (this.renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT) || gridParent || this.of(NODE_STANDARD.LINEAR, NODE_ALIGNMENT.HORIZONTAL)) {
-                    const baseline = NodeList.baselineText(this.renderChildren, false, (gridParent || this.inline ? this.documentParent : undefined));
+                else if (renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT) || gridParent || this.of(NODE_STANDARD.LINEAR, NODE_ALIGNMENT.HORIZONTAL)) {
+                    const baseline = NodeList.baselineText(renderChildren, false, (gridParent || this.inline ? this.documentParent : undefined));
                     if (baseline) {
-                        this.android('baselineAlignedChildIndex', this.renderChildren.indexOf(baseline).toString());
+                        this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline).toString());
                     }
+                }
+                switch (this.element.tagName) {
+                    case 'UL':
+                    case 'OL':
+                        if (this.children.every(item => item.inline)) {
+                            this.modifyBox(BOX_STANDARD.PADDING_TOP, 0);
+                            this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, 0);
+                        }
+                        break;
                 }
             }
         }
@@ -628,13 +641,13 @@ export default class View extends Node {
                     }
                 });
             }
-            if ((this.linearVertical || this.is(NODE_STANDARD.FRAME, NODE_STANDARD.GRID)) && this.renderChildren.every(node => this.renderChildren[0].documentParent === node.documentParent)) {
-                const lastIndex = this.renderChildren.length - 1;
-                for (let i = 0; i < this.renderChildren.length; i++) {
-                    const current = this.renderChildren[i];
+            if ((this.linearVertical || this.is(NODE_STANDARD.FRAME, NODE_STANDARD.GRID)) && renderChildren.every(node => renderChildren[0].documentParent === node.documentParent)) {
+                const lastIndex = renderChildren.length - 1;
+                for (let i = 0; i < renderChildren.length; i++) {
+                    const current = renderChildren[i];
                     const marginTop = convertInt(current.cssOriginal('marginTop', true));
                     if (i > 0 && current.blockStatic) {
-                        const previous = this.renderChildren[i - 1];
+                        const previous = renderChildren[i - 1];
                         const marginBottom = convertInt(previous.cssOriginal('marginBottom', true));
                         if (previous.blockStatic) {
                             if (marginBottom > 0 && marginTop > 0) {
@@ -848,7 +861,7 @@ export default class View extends Node {
                         if (previous && !previous.hasElement && previous.renderChildren.includes(<T> node.previousSibling)) {
                             previous = node.previousSibling as T;
                         }
-                        if ((!node.hasElement && !node.plainText) || getElementsBetweenSiblings((previous != null ? previous.element : null), node.element).filter(element => isLineBreak(element)).length > 0) {
+                        if ((!node.hasElement && !node.plainText) || getElementsBetweenSiblings((previous != null ? previous.element : null), node.element).filter(element => element.tagName === 'BR').length > 0) {
                             const height = Math.round(node.linear.top - top);
                             if (height >= 1) {
                                 node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + height);

@@ -60,9 +60,9 @@ export default class ListAndroid<T extends View> extends List<T> {
                 if (left > 0 && paddingLeft > left) {
                     paddingLeft -= left;
                 }
-                const minWidth = (paddingLeft > 0 ? delimitDimens(node.tagName, parseRTL('minwidth'), formatPX(paddingLeft)) : '');
+                const minWidth = (paddingLeft > 0 ? delimitDimens(node.tagName, parseRTL('min_width'), formatPX(paddingLeft)) : '');
                 const marginLeftValue = (left > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(left)) : '');
-                const paddingRightValue = (gravity === 'right' ? delimitDimens(node.tagName, parseRTL('margin_right'), formatPX(8)) : '');
+                const paddingRightValue = (gravity === 'right' ? delimitDimens(node.tagName, parseRTL('padding_right'), formatPX(12)) : '');
                 const options = {
                     android: {
                         layout_marginTop: (node.marginTop + top > 0 ? delimitDimens(node.tagName, 'margin_top', formatPX(node.marginTop + top)) : '')
@@ -91,7 +91,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                         )
                     );
                     Object.assign(options.android, {
-                        minWidth: delimitDimens(node.tagName, parseRTL('minwidth'), formatPX(24))
+                        minWidth: delimitDimens(node.tagName, parseRTL('min_width'), formatPX(24))
                     });
                 }
                 else {

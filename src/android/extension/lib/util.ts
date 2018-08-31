@@ -8,13 +8,13 @@ import parseRTL from '../../localization';
 import SETTINGS from '../../../settings';
 
 export function createPlaceholder<T extends View>(nextId: number, node: T, children: T[] = []) {
-    const placeHolder = new View(nextId, node.api, node.element) as T;
-    placeHolder.parent = node.parent;
-    placeHolder.children = children;
-    placeHolder.inherit(node, 'base');
-    placeHolder.isolated = true;
-    placeHolder.excludeResource |= NODE_RESOURCE.ALL;
-    return placeHolder;
+    const placeholder = new View(nextId, node.api, node.element) as T;
+    placeholder.parent = node.parent;
+    placeholder.children = children;
+    placeholder.inherit(node, 'base');
+    placeholder.isolated = true;
+    placeholder.excludeResource |= NODE_RESOURCE.ALL;
+    return placeholder;
 }
 
 export function locateExtension<T extends View>(node: T, extension: string): Null<HTMLElement> {

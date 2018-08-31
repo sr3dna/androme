@@ -1,21 +1,30 @@
 import { ObjectMap, Null } from './types';
 import { hasValue, repeat } from './util';
 
+export function getPlaceholder(id: string | number, symbol = ':') {
+    return `{${symbol + id.toString()}}`;
+}
+
+export function replacePlaceholder(value: string, id: string | number, content: string, before = false) {
+    const placeholder = (typeof id === 'number' ? getPlaceholder(id) : id);
+    return value.replace(placeholder, (before ? placeholder : '') + content + (before ? '' : placeholder));
+}
+
 export function removePlaceholders(value: string) {
     return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
 }
 
-export function placeIndent(value: string, depth: number) {
-    return value.split('\n').map(line => {
-        const match = /^({.*?})(.*)/g.exec(line);
-        const indent = repeat(depth);
-        if (match) {
-            return (match[2] !== '' ? match[1] + indent + match[2] : '');
-        }
-        else {
-            return indent + line;
-        }
-    }).join('\n');
+export function modifyIndent(value: string, depth: number) {
+    if (depth >= 0) {
+        return value.split('\n').map(line => {
+            const match = /^({.*?})(.*)(<.*)/.exec(line);
+            if (match) {
+                return match[1] + repeat(depth) + match[3];
+            }
+            return line;
+        }).join('\n');
+    }
+    return value;
 }
 
 export function replaceTab(value: string, spaces = 4, preserve = false) {

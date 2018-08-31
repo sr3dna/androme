@@ -90,18 +90,29 @@ export function sameAsParent(element: HTMLElement, attr: string) {
     return false;
 }
 
-export function getBoxSpacing(element: HTMLElement, complete = false) {
+export function getBoxSpacing(element: HTMLElement, complete = false, merge = false) {
     const result: BoxModel = {};
     const node = getNodeFromElement(element);
     const style = getStyle(element);
-    ['padding', 'margin'].forEach(area => {
-        ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
+    ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
+        let total = 0;
+        ['padding', 'margin'].forEach(area => {
             const attr = area + direction;
             const value = convertInt((node || style)[attr]);
             if (complete || value !== 0) {
                 result[attr] = value;
             }
+            total += value;
         });
+        if (merge) {
+            result[`padding${direction}`] = total;
+            if (complete) {
+                result[`margin${direction}`] = 0;
+            }
+            else {
+                delete result[`margin${direction}`];
+            }
+        }
     });
     return result;
 }
@@ -161,11 +172,11 @@ export function isPlainText(element: Null<Element>) {
     return (element != null && element.nodeName === '#text' && (element.textContent || '').trim() !== '');
 }
 
-export function isLineBreak(element: Null<Element>, direction = 'previous') {
+export function isLineBreak(element: Null<Element>, direction = 'previous', includeNode = true) {
     let found = false;
     while (element != null) {
         if (element.nodeName === '#text') {
-            if (isPlainText(element)) {
+            if (isPlainText(element) || direction === '') {
                 break;
             }
             else {
@@ -174,7 +185,7 @@ export function isLineBreak(element: Null<Element>, direction = 'previous') {
         }
         else {
             const styleMap = getElementCache(element, 'styleMap');
-            found = (element.tagName === 'BR' || (getStyle(<HTMLElement> element).display === 'block' && (!getNodeFromElement(element) || (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))));
+            found = (element.tagName === 'BR' || (includeNode && (getStyle(<HTMLElement> element).display === 'block' && (!getNodeFromElement(element) || (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === '')))));
             break;
         }
     }

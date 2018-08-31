@@ -7,6 +7,7 @@ import { formatPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, locateExtension, overwriteDefault } from '../lib/util';
 import { delimitDimens, stripId } from '../../lib/util';
 import { getNodeFromElement, getStyle, setElementCache } from '../../../lib/dom';
+import { replacePlaceholder } from '../../../lib/xml';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
@@ -189,11 +190,12 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren);
                 collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
                 this.application.cache.append(collapsingToolbarNode);
-                outer = outer.replace(`{:${appBarNode.id}}`, this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true) + `{:${appBarNode.id}}`);
+                const content = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true);
+                outer = replacePlaceholder(outer, appBarNode.id, content);
             }
         }
         if (appBarNode) {
-            xml = (collapsingToolbarNode ? outer.replace(`{:${collapsingToolbarNode.id}}`, xml + `{:${collapsingToolbarNode.id}}`) : outer.replace(`{:${appBarNode.id}}`, xml + `{:${appBarNode.id}}`));
+            xml = (collapsingToolbarNode ? replacePlaceholder(outer, collapsingToolbarNode.id, xml) : replacePlaceholder(outer, appBarNode.id, xml));
             if (collapsingToolbarNode == null) {
                 node.parent = appBarNode;
             }

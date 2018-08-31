@@ -8,7 +8,7 @@ import { capitalize, convertInt, convertPX, formatPX, hasValue, includesEnum, in
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
 import { hasLineBreak, isLineBreak } from '../lib/dom';
-import { removePlaceholders, replaceTab } from '../lib/xml';
+import { getPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 import { AXIS_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -207,6 +207,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 current.android(mapLayout['topBottom'], previousRowBottom.stringId);
                                 current.android(relativeParent['left'], 'true');
                                 rowWidth = dimension.width;
+                                if (SETTINGS.ellipsisOnTextOverflow && previous != null) {
+                                    previous.android('singleLine', 'true');
+                                }
                                 if (rowPaddingLeft > 0) {
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, current.paddingLeft + rowPaddingLeft);
                                 }
@@ -1254,7 +1257,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
         node.apply(options);
         node.render((target ? node : renderParent));
-        return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), viewName, node.id, `{:${node.id}}`, preXml, postXml);
+        return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), viewName, node.id, getPlaceholder(node.id), preXml, postXml);
     }
 
     public renderNode(node: T, parent: T, tagName: number | string, recursive = false) {
@@ -1482,11 +1485,11 @@ export default class ViewController<T extends View> extends Controller<T> {
         if (options != null) {
             node.apply(formatResource(options));
         }
-        let output = this.getEnclosingTag((depth === 0 && !node.documentRoot ? -1 : depth), viewName, node.id, (children ? `{:${node.id}}` : ''));
+        let output = this.getEnclosingTag((depth === 0 && !node.documentRoot ? -1 : depth), viewName, node.id, (children ? getPlaceholder(node.id) : ''));
         if (SETTINGS.showAttributes && node.id === 0) {
             const indent = repeat(renderDepth + 1);
             const attrs = node.combine().map(value => `\n${indent + value}`).join('');
-            output = output.replace(`{@${node.id}}`, attrs);
+            output = output.replace(getPlaceholder(node.id, '@'), attrs);
         }
         options.stringId = node.stringId;
         return output;
@@ -1555,10 +1558,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
                 ['android:layout_width:width',
                  'android:layout_height:height',
-                 'android:minWidth:minwidth',
-                 'android:minHeight:minheight',
-                 'app:layout_constraintWidth_min:constraintwidth_min',
-                 'app:layout_constraintHeight_min:constraintheight_min'].forEach(value => {
+                 'android:minWidth:min_width',
+                 'android:minHeight:min_height',
+                 'app:layout_constraintWidth_min:constraint_width_min',
+                 'app:layout_constraintHeight_min:constraint_height_min'].forEach(value => {
                     const [obj, attr, dimen] = value.split(':');
                     addToGroup(tagName, node, dimen, attr, node[obj](attr));
                 });
@@ -1584,7 +1587,7 @@ export default class ViewController<T extends View> extends Controller<T> {
 
     private setAttributes(data: ViewData<NodeList<T>>) {
         if (SETTINGS.showAttributes) {
-            const cache: StringMap[] = data.cache.visible.list.map(node => ({ pattern: `{@${node.id}}`, attributes: this.parseAttributes(node) }));
+            const cache: StringMap[] = data.cache.visible.list.map(node => ({ pattern: getPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
             [...data.views, ...data.includes].forEach(value => {
                 cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
                 value.content = value.content.replace(`{#0}`, this.getRootNamespace(value.content));

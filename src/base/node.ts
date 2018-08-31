@@ -14,7 +14,6 @@ export default abstract class Node implements BoxModel {
     public nodeType = 0;
     public alignmentType = NODE_ALIGNMENT.NONE;
     public depth = -1;
-    public renderDepth = 0;
     public renderIndex = -1;
     public siblingIndex = Number.MAX_VALUE;
     public bounds: ClientRect;
@@ -43,10 +42,11 @@ export default abstract class Node implements BoxModel {
     private _element: HTMLElement;
     private _parent: T;
     private _tagName: string;
-    private _data: ObjectMap<any> = {};
+    private _renderDepth: number;
     private _pageflow: boolean;
     private _multiLine: boolean;
     private _initalized = false;
+    private _data: ObjectMap<any> = {};
 
     constructor(
         public id: number,
@@ -579,6 +579,23 @@ export default abstract class Node implements BoxModel {
         return parent;
     }
 
+    set renderDepth(value) {
+        this._renderDepth = value;
+    }
+    get renderDepth() {
+        if (this._renderDepth == null) {
+            if (this.documentRoot) {
+                this._renderDepth = 0;
+            }
+            else {
+                if (this.parent != null) {
+                    this._renderDepth = this.parent.renderDepth + 1;
+                }
+            }
+        }
+        return this._renderDepth || 0;
+    }
+
     get dataset(): DOMStringMap {
         return (this.hasElement ? this.element.dataset : {});
     }
@@ -671,16 +688,16 @@ export default abstract class Node implements BoxModel {
     }
 
     get borderTopWidth() {
-        return convertInt(this.css('borderTopWidth'));
+        return (this.css('borderTopStyle') !== 'none' ? convertInt(this.css('borderTopWidth')) : 0);
     }
     get borderRightWidth() {
-        return convertInt(this.css('borderRightWidth'));
+        return (this.css('borderRightStyle') !== 'none' ? convertInt(this.css('borderRightWidth')) : 0);
     }
     get borderBottomWidth() {
-        return convertInt(this.css('borderBottomWidth'));
+        return (this.css('borderBottomStyle') !== 'none' ? convertInt(this.css('borderBottomWidth')) : 0);
     }
     get borderLeftWidth() {
-        return convertInt(this.css('borderLeftWidth'));
+        return (this.css('borderLeftStyle') !== 'none' ? convertInt(this.css('borderLeftWidth')) : 0);
     }
 
     get paddingTop() {

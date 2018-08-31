@@ -5,7 +5,7 @@ import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
 import { convertCamelCase, convertInt, convertPX, formatPX, includesEnum, isNumber, isPercent, optional, sortAsc, trim } from '../lib/util';
-import { placeIndent } from '../lib/xml';
+import { getPlaceholder, modifyIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { convertRGB, getByColorName } from '../lib/color';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
@@ -240,7 +240,7 @@ export default class Application<T extends Node> {
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
-                this.orderExt(this.extensions, element).some(item => item.init(element));
+                this.prioritizeExt(this.extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
                     if (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))) {
                         setElementCache(element, 'supportInline', true);
@@ -542,13 +542,7 @@ export default class Application<T extends Node> {
                                     if (template) {
                                         const indent = node.renderDepth + 1;
                                         if (item.renderDepth !== indent) {
-                                            template = template.split('\n').map(value => {
-                                                const match = /^{.*?}(\s+)</.exec(value);
-                                                if (match != null) {
-                                                    value = value.replace(match[1], match[1] + '\t'.repeat(indent - item.renderDepth));
-                                                }
-                                                return value;
-                                            }).join('\n');
+                                            template = modifyIndent(template, indent);
                                             item.renderDepth = indent;
                                         }
                                         insertViewTemplate(data, item, node.id.toString(), template, current);
@@ -649,7 +643,7 @@ export default class Application<T extends Node> {
                         }
                         const processed: IExtension[] = [];
                         let proceed = false;
-                        this.orderExt(this.extensions, nodeY.element).some(item => {
+                        this.prioritizeExt(this.extensions, nodeY.element).some(item => {
                             if (item.is(nodeY)) {
                                 item.setTarget(nodeY, parent);
                                 if (item.condition()) {
@@ -680,7 +674,7 @@ export default class Application<T extends Node> {
                         const linearVertical = parent.linearVertical;
                         if (nodeY.pageflow && nodeY.alignmentType <= NODE_ALIGNMENT.OPEN && !parent.flex.enabled && !parent.has('columnCount') && parent.alignmentType <= NODE_ALIGNMENT.OPEN && (parent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical) && current === '') {
                             const horizontal = [nodeY];
-                            let vertical = [nodeY];
+                            const vertical = [nodeY];
                             const floatSize = new Set(axisY.map(node => node.float)).size;
                             for (let l = k + 1; l < axisY.length; l++) {
                                 const adjacent = axisY[l];
@@ -720,6 +714,7 @@ export default class Application<T extends Node> {
                                             }
                                             if (horizontal.length === 1) {
                                                 if (vertical[vertical.length - 1] !== previous) {
+                                                    vertical.length = 0;
                                                     break;
                                                 }
                                                 vertical.push(adjacent);
@@ -746,6 +741,7 @@ export default class Application<T extends Node> {
                                                 }
                                             }
                                             if (vertical[vertical.length - 1] !== previous) {
+                                                vertical.length = 0;
                                                 break;
                                             }
                                             else {
@@ -757,17 +753,11 @@ export default class Application<T extends Node> {
                                     if (isLineBreak(<Element> adjacent.element.previousSibling)) {
                                         if (!linearVertical) {
                                             if (horizontal.length > 1) {
-                                                if (NodeList.linearY(horizontal)) {
-                                                    vertical = horizontal.slice();
-                                                    horizontal.length = 1;
-                                                    continue;
-                                                }
-                                                else {
-                                                    break;
-                                                }
+                                                break;
                                             }
                                             else {
                                                 if (vertical[vertical.length - 1] !== previous) {
+                                                    vertical.length = 0;
                                                     break;
                                                 }
                                                 else {
@@ -778,24 +768,10 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     if (horizontal[horizontal.length - 1] !== previous) {
+                                        horizontal.length = 0;
                                         break;
                                     }
-                                    else {
-                                        horizontal.push(adjacent);
-                                        if (!previous || ((previous.inlineElement && adjacent.inlineElement) || (previous.floating && !adjacent.inlineElement))) {
-                                            continue;
-                                        }
-                                        if (!NodeList.linearX(horizontal)) {
-                                            if (parent.is(NODE_STANDARD.CONSTRAINT) && NodeList.linearY(horizontal)) {
-                                                vertical = horizontal.slice();
-                                                horizontal.length = 1;
-                                            }
-                                            else {
-                                                horizontal.pop();
-                                                break;
-                                            }
-                                        }
-                                    }
+                                    horizontal.push(adjacent);
                                 }
                             }
                             let group: Null<T> = null;
@@ -815,12 +791,13 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     else {
-                                        group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
                                         if (horizontal.some(node => node.multiLine) || !NodeList.linearX(horizontal)) {
+                                            group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
                                             groupXml = this.writeRelativeLayout(group, parent);
                                             group.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                                         }
-                                        else {
+                                        else if (horizontal.some(node => !node.parent.linearHorizontal)) {
+                                            group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
                                             groupXml = this.writeLinearLayout(group, parent, true);
                                             this.sortByAlignment(group.children, group, NODE_ALIGNMENT.HORIZONTAL, true);
                                         }
@@ -828,7 +805,7 @@ export default class Application<T extends Node> {
                                 }
                             }
                             else if (vertical.length > 1) {
-                                if (vertical.some(node => cleared.has(node) && node !== vertical[vertical.length - 1]) && !vertical.every(node => cleared.has(node))) {
+                                if (!parent.is(NODE_STANDARD.CONSTRAINT) && vertical.some(node => cleared.has(node) && node !== vertical[vertical.length - 1]) && !vertical.every(node => cleared.has(node))) {
                                     group = this.controllerHandler.createGroup(nodeY, vertical, parent);
                                     groupXml = this.writeFrameLayoutVertical(group, vertical, cleared);
                                 }
@@ -836,7 +813,7 @@ export default class Application<T extends Node> {
                                     if (vertical.length === axisY.length) {
                                         parent.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                     }
-                                    else {
+                                    else if (vertical.some(node => !node.parent.linearVertical)) {
                                         group = this.controllerHandler.createGroup(nodeY, vertical, parent);
                                         groupXml = this.writeLinearLayout(group, parent, false);
                                     }
@@ -856,10 +833,9 @@ export default class Application<T extends Node> {
                                     if (SETTINGS.collapseUnattributedElements && !freeFormText && Object.keys(nodeY.styleMap).length === 0 && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
                                         parent.remove(nodeY);
                                         nodeY.hide();
-                                        continue;
                                     }
                                     else {
-                                        if ((!nodeY.inlineText || (nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) && /url(.*?)/.test(nodeY.css('backgroundImage')) && nodeY.css('backgroundRepeat') === 'no-repeat') {
+                                        if ((!nodeY.inlineText || (nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) && /url(.*?)/.test(nodeY.css('backgroundImage')) && nodeY.css('backgroundRepeat') === 'no-repeat' && !nodeY.has('backgroundColor')) {
                                             nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
                                             nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
                                             xml = this.writeNode(nodeY, parent, NODE_STANDARD.IMAGE);
@@ -886,8 +862,6 @@ export default class Application<T extends Node> {
                                                 child.documentRoot = nodeY.documentRoot;
                                                 child.parent = parent;
                                                 nodeY.hide();
-                                                axisY[k] = child;
-                                                k--;
                                             }
                                             else {
                                                 xml = this.writeFrameLayout(nodeY, parent);
@@ -965,7 +939,7 @@ export default class Application<T extends Node> {
                     if (this._sorted[parentId] != null) {
                         const parsed: string[] = [];
                         this._sorted[parentId].forEach(value => {
-                            const result = templates.find((view: string) => view.indexOf(`{@${value}}`) !== -1);
+                            const result = templates.find((view: string) => view.indexOf(getPlaceholder(value, '@')) !== -1);
                             if (result) {
                                 parsed.push(result);
                             }
@@ -978,9 +952,9 @@ export default class Application<T extends Node> {
                         content.push(...templates);
                     }
                     id = parentId + (renderIndex != null ? `:${renderIndex}` : '');
-                    const placeholder = `{:${id}}`;
+                    const placeholder = getPlaceholder(id);
                     if (output.indexOf(placeholder) !== -1) {
-                        output = this.replacePositionXml(output, placeholder, content.join(''));
+                        output = replacePlaceholder(output, placeholder, content.join(''));
                         empty = false;
                     }
                     else {
@@ -1060,7 +1034,6 @@ export default class Application<T extends Node> {
             xml = this.writeFrameLayout(group, parent, true);
             layers = [pageflow, left, right];
         }
-        const placeholder = `{:${group.id}}`;
         layers.forEach((item, index) => {
             if (item.length > 1) {
                 let content = '';
@@ -1068,6 +1041,9 @@ export default class Application<T extends Node> {
                 if (index !== 2 && (!item.linearX || item.list.some(node => node.plainText && node.multiLine))) {
                     content = this.writeRelativeLayout(subgroup, group);
                     subgroup.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP | NODE_ALIGNMENT.SEGMENTED;
+                    if (floated.length > 0) {
+                        subgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
+                    }
                 }
                 else {
                     content = this.writeLinearLayout(subgroup, group, true);
@@ -1103,17 +1079,17 @@ export default class Application<T extends Node> {
                     }
                     subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.SEGMENTED;
                 }
-                if (index === 0 || index === 2) {
+                if (floated.length > 0) {
                     subgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
                 }
-                xml = this.replacePositionXml(xml, placeholder, content);
+                xml = replacePlaceholder(xml, group.id, content);
                 group.append(subgroup);
             }
             else if (item.length > 0) {
                 const single = item.list[0];
                 single.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                 single.renderIndex = index;
-                xml = this.replacePositionXml(xml, placeholder, `{:${group.id}:${index}}`);
+                xml = replacePlaceholder(xml, group.id, `{:${group.id}:${index}}`);
                 group.append(single);
             }
         });
@@ -1198,14 +1174,13 @@ export default class Application<T extends Node> {
                 group.lateInit();
                 group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                 xml += this.writeFrameLayout(group, parent, true);
-                const placeholder = `{:${group.id}}`;
                 children.forEach((item, index) => {
                     item.parent = group;
                     if (nodes.includes(item)) {
-                        xml = this.replacePositionXml(xml, placeholder, `{:${group.id}:${index}}`);
+                        xml = replacePlaceholder(xml, group.id, `{:${group.id}:${index}}`);
                     }
                     else {
-                        xml = this.replacePositionXml(xml, placeholder, this.writeLinearLayout(item, group, false));
+                        xml = replacePlaceholder(xml, group.id, this.writeLinearLayout(item, group, false));
                         item.alignmentType |= NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.SEGMENTED;
                     }
                 });
@@ -1237,7 +1212,7 @@ export default class Application<T extends Node> {
                 const target = this.cacheInternal.locate('id', parseInt(replaceId));
                 if (target) {
                     const depth = target.renderDepth + 1;
-                    output = placeIndent(output, depth);
+                    output = modifyIndent(output, depth);
                     const pattern = /{@([0-9]+)}/g;
                     let match: Null<RegExpExecArray> = null;
                     let i = 0;
@@ -1259,14 +1234,14 @@ export default class Application<T extends Node> {
         for (const inner in template) {
             for (const outer in template) {
                 if (inner !== outer) {
-                    template[inner] = template[inner].replace(`{:${outer}}`, template[outer]);
-                    template[outer] = template[outer].replace(`{:${inner}}`, template[inner]);
+                    template[inner] = template[inner].replace(getPlaceholder(outer), template[outer]);
+                    template[outer] = template[outer].replace(getPlaceholder(inner), template[inner]);
                 }
             }
         }
-        for (const value of this.layouts) {
+        for (const value of this.everyLayout) {
             for (const id in template) {
-                value.content = value.content.replace(`{:${id}}`, template[id]);
+                value.content = value.content.replace(getPlaceholder(id), template[id]);
             }
             value.content = this.controllerHandler.appendLateInsert(value.content);
         }
@@ -1427,7 +1402,7 @@ export default class Application<T extends Node> {
         return node;
     }
 
-    private orderExt(available: IExtension[], element: HTMLElement) {
+    private prioritizeExt(available: IExtension[], element: HTMLElement) {
         let extensions: string[] = [];
         let current: Null<HTMLElement> = element;
         while (current != null) {
@@ -1454,10 +1429,6 @@ export default class Application<T extends Node> {
         }
     }
 
-    private replacePositionXml(xml: string, placeholder: string, value: string) {
-        return xml.replace(placeholder, value + placeholder);
-    }
-
     set appName(value) {
         if (this.resourceHandler != null) {
             this.resourceHandler.file.appName = value;
@@ -1474,7 +1445,7 @@ export default class Application<T extends Node> {
         return this._views[this._currentIndex];
     }
 
-    get layouts() {
+    get everyLayout() {
         return [...this._views, ...this._includes];
     }
 
