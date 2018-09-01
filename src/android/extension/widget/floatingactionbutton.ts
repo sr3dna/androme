@@ -2,7 +2,6 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Button from '../../../extension/button';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { includesEnum } from '../../../lib/util';
 import { overwriteDefault, positionIsolated } from '../lib/util';
 import { parseRGBA } from '../../../lib/color';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
@@ -22,7 +21,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
             const options = Object.assign({}, this.options[element.id]);
             const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
             overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${ResourceView.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
-            if (includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+            if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
                 overwriteDefault(options, 'android', 'focusable', 'false');
             }
             let src = '';

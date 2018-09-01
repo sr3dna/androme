@@ -1,5 +1,4 @@
 import View from './view';
-import { includesEnum } from '../lib/util';
 import { NODE_ALIGNMENT } from '../lib/constants';
 
 export default class ViewGroup<T extends View> extends View {
@@ -96,7 +95,7 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     get inlineElement() {
-        return includesEnum(this.alignmentType, NODE_ALIGNMENT.SEGMENTED);
+        return this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED);
     }
 
     get childrenBox() {

@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, includesEnum, isPercent, search } from '../lib/util';
+import { convertCamelCase, convertInt, hasValue, hasBit, isPercent, search } from '../lib/util';
 import { assignBounds, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
@@ -104,7 +104,7 @@ export default abstract class Node implements BoxModel {
     public of(nodeType: number, ...alignmentType: number[]) {
         if (this.nodeType === nodeType) {
             for (const value of alignmentType) {
-                if (includesEnum(this.alignmentType, value)) {
+                if (this.hasBit('alignmentType', value)) {
                     return true;
                 }
             }
@@ -341,6 +341,13 @@ export default abstract class Node implements BoxModel {
 
     public has(attr: string) {
         return this.isSet('styleMap', attr);
+    }
+
+    public hasBit(attr: string, bit: number) {
+        if (this[attr] != null) {
+            return hasBit(this[attr], bit);
+        }
+        return false;
     }
 
     public toInt(attr: string, defaultValue = 0) {
@@ -593,7 +600,7 @@ export default abstract class Node implements BoxModel {
                 }
             }
         }
-        return this._renderDepth || 0;
+        return this._renderDepth || this.depth;
     }
 
     get dataset(): DOMStringMap {
@@ -791,10 +798,10 @@ export default abstract class Node implements BoxModel {
         return value;
     }
     get overflowX() {
-        return includesEnum(this.overflow, OVERFLOW_ELEMENT.HORIZONTAL);
+        return this.hasBit('overflow', OVERFLOW_ELEMENT.HORIZONTAL);
     }
     get overflowY() {
-        return includesEnum(this.overflow, OVERFLOW_ELEMENT.VERTICAL);
+        return this.hasBit('overflow', OVERFLOW_ELEMENT.VERTICAL);
     }
 
     get baseline() {
@@ -817,7 +824,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineWrap() {
-        return includesEnum(this.alignmentType, NODE_ALIGNMENT.INLINE_WRAP);
+        return this.hasBit('alignmentType', NODE_ALIGNMENT.INLINE_WRAP);
     }
 
     get dir() {

@@ -135,7 +135,7 @@ export function convertEnum(base: {}, derived: {}, value: number): string {
     return '';
 }
 
-export function includesEnum(value: number, type: number) {
+export function hasBit(value: number, type: number) {
     return ((value & type) === type);
 }
 

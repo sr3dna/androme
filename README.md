@@ -90,6 +90,7 @@ androme.settings = {
     alwaysReevaluateResources: true,
     excludeTextColor: ['#000000'],
     excludeBackgroundColor: ['#FFFFFF'],
+    preloadImages: true,
     autoSizePaddingAndBorderWidth: true,
     autoSizeBackgroundImage: true,
     ellipsisOnTextOverflow: true,

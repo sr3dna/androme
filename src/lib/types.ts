@@ -58,6 +58,12 @@ export interface BasicData {
     value: string;
 }
 
+export interface Image {
+    width: number;
+    height: number;
+    url: string;
+}
+
 export interface PlainFile {
     pathname: string;
     filename: string;

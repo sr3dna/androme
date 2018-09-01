@@ -1,8 +1,10 @@
-import { Null } from './lib/types';
+import { Image, Null } from './lib/types';
 import { IExtension } from './extension/lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
-import { convertWord, hasValue, optional } from './lib/util';
+import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, optional  } from './lib/util';
+import { deleteElementCache, getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
+import { convertRGB, getByColorName } from './lib/color';
 import { EXT_NAME } from './extension/lib/constants';
 import SETTINGS from './settings';
 
@@ -31,6 +33,7 @@ type T = View;
 
 let LOADING = false;
 const ROOT_CACHE: Set<HTMLElement> = new Set();
+const IMAGE_CACHE: Map<string, Image> = new Map();
 const EXTENSIONS = {
     [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
     [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
@@ -69,27 +72,133 @@ main.registerResource(Resource);
     }
 })();
 
+function setStyleMap() {
+    let warning = false;
+    for (let i = 0; i < document.styleSheets.length; i++) {
+        const styleSheet = <CSSStyleSheet> document.styleSheets[i];
+        if (styleSheet.cssRules) {
+            for (let j = 0; j < styleSheet.cssRules.length; j++) {
+                try {
+                    const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
+                    const attrs: Set<string> = new Set();
+                    for (const attr of Array.from(cssRule.style)) {
+                        attrs.add(convertCamelCase(attr));
+                    }
+                    const elements = document.querySelectorAll(cssRule.selectorText);
+                    Array.from(elements).forEach((element: HTMLElement) => {
+                        deleteElementCache(element, 'style', 'styleMap');
+                        for (const attr of Array.from(element.style)) {
+                            attrs.add(convertCamelCase(attr));
+                        }
+                        const style = getStyle(element);
+                        const styleMap = {};
+                        for (const attr of attrs) {
+                            if (attr.toLowerCase().indexOf('color') !== -1) {
+                                const color = getByColorName(cssRule.style[attr]);
+                                if (color !== '') {
+                                    cssRule.style[attr] = convertRGB(color);
+                                }
+                            }
+                            const cssStyle = cssRule.style[attr];
+                            if (element.style[attr]) {
+                                styleMap[attr] = element.style[attr];
+                            }
+                            else if (style[attr] === cssStyle) {
+                                styleMap[attr] = style[attr];
+                            }
+                            else if (cssStyle) {
+                                switch (attr) {
+                                    case 'width':
+                                    case 'height':
+                                    case 'lineHeight':
+                                    case 'verticalAlign':
+                                    case 'fontSize':
+                                    case 'marginTop':
+                                    case 'marginRight':
+                                    case 'marginBottom':
+                                    case 'marginLeft':
+                                    case 'paddingTop':
+                                    case 'paddingRight':
+                                    case 'paddingBottom':
+                                    case 'paddingLeft':
+                                        styleMap[attr] = (/^[A-Za-z\-]+$/.test(<string> cssStyle) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle));
+                                        break;
+                                    default:
+                                        if (styleMap[attr] == null) {
+                                            styleMap[attr] = cssStyle;
+                                        }
+                                        break;
+                                }
+                            }
+                        }
+                        if (SETTINGS.preloadImages && styleMap['backgroundImage'] != null && styleMap['backgroundImage'] !== 'initial') {
+                            const url = parseBackgroundUrl(styleMap['backgroundImage']);
+                            if (url !== '' && !IMAGE_CACHE.has(url)) {
+                                IMAGE_CACHE.set(url, { width: 0, height: 0, url });
+                            }
+                        }
+                        const data = getElementCache(element, 'styleMap');
+                        if (data) {
+                            Object.assign(data, styleMap);
+                        }
+                        else {
+                            setElementCache(element, 'style', style);
+                            setElementCache(element, 'styleMap', styleMap);
+                        }
+                    });
+                }
+                catch (error) {
+                    if (!warning) {
+                        alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
+                              'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
+                              `${styleSheet.href}\n\n${error}`);
+                        warning = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function setImageCache(element: HTMLImageElement) {
+    if (!IMAGE_CACHE.has(element.src)) {
+        IMAGE_CACHE.set(element.src, {
+            width: element.naturalWidth,
+            height: element.naturalHeight,
+            url: element.src
+        });
+    }
+}
+
 export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     if (main.closed) {
         return;
     }
     LOADING = false;
-    main.setStyleMap();
+    setStyleMap();
     main.elements.clear();
     if (main.appName === '' && elements.length === 0) {
         elements.push(document.body);
     }
+    let rootElement: Null<HTMLElement> = null;
     for (let element of elements) {
         if (typeof element === 'string') {
             element = document.getElementById(element);
         }
         if (element instanceof HTMLElement) {
+            if (rootElement == null) {
+                rootElement = element;
+            }
             main.elements.add(element);
         }
     }
     let __THEN: () => void;
     function parseResume() {
         LOADING = false;
+        if (SETTINGS.preloadImages && rootElement != null) {
+            Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement && rootElement.removeChild(element));
+        }
+        main.resourceHandler.imageDimensions = IMAGE_CACHE;
         for (const element of main.elements) {
             if (main.appName === '') {
                 if (element.id === '') {
@@ -116,7 +225,36 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             __THEN.call(main);
         }
     }
-    const images: HTMLImageElement[] = Array.from(main.elements).map(element => <HTMLImageElement[]> Array.from(element.querySelectorAll('IMG'))).reduce((a, b) => a.concat(b), []).filter(element => !element.complete);
+    if (SETTINGS.preloadImages && rootElement != null) {
+        for (const image of IMAGE_CACHE.values()) {
+            if (image.width === 0 && image.height === 0) {
+                const imageElement = <HTMLImageElement> document.createElement('IMG');
+                imageElement.src = image.url;
+                if (imageElement.complete && imageElement.naturalWidth > 0 && imageElement.naturalHeight > 0) {
+                    image.width = imageElement.naturalWidth;
+                    image.height = imageElement.naturalHeight;
+                }
+                else {
+                    imageElement.style.display = 'none';
+                    imageElement.className = 'androme.preload';
+                    rootElement.appendChild(imageElement);
+                }
+            }
+        }
+    }
+    const images: HTMLImageElement[] =
+        Array.from(main.elements).map(element => {
+            const queue: HTMLImageElement[] = [];
+            Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
+                if (image.complete) {
+                    setImageCache(image);
+                }
+                else {
+                    queue.push(image);
+                }
+            });
+            return queue;
+        }).reduce((a, b) => a.concat(b), []);
     if (images.length === 0) {
         parseResume();
     }
@@ -130,7 +268,10 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
         });
         Promise
             .all(queue)
-            .then(() => parseResume())
+            .then(result => {
+                result.forEach((image: HTMLImageElement) => setImageCache(image));
+                parseResume();
+            })
             .catch((err: Event) => {
                 const message = (err.srcElement != null ? (<HTMLImageElement> err.srcElement).src : '');
                 if (!hasValue(message) || confirm(`FAIL: ${message}`)) {

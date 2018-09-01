@@ -3,10 +3,10 @@ import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import NodeList from '../base/nodelist';
-import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, includesEnum, isNumber, isPercent, lastIndexOf, resolvePath, trim } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, trim } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
-import { cssParent, getElementCache, sameAsParent, setElementCache } from '../lib/dom';
+import { cssParent, getElementCache, parseBackgroundUrl, sameAsParent, setElementCache } from '../lib/dom';
 import { getColorNearest, parseHex, parseRGBA } from '../lib/color';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
@@ -167,9 +167,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public static addImageURL(value = '', prefix = '') {
-        const match = value.match(/^url\("?(.*?)"?\)$/);
-        if (match) {
-            return ResourceView.addImage({ 'mdpi': resolvePath(match[1]) }, prefix);
+        const url = parseBackgroundUrl(value);
+        if (url !== '') {
+            return ResourceView.addImage({ 'mdpi': url }, prefix);
         }
         return '';
     }
@@ -300,7 +300,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setBoxSpacing() {
         super.setBoxSpacing();
-        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)).each(node => {
+        this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)).each(node => {
             const stored: StringMap = getElementCache(node.element, 'boxSpacing');
             if (stored) {
                 if (stored.marginLeft === stored.marginRight && node.alignParent('left') && node.alignParent('right') && !node.blockWidth) {
@@ -325,7 +325,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setBoxStyle() {
         super.setBoxStyle();
-        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
+        this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE)).each(node => {
             const stored: BoxStyle = getElementCache(node.element, 'boxStyle');
             if (stored) {
                 if (stored.backgroundColor.length > 0) {
@@ -334,8 +334,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
                 let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
                 let backgroundPosition = stored.backgroundPosition.split(',').map(value => value.trim());
+                const backgroundImageUrl: string[] = [];
                 for (let i = 0; i < backgroundImage.length; i++) {
                     if (backgroundImage[i] !== 'none') {
+                        backgroundImageUrl.push(backgroundImage[i]);
                         backgroundImage[i] = ResourceView.addImageURL(backgroundImage[i]);
                     }
                     else {
@@ -713,11 +715,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.formatted(formatString(method['background'], resourceName), (node.renderExtension == null));
-                    if (SETTINGS.autoSizeBackgroundImage && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.AUTOFIT) && !node.documentRoot && backgroundImage.length > 0) {
+                    if (SETTINGS.autoSizeBackgroundImage && backgroundImage.length > 0 && !node.documentRoot && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
                         let resize = true;
                         let current = node;
                         while (current != null && !current.documentBody) {
-                            if (current.viewHeight > 0) {
+                            if (current.viewWidth > 0 && current.viewHeight > 0) {
                                 resize = false;
                                 break;
                             }
@@ -727,11 +729,26 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             current = current.documentParent as T;
                         }
                         if (resize) {
-                            if (node.viewWidth === 0) {
-                                node.css('width', formatPX(node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0)));
+                            let maxWidth = 0;
+                            let maxHeight = 0;
+                            backgroundImageUrl.forEach(value => {
+                                const image = this.imageDimensions.get(parseBackgroundUrl(value));
+                                if (image != null) {
+                                    maxWidth = Math.max(maxWidth, image.width);
+                                    maxHeight = Math.max(maxHeight, image.height);
+                                }
+                            });
+                            if (!node.has('width')) {
+                                const width = node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
+                                if (maxWidth === 0 || width < maxWidth) {
+                                    node.css('width', formatPX(width));
+                                }
                             }
-                            if (node.viewHeight === 0) {
-                                node.css('height', formatPX(node.bounds.height + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0)));
+                            if (!node.has('height')) {
+                                const height = node.bounds.height + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
+                                if (maxHeight === 0 || height < maxHeight) {
+                                    node.css('height', formatPX(height));
+                                }
                             }
                         }
                     }
@@ -746,7 +763,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setFontStyle() {
         super.setFontStyle();
         const tagName: ObjectMap<T[]> = {};
-        this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)).each(node => {
+        this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE)).each(node => {
             if (getElementCache(node.element, 'fontStyle')) {
                 if (tagName[node.tagName] == null) {
                     tagName[node.tagName] = [];
@@ -854,7 +871,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public setImageSource() {
-        this.cache.filter(node => node.visible && (node.element.tagName === 'IMG' || (node.element.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
+        this.cache.filter(node => node.visible && (node.element.tagName === 'IMG' || (node.element.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
             const element = <HTMLImageElement> node.element;
             if (getElementCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
                 const result = (node.element.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
@@ -869,7 +886,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+        this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
             const stored: ObjectMap<string[]> = getElementCache(node.element, 'optionArray');
             if (stored) {
                 const method = METHOD_ANDROID['optionArray'];
@@ -902,7 +919,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setValueString() {
         super.setValueString();
-        this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
+        this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING)).each(node => {
             const stored: BasicData = getElementCache(node.element, 'valueString');
             if (stored) {
                 if (node.renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {

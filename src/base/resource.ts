@@ -1,8 +1,8 @@
-import { BorderAttribute, BoxStyle, FontAttribute, Null, ResourceMap, ViewData } from '../lib/types';
+import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ResourceMap, ViewData } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertPX, hasValue, includesEnum, isNumber, isPercent } from '../lib/util';
+import { convertPX, hasValue, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 import { getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, sameAsParent, setElementCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
@@ -56,6 +56,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public cache: NodeList<T>;
+    public imageDimensions: Map<string, Image>;
 
     constructor(public file: File<T>) {
     }
@@ -81,7 +82,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxSpacing() {
-        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_SPACING)).each(node => {
+        this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)).each(node => {
             if (getElementCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
@@ -99,7 +100,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxStyle() {
-        this.cache.elements.filter(node => !includesEnum(node.excludeResource, NODE_RESOURCE.BOX_STYLE)).each(node => {
+        this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE)).each(node => {
             if (getElementCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
                 const result: any = {
                     borderTop: this.parseBorderStyle,
@@ -108,7 +109,7 @@ export default abstract class Resource<T extends Node> {
                     borderLeft: this.parseBorderStyle,
                     borderRadius: this.parseBorderRadius,
                     backgroundColor: this.parseBackgroundColor,
-                    backgroundImage: (!includesEnum(node.excludeResource, NODE_RESOURCE.IMAGE_SOURCE) ? true : false),
+                    backgroundImage: !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE),
                     backgroundSize: this.parseBoxDimensions,
                     backgroundRepeat: true,
                     backgroundPosition: true
@@ -138,7 +139,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setFontStyle() {
-        this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.FONT_STYLE)).each(node => {
+        this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE)).each(node => {
             if (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources) {
                 if (node.renderChildren.length > 0 || node.element.tagName === 'IMG' || node.element.tagName === 'HR') {
                     return;
@@ -184,7 +185,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setOptionArray() {
-        this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !includesEnum(node.excludeResource, NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+        this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
             const element = <HTMLSelectElement> node.element;
             if (getElementCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
                 const stringArray: string[] = [];
@@ -242,7 +243,7 @@ export default abstract class Resource<T extends Node> {
             }
             return [value, true];
         }
-        this.cache.filter(node => node.visible && !includesEnum(node.excludeResource, NODE_RESOURCE.VALUE_STRING)).each(node => {
+        this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING)).each(node => {
             const element = <HTMLInputElement> node.element;
             if (getElementCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
                 let name = '';

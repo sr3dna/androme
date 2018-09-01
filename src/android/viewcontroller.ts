@@ -4,7 +4,7 @@ import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
-import { capitalize, convertInt, convertPX, formatPX, hasValue, includesEnum, indexOf, isPercent, optional, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
+import { capitalize, convertInt, convertPX, formatPX, hasValue, indexOf, isPercent, optional, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
 import { hasLineBreak, isLineBreak } from '../lib/dom';
@@ -161,7 +161,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const rows: T[][] = [];
                     const baseline: T[] = [];
                     const multiLine = nodes.list.some(item => item.multiLine);
-                    const floatParent = includesEnum(node.alignmentType, NODE_ALIGNMENT.FLOAT);
+                    const floatParent = node.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT);
                     const textIndent = node.toInt('textIndent');
                     let rowPaddingLeft = 0;
                     if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
@@ -1453,7 +1453,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
         node.cascade().forEach(item => item.hide());
         node.render((target ? node : parent));
-        if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+        if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
             node.setAccessibility();
         }
         return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), node.nodeName, node.id);

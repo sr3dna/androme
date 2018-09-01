@@ -4,10 +4,9 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertCamelCase, convertInt, convertPX, formatPX, includesEnum, isNumber, isPercent, optional, sortAsc, trim } from '../lib/util';
+import { convertInt, formatPX, hasBit, isNumber, optional, sortAsc, trim } from '../lib/util';
 import { getPlaceholder, modifyIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
-import { convertRGB, getByColorName } from '../lib/color';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
@@ -17,8 +16,8 @@ export default class Application<T extends Node> {
     public controllerHandler: Controller<T>;
     public resourceHandler: Resource<T>;
     public elements: Set<HTMLElement> = new Set();
-    public extensions: IExtension[] = [];
     public lateInsert: ObjectIndex<string[]> = {};
+    public extensions: IExtension[] = [];
     public processing: T[];
     public closed = false;
 
@@ -61,18 +60,18 @@ export default class Application<T extends Node> {
     public finalize() {
         const visible = this.cacheInternal.visible;
         for (const node of visible) {
-            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.LAYOUT)) {
+            if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
             }
-            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.ALIGNMENT)) {
+            if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ALIGNMENT)) {
                 node.setAlignment();
             }
         }
         for (const node of visible) {
-            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.OPTIMIZATION)) {
+            if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
                 node.applyOptimizations({ autoSizePaddingAndBorderWidth: SETTINGS.autoSizePaddingAndBorderWidth });
             }
-            if (!includesEnum(node.excludeProcedure, NODE_PROCEDURE.CUSTOMIZATION)) {
+            if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.CUSTOMIZATION)) {
                 node.applyCustomizations(SETTINGS.customizationsOverwritePrivilege);
             }
         }
@@ -126,90 +125,6 @@ export default class Application<T extends Node> {
 
     public resetResource() {
         this.resourceHandler.reset();
-    }
-
-    public setStyleMap() {
-        let warning = false;
-        for (let i = 0; i < document.styleSheets.length; i++) {
-            const styleSheet = <CSSStyleSheet> document.styleSheets[i];
-            if (styleSheet.cssRules) {
-                for (let j = 0; j < styleSheet.cssRules.length; j++) {
-                    try {
-                        const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
-                        const attrs: Set<string> = new Set();
-                        for (const attr of Array.from(cssRule.style)) {
-                            attrs.add(convertCamelCase(attr));
-                        }
-                        const elements = document.querySelectorAll(cssRule.selectorText);
-                        if (this.appName !== '') {
-                            Array.from(elements).forEach((element: HTMLElement) => deleteElementCache(element, 'style', 'styleMap'));
-                        }
-                        Array.from(elements).forEach((element: HTMLElement) => {
-                            for (const attr of Array.from(element.style)) {
-                                attrs.add(convertCamelCase(attr));
-                            }
-                            const style = getStyle(element);
-                            const styleMap = {};
-                            for (const attr of attrs) {
-                                if (attr.toLowerCase().indexOf('color') !== -1) {
-                                    const color = getByColorName(cssRule.style[attr]);
-                                    if (color !== '') {
-                                        cssRule.style[attr] = convertRGB(color);
-                                    }
-                                }
-                                const cssStyle = cssRule.style[attr];
-                                if (element.style[attr]) {
-                                    styleMap[attr] = element.style[attr];
-                                }
-                                else if (style[attr] === cssStyle) {
-                                    styleMap[attr] = style[attr];
-                                }
-                                else if (cssStyle) {
-                                    switch (attr) {
-                                        case 'width':
-                                        case 'height':
-                                        case 'lineHeight':
-                                        case 'verticalAlign':
-                                        case 'fontSize':
-                                        case 'marginTop':
-                                        case 'marginRight':
-                                        case 'marginBottom':
-                                        case 'marginLeft':
-                                        case 'paddingTop':
-                                        case 'paddingRight':
-                                        case 'paddingBottom':
-                                        case 'paddingLeft':
-                                            styleMap[attr] = (/^[A-Za-z\-]+$/.test(<string> cssStyle) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle));
-                                            break;
-                                        default:
-                                            if (styleMap[attr] == null) {
-                                                styleMap[attr] = cssStyle;
-                                            }
-                                            break;
-                                    }
-                                }
-                            }
-                            const data = getElementCache(element, 'styleMap');
-                            if (data) {
-                                Object.assign(data, styleMap);
-                            }
-                            else {
-                                setElementCache(element, 'style', style);
-                                setElementCache(element, 'styleMap', styleMap);
-                            }
-                        });
-                    }
-                    catch (error) {
-                        if (!warning) {
-                            alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
-                                  'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
-                                  `${styleSheet.href}\n\n${error}`);
-                            warning = true;
-                        }
-                    }
-                }
-            }
-        }
     }
 
     public createNodeCache(rootElement: HTMLElement) {
@@ -318,7 +233,7 @@ export default class Application<T extends Node> {
             for (const node of this.cache) {
                 if (node.pageflow) {
                     const element = <HTMLInputElement> node.element;
-                    if (element.tagName === 'INPUT' && !includesEnum(node.excludeProcedure, NODE_PROCEDURE.ACCESSIBILITY)) {
+                    if (element.tagName === 'INPUT' && !node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
                         switch (element.type) {
                             case 'radio':
                             case 'checkbox':
@@ -1319,7 +1234,7 @@ export default class Application<T extends Node> {
             }
         }
         if (!sorted) {
-            if (includesEnum(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
+            if (hasBit(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
                 if (children.some(node => node.floating)) {
                     children.sort((a, b) => {
                         if (a.floating && !b.floating) {
@@ -1338,7 +1253,7 @@ export default class Application<T extends Node> {
                     sorted = true;
                 }
             }
-            if (includesEnum(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
+            if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
                 if (children.some(node => node.toInt('zIndex') !== 0)) {
                     children.sort((a, b) => {
                         const indexA = a.css('zIndex');

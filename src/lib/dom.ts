@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
-import { convertInt, hasValue } from './util';
+import { convertInt, hasValue, resolvePath } from './util';
 
 export function setElementCache(element: Null<Element>, attr: string, data: any) {
     if (element != null) {
@@ -115,6 +115,14 @@ export function getBoxSpacing(element: HTMLElement, complete = false, merge = fa
         }
     });
     return result;
+}
+
+export function parseBackgroundUrl(value: string) {
+    const match = value.match(/^url\("?(.*?)"?\)$/);
+    if (match) {
+        return resolvePath(match[1]);
+    }
+    return '';
 }
 
 export function cssParent(element: HTMLElement, attr: string, ...styles: string[]) {

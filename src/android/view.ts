@@ -1,7 +1,7 @@
 import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, includesEnum, isPercent, lastIndexOf, withinFraction } from '../lib/util';
+import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
 import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
@@ -527,7 +527,7 @@ export default class View extends Node {
                 setAutoMargin(this);
             }
         }
-        const floatRight = ((includesEnum(this.alignmentType, NODE_ALIGNMENT.SEGMENTED) || this.linearHorizontal) && this.renderChildren.some(node => node.float === 'right'));
+        const floatRight = ((this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED) || this.linearHorizontal) && this.renderChildren.some(node => node.float === 'right'));
         const singleChild = (renderParent.renderChildren.length === 1);
         if (frameParent && !setAutoMargin(this) && (this.float === 'right' || floatRight)) {
             (singleChild && !floatRight ? renderParent : this).android('layout_gravity', right);
@@ -556,7 +556,7 @@ export default class View extends Node {
     }
 
     public mergeBoxSpacing() {
-        if (!includesEnum(this.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
+        if (!this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
             ['layout_margin', 'padding'].forEach((value, index) => {
                 const leftRtl = parseRTL(`${value}Left`);
                 const rightRtl = parseRTL(`${value}Right`);
@@ -682,7 +682,7 @@ export default class View extends Node {
             }
         }
         this.adjustWhiteSpace();
-        if (options.autoSizePaddingAndBorderWidth && !includesEnum(this.excludeProcedure, NODE_PROCEDURE.AUTOFIT)) {
+        if (options.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
             let viewWidth = convertInt(this.android('layout_width'));
             let viewHeight = convertInt(this.android('layout_height'));
             if (this.element.tagName === 'IMG') {
@@ -732,7 +732,7 @@ export default class View extends Node {
                 }
             }
             else {
-                if (this.hasElement && this.element.tagName !== 'TABLE' && !this.is(NODE_STANDARD.LINE) && !includesEnum(this.excludeResource, NODE_RESOURCE.BOX_SPACING)) {
+                if (this.hasElement && this.element.tagName !== 'TABLE' && !this.is(NODE_STANDARD.LINE) && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                     if (viewWidth > 0 && convertInt(this.cssOriginal('width')) > 0) {
                         this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + (renderParent.element.tagName !== 'TABLE' ? this.borderLeftWidth + this.borderRightWidth : 0)));
                     }
@@ -843,7 +843,7 @@ export default class View extends Node {
         if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
             switch (this.android('orientation')) {
                 case AXIS_ANDROID.HORIZONTAL:
-                    if (!includesEnum(this.alignmentType, NODE_ALIGNMENT.FLOAT)) {
+                    if (!this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
                         let left = this.box.left;
                         this.each((node: T) => {
                             if (!node.floating) {
