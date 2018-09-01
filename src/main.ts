@@ -86,7 +86,6 @@ function setStyleMap() {
                     }
                     const elements = document.querySelectorAll(cssRule.selectorText);
                     Array.from(elements).forEach((element: HTMLElement) => {
-                        deleteElementCache(element, 'style', 'styleMap');
                         for (const attr of Array.from(element.style)) {
                             attrs.add(convertCamelCase(attr));
                         }
@@ -336,6 +335,7 @@ export function reset() {
     for (const element of ROOT_CACHE) {
         delete element.dataset.views;
         delete element.dataset.viewName;
+        Array.from(element.querySelectorAll('*')).forEach((item: Element) => deleteElementCache(item, 'style', 'styleMap'));
     }
     ROOT_CACHE.clear();
     main.reset();

@@ -1,9 +1,10 @@
 import { ExtensionResult } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
-import { convertInt, isPercent } from '../lib/util';
+import { convertInt, formatPX, isPercent } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 import { cssInherit, getStyle } from '../lib/dom';
+import { BOX_STANDARD } from '../lib/constants';
 
 export default class Table<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -36,6 +37,18 @@ export default class Table<T extends Node> extends Extension<T> {
                 table.push(...<T[]> tfoot[0].children);
                 tfoot.forEach(item => item.hide());
             }
+            const collapse = (node.css('borderCollapse') === 'collapse');
+            const [width, height] = (collapse ? [0, 0] : node.css('borderSpacing').split(' ').map(value => parseInt(value)));
+            if (width > 0) {
+                node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft + width);
+                node.modifyBox(BOX_STANDARD.PADDING_RIGHT, node.paddingRight + width);
+            }
+            if (height > 0) {
+                node.modifyBox(BOX_STANDARD.PADDING_TOP, node.paddingTop + height);
+                node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, node.paddingBottom + height);
+            }
+            const spacingWidth = formatPX((width > 1 ? Math.round(width / 2) : width));
+            const spacingHeight = formatPX((height > 1 ? Math.round(height / 2) : width));
             const columnIndex = new Array(table.length).fill(0);
             for (let i = 0; i < table.length; i++) {
                 const tr = table[i];
@@ -60,13 +73,17 @@ export default class Table<T extends Node> extends Extension<T> {
                             }
                         }
                     }
+                    td.css({
+                        marginTop: (i === 0 ? '0px' : spacingHeight),
+                        marginRight: (j < tr.children.length - 1 ? spacingWidth : '0px'),
+                        marginBottom: (i + element.rowSpan - 1 >= table.length - 1 ? '0px' : spacingHeight),
+                        marginLeft: (columnIndex[i] === 0 ? '0px' : spacingWidth)
+                    });
                     columnIndex[i] += element.colSpan;
                 }
             }
             const rowCount = table.length;
             const columnCount = Math.max.apply(null, columnIndex);
-            const collapse = (node.css('borderCollapse') === 'collapse');
-            const [width, height] = (collapse ? ['0px', '0px'] : node.css('borderSpacing').split(' '));
             let borderInside = false;
             node.children.length = 0;
             for (let i = 0; i < table.length; i++) {
@@ -85,13 +102,6 @@ export default class Table<T extends Node> extends Extension<T> {
                     if (convertInt(td.css('border-width')) > 0 && td.css('borderStyle') !== 'none') {
                         borderInside = true;
                     }
-                    delete td.styleMap.margin;
-                    td.css({
-                        marginTop: height,
-                        marginRight: width,
-                        marginBottom: height,
-                        marginLeft: width
-                    });
                 });
                 if (columnIndex[i] < columnCount) {
                     const td = tr.children[tr.children.length - 1];

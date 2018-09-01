@@ -507,7 +507,7 @@ export default class View extends Node {
                 vertical = 'center_vertical';
             }
         }
-        if (!this.floating || this.is(NODE_STANDARD.TEXT) || tableParent) {
+        if (textAlign === '' && (!this.floating || this.is(NODE_STANDARD.TEXT) || tableParent)) {
             textAlignParent = cssInherit(this.element, 'textAlign');
         }
         if (tableParent) {
@@ -732,7 +732,7 @@ export default class View extends Node {
                 }
             }
             else {
-                if (this.hasElement && this.element.tagName !== 'TABLE' && !this.is(NODE_STANDARD.LINE) && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                if (this.hasElement && !this.is(NODE_STANDARD.LINE) && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                     if (viewWidth > 0 && convertInt(this.cssOriginal('width')) > 0) {
                         this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + (renderParent.element.tagName !== 'TABLE' ? this.borderLeftWidth + this.borderRightWidth : 0)));
                     }
