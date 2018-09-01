@@ -325,6 +325,19 @@ export default abstract class Node implements BoxModel {
         return this.originalStyleMap[attr] || (complete ? this.css(attr) : '');
     }
 
+    public cssParent(attr: string, includeChild = false) {
+        let result = '';
+        let current = (includeChild ? this : getNodeFromElement(this.element.parentElement));
+        while (current != null) {
+            result = current.styleMap[attr] || '';
+            if (current.documentBody || result) {
+                break;
+            }
+            current = getNodeFromElement(current.element.parentElement);
+        }
+        return result;
+    }
+
     public has(attr: string) {
         return this.isSet('styleMap', attr);
     }
@@ -855,6 +868,10 @@ export default abstract class Node implements BoxModel {
             element = element.nextSibling;
         }
         return null;
+    }
+
+    get singleChild() {
+        return (this.rendered ? (this.renderParent.renderChildren.length === 1) : (this.parent.children.length === 1));
     }
 
     get firstElement(): Null<HTMLElement> {

@@ -117,18 +117,18 @@ export function parseBackgroundUrl(value: string) {
     return '';
 }
 
-export function cssInherit(element: HTMLElement, attr: string, exclude?: string[]) {
+export function cssInherit(element: Element, attr: string, exclude?: string[]) {
     let result = '';
-    let parent = element.parentElement;
-    while (parent != null) {
-        result = getStyle(parent)[attr] || '';
+    let current: Null<Element> = element.parentElement;
+    while (current != null) {
+        result = getStyle(current)[attr] || '';
         if (exclude && exclude.some(value => result.indexOf(value) !== -1)) {
             result = '';
         }
-        if (parent === document.body || result) {
+        if (current === document.body || result) {
             break;
         }
-        parent = parent.parentElement;
+        current = current.parentElement;
     }
     return result;
 }

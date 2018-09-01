@@ -6,7 +6,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertInt, formatPX, hasBit, isNumber, optional, sortAsc, trim } from '../lib/util';
 import { getPlaceholder, modifyIndent, replacePlaceholder } from '../lib/xml';
-import { cssInherit, cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
+import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
@@ -297,7 +297,7 @@ export default class Application<T extends Node> {
                 }
                 if (node.children.some((current: T) => {
                         if (current.pageflow) {
-                            return (current.float !== 'right' && !['center', 'right', 'end'].includes(cssInherit(current.element, 'textAlign')) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)));
+                            return (current.float !== 'right' && !['center', 'right', 'end'].includes(current.cssParent('textAlign', true)) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)));
                         }
                         else {
                             const left = current.toInt('left');

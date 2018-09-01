@@ -3,7 +3,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { cssInherit, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
+import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -403,21 +403,25 @@ export default class View extends Node {
     }
 
     public setAlignment() {
+        const renderParent = this.renderParent;
+        const obj = (this.renderParent.is(NODE_STANDARD.GRID) ? 'app' : 'android');
         const left = parseRTL('left');
         const right = parseRTL('right');
-        const obj = (this.renderParent.is(NODE_STANDARD.GRID) ? 'app' : 'android');
-        function mergeGravity(alignment: string[]) {
-            alignment = alignment.filter(value => value);
-            switch (alignment.length) {
+        let textAlign = this.styleMap.textAlign || '';
+        let verticalAlign = '';
+        function mergeGravity(original?: Null<string>, ...alignment: string[]) {
+            const direction = [...(original || '').split('|'), ...alignment].filter(value => value);
+            switch (direction.length) {
                 case 0:
                     return '';
                 case 1:
-                    return alignment[0];
+                    return direction[0];
                 default:
                     let x = '';
                     let y = '';
-                    for (let i = 0; i < alignment.length; i++) {
-                        const value = alignment[i];
+                    let z = '';
+                    for (let i = 0; i < direction.length; i++) {
+                        const value = direction[i];
                         switch (value) {
                             case 'center':
                                 x = 'center_horizontal';
@@ -435,9 +439,14 @@ export default class View extends Node {
                             case 'center_vertical':
                                 y = value;
                                 break;
+                            default:
+                                z += (z !== '' ? '|' : '') + value;
+                                break;
                         }
                     }
-                    return [x, y].filter(value => value).filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : alignment.join('|');
+                    const gravity = [x, y].filter(value => value);
+                    const merged = (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
+                    return (merged !== '' ? (z !== '' ? `${merged}|${z}` : merged) : z);
             }
         }
         function setAutoMargin(node: T) {
@@ -455,7 +464,7 @@ export default class View extends Node {
                 alignment.push('bottom');
             }
             if (alignment.length > 0) {
-                node[obj]('layout_gravity', mergeGravity(alignment));
+                node[obj]('layout_gravity', mergeGravity(node[obj]('layout_gravity'), ...alignment));
                 return true;
             }
             return false;
@@ -474,85 +483,71 @@ export default class View extends Node {
                     return '';
             }
         }
-        const renderParent = this.renderParent;
-        const linearHorizontalParent = renderParent.linearHorizontal;
-        const frameParent = renderParent.is(NODE_STANDARD.FRAME);
-        const tableParent = (renderParent.element.tagName === 'TABLE');
-        let textAlign = this.styleMap.textAlign || '';
-        const verticalAlign = this.styleMap.verticalAlign;
-        let textAlignParent = '';
-        let vertical = '';
         if (!(this.floating || renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL))) {
-            switch (verticalAlign) {
+            switch (this.styleMap.verticalAlign) {
                 case 'top':
                 case 'text-top':
-                    vertical = 'top';
-                    if (linearHorizontalParent && this.inlineHeight) {
+                    verticalAlign = 'top';
+                    if (renderParent.linearHorizontal && this.inlineHeight) {
                         this.android('layout_height', 'match_parent');
                     }
                     break;
                 case 'middle':
                     if (this.documentParent.css('display') === 'table-cell' || this.documentParent.lineHeight > 0 || renderParent.of(NODE_STANDARD.LINEAR, NODE_ALIGNMENT.HORIZONTAL)) {
-                        vertical = 'center_vertical';
+                        verticalAlign = 'center_vertical';
                     }
                     break;
                 case 'bottom':
                 case 'text-bottom':
-                    vertical = 'bottom';
+                    verticalAlign = 'bottom';
                     break;
             }
         }
-        if (!vertical) {
-            if (this.lineHeight > 0 && !this.blockHeight) {
-                vertical = 'center_vertical';
-            }
-        }
-        if (textAlign === '' && (!this.floating || this.is(NODE_STANDARD.TEXT) || tableParent)) {
-            textAlignParent = cssInherit(this.element, 'textAlign');
-        }
-        if (tableParent) {
-            this[obj]('layout_gravity', 'fill');
-            if (!textAlign && !textAlignParent && this.element.tagName === 'TH') {
-                textAlign = 'center';
-            }
-            if (!vertical) {
-                vertical = 'center_vertical';
-            }
+        if (verticalAlign === '' && this.lineHeight > 0 && !this.blockHeight) {
+            verticalAlign = 'center_vertical';
         }
         if (renderParent.linearVertical) {
             if (this.float === 'right') {
-                this.android('layout_gravity', right);
+                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), right));
             }
             else {
                 setAutoMargin(this);
             }
         }
-        const floatRight = ((this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED) || this.linearHorizontal) && this.renderChildren.some(node => node.float === 'right'));
-        const singleChild = (renderParent.renderChildren.length === 1);
-        if (frameParent && !setAutoMargin(this) && (this.float === 'right' || floatRight)) {
-            (singleChild && !floatRight ? renderParent : this).android('layout_gravity', right);
-        }
-        const horizontalParent = convertHorizontal(textAlignParent);
-        let horizontal = (floatRight ? right : convertHorizontal(textAlign));
-        if (this.nodeType <= NODE_STANDARD.IMAGE) {
-            const image = this.is(NODE_STANDARD.IMAGE);
-            let fromParent = false;
-            if (!horizontal && horizontalParent !== '') {
-                horizontal = horizontalParent;
-                fromParent = !image;
+        const floating = ((this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED) || this.linearHorizontal) && this.renderChildren.some(node => node.float === 'right'));
+        if (renderParent.is(NODE_STANDARD.FRAME) && !setAutoMargin(this) && (this.float === 'right' || floating)) {
+            if (!floating && this.singleChild) {
+                renderParent.android('layout_gravity', mergeGravity(renderParent.android('layout_gravity'), right));
             }
-            if (horizontal !== '' && frameParent && (!fromParent || singleChild) && !this.floating && !this.autoMargin) {
-                this.android('layout_gravity', mergeGravity([horizontal, this.android('layout_gravity') || '']));
-            }
-            if (image && (this.baseline || linearHorizontalParent || renderParent.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL))) {
-                this.android('baselineAlignBottom', 'true');
+            else {
+                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), right));
             }
         }
-        if (linearHorizontalParent && vertical !== '') {
-            this.android('layout_gravity', vertical);
-            vertical = '';
+        if (renderParent.element.tagName === 'TABLE') {
+            this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), 'fill'));
+            if (textAlign === '' && this.element.tagName === 'TH') {
+                textAlign = 'center';
+            }
+            if (verticalAlign === '') {
+                verticalAlign = 'center_vertical';
+            }
         }
-        this.android('gravity', mergeGravity([horizontal, vertical]));
+        if (!this.floating && !this.autoMargin) {
+            const alignParent = this.cssParent('textAlign');
+            if (alignParent !== '' && parseRTL(alignParent) !== left) {
+                if ((renderParent.is(NODE_STANDARD.FRAME) && this.singleChild) || renderParent.linearVertical || renderParent.is(NODE_STANDARD.GRID)) {
+                    this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), convertHorizontal(alignParent)));
+                    if (this.viewWidth > 0 && textAlign === '') {
+                        textAlign = alignParent;
+                    }
+                }
+            }
+        }
+        if (verticalAlign !== '' && renderParent.linearHorizontal) {
+            this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), verticalAlign));
+            verticalAlign = '';
+        }
+        this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
     }
 
     public mergeBoxSpacing() {
@@ -734,7 +729,7 @@ export default class View extends Node {
             else {
                 if (this.hasElement && !this.is(NODE_STANDARD.LINE) && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                     if (viewWidth > 0 && convertInt(this.cssOriginal('width')) > 0) {
-                        this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + (renderParent.element.tagName !== 'TABLE' ? this.borderLeftWidth + this.borderRightWidth : 0)));
+                        this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + (renderParent.element.tagName !== 'TABLE' && this.element.tagName !== 'TABLE' ? this.borderLeftWidth + this.borderRightWidth : 0)));
                     }
                     if (!this.inlineElement || this.inlineText) {
                         if (this.borderLeftWidth > 0) {
@@ -747,7 +742,7 @@ export default class View extends Node {
                     const lineHeight = this.lineHeight;
                     if (lineHeight === 0 || lineHeight < this.box.height || lineHeight === this.toInt('height')) {
                         if (viewHeight > 0 && convertInt(this.cssOriginal('height')) > 0) {
-                            this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + (renderParent.element.tagName !== 'TABLE' ? this.borderTopWidth + this.borderBottomWidth : 0)));
+                            this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + (renderParent.element.tagName !== 'TABLE' && this.element.tagName !== 'TABLE' ? this.borderTopWidth + this.borderBottomWidth : 0)));
                         }
                         if (!this.inlineElement || this.inlineText) {
                             if (this.borderTopWidth > 0) {
@@ -797,6 +792,9 @@ export default class View extends Node {
             if (this.is(NODE_STANDARD.TEXT) && this.css('whiteSpace') === 'nowrap') {
                 this.android('singleLine', 'true');
             }
+        }
+        if (this.is(NODE_STANDARD.IMAGE) && (this.baseline || renderParent.linearHorizontal || renderParent.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL))) {
+            this.android('baselineAlignBottom', 'true');
         }
         if (this.css('display') === 'none') {
             this.android('visibility', 'gone');

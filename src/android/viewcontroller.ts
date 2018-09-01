@@ -7,7 +7,7 @@ import ViewGroup from './viewgroup';
 import { capitalize, convertInt, convertPX, formatPX, hasValue, indexOf, isPercent, optional, repeat, same, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
-import { cssInherit, hasLineBreak, isLineBreak } from '../lib/dom';
+import { hasLineBreak, isLineBreak } from '../lib/dom';
 import { getPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 import { AXIS_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
@@ -1057,7 +1057,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         }
                                     }
                                     else if (left) {
-                                        if (current.is(NODE_STANDARD.TEXT) && cssInherit(current.element, 'textAlign') === 'center') {
+                                        if (current.is(NODE_STANDARD.TEXT) && current.cssParent('textAlign', true) === 'center') {
                                             current.anchor(mapLayout['right'], 'parent');
                                         }
                                         if ((current.inlineText || current.plainText) && current.viewWidth === 0 && current.toInt('maxWidth') === 0 && current.multiLine && !hasLineBreak(current.element) && !nodes.list.some(item => mapView(item, 'rightLeft') === current.stringId)) {
