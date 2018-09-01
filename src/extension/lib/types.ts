@@ -1,5 +1,5 @@
 import Node from '../../base/node';
-import { BoxRect, Inheritable, LayoutMap, ObjectMap } from '../../lib/types';
+import { BoxRect, Inheritable, LayoutMapX, LayoutMapY, ObjectMap } from '../../lib/types';
 
 type T = Node;
 
@@ -22,8 +22,8 @@ export interface IExtension {
     init(element: HTMLElement): boolean;
     afterInit(internal?: boolean): void;
     condition(): void;
-    processNode(mapX?: LayoutMap<T>, mapY?: LayoutMap<T>): ExtensionResult;
-    processChild(mapX?: LayoutMap<T>, mapY?: LayoutMap<T>): ExtensionResult;
+    processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
+    processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
     afterRender(): void;
     beforeInsert(): void;
     afterInsert(): void;

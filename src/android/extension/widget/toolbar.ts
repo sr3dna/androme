@@ -178,6 +178,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             appBarNode.each(item => item.dataset.target = (appBarNode as T).nodeId);
             this.application.cache.append(appBarNode);
             outer = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
+            appBarNode.rendered = true;
             if (collapsingToolbar) {
                 depth++;
                 overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
@@ -191,6 +192,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
                 this.application.cache.append(collapsingToolbarNode);
                 const content = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true);
+                collapsingToolbarNode.rendered = true;
                 outer = replacePlaceholder(outer, appBarNode.id, content);
             }
         }

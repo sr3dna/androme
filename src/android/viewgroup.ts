@@ -22,12 +22,12 @@ export default class ViewGroup<T extends View> extends View {
         }
         if (children != null) {
             this.children = children;
-            this.lateInit();
+            this.init();
         }
     }
 
-    public lateInit() {
-        super.lateInit();
+    public init() {
+        super.init();
         const node = this.baseNode;
         this.children.forEach(item => item.parent = this);
         this.documentParent = node.documentParent;
@@ -43,7 +43,6 @@ export default class ViewGroup<T extends View> extends View {
             this.tagName = `${node.tagName}_GROUP`;
             this.setBounds();
         }
-        this.setNodeId(this.tagName);
         if (this.element == null) {
             node.hide();
         }

@@ -208,7 +208,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 current.android(relativeParent['left'], 'true');
                                 rowWidth = dimension.width;
                                 if (SETTINGS.ellipsisOnTextOverflow && previous != null) {
-                                    previous.android('singleLine', 'true');
+                                    let lastChild = previous;
+                                    if (previous.linearHorizontal) {
+                                        lastChild = previous.children[previous.children.length - 1] as T;
+                                    }
+                                    if (lastChild.plainText || lastChild.inlineText) {
+                                        lastChild.android('singleLine', 'true');
+                                    }
                                 }
                                 if (rowPaddingLeft > 0) {
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, current.paddingLeft + rowPaddingLeft);
@@ -1529,7 +1535,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             const group: ObjectMap<T[]> = groups[tagName];
             let name = dimen;
             if (arguments.length === 5) {
-                if (value && /(px|dp|sp)$/.test(value)) {
+                if (value != null && /(px|dp|sp)$/.test(value)) {
                     name = `${dimen},${attr},${value}`;
                 }
                 else {
@@ -1550,7 +1556,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     groups[tagName] = {};
                 }
                 for (const key of Object.keys(BOX_STANDARD)) {
-                    const result = node.boxValue(parseInt(key));
+                    const result = node.boxValue(key);
                     if (result[0] !== '' && result[1] !== '0px') {
                         const name = `${BOX_STANDARD[key].toLowerCase()},${result[0]},${result[1]}`;
                         addToGroup(tagName, node, name);

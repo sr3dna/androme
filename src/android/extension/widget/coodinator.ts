@@ -37,9 +37,10 @@ export default class Coordinator<T extends View> extends Extension<T> {
     }
 
     public afterInsert() {
-        if (this.node.documentRoot) {
-            this.node.android('layout_width', 'match_parent');
-            this.node.android('layout_height', 'match_parent');
+        const node = this.node;
+        if (node.documentRoot) {
+            node.android('layout_width', 'match_parent');
+            node.android('layout_height', 'match_parent');
         }
     }
 }

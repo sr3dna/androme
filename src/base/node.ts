@@ -45,7 +45,7 @@ export default abstract class Node implements BoxModel {
     private _renderDepth: number;
     private _pageflow: boolean;
     private _multiLine: boolean;
-    private _initalized = false;
+    private _initialized = false;
     private _data: ObjectMap<any> = {};
 
     constructor(
@@ -54,7 +54,7 @@ export default abstract class Node implements BoxModel {
     {
         if (element != null) {
             this._element = element;
-            this.lateInit();
+            this.init();
         }
     }
 
@@ -66,7 +66,7 @@ export default abstract class Node implements BoxModel {
     public abstract applyOptimizations(options: ObjectMap<any>): void;
     public abstract modifyBox(area: number, offset: number, bounds?: boolean): void;
     public abstract boxValue(area: number): string[];
-    public abstract clone(): T;
+    public abstract clone(id?: number, children?: boolean): T;
 
     public abstract set documentParent(value: T);
     public abstract get documentParent(): T;
@@ -75,8 +75,8 @@ export default abstract class Node implements BoxModel {
     public abstract get linearHorizontal(): boolean;
     public abstract get linearVertical(): boolean;
 
-    public lateInit() {
-        if (!this._initalized) {
+    public init() {
+        if (!this._initialized) {
             const element = this._element;
             if (element instanceof HTMLElement) {
                 const styleMap = getElementCache(element, 'styleMap') || {};
@@ -88,7 +88,7 @@ export default abstract class Node implements BoxModel {
                 this.originalStyleMap = Object.assign({}, styleMap);
             }
             setElementCache(element, 'node', this);
-            this._initalized = true;
+            this._initialized = true;
         }
     }
 

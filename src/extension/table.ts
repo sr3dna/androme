@@ -53,6 +53,7 @@ export default class Table<T extends Node> extends Extension<T> {
             const collapse = (node.css('borderCollapse') === 'collapse');
             const [width, height] = (collapse ? ['0px', '0px'] : node.css('borderSpacing').split(' '));
             let borderInside = false;
+            node.children.length = 0;
             for (let i = 0; i < table.length; i++) {
                 const tr = table[i];
                 tr.each(td => {

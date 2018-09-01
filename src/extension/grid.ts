@@ -1,4 +1,4 @@
-import { LayoutMap, ObjectIndex } from '../lib/types';
+import { LayoutMapX, ObjectIndex } from '../lib/types';
 import { ExtensionResult } from './lib/types';
 import { GridCellData, GridData } from './lib/types';
 import Extension from '../base/extension';
@@ -7,6 +7,7 @@ import NodeList from '../base/nodelist';
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { BLOCK_ELEMENT, NODE_ALIGNMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
+import { getNodeFromElement } from '../lib/dom';
 
 export default class Grid<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -21,7 +22,7 @@ export default class Grid<T extends Node> extends Extension<T> {
         );
     }
 
-    public processNode(mapX: LayoutMap<T>, mapY: LayoutMap<T>): ExtensionResult {
+    public processNode(mapX: LayoutMapX<T>): ExtensionResult {
         let xml = '';
         const parent = this.parent;
         if (parent) {
@@ -210,6 +211,7 @@ export default class Grid<T extends Node> extends Extension<T> {
             if (columns.length > 1) {
                 gridData.columnCount = (balanceColumns ? columns[0].length : columns.length);
                 xml = this.application.writeGridLayout(node, parent, gridData.columnCount);
+                node.children.length = 0;
                 for (let l = 0, count = 0; l < columns.length; l++) {
                     let spacer = 0;
                     for (let m = 0, start = 0; m < columns[l].length; m++) {
@@ -273,6 +275,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                         }
                     }
                 }
+                sortAsc(node.children, 'documentParent.siblingIndex', 'siblingIndex');
                 node.data(EXT_NAME.GRID, 'gridData', gridData);
                 node.render(parent);
             }
@@ -294,7 +297,10 @@ export default class Grid<T extends Node> extends Extension<T> {
                 }
                 else {
                     const columnEnd = gridData.columnEnd[Math.min(gridCellData.index + (gridCellData.columnSpan - 1), gridData.columnEnd.length - 1)];
-                    siblings = node.documentParent.children.filter(item => !item.rendered && item.linear.left >= node.linear.right && item.linear.right <= columnEnd) as T[];
+                    siblings = Array.from(node.documentParent.element.children).map(element => {
+                        const item = getNodeFromElement(element);
+                        return (item && !item.rendered && item.linear.left >= node.linear.right && item.linear.right <= columnEnd ? item : null);
+                    }).filter(item => item) as T[];
                 }
                 if (siblings && siblings.length > 0) {
                     siblings.unshift(node);

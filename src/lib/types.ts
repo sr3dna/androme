@@ -88,10 +88,12 @@ export interface ViewData<T> {
     includes: PlainFile[];
 }
 
-export interface LayoutMap<T> {
+export interface LayoutMapX<T> {
     [key: number]: ObjectIndex<T[]>;
     length: number;
 }
+
+export type LayoutMapY<T> = Map<number, Map<number, T>>;
 
 export interface ResourceMap {
     STRINGS: Map<string, string>;

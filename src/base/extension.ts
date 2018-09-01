@@ -1,4 +1,4 @@
-import { LayoutMap, ObjectMap, StringMap } from '../lib/types';
+import { LayoutMapX, LayoutMapY, ObjectMap, StringMap } from '../lib/types';
 import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
 import Application from './application';
 import Node from './node';
@@ -89,11 +89,11 @@ export default abstract class Extension<T extends Node> implements IExtension {
         return false;
     }
 
-    public processNode(mapX?: LayoutMap<T>, mapY?: LayoutMap<T>): ExtensionResult {
+    public processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult {
         return { xml: '' };
     }
 
-    public processChild(mapX?: LayoutMap<T>, mapY?: LayoutMap<T>): ExtensionResult {
+    public processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult {
         return { xml: '' };
     }
 

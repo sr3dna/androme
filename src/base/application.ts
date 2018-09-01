@@ -1,4 +1,4 @@
-import { LayoutMap, Null, ObjectIndex, ObjectMap, PlainFile, ViewData } from '../lib/types';
+import { LayoutMapX, LayoutMapY, Null, ObjectIndex, ObjectMap, PlainFile, ViewData } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import Controller from './controller';
 import Resource from './resource';
@@ -99,9 +99,9 @@ export default class Application<T extends Node> {
         this.resetController();
         this.resetResource();
         this.appName = '';
+        this.lateInsert = {};
         this._views = [];
         this._includes = [];
-        this.lateInsert = {};
         this._sorted = {};
         this._currentIndex = -1;
         this.closed = false;
@@ -212,21 +212,22 @@ export default class Application<T extends Node> {
         }
     }
 
-    public createNodeCache(root: HTMLElement) {
+    public createNodeCache(rootElement: HTMLElement) {
         let nodeTotal = 0;
-        if (root === document.body) {
+        if (rootElement === document.body) {
             Array.from(document.body.childNodes).some((item: Element) => (isElementVisible(item) && ++nodeTotal > 1));
         }
-        const elements = (root !== document.body ? root.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
+        const elements = (rootElement !== document.body ? rootElement.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         this.cache.parent = undefined;
+        this.cache.delegateAppend = undefined;
         this.cache.clear();
         for (const ext of this.extensions) {
-            ext.setTarget(<T> {}, undefined, root);
+            ext.setTarget(<T> {}, undefined, rootElement);
             ext.beforeInit();
         }
-        const rootNode = this.insertNode(root);
+        const rootNode = this.insertNode(rootElement);
         if (rootNode) {
-            rootNode.parent = new this._Node(0, SETTINGS.targetAPI, root.parentElement || document.body);
+            rootNode.parent = new this._Node(0, SETTINGS.targetAPI, rootElement.parentElement || document.body);
             rootNode.documentRoot = true;
             this.cache.parent = rootNode;
         }
@@ -249,10 +250,10 @@ export default class Application<T extends Node> {
                     let valid = true;
                     let current = element.parentElement;
                     while (current != null) {
-                        if (current === root) {
+                        if (current === rootElement) {
                             break;
                         }
-                        else if (current !== root && this.elements.has(current)) {
+                        else if (current !== rootElement && this.elements.has(current)) {
                             valid = false;
                             break;
                         }
@@ -490,39 +491,46 @@ export default class Application<T extends Node> {
                 });
                 sortAsc(node.children, 'siblingIndex');
             }
-            this.cache.sortAsc('depth', 'parent.id', 'siblingIndex', 'id');
-            this.createLayout(<string> root.dataset.viewName);
+            this.cache.sortAsc('depth', 'parent.siblingIndex', 'siblingIndex', 'id');
+            this.createLayout(<string> rootElement.dataset.viewName);
             return true;
         }
         return false;
     }
 
     public createLayoutXml() {
-        const mapX: LayoutMap<T> = [];
-        const mapY: LayoutMap<T> = [];
+        const application = this;
+        const mapX: LayoutMapX<T> = [];
+        const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
         let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
         let empty = true;
+        function setMapY(depth: number, id: number, node: T) {
+            if (!mapY.has(depth)) {
+                mapY.set(depth, new Map<number, T>());
+            }
+            const indexY = mapY.get(depth);
+            if (indexY != null) {
+                indexY.set(id, node);
+            }
+        }
+        if (this.cache.parent != null) {
+            setMapY(-1, 0, <T> this.cache.parent.parent);
+        }
         for (const node of this.cache.visible) {
             const x = Math.floor(node.linear.left);
-            const y = node.parent.id;
             if (mapX[node.depth] == null) {
                 mapX[node.depth] = {};
-            }
-            if (mapY[node.depth] == null) {
-                mapY[node.depth] = {};
             }
             if (mapX[node.depth][x] == null) {
                 mapX[node.depth][x] = [];
             }
-            if (mapY[node.depth][y] == null) {
-                mapY[node.depth][y] = [];
-            }
             mapX[node.depth][x].push(node);
-            mapY[node.depth][y].push(node);
+            setMapY(node.depth, node.id, node);
         }
-        const application = this;
-        for (let i = 0; i < mapY.length; i++) {
-            const coordsY = Object.keys(mapY[i]);
+        this.cache.delegateAppend = (nodes: T[]) => {
+            nodes.forEach(node => setMapY(-2, node.id, node));
+        };
+        for (const indexId of mapY.values()) {
             const partial = new Map<string, Map<number, string>>();
             const external = new Map<string, Map<number, string>>();
             function insertViewTemplate(data: Map<string, Map<number, string>>, item: T, parentId: string, value: string, current: string) {
@@ -577,12 +585,15 @@ export default class Application<T extends Node> {
                     }
                 }
             }
-            for (let j = 0; j < coordsY.length; j++) {
+            for (const parentNode of indexId.values()) {
+                if (parentNode.children.length === 0) {
+                    continue;
+                }
                 const axisY: T[] = [];
                 const below: T[] = [];
                 const middle: T[] = [];
                 const above: T[] = [];
-                for (const node of mapY[i][coordsY[j]] as T[]) {
+                for (const node of parentNode.children as T[]) {
                     if (node.documentRoot) {
                         axisY.push(node);
                     }
@@ -598,7 +609,7 @@ export default class Application<T extends Node> {
                         }
                     }
                 }
-                this.sortByAlignment(middle, this.cache.locate('id', parseInt(coordsY[j])));
+                this.sortByAlignment(middle, parentNode);
                 axisY.push(...sortAsc(below, 'style.zIndex', 'siblingIndex'));
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'siblingIndex'));
@@ -1171,8 +1182,8 @@ export default class Application<T extends Node> {
                     children.push(subgroup);
                 }
                 group.children = children;
-                group.lateInit();
                 group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                group.init();
                 xml += this.writeFrameLayout(group, parent, true);
                 children.forEach((item, index) => {
                     item.parent = group;
@@ -1307,43 +1318,46 @@ export default class Application<T extends Node> {
                 }
             }
         }
-        if (includesEnum(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
-            if (children.some(node => node.floating)) {
-                children.sort((a, b) => {
-                    if (a.floating && !b.floating) {
-                        return (a.float === 'left' ? -1 : 1);
-                    }
-                    else if (!a.floating && b.floating) {
-                        return (b.float === 'left' ? 1 : -1);
-                    }
-                    else if (a.floating && b.floating) {
-                        if (a.float !== b.float) {
+        if (!sorted) {
+            if (includesEnum(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
+                if (children.some(node => node.floating)) {
+                    children.sort((a, b) => {
+                        if (a.floating && !b.floating) {
                             return (a.float === 'left' ? -1 : 1);
                         }
-                    }
-                    return (a.linear.left <= b.linear.left ? -1 : 1);
-                });
-                sorted = true;
+                        else if (!a.floating && b.floating) {
+                            return (b.float === 'left' ? 1 : -1);
+                        }
+                        else if (a.floating && b.floating) {
+                            if (a.float !== b.float) {
+                                return (a.float === 'left' ? -1 : 1);
+                            }
+                        }
+                        return (a.linear.left <= b.linear.left ? -1 : 1);
+                    });
+                    sorted = true;
+                }
+            }
+            if (includesEnum(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
+                if (children.some(node => node.toInt('zIndex') !== 0)) {
+                    children.sort((a, b) => {
+                        const indexA = a.css('zIndex');
+                        const indexB = b.css('zIndex');
+                        if ((indexA === 'auto' || indexA === '' || indexA === '0') && (indexB === 'auto' || indexB === '' || indexB === '0')) {
+                            return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                        }
+                        else {
+                            return (convertInt(indexA) <= convertInt(indexB) ? -1 : 1);
+                        }
+                    });
+                    sorted = true;
+                }
             }
         }
-        if (includesEnum(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
-            if (children.some(node => node.toInt('zIndex') !== 0)) {
-                children.sort((a, b) => {
-                    const indexA = a.css('zIndex');
-                    const indexB = b.css('zIndex');
-                    if ((indexA === 'auto' || indexA === '' || indexA === '0') && (indexB === 'auto' || indexB === '' || indexB === '0')) {
-                        return (a.siblingIndex < b.siblingIndex ? -1 : 1);
-                    }
-                    else {
-                        return (convertInt(indexA) <= convertInt(indexB) ? -1 : 1);
-                    }
-                });
-                sorted = true;
-            }
-        }
-        if (preserve && sorted && parent != null) {
+        if (parent && preserve && sorted) {
             this.preserveSortOrder(parent.id, children);
         }
+        return children;
     }
 
     public preserveSortOrder<T extends Node>(id: string | number, nodes: T[]) {

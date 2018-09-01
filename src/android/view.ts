@@ -126,8 +126,8 @@ export default class View extends Node {
         }
     }
 
-    public boxValue(area: number) {
-        const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
+    public boxValue(area: string | number) {
+        const value = convertEnum(BOX_STANDARD, BOX_ANDROID, parseInt(<string> area));
         if (value !== '') {
             const dimen = parseRTL(value);
             return [dimen, this.android(dimen) || '0px'];
@@ -192,7 +192,7 @@ export default class View extends Node {
         });
     }
 
-    public clone(id?: number): T {
+    public clone(id?: number, children = false): T {
         const node = new View(id || this.id, this.api, this.element);
         node.nodeId = this.nodeId;
         node.nodeType = this.nodeType;
@@ -206,7 +206,9 @@ export default class View extends Node {
         node.visible = this.visible;
         node.documentRoot = this.documentRoot;
         node.documentParent = this.documentParent;
-        node.children = this.children.slice();
+        if (children) {
+            node.children = this.children.slice();
+        }
         node.inherit(this, 'base', 'style', 'styleMap');
         return node;
     }
@@ -222,7 +224,7 @@ export default class View extends Node {
         if (this.nodeId == null) {
             const element = <HTMLInputElement> this.element;
             let name = (element.id || element.name || '').trim();
-            if (name && RESERVED_JAVA.includes(name)) {
+            if (RESERVED_JAVA.includes(name)) {
                 name += '_1';
             }
             this.nodeId = convertWord(generateId('android', (name || `${lastIndexOf(this.nodeName, '.').toLowerCase()}_1`)));

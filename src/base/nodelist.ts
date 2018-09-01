@@ -123,6 +123,8 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         }
     }
 
+    public delegateAppend?: (nodes: T[]) => void;
+
     private _currentId = 0;
     private _list: T[] = [];
 
@@ -164,6 +166,9 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     public append(...nodes: T[]) {
         this._list.push(...nodes);
+        if (this.delegateAppend != null) {
+            this.delegateAppend.call(this, nodes);
+        }
     }
 
     public prepend(...nodes: T[]) {
