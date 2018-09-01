@@ -4,7 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertPX, hasValue, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, sameAsParent, setElementCache } from '../lib/dom';
+import { getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, cssFromParent, setElementCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -126,7 +126,7 @@ export default abstract class Resource<T extends Node> {
                         result[i] = '';
                     }
                 }
-                if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (!node.has('backgroundColor') && node.documentParent.visible && sameAsParent(node.element, 'backgroundColor')))) {
+                if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (!node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
                     result.backgroundColor = [];
                 }
                 const borderTop = JSON.stringify(result.borderTop);
@@ -150,7 +150,7 @@ export default abstract class Resource<T extends Node> {
                         color.length = 0;
                     }
                     const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && sameAsParent(node.element, 'backgroundColor')))) {
+                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
                         backgroundColor.length = 0;
                     }
                     let fontWeight = node.css('fontWeight');

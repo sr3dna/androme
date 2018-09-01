@@ -3,7 +3,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, isPercent, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId } from './lib/util';
-import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
+import { cssInherit, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -109,28 +109,28 @@ export default class View extends Node {
     }
 
     public modifyBox(area: number, offset: number, bounds = false) {
-        const value = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
-        if (value !== '') {
-            const dimension = parseRTL(value);
-            const total = formatPX(offset);
-            if (total !== '0px') {
-                this.android(dimension, total);
+        const key = convertEnum(BOX_STANDARD, BOX_ANDROID, area);
+        if (key !== '') {
+            const attr = parseRTL(key);
+            const dimension = formatPX(offset);
+            if (dimension !== '0px') {
+                this.android(attr, dimension);
             }
             else {
-                this.delete('android', dimension);
+                this.delete('android', attr);
             }
-            this.css(value.replace('layout_', ''), total);
+            this.css(key.replace('layout_', ''), dimension);
             if (bounds) {
                 this.setBounds(true);
             }
         }
     }
 
-    public boxValue(area: string | number) {
-        const value = convertEnum(BOX_STANDARD, BOX_ANDROID, parseInt(<string> area));
-        if (value !== '') {
-            const dimen = parseRTL(value);
-            return [dimen, this.android(dimen) || '0px'];
+    public valueBox(area: string | number) {
+        const key = convertEnum(BOX_STANDARD, BOX_ANDROID, parseInt(<string> area));
+        if (key !== '') {
+            const attr = parseRTL(key);
+            return [attr, this.android(attr) || '0px'];
         }
         return ['', '0px'];
     }
@@ -508,7 +508,7 @@ export default class View extends Node {
             }
         }
         if (!this.floating || this.is(NODE_STANDARD.TEXT) || tableParent) {
-            textAlignParent = this.inheritCss('textAlign');
+            textAlignParent = cssInherit(this.element, 'textAlign');
         }
         if (tableParent) {
             this[obj]('layout_gravity', 'fill');

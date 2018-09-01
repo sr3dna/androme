@@ -6,7 +6,7 @@ import NodeList from '../base/nodelist';
 import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, trim } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
-import { cssParent, getElementCache, parseBackgroundUrl, sameAsParent, setElementCache } from '../lib/dom';
+import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
 import { getColorNearest, parseHex, parseRGBA } from '../lib/color';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
@@ -356,7 +356,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 });
                 const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
-                if (companion && !sameAsParent(companion.element, 'backgroundColor')) {
+                if (companion && !cssFromParent(companion.element, 'backgroundColor')) {
                      const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
                      if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
                         stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);

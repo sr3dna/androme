@@ -3,7 +3,7 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import { convertInt, isPercent } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
-import { getStyle } from '../lib/dom';
+import { cssInherit, getStyle } from '../lib/dom';
 
 export default class Table<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -40,11 +40,24 @@ export default class Table<T extends Node> extends Extension<T> {
             for (let i = 0; i < table.length; i++) {
                 const tr = table[i];
                 for (let j = 0; j < tr.children.length; j++) {
+                    const td = tr.children[j];
                     const element = <HTMLTableCellElement> tr.children[j].element;
                     for (let k = 0; k < element.rowSpan - 1; k++)  {
                         const l = (i + 1) + k;
                         if (columnIndex[l] != null) {
                             columnIndex[l] += element.colSpan;
+                        }
+                    }
+                    if (!td.has('background')) {
+                        if (colgroup != null) {
+                            const style = getStyle(colgroup.children[columnIndex[i]]);
+                            td.element.style.background = <string> style.background;
+                        }
+                        else {
+                            const value = cssInherit(td.element, 'background', ['rgba(0, 0, 0, 0)']);
+                            if (value !== '') {
+                                td.element.style.background = value;
+                            }
                         }
                     }
                     columnIndex[i] += element.colSpan;
@@ -58,7 +71,6 @@ export default class Table<T extends Node> extends Extension<T> {
             node.children.length = 0;
             for (let i = 0; i < table.length; i++) {
                 const tr = table[i];
-                let j = 0;
                 tr.each((td: T, index: number) => {
                     const element = <HTMLTableCellElement> td.element;
                     if (element.rowSpan > 1) {
@@ -73,15 +85,6 @@ export default class Table<T extends Node> extends Extension<T> {
                     if (convertInt(td.css('border-width')) > 0 && td.css('borderStyle') !== 'none') {
                         borderInside = true;
                     }
-                    if (!td.has('background')) {
-                        if (colgroup != null) {
-                            const style = getStyle(colgroup.children[j]);
-                            td.element.style.background = <string> style.background;
-                        }
-                        else {
-                            td.inheritCss('background');
-                        }
-                    }
                     delete td.styleMap.margin;
                     td.css({
                         marginTop: height,
@@ -89,7 +92,6 @@ export default class Table<T extends Node> extends Extension<T> {
                         marginBottom: height,
                         marginLeft: width
                     });
-                    j += element.colSpan;
                 });
                 if (columnIndex[i] < columnCount) {
                     const td = tr.children[tr.children.length - 1];

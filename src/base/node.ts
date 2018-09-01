@@ -65,7 +65,7 @@ export default abstract class Node implements BoxModel {
     public abstract applyCustomizations(overwrite: boolean): void;
     public abstract applyOptimizations(options: ObjectMap<any>): void;
     public abstract modifyBox(area: number, offset: number, bounds?: boolean): void;
-    public abstract boxValue(area: number): string[];
+    public abstract valueBox(area: number): string[];
     public abstract clone(id?: number, children?: boolean): T;
 
     public abstract set documentParent(value: T);
@@ -272,20 +272,6 @@ export default abstract class Node implements BoxModel {
                     break;
             }
         }
-    }
-
-    public inheritCss(attr: string) {
-        let result = '';
-        let parent = this.documentParent;
-        do {
-            result = parent.styleMap[attr] || '';
-            if (parent.id === 0 || result) {
-                break;
-            }
-            parent = parent.documentParent;
-        }
-        while (true);
-        return result;
     }
 
     public intersect(rect: ClientRect, dimension = 'linear') {

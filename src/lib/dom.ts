@@ -82,14 +82,6 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
     return <CSSStyleDeclaration> {};
 }
 
-export function sameAsParent(element: HTMLElement, attr: string) {
-    if (element && element.parentElement != null) {
-        const style = getStyle(element);
-        return (style && style[attr] === getStyle(element.parentElement)[attr]);
-    }
-    return false;
-}
-
 export function getBoxSpacing(element: HTMLElement, complete = false, merge = false) {
     const result: BoxModel = {};
     const node = getNodeFromElement(element);
@@ -125,6 +117,22 @@ export function parseBackgroundUrl(value: string) {
     return '';
 }
 
+export function cssInherit(element: HTMLElement, attr: string, exclude?: string[]) {
+    let result = '';
+    let parent = element.parentElement;
+    while (parent != null) {
+        result = getStyle(parent)[attr] || '';
+        if (exclude && exclude.some(value => result.indexOf(value) !== -1)) {
+            result = '';
+        }
+        if (parent === document.body || result) {
+            break;
+        }
+        parent = parent.parentElement;
+    }
+    return result;
+}
+
 export function cssParent(element: HTMLElement, attr: string, ...styles: string[]) {
     if (element.nodeName.charAt(0) !== '#') {
         if (styles.includes(getStyle(element)[attr])) {
@@ -133,6 +141,15 @@ export function cssParent(element: HTMLElement, attr: string, ...styles: string[
     }
     if (element.parentElement != null) {
         return styles.includes(getStyle(element.parentElement)[attr]);
+    }
+    return false;
+}
+
+export function cssFromParent(element: HTMLElement, attr: string) {
+    if (element && element.parentElement != null) {
+        const node = getNodeFromElement(element);
+        const style = getStyle(element);
+        return (style && style[attr] === getStyle(element.parentElement)[attr] && (node == null || node.styleMap[attr] == null));
     }
     return false;
 }
@@ -162,6 +179,10 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
     return valid;
 }
 
+export function isPlainText(element: Null<Element>) {
+    return (element != null && element.nodeName === '#text' && (element.textContent || '').trim() !== '');
+}
+
 export function hasLineBreak(element: Null<Element>) {
     const node = getNodeFromElement(element);
     let whiteSpace = '';
@@ -174,10 +195,6 @@ export function hasLineBreak(element: Null<Element>) {
         whiteSpace = getStyle(<HTMLElement> element).whiteSpace || '';
     }
     return (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || (element != null && ((['pre', 'pre-wrap'].includes(whiteSpace) || (!styleMap && cssParent(<HTMLElement> element, 'whiteSpace', 'pre', 'pre-wrap'))) && /\n/.test(element.textContent || '')));
-}
-
-export function isPlainText(element: Null<Element>) {
-    return (element != null && element.nodeName === '#text' && (element.textContent || '').trim() !== '');
 }
 
 export function isLineBreak(element: Null<Element>, direction = 'previous', includeNode = true) {
