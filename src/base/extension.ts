@@ -8,7 +8,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public application: Application<T>;
     public node: T;
     public parent?: T;
-    public element?: HTMLElement;
+    public element?: Element;
     public options: ObjectMap<any> = {};
     public tagNames: string[] = [];
     public dependencies: ExtensionDependency[] = [];
@@ -27,10 +27,10 @@ export default abstract class Extension<T extends Node> implements IExtension {
         }
     }
 
-    public setTarget(node: T, parent?: T, element?: HTMLElement) {
+    public setTarget(node: T, parent?: T, element?: Element) {
         this.node = node;
         this.parent = parent;
-        this.element = (element == null && this.node != null ? this.node.element : element);
+        this.element = element || this.node.element;
     }
 
     public is(node: T) {
@@ -41,9 +41,9 @@ export default abstract class Extension<T extends Node> implements IExtension {
         this.dependencies.push({ name: value, init });
     }
 
-    public included(element?: HTMLElement) {
+    public included(element?: Element) {
         if (element == null) {
-            element = <HTMLElement> this.element;
+            element = <Element> this.element;
         }
         return includes(<string> optional(element, 'dataset.ext'), this.name);
     }
@@ -60,7 +60,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
         }
     }
 
-    public init(element: HTMLElement) {
+    public init(element: Element) {
         return false;
     }
 
@@ -115,7 +115,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
 
     public getData(): StringMap {
         const result = {};
-        if (this.element != null) {
+        if (this.element instanceof HTMLElement) {
             const prefix = convertCamelCase(this.name, '\\.');
             for (const attr in this.element.dataset) {
                 if (attr.length > prefix.length && attr.startsWith(prefix)) {

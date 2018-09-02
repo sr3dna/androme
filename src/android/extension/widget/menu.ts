@@ -4,7 +4,7 @@ import Nav from '../../../extension/nav';
 import ResourceView from '../../resource-view';
 import View from '../../view';
 import { optional } from '../../../lib/util';
-import { BLOCK_ELEMENT, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
 const VALIDATE_ITEM = {
@@ -68,14 +68,13 @@ export default class Menu<T extends View> extends Nav<T> {
                 node.hide();
                 return { xml, proceed: true };
             }
-            const element = node.element;
+            const element = <HTMLElement> node.element;
             const options: ObjectMap<StringMap> = { android: {}, app: {} };
-            const children = <HTMLElement[]> Array.from(node.element.children);
             let nodeName = VIEW_NAVIGATION.ITEM;
             let title = '';
             let layout = false;
-            if (children.some(item => BLOCK_ELEMENT.includes(item.tagName) && item.children.length > 0)) {
-                if (children.some(item => item.tagName === 'NAV')) {
+            if (node.children.some(item => (!item.inlineElement || !item.blockStatic) && item.children.length > 0)) {
+                if (node.children.some(item => item.element.tagName === 'NAV')) {
                     if (element.title !== '') {
                         title = element.title.trim();
                     }
@@ -120,7 +119,7 @@ export default class Menu<T extends View> extends Nav<T> {
                         options.android.checkable = 'true';
                     }
                 }
-                title = (element.title !== '' ? element.title : element.innerText).trim();
+                title = (element.title || element.innerText).trim();
             }
             switch (nodeName) {
                 case VIEW_NAVIGATION.ITEM:

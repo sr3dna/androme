@@ -62,14 +62,15 @@ export default class Table<T extends Node> extends Extension<T> {
                         }
                     }
                     if (!td.has('background')) {
+                        const item = <HTMLElement> td.element;
                         if (colgroup != null) {
                             const style = getStyle(colgroup.children[columnIndex[i]]);
-                            td.element.style.background = <string> style.background;
+                            item.style.background = <string> style.background;
                         }
                         else {
-                            const value = cssInherit(td.element, 'background', ['rgba(0, 0, 0, 0)']);
+                            const value = cssInherit(item, 'background', ['rgba(0, 0, 0, 0)']);
                             if (value !== '') {
-                                td.element.style.background = value;
+                                item.style.background = value;
                             }
                         }
                     }

@@ -10,7 +10,7 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
         this.require(EXT_NAME.EXTERNAL, true);
     }
 
-    public init(element: HTMLElement) {
+    public init(element: Element) {
         if (this.included(element)) {
             let valid = false;
             if (element.children.length > 0) {
@@ -33,7 +33,7 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
                         item.style.display = 'block';
                     }
                 });
-                this.application.elements.add(element);
+                this.application.elements.add(<HTMLElement> element);
             }
         }
         return false;

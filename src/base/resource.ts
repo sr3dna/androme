@@ -244,12 +244,12 @@ export default abstract class Resource<T extends Node> {
             return [value, true];
         }
         this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING)).each(node => {
-            const element = <HTMLInputElement> node.element;
+            const element = node.element;
             if (getElementCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
-                if (element.tagName === 'INPUT') {
+                if (element instanceof HTMLInputElement) {
                     switch (element.type) {
                         case 'text':
                         case 'number':
@@ -262,26 +262,28 @@ export default abstract class Resource<T extends Node> {
                             break;
                         default:
                             if (node.companion != null) {
-                                value = node.companion.element.innerText.trim();
+                                value = (<HTMLElement> node.companion.element).innerText.trim();
                             }
                             break;
                     }
                 }
-                else if (element.tagName === 'TEXTAREA') {
+                else if (element instanceof HTMLTextAreaElement) {
                     value = element.value.trim();
+                }
+                else if (element instanceof HTMLElement) {
+                    if (node.inlineText) {
+                        name = (element.innerText || element.textContent || '').trim();
+                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
+                        [value, inlineTrim] = parseWhiteSpace(node, value);
+                        value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
+                        value = value.replace(/\s+(class|style)=".*?"/g, '');
+                    }
                 }
                 else if (node.plainText) {
                     name = (element.textContent || '').trim();
                     value = replaceEntity(element.textContent || '');
                     value = value.replace(/&[A-Za-z]+;/g, (match => match.replace('&', '&amp;')));
                     [value, inlineTrim] = parseWhiteSpace(node, value);
-                }
-                else if (node.inlineText) {
-                    name = (element.innerText || element.textContent || '').trim();
-                    value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
-                    [value, inlineTrim] = parseWhiteSpace(node, value);
-                    value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
-                    value = value.replace(/\s+(class|style)=".*?"/g, '');
                 }
                 if (value !== '') {
                     const previousSibling = node.previousSibling;
@@ -291,7 +293,7 @@ export default abstract class Resource<T extends Node> {
                         value = value.replace(/^\s+/, '');
                     }
                     else {
-                        previousSpaceEnd = /\s+$/.test(<string> (previousSibling.element.innerText || previousSibling.element.textContent));
+                        previousSpaceEnd = /\s+$/.test(<string> ((<HTMLElement> previousSibling.element).innerText || previousSibling.element.textContent));
                     }
                     if (inlineTrim) {
                         const original = value;
@@ -305,7 +307,7 @@ export default abstract class Resource<T extends Node> {
                     }
                     else {
                         if (!/^\s+$/.test(value)) {
-                            value = value.replace(/^\s+/, (previousSibling && (previousSibling.block || (previousSibling.hasElement && previousSpaceEnd && previousSibling.element.innerText.length > 1) || (node.multiLine && (hasLineBreak(element) || node.renderParent.renderParent.linearHorizontal))) ? '' : '&#160;'));
+                            value = value.replace(/^\s+/, (previousSibling && (previousSibling.block || (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) || (node.multiLine && (hasLineBreak(element) || node.renderParent.renderParent.linearHorizontal))) ? '' : '&#160;'));
                             value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
                         }
                         else if (value.length > 0) {

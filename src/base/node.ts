@@ -39,7 +39,7 @@ export default abstract class Node implements BoxModel {
 
     protected abstract _namespaces: Set<string>;
 
-    private _element: HTMLElement;
+    private _element: Element;
     private _parent: T;
     private _tagName: string;
     private _renderDepth: number;
@@ -50,7 +50,7 @@ export default abstract class Node implements BoxModel {
 
     constructor(
         public id: number,
-        element?: HTMLElement)
+        element?: Element)
     {
         if (element != null) {
             this._element = element;
@@ -603,7 +603,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get dataset(): DOMStringMap {
-        return (this.hasElement ? this.element.dataset : {});
+        return (this.element instanceof HTMLElement ? this.element.dataset : {});
     }
 
     get extension() {
@@ -742,7 +742,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: HTMLElement) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
+        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
     }
 
     get plainText() {
@@ -874,10 +874,10 @@ export default abstract class Node implements BoxModel {
         return (this.rendered ? (this.renderParent.renderChildren.length === 1) : (this.parent.children.length === 1));
     }
 
-    get firstElement(): Null<HTMLElement> {
+    get firstChildElement(): Null<Element> {
         if (this.hasElement) {
             for (let i = 0; i < this.element.childNodes.length; i++) {
-                const element = <HTMLElement> this.element.childNodes[i];
+                const element = <Element> this.element.childNodes[i];
                 if (element.nodeName.charAt(0) === '#') {
                     if (isPlainText(element)) {
                         return element;
@@ -891,10 +891,10 @@ export default abstract class Node implements BoxModel {
         return null;
     }
 
-    get lastElement(): Null<HTMLElement> {
+    get lastChildElement(): Null<Element> {
         if (this.hasElement) {
             for (let i = this.element.childNodes.length - 1; i >= 0; i--) {
-                const element = <HTMLElement> this.element.childNodes[i];
+                const element = <Element> this.element.childNodes[i];
                 if (element.nodeName.charAt(0) === '#') {
                     if (isPlainText(element)) {
                         return element;

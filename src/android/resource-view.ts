@@ -738,13 +738,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     maxHeight = Math.max(maxHeight, image.height);
                                 }
                             });
-                            if (!node.has('width')) {
+                            if (!node.has('width') || node.css('width') === 'auto') {
                                 const width = node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
                                 if (maxWidth === 0 || width < maxWidth) {
                                     node.css('width', formatPX(width));
                                 }
                             }
-                            if (!node.has('height')) {
+                            if (!node.has('height') || node.css('height') === 'auto') {
                                 const height = node.bounds.height + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
                                 if (maxHeight === 0 || height < maxHeight) {
                                     node.css('height', formatPX(height));

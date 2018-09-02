@@ -1,4 +1,4 @@
-import { ObjectMap, StringMap } from './types';
+import { Null, ObjectMap, StringMap } from './types';
 
 function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     return list.sort((a: T, b: T) => {
@@ -147,8 +147,8 @@ export function isPercent(value: string) {
     return /^[0-9]+%$/.test(value);
 }
 
-export function includes(source: string, value: string, delimiter = ',') {
-    return source.split(delimiter).map(segment => segment.trim()).includes(value);
+export function includes(source: Null<string>, value: string, delimiter = ',') {
+    return (source != null ? source.split(delimiter).map(segment => segment.trim()).includes(value) : false);
 }
 
 export function optional(obj: any, value: string, type?: string) {

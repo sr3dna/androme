@@ -27,8 +27,10 @@ export default class Custom<T extends Node> extends Extension<T> {
             }
             if (data.tagChild) {
                 node.each(item => {
-                    item.element.dataset.ext = this.name;
-                    item.element.dataset.andromeCustomTag = data.tagChild;
+                    if (item.element instanceof HTMLElement) {
+                        item.element.dataset.ext = this.name;
+                        item.element.dataset.andromeCustomTag = data.tagChild;
+                    }
                 });
             }
         }

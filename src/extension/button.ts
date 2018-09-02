@@ -11,7 +11,7 @@ export default abstract class Button<T extends Node> extends Extension<T> {
         return (super.is(node) && (node.element.tagName !== 'INPUT' || ['button', 'file', 'image', 'reset', 'search', 'submit'].includes((<HTMLInputElement> node.element).type)));
     }
 
-    public init(element: HTMLElement) {
+    public init(element: Element) {
         if (this.included(element)) {
             const position = getStyle(element).position;
             setElementCache(element, 'nodeIsolated', (position !== 'static' && position !== 'initial'));

@@ -23,10 +23,12 @@ export default class Toolbar<T extends View> extends Extension<T> {
 
     public init(element: HTMLElement) {
         if (this.included(element)) {
-            Array.from(element.children).forEach((item: HTMLElement) => {
-                if (item.tagName === 'NAV' && !includes(item.dataset.ext || '', EXT_NAME.EXTERNAL)) {
+            Array.from(element.children).some((item: HTMLElement) => {
+                if (item.tagName === 'NAV' && !includes(item.dataset.ext, EXT_NAME.EXTERNAL)) {
                     item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
+                    return true;
                 }
+                return false;
             });
             if (hasValue(element.dataset.target)) {
                 const target = document.getElementById(<string> element.dataset.target);
@@ -57,7 +59,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
         let children = node.children.filter(item => !item.isolated).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
-                if (element.dataset.navigationIcon != null) {
+                if (hasValue(element.dataset.navigationIcon)) {
                     const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
                         overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
@@ -66,7 +68,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                         }
                     }
                 }
-                if (element.dataset.collapseIcon != null) {
+                if (hasValue(element.dataset.collapseIcon)) {
                     const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                     if (result !== '') {
                         overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);

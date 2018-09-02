@@ -26,7 +26,7 @@ export default class Application<T extends Node> {
     private _sorted: ObjectMap<number[]> = {};
     private _currentIndex = -1;
 
-    constructor(private _Node: { new (id: number, api: number, element?: HTMLElement, options?: {}): T }) {
+    constructor(private _Node: { new (id: number, api: number, element?: Element, options?: {}): T }) {
         this.cache = new NodeList<T>();
         this.cacheInternal = new NodeList<T>();
     }
@@ -183,7 +183,7 @@ export default class Application<T extends Node> {
         if (this.cache.length > 0) {
             const preAlignment: ObjectIndex<ObjectMap<Null<string>>> = {};
             for (const node of this.cache) {
-                const element = node.element;
+                const element = <HTMLElement> node.element;
                 preAlignment[node.id] = {};
                 const style = preAlignment[node.id];
                 const textAlign = node.css('textAlign');
@@ -275,8 +275,8 @@ export default class Application<T extends Node> {
             }
             for (const node of visible) {
                 let valid = true;
-                const text: HTMLElement[] = [];
-                Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
+                const text: Element[] = [];
+                Array.from(node.element.childNodes).forEach((element: Element) => {
                     if (element.nodeName === '#text') {
                         if (node.element.tagName !== 'SELECT') {
                             text.push(element);
@@ -388,7 +388,7 @@ export default class Application<T extends Node> {
                 const style = preAlignment[node.id];
                 if (style != null) {
                     for (const attr in style) {
-                        node.element.style[attr] = style[attr];
+                        (<HTMLElement> node.element).style[attr] = style[attr];
                     }
                 }
             }
@@ -398,7 +398,7 @@ export default class Application<T extends Node> {
             }
             for (const node of this.cache.elements) {
                 let i = 0;
-                Array.from(node.element.childNodes).forEach((element: HTMLElement) => {
+                Array.from(node.element.childNodes).forEach((element: Element) => {
                     const child = getNodeFromElement(element);
                     if (child && child.visible) {
                         child.siblingIndex = i++;
@@ -481,7 +481,7 @@ export default class Application<T extends Node> {
                         insertViewTemplate(external, node, current, xml, current);
                     }
                     else {
-                        if (!application.elements.has(node.element)) {
+                        if (!application.elements.has(<HTMLElement> node.element)) {
                             if (node.isSet('dataset', 'target')) {
                                 const target = application.findByDomId(<string> node.dataset.target, true);
                                 if (!target || target !== parent) {
@@ -534,7 +534,7 @@ export default class Application<T extends Node> {
                 let current = '';
                 for (let k = 0; k < axisY.length; k++) {
                     let nodeY = axisY[k];
-                    if (!nodeY.documentRoot && this.elements.has(nodeY.element)) {
+                    if (!nodeY.documentRoot && this.elements.has(<HTMLElement> nodeY.element)) {
                         continue;
                     }
                     let parent = nodeY.parent as T;
@@ -812,7 +812,7 @@ export default class Application<T extends Node> {
                                                         }
                                                     }
                                                     else if ((float.has('left') || float.has('none')) && float.has('right')) {
-                                                        const group = this.controllerHandler.createGroup(nodeY, children, parent, nodeY.element);
+                                                        const group = this.controllerHandler.createGroup(nodeY, children, parent, <HTMLElement> nodeY.element);
                                                         const groupXml = this.writeFrameLayoutHorizontal(group, parent, <T[]> group.children);
                                                         renderXml(group, parent, groupXml, current, true);
                                                         continue;
@@ -1295,7 +1295,7 @@ export default class Application<T extends Node> {
         return (this._views.length > 0 ? this._views[0].content : '');
     }
 
-    private insertNode(element: HTMLElement, parent?: T) {
+    private insertNode(element: Element, parent?: T) {
         let node: Null<T> = null;
         if (element.nodeName === '#text') {
             if (isPlainText(element) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
@@ -1331,9 +1331,9 @@ export default class Application<T extends Node> {
         return node;
     }
 
-    private prioritizeExt(available: IExtension[], element: HTMLElement) {
+    private prioritizeExt(available: IExtension[], element: Element) {
         let extensions: string[] = [];
-        let current: Null<HTMLElement> = element;
+        let current: Null<Element> = element;
         while (current != null) {
             extensions = [...extensions, ...(optional(current, 'dataset.ext') as string).split(',').map(value => value.trim())];
             current = current.parentElement;

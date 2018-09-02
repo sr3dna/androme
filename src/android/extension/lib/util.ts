@@ -17,8 +17,8 @@ export function createPlaceholder<T extends View>(nextId: number, node: T, child
     return placeholder;
 }
 
-export function locateExtension<T extends View>(node: T, extension: string): Null<HTMLElement> {
-    return <HTMLElement> Array.from(node.element.children).find((element: HTMLElement) => includes(<string> optional(element, 'dataset.ext'), extension));
+export function locateExtension<T extends View>(node: T, extension: string): Null<Element> {
+    return <Element> Array.from(node.element.children).find((element: Element) => includes(<string> optional(element, 'dataset.ext'), extension));
 }
 
 export function positionIsolated<T extends View>(node: T) {

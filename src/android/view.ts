@@ -40,7 +40,7 @@ export default class View extends Node {
     constructor(
         public id: number,
         public api: number,
-        element?: HTMLElement)
+        element?: Element)
     {
         super(id, element);
     }
@@ -258,8 +258,8 @@ export default class View extends Node {
             const constraint = this.constraint;
             const parent = this.documentParent;
             const renderParent = this.renderParent;
-            const widthParent = (parent.box ? parent.box.width : (parent.hasElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0));
-            const heightParent = (parent.box ? parent.box.height : (parent.hasElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0));
+            const widthParent = (parent.box ? parent.box.width : (parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0));
+            const heightParent = (parent.box ? parent.box.height : (parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0));
             if (width == null) {
                 width = (this.linear ? this.linear.width : (this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0));
             }
@@ -368,7 +368,7 @@ export default class View extends Node {
                         }
                     }
                     else {
-                        this.android('layout_height', styleMap.height);
+                        this.android('layout_height', (this.css('overflow') === 'hidden' && this.toInt('height') < this.bounds.height ? 'wrap_content' : styleMap.height));
                     }
                 }
                 if (this.has('minHeight') && !isPercent(styleMap.minHeight)) {
@@ -622,7 +622,7 @@ export default class View extends Node {
                 [['firstElement', 'paddingTop', 'borderTopWidth', 'marginTop', BOX_STANDARD.MARGIN_TOP], ['lastElement', 'paddingBottom', 'borderBottomWidth', 'marginBottom', BOX_STANDARD.MARGIN_BOTTOM]].forEach((item: [string, string, string, string, number]) => {
                     if (getNodeFromElement(renderParent[item[0]]) === this) {
                         let valid = true;
-                        let element: Null<HTMLElement> = renderParent.element;
+                        let element: Null<Element> = renderParent.element;
                         while (element != null) {
                             const style = getStyle(element);
                             if (convertInt(style[item[1]]) > 0 || convertInt(style[item[2]]) > 0) {

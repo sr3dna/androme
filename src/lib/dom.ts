@@ -82,7 +82,7 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
     return <CSSStyleDeclaration> {};
 }
 
-export function getBoxSpacing(element: HTMLElement, complete = false, merge = false) {
+export function getBoxSpacing(element: Element, complete = false, merge = false) {
     const result: BoxModel = {};
     const node = getNodeFromElement(element);
     const style = getStyle(element);
@@ -133,7 +133,7 @@ export function cssInherit(element: Element, attr: string, exclude?: string[]) {
     return result;
 }
 
-export function cssParent(element: HTMLElement, attr: string, ...styles: string[]) {
+export function cssParent(element: Element, attr: string, ...styles: string[]) {
     if (element.nodeName.charAt(0) !== '#') {
         if (styles.includes(getStyle(element)[attr])) {
             return true;
@@ -145,7 +145,7 @@ export function cssParent(element: HTMLElement, attr: string, ...styles: string[
     return false;
 }
 
-export function cssFromParent(element: HTMLElement, attr: string) {
+export function cssFromParent(element: Element, attr: string) {
     if (element && element.parentElement != null) {
         const node = getNodeFromElement(element);
         const style = getStyle(element);
@@ -161,14 +161,14 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
         if (depth === maxDepth) {
             return true;
         }
-        return elements.some((item: HTMLElement) => {
+        return elements.some((item: Element) => {
             if (item.nodeName === '#text') {
                 if (isPlainText(item) || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap')) {
                     valid = true;
                     return true;
                 }
             }
-            else if (item.childNodes && item.childNodes.length > 0) {
+            else if (item instanceof HTMLElement && item.childNodes.length > 0) {
                 depth++;
                 return findFreeForm(Array.from(item.childNodes));
             }
@@ -192,9 +192,9 @@ export function hasLineBreak(element: Null<Element>) {
         styleMap = node.has('whiteSpace');
     }
     else {
-        whiteSpace = getStyle(<HTMLElement> element).whiteSpace || '';
+        whiteSpace = getStyle(element).whiteSpace || '';
     }
-    return (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || (element != null && ((['pre', 'pre-wrap'].includes(whiteSpace) || (!styleMap && cssParent(<HTMLElement> element, 'whiteSpace', 'pre', 'pre-wrap'))) && /\n/.test(element.textContent || '')));
+    return (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || (element != null && ((['pre', 'pre-wrap'].includes(whiteSpace) || (!styleMap && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))) && /\n/.test(element.textContent || '')));
 }
 
 export function isLineBreak(element: Null<Element>, direction = 'previous', includeNode = true) {
@@ -210,7 +210,7 @@ export function isLineBreak(element: Null<Element>, direction = 'previous', incl
         }
         else {
             const styleMap = getElementCache(element, 'styleMap');
-            found = (element.tagName === 'BR' || (includeNode && (getStyle(<HTMLElement> element).display === 'block' && (!getNodeFromElement(element) || (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === '')))));
+            found = (element.tagName === 'BR' || (includeNode && getStyle(element).display === 'block' && (!getNodeFromElement(element) || (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))));
             break;
         }
     }
@@ -269,7 +269,7 @@ export function isElementVisible(element: Element) {
                 }
                 if (valid) {
                     if (element.children.length > 0) {
-                        return Array.from(element.children).some((item: HTMLElement) => {
+                        return Array.from(element.children).some((item: Element) => {
                             const style = getStyle(item);
                             const float = style.cssFloat;
                             const position = style.position;
