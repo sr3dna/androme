@@ -638,7 +638,7 @@ export default abstract class Node implements BoxModel {
                 }
             }
         }
-        return this._renderDepth || this.depth;
+        return this._renderDepth || 0;
     }
 
     get dataset(): DOMStringMap {

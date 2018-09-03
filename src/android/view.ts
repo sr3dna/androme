@@ -371,7 +371,7 @@ export default class View extends Node {
                             }
                         }
                         else {
-                            this.android('layout_height', (this.css('overflow') === 'hidden' && this.toInt('height') < this.bounds.height ? 'wrap_content' : styleMap.height));
+                            this.android('layout_height', (this.css('overflow') === 'hidden' && this.toInt('height') < this.box.height ? 'wrap_content' : styleMap.height));
                         }
                     }
                 }
@@ -419,7 +419,7 @@ export default class View extends Node {
                 else if (!wrap || this.blockStatic) {
                     const widthRoot = this.ascend(true).reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0);
                     const inlineRight = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.inlineElement && node.float !== 'right').map(node => node.linear.right)]);
-                    if ((blockElement && (this.is(NODE_STANDARD.TEXT) || (widest.length > 0 && !widest.includes(this)) || renderParent.blockWidth)) ||
+                    if ((blockElement && !widest.includes(this) && (this.is(NODE_STANDARD.TEXT) || renderParent.blockWidth)) ||
                         (width >= widthParent && (widthRoot > 0 || parent.documentBody || renderParent.documentRoot)) ||
                         (inlineRight > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(inlineRight, this.box.right))))
                     {
@@ -575,6 +575,14 @@ export default class View extends Node {
                 this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), right));
             }
         }
+        else if (floating) {
+            if (renderParent.alignmentType === NODE_ALIGNMENT.VERTICAL) {
+                textAlign = right;
+            }
+            else {
+                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), right));
+            }
+        }
         if (renderParent.element.tagName === 'TABLE') {
             this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), 'fill'));
             if (textAlign === '' && this.element.tagName === 'TH') {
@@ -670,7 +678,7 @@ export default class View extends Node {
             if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                 [['firstElementChild', 'paddingTop', 'borderTopWidth', BOX_STANDARD.MARGIN_TOP, BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'paddingBottom', 'borderBottomWidth', BOX_STANDARD.MARGIN_BOTTOM, BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, string, number, number], index: number) => {
                     const firstNode = getNodeFromElement(renderParent[item[0]]);
-                    if (firstNode === this || firstNode === this.renderChildren[(index === 0 ? 0 : this.renderChildren.length - 1)]) {
+                    if (firstNode && (firstNode === this || firstNode === this.renderChildren[(index === 0 ? 0 : this.renderChildren.length - 1)])) {
                         let valid = true;
                         let element: Null<Element> = renderParent.element;
                         while (element != null) {
@@ -787,25 +795,21 @@ export default class View extends Node {
                     let resizedWidth = false;
                     let resizedHeight = false;
                     if (viewWidth > 0 && convertInt(this.cssOriginal('width')) > 0) {
-                        if (!tableElement) {
-                            this.android('layout_width', formatPX(viewWidth + this.paddingLeft + this.paddingRight + (!borderCollapse ? this.borderLeftWidth + this.borderRightWidth : 0)));
+                        const paddedWidth = this.paddingLeft + this.paddingRight + (!borderCollapse ? this.borderLeftWidth + this.borderRightWidth : 0);
+                        if (!tableElement && paddedWidth > 0) {
+                            this.android('layout_width', formatPX(viewWidth + paddedWidth));
                         }
                         resizedWidth = true;
-                    }
-                    else if (this.css('overflow') === 'hidden') {
-                        this.android('layout_width', formatPX(this.bounds.width));
                     }
                     if (viewHeight > 0 && convertInt(this.cssOriginal('height')) > 0) {
                         const lineHeight = this.lineHeight;
                         if (lineHeight === 0 || lineHeight < this.box.height || lineHeight === this.toInt('height')) {
+                            const paddedHeight = this.paddingTop + this.paddingBottom + (!borderCollapse ? this.borderTopWidth + this.borderBottomWidth : 0);
                             if (!tableElement) {
-                                this.android('layout_height', formatPX(viewHeight + this.paddingTop + this.paddingBottom + (!borderCollapse ? this.borderTopWidth + this.borderBottomWidth : 0)));
+                                this.android('layout_height', formatPX(viewHeight + paddedHeight));
                             }
                             resizedHeight = true;
                         }
-                    }
-                    else if (this.css('overflow') === 'hidden') {
-                        this.android('layout_height', formatPX(this.bounds.height));
                     }
                     const borderTop = this.borderTopWidth - (tableElement && resizedHeight ? this.paddingTop : 0);
                     const borderRight = this.borderRightWidth - (tableElement && resizedWidth ? this.paddingRight : 0);

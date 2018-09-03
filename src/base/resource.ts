@@ -82,8 +82,8 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxSpacing() {
-        this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)).each(node => {
-            if (getElementCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources) {
+        this.cache.elements.each(node => {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (getElementCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources)) {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
                 for (const attr in result) {
@@ -100,8 +100,8 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setBoxStyle() {
-        this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE)).each(node => {
-            if (getElementCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources) {
+        this.cache.elements.each(node => {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (getElementCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources)) {
                 const result: any = {
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
@@ -139,8 +139,8 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setFontStyle() {
-        this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE)).each(node => {
-            if (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources) {
+        this.cache.each(node => {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
                 if (node.renderChildren.length > 0 || node.element.tagName === 'IMG' || node.element.tagName === 'HR') {
                     return;
                 }
@@ -288,7 +288,7 @@ export default abstract class Resource<T extends Node> {
                             break;
                         default:
                             if (node.companion != null) {
-                                value = (<HTMLElement> node.companion.element).innerText.trim();
+                                value = ((node.plainText ? node.companion.element.textContent : (<HTMLElement> node.companion.element).innerText) || '').trim();
                             }
                             break;
                     }

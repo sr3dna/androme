@@ -17,13 +17,15 @@ export default class TableAndroid<T extends View> extends Table<T> {
         const columnCount = convertInt(node.app('columnCount'));
         if (columnCount > 1) {
             let requireWidth = false;
-            node.each((item: T) => {
-                if (item.viewWidth === 0) {
-                    item.android('layout_width', '0px');
-                    item.app('layout_columnWeight', '1');
-                    requireWidth = true;
-                }
-            });
+            if (node.children.every(item => (<HTMLTableCellElement> item.element).colSpan === 1)) {
+                node.each((item: T) => {
+                    if (item.viewWidth === 0) {
+                        item.android('layout_width', '0px');
+                        item.app('layout_columnWeight', '1');
+                        requireWidth = true;
+                    }
+                });
+            }
             if (requireWidth || node.children.some(item => item.multiLine)) {
                 let widthRoot = 0;
                 node.ascend(true).some(item => {

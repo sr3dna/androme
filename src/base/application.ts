@@ -254,26 +254,24 @@ export default class Application<T extends Node> {
                         switch (element.type) {
                             case 'radio':
                             case 'checkbox':
-                                const found = [element.previousElementSibling, element.nextElementSibling].some((sibling: HTMLLabelElement) => {
-                                    if (sibling && sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
-                                        const label = getNodeFromElement(sibling);
-                                        if (label && label.pageflow) {
-                                            node.companion = label;
-                                            node.setBounds(false);
+                                [element.previousSibling, element.nextSibling].some((sibling: HTMLLabelElement, index) => {
+                                    const label = getNodeFromElement(sibling);
+                                    const labelParent = (sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) : null);
+                                    if (label && label.pageflow && ((sibling.htmlFor !== '' && sibling.htmlFor === element.id) || (labelParent && label.plainText))) {
+                                        if (labelParent && label.plainText) {
+                                            node.companion = labelParent;
                                             label.hide();
-                                            return true;
+                                            labelParent.hide();
                                         }
+                                        else {
+                                            node.companion = label;
+                                            label.hide();
+                                        }
+                                        node.setBounds(false);
+                                        return true;
                                     }
                                     return false;
                                 });
-                                if (!found) {
-                                    const label = getNodeFromElement(element.parentElement);
-                                    if (label && label.element.tagName === 'LABEL' && label.element.children.length === 1) {
-                                        node.companion = label;
-                                        node.setBounds(false);
-                                        label.hide();
-                                    }
-                                }
                                 break;
                         }
                     }
@@ -283,6 +281,12 @@ export default class Application<T extends Node> {
             for (const node of visible) {
                 if (!node.documentRoot) {
                     let parent = node.parentElementAsNode;
+                    if (node.companion != null) {
+                        const companion = getNodeFromElement(node.companion.element.parentElement);
+                        if (companion && !companion.visible) {
+                            parent = getNodeFromElement(companion.element.parentElement) || companion;
+                        }
+                    }
                     if (parent == null) {
                         parent = this.cache.parent;
                     }
@@ -456,12 +460,12 @@ export default class Application<T extends Node> {
         for (const indexId of mapY.values()) {
             const partial = new Map<string, Map<number, string>>();
             const external = new Map<string, Map<number, string>>();
-            function insertViewTemplate(data: Map<string, Map<number, string>>, item: T, parentId: string, value: string, current: string) {
-                const key = parentId + (current === '' && item.renderIndex !== -1 ? `:${item.renderIndex}` : '');
+            function insertViewTemplate(data: Map<string, Map<number, string>>, node: T, parentId: string, value: string, current: string) {
+                const key = parentId + (current === '' && node.renderIndex !== -1 ? `:${node.renderIndex}` : '');
                 if (!data.has(key)) {
                     data.set(key, new Map<number, string>());
                 }
-                (data.get(key) as Map<number, string>).set(item.id, value);
+                (data.get(key) as Map<number, string>).set(node.id, value);
             }
             function renderXml(node: T, parent: T, xml: string, current = '', group = false) {
                 if (xml !== '') {

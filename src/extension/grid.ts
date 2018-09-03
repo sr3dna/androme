@@ -18,8 +18,11 @@ export default class Grid<T extends Node> extends Extension<T> {
         const node = this.node;
         return (
             this.included() ||
-            (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.inlineText || item.plainText) && node.children.every(item => item.pageflow && (!item.inlineElement || item.blockStatic)) ||
-            (node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))))
+            (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) &&
+                ((node.css('listStyle') === 'none' || node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none')) ||
+                (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.inlineText || item.plainText)) ||
+                (node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))))
+            )
         );
     }
 
@@ -55,7 +58,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                         }
                     }));
                 })];
-            if (base.length > 1) {
+            if (base && base.length > 1) {
                 let maxIndex = -1;
                 let assigned: number[] = [];
                 let every = false;
