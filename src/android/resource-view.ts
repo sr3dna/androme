@@ -10,25 +10,12 @@ import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setEleme
 import { getColorNearest, parseHex, parseRGBA } from '../lib/color';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
-import parseRTL from './localization';
 import SETTINGS from '../settings';
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';
 
 const METHOD_ANDROID = {
-    'boxSpacing': {
-        'margin': 'android:layout_margin="{0}"',
-        'marginTop': 'android:layout_marginTop="{0}"',
-        'marginRight': 'android:layout_marginRight="{0}"',
-        'marginBottom': 'android:layout_marginBottom="{0}"',
-        'marginLeft': 'android:layout_marginLeft="{0}"',
-        'padding': 'android:padding="{0}"',
-        'paddingTop': 'android:paddingTop="{0}"',
-        'paddingRight': 'android:paddingRight="{0}"',
-        'paddingBottom': 'android:paddingBottom="{0}"',
-        'paddingLeft': 'android:paddingLeft="{0}"'
-    },
     'boxStyle': {
         'background': 'android:background="@drawable/{0}"',
         'backgroundColor': 'android:background="@color/{0}"'
@@ -304,20 +291,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const stored: StringMap = getElementCache(node.element, 'boxSpacing');
             if (stored) {
                 if (stored.marginLeft === stored.marginRight && node.alignParent('left') && node.alignParent('right') && !node.blockWidth) {
-                    delete stored.marginLeft;
-                    delete stored.marginRight;
+                    node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                 }
                 if (node.styleMap.marginLeft === 'auto') {
-                    delete stored.marginLeft;
+                    node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                 }
                 if (node.styleMap.marginRight === 'auto') {
-                    delete stored.marginRight;
-                }
-                const method = METHOD_ANDROID['boxSpacing'];
-                for (const attr in stored) {
-                    if (stored[attr] !== '0px') {
-                        node.formatted(formatString(parseRTL(method[attr]), (!isPercent(node.styleMap[attr]) ? node.styleMap[attr] : null) || stored[attr]), (node.renderExtension == null));
-                    }
+                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                 }
             }
         });
@@ -499,10 +480,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         if (node.of(NODE_STANDARD.IMAGE, NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
                             node.android('src', `@drawable/${backgroundImage[0]}`);
                             if (convertInt(left) > 0) {
-                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + convertInt(left));
+                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, convertInt(left));
                             }
                             if (convertInt(top) > 0) {
-                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + convertInt(top));
+                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, convertInt(top));
                             }
                             let scaleType = '';
                             switch (gravity) {
@@ -715,7 +696,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.formatted(formatString(method['background'], resourceName), (node.renderExtension == null));
-                    if (SETTINGS.autoSizeBackgroundImage && backgroundImage.length > 0 && !node.documentRoot && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
+                    if (SETTINGS.autoSizeBackgroundImage && !node.is(NODE_STANDARD.IMAGE) && backgroundImage.length > 0 && !node.documentRoot && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
                         let resize = true;
                         let current = node;
                         while (current != null && !current.documentBody) {

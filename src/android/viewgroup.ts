@@ -54,13 +54,13 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     public setBounds(calibrate = false) {
-        const nodes = this.outerRegion;
+        let nodes = this.outerRegion();
         if (!calibrate) {
             this.bounds = {
-                top: nodes.top[0].bounds.top,
-                right: nodes.right[0].bounds.right,
-                bottom: nodes.bottom[0].bounds.bottom,
-                left: nodes.left[0].bounds.left,
+                top: nodes.top[0].linear.top,
+                right: nodes.right[0].linear.right,
+                bottom: nodes.bottom[0].linear.bottom,
+                left: nodes.left[0].linear.left,
                 width: 0,
                 height: 0
             };
@@ -75,11 +75,12 @@ export default class ViewGroup<T extends View> extends View {
             width: 0,
             height: 0
         };
+        nodes = this.outerRegion('bounds');
         this.box = {
-            top: nodes.top[0].box.top,
-            right: nodes.right[0].box.right,
-            bottom: nodes.bottom[0].box.bottom,
-            left: nodes.left[0].box.left,
+            top: nodes.top[0].bounds.top,
+            right: nodes.right[0].bounds.right,
+            bottom: nodes.bottom[0].bounds.bottom,
+            left: nodes.left[0].bounds.left,
             width: 0,
             height: 0
         };
@@ -112,7 +113,7 @@ export default class ViewGroup<T extends View> extends View {
         return [maxRight - minLeft, maxBottom - minTop];
     }
 
-    get outerRegion() {
+    public outerRegion(dimension = 'linear') {
         let top: T[] = [];
         let right: T[] = [];
         let bottom: T[] = [];
@@ -125,28 +126,28 @@ export default class ViewGroup<T extends View> extends View {
                 left.push(node);
             }
             else {
-                if (top[0].linear.top === node.linear.top) {
+                if (top[0][dimension].top === node[dimension].top) {
                     top.push(node);
                 }
-                else if (node.linear.top < top[0].linear.top) {
+                else if (node[dimension].top < top[0][dimension].top) {
                     top = [node];
                 }
-                if (right[0].linear.right === node.linear.right) {
+                if (right[0][dimension].right === node[dimension].right) {
                     right.push(node);
                 }
-                else if (node.linear.right > right[0].linear.right) {
+                else if (node[dimension].right > right[0][dimension].right) {
                     right = [node];
                 }
-                if (bottom[0].linear.bottom === node.linear.bottom) {
+                if (bottom[0][dimension].bottom === node[dimension].bottom) {
                     bottom.push(node);
                 }
-                else if (node.linear.bottom > bottom[0].linear.bottom) {
+                else if (node[dimension].bottom > bottom[0][dimension].bottom) {
                     bottom = [node];
                 }
-                if (left[0].linear.left === node.linear.left) {
+                if (left[0][dimension].left === node[dimension].left) {
                     left.push(node);
                 }
-                else if (node.linear.left < left[0].linear.left) {
+                else if (node[dimension].left < left[0][dimension].left) {
                     left = [node];
                 }
             }

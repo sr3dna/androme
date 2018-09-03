@@ -224,20 +224,22 @@ export default class Toolbar<T extends View> extends Extension<T> {
     }
 
     public processChild(): ExtensionResult {
-        if (this.node.element.tagName === 'IMG' && (this.node.dataset.navigationIcon != null || this.node.dataset.collapseIcon != null)) {
-            this.node.hide();
+        const node = this.node;
+        if (node.element.tagName === 'IMG' && (node.dataset.navigationIcon != null || node.dataset.collapseIcon != null)) {
+            node.hide();
             return { xml: '', proceed: true };
         }
         return { xml: '' };
     }
 
     public beforeInsert() {
-        const menu: string = optional(locateExtension(this.node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const node = this.node;
+        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         if (menu !== '') {
-            const options = Object.assign({}, this.options[this.node.element.id]);
+            const options = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = Object.assign({}, options.toolbar);
             overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
-            this.node.app('menu', optionsToolbar.app.menu);
+            node.app('menu', optionsToolbar.app.menu);
         }
     }
 

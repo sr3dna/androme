@@ -156,7 +156,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             const flex = node.flex;
             if (constraint || relative || flex.enabled) {
                 mapLayout = MAP_LAYOUT[(relative ? 'relative' : 'constraint')];
-                const nodes = new NodeList<T>(<T[]> node.renderChildren.filter(item => !item.isolated && !item.relocated), node);
+                const nodes = new NodeList<T>(node.renderChildren.filter(item => !item.isolated && !item.relocated) as T[], node);
                 if (relative) {
                     const rows: T[][] = [];
                     const baseline: T[] = [];
@@ -167,6 +167,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
                         rowPaddingLeft = node.paddingLeft;
                         node.modifyBox(BOX_STANDARD.PADDING_LEFT, node.paddingLeft + textIndent);
+                        node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
                     }
                     let previousRowBottom: Null<T> = null;
                     let rowWidth = 0;
@@ -178,7 +179,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             current.android(relativeParent['left'], 'true');
                             rowWidth += dimension.width;
                             if (!node.inline && textIndent > 0) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + textIndent);
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, textIndent);
                             }
                             if (rowPaddingLeft > 0) {
                                 current.android('singleLine', 'true');
@@ -207,17 +208,17 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 current.android(mapLayout['topBottom'], previousRowBottom.stringId);
                                 current.android(relativeParent['left'], 'true');
                                 rowWidth = dimension.width;
-                                if (SETTINGS.ellipsisOnTextOverflow && previous != null) {
+                                if (SETTINGS.ellipsisOnTextOverflow && previous != null && (rows[rows.length - 1].length > 1 || previous.linearHorizontal)) {
                                     let lastChild = previous;
                                     if (previous.linearHorizontal) {
                                         lastChild = previous.children[previous.children.length - 1] as T;
                                     }
-                                    if (lastChild.plainText || lastChild.inlineText) {
+                                    if (lastChild.multiLine) {
                                         lastChild.android('singleLine', 'true');
                                     }
                                 }
                                 if (rowPaddingLeft > 0) {
-                                    current.modifyBox(BOX_STANDARD.PADDING_LEFT, current.paddingLeft + rowPaddingLeft);
+                                    current.modifyBox(BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
                                 }
                                 if (!floatParent) {
                                     adjustBaseline(baseline);
@@ -1085,10 +1086,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         node.constraint.layoutHeight = true;
                                     }
                                     if (right && current.toInt('right') > 0) {
-                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, current.marginRight + current.toInt('right'));
+                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, current.toInt('right'));
                                     }
                                     if (bottom && current.toInt('bottom') > 0) {
-                                        current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, current.marginBottom + current.toInt('bottom'));
+                                        current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, current.toInt('bottom'));
                                     }
                                     if (right && bottom) {
                                         if (node.documentRoot) {
@@ -1154,7 +1155,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         if (item) {
                             const offset = current.linear.left - item.linear.right;
                             if (offset >= 1) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + offset);
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
                             }
                         }
                     }
@@ -1163,7 +1164,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         if (item) {
                             const offset = current.linear.top - item.linear.bottom;
                             if (offset >= 1) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, current.marginTop + offset);
+                                current.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
                             }
                         }
                     }
@@ -1203,7 +1204,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 scrollView.push(NODE_ANDROID.SCROLL_HORIZONTAL);
             }
             if (node.overflowY) {
-                scrollView.push((node.ascend().some(item => item.overflow !== OVERFLOW_ELEMENT.NONE) ? NODE_ANDROID.SCROLL_NESTED : NODE_ANDROID.SCROLL_VERTICAL));
+                scrollView.push(node.ascend().some(item => item.overflow !== OVERFLOW_ELEMENT.NONE) ? NODE_ANDROID.SCROLL_NESTED : NODE_ANDROID.SCROLL_VERTICAL);
             }
             let current = node;
             let scrollDepth = parent.renderDepth + scrollView.length;
@@ -1212,23 +1213,15 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const container = new View(this.cache.nextId, SETTINGS.targetAPI, node.element) as T;
                     container.setBounds();
                     container.setNodeId(nodeName);
+                    container.inherit(node, 'styleMap');
                     this.cache.append(container);
                     switch (nodeName) {
                         case NODE_ANDROID.SCROLL_HORIZONTAL:
-                            container.css({
-                                width: node.styleMap.width,
-                                minWidth: node.styleMap.minWidth,
-                                maxWidth: node.styleMap.maxWidth,
-                                overflowX: node.css('overflowX')
-                            });
+                            delete container.styleMap.overflowY;
                             break;
-                        default:
-                            container.css({
-                                height: node.styleMap.height,
-                                minHeight: node.styleMap.minHeight,
-                                maxHeight: node.styleMap.maxHeight,
-                                overflowY: node.css('overflowY')
-                            });
+                        case NODE_ANDROID.SCROLL_NESTED:
+                        case NODE_ANDROID.SCROLL_VERTICAL:
+                            delete container.styleMap.overflowX;
                             break;
                     }
                     const indent = repeat(scrollDepth--);
@@ -1333,10 +1326,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                         container.setNodeId(NODE_ANDROID.FRAME);
                         container.render(parent);
                         if (left < 0) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft + left);
+                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, left);
                         }
                         if (top < 0) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop + top);
+                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, top);
                         }
                         node.parent = container;
                         this.cache.append(container);
@@ -1380,12 +1373,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 const group = this.createGroup(node, (linearX ? sortAsc(result, 'linear.left') : result), parent);
                                 group.setNodeId(NODE_ANDROID.RADIO_GROUP);
                                 group.render(parent);
-                                let checked: string = '';
+                                let checked = '';
                                 for (const item of group.children) {
                                     if ((<HTMLInputElement> item.element).checked) {
                                         checked = item.stringId;
                                     }
-                                    xml += this.renderNode(<T> item, group, NODE_STANDARD.RADIO, true);
+                                    xml += this.renderNode(item as T, group, NODE_STANDARD.RADIO, true);
                                 }
                                 group.android('orientation', linearX ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
                                 group.alignmentType |= (linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL) | NODE_ALIGNMENT.SEGMENTED;
@@ -1549,7 +1542,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
         const groups = {};
         for (const node of data.cache.visible) {
-            node.mergeBoxSpacing();
+            node.setBoxSpacing();
             if (SETTINGS.dimensResourceValue) {
                 const tagName = node.tagName.toLowerCase();
                 if (groups[tagName] == null) {
@@ -1862,8 +1855,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                 return false;
             });
             if (valid) {
-                parent.modifyBox(BOX_STANDARD.PADDING_TOP, parent.paddingTop + Math.ceil(minHeight / 2));
-                parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, parent.paddingBottom + Math.floor(minHeight / 2) + offsetTop);
+                parent.modifyBox(BOX_STANDARD.PADDING_TOP, Math.floor(minHeight / 2));
+                parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, Math.ceil(minHeight / 2) + offsetTop);
             }
         }
     }

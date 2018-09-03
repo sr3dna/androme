@@ -1358,7 +1358,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="button_padding_horizontal">8dp</dimen>
     <dimen name="button_padding_vertical">3dp</dimen>
     <dimen name="checkbox_margin_end">3dp</dimen>
-    <dimen name="checkbox_margin_start">7dp</dimen>
+    <dimen name="checkbox_margin_start">5dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">3dp</dimen>
     <dimen name="form_padding_horizontal">11dp</dimen>

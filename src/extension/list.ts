@@ -21,81 +21,80 @@ export default abstract class List<T extends Node> extends Extension<T> {
 
     public processNode(): ExtensionResult {
         let xml = '';
-        const parent = this.parent;
-        if (parent) {
-            const node = this.node;
-            const vertical = (!node.children.some(item => item.floating) && (NodeList.linearY(node.children) || node.children.every(item => !item.inlineElement)));
-            if (vertical) {
-                xml = this.application.writeGridLayout(node, parent, (node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2));
-            }
-            else {
-                xml = this.application.writeLinearLayout(node, parent, true);
-            }
-            let i = 0;
-            node.each((item: T) => {
-                let ordinal: any = '0';
-                if (item.display === 'list-item' || item.has('listStyleType')) {
-                    let image = item.css('listStyleImage');
-                    if (image && image !== 'none') {
-                        ordinal = { image, position: '' };
-                    }
-                    else {
-                        switch (item.css('listStyleType')) {
-                            case 'disc':
-                                ordinal = '●';
-                                break;
-                            case 'square':
-                                ordinal = '■';
-                                break;
-                            case 'decimal':
-                                ordinal = `${(i + 1).toString()}.`;
-                                break;
-                            case 'decimal-leading-zero':
-                                ordinal = `${(i < 9 ? '0' : '') + (i + 1).toString()}.`;
-                                break;
-                            case 'lower-alpha':
-                            case 'lower-latin':
-                                ordinal = `${convertAlpha(i).toLowerCase()}.`;
-                                break;
-                            case 'upper-alpha':
-                            case 'upper-latin':
-                                ordinal = `${convertAlpha(i)}.`;
-                                break;
-                            case 'lower-roman':
-                                ordinal = `${convertRoman(i + 1).toLowerCase()}.`;
-                                break;
-                            case 'upper-roman':
-                                ordinal = `${convertRoman(i + 1)}.`;
-                                break;
-                            case 'none':
-                                image = '';
-                                let position = '';
-                                const repeat = item.css('backgroundRepeat');
-                                if (repeat === 'no-repeat') {
-                                    image = item.css('backgroundImage');
-                                    position = item.css('backgroundPosition');
-                                }
-                                if (image && image !== 'none') {
-                                    ordinal = { image, position };
-                                    item.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
-                                }
-                                break;
-                            default:
-                                ordinal = '○';
-                                break;
-                        }
-                    }
-                    i++;
-                }
-                item.data(EXT_NAME.LIST, 'listStyleType', ordinal);
-            });
+        const node = this.node;
+        const parent = this.parent as T;
+        const vertical = (!node.children.some(item => item.floating) && (NodeList.linearY(node.children) || node.children.every(item => !item.inlineElement)));
+        if (vertical) {
+            xml = this.application.writeGridLayout(node, parent, (node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2));
         }
+        else {
+            xml = this.application.writeLinearLayout(node, parent, true);
+        }
+        let i = 0;
+        node.each((item: T) => {
+            let ordinal: any = '0';
+            if (item.display === 'list-item' || item.has('listStyleType')) {
+                let image = item.css('listStyleImage');
+                if (image && image !== 'none') {
+                    ordinal = { image, position: '' };
+                }
+                else {
+                    switch (item.css('listStyleType')) {
+                        case 'disc':
+                            ordinal = '●';
+                            break;
+                        case 'square':
+                            ordinal = '■';
+                            break;
+                        case 'decimal':
+                            ordinal = `${(i + 1).toString()}.`;
+                            break;
+                        case 'decimal-leading-zero':
+                            ordinal = `${(i < 9 ? '0' : '') + (i + 1).toString()}.`;
+                            break;
+                        case 'lower-alpha':
+                        case 'lower-latin':
+                            ordinal = `${convertAlpha(i).toLowerCase()}.`;
+                            break;
+                        case 'upper-alpha':
+                        case 'upper-latin':
+                            ordinal = `${convertAlpha(i)}.`;
+                            break;
+                        case 'lower-roman':
+                            ordinal = `${convertRoman(i + 1).toLowerCase()}.`;
+                            break;
+                        case 'upper-roman':
+                            ordinal = `${convertRoman(i + 1)}.`;
+                            break;
+                        case 'none':
+                            image = '';
+                            let position = '';
+                            const repeat = item.css('backgroundRepeat');
+                            if (repeat === 'no-repeat') {
+                                image = item.css('backgroundImage');
+                                position = item.css('backgroundPosition');
+                            }
+                            if (image && image !== 'none') {
+                                ordinal = { image, position };
+                                item.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
+                            }
+                            break;
+                        default:
+                            ordinal = '○';
+                            break;
+                    }
+                }
+                i++;
+            }
+            item.data(EXT_NAME.LIST, 'listStyleType', ordinal);
+        });
         return { xml };
     }
 
     public beforeInsert() {
-        this.node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
-        this.node.modifyBox(BOX_STANDARD.PADDING_LEFT, 0);
+        const node = this. node;
+        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+        node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
     }
 
     private hasSingleImage(node: T) {

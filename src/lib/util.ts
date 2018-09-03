@@ -125,7 +125,7 @@ export function convertRoman(value: number) {
     return 'M'.repeat(parseInt(digits.join(''))) + result;
 }
 
-export function convertEnum(base: {}, derived: {}, value: number): string {
+export function convertEnum(value: number, base: {}, derived: {}): string {
     for (const key of Object.keys(base)) {
         const index: number = base[key];
         if (value === index) {

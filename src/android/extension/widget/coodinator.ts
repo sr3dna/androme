@@ -13,22 +13,20 @@ export default class Coordinator<T extends View> extends Extension<T> {
 
     public processNode(): ExtensionResult {
         let xml = '';
-        const parent = this.parent;
-        if (parent) {
-            const node = this.node;
-            xml = this.application.controllerHandler.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
-            node.apply(this.options[node.element.id]);
-            node.nodeType = NODE_STANDARD.BLOCK;
-            node.excludeResource |= NODE_RESOURCE.ASSET;
-            if (node.children.filter(item => !item.isolated).length > 0) {
-                const toolbar = getNodeFromElement(locateExtension(node, WIDGET_NAME.TOOLBAR));
-                if (toolbar) {
-                    const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
-                    if (ext) {
-                        const collapsingToolbar = (ext.options[toolbar.element.id] != null ? ext.options[toolbar.element.id].collapsingToolbar : null);
-                        if (collapsingToolbar != null) {
-                            node.android('fitsSystemWindows', 'true');
-                        }
+        const node = this.node;
+        const parent = this.parent as T;
+        xml = this.application.controllerHandler.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
+        node.apply(this.options[node.element.id]);
+        node.nodeType = NODE_STANDARD.BLOCK;
+        node.excludeResource |= NODE_RESOURCE.ASSET;
+        if (node.children.filter(item => !item.isolated).length > 0) {
+            const toolbar = getNodeFromElement(locateExtension(node, WIDGET_NAME.TOOLBAR));
+            if (toolbar) {
+                const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
+                if (ext) {
+                    const collapsingToolbar = (ext.options[toolbar.element.id] != null ? ext.options[toolbar.element.id].collapsingToolbar : null);
+                    if (collapsingToolbar != null) {
+                        node.android('fitsSystemWindows', 'true');
                     }
                 }
             }

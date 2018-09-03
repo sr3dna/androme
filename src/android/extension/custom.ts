@@ -8,7 +8,8 @@ export default class CustomAndroid<T extends View> extends Custom<T> {
     }
 
     public afterInsert() {
-        const options = Object.assign({}, this.options[this.node.element.id]);
-        this.node.apply(formatResource(options));
+        const node = this.node;
+        const options = Object.assign({}, this.options[node.element.id]);
+        node.apply(formatResource(options));
     }
 }

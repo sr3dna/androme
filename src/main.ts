@@ -131,10 +131,12 @@ function setStyleMap() {
                             }
                         }
                         if (SETTINGS.preloadImages && styleMap['backgroundImage'] != null && styleMap['backgroundImage'] !== 'initial') {
-                            const url = parseBackgroundUrl(styleMap['backgroundImage']);
-                            if (url !== '' && !IMAGE_CACHE.has(url)) {
-                                IMAGE_CACHE.set(url, { width: 0, height: 0, url });
-                            }
+                            styleMap['backgroundImage'].split(',').map(value => value.trim()).forEach(value => {
+                                const url = parseBackgroundUrl(value);
+                                if (url !== '' && !IMAGE_CACHE.has(url)) {
+                                    IMAGE_CACHE.set(url, { width: 0, height: 0, url });
+                                }
+                            });
                         }
                         const data = getElementCache(element, 'styleMap');
                         if (data) {

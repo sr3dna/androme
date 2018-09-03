@@ -43,7 +43,7 @@ export function getRangeClientRect(element: Element): [ClientRect, boolean] {
         result.top = Math.min.apply(null, Array.from(top));
         result.bottom = Math.max.apply(null, Array.from(bottom));
         result.height = result.bottom - result.top;
-        if (element.textContent && (!/^\s+$/.test(element.textContent) || /^\s*\n/.test(element.textContent))) {
+        if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
             multiLine = true;
         }
     }
@@ -62,15 +62,20 @@ export function assignBounds(bounds: ClientRect): ClientRect {
 }
 
 export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclaration {
-    if (element instanceof Element) {
+    if (element != null) {
         if (cache) {
             const node = getNodeFromElement(element);
             const style = getElementCache(element, 'style');
             if (style) {
                 return style;
             }
-            else if (node && node.style != null) {
-                return node.style;
+            else if (node) {
+                if (node.style != null) {
+                    return node.style;
+                }
+                else if (node.plainText) {
+                    return <any> node.styleMap;
+                }
             }
         }
         if (element.nodeName.charAt(0) !== '#') {
@@ -83,13 +88,13 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
 }
 
 export function getBoxSpacing(element: Element, complete = false, merge = false) {
-    const result: BoxModel = {};
+    const result = {};
     const node = getNodeFromElement(element);
     const style = getStyle(element);
     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
         let total = 0;
-        ['padding', 'margin'].forEach(area => {
-            const attr = area + direction;
+        ['padding', 'margin'].forEach(region => {
+            const attr = region + direction;
             const value = convertInt((node || style)[attr]);
             if (complete || value !== 0) {
                 result[attr] = value;
@@ -106,7 +111,7 @@ export function getBoxSpacing(element: Element, complete = false, merge = false)
             }
         }
     });
-    return result;
+    return <BoxModel> result;
 }
 
 export function parseBackgroundUrl(value: string) {

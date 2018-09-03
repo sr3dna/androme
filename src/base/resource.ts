@@ -2,7 +2,7 @@ import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ResourceMap, Vie
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertPX, hasValue, isNumber, isPercent } from '../lib/util';
+import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 import { getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, cssFromParent, setElementCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
@@ -87,7 +87,7 @@ export default abstract class Resource<T extends Node> {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
                 for (const attr in result) {
-                   if (node.inline && (attr === 'marginTop' || attr === 'marginBottom')) {
+                   if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
                         formatted[attr] = '0px';
                     }
                     else {
@@ -154,6 +154,32 @@ export default abstract class Resource<T extends Node> {
                         backgroundColor.length = 0;
                     }
                     let fontWeight = node.css('fontWeight');
+                    let fontSize = node.css('fontSize');
+                    if (convertInt(fontSize) === 0) {
+                        switch (fontSize) {
+                            case 'xx-small':
+                                fontSize = '8px';
+                                break;
+                            case 'x-small':
+                                fontSize = '10px';
+                                break;
+                            case 'small':
+                                fontSize = '13px';
+                                break;
+                            case 'medium':
+                                fontSize = '16px';
+                                break;
+                            case 'large':
+                                fontSize = '18px';
+                                break;
+                            case 'x-large':
+                                fontSize = '24px';
+                                break;
+                            case 'xx-large':
+                                fontSize = '32px';
+                                break;
+                        }
+                    }
                     if (!isNumber(fontWeight)) {
                         switch (fontWeight) {
                             case 'lighter':
@@ -173,7 +199,7 @@ export default abstract class Resource<T extends Node> {
                     const result: FontAttribute = {
                         fontFamily: node.css('fontFamily'),
                         fontStyle: node.css('fontStyle'),
-                        fontSize: node.css('fontSize'),
+                        fontSize,
                         fontWeight,
                         color,
                         backgroundColor
@@ -289,7 +315,7 @@ export default abstract class Resource<T extends Node> {
                     const previousSibling = node.previousSibling;
                     const nextSibling = node.nextSibling;
                     let previousSpaceEnd = false;
-                    if (previousSibling == null) {
+                    if (previousSibling == null || previousSibling.multiLine) {
                         value = value.replace(/^\s+/, '');
                     }
                     else {

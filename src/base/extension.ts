@@ -77,8 +77,9 @@ export default abstract class Extension<T extends Node> implements IExtension {
     }
 
     public condition() {
-        if (this.node && this.node.hasElement) {
-            const ext: string = optional(this.node.element, 'dataset.ext');
+        const node = this.node;
+        if (node && node.hasElement) {
+            const ext: string = optional(node.element, 'dataset.ext');
             if (ext === '') {
                 return (this.tagNames.length > 0);
             }

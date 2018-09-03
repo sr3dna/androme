@@ -21,7 +21,7 @@ export function locateExtension<T extends View>(node: T, extension: string): Nul
     return <Element> Array.from(node.element.children).find((element: Element) => includes(<string> optional(element, 'dataset.ext'), extension));
 }
 
-export function positionIsolated<T extends View>(node: T) {
+export function setPositionIsolated<T extends View>(node: T) {
     const horizontalBias = node.horizontalBias;
     const verticalBias = node.verticalBias;
     const gravity: string[] = [];

@@ -137,7 +137,7 @@ export default class Application<T extends Node> {
         this.cache.delegateAppend = undefined;
         this.cache.clear();
         for (const ext of this.extensions) {
-            ext.setTarget(<T> {}, undefined, rootElement);
+            ext.setTarget({} as T, undefined, rootElement);
             ext.beforeInit();
         }
         const rootNode = this.insertNode(rootElement);
@@ -180,9 +180,26 @@ export default class Application<T extends Node> {
                 }
             }
         }
+        for (const node of this.cache) {
+            let valid = true;
+            const text: Element[] = [];
+            Array.from(node.element.childNodes).forEach((element: Element) => {
+                if (element.nodeName === '#text') {
+                    if (node.element.tagName !== 'SELECT') {
+                        text.push(element);
+                    }
+                }
+                else if (!supportInline.includes(element.tagName) || getNodeFromElement(element)) {
+                    valid = false;
+                }
+            });
+            if (!valid) {
+                text.forEach(element => this.insertNode(element, node));
+            }
+        }
         if (this.cache.length > 0) {
             const preAlignment: ObjectIndex<ObjectMap<Null<string>>> = {};
-            for (const node of this.cache) {
+            for (const node of this.cache.elements) {
                 const element = <HTMLElement> node.element;
                 preAlignment[node.id] = {};
                 const style = preAlignment[node.id];
@@ -228,8 +245,8 @@ export default class Application<T extends Node> {
                     style.overflow = node.style.overflow;
                     element.style.overflow = 'visible';
                 }
-                node.setBounds();
             }
+            this.cache.each(node => node.setBounds());
             for (const node of this.cache) {
                 if (node.pageflow) {
                     const element = <HTMLInputElement> node.element;
@@ -265,7 +282,7 @@ export default class Application<T extends Node> {
             const visible = this.cache.visible;
             for (const node of visible) {
                 if (!node.documentRoot) {
-                    let parent = node.parentElementNode;
+                    let parent = node.parentElementAsNode;
                     if (parent == null) {
                         parent = this.cache.parent;
                     }
@@ -274,21 +291,6 @@ export default class Application<T extends Node> {
                 }
             }
             for (const node of visible) {
-                let valid = true;
-                const text: Element[] = [];
-                Array.from(node.element.childNodes).forEach((element: Element) => {
-                    if (element.nodeName === '#text') {
-                        if (node.element.tagName !== 'SELECT') {
-                            text.push(element);
-                        }
-                    }
-                    else if (!supportInline.includes(element.tagName) || getNodeFromElement(element)) {
-                        valid = false;
-                    }
-                });
-                if (!valid) {
-                    text.forEach(element => this.insertNode(element, node));
-                }
                 if (node.children.length === 1) {
                     const firstChild = node.children[0];
                     if (!firstChild.pageflow && firstChild.toInt('top') === 0 && firstChild.toInt('right') === 0 && firstChild.toInt('bottom') === 0 && firstChild.toInt('left') === 0) {
@@ -297,7 +299,7 @@ export default class Application<T extends Node> {
                 }
                 if (node.children.some((current: T) => {
                         if (current.pageflow) {
-                            return (current.float !== 'right' && !['center', 'right', 'end'].includes(current.cssParent('textAlign', true)) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)));
+                            return (current.float !== 'right' && (Math.abs(current.marginLeft) >= current.bounds.width || !['center', 'right', 'end'].includes(current.cssParent('textAlign', true))) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)));
                         }
                         else {
                             const left = current.toInt('left');
@@ -312,7 +314,7 @@ export default class Application<T extends Node> {
                         let leftType = 0;
                         if (current.pageflow) {
                             const left = current.marginLeft;
-                            if (left < 0 && node.marginLeft >= left) {
+                            if (left < 0 && node.marginLeft >= Math.abs(left)) {
                                 leftType = 1;
                             }
                         }
@@ -334,15 +336,15 @@ export default class Application<T extends Node> {
                         marginLeft.push(leftType);
                     });
                     if (marginRight.length > 0) {
-                        const [panelLeft, panelRight] = new NodeList<T>(<T[]> node.children).partition((item: T) => !marginRight.includes(item));
-                        if (panelLeft.length > 0 && panelRight.length > 0) {
+                        const [sectionLeft, sectionRight] = new NodeList<T>(node.children as T[]).partition((item: T) => !marginRight.includes(item));
+                        if (sectionLeft.length > 0 && sectionRight.length > 0) {
                             if (node.cssOriginal('marginLeft') === 'auto') {
                                 node.css('marginLeft', <string> node.style.marginLeft);
                             }
-                            node.css('marginRight', '0px');
-                            const widthLeft = (node.has('width') ? node.toInt('width') : Math.max.apply(null, panelLeft.list.map(item => item.linear.width)));
-                            const widthRight = Math.max.apply(null, panelRight.list.map(item => Math.abs(item.toInt('right'))));
-                            panelLeft.each((item: T) => {
+                            node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
+                            const widthLeft = (node.has('width') ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.linear.width)));
+                            const widthRight = Math.max.apply(null, sectionRight.list.map(item => Math.abs(item.toInt('right'))));
+                            sectionLeft.each((item: T) => {
                                 if (item.pageflow && item.viewWidth === 0) {
                                     item.css('maxWidth', formatPX(widthLeft));
                                 }
@@ -353,7 +355,13 @@ export default class Application<T extends Node> {
                     const marginLeftType = Math.max.apply(null, marginLeft);
                     node.each((current: T, index: number) => {
                         if (marginLeftType && marginLeft[index] !== 2 && ((current.pageflow && !current.plainText && marginLeft.includes(1)) || marginLeftType === 2)) {
-                            current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft, true);
+                            if (marginLeft[index] === 1) {
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft, false, true);
+                            }
+                            else {
+                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft, false, true);
+                            }
                         }
                     });
                     if (marginLeftType > 0) {
@@ -362,7 +370,7 @@ export default class Application<T extends Node> {
                             node.css('width', formatPX(width + node.marginLeft));
                         }
                         node.bounds.left -= node.marginLeft;
-                        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0, true);
+                        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null, false, true);
                     }
                 }
                 if (!node.pageflow && node.children.length > 0) {
@@ -982,16 +990,22 @@ export default class Application<T extends Node> {
                             if (marginRight < 0) {
                                 if (Math.abs(marginRight) > node.bounds.width) {
                                     marginRight += node.bounds.width;
-                                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, node.bounds.width * -1);
+                                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, node.bounds.width * -1, true);
                                     prepend = true;
                                 }
                                 else {
-                                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, node.marginRight + marginRight);
+                                    if (Math.abs(marginRight) >= node.marginRight) {
+                                        node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, Math.ceil(Math.abs(marginRight) - node.marginRight));
+                                        node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
+                                    }
+                                    else {
+                                        node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, marginRight, true);
+                                    }
                                 }
                             }
                             if (node.marginLeft < 0) {
                                 marginRight += Math.max(node.marginLeft, node.bounds.width * -1);
-                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, 0);
+                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                             }
                             if (prepend) {
                                 sorted.splice(sorted.length - 1, 0, node);
@@ -1009,14 +1023,14 @@ export default class Application<T extends Node> {
                     subgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
                 }
                 xml = replacePlaceholder(xml, group.id, content);
-                group.append(subgroup);
+                group.renderAppend(subgroup);
             }
             else if (item.length > 0) {
                 const single = item.list[0];
                 single.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                 single.renderIndex = index;
                 xml = replacePlaceholder(xml, group.id, `{:${group.id}:${index}}`);
-                group.append(single);
+                group.renderAppend(single);
             }
         });
         return xml;
@@ -1042,7 +1056,7 @@ export default class Application<T extends Node> {
             if (i > 0 && cleared.has(node)) {
                 floated.push(node);
                 if (!node.floating) {
-                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, 0);
+                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
                     rowsCurrent.push(current.slice());
                     current.length = 0;
                 }
@@ -1315,7 +1329,6 @@ export default class Application<T extends Node> {
                     cssFloat: 'none',
                     verticalAlign: 'baseline'
                 });
-                node.setBounds();
             }
         }
         else if (isElementVisible(element)) {
@@ -1326,6 +1339,7 @@ export default class Application<T extends Node> {
             node.setExclusions();
         }
         if (node != null) {
+            node.setMultiLine();
             this.cache.append(node);
         }
         return node;

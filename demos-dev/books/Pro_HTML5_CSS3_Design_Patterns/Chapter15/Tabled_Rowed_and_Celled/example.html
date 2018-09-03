@@ -5,6 +5,7 @@
   		<meta charset="utf-8" />
   		<link rel="stylesheet" href="site.css"   media="all" />
   		<link rel="stylesheet" href="page.css"   media="all" />
+        <script src="/node_modules/systemjs/dist/system.js"></script>
         <script>
             SystemJS.config({
                 packages: {
@@ -24,7 +25,6 @@
                 });
             });
         </script>
-
 </head>
 
 <body>
@@ -33,12 +33,16 @@
  
 <h2>Before</h2>
  <div> 
+        <span>
+                <span>span</span>  
+                <span>span</span></span>
   <div>
     <div>division</div>   
     <div>division</div></div>
-  <span>
-    <span>span</span>  
-    <span>span</span></span></div>
+    <div>
+            <div>division</div>   
+            <div>division</div></div>
+</div>
 
 <h2>After being rendered as a table with rows and cells</h2>
  <div class="tabled"> 

@@ -16,37 +16,37 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
 
     public processNode(): ExtensionResult {
         let xml = '';
-        const parent = this.parent;
-        if (parent) {
-            const node = this.node;
-            const options = Object.assign({}, this.options[node.element.id]);
-            overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
-            xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
-            for (let i = 5; i < node.children.length; i++) {
-                node.children[i].hide();
-                node.children[i].cascade().forEach(item => item.hide());
-            }
-            node.cascade().forEach(item => item.renderExtension = this);
-            node.render(parent);
-            node.nodeType = NODE_STANDARD.BLOCK;
-            node.excludeResource |= NODE_RESOURCE.ASSET;
-            this.createResourceTheme();
+        const node = this.node;
+        const parent = this.parent as T;
+        const options = Object.assign({}, this.options[node.element.id]);
+        overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
+        xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'), 'wrap_content', node);
+        for (let i = 5; i < node.children.length; i++) {
+            node.children[i].hide();
+            node.children[i].cascade().forEach(item => item.hide());
         }
+        node.cascade().forEach(item => item.renderExtension = this);
+        node.render(parent);
+        node.nodeType = NODE_STANDARD.BLOCK;
+        node.excludeResource |= NODE_RESOURCE.ASSET;
+        this.createResourceTheme();
         return { xml };
     }
 
     public beforeInsert() {
-        const menu: string = optional(locateExtension(this.node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const node = this.node;
+        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
         if (menu !== '') {
-            const options = Object.assign({}, this.options[this.node.element.id]);
+            const options = Object.assign({}, this.options[node.element.id]);
             overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
-            this.node.app('menu', options.app.menu);
+            node.app('menu', options.app.menu);
         }
     }
 
     public afterInsert() {
-        if (this.node.renderParent.viewHeight === 0) {
-            this.node.renderParent.android('layout_height', 'match_parent');
+        const node = this.node;
+        if (node.renderParent.viewHeight === 0) {
+            node.renderParent.android('layout_height', 'match_parent');
         }
     }
 
