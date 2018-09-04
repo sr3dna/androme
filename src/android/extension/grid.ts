@@ -14,7 +14,7 @@ export default class GridAndroid<T extends View> extends Grid<T> {
 
     public processChild(): ExtensionResult {
         const node = this.node;
-        const data = <GridCellData> node.data(EXT_NAME.GRID, 'gridCellData');
+        const data = <GridCellData> node.data(EXT_NAME.GRID, 'cellData');
         if (data) {
             if (data.rowSpan > 1) {
                 node.app('layout_rowSpan', data.rowSpan.toString());
@@ -38,58 +38,40 @@ export default class GridAndroid<T extends View> extends Grid<T> {
             else {
                 const parent = node.renderParent;
                 if (parent.is(NODE_STANDARD.GRID) && !(parent.display === 'table' && parent.css('borderCollapse') === 'collapse')) {
-                    const gridData = <GridData> parent.data(EXT_NAME.GRID, 'gridData');
-                    const gridCellData = <GridCellData> node.data(EXT_NAME.GRID, 'gridCellData');
-                    if (gridData && gridCellData) {
+                    const mainData = <GridData> parent.data(EXT_NAME.GRID, 'mainData');
+                    const cellData = <GridCellData> node.data(EXT_NAME.GRID, 'cellData');
+                    if (mainData && cellData) {
                         const dimensions = getBoxSpacing(node.documentParent.element, true);
-                        const padding = gridData.padding;
-                        if (gridCellData.cellFirst) {
-                            const heightTop = dimensions.paddingTop + dimensions.marginTop;
-                            if (heightTop > 0) {
-                                padding.top = heightTop;
-                            }
+                        const padding = mainData.padding;
+                        if (cellData.cellFirst) {
+                            padding.top = dimensions.paddingTop + dimensions.marginTop;
                         }
-                        if (gridCellData.rowStart) {
-                            const marginLeft = dimensions.marginLeft + dimensions.paddingLeft;
-                            if (marginLeft > 0) {
-                                padding.left = Math.max(marginLeft, padding.left);
-                            }
+                        if (cellData.rowStart) {
+                            padding.left = Math.max(dimensions.marginLeft + dimensions.paddingLeft, padding.left);
                         }
-                        if (gridCellData.rowEnd) {
-                            const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!gridCellData.cellLast ? dimensions.marginTop + dimensions.paddingTop : 0);
+                        if (cellData.rowEnd) {
+                            const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellLast ? dimensions.marginTop + dimensions.paddingTop : 0);
                             if (heightBottom > 0) {
-                                if (gridCellData.cellLast) {
+                                if (cellData.cellLast) {
                                     padding.bottom = heightBottom;
                                 }
                                 else {
-                                    this.application.controllerHandler.appendAfter(node.id, this.application.controllerHandler.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { app: { layout_columnSpan: gridData.columnCount } }, 'match_parent', formatPX(heightBottom)));
+                                    this.application.controllerHandler.appendAfter(node.id, this.application.controllerHandler.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { app: { layout_columnSpan: mainData.columnCount } }, 'match_parent', formatPX(heightBottom)));
                                 }
                             }
-                            const marginRight = dimensions.marginRight + dimensions.paddingRight;
-                            if (marginRight > 0) {
-                                padding.right = Math.max(marginRight, padding.right);
-                            }
+                            padding.right = Math.max(dimensions.marginRight + dimensions.paddingRight, padding.right);
                         }
                     }
                 }
             }
         });
         for (const node of extended) {
-            const data = <GridData> node.data(EXT_NAME.GRID, 'gridData');
+            const data = <GridData> node.data(EXT_NAME.GRID, 'mainData');
             if (data) {
-                const padding = data.padding;
-                if (padding.top > 0) {
-                    node.modifyBox(BOX_STANDARD.PADDING_TOP, padding.top);
-                }
-                if (padding.right > 0) {
-                    node.modifyBox(BOX_STANDARD.PADDING_RIGHT, padding.right);
-                }
-                if (padding.bottom > 0) {
-                    node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, padding.bottom);
-                }
-                if (padding.left > 0) {
-                    node.modifyBox(BOX_STANDARD.PADDING_LEFT, padding.left);
-                }
+                node.modifyBox(BOX_STANDARD.PADDING_TOP, data.padding.top);
+                node.modifyBox(BOX_STANDARD.PADDING_RIGHT, data.padding.right);
+                node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, data.padding.bottom);
+                node.modifyBox(BOX_STANDARD.PADDING_LEFT, data.padding.left);
             }
         }
     }

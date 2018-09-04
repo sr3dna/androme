@@ -4,7 +4,7 @@ import List from '../../extension/list';
 import View from '../view';
 import { convertInt, formatPX } from '../../lib/util';
 import { delimitDimens } from '../lib/util';
-import { BOX_STANDARD, NODE_STANDARD } from '../../lib/constants';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
 
@@ -32,11 +32,18 @@ export default class ListAndroid<T extends View> extends List<T> {
         const floatItem = node.children.find(item => item.float === 'left' && convertInt(item.cssOriginal('marginLeft', true)) < 0 && Math.abs(convertInt(item.cssOriginal('marginLeft', true))) <= convertInt(item.documentParent.cssOriginal('marginLeft', true))) as T;
         if (floatItem && listStyle === '0') {
             floatItem.parent = parent;
-            controller.prependBefore(
-                node.id,
-                (floatItem.inlineText || floatItem.children.length === 0 ? this.application.controllerHandler.renderNode(floatItem, parent, NODE_STANDARD.TEXT)
-                                                                         : this.application.controllerHandler.renderGroup(floatItem, parent, NODE_STANDARD.CONSTRAINT))
-            );
+            let xml = '';
+            if (floatItem.inlineText || floatItem.children.length === 0) {
+                xml = this.application.controllerHandler.renderNode(floatItem, parent, NODE_STANDARD.TEXT);
+            }
+            else if (floatItem.children.every(item => item.pageflow)) {
+                xml = this.application.controllerHandler.renderGroup(floatItem, parent, NODE_STANDARD.RELATIVE);
+                floatItem.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
+            }
+            else {
+                xml = this.application.controllerHandler.renderGroup(floatItem, parent, NODE_STANDARD.CONSTRAINT);
+            }
+            controller.prependBefore(node.id, xml);
             if (columnCount === 3) {
                 node.app('layout_columnSpan', '2');
             }
@@ -64,19 +71,14 @@ export default class ListAndroid<T extends View> extends List<T> {
             if (left > 0 && paddingLeft > left) {
                 paddingLeft -= left;
             }
+            paddingLeft = Math.max(paddingLeft, 20);
             const minWidth = (paddingLeft > 0 ? delimitDimens(node.tagName, parseRTL('min_width'), formatPX(paddingLeft)) : '');
             const paddingRight = (() => {
-                if (paddingLeft <= 10) {
-                    return 0;
-                }
-                else if (paddingLeft <= 16) {
-                    return 4;
-                }
-                else if (paddingLeft <= 24) {
-                    return 6;
-                }
-                else if (paddingLeft <= 30) {
+                if (paddingLeft <= 24) {
                     return 8;
+                }
+                else if (paddingLeft <= 32) {
+                    return 10;
                 }
                 else {
                     return 12;

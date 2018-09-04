@@ -81,4 +81,25 @@ export default class TableAndroid<T extends View> extends Table<T> {
         }
         return { xml: '' };
     }
+
+    public beforeInsert() {
+        const node = this.node;
+        if (convertInt(node.cssOriginal('width')) === 0 && node.toInt('width') > 0) {
+            const columnCount = convertInt(node.app('columnCount'));
+            let width = 0;
+            let maxWidth = 0;
+            node.each((item: T, index: number) => {
+                if (index === 0 || (index % columnCount) !== 0) {
+                    width += item.toInt('width');
+                }
+                else {
+                    width = 0;
+                }
+                maxWidth = Math.max(width, maxWidth);
+            });
+            if (maxWidth > node.toInt('width')) {
+                node.android('layout_width', formatPX(maxWidth));
+            }
+        }
+    }
 }
