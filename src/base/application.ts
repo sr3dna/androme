@@ -257,18 +257,19 @@ export default class Application<T extends Node> {
                                 [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
                                     const label = getNodeFromElement(sibling);
                                     const labelParent = (sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) : null);
-                                    if (label && label.visible && label.pageflow && ((sibling.htmlFor !== '' && sibling.htmlFor === element.id) || (labelParent && labelParent.visible && label.plainText))) {
-                                        if (labelParent && label.plainText) {
-                                            node.companion = labelParent;
-                                            label.hide();
-                                            labelParent.hide();
-                                        }
-                                        else {
+                                    if (label && label.visible && label.pageflow) {
+                                        if (sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
                                             node.companion = label;
-                                            label.hide();
                                         }
-                                        node.setBounds(false);
-                                        return true;
+                                        else if (labelParent && (label.plainText || label.inlineText)) {
+                                            node.companion = labelParent;
+                                            labelParent.renderAs = node;
+                                        }
+                                        if (node.companion != null) {
+                                            label.hide();
+                                            node.setBounds(false);
+                                            return true;
+                                        }
                                     }
                                     return false;
                                 });
@@ -280,18 +281,17 @@ export default class Application<T extends Node> {
             const visible = this.cache.visible;
             for (const node of visible) {
                 if (!node.documentRoot) {
-                    let parent = node.parentElementAsNode;
-                    if (node.companion != null) {
-                        const companion = getNodeFromElement(node.companion.element.parentElement);
-                        if (companion && !companion.visible) {
-                            parent = getNodeFromElement(companion.element.parentElement) || companion;
-                        }
-                    }
-                    if (parent == null) {
+                    let parent: Null<T> = node.getParentElementAsNode(SETTINGS.constraintSupportNegativeLeftTop) as T;
+                    if (parent == null && !node.pageflow) {
                         parent = this.cache.parent;
                     }
-                    node.parent = parent;
-                    node.documentParent = parent;
+                    if (parent != null) {
+                        node.parent = parent;
+                        node.documentParent = parent;
+                    }
+                    else {
+                        node.hide();
+                    }
                 }
             }
             for (const node of visible) {

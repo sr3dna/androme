@@ -1264,6 +1264,10 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     public renderNode(node: T, parent: T, tagName: number | string, recursive = false) {
+        if (node.renderAs != null && !node.renderAs.rendered) {
+            node.hide();
+            node = node.renderAs as T;
+        }
         const target = (node.isSet('dataset', 'target') && !node.isSet('dataset', 'include'));
         if (typeof tagName === 'number') {
             tagName = View.getNodeFromElementName(tagName);
@@ -1372,7 +1376,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
-                            const result = parent.children.filter(item => (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name) as T[];
+                            const result = parent.children.filter(item => {
+                                if (item.visible && item.renderAs != null) {
+                                    item = item.renderAs as T;
+                                }
+                                return ((<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name);
+                            }) as T[];
                             if (result.length > 1) {
                                 let xml = '';
                                 const linearX = NodeList.linearX(result);

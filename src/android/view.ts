@@ -374,7 +374,7 @@ export default class View extends Node {
                     const previousSibling = this.previousSibling;
                     const nextSibling = this.nextSibling;
                     if ((width >= widthParent && (widthRoot > 0 || parent.documentBody || renderParent.documentRoot)) ||
-                        (this.hasElement && this.blockStatic && this.documentParent.blockStatic && ((previousSibling === null || !previousSibling.floating) && (nextSibling === null || !nextSibling.floating))) ||
+                        (this.hasElement && this.nodeType < NODE_STANDARD.BLOCK && this.blockStatic && this.documentParent.blockStatic && ((previousSibling === null || !previousSibling.floating) && (nextSibling === null || !nextSibling.floating))) ||
                         (!this.hasElement && this.renderChildren.length > 0 && this.renderChildren.some(item => item.linear.width >= this.documentParent.box.width)) ||
                         (blockElement && !widest.includes(this) && (this.is(NODE_STANDARD.TEXT) || renderParent.blockWidth)) ||
                         (inlineRight > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(inlineRight, this.box.right))))
@@ -975,7 +975,7 @@ export default class View extends Node {
     set documentParent(value: T) {
         this._documentParent = value;
     }
-    get documentParent(): T {
+    get documentParent() {
         if (this._documentParent != null) {
             return this._documentParent as T;
         }
@@ -983,7 +983,7 @@ export default class View extends Node {
             return this;
         }
         else {
-            return this.parentElementAsNode as T || View.documentBody();
+            return this.getParentElementAsNode(false) as T || View.documentBody();
         }
     }
 

@@ -20,6 +20,7 @@ export default abstract class Node implements BoxModel {
     public linear: ClientRect;
     public box: ClientRect;
     public renderExtension?: IExtension;
+    public renderAs: T;
     public excludeProcedure = NODE_PROCEDURE.NONE;
     public excludeResource = NODE_RESOURCE.NONE;
     public documentRoot = false;
@@ -493,6 +494,38 @@ export default abstract class Node implements BoxModel {
         }
     }
 
+    public getParentElementAsNode(negative = false) {
+        let parent = getNodeFromElement(this.element.parentElement);
+        if (!this.pageflow) {
+            let found = false;
+            let previous: Null<T> = null;
+            let relativeParent: Null<T> = null;
+            while (parent && parent.id !== 0) {
+                if (relativeParent == null && this.position === 'absolute') {
+                    if (!['static', 'initial'].includes(parent.position)) {
+                        if (!negative || (convertInt(this.top) >= 0 && convertInt(this.left) >= 0)) {
+                            found = true;
+                            break;
+                        }
+                        relativeParent = parent;
+                    }
+                }
+                else {
+                    if ((this.withinX(parent.box) && this.withinY(parent.box)) || (previous && ((this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) || (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) || (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) || (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)))) {
+                        found = true;
+                        break;
+                    }
+                }
+                previous = parent;
+                parent = getNodeFromElement(parent.element.parentElement);
+            }
+            if (!found)  {
+                parent = relativeParent;
+            }
+        }
+        return parent;
+    }
+
     public remove(node: T) {
         this.children = this.children.filter(child => child !== node);
     }
@@ -586,48 +619,6 @@ export default abstract class Node implements BoxModel {
 
     get documentBody() {
         return (this.element === document.body);
-    }
-
-    get parentElementAsNode() {
-        let parent = getNodeFromElement(this.element.parentElement);
-        if (parent) {
-            if (!this.pageflow) {
-                let found = false;
-                let previous: Null<T> = null;
-                let relativeParent: Null<T> = null;
-                while (parent && parent.id !== 0) {
-                    if (relativeParent == null && this.position === 'absolute') {
-                        if (!['static', 'initial'].includes(parent.position)) {
-                            if (convertInt(this.top) >= 0 && convertInt(this.left) >= 0) {
-                                found = true;
-                                break;
-                            }
-                            relativeParent = parent;
-                        }
-                    }
-                    else {
-                        if ((this.withinX(parent.box) && this.withinY(parent.box)) || (previous && ((this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) || (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) || (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) || (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)))) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    previous = parent;
-                    parent = getNodeFromElement(parent.element.parentElement);
-                }
-                if (!found)  {
-                    parent = relativeParent;
-                }
-            }
-            else {
-                if (parent === this.companion) {
-                    const container = getNodeFromElement(parent.element.parentElement);
-                    if (container) {
-                        parent = container;
-                    }
-                }
-            }
-        }
-        return parent;
     }
 
     set renderDepth(value) {

@@ -102,6 +102,7 @@ androme.settings = {
     constraintChainPackedHorizontalOffset: 4,
     constraintChainPackedVerticalOffset: 16,
     constraintCirclePositionAbsolute: false,
+    constraintSupportNegativeLeftTop: true,
     showAttributes: true,
     customizationsOverwritePrivilege: false,
     autoCloseOnWrite: true,
