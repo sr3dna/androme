@@ -347,48 +347,6 @@ export default class View extends Node {
                     }
                 }
             }
-            if (this.android('layout_height') !== '0px') {
-                if (!this.inlineStatic || tableParent) {
-                    if (this.toInt('height') > 0) {
-                        if (isPercent(styleMap.height)) {
-                            const percent = this.toInt('height') / 100;
-                            if (tableParent && !renderParent.inlineHeight) {
-                                this.android('layout_rowWeight', percent.toFixed(2));
-                                this.android('layout_height', '0px');
-                            }
-                            else if (styleMap.height === '100%') {
-                                this.android('layout_height', 'match_parent');
-                            }
-                            else {
-                                const heightPercent = Math.floor(convertInt(this.style.height) * (this.pageflow ? percent : 1));
-                                this.android('layout_height', (heightPercent > 0 ? formatPX(heightPercent) : 'wrap_content'));
-                            }
-                        }
-                        else {
-                            this.android('layout_height', (this.css('overflow') === 'hidden' && this.toInt('height') < this.box.height ? 'wrap_content' : styleMap.height));
-                        }
-                    }
-                }
-                if (this.has('minHeight') && !isPercent(styleMap.minHeight)) {
-                    this.android('layout_height', 'wrap_content', false);
-                    this.android('minHeight', styleMap.minHeight, false);
-                }
-                if (this.has('maxHeight') && !isPercent(styleMap.maxHeight)) {
-                    this.android('maxHeight', styleMap.maxHeight, false);
-                }
-                if (constraint.layoutHeight) {
-                    if (constraint.layoutVertical) {
-                        this.android('layout_height', 'wrap_content', false);
-                    }
-                    else if (this.documentRoot) {
-                        const bottomHeight = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.pageflow).map(node => node.linear.bottom)]);
-                        this.android('layout_height', (bottomHeight > 0 ? formatPX(bottomHeight + this.paddingBottom + this.borderBottomWidth) : 'match_parent'), false);
-                    }
-                    else {
-                        this.android('layout_height', (this.bounds.height < heightParent ? formatPX(this.bounds.height) : 'match_parent'), false);
-                    }
-                }
-            }
             if (this.android('layout_width') == null) {
                 const wrap = (this.nodeType < NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
                 const blockElement = (!this.inlineElement || this.blockStatic);
@@ -429,6 +387,48 @@ export default class View extends Node {
                 }
                 else {
                     this.android('layout_width', 'wrap_content');
+                }
+            }
+            if (this.android('layout_height') !== '0px') {
+                if (!this.inlineStatic || tableParent) {
+                    if (this.toInt('height') > 0) {
+                        if (isPercent(styleMap.height)) {
+                            const percent = this.toInt('height') / 100;
+                            if (tableParent && !renderParent.inlineHeight) {
+                                this.android('layout_rowWeight', percent.toFixed(2));
+                                this.android('layout_height', '0px');
+                            }
+                            else if (styleMap.height === '100%') {
+                                this.android('layout_height', 'match_parent');
+                            }
+                            else {
+                                const heightPercent = Math.floor(convertInt(this.style.height) * (this.pageflow ? percent : 1));
+                                this.android('layout_height', (heightPercent > 0 ? formatPX(heightPercent) : 'wrap_content'));
+                            }
+                        }
+                        else {
+                            this.android('layout_height', (this.css('overflow') === 'hidden' && this.toInt('height') < this.box.height ? 'wrap_content' : styleMap.height));
+                        }
+                    }
+                }
+                if (this.has('minHeight') && !isPercent(styleMap.minHeight)) {
+                    this.android('layout_height', 'wrap_content', false);
+                    this.android('minHeight', styleMap.minHeight, false);
+                }
+                if (this.has('maxHeight') && !isPercent(styleMap.maxHeight)) {
+                    this.android('maxHeight', styleMap.maxHeight, false);
+                }
+                if (constraint.layoutHeight) {
+                    if (constraint.layoutVertical) {
+                        this.android('layout_height', 'wrap_content', false);
+                    }
+                    else if (this.documentRoot) {
+                        const bottomHeight = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.pageflow).map(node => node.linear.bottom)]);
+                        this.android('layout_height', (bottomHeight > 0 ? formatPX(bottomHeight + this.paddingBottom + this.borderBottomWidth) : 'match_parent'), false);
+                    }
+                    else {
+                        this.android('layout_height', (this.bounds.height < heightParent ? formatPX(this.bounds.height) : 'match_parent'), false);
+                    }
                 }
             }
             if (this.android('layout_height') == null) {
@@ -668,7 +668,7 @@ export default class View extends Node {
             }
             if (this.linearHorizontal) {
                 const gridParent = renderParent.is(NODE_STANDARD.GRID);
-                if (renderChildren.every(node => node.inline && node.viewWidth === 0 && node.viewHeight === 0) && (renderChildren.some(node => node.floating || !node.siblingflow || node.plainText))) {
+                if (renderChildren.every(node => (node.inline || node.alignMargin) && node.viewWidth === 0 && node.viewHeight === 0) && (renderChildren.some(node => node.floating || !node.siblingflow || node.plainText))) {
                     this.android('baselineAligned', 'false');
                 }
                 else if (renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT) || gridParent || this.of(NODE_STANDARD.LINEAR, NODE_ALIGNMENT.HORIZONTAL)) {

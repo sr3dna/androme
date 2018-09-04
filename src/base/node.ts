@@ -109,7 +109,9 @@ export default abstract class Node implements BoxModel {
                 this.styleMap = styleMap;
                 this.originalStyleMap = Object.assign({}, styleMap);
             }
-            setElementCache(element, 'node', this);
+            if (this.id !== 0) {
+                setElementCache(element, 'node', this);
+            }
             this._initialized = true;
         }
     }
@@ -592,11 +594,15 @@ export default abstract class Node implements BoxModel {
             if (!this.pageflow) {
                 let found = false;
                 let previous: Null<T> = null;
+                let relativeParent: Null<T> = null;
                 while (parent && parent.id !== 0) {
-                    if (this.position === 'absolute') {
+                    if (relativeParent == null && this.position === 'absolute') {
                         if (!['static', 'initial'].includes(parent.position)) {
-                            found = true;
-                            break;
+                            if (convertInt(this.top) >= 0 && convertInt(this.left) >= 0) {
+                                found = true;
+                                break;
+                            }
+                            relativeParent = parent;
                         }
                     }
                     else {
@@ -609,7 +615,7 @@ export default abstract class Node implements BoxModel {
                     parent = getNodeFromElement(parent.element.parentElement);
                 }
                 if (!found)  {
-                    parent = null;
+                    parent = relativeParent;
                 }
             }
             else {
@@ -803,7 +809,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get blockStatic() {
-        return (this.block && this.pageflow && !this.floating);
+        return (this.block && this.pageflow && this.siblingflow && !this.floating);
     }
 
     get alignMargin() {

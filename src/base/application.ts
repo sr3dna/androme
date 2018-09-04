@@ -142,7 +142,7 @@ export default class Application<T extends Node> {
         }
         const rootNode = this.insertNode(rootElement);
         if (rootNode) {
-            rootNode.parent = new this._Node(0, SETTINGS.targetAPI, rootElement.parentElement || document.body);
+            rootNode.parent = new this._Node(0, SETTINGS.targetAPI, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
             rootNode.documentRoot = true;
             this.cache.parent = rootNode;
         }

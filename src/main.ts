@@ -337,7 +337,7 @@ export function reset() {
     for (const element of ROOT_CACHE) {
         delete element.dataset.views;
         delete element.dataset.viewName;
-        Array.from(element.querySelectorAll('*')).forEach((item: Element) => deleteElementCache(item, 'style', 'styleMap'));
+        Array.from(element.querySelectorAll('*')).forEach((item: Element) => deleteElementCache(item, 'node', 'style', 'styleMap'));
     }
     ROOT_CACHE.clear();
     main.reset();
