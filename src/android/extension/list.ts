@@ -56,7 +56,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 image = ResourceView.addImageURL(listStyle.image);
                 [left, top] = ResourceView.parseBackgroundPosition(listStyle.position).map(value => convertInt(value));
             }
-            const gravity = (image !== '' && !listStyleImage ? '' : 'right');
+            const gravity = ((image !== '' && !listStyleImage) || (parent.marginLeft === 0 && node.marginLeft === 0) ? '' : 'right');
             if (gravity === '') {
                 paddingLeft += node.paddingLeft;
                 node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
@@ -65,13 +65,15 @@ export default class ListAndroid<T extends View> extends List<T> {
                 paddingLeft -= left;
             }
             const minWidth = (paddingLeft > 0 ? delimitDimens(node.tagName, parseRTL('min_width'), formatPX(paddingLeft)) : '');
-            const marginLeftValue = (left > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(left)) : '');
             const paddingRight = (() => {
                 if (paddingLeft <= 10) {
                     return 0;
                 }
-                else if (paddingLeft <= 20) {
+                else if (paddingLeft <= 16) {
                     return 4;
+                }
+                else if (paddingLeft <= 24) {
+                    return 6;
                 }
                 else if (paddingLeft <= 30) {
                     return 8;
@@ -80,7 +82,9 @@ export default class ListAndroid<T extends View> extends List<T> {
                     return 12;
                 }
             })();
+            const paddingLeftValue = (gravity === '' ? delimitDimens(node.tagName, parseRTL('padding_left'), formatPX(paddingRight)) : '');
             const paddingRightValue = (gravity === 'right' ? delimitDimens(node.tagName, parseRTL('padding_right'), formatPX(paddingRight)) : '');
+            const marginLeftValue = (left > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(left)) : '');
             const options = {
                 android: {
                     layout_marginTop: (node.marginTop + top > 0 ? delimitDimens(node.tagName, 'margin_top', formatPX(node.marginTop + top)) : '')
@@ -98,6 +102,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                             android: {
                                 minWidth,
                                 [parseRTL('layout_marginLeft')]: marginLeftValue,
+                                [parseRTL('paddingLeft')]: paddingLeftValue,
                                 [parseRTL('paddingRight')]: paddingRightValue
                             },
                             app: {
@@ -117,6 +122,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                     minWidth,
                     gravity: parseRTL(gravity),
                     [parseRTL('layout_marginLeft')]: marginLeftValue,
+                    [parseRTL('paddingLeft')]: paddingLeftValue,
                     [parseRTL('paddingRight')]: paddingRightValue
                 });
                 if (columnCount === 3) {

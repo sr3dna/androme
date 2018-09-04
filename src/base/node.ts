@@ -891,28 +891,36 @@ export default abstract class Node implements BoxModel {
     }
 
     get previousSibling() {
+        let element: Null<Element> = null;
         if (this._element != null)  {
-            let element = this.element.previousSibling;
-            while (element != null) {
-                const node = getNodeFromElement(<Element> element);
-                if (node && node.siblingflow) {
-                    return node;
-                }
-                element = element.previousSibling;
+            element = <Element> this.element.previousSibling;
+        }
+        else if (this.children.length > 0) {
+            element = <Element> this.children[0].element.previousSibling;
+        }
+        while (element != null) {
+            const node = getNodeFromElement(element);
+            if (node && node.siblingflow) {
+                return node;
             }
+            element = <Element> element.previousSibling;
         }
         return null;
     }
     get nextSibling() {
+        let element: Null<Element> = null;
         if (this._element != null)  {
-            let element = this.element.nextSibling;
-            while (element != null) {
-                const node = getNodeFromElement(<Element> element);
-                if (node && node.siblingflow) {
-                    return node;
-                }
-                element = element.nextSibling;
+            element = <Element> this.element.nextSibling;
+        }
+        else if (this.children.length > 0) {
+            element = <Element> this.children[this.children.length - 1].element.nextSibling;
+        }
+        while (element != null) {
+            const node = getNodeFromElement(element);
+            if (node && node.siblingflow) {
+                return node;
             }
+            element = <Element> element.nextSibling;
         }
         return null;
     }

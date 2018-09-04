@@ -314,9 +314,6 @@ export default class View extends Node {
                             }
                             else if (styleMap.width === '100%') {
                                 this.android('layout_width', 'match_parent');
-                                if (!this.has('height') && this.is(NODE_STANDARD.IMAGE)) {
-                                    this.android('layout_height', 'match_parent');
-                                }
                             }
                             else {
                                 const widthPercent = Math.floor(convertInt(this.style.width) * (this.pageflow && !this.inlineElement ? percent : 1));
@@ -361,9 +358,6 @@ export default class View extends Node {
                             }
                             else if (styleMap.height === '100%') {
                                 this.android('layout_height', 'match_parent');
-                                if (!this.has('width') && this.is(NODE_STANDARD.IMAGE)) {
-                                    this.android('layout_width', 'match_parent');
-                                }
                             }
                             else {
                                 const heightPercent = Math.floor(convertInt(this.style.height) * (this.pageflow ? percent : 1));
@@ -419,8 +413,12 @@ export default class View extends Node {
                 else if (!wrap || this.blockStatic) {
                     const widthRoot = this.ascend(true).reduce((a: number, b: T) => Math.max(a, b.viewWidth), 0);
                     const inlineRight = Math.max.apply(null, [0, ...this.renderChildren.filter(node => node.inlineElement && node.float !== 'right').map(node => node.linear.right)]);
-                    if ((blockElement && !widest.includes(this) && (this.is(NODE_STANDARD.TEXT) || renderParent.blockWidth)) ||
-                        (width >= widthParent && (widthRoot > 0 || parent.documentBody || renderParent.documentRoot)) ||
+                    const previousSibling = this.previousSibling;
+                    const nextSibling = this.nextSibling;
+                    if ((width >= widthParent && (widthRoot > 0 || parent.documentBody || renderParent.documentRoot)) ||
+                        (this.hasElement && this.blockStatic && this.documentParent.blockStatic && ((previousSibling === null || !previousSibling.floating) && (nextSibling === null || !nextSibling.floating))) ||
+                        (!this.hasElement && this.renderChildren.length > 0 && this.renderChildren.some(item => item.linear.width >= this.documentParent.box.width)) ||
+                        (blockElement && !widest.includes(this) && (this.is(NODE_STANDARD.TEXT) || renderParent.blockWidth)) ||
                         (inlineRight > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(inlineRight, this.box.right))))
                     {
                         this.android('layout_width', 'match_parent');
@@ -566,21 +564,28 @@ export default class View extends Node {
                 setAutoMargin(this);
             }
         }
-        const floating = ((this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED) || this.linearHorizontal) && this.renderChildren.some(node => node.float === 'right'));
-        if (renderParent.is(NODE_STANDARD.FRAME) && !setAutoMargin(this) && (this.float === 'right' || floating)) {
-            if (!floating && this.singleChild) {
-                renderParent.android('layout_gravity', mergeGravity(renderParent.android('layout_gravity'), right));
+        let floating = '';
+        if (this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED | NODE_ALIGNMENT.FLOAT) || this.linearHorizontal) {
+            if (this.hasBit('alignmentType', NODE_ALIGNMENT.LEFT) || this.renderChildren.some(node => node.float === 'left' || node.hasBit('alignmentType', NODE_ALIGNMENT.LEFT))) {
+                floating = left;
             }
-            else {
-                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), right));
+            else if (this.hasBit('alignmentType', NODE_ALIGNMENT.RIGHT) || this.renderChildren.some(node => node.float === 'right' || node.hasBit('alignmentType', NODE_ALIGNMENT.RIGHT))) {
+                floating = right;
             }
         }
-        else if (floating) {
+        if (renderParent.is(NODE_STANDARD.FRAME) && !setAutoMargin(this)) {
+            if (floating !== '' || this.floating) {
+                const node = (this.singleChild ? renderParent : this);
+                node.android('layout_gravity', mergeGravity(node.android('layout_gravity'), parseRTL(floating || this.float)));
+                floating = '';
+            }
+        }
+        if (floating !== '') {
             if (renderParent.alignmentType === NODE_ALIGNMENT.VERTICAL) {
-                textAlign = right;
+                textAlign = floating;
             }
             else {
-                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), right));
+                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), floating));
             }
         }
         if (renderParent.element.tagName === 'TABLE') {
@@ -663,7 +668,7 @@ export default class View extends Node {
             }
             if (this.linearHorizontal) {
                 const gridParent = renderParent.is(NODE_STANDARD.GRID);
-                if (renderChildren.some(node => node.floating || !node.siblingflow)) {
+                if (renderChildren.every(node => node.inline && node.viewWidth === 0 && node.viewHeight === 0) && (renderChildren.some(node => node.floating || !node.siblingflow || node.plainText))) {
                     this.android('baselineAligned', 'false');
                 }
                 else if (renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT) || gridParent || this.of(NODE_STANDARD.LINEAR, NODE_ALIGNMENT.HORIZONTAL)) {
@@ -676,24 +681,20 @@ export default class View extends Node {
         }
         if (this.pageflow) {
             if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
-                [['firstElementChild', 'paddingTop', 'borderTopWidth', BOX_STANDARD.MARGIN_TOP, BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'paddingBottom', 'borderBottomWidth', BOX_STANDARD.MARGIN_BOTTOM, BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, string, number, number], index: number) => {
+                [['firstElementChild', 'Top', BOX_STANDARD.MARGIN_TOP, BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', BOX_STANDARD.MARGIN_BOTTOM, BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
                     const firstNode = getNodeFromElement(renderParent[item[0]]);
                     if (firstNode && (firstNode === this || firstNode === this.renderChildren[(index === 0 ? 0 : this.renderChildren.length - 1)])) {
-                        let valid = true;
-                        let element: Null<Element> = renderParent.element;
-                        while (element != null) {
-                            const style = getStyle(element);
-                            if (convertInt(style[item[1]]) > 0 || convertInt(style[item[2]]) > 0) {
-                                valid = false;
-                                break;
+                        const marginOffset = renderParent[`margin${item[1]}`];
+                        if (marginOffset > 0 && renderParent[`padding${item[1]}`] === 0 && renderParent[`border${item[1]}Width`] === 0) {
+                            if (firstNode.marginTop <= marginOffset) {
+                                firstNode.modifyBox(item[2], null);
                             }
-                            element = element.parentElement;
-                        }
-                        if (valid) {
-                            firstNode.modifyBox(item[3], null);
+                            else {
+                                renderParent.modifyBox(item[2], null);
+                            }
                         }
                         if (firstNode.inline && !firstNode.floating && !firstNode.plainText && firstNode.lineHeight === 0) {
-                            renderParent.modifyBox(item[4], null);
+                            renderParent.modifyBox(item[3], null);
                         }
                     }
                 });

@@ -254,10 +254,10 @@ export default class Application<T extends Node> {
                         switch (element.type) {
                             case 'radio':
                             case 'checkbox':
-                                [element.previousSibling, element.nextSibling].some((sibling: HTMLLabelElement, index) => {
+                                [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
                                     const label = getNodeFromElement(sibling);
                                     const labelParent = (sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) : null);
-                                    if (label && label.pageflow && ((sibling.htmlFor !== '' && sibling.htmlFor === element.id) || (labelParent && label.plainText))) {
+                                    if (label && label.visible && label.pageflow && ((sibling.htmlFor !== '' && sibling.htmlFor === element.id) || (labelParent && labelParent.visible && label.plainText))) {
                                         if (labelParent && label.plainText) {
                                             node.companion = labelParent;
                                             label.hide();
@@ -718,6 +718,7 @@ export default class Application<T extends Node> {
                                 if (horizontal.some(node => node.floating) && !horizontal.every(node => horizontal[0].float === node.float && !cleared.has(node))) {
                                     group = this.controllerHandler.createGroup(nodeY, horizontal, parent);
                                     groupXml = this.writeFrameLayoutHorizontal(group, parent, horizontal);
+                                    group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT;
                                 }
                                 else {
                                     if (horizontal.length === axisY.length) {
@@ -978,10 +979,7 @@ export default class Application<T extends Node> {
                 const subgroup = this.controllerHandler.createGroup(item.list[0], item.list, group);
                 if (index !== 2 && (!item.linearX || item.list.some(node => node.plainText && node.multiLine))) {
                     content = this.writeRelativeLayout(subgroup, group);
-                    subgroup.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP | NODE_ALIGNMENT.SEGMENTED;
-                    if (floated.length > 0) {
-                        subgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
-                    }
+                    subgroup.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                 }
                 else {
                     content = this.writeLinearLayout(subgroup, group, true);
@@ -1021,17 +1019,20 @@ export default class Application<T extends Node> {
                         subgroup.children = sorted.reverse();
                         this.preserveSortOrder(subgroup.id, <T[]> subgroup.children);
                     }
-                    subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.SEGMENTED;
+                    subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                 }
                 if (floated.length > 0) {
                     subgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
                 }
+                subgroup.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                subgroup.alignmentType |= (index < 2 ? NODE_ALIGNMENT.LEFT : NODE_ALIGNMENT.RIGHT);
                 xml = replacePlaceholder(xml, group.id, content);
                 group.renderAppend(subgroup);
             }
             else if (item.length > 0) {
                 const single = item.list[0];
-                single.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
+                single.alignmentType |= NODE_ALIGNMENT.SINGLE;
+                single.alignmentType |= (index < 2 ? NODE_ALIGNMENT.LEFT : NODE_ALIGNMENT.RIGHT);
                 single.renderIndex = index;
                 xml = replacePlaceholder(xml, group.id, `{:${group.id}:${index}}`);
                 group.renderAppend(single);

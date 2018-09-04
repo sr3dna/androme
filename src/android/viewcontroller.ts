@@ -254,7 +254,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                             const previous = nodes.get(i - 1);
                             if (i === 0) {
                                 current.app(mapLayout['left'], 'parent');
-                                current.app(mapLayout['bottom'], 'parent');
                             }
                             else {
                                 current.app(mapLayout['leftRight'], previous.stringId);
@@ -275,7 +274,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
                                     break;
                                 case 'baseline':
-                                    if (baseline && current !== baseline) {
+                                    if (text && current.is(NODE_STANDARD.TEXT)) {
+                                        if (current !== text) {
+                                            current.app(mapLayout['baseline'], text.stringId);
+                                        }
+                                    }
+                                    else if (baseline && current !== baseline) {
                                         current.app(mapLayout['baseline'], baseline.stringId);
                                     }
                                     break;
@@ -1273,9 +1277,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                     let height = node.toInt('height');
                     const top = node.toInt('top');
                     const left = node.toInt('left');
+                    const percentWidth = isPercent(node.css('width'));
+                    const percentHeight = isPercent(node.css('height'));
                     let scaleType = '';
-                    if (isPercent(node.css('width')) || isPercent(node.css('height'))) {
-                        scaleType = 'fitXY';
+                    if (percentWidth || percentHeight) {
+                        scaleType = (percentWidth && percentHeight ? 'fitXY' : 'fitCenter');
                     }
                     else {
                         if (width === 0) {
@@ -1372,6 +1378,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 const linearX = NodeList.linearX(result);
                                 const group = this.createGroup(node, (linearX ? sortAsc(result, 'linear.left') : result), parent);
                                 group.setNodeId(NODE_ANDROID.RADIO_GROUP);
+                                group.css({
+                                    'marginLeft': (node.cssOriginal('marginLeft') === 'auto' ? 'auto' : ''),
+                                    'marginRight': (node.cssOriginal('marginRight') === 'auto' ? 'auto' : ''),
+                                    'verticalAlign': node.css('verticalAlign'),
+                                    'cssFloat': node.css('cssFloat'),
+                                    'clear': node.css('clear')
+                                });
                                 group.render(parent);
                                 let checked = '';
                                 for (const item of group.children) {

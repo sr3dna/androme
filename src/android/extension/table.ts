@@ -17,7 +17,15 @@ export default class TableAndroid<T extends View> extends Table<T> {
         const columnCount = convertInt(node.app('columnCount'));
         if (columnCount > 1) {
             let requireWidth = false;
-            if (node.children.every(item => (<HTMLTableCellElement> item.element).colSpan === 1)) {
+            let widthRoot = 0;
+            node.ascend(true).some(item => {
+                if (item.viewWidth > 0) {
+                    widthRoot = item.viewWidth;
+                    return true;
+                }
+                return false;
+            });
+            if (widthRoot > 0 && node.children.every(item => (<HTMLTableCellElement> item.element).colSpan === 1)) {
                 node.each((item: T) => {
                     if (item.viewWidth === 0) {
                         item.android('layout_width', '0px');
@@ -27,14 +35,6 @@ export default class TableAndroid<T extends View> extends Table<T> {
                 });
             }
             if (requireWidth || node.children.some(item => item.multiLine)) {
-                let widthRoot = 0;
-                node.ascend(true).some(item => {
-                    if (item.viewWidth > 0) {
-                        widthRoot = item.viewWidth;
-                        return true;
-                    }
-                    return false;
-                });
                 if (node.linear.width >= widthRoot) {
                     node.android('layout_width', 'match_parent');
                 }
