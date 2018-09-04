@@ -225,7 +225,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
 
     public processChild(): ExtensionResult {
         const node = this.node;
-        if (node.element.tagName === 'IMG' && (node.dataset.navigationIcon != null || node.dataset.collapseIcon != null)) {
+        if (node.imageElement && (node.dataset.navigationIcon != null || node.dataset.collapseIcon != null)) {
             node.hide();
             return { xml: '', proceed: true };
         }

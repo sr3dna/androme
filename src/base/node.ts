@@ -503,7 +503,9 @@ export default abstract class Node implements BoxModel {
             while (parent && parent.id !== 0) {
                 if (relativeParent == null && this.position === 'absolute') {
                     if (!['static', 'initial'].includes(parent.position)) {
-                        if (!negative || (convertInt(this.top) >= 0 && convertInt(this.left) >= 0)) {
+                        const top = convertInt(this.top);
+                        const left = convertInt(this.left);
+                        if ((top >= 0 && left >= 0) || !negative || (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) || this.imageElement) {
                             found = true;
                             break;
                         }
@@ -792,6 +794,10 @@ export default abstract class Node implements BoxModel {
 
     get plainText() {
         return (this.tagName === 'PLAINTEXT');
+    }
+
+    get imageElement() {
+        return (this.element.tagName === 'IMG');
     }
 
     get block() {

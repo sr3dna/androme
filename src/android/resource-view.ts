@@ -454,6 +454,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                                         top = xy;
                                                     }
                                                 }
+                                                gravity = mergeGravity(gravity, (index === 0 ? 'left' : 'top'));
                                             }
                                         });
                                     }
@@ -852,10 +853,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public setImageSource() {
-        this.cache.filter(node => node.visible && (node.element.tagName === 'IMG' || (node.element.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
+        this.cache.filter(node => node.visible && (node.imageElement || (node.element.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
             const element = <HTMLImageElement> node.element;
             if (getElementCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
-                const result = (node.element.tagName === 'IMG' ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
+                const result = (node.imageElement ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
                 if (result !== '') {
                     const method = METHOD_ANDROID['imageSource'];
                     node.formatted(formatString(method['src'], result), (node.renderExtension == null));

@@ -112,7 +112,7 @@ export default class Table<T extends Node> extends Extension<T> {
         }
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
-            const columnWeight = (tr.children.length > 1 ? tr.children.every((td: T) => !td.has('width') || td.css('width') === tr.children[tr.children.length - 1].css('width')) : false);
+            const columnWeight = (node.viewWidth > 0 && tr.children.length > 1 ? tr.children.every((td: T) => !td.has('width') || td.css('width') === tr.children[0].css('width')) : false);
             tr.each((td: T) => {
                 const element = <HTMLTableCellElement> td.element;
                 if (element.rowSpan > 1) {

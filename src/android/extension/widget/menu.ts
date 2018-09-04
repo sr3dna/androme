@@ -130,7 +130,7 @@ export default class Menu<T extends View> extends Nav<T> {
                         options.android.icon = `@drawable/${src}`;
                     }
                     else {
-                        const image = node.children.find(item => item.element.tagName === 'IMG');
+                        const image = node.children.find(item => item.imageElement);
                         if (image) {
                             src = ResourceView.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
                             if (src !== '') {

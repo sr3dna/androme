@@ -141,7 +141,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         function adjustBaseline(nodes: T[]) {
             if (nodes.length > 1) {
                 const baseline = NodeList.baselineText(nodes);
-                if (baseline) {
+                if (baseline != null) {
                     for (const node of nodes) {
                         if (node !== baseline && (node.nodeType < NODE_STANDARD.IMAGE || node.linearHorizontal)) {
                             node.android(mapLayout['baseline'], baseline.stringId);
@@ -254,6 +254,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                             const previous = nodes.get(i - 1);
                             if (i === 0) {
                                 current.app(mapLayout['left'], 'parent');
+                                if (nodes.list.some(item => item.imageElement)) {
+                                    current.app(mapLayout['bottom'], 'parent');
+                                }
                             }
                             else {
                                 current.app(mapLayout['leftRight'], previous.stringId);
@@ -274,8 +277,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
                                     break;
                                 case 'baseline':
-                                    if (text && current.is(NODE_STANDARD.TEXT)) {
-                                        if (current !== text) {
+                                    if ((text && current.is(NODE_STANDARD.TEXT)) || current === baseline) {
+                                        if (text && current !== text) {
                                             current.app(mapLayout['baseline'], text.stringId);
                                         }
                                     }

@@ -141,7 +141,7 @@ export default abstract class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
-                if (node.renderChildren.length > 0 || node.element.tagName === 'IMG' || node.element.tagName === 'HR') {
+                if (node.renderChildren.length > 0 || node.imageElement || node.element.tagName === 'HR') {
                     return;
                 }
                 else {

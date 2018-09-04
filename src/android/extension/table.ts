@@ -15,33 +15,39 @@ export default class TableAndroid<T extends View> extends Table<T> {
         const result = super.processNode();
         const node = this.node;
         const columnCount = convertInt(node.app('columnCount'));
-        if (columnCount > 1) {
+        if (columnCount > 1 && node.children.some(item => item.multiLine)) {
             let requireWidth = false;
-            let widthRoot = 0;
-            node.ascend(true).some(item => {
-                if (item.viewWidth > 0) {
-                    widthRoot = item.viewWidth;
-                    return true;
+            node.each((item: T) => {
+                if (item.viewWidth === 0) {
+                    item.android('layout_width', '0px');
+                    item.app('layout_columnWeight', (<HTMLTableCellElement> item.element).colSpan.toString());
+                    requireWidth = true;
                 }
-                return false;
             });
-            if (widthRoot > 0 && node.children.every(item => (<HTMLTableCellElement> item.element).colSpan === 1)) {
-                node.each((item: T) => {
-                    if (item.viewWidth === 0) {
-                        item.android('layout_width', '0px');
-                        item.app('layout_columnWeight', '1');
-                        requireWidth = true;
+            if (node.viewWidth === 0 && requireWidth) {
+                let widthParent = 0;
+                node.ascend(true).some(item => {
+                    if (item.viewWidth > 0) {
+                        widthParent = item.viewWidth;
+                        return true;
                     }
+                    return false;
                 });
-            }
-            if (requireWidth || node.children.some(item => item.multiLine)) {
-                if (node.linear.width >= widthRoot) {
+                if (node.bounds.width >= widthParent) {
                     node.android('layout_width', 'match_parent');
                 }
                 else {
                     node.css('width', formatPX(node.bounds.width));
                 }
             }
+        }
+        else {
+            node.each((item: T) => {
+                if (item.styleMap.width === '0px') {
+                    item.android('layout_width', '0px');
+                    item.app('layout_columnWeight', (<HTMLTableCellElement> item.element).colSpan.toString());
+                }
+            });
         }
         return result;
     }

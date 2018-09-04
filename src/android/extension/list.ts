@@ -56,7 +56,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 image = ResourceView.addImageURL(listStyle.image);
                 [left, top] = ResourceView.parseBackgroundPosition(listStyle.position).map(value => convertInt(value));
             }
-            const gravity = ((image !== '' && !listStyleImage) || (parent.marginLeft === 0 && node.marginLeft === 0) ? '' : 'right');
+            const gravity = ((image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right');
             if (gravity === '') {
                 paddingLeft += node.paddingLeft;
                 node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
@@ -82,7 +82,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                     return 12;
                 }
             })();
-            const paddingLeftValue = (gravity === '' ? delimitDimens(node.tagName, parseRTL('padding_left'), formatPX(paddingRight)) : '');
+            const paddingLeftValue = (gravity === '' && image === '' ? delimitDimens(node.tagName, parseRTL('padding_left'), formatPX(paddingRight)) : '');
             const paddingRightValue = (gravity === 'right' ? delimitDimens(node.tagName, parseRTL('padding_right'), formatPX(paddingRight)) : '');
             const marginLeftValue = (left > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(left)) : '');
             const options = {

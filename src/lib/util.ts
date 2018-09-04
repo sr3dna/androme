@@ -143,6 +143,10 @@ export function isNumber(value: string) {
     return /^-?[0-9]+(\.[0-9]+)?$/.test(value.toString().trim());
 }
 
+export function isUnit(value?: string) {
+    return /^-?[0-9\.]+(px|pt|em)$/.test((value || '').trim());
+}
+
 export function isPercent(value: string) {
     return /^[0-9]+%$/.test(value);
 }
