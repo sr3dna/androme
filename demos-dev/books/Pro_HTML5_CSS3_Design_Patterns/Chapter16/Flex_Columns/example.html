@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en"> 
+	<head>
+		<title>Flex Columns</title>
+  		<meta charset="utf-8" />
+  		<link rel="stylesheet" href="site.css"   media="all" />
+  		<link rel="stylesheet" href="page.css"   media="all" />
+        <script src="/node_modules/systemjs/dist/system.js"></script>
+        <script>
+            SystemJS.config({
+                packages: {
+                    '/build': { defaultExtension: 'js' }
+                },
+                map: {
+                    'plugin-babel': '/node_modules/systemjs-plugin-babel/plugin-babel.js',
+                    'systemjs-babel-build': '/node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+                },
+                transpiler: 'plugin-babel'
+            });
+            System.import('/build/main.js').then(function(result) {
+                androme = result;
+                androme.parseDocument().then(function() {
+                    androme.close();
+                    androme.saveAllToDisk();
+                });
+            });
+        </script>
+</head>
+
+<body>
+
+<h1>Flex Columns</h1>
+
+<h2>Sized, Stretched, or Fixed Table</h2>
+<table class="fixed-layout sized"><tr><td class="sized1">200px</td>  
+  <td class="p1"  >20%</td>       <td class="sized2">100px</td>  
+  <td class="flex">auto flex</td> <td class="flex"  >auto flex</td></tr></table>
+
+<h2>Sized or Stretched — Oversized</h2>
+<table class="auto-layout sized"> <tr><td class="sized1">200px</td>  
+  <td class="p1"  >20%</td>       <td class="sized3">500px</td>  
+  <td class="flex">auto flex</td> <td class="flex"  >auto flex</td></tr></table>
+
+<h2>Fixed — Oversized</h2>
+<table class="fixed-layout sized"><tr><td class="sized1">200px</td>  
+  <td class="p1"  >20%</td>       <td class="sized3">500px</td>  
+  <td class="flex">auto flex</td> <td class="flex"  >auto flex </td></tr></table>
+   
+</body>
+</html>
