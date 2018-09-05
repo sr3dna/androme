@@ -148,7 +148,7 @@ export function isUnit(value?: string) {
 }
 
 export function isPercent(value: string) {
-    return /^[0-9]+%$/.test(value);
+    return /^[0-9]+(\.[0-9]+)?%$/.test(value);
 }
 
 export function includes(source: Null<string>, value: string, delimiter = ',') {
@@ -212,7 +212,15 @@ export function resolvePath(value: string) {
 }
 
 export function trim(value: string, char: string) {
-    return value.replace(new RegExp(`^${char}+`, 'g'), '').replace(new RegExp(`${char}+$`, 'g'), '');
+    return trimStart(trimEnd(value, char), char);
+}
+
+export function trimStart(value: string, char: string) {
+    return value.replace(new RegExp(`^${char}+`, 'g'), '');
+}
+
+export function trimEnd(value: string, char: string) {
+    return value.replace(new RegExp(`${char}+$`, 'g'), '');
 }
 
 export function repeat(n: number, value = '\t') {

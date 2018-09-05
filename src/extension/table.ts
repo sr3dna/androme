@@ -1,7 +1,7 @@
 import { ExtensionResult } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
-import { convertInt, formatPX, isPercent, isUnit } from '../lib/util';
+import { convertFloat, convertInt, formatPX, isPercent, isUnit } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 import { cssInherit, getStyle } from '../lib/dom';
 import { BOX_STANDARD } from '../lib/constants';
@@ -52,6 +52,7 @@ export default class Table<T extends Node> extends Extension<T> {
         const mapBounds: number[] = [];
         let columnIndex = new Array(table.length).fill(0);
         let multiLine = false;
+        let autoWidth = true;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
             for (let j = 0; j < tr.children.length; j++) {
@@ -87,8 +88,11 @@ export default class Table<T extends Node> extends Extension<T> {
                         }
                     }
                 }
-                const m = columnIndex[i];
                 const columnWidth = td.styleMap.width;
+                const m = columnIndex[i];
+                if (columnWidth !== 'auto') {
+                    autoWidth = false;
+                }
                 if (columnWidth == null || columnWidth === 'auto') {
                     if (mapWidth[m] == null) {
                         mapWidth[m] = '0px';
@@ -96,7 +100,7 @@ export default class Table<T extends Node> extends Extension<T> {
                     }
                 }
                 else {
-                    if (mapWidth[m] == null || td.bounds.width > mapBounds[m] || (td.bounds.width === mapBounds[m] && ((isPercent(columnWidth) && isUnit(mapWidth[m])) || (isPercent(columnWidth) && isPercent(mapWidth[m]) && convertInt(width) > convertInt(mapWidth[m])) || (isUnit(columnWidth) && isUnit(mapWidth[m]) && convertInt(columnWidth) > convertInt(mapWidth[m]))))) {
+                    if (mapWidth[m] == null || td.bounds.width > mapBounds[m] || (td.bounds.width === mapBounds[m] && ((isPercent(columnWidth) && isUnit(mapWidth[m])) || (isPercent(columnWidth) && isPercent(mapWidth[m]) && convertFloat(width) > convertFloat(mapWidth[m])) || (isUnit(columnWidth) && isUnit(mapWidth[m]) && convertInt(columnWidth) > convertInt(mapWidth[m]))))) {
                         mapWidth[m] = columnWidth;
                         mapBounds[m] = td.bounds.width;
                     }
@@ -130,6 +134,9 @@ export default class Table<T extends Node> extends Extension<T> {
         }
         const typeWidth = (() => {
             if (mapWidth.some(value => isPercent(value))) {
+                return 3;
+            }
+            else if (autoWidth) {
                 return 2;
             }
             else if (mapWidth.every(value => value === '0px' || mapWidth[0] === value) && (node.viewWidth > 0 || isPercent(node.css('width')) || multiLine)) {
@@ -168,7 +175,7 @@ export default class Table<T extends Node> extends Extension<T> {
                     borderInside = true;
                 }
                 switch (typeWidth) {
-                    case 2:
+                    case 3:
                         const columnWidth = mapWidth[columnIndex[i]];
                         if (isPercent(columnWidth)) {
                             td.data(EXT_NAME.TABLE, 'percent', columnWidth);
@@ -180,6 +187,10 @@ export default class Table<T extends Node> extends Extension<T> {
                             }
                             td.data(EXT_NAME.TABLE, 'expand', false);
                         }
+                        break;
+                    case 2:
+                        td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
+                        td.data(EXT_NAME.TABLE, 'expand', true);
                         break;
                     case 1:
                         td.css('width', '0px');

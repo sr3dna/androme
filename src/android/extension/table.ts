@@ -2,7 +2,7 @@
 import { ExtensionResult } from '../../extension/lib/types';
 import Table from '../../extension/table';
 import View from '../view';
-import { convertInt, formatPX, isPercent } from '../../lib/util';
+import { convertFloat, convertInt, formatPX, isPercent, trimEnd } from '../../lib/util';
 import { NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 
@@ -26,10 +26,10 @@ export default class TableAndroid<T extends View> extends Table<T> {
                     const expand: boolean | null = item.data(EXT_NAME.TABLE, 'expand');
                     if (expand != null) {
                         if (expand) {
-                            const percent = convertInt(item.data(EXT_NAME.TABLE, 'percent')) / 100;
+                            const percent = convertFloat(item.data(EXT_NAME.TABLE, 'percent')) / 100;
                             if (percent > 0) {
                                 item.android('layout_width', '0px');
-                                item.app('layout_columnWeight', percent.toFixed(2));
+                                item.app('layout_columnWeight', trimEnd(percent.toFixed(3), '0'));
                             }
                         }
                         else {
