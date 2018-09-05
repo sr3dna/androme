@@ -24,18 +24,24 @@ export default class TableAndroid<T extends View> extends Table<T> {
                 }
                 else {
                     const expand: boolean | null = item.data(EXT_NAME.TABLE, 'expand');
+                    const downsized: boolean = !!item.data(EXT_NAME.TABLE, 'downsized');
                     if (expand != null) {
                         if (expand) {
                             const percent = convertFloat(item.data(EXT_NAME.TABLE, 'percent')) / 100;
                             if (percent > 0) {
                                 item.android('layout_width', '0px');
                                 item.app('layout_columnWeight', trimEnd(percent.toFixed(3), '0'));
+                                requireWidth = true;
                             }
                         }
                         else {
                             item.app('layout_columnWeight', '0');
                         }
-                        requireWidth = true;
+                    }
+                    if (downsized) {
+                        if (item.plainText || item.inlineText) {
+                            item.android('maxLines', '1');
+                        }
                     }
                 }
             });
@@ -92,22 +98,9 @@ export default class TableAndroid<T extends View> extends Table<T> {
     public beforeInsert() {
         const node = this.node;
         const tableWidth = node.toInt('width');
-        if (convertInt(node.cssOriginal('width')) === 0 && tableWidth > 0) {
-            const columnCount = convertInt(node.app('columnCount'));
-            let width = 0;
-            let maxWidth = 0;
-            node.each((item: T, index: number) => {
-                if (index === 0 || (index % columnCount) !== 0) {
-                    width += item.bounds.width;
-                }
-                else {
-                    width = 0;
-                }
-                maxWidth = Math.max(width, maxWidth);
-            });
-            if (maxWidth > tableWidth) {
-                node.android('layout_width', formatPX(maxWidth));
-            }
+        const boundsWidth = node.data(EXT_NAME.TABLE, 'boundsWidth');
+        if (tableWidth > 0 && boundsWidth > tableWidth) {
+            node.android('layout_width', formatPX(boundsWidth));
         }
     }
 }

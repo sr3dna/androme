@@ -20,6 +20,7 @@ export default class Table<T extends Node> extends Extension<T> {
         const tbody = node.children.filter(item => item.tagName === 'TBODY');
         const tfoot = node.children.filter(item => item.tagName === 'TFOOT');
         const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
+        const tableWidth = node.css('width');
         if (thead.length > 0) {
             thead[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead[0], 'styleMap'));
             table.push(...<T[]> thead[0].children);
@@ -50,6 +51,7 @@ export default class Table<T extends Node> extends Extension<T> {
         const spacingHeight = formatPX((height > 1 ? Math.round(height / 2) : width));
         const mapWidth: string[] = [];
         const mapBounds: number[] = [];
+        const fixedTable = (node.css('tableLayout') === 'fixed');
         let columnIndex = new Array(table.length).fill(0);
         let multiLine = false;
         for (let i = 0; i < table.length; i++) {
@@ -89,18 +91,20 @@ export default class Table<T extends Node> extends Extension<T> {
                 }
                 const columnWidth = td.styleMap.width;
                 const m = columnIndex[i];
-                if (columnWidth == null || columnWidth === 'auto') {
-                    if (mapWidth[m] == null) {
-                        mapWidth[m] = columnWidth || '0px';
-                        mapBounds[m] = 0;
+                if (i === 0 || mapWidth[m] == null || !fixedTable) {
+                    if (columnWidth == null || columnWidth === 'auto') {
+                        if (mapWidth[m] == null) {
+                            mapWidth[m] = columnWidth || '0px';
+                            mapBounds[m] = 0;
+                        }
                     }
-                }
-                else {
-                    const percentColumnWidth = isPercent(columnWidth);
-                    const unitMapWidth = isUnit(mapWidth[m]);
-                    if (mapWidth[m] == null || td.bounds.width > mapBounds[m] || (td.bounds.width === mapBounds[m] && ((mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth)) || (percentColumnWidth && unitMapWidth) || (percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(width) > convertFloat(mapWidth[m])) || (isUnit(columnWidth) && unitMapWidth && convertInt(columnWidth) > convertInt(mapWidth[m]))))) {
-                        mapWidth[m] = columnWidth;
-                        mapBounds[m] = td.bounds.width;
+                    else {
+                        const percentColumnWidth = isPercent(columnWidth);
+                        const unitMapWidth = isUnit(mapWidth[m]);
+                        if (mapWidth[m] == null || td.bounds.width > mapBounds[m] || (td.bounds.width === mapBounds[m] && ((mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth)) || (percentColumnWidth && unitMapWidth) || (percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m])) || (isUnit(columnWidth) && unitMapWidth && convertInt(columnWidth) > convertInt(mapWidth[m]))))) {
+                            mapWidth[m] = columnWidth;
+                            mapBounds[m] = td.bounds.width;
+                        }
                     }
                 }
                 td.css({
@@ -115,21 +119,9 @@ export default class Table<T extends Node> extends Extension<T> {
                 columnIndex[i] += element.colSpan;
             }
         }
-        let rowCount = table.length;
         const columnCount = Math.max.apply(null, columnIndex);
+        let rowCount = table.length;
         let borderInside = false;
-        const caption = node.children.find(item => item.tagName === 'CAPTION');
-        if (caption) {
-            if (!caption.has('textAlign')) {
-                caption.css('textAlign', 'center');
-            }
-            rowCount++;
-            caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);
-        }
-        node.children.length = 0;
-        if (caption) {
-            node.children.push(caption);
-        }
         if (mapWidth.every(value => isPercent(value)) && mapWidth.reduce((a, b) => a + parseFloat(b), 0) > 1) {
             let percentTotal = 100;
             mapWidth.forEach((value, index) => {
@@ -143,12 +135,30 @@ export default class Table<T extends Node> extends Extension<T> {
                 percentTotal -= percent;
             });
         }
+        else if (mapWidth.every(value => isUnit(value))) {
+            const pxWidth = mapWidth.reduce((a, b) => a + parseInt(b), 0);
+            if (isPercent(tableWidth) || pxWidth < node.viewWidth) {
+                mapWidth.forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
+            }
+            else if (tableWidth === 'auto') {
+                mapWidth.forEach((value, index) => mapWidth[index] = `${(mapBounds[index] / node.bounds.width) * 100}%`);
+            }
+            else if (pxWidth > node.viewWidth) {
+                node.css('width', 'auto');
+                if (!fixedTable) {
+                    node.cascade().forEach(item => item.css('width', 'auto'));
+                }
+            }
+        }
         const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
         const typeWidth = (() => {
             if (mapWidth.some(value => isPercent(value)) || !mapWidth.some(value => value !== 'auto')) {
-                return 2;
+                return 3;
             }
             else if (mapWidth.every(value => value === '0px' || mapWidth[0] === value) && (node.viewWidth > 0 || isPercent(node.css('width')) || multiLine)) {
+                return 2;
+            }
+            else if (mapWidth.every(value => isUnit(value) || value === 'auto')) {
                 return 1;
             }
             else {
@@ -157,6 +167,18 @@ export default class Table<T extends Node> extends Extension<T> {
         })();
         if ((typeWidth === 2 && node.viewWidth === 0) || multiLine) {
             node.data(EXT_NAME.TABLE, 'expand', true);
+        }
+        node.children.length = 0;
+        const caption = node.children.find(item => item.tagName === 'CAPTION');
+        if (caption) {
+            if (!caption.has('textAlign')) {
+                caption.css('textAlign', 'center');
+            }
+            rowCount++;
+            caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);
+        }
+        if (caption) {
+            node.children.push(caption);
         }
         columnIndex = new Array(table.length).fill(0);
         function setAutoWidth(td: T) {
@@ -187,9 +209,9 @@ export default class Table<T extends Node> extends Extension<T> {
                 if (convertInt(td.css('borderWidth')) > 0 && td.css('borderStyle') !== 'none') {
                     borderInside = true;
                 }
+                const columnWidth = mapWidth[columnIndex[i]];
                 switch (typeWidth) {
-                    case 2:
-                        const columnWidth = mapWidth[columnIndex[i]];
+                    case 3:
                         if (columnWidth === 'auto') {
                             if (mapPercent >= 1) {
                                 td.css('width', formatPX(td.bounds.width));
@@ -209,22 +231,39 @@ export default class Table<T extends Node> extends Extension<T> {
                                 td.data(EXT_NAME.TABLE, 'expand', false);
                                 td.data(EXT_NAME.TABLE, 'downsized', false);
                             }
-                            else if (mapPercent >= 1) {
-                                td.css('width', formatPX(td.bounds.width));
-                                td.data(EXT_NAME.TABLE, 'expand', false);
-                            }
                             else {
-                                setAutoWidth(td as T);
-                                td.data(EXT_NAME.TABLE, 'downsized', true);
+                                if (fixedTable) {
+                                    setAutoWidth(td as T);
+                                    td.data(EXT_NAME.TABLE, 'downsized', true);
+                                }
+                                else {
+                                    td.css('width', formatPX(td.bounds.width));
+                                    td.data(EXT_NAME.TABLE, 'expand', false);
+                                }
                             }
                         }
                         else {
                             td.data(EXT_NAME.TABLE, 'expand', false);
                         }
                         break;
-                    case 1:
+                    case 2:
                         td.css('width', '0px');
                         break;
+                    case 1:
+                        if (columnWidth === 'auto') {
+                            td.css('width', '0px');
+                        }
+                        else {
+                            if (fixedTable) {
+                                td.data(EXT_NAME.TABLE, 'downsized', true);
+                            }
+                            else {
+                                td.css('width', formatPX(td.bounds.width));
+                            }
+                            td.data(EXT_NAME.TABLE, 'expand', false);
+                        }
+                        break;
+
                 }
                 columnIndex[i] += element.colSpan;
                 td.parent = node;
@@ -243,6 +282,7 @@ export default class Table<T extends Node> extends Extension<T> {
                 borderLeftWidth: '0px'
             });
         }
+        node.data(EXT_NAME.TABLE, 'boundsWidth', mapBounds.reduce((a, b) => a + b, 0));
         xml = this.application.writeGridLayout(node, parent, columnCount, rowCount);
         return { xml };
     }
