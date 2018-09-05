@@ -52,7 +52,6 @@ export default class Table<T extends Node> extends Extension<T> {
         const mapBounds: number[] = [];
         let columnIndex = new Array(table.length).fill(0);
         let multiLine = false;
-        let autoWidth = true;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
             for (let j = 0; j < tr.children.length; j++) {
@@ -90,17 +89,16 @@ export default class Table<T extends Node> extends Extension<T> {
                 }
                 const columnWidth = td.styleMap.width;
                 const m = columnIndex[i];
-                if (columnWidth !== 'auto') {
-                    autoWidth = false;
-                }
                 if (columnWidth == null || columnWidth === 'auto') {
                     if (mapWidth[m] == null) {
-                        mapWidth[m] = '0px';
+                        mapWidth[m] = columnWidth || '0px';
                         mapBounds[m] = 0;
                     }
                 }
                 else {
-                    if (mapWidth[m] == null || td.bounds.width > mapBounds[m] || (td.bounds.width === mapBounds[m] && ((isPercent(columnWidth) && isUnit(mapWidth[m])) || (isPercent(columnWidth) && isPercent(mapWidth[m]) && convertFloat(width) > convertFloat(mapWidth[m])) || (isUnit(columnWidth) && isUnit(mapWidth[m]) && convertInt(columnWidth) > convertInt(mapWidth[m]))))) {
+                    const percentColumnWidth = isPercent(columnWidth);
+                    const unitMapWidth = isUnit(mapWidth[m]);
+                    if (mapWidth[m] == null || td.bounds.width > mapBounds[m] || (td.bounds.width === mapBounds[m] && ((mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth)) || (percentColumnWidth && unitMapWidth) || (percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(width) > convertFloat(mapWidth[m])) || (isUnit(columnWidth) && unitMapWidth && convertInt(columnWidth) > convertInt(mapWidth[m]))))) {
                         mapWidth[m] = columnWidth;
                         mapBounds[m] = td.bounds.width;
                     }
@@ -132,11 +130,22 @@ export default class Table<T extends Node> extends Extension<T> {
         if (caption) {
             node.children.push(caption);
         }
+        if (mapWidth.every(value => isPercent(value)) && mapWidth.reduce((a, b) => a + parseFloat(b), 0) > 1) {
+            let percentTotal = 100;
+            mapWidth.forEach((value, index) => {
+                const percent = parseFloat(value);
+                if (percentTotal <= 0) {
+                    mapWidth[index] = '0px';
+                }
+                else if (percentTotal - percent < 0) {
+                    mapWidth[index] = `${percentTotal}%`;
+                }
+                percentTotal -= percent;
+            });
+        }
+        const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
         const typeWidth = (() => {
-            if (mapWidth.some(value => isPercent(value))) {
-                return 3;
-            }
-            else if (autoWidth) {
+            if (mapWidth.some(value => isPercent(value)) || !mapWidth.some(value => value !== 'auto')) {
                 return 2;
             }
             else if (mapWidth.every(value => value === '0px' || mapWidth[0] === value) && (node.viewWidth > 0 || isPercent(node.css('width')) || multiLine)) {
@@ -150,6 +159,10 @@ export default class Table<T extends Node> extends Extension<T> {
             node.data(EXT_NAME.TABLE, 'expand', true);
         }
         columnIndex = new Array(table.length).fill(0);
+        function setAutoWidth(td: T) {
+            td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
+            td.data(EXT_NAME.TABLE, 'expand', true);
+        }
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
             const children = tr.children.slice();
@@ -175,22 +188,39 @@ export default class Table<T extends Node> extends Extension<T> {
                     borderInside = true;
                 }
                 switch (typeWidth) {
-                    case 3:
+                    case 2:
                         const columnWidth = mapWidth[columnIndex[i]];
-                        if (isPercent(columnWidth)) {
+                        if (columnWidth === 'auto') {
+                            if (mapPercent >= 1) {
+                                td.css('width', formatPX(td.bounds.width));
+                                td.data(EXT_NAME.TABLE, 'expand', false);
+                            }
+                            else {
+                                setAutoWidth(td as T);
+                            }
+                        }
+                        else if (isPercent(columnWidth)) {
                             td.data(EXT_NAME.TABLE, 'percent', columnWidth);
                             td.data(EXT_NAME.TABLE, 'expand', true);
                         }
-                        else {
-                            if (columnWidth !== '0px') {
+                        else if (convertInt(columnWidth) > 0) {
+                            if (td.bounds.width >= parseInt(columnWidth)) {
                                 td.css('width', columnWidth);
+                                td.data(EXT_NAME.TABLE, 'expand', false);
+                                td.data(EXT_NAME.TABLE, 'downsized', false);
                             }
+                            else if (mapPercent >= 1) {
+                                td.css('width', formatPX(td.bounds.width));
+                                td.data(EXT_NAME.TABLE, 'expand', false);
+                            }
+                            else {
+                                setAutoWidth(td as T);
+                                td.data(EXT_NAME.TABLE, 'downsized', true);
+                            }
+                        }
+                        else {
                             td.data(EXT_NAME.TABLE, 'expand', false);
                         }
-                        break;
-                    case 2:
-                        td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
-                        td.data(EXT_NAME.TABLE, 'expand', true);
                         break;
                     case 1:
                         td.css('width', '0px');

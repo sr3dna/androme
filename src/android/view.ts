@@ -313,13 +313,7 @@ export default class View extends Node {
                             }
                         }
                         else {
-                            if (this.linearVertical && this.css('overflow') === 'visible' && !this.has('minWidth') && this.renderChildren.some(node => !node.multiLine && node.box.width > this.box.width)) {
-                                this.android('minWidth', styleMap.width);
-                                this.android('layout_width', 'wrap_content');
-                            }
-                            else {
-                                this.android('layout_width', styleMap.width);
-                            }
+                            this.android('layout_width', styleMap.width);
                         }
                     }
                 }

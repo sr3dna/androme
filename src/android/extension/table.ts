@@ -91,20 +91,21 @@ export default class TableAndroid<T extends View> extends Table<T> {
 
     public beforeInsert() {
         const node = this.node;
-        if (convertInt(node.cssOriginal('width')) === 0 && node.toInt('width') > 0) {
+        const tableWidth = node.toInt('width');
+        if (convertInt(node.cssOriginal('width')) === 0 && tableWidth > 0) {
             const columnCount = convertInt(node.app('columnCount'));
             let width = 0;
             let maxWidth = 0;
             node.each((item: T, index: number) => {
                 if (index === 0 || (index % columnCount) !== 0) {
-                    width += item.toInt('width');
+                    width += item.bounds.width;
                 }
                 else {
                     width = 0;
                 }
                 maxWidth = Math.max(width, maxWidth);
             });
-            if (maxWidth > node.toInt('width')) {
+            if (maxWidth > tableWidth) {
                 node.android('layout_width', formatPX(maxWidth));
             }
         }
