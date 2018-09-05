@@ -34,14 +34,14 @@ export default class ListAndroid<T extends View> extends List<T> {
             floatItem.parent = parent;
             let xml = '';
             if (floatItem.inlineText || floatItem.children.length === 0) {
-                xml = this.application.controllerHandler.renderNode(floatItem, parent, NODE_STANDARD.TEXT);
+                xml = controller.renderNode(floatItem, parent, NODE_STANDARD.TEXT);
             }
             else if (floatItem.children.every(item => item.pageflow)) {
-                xml = this.application.controllerHandler.renderGroup(floatItem, parent, NODE_STANDARD.RELATIVE);
+                xml = controller.renderGroup(floatItem, parent, NODE_STANDARD.RELATIVE);
                 floatItem.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
             }
             else {
-                xml = this.application.controllerHandler.renderGroup(floatItem, parent, NODE_STANDARD.CONSTRAINT);
+                xml = controller.renderGroup(floatItem, parent, NODE_STANDARD.CONSTRAINT);
             }
             controller.prependBefore(node.id, xml);
             if (columnCount === 3) {
@@ -75,13 +75,13 @@ export default class ListAndroid<T extends View> extends List<T> {
             const minWidth = (paddingLeft > 0 ? delimitDimens(node.tagName, parseRTL('min_width'), formatPX(paddingLeft)) : '');
             const paddingRight = (() => {
                 if (paddingLeft <= 24) {
-                    return 8;
+                    return 6;
                 }
                 else if (paddingLeft <= 32) {
-                    return 10;
+                    return 8;
                 }
                 else {
-                    return 12;
+                    return 10;
                 }
             })();
             const paddingLeftValue = (gravity === '' && image === '' ? delimitDimens(node.tagName, parseRTL('padding_left'), formatPX(paddingRight)) : '');

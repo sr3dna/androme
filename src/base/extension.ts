@@ -13,6 +13,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public tagNames: string[] = [];
     public dependencies: ExtensionDependency[] = [];
     public documentRoot = false;
+    public singleRender = true;
 
     constructor(
         public name: string,

@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, hasBit, isPercent, search } from '../lib/util';
+import { convertCamelCase, convertInt, hasValue, hasBit, isPercent, search, sortAsc, sortDesc } from '../lib/util';
 import { assignBounds, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache } from '../lib/dom';
 import { INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
@@ -16,10 +16,11 @@ export default abstract class Node implements BoxModel {
     public depth = -1;
     public renderIndex = -1;
     public siblingIndex = Number.MAX_VALUE;
+    public box: ClientRect;
     public bounds: ClientRect;
     public linear: ClientRect;
-    public box: ClientRect;
-    public renderExtension?: IExtension;
+    public renderExtension: IExtension[] = [];
+    public renderExtensionChild: IExtension[] = [];
     public renderAs: T;
     public excludeProcedure = NODE_PROCEDURE.NONE;
     public excludeResource = NODE_RESOURCE.NONE;
@@ -899,7 +900,7 @@ export default abstract class Node implements BoxModel {
             element = <Element> this.element.previousSibling;
         }
         else if (this.children.length > 0) {
-            element = <Element> this.children[0].element.previousSibling;
+            element = <Element> sortAsc(this.children.slice(), 'siblingIndex')[0].previousSibling;
         }
         while (element != null) {
             const node = getNodeFromElement(element);
@@ -916,7 +917,7 @@ export default abstract class Node implements BoxModel {
             element = <Element> this.element.nextSibling;
         }
         else if (this.children.length > 0) {
-            element = <Element> this.children[this.children.length - 1].element.nextSibling;
+            element = <Element> sortDesc(this.children.slice(), 'siblingIndex')[0].nextSibling;
         }
         while (element != null) {
             const node = getNodeFromElement(element);

@@ -13,6 +13,7 @@ export interface IExtension {
     options: ObjectMap<any>;
     dependencies: ExtensionDependency[];
     documentRoot: boolean;
+    singleRender: boolean;
     setTarget(node: T, parent?: T, element?: Element): void;
     getData(): void;
     is(node: T): void;
@@ -39,6 +40,7 @@ export interface ExtensionResult {
     xml: string;
     proceed?: boolean;
     parent?: Node;
+    include?: boolean;
 }
 
 export interface GridData {

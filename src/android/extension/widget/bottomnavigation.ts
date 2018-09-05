@@ -25,7 +25,7 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
             node.children[i].hide();
             node.children[i].cascade().forEach(item => item.hide());
         }
-        node.cascade().forEach(item => item.renderExtension = this);
+        node.cascade().forEach(item => item.renderExtensionChild.push(this));
         node.render(parent);
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ASSET;

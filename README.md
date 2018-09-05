@@ -383,7 +383,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_19"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol79591"
+                    android:text="@string/__symbol11084"
                     style="@style/Plaintext" />
             </LinearLayout>
             <RelativeLayout
@@ -531,7 +531,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_22"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol79591"
+                    android:text="@string/__symbol11084"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -960,7 +960,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_25"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol79591"
+                    android:text="@string/__symbol11084"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -1088,7 +1088,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol79591">):</string>
+    <string name="__symbol11084">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1385,7 +1385,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="button_padding_horizontal">8dp</dimen>
     <dimen name="button_padding_vertical">3dp</dimen>
     <dimen name="checkbox_margin_end">3dp</dimen>
-    <dimen name="checkbox_margin_start">5dp</dimen>
+    <dimen name="checkbox_margin_start">7dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">3dp</dimen>
     <dimen name="form_padding_horizontal">11dp</dimen>

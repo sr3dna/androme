@@ -32,7 +32,7 @@ export default class GridAndroid<T extends View> extends Grid<T> {
     public afterRender() {
         const extended: T[] = [];
         this.application.cache.each((node: T) => {
-            if (node.renderExtension === this) {
+            if (node.renderExtension.includes(this)) {
                 extended.push(node);
             }
             else {

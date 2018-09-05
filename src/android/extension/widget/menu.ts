@@ -4,7 +4,7 @@ import Nav from '../../../extension/nav';
 import ResourceView from '../../resource-view';
 import View from '../../view';
 import { optional } from '../../../lib/util';
-import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD, NODE_PROCEDURE } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
 const VALIDATE_ITEM = {
@@ -51,11 +51,12 @@ export default class Menu<T extends View> extends Nav<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
-        node.documentRoot = true;
+        node.documentRoot = !node.ascend(true).some(item => item.renderExtension.includes(this));
         node.rendered = true;
-        node.cascade().forEach(item => item.renderExtension = this);
+        node.cascade().forEach(item => item.renderExtensionChild.push(this));
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ALL;
+        node.excludeProcedure |= NODE_PROCEDURE.ALL;
         return { xml };
     }
 
@@ -162,6 +163,7 @@ export default class Menu<T extends View> extends Nav<T> {
         xml = this.application.controllerHandler.renderNodeStatic(nodeName, parent.renderDepth + 1, options, '', '', node, layout);
         node.rendered = true;
         node.excludeResource |= NODE_RESOURCE.ALL;
+        node.excludeProcedure |= NODE_PROCEDURE.ALL;
         return { xml, proceed };
     }
 

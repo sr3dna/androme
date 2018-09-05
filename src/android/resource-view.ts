@@ -696,7 +696,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             Resource.STORED.DRAWABLES.set(resourceName, xml);
                         }
                     }
-                    node.formatted(formatString(method['background'], resourceName), (node.renderExtension == null));
+                    node.formatted(formatString(method['background'], resourceName), (node.renderExtension.length === 0));
                     if (SETTINGS.autoSizeBackgroundImage && !node.is(NODE_STANDARD.IMAGE) && backgroundImage.length > 0 && !node.documentRoot && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
                         let resize = true;
                         let current = node;
@@ -736,7 +736,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                 }
                 else if (getElementCache(node.element, 'fontStyle') == null && stored.backgroundColor.length > 0) {
-                    node.formatted(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension == null));
+                    node.formatted(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension.length === 0));
                 }
             }
         });
@@ -859,7 +859,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const result = (node.imageElement ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
                 if (result !== '') {
                     const method = METHOD_ANDROID['imageSource'];
-                    node.formatted(formatString(method['src'], result), (node.renderExtension == null));
+                    node.formatted(formatString(method['src'], result), (node.renderExtension.length === 0));
                     setElementCache(element, 'imageSource', result);
                 }
             }
@@ -894,7 +894,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     arrayName = `${node.nodeId}_array`;
                     Resource.STORED.ARRAYS.set(arrayName, result);
                 }
-                node.formatted(formatString(method['entries'], arrayName), (node.renderExtension == null));
+                node.formatted(formatString(method['entries'], arrayName), (node.renderExtension.length === 0));
             }
         });
     }
@@ -930,7 +930,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const name = ResourceView.addString(stored.value, stored.name);
                 if (name !== '') {
                     const method = METHOD_ANDROID['valueString'];
-                    node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension == null));
+                    node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension.length === 0));
                 }
             }
         });
