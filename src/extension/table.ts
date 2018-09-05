@@ -16,12 +16,12 @@ export default class Table<T extends Node> extends Extension<T> {
         const node = this.node;
         const parent = this.parent as T;
         const table: T[] = [];
-        const thead = node.children.filter(item => item.element.tagName === 'THEAD');
-        const tbody = node.children.filter(item => item.element.tagName === 'TBODY');
-        const tfoot = node.children.filter(item => item.element.tagName === 'TFOOT');
+        const thead = node.children.filter(item => item.tagName === 'THEAD');
+        const tbody = node.children.filter(item => item.tagName === 'TBODY');
+        const tfoot = node.children.filter(item => item.tagName === 'TFOOT');
         const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
         if (thead.length > 0) {
-            thead[0].cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(thead[0], 'styleMap'));
+            thead[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead[0], 'styleMap'));
             table.push(...<T[]> thead[0].children);
             thead.forEach(item => item.hide());
         }
@@ -32,7 +32,7 @@ export default class Table<T extends Node> extends Extension<T> {
             });
         }
         if (tfoot.length > 0) {
-            tfoot[0].cascade().filter(item => item.element.tagName === 'TH' || item.element.tagName === 'TD').forEach(item => item.inherit(tfoot[0], 'styleMap'));
+            tfoot[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(tfoot[0], 'styleMap'));
             table.push(...<T[]> tfoot[0].children);
             tfoot.forEach(item => item.hide());
         }
@@ -98,7 +98,7 @@ export default class Table<T extends Node> extends Extension<T> {
         let rowCount = table.length;
         const columnCount = Math.max.apply(null, columnIndex);
         let borderInside = false;
-        const caption = node.children.find(item => item.element.tagName === 'CAPTION');
+        const caption = node.children.find(item => item.tagName === 'CAPTION');
         if (caption) {
             if (!caption.has('textAlign')) {
                 caption.css('textAlign', 'center');

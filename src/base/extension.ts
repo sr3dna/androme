@@ -35,7 +35,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
     }
 
     public is(node: T) {
-        return (node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.element.tagName)));
+        return (node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.tagName)));
     }
 
     public require(value: string, init = false) {

@@ -141,7 +141,7 @@ export default abstract class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
-                if (node.renderChildren.length > 0 || node.imageElement || node.element.tagName === 'HR') {
+                if (node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR') {
                     return;
                 }
                 else {
@@ -211,7 +211,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     public setOptionArray() {
-        this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+        this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
             const element = <HTMLSelectElement> node.element;
             if (getElementCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
                 const stringArray: string[] = [];

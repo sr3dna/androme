@@ -69,7 +69,7 @@ export function formatResource(options: {}) {
         const object: StringMap = options[namespace];
         if (typeof object === 'object') {
             for (const attr in object) {
-                if (object[attr]) {
+                if (object[attr] != null) {
                     let value = object[attr].toString();
                     switch (namespace) {
                         case 'android':

@@ -294,10 +294,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                     node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                 }
-                if (node.styleMap.marginLeft === 'auto') {
+                if (node.cssOriginal('marginLeft') === 'auto') {
                     node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                 }
-                if (node.styleMap.marginRight === 'auto') {
+                if (node.cssOriginal('marginRight') === 'auto') {
                     node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                 }
             }
@@ -692,7 +692,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                         }
                         if (resourceName === '') {
-                            resourceName = `${node.tagName.toLowerCase()}_${node.nodeId}`;
+                            resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
                             Resource.STORED.DRAWABLES.set(resourceName, xml);
                         }
                     }
@@ -747,10 +747,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
         const tagName: ObjectMap<T[]> = {};
         this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE)).each(node => {
             if (getElementCache(node.element, 'fontStyle')) {
-                if (tagName[node.tagName] == null) {
-                    tagName[node.tagName] = [];
+                if (tagName[node.nodeName] == null) {
+                    tagName[node.nodeName] = [];
                 }
-                tagName[node.tagName].push(node);
+                tagName[node.nodeName].push(node);
             }
             const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
             if (match) {
@@ -853,7 +853,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public setImageSource() {
-        this.cache.filter(node => node.visible && (node.imageElement || (node.element.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
+        this.cache.filter(node => node.visible && (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
             const element = <HTMLImageElement> node.element;
             if (getElementCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
                 const result = (node.imageElement ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
@@ -868,7 +868,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.filter(node => node.visible && node.element.tagName === 'SELECT' && !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+        this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
             const stored: ObjectMap<string[]> = getElementCache(node.element, 'optionArray');
             if (stored) {
                 const method = METHOD_ANDROID['optionArray'];

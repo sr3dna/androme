@@ -75,7 +75,7 @@ export default class Menu<T extends View> extends Nav<T> {
         let title = '';
         let layout = false;
         if (node.children.some(item => (!item.inlineElement || !item.blockStatic) && item.children.length > 0)) {
-            if (node.children.some(item => item.element.tagName === 'NAV')) {
+            if (node.children.some(item => item.tagName === 'NAV')) {
                 if (element.title !== '') {
                     title = element.title.trim();
                 }
@@ -95,9 +95,9 @@ export default class Menu<T extends View> extends Nav<T> {
                         return false;
                     });
                 }
-                node.each(item => item.element.tagName !== 'NAV' && item.hide());
+                node.each(item => item.tagName !== 'NAV' && item.hide());
             }
-            else if (node.element.tagName === 'NAV') {
+            else if (node.tagName === 'NAV') {
                 nodeName = VIEW_NAVIGATION.MENU;
                 proceed = true;
             }
@@ -155,10 +155,10 @@ export default class Menu<T extends View> extends Nav<T> {
             }
         }
         if (options.android.id == null) {
-            node.setNodeId(nodeName);
+            node.setNodeType(nodeName);
         }
         else {
-            node.nodeName = nodeName;
+            node.controlName = nodeName;
         }
         xml = this.application.controllerHandler.renderNodeStatic(nodeName, parent.renderDepth + 1, options, '', '', node, layout);
         node.rendered = true;

@@ -60,7 +60,7 @@ export default class Drawer<T extends View> extends Extension<T> {
         const application = this.application;
         const node = this.node;
         if (application.lateInsert[node.nodeId] != null) {
-            const target = application.cacheInternal.locate(item => item.isolated && item.parent === node.parent && item.nodeName === VIEW_SUPPORT.COORDINATOR);
+            const target = application.cacheInternal.locate(item => item.isolated && item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
             if (target) {
                 application.lateInsert[target.nodeId] = application.lateInsert[node.nodeId];
                 delete application.lateInsert[node.nodeId];

@@ -22,8 +22,8 @@ export default class View extends Node {
         return View._documentBody;
     }
 
-    public static getNodeFromElementName(tagName: number): string {
-        return NODE_ANDROID[NODE_STANDARD[tagName]];
+    public static getControlName(nodeName: number): string {
+        return NODE_ANDROID[NODE_STANDARD[nodeName]];
     }
 
     private static _documentBody: T;
@@ -90,7 +90,7 @@ export default class View extends Node {
             if (overwrite == null) {
                 overwrite = (adjacent === 'parent' || adjacent === 'true');
             }
-            this[(this.renderParent.nodeName === NODE_ANDROID.RELATIVE ? 'android' : 'app')](position, adjacent, overwrite);
+            this[(this.renderParent.controlName === NODE_ANDROID.RELATIVE ? 'android' : 'app')](position, adjacent, overwrite);
             if (orientation) {
                 this.constraint[orientation] = true;
             }
@@ -100,7 +100,7 @@ export default class View extends Node {
 
     public alignParent(position: string) {
         if (this.renderParent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
-            const constraint = (this.renderParent.nodeName === NODE_ANDROID.CONSTRAINT);
+            const constraint = (this.renderParent.controlName === NODE_ANDROID.CONSTRAINT);
             const direction = capitalize(position);
             const attr = (constraint ? `layout_constraint${direction}_to${direction}Of` : `layout_alignParent${direction}`);
             return (this[(constraint ? 'app' : 'android')](parseRTL(attr)) === (constraint ? 'parent' : 'true'));
@@ -176,6 +176,7 @@ export default class View extends Node {
 
     public combine(...objs: string[]) {
         const result: string[] = [];
+        this.android('id', this.stringId);
         for (const value of this._namespaces.values()) {
             const obj: StringMap = this[`_${value}`];
             if (objs.length === 0 || objs.includes(value)) {
@@ -205,7 +206,7 @@ export default class View extends Node {
     public applyCustomizations(overwrite = false) {
         [API_ANDROID[this.api], API_ANDROID[0]].forEach(build => {
             if (build && build.customizations != null) {
-                [this.element.tagName, this.nodeName].forEach(nodeName => {
+                [this.tagName, this.controlName].forEach(nodeName => {
                     const customizations = build.customizations[nodeName];
                     if (customizations != null) {
                         for (const obj in customizations) {
@@ -223,14 +224,13 @@ export default class View extends Node {
         const node = new View(id || this.id, this.api, this.element);
         node.nodeId = this.nodeId;
         node.nodeType = this.nodeType;
-        node.nodeName = this.nodeName;
+        node.controlName = this.controlName;
         node.alignmentType = this.alignmentType;
         node.depth = this.depth;
         node.rendered = this.rendered;
         node.renderDepth = this.renderDepth;
         node.renderParent = this.renderParent;
         node.renderExtension = this.renderExtension;
-        node.visible = this.visible;
         node.documentRoot = this.documentRoot;
         node.documentParent = this.documentParent;
         if (children) {
@@ -240,23 +240,22 @@ export default class View extends Node {
         return node;
     }
 
-    public setNodeId(nodeName: string) {
+    public setNodeType(nodeName: string) {
         for (const type in NODE_ANDROID) {
             if (NODE_ANDROID[type] === nodeName && NODE_STANDARD[type] != null) {
                 this.nodeType = NODE_STANDARD[type];
                 break;
             }
         }
-        super.nodeName = nodeName || this.nodeName;
+        this.controlName = nodeName;
         if (this.nodeId == null) {
             const element = <HTMLInputElement> this.element;
             let name = (element.id || element.name || '').trim();
             if (RESERVED_JAVA.includes(name)) {
                 name += '_1';
             }
-            this.nodeId = convertWord(generateId('android', (name || `${lastIndexOf(this.nodeName, '.').toLowerCase()}_1`)));
+            this.nodeId = convertWord(generateId('android', (name || `${lastIndexOf(this.controlName, '.').toLowerCase()}_1`)));
         }
-        this.android('id', this.stringId);
     }
 
     public setLayout(width?: number, height?: number) {
@@ -287,7 +286,7 @@ export default class View extends Node {
             const renderParent = this.renderParent;
             const widthParent = (parent.box ? parent.box.width : (parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0));
             const heightParent = (parent.box ? parent.box.height : (parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0));
-            const tableParent = (renderParent.element.tagName === 'TABLE');
+            const tableParent = (renderParent.tagName === 'TABLE');
             if (width == null) {
                 width = (this.linear ? this.linear.width : (this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0));
             }
@@ -595,9 +594,9 @@ export default class View extends Node {
                 this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), floating));
             }
         }
-        if (renderParent.element.tagName === 'TABLE') {
+        if (renderParent.tagName === 'TABLE') {
             this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), 'fill'));
-            if (textAlign === '' && this.element.tagName === 'TH') {
+            if (textAlign === '' && this.tagName === 'TH') {
                 textAlign = 'center';
             }
             if (verticalAlign === '') {
@@ -811,8 +810,8 @@ export default class View extends Node {
             }
             else if (!this.is(NODE_STANDARD.LINE)) {
                 if (this.hasElement && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
-                    const tableElement = (this.element.tagName === 'TABLE');
-                    const borderCollapse = ((renderParent.display === 'table' || renderParent.element.tagName === 'TABLE') && renderParent.css('borderCollapse') === 'collapse');
+                    const tableElement = (this.tagName === 'TABLE');
+                    const borderCollapse = ((renderParent.display === 'table' || renderParent.tagName === 'TABLE') && renderParent.css('borderCollapse') === 'collapse');
                     let resizedWidth = false;
                     let resizedHeight = false;
                     if (viewWidth > 0 && convertInt(this.cssOriginal('width')) > 0) {
@@ -897,7 +896,7 @@ export default class View extends Node {
     public setAccessibility() {
         const node = this;
         const element = this.element;
-        switch (this.nodeName) {
+        switch (this.controlName) {
             case NODE_ANDROID.EDIT:
                 if (node.companion == null) {
                     let label: Null<T> = null;
@@ -970,16 +969,16 @@ export default class View extends Node {
         return (this.nodeId ? `@+id/${this.nodeId}` : '');
     }
 
-    set nodeName(value) {
-        this._nodeName = value;
+    set controlName(value: string) {
+        this._controlName = value;
     }
-    get nodeName() {
-        if (this._nodeName != null) {
-            return super.nodeName;
+    get controlName() {
+        if (this._controlName != null) {
+            return this._controlName;
         }
         else {
-            const value: number = MAP_ELEMENT[this.tagName];
-            return (value != null ? View.getNodeFromElementName(value) : '');
+            const value: number = MAP_ELEMENT[this.nodeName];
+            return (value != null ? View.getControlName(value) : '');
         }
     }
 

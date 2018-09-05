@@ -31,7 +31,7 @@ export default class ViewGroup<T extends View> extends View {
         this.children.forEach(item => item.parent = this);
         this.documentParent = node.documentParent;
         if (this.hasElement) {
-            this.tagName = node.tagName;
+            this.nodeName = node.nodeName;
             this.inherit(node, 'base', 'style', 'styleMap');
             this.documentRoot = node.documentRoot;
             this.excludeProcedure = node.excludeProcedure;
@@ -39,7 +39,7 @@ export default class ViewGroup<T extends View> extends View {
             this.renderExtension = node.renderExtension;
         }
         else {
-            this.tagName = `${node.tagName}_GROUP`;
+            this.nodeName = `${node.nodeName}_GROUP`;
             this.setBounds();
         }
         if (this.element == null) {

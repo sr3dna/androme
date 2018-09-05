@@ -16,7 +16,7 @@ export default abstract class Controller<T extends Node> {
     public abstract createGroup(node: T, children?: T[], parent?: T, element?: HTMLElement): T;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
-    public abstract renderNodeStatic(tagName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
+    public abstract renderNodeStatic(nodeName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
     public abstract renderInclude(node: T, parent: T, name: string): string;
     public abstract renderMerge(name: string, content: string[]): string;
     public abstract baseRenderDepth(name: string): number;
@@ -71,17 +71,17 @@ export default abstract class Controller<T extends Node> {
         return (this._before[id] != null || this._after[id] != null);
     }
 
-    protected getEnclosingTag(depth: number, tagName: string, id: number, xml = '', preXml = '', postXml = '') {
+    protected getEnclosingTag(depth: number, controlName: string, id: number, xml = '', preXml = '', postXml = '') {
         const indent = repeat(Math.max(0, depth));
         let output = preXml +
                      `{<${id}}`;
         if (xml !== '') {
-            output += indent + `<${tagName}${(depth === 0 ? '{#0}' : '')}{@${id}}>\n` +
+            output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}}>\n` +
                                xml +
-                      indent + `</${tagName}>\n`;
+                      indent + `</${controlName}>\n`;
         }
         else {
-            output += indent + `<${tagName}${(depth === 0 ? '{#0}' : '')}{@${id}} />\n`;
+            output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}} />\n`;
         }
         output += `{>${id}}` +
                   postXml;

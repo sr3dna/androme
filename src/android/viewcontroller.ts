@@ -985,7 +985,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         degrees = (center1.x > center2.x ? 90 : 270);
                                     }
                                     current.app('layout_constraintCircle', opposite.stringId);
-                                    current.app('layout_constraintCircleRadius', delimitDimens(`${current.tagName}`, 'constraintcircleradius', formatPX(radius)));
+                                    current.app('layout_constraintCircleRadius', delimitDimens(`${current.nodeName}`, 'constraintcircleradius', formatPX(radius)));
                                     current.app('layout_constraintCircleAngle', degrees.toString());
                                     current.constraint.horizontal = true;
                                     current.constraint.vertical = true;
@@ -1191,7 +1191,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         let postXml = '';
         let renderParent = parent;
         if (typeof viewName === 'number') {
-            viewName = View.getNodeFromElementName(viewName);
+            viewName = View.getControlName(viewName);
         }
         switch (viewName) {
             case NODE_ANDROID.LINEAR:
@@ -1204,7 +1204,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 options = {};
                 break;
         }
-        node.setNodeId(viewName);
+        node.setNodeType(viewName);
         if (node.overflow !== OVERFLOW_ELEMENT.NONE) {
             const scrollView: string[] = [];
             if (node.overflowX) {
@@ -1219,7 +1219,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 .map(nodeName => {
                     const container = new View(this.cache.nextId, SETTINGS.targetAPI, node.element) as T;
                     container.setBounds();
-                    container.setNodeId(nodeName);
+                    container.setNodeType(nodeName);
                     container.inherit(node, 'styleMap');
                     this.cache.append(container);
                     switch (nodeName) {
@@ -1266,17 +1266,17 @@ export default class ViewController<T extends View> extends Controller<T> {
         return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), viewName, node.id, getPlaceholder(node.id), preXml, postXml);
     }
 
-    public renderNode(node: T, parent: T, tagName: number | string, recursive = false) {
+    public renderNode(node: T, parent: T, nodeName: number | string, recursive = false) {
         if (node.renderAs != null && !node.renderAs.rendered) {
             node.hide();
             node = node.renderAs as T;
         }
         const target = (node.isSet('dataset', 'target') && !node.isSet('dataset', 'include'));
-        if (typeof tagName === 'number') {
-            tagName = View.getNodeFromElementName(tagName);
+        if (typeof nodeName === 'number') {
+            nodeName = View.getControlName(nodeName);
         }
-        node.setNodeId(tagName);
-        switch (node.element.tagName) {
+        node.setNodeType(nodeName);
+        switch (node.tagName) {
             case 'IMG': {
                 if (!recursive) {
                     const element = <HTMLImageElement> node.element;
@@ -1336,7 +1336,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         container.android('layout_width', (width > 0 ? formatPX(width) : 'wrap_content'));
                         container.android('layout_height', (height > 0 ? formatPX(height) : 'wrap_content'));
                         container.setBounds();
-                        container.setNodeId(NODE_ANDROID.FRAME);
+                        container.setNodeType(NODE_ANDROID.FRAME);
                         container.render(parent);
                         if (left < 0) {
                             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, left);
@@ -1346,7 +1346,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                         node.parent = container;
                         this.cache.append(container);
-                        return this.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, this.renderNode(node, container, tagName, true));
+                        return this.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, this.renderNode(node, container, nodeName, true));
                     }
                 }
                 break;
@@ -1389,7 +1389,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 let xml = '';
                                 const linearX = NodeList.linearX(result);
                                 const group = this.createGroup(node, (linearX ? sortAsc(result, 'linear.left') : result), parent);
-                                group.setNodeId(NODE_ANDROID.RADIO_GROUP);
+                                group.setNodeType(NODE_ANDROID.RADIO_GROUP);
                                 group.css({
                                     'marginLeft': (node.cssOriginal('marginLeft') === 'auto' ? 'auto' : ''),
                                     'marginRight': (node.cssOriginal('marginRight') === 'auto' ? 'auto' : ''),
@@ -1450,7 +1450,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 break;
             }
         }
-        switch (node.nodeName) {
+        switch (node.controlName) {
             case NODE_ANDROID.TEXT:
                 if (node.overflow !== OVERFLOW_ELEMENT.NONE) {
                     const scrollbars: string[] = [];
@@ -1474,48 +1474,46 @@ export default class ViewController<T extends View> extends Controller<T> {
         if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
             node.setAccessibility();
         }
-        return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), node.nodeName, node.id);
+        return this.getEnclosingTag((target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth), node.controlName, node.id);
     }
 
-    public renderNodeStatic(tagName: number | string, depth: number, options: ObjectMap<any> = {}, width = '', height = '', node?: T, children?: boolean) {
+    public renderNodeStatic(nodeName: number | string, depth: number, options = {}, width = '', height = '', node?: T, children?: boolean) {
         if (node == null) {
             node = new View(0, SETTINGS.targetAPI) as T;
         }
         const renderDepth = Math.max(0, depth);
-        const viewName = (typeof tagName === 'number' ? View.getNodeFromElementName(tagName) : tagName);
-        tagName = (node.hasElement ? node.tagName : viewName);
+        const viewName = (typeof nodeName === 'number' ? View.getControlName(nodeName) : nodeName);
         switch (viewName) {
             case 'include':
             case 'merge':
             case 'menu':
                 break;
             default:
-                node.setNodeId(viewName);
+                node.setNodeType(viewName);
                 break;
         }
+        const displayName = (node.hasElement ? node.nodeName : viewName);
         if (hasValue(width)) {
             if (!isNaN(parseInt(width))) {
-                width = delimitDimens(tagName, 'width', width);
+                width = delimitDimens(displayName, 'width', width);
             }
             node.android('layout_width', width);
         }
         if (hasValue(height)) {
             if (!isNaN(parseInt(height))) {
-                height = delimitDimens(tagName, 'height', height);
+                height = delimitDimens(displayName, 'height', height);
             }
             node.android('layout_height', height);
         }
         node.renderDepth = renderDepth;
-        if (options != null) {
-            node.apply(formatResource(options));
-        }
+        node.apply(formatResource(options));
         let output = this.getEnclosingTag((depth === 0 && !node.documentRoot ? -1 : depth), viewName, node.id, (children ? getPlaceholder(node.id) : ''));
         if (SETTINGS.showAttributes && node.id === 0) {
             const indent = repeat(renderDepth + 1);
             const attrs = node.combine().map(value => `\n${indent + value}`).join('');
             output = output.replace(getPlaceholder(node.id, '@'), attrs);
         }
-        options.stringId = node.stringId;
+        options['stringId'] = node.stringId;
         return output;
     }
 
@@ -1549,8 +1547,8 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     public setDimensions(data: ViewData<NodeList<T>>) {
-        function addToGroup(tagName: string, node: T, dimen: string, attr?: string, value?: string) {
-            const group: ObjectMap<T[]> = groups[tagName];
+        function addToGroup(nodeName: string, node: T, dimen: string, attr?: string, value?: string) {
+            const group: ObjectMap<T[]> = groups[nodeName];
             let name = dimen;
             if (arguments.length === 5) {
                 if (value != null && /(px|dp|sp)$/.test(value)) {
@@ -1569,15 +1567,15 @@ export default class ViewController<T extends View> extends Controller<T> {
         for (const node of data.cache.visible) {
             node.setBoxSpacing();
             if (SETTINGS.dimensResourceValue) {
-                const tagName = node.tagName.toLowerCase();
-                if (groups[tagName] == null) {
-                    groups[tagName] = {};
+                const nodeName = node.nodeName.toLowerCase();
+                if (groups[nodeName] == null) {
+                    groups[nodeName] = {};
                 }
                 for (const key of Object.keys(BOX_STANDARD)) {
                     const result = node.valueBox(key);
                     if (result[0] !== '' && result[1] !== '0px') {
                         const name = `${BOX_STANDARD[key].toLowerCase()},${result[0]},${result[1]}`;
-                        addToGroup(tagName, node, name);
+                        addToGroup(nodeName, node, name);
                     }
                 }
                 ['android:layout_width:width',
@@ -1587,17 +1585,17 @@ export default class ViewController<T extends View> extends Controller<T> {
                  'app:layout_constraintWidth_min:constraint_width_min',
                  'app:layout_constraintHeight_min:constraint_height_min'].forEach(value => {
                     const [obj, attr, dimen] = value.split(':');
-                    addToGroup(tagName, node, dimen, attr, node[obj](attr));
+                    addToGroup(nodeName, node, dimen, attr, node[obj](attr));
                 });
             }
         }
         if (SETTINGS.dimensResourceValue) {
             const resource = <Map<string, string>> Resource.STORED.DIMENS;
-            for (const tagName in groups) {
-                const group: ObjectMap<T[]> = groups[tagName];
+            for (const nodeName in groups) {
+                const group: ObjectMap<T[]> = groups[nodeName];
                 for (const name in group) {
                     const [dimen, attr, value] = name.split(',');
-                    const key = this.getDimenResourceKey(resource, `${tagName}_${parseRTL(dimen)}`, value);
+                    const key = this.getDimenResourceKey(resource, `${nodeName}_${parseRTL(dimen)}`, value);
                     group[name].forEach(node => node[(attr.indexOf('constraint') !== -1 ? 'app' : 'android')](attr, `@dimen/${key}`));
                     resource.set(key, value);
                 }
@@ -1633,7 +1631,7 @@ export default class ViewController<T extends View> extends Controller<T> {
 
     private parseAttributes(node: T) {
         if (node.dir === 'rtl') {
-            switch (node.nodeName) {
+            switch (node.controlName) {
                 case NODE_ANDROID.RADIO:
                 case NODE_ANDROID.CHECKBOX:
                     node.android('layoutDirection', 'rtl');
@@ -1837,7 +1835,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                         if (!found) {
                             if (!percent) {
-                                options.app[beginPercent] = delimitDimens(node.tagName, 'constraintguide_begin', <string> location);
+                                options.app[beginPercent] = delimitDimens(node.nodeName, 'constraintguide_begin', <string> location);
                             }
                             const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
                             const stringId = (<any> options).stringId;

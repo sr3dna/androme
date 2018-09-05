@@ -22,7 +22,7 @@ export default class Custom<T extends Node> extends Extension<T> {
             else {
                 xml = this.application.controllerHandler.renderNode(node, parent, data.tag);
             }
-            node.nodeType = (BLOCK_ELEMENT.includes(node.element.tagName) && !node.inline ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE);
+            node.nodeType = (BLOCK_ELEMENT.includes(node.tagName) && !node.inline ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE);
         }
         if (data.tagChild) {
             node.each(item => {

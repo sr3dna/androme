@@ -8,7 +8,7 @@ export default abstract class Button<T extends Node> extends Extension<T> {
     }
 
     public is(node: T) {
-        return (super.is(node) && (node.element.tagName !== 'INPUT' || ['button', 'file', 'image', 'reset', 'search', 'submit'].includes((<HTMLInputElement> node.element).type)));
+        return (super.is(node) && (node.tagName !== 'INPUT' || ['button', 'file', 'image', 'reset', 'search', 'submit'].includes((<HTMLInputElement> node.element).type)));
     }
 
     public init(element: Element) {

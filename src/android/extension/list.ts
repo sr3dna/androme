@@ -72,7 +72,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 paddingLeft -= left;
             }
             paddingLeft = Math.max(paddingLeft, 20);
-            const minWidth = (paddingLeft > 0 ? delimitDimens(node.tagName, parseRTL('min_width'), formatPX(paddingLeft)) : '');
+            const minWidth = (paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(paddingLeft)) : '');
             const paddingRight = (() => {
                 if (paddingLeft <= 24) {
                     return 6;
@@ -84,12 +84,12 @@ export default class ListAndroid<T extends View> extends List<T> {
                     return 10;
                 }
             })();
-            const paddingLeftValue = (gravity === '' && image === '' ? delimitDimens(node.tagName, parseRTL('padding_left'), formatPX(paddingRight)) : '');
-            const paddingRightValue = (gravity === 'right' ? delimitDimens(node.tagName, parseRTL('padding_right'), formatPX(paddingRight)) : '');
-            const marginLeftValue = (left > 0 ? delimitDimens(node.tagName, parseRTL('margin_left'), formatPX(left)) : '');
+            const paddingLeftValue = (gravity === '' && image === '' ? delimitDimens(node.nodeName, parseRTL('padding_left'), formatPX(paddingRight)) : '');
+            const paddingRightValue = (gravity === 'right' ? delimitDimens(node.nodeName, parseRTL('padding_right'), formatPX(paddingRight)) : '');
+            const marginLeftValue = (left > 0 ? delimitDimens(node.nodeName, parseRTL('margin_left'), formatPX(left)) : '');
             const options = {
                 android: {
-                    layout_marginTop: (node.marginTop + top > 0 ? delimitDimens(node.tagName, 'margin_top', formatPX(node.marginTop + top)) : '')
+                    layout_marginTop: (node.marginTop + top > 0 ? delimitDimens(node.nodeName, 'margin_top', formatPX(node.marginTop + top)) : '')
                 },
                 app: {
                     layout_columnWeight: columnWeight
@@ -116,7 +116,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                     )
                 );
                 Object.assign(options.android, {
-                    minWidth: delimitDimens(node.tagName, parseRTL('min_width'), formatPX(24))
+                    minWidth: delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(24))
                 });
             }
             else {

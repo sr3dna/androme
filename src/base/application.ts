@@ -183,7 +183,7 @@ export default class Application<T extends Node> {
             const text: Element[] = [];
             Array.from(node.element.childNodes).forEach((element: Element) => {
                 if (element.nodeName === '#text') {
-                    if (node.element.tagName !== 'SELECT') {
+                    if (node.tagName !== 'SELECT') {
                         text.push(element);
                     }
                 }
@@ -765,7 +765,7 @@ export default class Application<T extends Node> {
                         }
                         if (!nodeY.rendered) {
                             let xml = '';
-                            if (nodeY.nodeName === '') {
+                            if (nodeY.controlName === '') {
                                 const untargeted = nodeY.children.filter(node => !node.isSet('dataset', 'target'));
                                 if (untargeted.length === 0) {
                                     const freeFormText = hasFreeFormText(nodeY.element, 1);
@@ -858,7 +858,7 @@ export default class Application<T extends Node> {
                                 }
                             }
                             else {
-                                xml = this.writeNode(nodeY, parentY, nodeY.nodeName);
+                                xml = this.writeNode(nodeY, parentY, nodeY.controlName);
                             }
                             renderXml(nodeY, parentY, xml, current);
                         }
@@ -1317,7 +1317,7 @@ export default class Application<T extends Node> {
         if (element.nodeName === '#text') {
             if (isPlainText(element) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
                 node = new this._Node(this.cache.nextId, SETTINGS.targetAPI, element);
-                node.tagName = 'PLAINTEXT';
+                node.nodeName = 'PLAINTEXT';
                 if (parent) {
                     node.parent = parent;
                     node.inherit(parent, 'style');

@@ -35,7 +35,7 @@ export default abstract class Node implements BoxModel {
     public abstract children: T[];
     public abstract renderChildren: T[];
 
-    protected _nodeName: string;
+    protected _controlName: string;
     protected _renderParent: T;
     protected _documentParent: T;
     protected _boxAdjustment: BoxModel = {
@@ -63,7 +63,7 @@ export default abstract class Node implements BoxModel {
 
     private _element: Element;
     private _parent: T;
-    private _tagName: string;
+    private _nodeName: string;
     private _renderDepth: number;
     private _pageflow: boolean;
     private _multiLine: boolean;
@@ -81,7 +81,7 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public abstract setNodeId(viewName: string): void;
+    public abstract setNodeType(viewName: string): void;
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
     public abstract setBoxSpacing(): void;
@@ -92,6 +92,8 @@ export default abstract class Node implements BoxModel {
     public abstract valueBox(region: number): string[];
     public abstract clone(id?: number, children?: boolean): T;
 
+    public abstract set controlName(value: string);
+    public abstract get controlName();
     public abstract set documentParent(value: T);
     public abstract get documentParent(): T;
     public abstract set renderParent(value: T);
@@ -595,18 +597,11 @@ export default abstract class Node implements BoxModel {
         return this._parent;
     }
 
-    set tagName(value) {
-        this._tagName = value;
-    }
-    get tagName() {
-        return this._tagName || (this.hasElement ? (this.element.tagName === 'INPUT' ? (<HTMLInputElement> this.element).type.toUpperCase() : this.element.tagName) : '');
-    }
-
     set nodeName(value) {
         this._nodeName = value;
     }
     get nodeName() {
-        return this._nodeName;
+        return this._nodeName || (this.hasElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this.element).type.toUpperCase() : this.tagName) : '');
     }
 
     set element(value) {
@@ -614,6 +609,10 @@ export default abstract class Node implements BoxModel {
     }
     get element() {
         return this._element || {};
+    }
+
+    get tagName() {
+        return this._element && (this._element.tagName || '');
     }
 
     get hasElement() {
@@ -665,7 +664,7 @@ export default abstract class Node implements BoxModel {
                 order: convertInt(style.order)
             };
         }
-        return (<Flexbox> { enabled: false });
+        return <Flexbox> { enabled: false };
     }
 
     get viewWidth() {
@@ -776,7 +775,7 @@ export default abstract class Node implements BoxModel {
 
     get inline() {
         const display = this.display;
-        return (display === 'inline' || (display === 'initial' && INLINE_ELEMENT.includes(this.element.tagName)));
+        return (display === 'inline' || (display === 'initial' && INLINE_ELEMENT.includes(this.tagName)));
     }
 
     get inlineElement() {
@@ -786,19 +785,19 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineStatic() {
-        return (this.inline && !this.floating && this.element.tagName !== 'IMG');
+        return (this.inline && !this.floating && this.tagName !== 'IMG');
     }
 
     get inlineText() {
-        return (this.hasElement && !['SELECT', 'IMG'].includes(this.element.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
+        return (this.hasElement && !['SELECT', 'IMG'].includes(this.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
     }
 
     get plainText() {
-        return (this.tagName === 'PLAINTEXT');
+        return (this.nodeName === 'PLAINTEXT');
     }
 
     get imageElement() {
-        return (this.element.tagName === 'IMG');
+        return (this.tagName === 'IMG');
     }
 
     get block() {
@@ -815,15 +814,15 @@ export default abstract class Node implements BoxModel {
     }
 
     get autoMargin() {
-        return (this.styleMap.marginLeft === 'auto' || this.styleMap.marginRight === 'auto');
+        return (this.originalStyleMap.marginLeft === 'auto' || this.originalStyleMap.marginRight === 'auto');
     }
 
     get centerHorizontal() {
-        return (this.styleMap.marginLeft === 'auto' && this.styleMap.marginRight === 'auto');
+        return (this.originalStyleMap.marginLeft === 'auto' && this.originalStyleMap.marginRight === 'auto');
     }
 
     get centerVertical() {
-        return (this.styleMap.marginTop === 'auto' && this.styleMap.marginBottom === 'auto');
+        return (this.originalStyleMap.marginTop === 'auto' && this.originalStyleMap.marginBottom === 'auto');
     }
 
     get floating() {
