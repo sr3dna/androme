@@ -31,23 +31,23 @@ export interface IExtension {
     finalize(): void;
 }
 
-export interface ExtensionDependency {
+export type ExtensionDependency = {
     name: string;
     init: boolean;
-}
+};
 
-export interface ExtensionResult {
+export type ExtensionResult = {
     xml: string;
     proceed?: boolean;
     parent?: Node;
     include?: boolean;
-}
+};
 
-export interface GridData {
+export type GridData = {
     columnEnd: number[];
     columnCount: number;
     padding: BoxRect;
-}
+};
 
 export interface GridCellData extends Inheritable {
     rowSpan: number;

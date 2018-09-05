@@ -3,7 +3,7 @@ import { IExtension } from './extension/lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
 import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, optional  } from './lib/util';
-import { deleteElementCache, getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
+import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
 import { convertRGB, getByColorName } from './lib/color';
 import { EXT_NAME } from './extension/lib/constants';
 import SETTINGS from './settings';
@@ -311,7 +311,7 @@ export function getExtension(name: string) {
     return main.getExtension(name);
 }
 
-export function ext(name: any, options: {}) {
+export function ext(name: any, options?: {}) {
     if (typeof name === 'object') {
         registerExtension(name);
     }
@@ -337,7 +337,6 @@ export function reset() {
     for (const element of ROOT_CACHE) {
         delete element.dataset.views;
         delete element.dataset.viewName;
-        Array.from(element.querySelectorAll('*')).forEach((item: Element) => deleteElementCache(item, 'node', 'style', 'styleMap'));
     }
     ROOT_CACHE.clear();
     main.reset();

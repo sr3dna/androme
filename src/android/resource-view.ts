@@ -1,4 +1,4 @@
-import { ArrayIndex, BasicData, BorderAttribute, BoxStyle, FontAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, NameValue, BorderAttribute, BoxStyle, FontAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -317,7 +317,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let backgroundPosition = stored.backgroundPosition.split(',').map(value => value.trim());
                 const backgroundImageUrl: string[] = [];
                 for (let i = 0; i < backgroundImage.length; i++) {
-                    if (backgroundImage[i] !== 'none') {
+                    if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
                         backgroundImageUrl.push(backgroundImage[i]);
                         backgroundImage[i] = ResourceView.addImageURL(backgroundImage[i]);
                     }
@@ -698,8 +698,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                     node.formatted(formatString(method['background'], resourceName), (node.renderExtension.length === 0));
                     if (SETTINGS.autoSizeBackgroundImage && !node.is(NODE_STANDARD.IMAGE) && backgroundImage.length > 0 && !node.documentRoot && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
-                        let resize = true;
                         let current = node;
+                        let resize = true;
                         while (current != null && !current.documentBody) {
                             if (current.viewWidth > 0 && current.viewHeight > 0) {
                                 resize = false;
@@ -902,7 +902,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setValueString() {
         super.setValueString();
         this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING)).each(node => {
-            const stored: BasicData = getElementCache(node.element, 'valueString');
+            const stored: NameValue = getElementCache(node.element, 'valueString');
             if (stored) {
                 if (node.renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
                     if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {

@@ -18,7 +18,6 @@ export default class Application<T extends Node> {
     public elements: Set<HTMLElement> = new Set();
     public lateInsert: ObjectIndex<string[]> = {};
     public extensions: IExtension[] = [];
-    public processing: T[];
     public closed = false;
 
     private _views: PlainFile[] = [];
@@ -90,18 +89,18 @@ export default class Application<T extends Node> {
 
     public reset() {
         for (const node of this.cacheInternal) {
-            deleteElementCache(node.element, 'style', 'styleMap', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
+            deleteElementCache(node.element, 'node', 'style', 'styleMap', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
         }
         this.cache.reset();
         this.cacheInternal.reset();
         this.resetController();
         this.resetResource();
-        this.appName = '';
-        this.lateInsert = {};
         this._views = [];
         this._includes = [];
         this._sorted = {};
         this._currentIndex = -1;
+        this.appName = '';
+        this.lateInsert = {};
         this.closed = false;
     }
 
@@ -456,7 +455,7 @@ export default class Application<T extends Node> {
         this.cache.delegateAppend = (nodes: T[]) => {
             nodes.forEach(node => setMapY(-2, node.id, node));
         };
-        for (const indexId of mapY.values()) {
+        for (const depth of mapY.values()) {
             const partial = new Map<string, Map<number, string>>();
             const external = new Map<string, Map<number, string>>();
             function insertViewTemplate(data: Map<string, Map<number, string>>, node: T, parentId: string, value: string, current: string) {
@@ -511,7 +510,7 @@ export default class Application<T extends Node> {
                     }
                 }
             }
-            for (const parent of indexId.values()) {
+            for (const parent of depth.values()) {
                 if (parent.children.length === 0) {
                     continue;
                 }
@@ -539,7 +538,6 @@ export default class Application<T extends Node> {
                 axisY.push(...sortAsc(below, 'style.zIndex', 'id'));
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
-                this.processing = axisY;
                 const cleared = NodeList.cleared(axisY);
                 const includes: string[] = [];
                 let current = '';

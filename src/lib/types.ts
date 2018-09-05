@@ -19,14 +19,14 @@ export interface BoxModel {
     borderLeftWidth?: number;
 }
 
-export interface BoxRect {
+export type BoxRect = {
     top: number;
     right: number;
     bottom: number;
     left: number;
-}
+};
 
-export interface ClientRect {
+export type ClientRect = {
     top: number;
     right: number;
     bottom: number;
@@ -34,14 +34,14 @@ export interface ClientRect {
     width: number;
     height: number;
     [key: string]: number;
-}
+};
 
-export interface Point {
+export type Point = {
     x: number;
     y: number;
-}
+};
 
-export interface Flexbox {
+export type Flexbox = {
     enabled: boolean;
     direction: string;
     basis: string;
@@ -51,57 +51,57 @@ export interface Flexbox {
     alignSelf: string;
     justifyContent: string;
     order: number;
-}
+};
 
-export interface BasicData {
+export type NameValue = {
     name: string;
     value: string;
-}
+};
 
-export interface Image {
+export type Image = {
     width: number;
     height: number;
     url: string;
-}
+};
 
-export interface PlainFile {
+export type PlainFile = {
     pathname: string;
     filename: string;
     content: string;
     uri?: string;
-}
+};
 
-export interface StringMap {
+export type StringMap = {
     [key: string]: string;
-}
+};
 
-export interface ObjectMap<T> {
+export type ObjectMap<T> = {
     [key: string]: T;
-}
+};
 
-export interface ObjectIndex<T> {
+export type ObjectIndex<T> = {
     [key: number]: T;
-}
+};
 
-export interface ArrayIndex<T> {
+export type ArrayIndex<T> = {
     [key: number]: T;
     length: number;
-}
+};
 
-export interface ViewData<T> {
+export type ViewData<T> = {
     cache: T;
     views: PlainFile[];
     includes: PlainFile[];
-}
+};
 
-export interface LayoutMapX<T> {
+export type LayoutMapX<T> = {
     [key: number]: ObjectIndex<T[]>;
     length: number;
-}
+};
 
 export type LayoutMapY<T> = Map<number, Map<number, T>>;
 
-export interface ResourceMap {
+export type ResourceMap = {
     STRINGS: Map<string, string>;
     ARRAYS: Map<string, string[]>;
     FONTS: Map<string, {}>;
@@ -110,24 +110,24 @@ export interface ResourceMap {
     DIMENS: Map<string, string>;
     DRAWABLES: Map<string, string>;
     IMAGES: Map<string, {}>;
-}
+};
 
-export interface BorderAttribute {
+export type BorderAttribute = {
     style: string;
     width: string;
     color: string[] | string;
-}
+};
 
-export interface FontAttribute {
+export type FontAttribute = {
     fontFamily: string;
     fontStyle: string;
     fontSize: string;
     fontWeight: string;
     color: string[] | string;
     backgroundColor: string[] | string;
-}
+};
 
-export interface BoxStyle {
+export type BoxStyle = {
     border?: BorderAttribute;
     borderTop: BorderAttribute;
     borderRight: BorderAttribute;
@@ -139,8 +139,8 @@ export interface BoxStyle {
     backgroundSize: string[];
     backgroundRepeat: string;
     backgroundPosition: string;
-}
+};
 
-export interface ControllerSettings {
+export type ControllerSettings = {
     folderLayout: string;
-}
+};

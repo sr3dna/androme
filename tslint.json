@@ -27,7 +27,8 @@
     "no-empty": false,
     "interface-name": false,
     "array-type": [true, "array"],
-    "no-shadowed-variable": [true, { "function": false, "typeParameter": false } ]
+    "no-shadowed-variable": [true, { "function": false, "typeParameter": false } ],
+    "interface-over-type-literal": false
   },
   "rulesDirectory": []
 }
