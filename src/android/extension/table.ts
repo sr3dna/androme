@@ -2,7 +2,7 @@
 import { ExtensionResult } from '../../extension/lib/types';
 import Table from '../../extension/table';
 import View from '../view';
-import { convertInt, formatPX } from '../../lib/util';
+import { convertInt, formatPX, isPercent } from '../../lib/util';
 import { NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 
@@ -15,16 +15,31 @@ export default class TableAndroid<T extends View> extends Table<T> {
         const result = super.processNode();
         const node = this.node;
         const columnCount = convertInt(node.app('columnCount'));
-        if (columnCount > 1 && node.children.some(item => item.multiLine)) {
-            let requireWidth = false;
+        if (columnCount > 1) {
+            let requireWidth = node.data(EXT_NAME.TABLE, 'expand') || false;
             node.each((item: T) => {
-                if (item.viewWidth === 0) {
+                if (item.css('width') === '0px') {
                     item.android('layout_width', '0px');
-                    item.app('layout_columnWeight', (<HTMLTableCellElement> item.element).colSpan.toString());
-                    requireWidth = true;
+                    item.app('layout_columnWeight', ((<HTMLTableCellElement> item.element).colSpan || 1).toString());
+                }
+                else {
+                    const expand: boolean | null = item.data(EXT_NAME.TABLE, 'expand');
+                    if (expand != null) {
+                        if (expand) {
+                            const percent = convertInt(item.data(EXT_NAME.TABLE, 'percent')) / 100;
+                            if (percent > 0) {
+                                item.android('layout_width', '0px');
+                                item.app('layout_columnWeight', percent.toFixed(2));
+                            }
+                        }
+                        else {
+                            item.app('layout_columnWeight', '0');
+                        }
+                        requireWidth = true;
+                    }
                 }
             });
-            if (node.viewWidth === 0 && requireWidth) {
+            if (requireWidth && (node.viewWidth === 0 && !isPercent(node.css('width')))) {
                 let widthParent = 0;
                 node.ascend(true).some(item => {
                     if (item.viewWidth > 0) {
@@ -40,14 +55,6 @@ export default class TableAndroid<T extends View> extends Table<T> {
                     node.css('width', formatPX(node.bounds.width));
                 }
             }
-        }
-        else {
-            node.each((item: T) => {
-                if (item.styleMap.width === '0px') {
-                    item.android('layout_width', '0px');
-                    item.app('layout_columnWeight', (<HTMLTableCellElement> item.element).colSpan.toString());
-                }
-            });
         }
         return result;
     }

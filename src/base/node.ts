@@ -231,7 +231,9 @@ export default abstract class Node implements BoxModel {
     public cascade() {
         function cascade(node: T) {
             const current = [...node.children];
-            node.each(item => current.push(...cascade(item)));
+            for (const item of node.children) {
+                current.push(...cascade(item));
+            }
             return current;
         }
         return cascade(this);
@@ -668,10 +670,10 @@ export default abstract class Node implements BoxModel {
     }
 
     get viewWidth() {
-        return (this.inlineStatic ? 0 : (isPercent(this.styleMap.width) ? 0 : this.toInt('width') || this.toInt('minWidth')));
+        return (this.inlineStatic || isPercent(this.styleMap.width) ? 0 : this.toInt('width') || this.toInt('minWidth'));
     }
     get viewHeight() {
-        return (this.inlineStatic ? 0 : (isPercent(this.styleMap.height) ? 0 : this.toInt('height') || this.toInt('minHeight')));
+        return (this.inlineStatic || isPercent(this.styleMap.height) ? 0 : this.toInt('height') || this.toInt('minHeight'));
     }
 
     get lineHeight() {

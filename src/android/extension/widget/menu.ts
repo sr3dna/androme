@@ -51,7 +51,7 @@ export default class Menu<T extends View> extends Nav<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
-        node.documentRoot = !node.ascend(true).some(item => item.renderExtension.includes(this));
+        node.documentRoot = true;
         node.rendered = true;
         node.cascade().forEach(item => item.renderExtensionChild.push(this));
         node.nodeType = NODE_STANDARD.BLOCK;

@@ -122,10 +122,10 @@ export function parseBackgroundUrl(value: string) {
     return '';
 }
 
-export function cssInherit(element: Element, attr: string, exclude?: string[]) {
+export function cssInherit(element: Element, attr: string, tagName = '', exclude?: string[]) {
     let result = '';
     let current: Null<Element> = element.parentElement;
-    while (current != null) {
+    while (current != null && current.tagName !== tagName) {
         result = getStyle(current)[attr] || '';
         if (exclude && exclude.some(value => result.indexOf(value) !== -1)) {
             result = '';

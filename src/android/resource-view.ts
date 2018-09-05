@@ -697,7 +697,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.formatted(formatString(method['background'], resourceName), (node.renderExtension.length === 0));
-                    if (SETTINGS.autoSizeBackgroundImage && !node.is(NODE_STANDARD.IMAGE) && backgroundImage.length > 0 && !node.documentRoot && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
+                    if (SETTINGS.autoSizeBackgroundImage && !node.imageElement && node.renderParent.tagName !== 'TABLE' && backgroundImage.length > 0 && !node.documentRoot && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
                         let current = node;
                         let resize = true;
                         while (current != null && !current.documentBody) {

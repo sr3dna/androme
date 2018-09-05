@@ -95,12 +95,12 @@ androme.settings = {
     autoSizeBackgroundImage: true,
     ellipsisOnTextOverflow: true,
     collapseUnattributedElements: false,
-    constraintPercentAccuracy: 4, // eq: 1px
     constraintChainDisabled: false,
     constraintWhitespaceHorizontalOffset: 4, // Chrome/Safari: 3.5 | Edge: 3.5 | Firefox: 3
     constraintWhitespaceVerticalOffset: 16,  // 1em
     constraintChainPackedHorizontalOffset: 4,
     constraintChainPackedVerticalOffset: 16,
+    constraintPercentAccuracy: 4, // eq: 1px
     constraintCirclePositionAbsolute: false,
     constraintSupportNegativeLeftTop: true,
     showAttributes: true,
