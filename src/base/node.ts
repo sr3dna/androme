@@ -836,6 +836,10 @@ export default abstract class Node implements BoxModel {
         return (this.floating ? this.css('cssFloat') : null) || 'none';
     }
 
+    get relativeWrap() {
+        return (this.plainText || this.inlineText) && !this.floating && this.siblingflow && this.alignMargin;
+    }
+
     get overflow() {
         let value = OVERFLOW_ELEMENT.NONE;
         if (this.hasElement) {

@@ -14,29 +14,29 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 download [only required file]: [https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js](https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js)
 
-Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server. 
+Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
 
 * Install Node.js: http://www.nodejs.org
 * Install androme: (choose one)
 
-NPM  
-&nbsp;&nbsp;&nbsp;&gt; npm i androme  
-&nbsp;&nbsp;&nbsp;&gt; cd node_modules/androme  
-&nbsp;&nbsp;&nbsp;&gt; node app.js  
+NPM
+&nbsp;&nbsp;&nbsp;&gt; npm i androme
+&nbsp;&nbsp;&nbsp;&gt; cd node_modules/androme
+&nbsp;&nbsp;&nbsp;&gt; node app.js
 
-GitHub  
-&nbsp;&nbsp;&nbsp;&gt; git clone https://github.com/anpham6/androme  
-&nbsp;&nbsp;&nbsp;&gt; cd androme  
-&nbsp;&nbsp;&nbsp;&gt; npm install  
-&nbsp;&nbsp;&nbsp;&gt; npm run prod  
-&nbsp;&nbsp;&nbsp;&gt; node app.js  
-  
+GitHub
+&nbsp;&nbsp;&nbsp;&gt; git clone https://github.com/anpham6/androme
+&nbsp;&nbsp;&nbsp;&gt; cd androme
+&nbsp;&nbsp;&nbsp;&gt; npm install
+&nbsp;&nbsp;&nbsp;&gt; npm run prod
+&nbsp;&nbsp;&nbsp;&gt; node app.js
+
 * Open Browser: http://localhost:3000/demos/index.html
 
 ```javascript
 <script src="/dist/androme.min.js"></script>
 <script>
-    // optional  
+    // optional
     androme.settings.targetAPI = 19; // androme.build.KITKAT
     androme.settings.density = 160; // androme.density.MDPI
 
@@ -315,6 +315,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <TextView
         android:id="@+id/textview_1"
         android:background="@drawable/h2_textview_1"
+        android:layout_gravity="start"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:padding="@dimen/h2_padding"
@@ -323,6 +324,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <LinearLayout
         android:id="@+id/entry"
         android:background="@drawable/form_entry"
+        android:layout_gravity="start"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:orientation="vertical"
@@ -361,7 +363,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 app:layout_columnSpan="2" />
             <LinearLayout
                 android:id="@+id/linearlayout_1"
-                android:baselineAlignedChildIndex="1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -383,7 +385,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_19"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol11084"
+                    android:text="@string/__symbol72716"
                     style="@style/Plaintext" />
             </LinearLayout>
             <RelativeLayout
@@ -509,7 +511,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 app:layout_columnSpan="2" />
             <LinearLayout
                 android:id="@+id/linearlayout_3"
-                android:baselineAlignedChildIndex="1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -531,7 +533,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_22"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol11084"
+                    android:text="@string/__symbol72716"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -938,7 +940,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 app:layout_columnSpan="2" />
             <LinearLayout
                 android:id="@+id/linearlayout_8"
-                android:baselineAlignedChildIndex="1"
+                android:baselineAlignedChildIndex="0"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/label_margin_end"
                 android:layout_width="@dimen/label_width"
@@ -960,7 +962,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/textview_25"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol11084"
+                    android:text="@string/__symbol72716"
                     style="@style/Plaintext" />
             </LinearLayout>
             <LinearLayout
@@ -1088,7 +1090,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol11084">):</string>
+    <string name="__symbol72716">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>

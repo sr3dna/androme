@@ -27,10 +27,17 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline && !node.multiLine)).sort((a, b) => {
             const fontSizeA = convertInt(convertPX(a.css('fontSize')));
             const fontSizeB = convertInt(convertPX(b.css('fontSize')));
-            const heightA = a.bounds.height - (a.paddingLeft + a.paddingRight + a.borderLeftWidth + a.borderRightWidth);
-            const heightB = b.bounds.height - (b.paddingLeft + b.paddingRight + b.borderLeftWidth + b.borderRightWidth);
+            const paddingA = (a.paddingLeft + a.paddingRight + a.borderLeftWidth + a.borderRightWidth);
+            const paddingB = (b.paddingLeft + b.paddingRight + b.borderLeftWidth + b.borderRightWidth);
+            const heightA = a.bounds.height - paddingA;
+            const heightB = b.bounds.height - paddingB;
             if (fontSizeA === fontSizeB && heightA === heightB) {
-                return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                if (paddingA !== paddingB) {
+                    return (paddingA < paddingB ? 1 : -1);
+                }
+                else {
+                    return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                }
             }
             else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
                 return (fontSizeA > fontSizeB ? -1 : 1);
@@ -129,8 +136,8 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     public delegateAppend?: (nodes: T[]) => void;
 
+    private readonly _list: T[] = [];
     private _currentId = 0;
-    private _list: T[] = [];
 
     constructor(
         nodes?: T[],
@@ -221,7 +228,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public clear() {
-        this._list = [];
+        this._list.length = 0;
     }
 
     public sortAsc(...attrs: string[]) {

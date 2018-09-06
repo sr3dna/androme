@@ -16,7 +16,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public singleRender = true;
 
     constructor(
-        public name: string,
+        public readonly name: string,
         tagNames?: string[],
         options?: {})
     {

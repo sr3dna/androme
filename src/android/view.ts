@@ -28,9 +28,9 @@ export default class View extends Node {
 
     private static _documentBody: T;
 
-    public constraint: ObjectMap<any> = { current: {} };
+    public readonly renderChildren: T[] = [];
     public children: T[] = [];
-    public renderChildren: T[] = [];
+    public constraint: ObjectMap<any> = { current: {} };
 
     protected _namespaces = new Set(['android', 'app']);
 
@@ -38,7 +38,7 @@ export default class View extends Node {
     private _app: StringMap = {};
 
     constructor(
-        public id: number,
+        public readonly id: number,
         public api: number,
         element?: Element)
     {
@@ -685,7 +685,7 @@ export default class View extends Node {
                 });
             }
             if (this.linearHorizontal) {
-                if (!renderEvery && renderChildren.every(node => (node.inline || node.alignMargin) && node.viewWidth === 0 && node.viewHeight === 0 && convertInt(node.top) >= 0 && node.baseline) && renderChildren.some(node => node.floating || !node.siblingflow || node.plainText)) {
+                if (!renderEvery && (renderChildren.every(node => (node.inline || node.alignMargin) && node.viewWidth === 0 && node.viewHeight === 0 && convertInt(node.top) >= 0 && node.baseline) && renderChildren.some(node => node.floating || !node.siblingflow || node.plainText)) || this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
                     this.android('baselineAligned', 'false');
                 }
                 else if (renderChildren.some(node => node.nodeType <= NODE_STANDARD.TEXT)) {

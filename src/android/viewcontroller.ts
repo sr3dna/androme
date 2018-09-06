@@ -232,9 +232,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 rows[rows.length - 1].push(current);
                             }
                         }
-                        if (current.alignMargin) {
-                            baseline.push(current);
-                        }
+                        baseline.push(current);
                     }
                     adjustBaseline(baseline);
                 }
