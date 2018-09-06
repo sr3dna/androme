@@ -161,7 +161,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const rows: T[][] = [];
                     const baseline: T[] = [];
                     const multiLine = nodes.list.some(item => item.multiLine);
-                    const floatParent = node.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT);
                     const textIndent = node.toInt('textIndent');
                     let rowPaddingLeft = 0;
                     if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
@@ -220,10 +219,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 if (rowPaddingLeft > 0) {
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
                                 }
-                                if (!floatParent) {
-                                    adjustBaseline(baseline);
-                                    baseline.length = 0;
-                                }
+                                adjustBaseline(baseline);
+                                baseline.length = 0;
                                 rows.push([current]);
                             }
                             else {
@@ -235,13 +232,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 rows[rows.length - 1].push(current);
                             }
                         }
-                        if (!floatParent && current.alignMargin) {
+                        if (current.alignMargin) {
                             baseline.push(current);
                         }
                     }
-                    if (!floatParent) {
-                        adjustBaseline(baseline);
-                    }
+                    adjustBaseline(baseline);
                 }
                 else {
                     if (node.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL)) {
@@ -304,7 +299,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         if (pageflow.length > 0) {
                             for (const current of pageflow) {
                                 const parent = current.documentParent;
-                                if (current.centerHorizontal) {
+                                if (current.centerMarginHorizontal) {
                                     this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                 }
                                 else {
@@ -312,7 +307,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                     }
                                     if (current.linear.right >= parent.box.right || withinFraction(current.linear.right, parent.box.right)) {
-                                        current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.inlineWrap || current.cssOriginal('marginLeft') === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
+                                        current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.hasBit('alignmentType', NODE_ALIGNMENT.INLINE_WRAP) || current.cssOriginal('marginLeft') === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
                                     }
                                 }
                                 let alignTop = false;
@@ -321,7 +316,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     alignTop = true;
                                 }
                                 if (current.linear.bottom >= parent.box.bottom || withinFraction(current.linear.bottom, parent.box.bottom)) {
-                                    if (!(alignTop && current.inlineWrap)) {
+                                    if (!(alignTop && current.hasBit('alignmentType', NODE_ALIGNMENT.INLINE_WRAP))) {
                                         current.anchor(mapLayout['bottom'], 'parent', (parent.viewHeight > 0 ? AXIS_ANDROID.VERTICAL : ''));
                                     }
                                 }
@@ -340,7 +335,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 current.anchor(mapLayout['right'], stringId);
                                             }
                                         }
-                                        if (!current.centerHorizontal) {
+                                        if (!current.centerMarginHorizontal) {
                                             if ((!current.constraint.horizontal && alignMargin && withinRange(current.linear.left, adjacent.linear.right, SETTINGS.constraintWhitespaceHorizontalOffset)) || withinFraction(current.linear.left, adjacent.linear.right)) {
                                                 if (current.float !== 'right' || current.float === adjacent.float) {
                                                     current.anchor(mapLayout['leftRight'], stringId, horizontal, current.withinX(adjacent.linear));
@@ -383,7 +378,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 if (current.right != null && current.toInt('right') >= 0) {
                                     current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
-                                    if (current.centerHorizontal && current.toInt('left') > 0) {
+                                    if (current.centerMarginHorizontal && current.toInt('left') > 0) {
                                         current.anchor(mapLayout['left'], 'parent');
                                         current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.toInt('left'));
                                     }
@@ -393,12 +388,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 if (current.left != null && current.toInt('left') === 0) {
                                     current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
-                                    if (current.centerHorizontal && current.toInt('right') > 0) {
+                                    if (current.centerMarginHorizontal && current.toInt('right') > 0) {
                                         current.anchor(mapLayout['right'], 'parent');
                                         current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, current.toInt('right'));
                                     }
                                 }
-                                if (current.left === 0 && current.right === 0 && !current.floating) {
+                                if (current.left === 0 && current.right === 0 && !current.floating && !isPercent(current.css('width'))) {
                                     current.android('layout_width', 'match_parent');
                                 }
                                 if (current.top === 0 && current.bottom === 0) {
@@ -430,8 +425,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     if (current.cssOriginal('marginLeft') !== 'auto' && current.cssOriginal('marginRight') === 'auto') {
                                         mapDelete(current, 'right');
                                     }
-                                    if (current.centerHorizontal) {
-                                        if (node.viewWidth > 0) {
+                                    if (current.centerMarginHorizontal) {
+                                        if (node.viewWidth > 0 && !isPercent(current.css('width'))) {
                                             current.android('layout_width', 'match_parent');
                                         }
                                         else if (current.inlineElement && current.viewWidth === 0) {
@@ -1481,6 +1476,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         if (node == null) {
             node = new View(0, SETTINGS.targetAPI) as T;
         }
+        node.apply(formatResource(options));
         const renderDepth = Math.max(0, depth);
         const viewName = (typeof nodeName === 'number' ? View.getControlName(nodeName) : nodeName);
         switch (viewName) {
@@ -1506,7 +1502,6 @@ export default class ViewController<T extends View> extends Controller<T> {
             node.android('layout_height', height);
         }
         node.renderDepth = renderDepth;
-        node.apply(formatResource(options));
         let output = this.getEnclosingTag((depth === 0 && !node.documentRoot ? -1 : depth), viewName, node.id, (children ? getPlaceholder(node.id) : ''));
         if (SETTINGS.showAttributes && node.id === 0) {
             const indent = repeat(renderDepth + 1);

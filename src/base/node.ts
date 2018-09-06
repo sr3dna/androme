@@ -819,11 +819,11 @@ export default abstract class Node implements BoxModel {
         return (this.originalStyleMap.marginLeft === 'auto' || this.originalStyleMap.marginRight === 'auto');
     }
 
-    get centerHorizontal() {
+    get centerMarginHorizontal() {
         return (this.originalStyleMap.marginLeft === 'auto' && this.originalStyleMap.marginRight === 'auto');
     }
 
-    get centerVertical() {
+    get centerMarginVertical() {
         return (this.originalStyleMap.marginTop === 'auto' && this.originalStyleMap.marginBottom === 'auto');
     }
 
@@ -868,10 +868,6 @@ export default abstract class Node implements BoxModel {
             this.setMultiLine();
         }
         return this._multiLine;
-    }
-
-    get inlineWrap() {
-        return this.hasBit('alignmentType', NODE_ALIGNMENT.INLINE_WRAP);
     }
 
     get dir() {

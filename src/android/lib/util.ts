@@ -1,4 +1,4 @@
-import { ObjectMap } from '../.././lib/types';
+import { ObjectMap, Null } from '../.././lib/types';
 import SETTINGS from '../../settings';
 
 let ID: ObjectMap<string[]>;
@@ -33,8 +33,8 @@ export function generateId(section: string, name: string) {
     return name;
 }
 
-export function stripId(value: string) {
-    return value.replace(/@\+?id\//, '');
+export function stripId(value: Null<string>) {
+    return (value != null ? value.replace(/@\+?id\//, '') : '');
 }
 
 export function convertDP(value: any, dpi = 160, font = false) {

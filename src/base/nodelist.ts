@@ -27,8 +27,12 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline && !node.multiLine)).sort((a, b) => {
             const fontSizeA = convertInt(convertPX(a.css('fontSize')));
             const fontSizeB = convertInt(convertPX(b.css('fontSize')));
-            const sameSize = (fontSizeA === fontSizeB);
-            if (!sameSize && fontSizeA !== 0 && fontSizeB !== 0) {
+            const heightA = a.bounds.height - (a.paddingLeft + a.paddingRight + a.borderLeftWidth + a.borderRightWidth);
+            const heightB = b.bounds.height - (b.paddingLeft + b.paddingRight + b.borderLeftWidth + b.borderRightWidth);
+            if (fontSizeA === fontSizeB && heightA === heightB) {
+                return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+            }
+            else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
                 return (fontSizeA > fontSizeB ? -1 : 1);
             }
             else if ((a.hasElement && !b.hasElement) || (fontSizeA > 0 && fontSizeB === 0)) {
@@ -38,7 +42,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return 1;
             }
             else {
-                return (Math.max(a.bounds.height, a.lineHeight) >= Math.max(b.bounds.height, b.lineHeight) ? -1 : 1);
+                return (Math.max(heightA, a.lineHeight) >= Math.max(heightB, b.lineHeight) ? -1 : 1);
             }
         })[0];
         const nodeType = (text ? NODE_STANDARD.TEXT : NODE_STANDARD.IMAGE);

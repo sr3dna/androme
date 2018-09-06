@@ -103,6 +103,8 @@ export default class Table<T extends Node> extends Extension<T> {
                         const unitMapWidth = isUnit(mapWidth[m]);
                         if (mapWidth[m] == null || td.bounds.width > mapBounds[m] || (td.bounds.width === mapBounds[m] && ((mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth)) || (percentColumnWidth && unitMapWidth) || (percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m])) || (isUnit(columnWidth) && unitMapWidth && convertInt(columnWidth) > convertInt(mapWidth[m]))))) {
                             mapWidth[m] = columnWidth;
+                        }
+                        if (element.colSpan === 1) {
                             mapBounds[m] = td.bounds.width;
                         }
                     }
@@ -141,7 +143,7 @@ export default class Table<T extends Node> extends Extension<T> {
                 mapWidth.forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
             }
             else if (tableWidth === 'auto') {
-                mapWidth.forEach((value, index) => mapWidth[index] = `${(mapBounds[index] / node.bounds.width) * 100}%`);
+                mapWidth.forEach((value, index) => mapWidth[index] = (mapBounds[index] == null ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`));
             }
             else if (pxWidth > node.viewWidth) {
                 node.css('width', 'auto');
@@ -152,7 +154,11 @@ export default class Table<T extends Node> extends Extension<T> {
         }
         const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
         const typeWidth = (() => {
-            if (mapWidth.some(value => isPercent(value)) || !mapWidth.some(value => value !== 'auto')) {
+            const everyAuto = !mapWidth.some(value => value !== 'auto');
+            if (everyAuto && node.cssOriginal('width', true) === 'auto' && !multiLine) {
+                return 0;
+            }
+            else if (mapWidth.some(value => isPercent(value)) || everyAuto) {
                 return 3;
             }
             else if (mapWidth.every(value => value === '0px' || mapWidth[0] === value) && (node.viewWidth > 0 || isPercent(node.css('width')) || multiLine)) {
@@ -210,60 +216,62 @@ export default class Table<T extends Node> extends Extension<T> {
                     borderInside = true;
                 }
                 const columnWidth = mapWidth[columnIndex[i]];
-                switch (typeWidth) {
-                    case 3:
-                        if (columnWidth === 'auto') {
-                            if (mapPercent >= 1) {
-                                td.css('width', formatPX(td.bounds.width));
-                                td.data(EXT_NAME.TABLE, 'expand', false);
+                if (columnWidth !== 'undefined') {
+                    switch (typeWidth) {
+                        case 3:
+                            if (columnWidth === 'auto') {
+                                if (mapPercent >= 1) {
+                                    td.css('width', formatPX(td.bounds.width));
+                                    td.data(EXT_NAME.TABLE, 'expand', false);
+                                }
+                                else {
+                                    setAutoWidth(td as T);
+                                }
+                            }
+                            else if (isPercent(columnWidth)) {
+                                td.data(EXT_NAME.TABLE, 'percent', columnWidth);
+                                td.data(EXT_NAME.TABLE, 'expand', true);
+                            }
+                            else if (convertInt(columnWidth) > 0) {
+                                if (td.bounds.width >= parseInt(columnWidth)) {
+                                    td.css('width', columnWidth);
+                                    td.data(EXT_NAME.TABLE, 'expand', false);
+                                    td.data(EXT_NAME.TABLE, 'downsized', false);
+                                }
+                                else {
+                                    if (fixedTable) {
+                                        setAutoWidth(td as T);
+                                        td.data(EXT_NAME.TABLE, 'downsized', true);
+                                    }
+                                    else {
+                                        td.css('width', formatPX(td.bounds.width));
+                                        td.data(EXT_NAME.TABLE, 'expand', false);
+                                    }
+                                }
                             }
                             else {
-                                setAutoWidth(td as T);
-                            }
-                        }
-                        else if (isPercent(columnWidth)) {
-                            td.data(EXT_NAME.TABLE, 'percent', columnWidth);
-                            td.data(EXT_NAME.TABLE, 'expand', true);
-                        }
-                        else if (convertInt(columnWidth) > 0) {
-                            if (td.bounds.width >= parseInt(columnWidth)) {
-                                td.css('width', columnWidth);
                                 td.data(EXT_NAME.TABLE, 'expand', false);
-                                td.data(EXT_NAME.TABLE, 'downsized', false);
+                            }
+                            break;
+                        case 2:
+                            td.css('width', '0px');
+                            break;
+                        case 1:
+                            if (columnWidth === 'auto') {
+                                td.css('width', '0px');
                             }
                             else {
                                 if (fixedTable) {
-                                    setAutoWidth(td as T);
                                     td.data(EXT_NAME.TABLE, 'downsized', true);
                                 }
                                 else {
                                     td.css('width', formatPX(td.bounds.width));
-                                    td.data(EXT_NAME.TABLE, 'expand', false);
                                 }
+                                td.data(EXT_NAME.TABLE, 'expand', false);
                             }
-                        }
-                        else {
-                            td.data(EXT_NAME.TABLE, 'expand', false);
-                        }
-                        break;
-                    case 2:
-                        td.css('width', '0px');
-                        break;
-                    case 1:
-                        if (columnWidth === 'auto') {
-                            td.css('width', '0px');
-                        }
-                        else {
-                            if (fixedTable) {
-                                td.data(EXT_NAME.TABLE, 'downsized', true);
-                            }
-                            else {
-                                td.css('width', formatPX(td.bounds.width));
-                            }
-                            td.data(EXT_NAME.TABLE, 'expand', false);
-                        }
-                        break;
+                            break;
 
+                    }
                 }
                 columnIndex[i] += element.colSpan;
                 td.parent = node;

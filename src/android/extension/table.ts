@@ -99,7 +99,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
         const node = this.node;
         const tableWidth = node.toInt('width');
         const boundsWidth = node.data(EXT_NAME.TABLE, 'boundsWidth');
-        if (tableWidth > 0 && boundsWidth > tableWidth) {
+        if (!node.blockWidth && tableWidth > 0 && boundsWidth > tableWidth) {
             node.android('layout_width', formatPX(boundsWidth));
         }
     }

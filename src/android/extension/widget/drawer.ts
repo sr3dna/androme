@@ -76,7 +76,7 @@ export default class Drawer<T extends View> extends Extension<T> {
             overwriteDefault(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
         }
         if (menu !== '' || headerLayout !== '') {
-            overwriteDefault(options, 'android', 'id', `${node.stringId}_view`);
+            overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
             const xml = application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');

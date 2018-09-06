@@ -2,7 +2,7 @@ import { Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, isPercent, isUnit, lastIndexOf, withinFraction } from '../lib/util';
-import { calculateBias, generateId } from './lib/util';
+import { calculateBias, generateId, stripId } from './lib/util';
 import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
@@ -176,7 +176,6 @@ export default class View extends Node {
 
     public combine(...objs: string[]) {
         const result: string[] = [];
-        this.android('id', this.stringId);
         for (const value of this._namespaces.values()) {
             const obj: StringMap = this[`_${value}`];
             if (objs.length === 0 || objs.includes(value)) {
@@ -248,13 +247,17 @@ export default class View extends Node {
             }
         }
         this.controlName = nodeName;
-        if (this.nodeId == null) {
+        if (this.android('id') != null) {
+            this.nodeId = stripId(this.android('id'));
+        }
+        if (!this.nodeId) {
             const element = <HTMLInputElement> this.element;
             let name = (element.id || element.name || '').trim();
             if (RESERVED_JAVA.includes(name)) {
                 name += '_1';
             }
             this.nodeId = convertWord(generateId('android', (name || `${lastIndexOf(this.controlName, '.').toLowerCase()}_1`)));
+            this.android('id', this.stringId);
         }
     }
 
@@ -490,13 +493,13 @@ export default class View extends Node {
         }
         function setAutoMargin(node: T) {
             const alignment: string[] = [];
-            if (node.centerHorizontal) {
+            if (node.centerMarginHorizontal) {
                 alignment.push('center_horizontal');
             }
             else if (node.css('marginLeft') === 'auto') {
                 alignment.push(right);
             }
-            if (node.centerVertical) {
+            if (node.centerMarginVertical) {
                 alignment.push('center_vertical');
             }
             else if (node.css('marginTop') === 'auto') {
@@ -547,10 +550,12 @@ export default class View extends Node {
         }
         if (renderParent.linearVertical) {
             if (this.float === 'right') {
-                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), right));
+                this[obj]('layout_gravity', right);
             }
             else {
-                setAutoMargin(this);
+                if (!setAutoMargin(this) && renderParent.android('gravity') !== null) {
+                    this[obj]('layout_gravity', left);
+                }
             }
         }
         let floating = '';
@@ -562,21 +567,6 @@ export default class View extends Node {
                 floating = right;
             }
         }
-        if (renderParent.is(NODE_STANDARD.FRAME) && !setAutoMargin(this)) {
-            if (floating !== '' || this.floating) {
-                const node = (this.singleChild ? renderParent : this);
-                node.android('layout_gravity', mergeGravity(node.android('layout_gravity'), parseRTL(floating || this.float)));
-                floating = '';
-            }
-        }
-        if (floating !== '') {
-            if (renderParent.alignmentType === NODE_ALIGNMENT.VERTICAL) {
-                textAlign = floating;
-            }
-            else {
-                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), floating));
-            }
-        }
         if (renderParent.tagName === 'TABLE') {
             this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), 'fill'));
             if (textAlign === '' && this.tagName === 'TH') {
@@ -584,6 +574,43 @@ export default class View extends Node {
             }
             if (verticalAlign === '') {
                 verticalAlign = 'center_vertical';
+            }
+        }
+        function setTextAlign(value: string) {
+            if (textAlign === '' || value === right) {
+                return value;
+            }
+            return textAlign;
+        }
+        if (this.linearHorizontal) {
+            if (this.blockWidth) {
+                textAlign = setTextAlign(floating);
+            }
+            else {
+                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), floating));
+            }
+        }
+        else if (renderParent.is(NODE_STANDARD.FRAME)) {
+            if (!setAutoMargin(this)) {
+                floating = floating || this.float;
+                if (floating !== 'none') {
+                    if (renderParent.inlineWidth || this.singleChild) {
+                        renderParent.android('layout_gravity', mergeGravity(renderParent.android('layout_gravity'), parseRTL(floating)));
+                    }
+                    else {
+                        if (this.blockWidth) {
+                            textAlign = setTextAlign(floating);
+                        }
+                        else {
+                            this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), parseRTL(floating)));
+                        }
+                    }
+                }
+            }
+        }
+        else if (floating !== '') {
+            if (renderParent.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL)) {
+                textAlign = setTextAlign(floating);
             }
         }
         const textAlignParent = this.cssParent('textAlign');
@@ -691,7 +718,7 @@ export default class View extends Node {
         }
         if (this.pageflow) {
             if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
-                [['firstElementChild', 'Top', BOX_STANDARD.MARGIN_TOP], ['lastElementChild', 'Bottom', BOX_STANDARD.MARGIN_BOTTOM]].forEach((item: [string, string, number], index: number) => {
+                [['firstElementChild', 'Top', BOX_STANDARD.MARGIN_TOP, BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', BOX_STANDARD.MARGIN_BOTTOM, BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
                     const firstNode = getNodeFromElement(renderParent[item[0]]);
                     if (firstNode && (firstNode === this || firstNode === this.renderChildren[(index === 0 ? 0 : this.renderChildren.length - 1)])) {
                         const marginOffset = renderParent[`margin${item[1]}`];

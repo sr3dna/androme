@@ -14,7 +14,7 @@ export default [
         },
         plugins: [
             babel(),
-            minify({ comments: false })
+            minify()
         ]
     },
     {
