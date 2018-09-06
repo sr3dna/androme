@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Outside-in Box</title>
+  		<meta charset="utf-8" />
+  		<link rel="stylesheet" href="site.css"   media="all" />
+  		<link rel="stylesheet" href="page.css"   media="all" />
+        <script src="/node_modules/systemjs/dist/system.js"></script>
+        <script>
+            SystemJS.config({
+                packages: {
+                    '/build': { defaultExtension: 'js' }
+                },
+                map: {
+                    'plugin-babel': '/node_modules/systemjs-plugin-babel/plugin-babel.js',
+                    'systemjs-babel-build': '/node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
+                },
+                transpiler: 'plugin-babel'
+            });
+            System.import('/build/main.js').then(function(result) {
+                androme = result;
+                androme.parseDocument().then(function() {
+                    androme.close();
+                    androme.saveAllToDisk();
+                });
+            });
+        </script>
+    </head>
+<body>
+
+ <h1>Outside-in Box</h1>
+
+ <h2>Before</h2>
+ <div class="container">   <div  class="before float"   >Float   </div>    </div>
+ <div class="container">   <span class="before absolute">Absolute</span>   </div>
+ <div class="container">   <div  class="before static"  >Static  </div>    </div>
+
+ <div class="float-divider"></div><h2>After</h2>
+
+ <div class="container">
+   <div class="after float"   ><div class="oi">Float   </div></div>        </div>
+
+ <div class="container">
+   <span class="after absolute"><span class="oi">Absolute</span></span>    </div>
+
+ <div class="container">
+   <div class="after static"  ><div class="oi">Static  </div></div>        </div>
+
+ </body>
+</html>
