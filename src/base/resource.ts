@@ -126,12 +126,14 @@ export default abstract class Resource<T extends Node> {
                         result[i] = '';
                     }
                 }
-                if (result.backgroundColor.length > 0 && ((SETTINGS.excludeBackgroundColor.includes(result.backgroundColor[0]) && result.backgroundColor[1] !== node.styleMap.backgroundColor) || (!node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
+                if (result.backgroundColor.length > 0 && (node.cssParent('backgroundColor') === result.backgroundColor[1] && node.styleMap.backgroundColor !== result.backgroundColor[1]) || (!node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))) {
                     result.backgroundColor = [];
                 }
-                const borderTop = JSON.stringify(result.borderTop);
-                if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
-                    result.border = result.borderTop;
+                if (result.borderTop.style !== 'none') {
+                    const borderTop = JSON.stringify(result.borderTop);
+                    if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
+                        result.border = result.borderTop;
+                    }
                 }
                 setElementCache(node.element, 'boxStyle', result);
             }
@@ -141,16 +143,13 @@ export default abstract class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
-                if (node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR') {
+                if (node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.hasElement && node.element.innerHTML.trim() === '')) {
                     return;
                 }
                 else {
                     const color = parseRGBA(node.css('color'), node.css('opacity'));
-                    if (color.length > 0 && SETTINGS.excludeTextColor.includes(color[0]) && (node.plainText || node.styleMap.color !== color[1])) {
-                        color.length = 0;
-                    }
                     const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle')) || (SETTINGS.excludeBackgroundColor.includes(backgroundColor[0]) && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
+                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle')) || (node.cssParent('backgroundColor') === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
                         backgroundColor.length = 0;
                     }
                     let fontWeight = node.css('fontWeight');
@@ -366,13 +365,17 @@ export default abstract class Resource<T extends Node> {
     }
 
     private parseBorderStyle(value: string, node: T, attr: string): BorderAttribute {
+        let colorMap = node.css(`${attr}Color`);
+        if (colorMap === 'initial') {
+            colorMap = value;
+        }
         const style = node.css(`${attr}Style`) || 'none';
         let width = node.css(`${attr}Width`) || '1px';
-        const color = (style !== 'none' ? parseRGBA(node.css(`${attr}Color`), node.css('opacity')) : []);
+        const color = (style !== 'none' ? parseRGBA(colorMap, node.css('opacity')) : []);
         if (style === 'inset' && width === '0px') {
             width = '1px';
         }
-        return { style, width, color: (color.length > 0 ? color : ['#000000', '', '0']) };
+        return { style, width, color: (color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']) };
     }
 
     private parseBorderRadius(value: string, node: T) {

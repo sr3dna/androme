@@ -7,19 +7,19 @@ export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
 export default class NodeList<T extends Node> implements Iterable<T> {
     public static cleared<T extends Node>(list: T[]) {
-        const result: Set<T> = new Set();
+        const nodes: Set<T> = new Set();
         const floats = new Set();
         list.forEach(node => {
             const clear = node.css('clear');
             if (floats.size > 0 && (clear === 'both' || floats.has(clear))) {
-                result.add(node);
+                nodes.add(node);
                 floats.clear();
             }
             if (node.floating) {
                 floats.add(node.float);
             }
         });
-        return result;
+        return nodes;
     }
 
     public static baselineText<T extends Node>(list: T[], text = false, parent?: T) {
@@ -266,18 +266,5 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
     get linearY() {
         return NodeList.linearY(this._list);
-    }
-
-    get top() {
-        return Math.max.apply(null, this._list.map(node => node.linear.top));
-    }
-    get bottom() {
-        return Math.max.apply(null, this._list.map(node => node.linear.bottom));
-    }
-    get right() {
-        return Math.max.apply(null, this._list.map(node => node.linear.right));
-    }
-    get left() {
-        return Math.max.apply(null, this._list.map(node => node.linear.left));
     }
 }

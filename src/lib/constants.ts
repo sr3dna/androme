@@ -3,11 +3,11 @@ export enum NODE_STANDARD {
     RANGE,
     RADIO,
     CHECKBOX,
-    BUTTON,
     SELECT,
     EDIT,
     INLINE,
     TEXT,
+    BUTTON,
     IMAGE,
     LINE,
     SPACE,
@@ -26,16 +26,15 @@ export enum NODE_STANDARD {
 
 export enum NODE_ALIGNMENT {
     NONE = 0,
-    OPEN = 2,
-    SINGLE = 4,
-    HORIZONTAL = 8,
-    VERTICAL = 16,
-    ABSOLUTE = 32,
-    FLOAT = 64,
-    INLINE_WRAP = 128,
-    SEGMENTED = 256,
-    LEFT = 512,
-    RIGHT = 1024
+    SINGLE = 2,
+    HORIZONTAL = 4,
+    VERTICAL = 8,
+    ABSOLUTE = 16,
+    FLOAT = 32,
+    INLINE_WRAP = 64,
+    SEGMENTED = 128,
+    LEFT = 256,
+    RIGHT = 512
 }
 
 export enum NODE_RESOURCE {

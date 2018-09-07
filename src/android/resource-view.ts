@@ -330,11 +330,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 backgroundImage = backgroundImage.filter(value => value !== '');
                 backgroundRepeat = backgroundRepeat.filter(value => value !== '');
                 backgroundPosition = backgroundPosition.filter(value => value !== '');
-                [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
-                    if (Array.isArray(item.color) && item.color.length > 0) {
-                        item.color = ResourceView.addColor(item.color[0], item.color[2]);
-                    }
-                });
                 const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
                 if (companion && !cssFromParent(companion.element, 'backgroundColor')) {
@@ -345,9 +340,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
                 const hasBorder = (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.borderRadius.length > 0);
                 if (hasBorder || backgroundImage.length > 0) {
+                    [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
+                        if (this.borderVisible(item) && Array.isArray(item.color) && item.color.length > 0) {
+                            item.color = ResourceView.addColor(item.color[0], item.color[2]);
+                        }
+                    });
                     let data;
-                    const image6: BackgroundImage[] = [];
-                    const image7: BackgroundImage[] = [];
+                    const image2: BackgroundImage[] = [];
+                    const image3: BackgroundImage[] = [];
                     let template: Null<ObjectMap<string>> = null;
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
@@ -512,14 +512,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         else {
                             if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                                image7.push({ image: backgroundImage[i], top, left, gravity, tileMode, tileModeX, tileModeY, width: '', height: '' });
+                                image3.push({ image: backgroundImage[i], top, left, gravity, tileMode, tileModeX, tileModeY, width: '', height: '' });
                             }
                             else {
-                                image6.push({ image: backgroundImage[i], top, left, gravity, tileMode, tileModeX, tileModeY, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') });
+                                image2.push({ image: backgroundImage[i], top, left, gravity, tileMode, tileModeX, tileModeY, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') });
                             }
                         }
                     }
-                    image7.sort((a, b) => {
+                    image3.sort((a, b) => {
                         if (!(a.tileModeX === 'repeat' || a.tileModeY === 'repeat' || a.tileMode === 'repeat')) {
                             return 1;
                         }
@@ -547,7 +547,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             data = {
                                 '0': [{
                                     '1': this.getShapeAttribute(stored, 'stroke'),
-                                    '2': (stored.backgroundColor.length > 0 || stored.borderRadius.length > 0 ? [{
+                                    '2': (backgroundColor !== false || stored.borderRadius.length > 0 ? [{
                                         '3': backgroundColor,
                                         '4': radius,
                                         '5': radiusInit
@@ -564,15 +564,15 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             template = parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
-                                    '1': (backgroundColor === false ? false
+                                    '1': backgroundColor,
+                                    '2': (image2.length > 0 ? image2 : false),
+                                    '3': (image3.length > 0 ? image3 : false),
+                                    '4': (backgroundColor === false ? false
                                                                     : [{
-                                                                        '2': false,
-                                                                        '3': backgroundColor,
-                                                                        '4': false,
-                                                                        '5': false
-                                                                    }]),
-                                    '6': (image6.length > 0 ? image6 : false),
-                                    '7': (image7.length > 0 ? image7 : false)
+                                                                        '5': false,
+                                                                        '6': false,
+                                                                        '7': false
+                                                                    }])
                                 }]
                             };
                         }
@@ -580,20 +580,20 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             template = parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
-                                    '1': [{
-                                        '2': this.getShapeAttribute(stored, 'stroke'),
-                                        '3': backgroundColor,
-                                        '4': radius,
-                                        '5': radiusInit
-                                    }],
-                                    '6': (image6.length > 0 ? image6 : false),
-                                    '7': (image7.length > 0 ? image7 : false)
+                                    '1': backgroundColor,
+                                    '2': (image2.length > 0 ? image2 : false),
+                                    '3': (image3.length > 0 ? image3 : false),
+                                    '4': [{
+                                        '5': this.getShapeAttribute(stored, 'stroke'),
+                                        '6': radius,
+                                        '7': radiusInit
+                                    }]
                                 }]
                             };
                             if (stored.borderRadius.length > 1) {
-                                const shape = getTemplateLevel(data, '0', '1');
+                                const shape = getTemplateLevel(data, '0', '4');
                                 const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                shape['5'].push(borderRadius);
+                                shape['7'].push(borderRadius);
                             }
                         }
                     }
@@ -601,9 +601,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         template = parseTemplate(LAYERLIST_TMPL);
                         data = {
                             '0': [{
-                                '1': [],
-                                '6': (image6.length > 0 ? image6 : false),
-                                '7': (image7.length > 0 ? image7 : false)
+                                '1': backgroundColor,
+                                '2': (image2.length > 0 ? image2 : false),
+                                '3': (image3.length > 0 ? image3 : false),
+                                '4': []
                             }]
                         };
                         const root = getTemplateLevel(data, '0');
@@ -631,9 +632,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 bottomLeftRadius: stored.borderRadius[3]
                             });
                         }
-                        if (backgroundColor !== false) {
-                            root['1'].push({ '2': false, '3': backgroundColor, '4': false, '5': false });
-                        }
                         if (valid) {
                             const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
                             const layerList: {} = {
@@ -641,15 +639,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
                                 'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
                                 'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
-                                '2': [{ width, borderStyle }],
-                                '3': false,
-                                '4': radius,
-                                '5': radiusInit
+                                '5': [{ width, borderStyle }],
+                                '6': radius,
+                                '7': radiusInit
                             };
                             if (stored.borderRadius.length > 1) {
-                                layerList['5'].push(borderRadius);
+                                layerList['7'].push(borderRadius);
                             }
-                            root['1'].push(layerList);
+                            root['4'].push(layerList);
                         }
                         else {
                             borders.forEach((item, index) => {
@@ -660,24 +657,23 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                         'right': hideWidth,
                                         'bottom': hideWidth,
                                         'left': hideWidth,
-                                        '2': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
-                                        '3': false,
-                                        '4': radius,
-                                        '5': radiusInit
+                                        '5': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
+                                        '6': radius,
+                                        '7': radiusInit
                                     };
                                     layerList[['top', 'right', 'bottom', 'left'][index]] = '';
                                     if (stored.borderRadius.length > 1) {
-                                        layerList['5'].push(borderRadius);
+                                        layerList['7'].push(borderRadius);
                                     }
-                                    root['1'].push(layerList);
+                                    root['4'].push(layerList);
                                 }
                             });
                         }
-                        if (root['1'].length === 0) {
-                            root['1'] = false;
+                        if (root['4'].length === 0) {
+                            root['4'] = false;
                         }
                         else {
-                            const layer = root['1'][0];
+                            const layer = root['4'][0];
                             if (layer && layer.top !== '' && layer.right !== '' && layer.bottom === '' && layer.left !== '') {
                                 layer.bottom = formatPX(node.borderBottomWidth);
                             }
@@ -1198,7 +1194,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             case 'stroke':
                 return (stored.border && stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);
             case 'backgroundColor':
-                return (stored.backgroundColor.length > 0 ? [{ color: stored.backgroundColor }] : false);
+                return (stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false);
             case 'radius':
                 return (stored.borderRadius.length === 1 && stored.borderRadius[0] !== '0px' ? [{ radius: stored.borderRadius[0] }] : false);
             case 'radiusInit':

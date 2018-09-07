@@ -7,7 +7,7 @@ export default abstract class File<T extends Node> {
     public appName = '';
     public stored: ResourceMap;
 
-    protected queue: PlainFile[] = [];
+    protected readonly queue: PlainFile[] = [];
 
     private _compression = 'zip';
 
@@ -46,7 +46,7 @@ export default abstract class File<T extends Node> {
     }
 
     public reset() {
-        this.queue = [];
+        this.queue.length = 0;
     }
 
     protected saveToDisk(files: PlainFile[]) {

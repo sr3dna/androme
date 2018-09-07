@@ -1,5 +1,4 @@
-import { Image, Null } from './lib/types';
-import { IExtension } from './extension/lib/types';
+import { Image, Null, ObjectMap } from './lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
 import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, optional  } from './lib/util';
@@ -8,14 +7,14 @@ import { convertRGB, getByColorName } from './lib/color';
 import { EXT_NAME } from './extension/lib/constants';
 import SETTINGS from './settings';
 
-import External from './extension/external';
-
 import ViewController from './android/viewcontroller';
 import ResourceView from './android/resource-view';
 import FileView from './android/file-view';
 import View from './android/view';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
+
+import External from './extension/external';
 
 import Custom from './android/extension/custom';
 import List from './android/extension/list';
@@ -34,7 +33,7 @@ type T = View;
 let LOADING = false;
 const ROOT_CACHE: Set<HTMLElement> = new Set();
 const IMAGE_CACHE: Map<string, Image> = new Map();
-const EXTENSIONS = {
+const EXTENSIONS: ObjectMap<Extension<T>> = {
     [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
     [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
     [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL', 'DL', 'DIV']),
@@ -58,12 +57,12 @@ main.registerController(Controller);
 main.registerResource(Resource);
 
 (() => {
-    const extension = new Set<IExtension>();
+    const extension = new Set<Extension<T>>();
     for (let name of SETTINGS.builtInExtensions) {
         name = name.toLowerCase().trim();
         for (const ext in EXTENSIONS) {
             if (ext === name || ext.startsWith(`${name}.`)) {
-                extension.add(<IExtension> EXTENSIONS[ext]);
+                extension.add(EXTENSIONS[ext]);
             }
         }
     }
@@ -292,7 +291,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     };
 }
 
-export function registerExtension(ext: IExtension) {
+export function registerExtension(ext: Extension<T>) {
     if (ext instanceof Extension && ext.name !== '' && Array.isArray(ext.tagNames)) {
         main.registerExtension(ext);
     }

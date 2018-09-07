@@ -59,11 +59,11 @@ export default class Drawer<T extends View> extends Extension<T> {
     public beforeInsert() {
         const application = this.application;
         const node = this.node;
-        if (application.lateInsert[node.nodeId] != null) {
+        if (application.renderQueue[node.nodeId] != null) {
             const target = application.cacheInternal.locate(item => item.isolated && item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
             if (target) {
-                application.lateInsert[target.nodeId] = application.lateInsert[node.nodeId];
-                delete application.lateInsert[node.nodeId];
+                application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
+                delete application.renderQueue[node.nodeId];
             }
         }
         const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');

@@ -36,7 +36,7 @@ export default class ListAndroid<T extends View> extends List<T> {
             if (floatItem.inlineText || floatItem.children.length === 0) {
                 xml = controller.renderNode(floatItem, parent, NODE_STANDARD.TEXT);
             }
-            else if (floatItem.children.every(item => item.pageflow)) {
+            else if (floatItem.children.every(item => item.pageflow && !item.floating)) {
                 xml = controller.renderGroup(floatItem, parent, NODE_STANDARD.RELATIVE);
                 floatItem.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
             }

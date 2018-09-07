@@ -11,13 +11,13 @@ import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STAND
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node> {
-    public readonly cache: NodeList<T>;
-    public readonly cacheInternal: NodeList<T>;
+    public readonly cache: NodeList<T> = new NodeList<T>();
+    public readonly cacheInternal: NodeList<T> = new NodeList<T>();
     public readonly elements: Set<HTMLElement> = new Set();
     public readonly extensions: IExtension[] = [];
     public controllerHandler: Controller<T>;
     public resourceHandler: Resource<T>;
-    public lateInsert: ObjectIndex<string[]> = {};
+    public renderQueue: ObjectIndex<string[]> = {};
     public closed = false;
 
     private readonly _views: PlainFile[] = [];
@@ -26,8 +26,6 @@ export default class Application<T extends Node> {
     private _currentIndex = -1;
 
     constructor(private readonly _Node: { new (id: number, api: number, element?: Element): T }) {
-        this.cache = new NodeList<T>();
-        this.cacheInternal = new NodeList<T>();
     }
 
     public registerController(controllerHandler: Controller<T>) {
@@ -100,7 +98,7 @@ export default class Application<T extends Node> {
         this._sorted = {};
         this._currentIndex = -1;
         this.appName = '';
-        this.lateInsert = {};
+        this.renderQueue = {};
         this.closed = false;
     }
 
@@ -610,7 +608,7 @@ export default class Application<T extends Node> {
                             continue;
                         }
                         const linearVertical = parentY.linearVertical;
-                        if (nodeY.pageflow && nodeY.alignmentType <= NODE_ALIGNMENT.OPEN && !parentY.flex.enabled && !parentY.has('columnCount') && parentY.alignmentType <= NODE_ALIGNMENT.OPEN && (parentY.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical) && current === '') {
+                        if (nodeY.pageflow && nodeY.alignmentType === NODE_ALIGNMENT.NONE && !parentY.flex.enabled && !parentY.has('columnCount') && parentY.alignmentType === NODE_ALIGNMENT.NONE && (parentY.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical) && current === '') {
                             const horizontal = [nodeY];
                             const vertical = [nodeY];
                             const floatSize = new Set(axisY.map(node => node.float)).size;
@@ -642,7 +640,7 @@ export default class Application<T extends Node> {
                                                               (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
                                                               (!previous.floating && (!previous.inlineElement || previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
                                                               (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
-                                                              (cleared.has(previous) && adjacent.blockStatic) ||
+                                                              ((previous.blockStatic || cleared.has(previous)) && adjacent.blockStatic) ||
                                                               (floatSize === 1 && previous.floating && adjacent.floating && adjacent.linear.top >= previous.linear.bottom);
                                         if (cleared.has(adjacent)) {
                                             const floated = new Set(['both', ...horizontal.map(item => item.float)]);
@@ -745,7 +743,7 @@ export default class Application<T extends Node> {
                                 }
                             }
                             else if (vertical.length > 1) {
-                                if (!parentY.is(NODE_STANDARD.CONSTRAINT) && vertical.some(node => cleared.has(node) && node !== vertical[vertical.length - 1]) && !vertical.every(node => cleared.has(node))) {
+                                if (!parentY.is(NODE_STANDARD.CONSTRAINT) && vertical.some(node => cleared.has(node) && node !== vertical[0] && node !== vertical[vertical.length - 1]) && !vertical.every(node => cleared.has(node))) {
                                     group = this.controllerHandler.createGroup(nodeY, vertical, parentY);
                                     groupXml = this.writeFrameLayoutVertical(group, vertical, cleared);
                                 }
@@ -851,13 +849,10 @@ export default class Application<T extends Node> {
                                             if (xml === '') {
                                                 if (children.every(node => node.pageflow && node.inlineElement && !cleared.has(node))) {
                                                     xml = this.writeRelativeLayout(nodeY, parentY);
-                                                    nodeY.alignmentType |= NODE_ALIGNMENT.OPEN;
+                                                    nodeY.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                                                 }
                                                 else {
                                                     xml = this.writeConstraintLayout(nodeY, parentY);
-                                                    if (!linearX && linearY) {
-                                                        nodeY.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
-                                                    }
                                                 }
                                             }
                                         }
@@ -1198,7 +1193,7 @@ export default class Application<T extends Node> {
             }
         }
         const template = {};
-        for (const id in this.lateInsert) {
+        for (const id in this.renderQueue) {
             const [originalId] = id.split(':');
             let replaceId = originalId;
             if (!isNumber(replaceId)) {
@@ -1207,7 +1202,7 @@ export default class Application<T extends Node> {
                     replaceId = target.id.toString();
                 }
             }
-            let output = this.lateInsert[id].join('\n');
+            let output = this.renderQueue[id].join('\n');
             if (replaceId !== originalId) {
                 const target = this.cacheInternal.locate('id', parseInt(replaceId));
                 if (target) {
@@ -1288,10 +1283,10 @@ export default class Application<T extends Node> {
     }
 
     public addLateInsert(id: string, views: string[]) {
-        if (this.lateInsert[id] == null) {
-            this.lateInsert[id] = [];
+        if (this.renderQueue[id] == null) {
+            this.renderQueue[id] = [];
         }
-        this.lateInsert[id].push(...views);
+        this.renderQueue[id].push(...views);
     }
 
     public sortByAlignment<T extends Node>(children: T[], parent?: T, alignmentType = NODE_ALIGNMENT.NONE, preserve = false) {

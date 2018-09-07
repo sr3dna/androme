@@ -19,21 +19,21 @@ export default abstract class Node implements BoxModel {
     public box: ClientRect;
     public bounds: ClientRect;
     public linear: ClientRect;
-    public renderExtension: IExtension[] = [];
-    public renderExtensionChild: IExtension[] = [];
-    public renderAs: T;
     public excludeProcedure = NODE_PROCEDURE.NONE;
     public excludeResource = NODE_RESOURCE.NONE;
+    public renderExtension: IExtension[] = [];
+    public renderExtensionChild: IExtension[] = [];
     public documentRoot = false;
+    public renderAs: T;
     public companion: T;
     public visible = true;
     public rendered = false;
     public isolated = false;
     public relocated = false;
 
-    public abstract constraint: ObjectMap<any>;
+    public abstract readonly renderChildren: T[];
     public abstract children: T[];
-    public abstract renderChildren: T[];
+    public abstract constraint: ObjectMap<any>;
 
     protected _controlName: string;
     protected _renderParent: T;
@@ -68,11 +68,11 @@ export default abstract class Node implements BoxModel {
     private _pageflow: boolean;
     private _multiLine: boolean;
     private _lineHeight: number;
-    private _initialized = false;
     private _data: ObjectMap<any> = {};
+    private _initialized = false;
 
     constructor(
-        public id: number,
+        public readonly id: number,
         element?: Element)
     {
         if (element != null) {
@@ -355,7 +355,7 @@ export default abstract class Node implements BoxModel {
         let result = '';
         let current = (includeChild ? this : getNodeFromElement(this.element.parentElement));
         while (current != null) {
-            result = current.styleMap[attr] || '';
+            result = current.originalStyleMap[attr] || '';
             if (current.documentBody || result) {
                 break;
             }
@@ -791,7 +791,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && !['SELECT', 'IMG'].includes(this.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
+        return (this.hasElement && !['INPUT', 'IMG', 'SELECT', 'TEXTAREA'].includes(this.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
     }
 
     get plainText() {
@@ -808,7 +808,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get blockStatic() {
-        return (this.block && this.pageflow && this.siblingflow && !this.floating);
+        return (this.block && this.pageflow && this.siblingflow && (!this.floating || this.css('width') === '100%'));
     }
 
     get alignMargin() {

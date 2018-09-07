@@ -33,7 +33,7 @@ export default class Grid<T extends Node> extends Extension<T> {
         const node = this.node;
         const parent = this.parent as T;
         const balanceColumns = this.options.balanceColumns;
-        let columns: any[] = [];
+        let columns: T[][] = [];
         const mainData: GridData = {
             columnEnd: [],
             columnCount: 0,
@@ -42,7 +42,7 @@ export default class Grid<T extends Node> extends Extension<T> {
         if (balanceColumns) {
             const dimensions: number[][] = [];
             node.each((item: T, index: number) => {
-                const children = item.children;
+                const children = item.children as T[];
                 dimensions[index] = [];
                 for (let l = 0; l < children.length; l++) {
                     dimensions[index].push(children[l].bounds.width);
@@ -172,7 +172,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                                     const filtered = columns.filter(item => item);
                                     const row = findRowIndex();
                                     if (row !== -1 && filtered[filtered.length - 1][row] == null) {
-                                        columns[current] = null;
+                                        columns[current].length = 0;
                                     }
                                 }
                             }
@@ -200,12 +200,12 @@ export default class Grid<T extends Node> extends Extension<T> {
                         columnEnd.push(columnRight[l]);
                     }
                 }
-                columns = columns.filter(item => item);
+                columns = columns.filter(item => item && item.length > 0);
                 const columnLength = columns.reduce((a, b) => Math.max(a, b.length), 0);
                 for (let l = 0; l < columnLength; l++) {
                     for (let m = 0; m < columns.length; m++) {
                         if (columns[m][l] == null) {
-                            columns[m][l] = { spacer: 1 };
+                            columns[m][l] = { spacer: 1 } as any;
                         }
                     }
                 }
@@ -247,9 +247,9 @@ export default class Grid<T extends Node> extends Extension<T> {
                             let rowSpan = 1;
                             let columnSpan = 1 + spacer;
                             for (let n = l + 1; n < columns.length; n++) {
-                                if (columns[n][m].spacer === 1) {
+                                if ((<any> columns[n][m]).spacer === 1) {
                                     columnSpan++;
-                                    columns[n][m].spacer = 2;
+                                    (<any> columns[n][m]).spacer = 2;
                                 }
                                 else {
                                     break;
@@ -257,9 +257,9 @@ export default class Grid<T extends Node> extends Extension<T> {
                             }
                             if (columnSpan === 1) {
                                 for (let n = m + 1; n < columns[l].length; n++) {
-                                    if (columns[l][n].spacer === 1) {
+                                    if ((<any> columns[l][n]).spacer === 1) {
                                         rowSpan++;
-                                        columns[l][n].spacer = 2;
+                                        (<any> columns[l][n]).spacer = 2;
                                     }
                                     else {
                                         break;

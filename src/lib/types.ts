@@ -33,7 +33,6 @@ export type ClientRect = {
     left: number;
     width: number;
     height: number;
-    [key: string]: number;
 };
 
 export type Point = {

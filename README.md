@@ -14,23 +14,23 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 download [only required file]: [https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js](https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js)
 
-Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server.
+Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server. 
 
 * Install Node.js: http://www.nodejs.org
 * Install androme: (choose one)
 
-NPM
-&nbsp;&nbsp;&nbsp;&gt; npm i androme
-&nbsp;&nbsp;&nbsp;&gt; cd node_modules/androme
-&nbsp;&nbsp;&nbsp;&gt; node app.js
+NPM  
+&nbsp;&nbsp;&nbsp;&gt; npm i androme  
+&nbsp;&nbsp;&nbsp;&gt; cd node_modules/androme  
+&nbsp;&nbsp;&nbsp;&gt; node app.js  
 
-GitHub
-&nbsp;&nbsp;&nbsp;&gt; git clone https://github.com/anpham6/androme
-&nbsp;&nbsp;&nbsp;&gt; cd androme
-&nbsp;&nbsp;&nbsp;&gt; npm install
-&nbsp;&nbsp;&nbsp;&gt; npm run prod
-&nbsp;&nbsp;&nbsp;&gt; node app.js
-
+GitHub  
+&nbsp;&nbsp;&nbsp;&gt; git clone https://github.com/anpham6/androme  
+&nbsp;&nbsp;&nbsp;&gt; cd androme  
+&nbsp;&nbsp;&nbsp;&gt; npm install  
+&nbsp;&nbsp;&nbsp;&gt; npm run prod  
+&nbsp;&nbsp;&nbsp;&gt; node app.js  
+  
 * Open Browser: http://localhost:3000/demos/index.html
 
 ```javascript
@@ -88,8 +88,6 @@ androme.settings = {
     numberResourceValue: false,
     fontAliasResourceValue: true,
     alwaysReevaluateResources: true,
-    excludeTextColor: ['#000000'],
-    excludeBackgroundColor: ['#FFFFFF'],
     preloadImages: true,
     autoSizePaddingAndBorderWidth: true,
     autoSizeBackgroundImage: true,
