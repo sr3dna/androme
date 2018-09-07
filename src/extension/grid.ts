@@ -22,7 +22,7 @@ export default class Grid<T extends Node> extends Extension<T> {
             (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) &&
                 (
                     (node.css('listStyle') === 'none' || node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none')) ||
-                    (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.inlineText || item.plainText))
+                    (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement))
                 )
             )
         );

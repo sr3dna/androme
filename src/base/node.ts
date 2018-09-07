@@ -489,7 +489,7 @@ export default abstract class Node implements BoxModel {
                 case 'IFRAME':
                     return;
                 default:
-                    if (this.viewWidth === 0 && this.inlineElement && !this.floating && (this.inlineText || this.plainText)) {
+                    if (this.viewWidth === 0 && this.inlineElement && !this.floating && this.textElement) {
                         this._multiLine = getRangeClientRect(this.element)[1];
                     }
                     break;
@@ -808,6 +808,10 @@ export default abstract class Node implements BoxModel {
         return (this.tagName === 'IMG');
     }
 
+    get textElement() {
+        return (this.plainText || this.inlineText);
+    }
+
     get block() {
         const display = this.display;
         return (display === 'block' || display === 'list-item');
@@ -843,7 +847,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get relativeWrap() {
-        return (this.plainText || this.inlineText) && !this.floating && this.siblingflow && this.alignMargin;
+        return this.textElement && !this.floating && this.siblingflow && this.alignMargin;
     }
 
     get overflow() {

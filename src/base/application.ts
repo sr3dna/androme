@@ -257,7 +257,7 @@ export default class Application<T extends Node> {
                                         if (sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
                                             node.companion = label;
                                         }
-                                        else if (labelParent && (label.plainText || label.inlineText)) {
+                                        else if (labelParent && label.textElement) {
                                             node.companion = labelParent;
                                             labelParent.renderAs = node;
                                         }

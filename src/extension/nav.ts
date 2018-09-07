@@ -1,7 +1,6 @@
 import Extension from '../base/extension';
 import Node from '../base/node';
 import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
-import { BLOCK_ELEMENT } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
 export default abstract class Menu<T extends Node> extends Extension<T> {
@@ -15,7 +14,7 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
             let valid = false;
             if (element.children.length > 0) {
                 const tagName = element.children[0].tagName;
-                valid = (BLOCK_ELEMENT.includes(tagName) && Array.from(element.children).every(item => item.tagName === tagName));
+                valid = Array.from(element.children).every(item => item.tagName === tagName);
                 let current = element.parentElement;
                 while (current != null) {
                     if (current.tagName === 'NAV' && this.application.elements.has(current)) {

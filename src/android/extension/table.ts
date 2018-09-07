@@ -39,7 +39,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
                         }
                     }
                     if (downsized) {
-                        if (item.plainText || item.inlineText) {
+                        if (item.textElement) {
                             item.android('maxLines', '1');
                         }
                     }

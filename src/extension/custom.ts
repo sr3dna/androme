@@ -1,7 +1,7 @@
 import { ExtensionResult } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
-import { BLOCK_ELEMENT, NODE_STANDARD } from '../lib/constants';
+import { NODE_STANDARD } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 
 export default class Custom<T extends Node> extends Extension<T> {
@@ -22,7 +22,7 @@ export default class Custom<T extends Node> extends Extension<T> {
             else {
                 xml = this.application.controllerHandler.renderNode(node, parent, data.tag);
             }
-            node.nodeType = (BLOCK_ELEMENT.includes(node.tagName) && !node.inline ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE);
+            node.nodeType = (node.blockStatic ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE);
         }
         if (data.tagChild) {
             node.each(item => {

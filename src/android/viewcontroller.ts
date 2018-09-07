@@ -275,7 +275,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
                                     break;
                                 case 'baseline':
-                                    if ((text && (current.plainText || current.inlineText)) || current === baseline) {
+                                    if ((text && current.textElement) || current === baseline) {
                                         if (text && current !== text && (current.lineHeight === 0 || current.lineHeight !== text.lineHeight)) {
                                             current.app(mapLayout['baseline'], text.stringId);
                                         }
@@ -484,7 +484,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                         }
                         if (flex.enabled || columnCount > 1 || (!SETTINGS.constraintChainDisabled && pageflow.length > 1)) {
-                            let flexbox: Null<any[]> = null;
+                            const flexbox: any[] = [];
                             if (flex.enabled) {
                                 if (flex.wrap === 'nowrap') {
                                     const horizontalChain = pageflow.clone();
@@ -501,7 +501,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             horizontalChain.clear();
                                             break;
                                     }
-                                    flexbox = [{ constraint: { horizontalChain, verticalChain } }];
+                                    flexbox.push({ constraint: { horizontalChain, verticalChain } });
                                 }
                                 else {
                                     const sorted = pageflow.clone();
@@ -541,36 +541,46 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             }
                                             break;
                                     }
-                                    flexbox = [];
                                     for (const n of levels) {
-                                        flexbox.push({ constraint: { horizontalChain: new NodeList<T>(map[n]), verticalChain: new NodeList<T>() } });
+                                        flexbox.push({ constraint: { horizontalChain: new NodeList<T>(map[n]) } });
                                     }
                                 }
                             }
                             else if (columnCount > 1) {
-                                flexbox = [];
-                                const marginLeft = convertInt(convertPX(node.css('columnGap')));
-                                const columnRow: T[] = [];
-                                for (let i = 0; i < pageflow.length; i++) {
+                                const columns: T[][] = [];
+                                const perRowCount = Math.ceil(pageflow.length / Math.min(columnCount, pageflow.length));
+                                for (let i = 0, j = 0; i < pageflow.length; i++) {
                                     const item = pageflow.list[i];
-                                    if (item.viewWidth === 0) {
-                                        item.android('layout_width', '0px');
-                                        item.app('layout_constraintWidth_percent', (1 / columnCount).toFixed(2));
-                                    }
-                                    if (i % columnCount !== 0) {
-                                        if (marginLeft > 0) {
-                                            item.android(`layout_${parseRTL('marginLeft')}`, formatPX(item.marginLeft + marginLeft));
+                                    if ((i % perRowCount) === 0) {
+                                        if (i > 0) {
+                                            j++;
+                                        }
+                                        if (columns[j] == null) {
+                                            columns[j] = [];
                                         }
                                     }
-                                    if (i > 0 && ((i % columnCount) === 0 || i === pageflow.length - 1)) {
-                                        if (i === pageflow.length - 1) {
-                                            columnRow.push(item);
-                                        }
-                                        flexbox.push({ constraint: { horizontalChain: new NodeList<T>(columnRow.slice()), verticalChain: new NodeList<T>() } });
-                                        columnRow.length = 0;
-                                    }
-                                    columnRow.push(item);
+                                    columns[j].push(item);
                                 }
+                                const row: T[] = [];
+                                const marginLeft = convertInt(convertPX(node.css('columnGap')));
+                                const marginTotal: number = columns.map(list => Math.max.apply(null, list.map(item => item.marginLeft + item.marginRight))).reduce((a: number, b: number) => a + b, 0);
+                                const marginPercent = ((marginTotal + (marginLeft * (columnCount - 1))) / node.box.width) / columnCount;
+                                for (let i = 0; i < columns.length; i++) {
+                                    const column = columns[i];
+                                    const first = column[0];
+                                    if (i > 0) {
+                                        first.android(`layout_${parseRTL('marginLeft')}`, formatPX(first.marginLeft + marginLeft));
+                                    }
+                                    row.push(first);
+                                    column.forEach(item => {
+                                        if (item.viewWidth === 0) {
+                                            item.android('layout_width', '0px');
+                                            item.app('layout_constraintWidth_percent', ((1 / columnCount) - marginPercent).toFixed(2));
+                                        }
+                                    });
+                                    flexbox.push({ constraint: { verticalChain: new NodeList<T>(column) } });
+                                }
+                                flexbox.push({ constraint: { horizontalChain: new NodeList<T>(row) } });
                             }
                             else {
                                 const horizontal = pageflow.list.filter(current => !current.constraint.horizontal);
@@ -590,8 +600,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 });
                             }
                             MAP_CHAIN.direction.forEach((value, index) => {
-                                const connected = (flexbox && flexbox.length > 0 ? flexbox : pageflow.clone().list.sort((a, b) => (a.constraint[value] != null ? a.constraint[value].length : 0) >= (b.constraint[value] != null ? b.constraint[value].length : 0) ? -1 : 1));
-                                if (connected != null) {
+                                const connected = (flexbox.length > 0 ? flexbox : pageflow.clone().list.sort((a, b) => (a.constraint[value] != null ? a.constraint[value].length : 0) >= (b.constraint[value] != null ? b.constraint[value].length : 0) ? -1 : 1));
+                                if (connected.length > 0) {
                                     const connectedRows: NodeList<T>[]  = [];
                                     connected.filter(current => current.constraint[value]).forEach((current, level) => {
                                         const chainable: NodeList<T> = current.constraint[value];
@@ -672,16 +682,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                     }
                                                 }
                                                 else if (columnCount > 1) {
-                                                    if (connectedRows.length > 0) {
-                                                        const chainPrevious = connectedRows[connectedRows.length - 1].get(i);
-                                                        chain.anchor(mapLayout['topBottom'], chainPrevious.stringId);
-                                                        chainPrevious.anchor(mapLayout['bottomTop'], chain.stringId);
-                                                        if (chain === last && chainable.length < columnCount) {
-                                                            chain.delete('app', mapLayout['right']);
-                                                        }
+                                                    if (index === 0) {
+                                                        chain.app(`layout_constraint${VH}_bias`, '0');
                                                     }
-                                                    else {
-                                                        chain.anchor(mapLayout['top'], 'parent');
+                                                    if (index === 1 && i > 0) {
+                                                        chain.anchor(mapLayout['left'], first.stringId);
                                                     }
                                                     chain.constraint.horizontal = true;
                                                     chain.constraint.vertical = true;
@@ -752,6 +757,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                             if (chain.flex.alignSelf !== 'center') {
                                                                 chain.android(`layout_${HW.toLowerCase()}`, '0px');
                                                             }
+                                                            chain.constraint[orientationInverse] = false;
                                                             this.setAlignParent(chain, orientationInverse);
                                                             break;
                                                     }
@@ -815,8 +821,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 }
                                                 marginDelete = true;
                                             }
-                                            else if (columnCount > 1) {
-                                                first.app(chainStyle, 'spread_inside');
+                                            else if (!flex.enabled && columnCount > 1) {
+                                                first.app(chainStyle, (index === 0 ? 'spread_inside' : 'packed'));
                                             }
                                             else {
                                                 const alignLeft = withinFraction(node.box.left, first.linear.left);
@@ -1108,7 +1114,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         if (current.is(NODE_STANDARD.TEXT) && current.cssParent('textAlign', true) === 'center') {
                                             current.anchor(mapLayout['right'], 'parent');
                                         }
-                                        if ((current.inlineText || current.plainText) && current.viewWidth === 0 && current.toInt('maxWidth') === 0 && current.multiLine && !hasLineBreak(current.element) && !nodes.list.some(item => mapView(item, 'rightLeft') === current.stringId)) {
+                                        if (current.textElement && current.viewWidth === 0 && current.toInt('maxWidth') === 0 && current.multiLine && !hasLineBreak(current.element) && !nodes.list.some(item => mapView(item, 'rightLeft') === current.stringId)) {
                                             current.android('layout_width', 'match_parent');
                                         }
                                     }

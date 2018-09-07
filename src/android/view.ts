@@ -559,9 +559,7 @@ export default class View extends Node {
                 this[obj]('layout_gravity', right);
             }
             else {
-                if (!setAutoMargin(this) && renderParent.android('gravity') !== null) {
-                    this[obj]('layout_gravity', left);
-                }
+                setAutoMargin(this);
             }
         }
         let floating = '';

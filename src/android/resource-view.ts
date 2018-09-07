@@ -270,7 +270,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                         }
                         if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
-                            name = (style !== '' ? `${style}.` : '') + node.nodeId;
+                            name = (style !== '' ? `${style}.` : '') + capitalize(node.nodeId);
                             styles[name] = common;
                         }
                         children.forEach(child => child.attr('_', 'style', `@style/${name}`));

@@ -126,7 +126,7 @@ export default abstract class Resource<T extends Node> {
                         result[i] = '';
                     }
                 }
-                if (result.backgroundColor.length > 0 && (node.cssParent('backgroundColor') === result.backgroundColor[1] && node.styleMap.backgroundColor !== result.backgroundColor[1]) || (!node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))) {
+                if (result.backgroundColor.length > 0 && !node.has('backgroundColor') && (node.cssParent('backgroundColor') === result.backgroundColor[1] || (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
                     result.backgroundColor = [];
                 }
                 if (result.borderTop.style !== 'none') {

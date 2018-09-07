@@ -23,11 +23,11 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public static textBaseline<T extends Node>(list: T[], text = false, parent?: T) {
-        const images = (!text ? list.filter(node => node.is(NODE_STANDARD.IMAGE) && node.baseline) : []);
+        const images = (!text ? list.filter(node => node.imageElement && node.baseline) : []);
         if (parent == null && images.length === 0 && list.every(node => node.lineHeight === list[0].lineHeight && node.css('fontSize') === list[0].css('fontSize'))) {
             return null;
         }
-        const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline && !node.multiLine)).sort((a, b) => {
+        const baseline = (images.length > 0 ? images : list.filter(node => node.textElement && node.baseline && !node.multiLine)).sort((a, b) => {
             const fontSizeA = convertInt(convertPX(a.css('fontSize')));
             const fontSizeB = convertInt(convertPX(b.css('fontSize')));
             const heightA = a.bounds.height;
@@ -66,7 +66,17 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return false;
             });
             if (valid) {
-                return list.slice().sort((a, b) => a.nodeType >= b.nodeType ? -1 : 1).find(node => node.nodeType <= nodeType && node.baseline);
+                return list.filter(node => node.baseline).sort((a, b) => {
+                    let nodeTypeA = a.nodeType;
+                    let nodeTypeB = b.nodeType;
+                    if (a.linearHorizontal) {
+                        nodeTypeA = Math.min.apply(null, a.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
+                    }
+                    if (b.linearHorizontal) {
+                        nodeTypeB = Math.min.apply(null, b.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
+                    }
+                    return (nodeTypeA <= nodeTypeB ? -1 : 1);
+                })[0];
             }
         }
         return baseline;
