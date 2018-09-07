@@ -140,10 +140,10 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
         function adjustBaseline(nodes: T[]) {
             if (nodes.length > 1) {
-                const baseline = NodeList.baselineText(nodes);
+                const baseline = NodeList.textBaseline(nodes);
                 if (baseline != null) {
                     for (const node of nodes) {
-                        if (node !== baseline && (node.nodeType <= NODE_STANDARD.TEXT || node.linearHorizontal)) {
+                        if (node !== baseline && (node.lineHeight === 0 || baseline.lineHeight !== node.lineHeight) && (node.nodeType <= NODE_STANDARD.TEXT || node.linearHorizontal)) {
                             node.android(mapLayout['baseline'], baseline.stringId);
                         }
                     }
@@ -158,7 +158,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 const nodes = new NodeList<T>(node.renderChildren.filter(item => !item.isolated && !item.relocated) as T[], node);
                 if (relative) {
                     mapLayout = MAP_LAYOUT.relative;
-                    if (node.hasBit('alignmentType', NODE_ALIGNMENT.INLINE_WRAP)) {
+                    if (node.hasBit('alignmentType', NODE_ALIGNMENT.INLINE_WRAP) || nodes.list.every((item, index) => item instanceof ViewGroup || index === (nodes.length - 1))) {
                         const rows: T[][] = [];
                         const baseline: T[] = [];
                         const multiLine = nodes.list.some(item => item.multiLine);
@@ -202,7 +202,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             previousRowBottom = items[j];
                                         }
                                     }
-                                    if (current instanceof ViewGroup) {
+                                    if (current instanceof ViewGroup || (previous instanceof ViewGroup && i === nodes.length - 1)) {
                                         current.constraint.marginVertical = previousRowBottom.stringId;
                                     }
                                     current.android(mapLayout['topBottom'], previousRowBottom.stringId);
@@ -233,7 +233,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     rows[rows.length - 1].push(current);
                                 }
                             }
-                            baseline.push(current);
+                            if (current.alignMargin) {
+                                baseline.push(current);
+                            }
                         }
                         adjustBaseline(baseline);
                     }
@@ -241,8 +243,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                 else {
                     mapLayout = MAP_LAYOUT.constraint;
                     if (node.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL)) {
-                        const baseline =  NodeList.baselineText(nodes.list);
-                        const text =  NodeList.baselineText(nodes.list, true);
+                        const baseline =  NodeList.textBaseline(nodes.list);
+                        const text =  NodeList.textBaseline(nodes.list, true);
                         const highest = nodes.sort((a, b) => a.linear.top <= b.linear.top ? -1 : 1).get(0);
                         const lowest = nodes.sort((a, b) => a.linear.bottom >= b.linear.bottom ? -1 : 1).get(0);
                         for (let i = 0; i < nodes.length; i++) {
@@ -273,8 +275,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
                                     break;
                                 case 'baseline':
-                                    if ((text && current.is(NODE_STANDARD.TEXT)) || current === baseline) {
-                                        if (text && current !== text) {
+                                    if ((text && (current.plainText || current.inlineText)) || current === baseline) {
+                                        if (text && current !== text && (current.lineHeight === 0 || current.lineHeight !== text.lineHeight)) {
                                             current.app(mapLayout['baseline'], text.stringId);
                                         }
                                     }
@@ -346,12 +348,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         const topParent = mapParent(current, 'top');
                                         const bottomParent = mapParent(current, 'bottom');
                                         const blockElement = (!flex.enabled && !current.inlineElement);
-                                        if ((!current.constraint.vertical && alignMargin && withinRange(current.linear.top, adjacent.linear.bottom, SETTINGS.constraintWhitespaceVerticalOffset)) || withinFraction(current.linear.top, adjacent.linear.bottom)) {
+                                        if ((alignMargin && withinRange(current.linear.top, adjacent.linear.bottom, SETTINGS.constraintWhitespaceVerticalOffset)) || withinFraction(current.linear.top, adjacent.linear.bottom)) {
                                             if (intersectY || !bottomParent || blockElement) {
                                                 current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
                                             }
                                         }
-                                        if ((!current.constraint.vertical && alignMargin && withinRange(current.linear.bottom, adjacent.linear.top, SETTINGS.constraintWhitespaceVerticalOffset)) || withinFraction(current.linear.bottom, adjacent.linear.top)) {
+                                        if ((alignMargin && withinRange(current.linear.bottom, adjacent.linear.top, SETTINGS.constraintWhitespaceVerticalOffset)) || withinFraction(current.linear.bottom, adjacent.linear.top)) {
                                             if (intersectY || !topParent || blockElement) {
                                                 current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
                                             }

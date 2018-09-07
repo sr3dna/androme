@@ -6,7 +6,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertInt, formatPX, hasBit, isNumber, optional, sortAsc, trim } from '../lib/util';
 import { getPlaceholder, modifyIndent, replacePlaceholder } from '../lib/xml';
-import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
+import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache, getElementsBetweenSiblings } from '../lib/dom';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import SETTINGS from '../settings';
 
@@ -72,7 +72,7 @@ export default class Application<T extends Node> {
                 node.applyCustomizations(SETTINGS.customizationsOverwritePrivilege);
             }
         }
-        this.appendLateInsert();
+        this.appendRenderQueue();
         this.controllerHandler.setDimensions(this.viewData);
         for (const node of this.cacheInternal) {
             for (const ext of node.renderExtension) {
@@ -493,13 +493,13 @@ export default class Application<T extends Node> {
                             if (node.isSet('dataset', 'target')) {
                                 const target = application.findByDomId(<string> node.dataset.target, true);
                                 if (!target || target !== parent) {
-                                    application.addLateInsert(<string> node.dataset.target, [xml]);
+                                    application.addRenderQueue(<string> node.dataset.target, [xml]);
                                     node.relocated = true;
                                     return;
                                 }
                             }
                             else if (parent.isSet('dataset', 'target')) {
-                                application.addLateInsert(parent.nodeId, [xml]);
+                                application.addRenderQueue(parent.nodeId, [xml]);
                                 node.dataset.target = parent.nodeId;
                                 return;
                             }
@@ -713,7 +713,7 @@ export default class Application<T extends Node> {
                             let group: Null<T> = null;
                             let groupXml = '';
                             if (horizontal.length > 1) {
-                                if (horizontal.some(node => node.floating) && !horizontal.every((node, index) => horizontal[0].float === node.float && (index === 0 || !cleared.has(node)))) {
+                                if (this.isFrameHorizontal(horizontal, cleared)) {
                                     group = this.controllerHandler.createGroup(nodeY, horizontal, parentY);
                                     groupXml = this.writeFrameLayoutHorizontal(group, parentY, horizontal);
                                     group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT;
@@ -728,7 +728,7 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     else {
-                                        if (horizontal.every(node => node.relativeWrap) || horizontal.some(node => node.plainText && node.multiLine) || !NodeList.linearX(horizontal)) {
+                                        if ((horizontal.every(node => node.relativeWrap) && new Set(horizontal.map(node => node.lineHeight)).size > 1) || horizontal.some(node => node.plainText && node.multiLine) || !NodeList.linearX(horizontal)) {
                                             group = this.controllerHandler.createGroup(nodeY, horizontal, parentY);
                                             groupXml = this.writeRelativeLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
@@ -785,7 +785,12 @@ export default class Application<T extends Node> {
                                             xml = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
                                         }
                                         else if (!nodeY.documentRoot) {
-                                            xml = this.writeFrameLayout(nodeY, parentY);
+                                            if (nodeY.bounds.height === 0) {
+                                                nodeY.hide();
+                                            }
+                                            else {
+                                                xml = this.writeFrameLayout(nodeY, parentY);
+                                            }
                                         }
                                     }
                                 }
@@ -818,7 +823,7 @@ export default class Application<T extends Node> {
                                                         this.sortByAlignment(children, nodeY, nodeY.alignmentType, true);
                                                     }
                                                     else if ((float.size === 1 || !float.has('right')) || horizontalAlign) {
-                                                        if (!horizontalAlign && (children.every(node => node.relativeWrap) || children.some(node => node.plainText && node.multiLine))) {
+                                                        if (!horizontalAlign && ((children.every(node => node.relativeWrap) && new Set(children.map(node => node.lineHeight)).size > 1)  || children.some(node => node.plainText && node.multiLine))) {
                                                             xml = this.writeRelativeLayout(nodeY, parentY);
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                                                         }
@@ -847,9 +852,17 @@ export default class Application<T extends Node> {
                                                 }
                                             }
                                             if (xml === '') {
-                                                if (children.every(node => node.pageflow && node.inlineElement && !cleared.has(node))) {
-                                                    xml = this.writeRelativeLayout(nodeY, parentY);
-                                                    nodeY.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
+                                                if (children.every(node => node.pageflow && node.inlineElement)) {
+                                                    if (this.isFrameHorizontal(children, cleared)) {
+                                                        xml = this.writeFrameLayoutHorizontal(nodeY, parentY, children);
+                                                        nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT;
+                                                    }
+                                                    else {
+                                                        xml = this.writeRelativeLayout(nodeY, parentY);
+                                                        if (getElementsBetweenSiblings(children[0].element, children[children.length - 1].element).filter(element => isLineBreak(element, '')).length === 0) {
+                                                            nodeY.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
+                                                        }
+                                                    }
                                                 }
                                                 else {
                                                     xml = this.writeConstraintLayout(nodeY, parentY);
@@ -899,7 +912,7 @@ export default class Application<T extends Node> {
                         empty = false;
                     }
                     else {
-                        this.addLateInsert(id, templates);
+                        this.addRenderQueue(id, templates);
                     }
                 }
             }
@@ -1024,7 +1037,7 @@ export default class Application<T extends Node> {
                     if (section.length > 1) {
                         let content = '';
                         const subgroup = this.controllerHandler.createGroup(section.list[0], section.list, group);
-                        if (index <= 1 && (section.list.every(node => node.relativeWrap) || section.list.some(node => node.plainText && node.multiLine) || !section.linearX)) {
+                        if (index <= 1 && ((section.list.every(node => node.relativeWrap) && new Set(section.list.map(node => node.lineHeight)).size > 1) || section.list.some(node => node.plainText && node.multiLine) || !section.linearX)) {
                             content = this.writeRelativeLayout(subgroup, group);
                             subgroup.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                         }
@@ -1185,7 +1198,7 @@ export default class Application<T extends Node> {
         return xml;
     }
 
-    public appendLateInsert() {
+    public appendRenderQueue() {
         for (const node of this.cacheInternal) {
             for (const ext of node.renderExtension) {
                 ext.setTarget(node);
@@ -1238,7 +1251,7 @@ export default class Application<T extends Node> {
             for (const id in template) {
                 value.content = value.content.replace(getPlaceholder(id), template[id]);
             }
-            value.content = this.controllerHandler.appendLateInsert(value.content);
+            value.content = this.controllerHandler.appendRenderQueue(value.content);
         }
         for (const node of this.cacheInternal) {
             for (const ext of node.renderExtension) {
@@ -1282,7 +1295,7 @@ export default class Application<T extends Node> {
         });
     }
 
-    public addLateInsert(id: string, views: string[]) {
+    public addRenderQueue(id: string, views: string[]) {
         if (this.renderQueue[id] == null) {
             this.renderQueue[id] = [];
         }
@@ -1424,6 +1437,10 @@ export default class Application<T extends Node> {
         else {
             return available;
         }
+    }
+
+    private isFrameHorizontal(nodes: T[], cleared: Set<T>) {
+        return nodes.some(node => node.floating) && !nodes.every((node, index) => nodes[0].float === node.float && (index === 0 || !cleared.has(node)));
     }
 
     set appName(value) {

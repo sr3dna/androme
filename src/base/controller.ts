@@ -33,7 +33,7 @@ export default abstract class Controller<T extends Node> {
         this._after = {};
     }
 
-    public appendLateInsert(output: string) {
+    public appendRenderQueue(output: string) {
         for (const id in this._before) {
             output = output.replace(`{<${id}}`, this._before[id].join(''));
         }

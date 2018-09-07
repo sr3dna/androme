@@ -68,6 +68,7 @@ export default abstract class Node implements BoxModel {
     private _pageflow: boolean;
     private _multiLine: boolean;
     private _lineHeight: number;
+    private _inlineText: boolean;
     private _data: ObjectMap<any> = {};
     private _initialized = false;
 
@@ -583,17 +584,19 @@ export default abstract class Node implements BoxModel {
     }
 
     set parent(value) {
-        if (value == null || value === this._parent) {
-            return;
-        }
         if (this._parent != null) {
             this._parent.children = this._parent.children.filter(node => node !== this);
         }
         this._parent = value;
-        if (value.children.indexOf(this) === -1) {
-            value.children.push(this);
+        if (value != null) {
+            if (value.children.indexOf(this) === -1) {
+                value.children.push(this);
+            }
+            this.depth = value.depth + 1;
         }
-        this.depth = value.depth + 1;
+        else {
+            this.depth = -1;
+        }
     }
     get parent() {
         return this._parent;
@@ -791,7 +794,10 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineText() {
-        return (this.hasElement && !['INPUT', 'IMG', 'SELECT', 'TEXTAREA'].includes(this.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
+        if (this._inlineText == null) {
+            this._inlineText = (this.hasElement && !['INPUT', 'IMG', 'SELECT', 'TEXTAREA'].includes(this.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
+        }
+        return this._inlineText;
     }
 
     get plainText() {

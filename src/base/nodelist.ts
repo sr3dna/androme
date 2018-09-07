@@ -22,18 +22,28 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return nodes;
     }
 
-    public static baselineText<T extends Node>(list: T[], text = false, parent?: T) {
+    public static textBaseline<T extends Node>(list: T[], text = false, parent?: T) {
         const images = (!text ? list.filter(node => node.is(NODE_STANDARD.IMAGE) && node.baseline) : []);
+        if (parent == null && images.length === 0 && list.every(node => node.lineHeight === list[0].lineHeight && node.css('fontSize') === list[0].css('fontSize'))) {
+            return null;
+        }
         const baseline = (images.length > 0 ? images : list.filter(node => node.is(NODE_STANDARD.TEXT) && node.baseline && !node.multiLine)).sort((a, b) => {
             const fontSizeA = convertInt(convertPX(a.css('fontSize')));
             const fontSizeB = convertInt(convertPX(b.css('fontSize')));
-            const paddingA = (a.paddingLeft + a.paddingRight + a.borderLeftWidth + a.borderRightWidth);
-            const paddingB = (b.paddingLeft + b.paddingRight + b.borderLeftWidth + b.borderRightWidth);
-            const heightA = a.bounds.height - paddingA;
-            const heightB = b.bounds.height - paddingB;
-            if (fontSizeA === fontSizeB && heightA === heightB) {
-                if (paddingA !== paddingB) {
-                    return (paddingA < paddingB ? 1 : -1);
+            const heightA = a.bounds.height;
+            const heightB = b.bounds.height;
+            if (a.lineHeight > heightB && b.lineHeight === 0) {
+                return -1;
+            }
+            else if (b.lineHeight > heightA && a.lineHeight === 0) {
+                return 1;
+            }
+            else if (fontSizeA === fontSizeB && heightA === heightB) {
+                if (a.hasElement && !b.hasElement) {
+                    return -1;
+                }
+                else if (!a.hasElement && b.hasElement) {
+                    return 1;
                 }
                 else {
                     return (a.siblingIndex < b.siblingIndex ? -1 : 1);
@@ -42,14 +52,8 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
                 return (fontSizeA > fontSizeB ? -1 : 1);
             }
-            else if ((a.hasElement && !b.hasElement) || (fontSizeA > 0 && fontSizeB === 0)) {
-                return -1;
-            }
-            else if ((!a.hasElement && b.hasElement) || (fontSizeA === 0 && fontSizeB > 0)) {
-                return 1;
-            }
             else {
-                return (Math.max(heightA, a.lineHeight) >= Math.max(heightB, b.lineHeight) ? -1 : 1);
+                return (heightA >= heightB ? -1 : 1);
             }
         })[0];
         const nodeType = (text ? NODE_STANDARD.TEXT : NODE_STANDARD.IMAGE);

@@ -143,7 +143,7 @@ export default abstract class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
-                if (node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.hasElement && node.element.innerHTML.trim() === '')) {
+                if (node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && node.element.innerHTML.trim() === '')) {
                     return;
                 }
                 else {

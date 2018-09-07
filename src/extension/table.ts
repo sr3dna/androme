@@ -154,11 +154,12 @@ export default class Table<T extends Node> extends Extension<T> {
         }
         const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
         const typeWidth = (() => {
-            const everyAuto = !mapWidth.some(value => value !== 'auto');
-            if (everyAuto && node.cssOriginal('width', true) === 'auto' && !multiLine) {
+            const everyAuto = mapWidth.every(value => value === 'auto');
+            const everyUndefined = mapWidth.every(value => value === '0px');
+            if ((everyAuto || everyUndefined) && (node.cssOriginal('width') === 'auto' || !node.has('width')) && !multiLine) {
                 return 0;
             }
-            else if (mapWidth.some(value => isPercent(value)) || everyAuto) {
+            else if (everyAuto || mapWidth.some(value => isPercent(value))) {
                 return 3;
             }
             else if (mapWidth.every(value => value === '0px' || mapWidth[0] === value) && (node.viewWidth > 0 || isPercent(node.css('width')) || multiLine)) {
@@ -174,17 +175,15 @@ export default class Table<T extends Node> extends Extension<T> {
         if ((typeWidth === 2 && node.viewWidth === 0) || multiLine) {
             node.data(EXT_NAME.TABLE, 'expand', true);
         }
-        node.children.length = 0;
         const caption = node.children.find(item => item.tagName === 'CAPTION');
+        node.children.length = 0;
         if (caption) {
             if (!caption.has('textAlign')) {
                 caption.css('textAlign', 'center');
             }
             rowCount++;
             caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);
-        }
-        if (caption) {
-            node.children.push(caption);
+            caption.parent = node;
         }
         columnIndex = new Array(table.length).fill(0);
         function setAutoWidth(td: T) {

@@ -259,7 +259,7 @@ export function isElementVisible(element: Element) {
         }
         if (typeof element.getBoundingClientRect === 'function') {
             const bounds = element.getBoundingClientRect();
-            if (bounds.width !== 0 && bounds.height !== 0 || hasValue(element.dataset.ext)) {
+            if (bounds.width !== 0 && bounds.height !== 0 || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
                 return true;
             }
             else {

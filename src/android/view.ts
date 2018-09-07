@@ -695,7 +695,7 @@ export default class View extends Node {
                     this.android('baselineAligned', 'false');
                 }
                 else if (renderChildren.some(node => node.nodeType <= NODE_STANDARD.TEXT)) {
-                    const baseline = NodeList.baselineText(renderChildren, false, (renderParent.is(NODE_STANDARD.GRID) || this.inline ? this.documentParent : undefined));
+                    const baseline = NodeList.textBaseline(renderChildren, false, (renderParent.is(NODE_STANDARD.GRID) || this.inline ? this.documentParent : undefined));
                     if (baseline != null) {
                         this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline).toString());
                     }
