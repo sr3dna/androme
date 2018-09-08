@@ -4,25 +4,7 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <link rel="stylesheet" href="page.css"   media="all"    type="text/css" />
   <script src="/node_modules/systemjs/dist/system.js"></script>
-  <script>
-      SystemJS.config({
-          packages: {
-              '/build': { defaultExtension: 'js' }
-          },
-          map: {
-              'plugin-babel': '/node_modules/systemjs-plugin-babel/plugin-babel.js',
-              'systemjs-babel-build': '/node_modules/systemjs-plugin-babel/systemjs-babel-browser.js'
-          },
-          transpiler: 'plugin-babel'
-      });
-      System.import('/build/main.js').then(function(result) {
-          androme = result;
-          androme.parseDocument().then(function() {
-              androme.close();
-              androme.saveAllToDisk();
-          });
-      });
-  </script>
+  <script src="../../system.js"></script>
 </head>
 
 <body>
