@@ -161,7 +161,7 @@ function setStyleMap() {
 }
 
 function setImageCache(element: HTMLImageElement) {
-    if (!IMAGE_CACHE.has(element.src)) {
+    if (element && hasValue(element.src)) {
         IMAGE_CACHE.set(element.src, {
             width: element.naturalWidth,
             height: element.naturalHeight,
@@ -269,7 +269,11 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
         Promise
             .all(queue)
             .then(result => {
-                result.forEach((image: HTMLImageElement) => setImageCache(image));
+                try {
+                    result.forEach((evt: Event) => setImageCache(<HTMLImageElement> evt.srcElement));
+                }
+                catch (e) {
+                }
                 parseResume();
             })
             .catch((err: Event) => {

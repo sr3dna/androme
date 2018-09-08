@@ -33,8 +33,10 @@ export enum NODE_ALIGNMENT {
     FLOAT = 32,
     INLINE_WRAP = 64,
     SEGMENTED = 128,
-    LEFT = 256,
-    RIGHT = 512
+    TOP = 256,
+    RIGHT = 512,
+    BOTTOM = 1024,
+    LEFT = 2048
 }
 
 export enum NODE_RESOURCE {

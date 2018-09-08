@@ -47,11 +47,11 @@ export function convertCamelCase(value: string, char = '-') {
 }
 
 export function convertWord(value: string) {
-    return (value != null ? value.replace(/[^\w]/g, '_').trim() : '');
+    return (value ? value.replace(/[^\w]/g, '_').trim() : '');
 }
 
 export function capitalize(value: string, upper = true) {
-    return value.charAt(0)[(upper ? 'toUpperCase' : 'toLowerCase')]() + value.substring(1)[(upper ? 'toLowerCase' : 'toString')]();
+    return (value ? value.charAt(0)[(upper ? 'toUpperCase' : 'toLowerCase')]() + value.substring(1)[(upper ? 'toLowerCase' : 'toString')]() : '');
 }
 
 export function convertInt(value: any) {

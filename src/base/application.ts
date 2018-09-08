@@ -4,7 +4,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertInt, formatPX, hasBit, isNumber, optional, sortAsc, trim } from '../lib/util';
+import { convertInt, formatPX, hasBit, isNumber, optional, sortAsc, trim, isUnit } from '../lib/util';
 import { getPlaceholder, modifyIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache, getElementsBetweenSiblings } from '../lib/dom';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
@@ -152,7 +152,7 @@ export default class Application<T extends Node> {
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
-                this.prioritizeExt(this.extensions, element).some(item => item.init(element));
+                this.prioritizeExtOrder(this.extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
                     if (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))) {
                         setElementCache(element, 'supportInline', true);
@@ -291,6 +291,7 @@ export default class Application<T extends Node> {
                 }
             }
             for (const node of visible) {
+                node.setMultiLine();
                 if (node.children.length === 1) {
                     const firstChild = node.children[0];
                     if (!firstChild.pageflow && firstChild.toInt('top') === 0 && firstChild.toInt('right') === 0 && firstChild.toInt('bottom') === 0 && firstChild.toInt('left') === 0) {
@@ -579,7 +580,7 @@ export default class Application<T extends Node> {
                             continue;
                         }
                         const processed: IExtension[] = [];
-                        this.prioritizeExt(this.extensions, nodeY.element).some(item => {
+                        this.prioritizeExtOrder(this.extensions, nodeY.element).some(item => {
                             if (item.is(nodeY)) {
                                 item.setTarget(nodeY, parentY);
                                 if (item.condition()) {
@@ -728,7 +729,7 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     else {
-                                        if ((horizontal.every(node => node.relativeWrap) && new Set(horizontal.map(node => node.lineHeight)).size > 1) || horizontal.some(node => node.plainText && node.multiLine) || !NodeList.linearX(horizontal)) {
+                                        if ((horizontal.every(node => node.relativeWrap) && new Set(horizontal.map(node => node.lineHeight)).size > 1) || horizontal.some(node => node.textElement && node.multiLine) || !NodeList.linearX(horizontal)) {
                                             group = this.controllerHandler.createGroup(nodeY, horizontal, parentY);
                                             groupXml = this.writeRelativeLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
@@ -746,6 +747,7 @@ export default class Application<T extends Node> {
                                 if (!parentY.is(NODE_STANDARD.CONSTRAINT) && vertical.some(node => cleared.has(node) && node !== vertical[0] && node !== vertical[vertical.length - 1]) && !vertical.every(node => cleared.has(node))) {
                                     group = this.controllerHandler.createGroup(nodeY, vertical, parentY);
                                     groupXml = this.writeFrameLayoutVertical(group, vertical, cleared);
+                                    this.controllerHandler.setNodeType(group, NODE_STANDARD.FRAME);
                                 }
                                 else {
                                     if (vertical.length === axisY.length) {
@@ -773,7 +775,7 @@ export default class Application<T extends Node> {
                                         nodeY.hide();
                                     }
                                     else {
-                                        if ((!nodeY.inlineText || (nodeY.toInt('textIndent') + nodeY.bounds.width < 0)) && /url(.*?)/.test(nodeY.css('backgroundImage')) && nodeY.css('backgroundRepeat') === 'no-repeat' && !nodeY.has('backgroundColor')) {
+                                        if ((!nodeY.inlineText || ((nodeY.toInt('textIndent') + nodeY.bounds.width) < 0)) && /url(.*?)/.test(nodeY.css('backgroundImage')) && nodeY.css('backgroundRepeat') === 'no-repeat' && !nodeY.has('backgroundColor')) {
                                             nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
                                             nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
                                             xml = this.writeNode(nodeY, parentY, NODE_STANDARD.IMAGE);
@@ -781,7 +783,7 @@ export default class Application<T extends Node> {
                                         else if (freeFormText || nodeY.inline) {
                                             xml = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
                                         }
-                                        else if (!nodeY.inlineElement && (nodeY.borderTopWidth + nodeY.borderBottomWidth > 0 || nodeY.paddingTop + nodeY.paddingBottom > 0)) {
+                                        else if (!nodeY.inlineElement && ((nodeY.borderTopWidth + nodeY.borderBottomWidth) > 0 || (nodeY.paddingTop + nodeY.paddingBottom) > 0)) {
                                             xml = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
                                         }
                                         else if (!nodeY.documentRoot) {
@@ -816,20 +818,20 @@ export default class Application<T extends Node> {
                                             if (!parentY.flex.enabled && children.every(node => node.pageflow)) {
                                                 const float = new Set(children.map(node => node.float));
                                                 if (linearX) {
-                                                    const horizontalAlign = children.some(node => !['baseline', 'initial', 'sub', 'sup'].includes(node.css('verticalAlign')));
-                                                    if (float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'middle', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => node.toInt('verticalAlign') >= 0)) {
+                                                    const linearAlignment = children.every(node => ['baseline', 'initial', 'sub', 'sup'].includes(node.css('verticalAlign')) || isUnit(node.css('verticalAlign')));
+                                                    if (!linearAlignment && float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'middle', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => node.toInt('verticalAlign') >= 0)) {
                                                         xml = this.writeConstraintLayout(nodeY, parentY);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         this.sortByAlignment(children, nodeY, nodeY.alignmentType, true);
                                                     }
-                                                    else if ((float.size === 1 || !float.has('right')) || horizontalAlign) {
-                                                        if (!horizontalAlign && ((children.every(node => node.relativeWrap) && new Set(children.map(node => node.lineHeight)).size > 1)  || children.some(node => node.plainText && node.multiLine))) {
+                                                    else if ((float.size === 1 || !float.has('right')) || linearAlignment) {
+                                                        if ((children.every(node => node.relativeWrap) && new Set(children.map(node => node.lineHeight)).size > 1) || children.some(node => node.textElement && node.multiLine)) {
                                                             xml = this.writeRelativeLayout(nodeY, parentY);
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                                                         }
                                                         else {
                                                             xml = this.writeLinearLayout(nodeY, parentY, true);
-                                                            if (children.some(node => node.plainText) || horizontalAlign) {
+                                                            if (children.some(node => node.plainText) || linearAlignment) {
                                                                 nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                             }
                                                         }
@@ -1037,7 +1039,7 @@ export default class Application<T extends Node> {
                     if (section.length > 1) {
                         let content = '';
                         const subgroup = this.controllerHandler.createGroup(section.list[0], section.list, group);
-                        if (index <= 1 && ((section.list.every(node => node.relativeWrap) && new Set(section.list.map(node => node.lineHeight)).size > 1) || section.list.some(node => node.plainText && node.multiLine) || !section.linearX)) {
+                        if (index <= 1 && ((section.list.every(node => node.relativeWrap) && new Set(section.list.map(node => node.lineHeight)).size > 1) || section.list.some(node => node.textElement && node.multiLine) || !section.linearX)) {
                             content = this.writeRelativeLayout(subgroup, group);
                             subgroup.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                         }
@@ -1406,13 +1408,12 @@ export default class Application<T extends Node> {
             node.setExclusions();
         }
         if (node != null) {
-            node.setMultiLine();
             this.cache.append(node);
         }
         return node;
     }
 
-    private prioritizeExt(available: IExtension[], element: Element) {
+    private prioritizeExtOrder(available: IExtension[], element: Element) {
         let extensions: string[] = [];
         let current: Null<Element> = element;
         while (current != null) {

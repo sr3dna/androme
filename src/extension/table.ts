@@ -37,8 +37,8 @@ export default class Table<T extends Node> extends Extension<T> {
             table.push(...<T[]> tfoot[0].children);
             tfoot.forEach(item => item.hide());
         }
-        const collapse = (node.css('borderCollapse') === 'collapse');
-        const [width, height] = (collapse ? [0, 0] : node.css('borderSpacing').split(' ').map(value => parseInt(value)));
+        const borderCollapse = (node.css('borderCollapse') === 'collapse');
+        const [width, height] = (borderCollapse ? [0, 0] : node.css('borderSpacing').split(' ').map(value => parseInt(value)));
         if (width > 0) {
             node.modifyBox(BOX_STANDARD.PADDING_LEFT, width);
             node.modifyBox(BOX_STANDARD.PADDING_RIGHT, width);
@@ -190,11 +190,18 @@ export default class Table<T extends Node> extends Extension<T> {
             td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
             td.data(EXT_NAME.TABLE, 'expand', true);
         }
+        function setBoundsWidth(td: T) {
+            let boundsWidth = td.bounds.width;
+            if (borderCollapse) {
+                boundsWidth -= td.borderLeftWidth + td.borderRightWidth;
+            }
+            td.css('width', formatPX(boundsWidth));
+        }
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
             const children = tr.children.slice();
             for (let j = 0; j < children.length; j++) {
-                const td = children[j];
+                const td = children[j] as T;
                 const element = <HTMLTableCellElement> td.element;
                 for (let k = 0; k < element.rowSpan - 1; k++)  {
                     const l = (i + 1) + k;
@@ -220,7 +227,7 @@ export default class Table<T extends Node> extends Extension<T> {
                         case 3:
                             if (columnWidth === 'auto') {
                                 if (mapPercent >= 1) {
-                                    td.css('width', formatPX(td.bounds.width));
+                                    setBoundsWidth(td);
                                     td.data(EXT_NAME.TABLE, 'expand', false);
                                 }
                                 else {
@@ -243,7 +250,7 @@ export default class Table<T extends Node> extends Extension<T> {
                                         td.data(EXT_NAME.TABLE, 'downsized', true);
                                     }
                                     else {
-                                        td.css('width', formatPX(td.bounds.width));
+                                        setBoundsWidth(td);
                                         td.data(EXT_NAME.TABLE, 'expand', false);
                                     }
                                 }
@@ -264,7 +271,7 @@ export default class Table<T extends Node> extends Extension<T> {
                                     td.data(EXT_NAME.TABLE, 'downsized', true);
                                 }
                                 else {
-                                    td.css('width', formatPX(td.bounds.width));
+                                    setBoundsWidth(td);
                                 }
                                 td.data(EXT_NAME.TABLE, 'expand', false);
                             }
@@ -281,7 +288,7 @@ export default class Table<T extends Node> extends Extension<T> {
             }
             tr.hide();
         }
-        if (collapse && borderInside) {
+        if (borderCollapse && borderInside) {
             node.css({
                 borderTopWidth: '0px',
                 borderRightWidth: '0px',

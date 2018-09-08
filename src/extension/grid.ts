@@ -215,7 +215,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                 mainData.columnEnd[mainData.columnEnd.length - 1] = node.box.right;
             }
         }
-        if (columns.length > 1) {
+        if (columns.length > 1 && columns[0].length === node.children.length) {
             mainData.columnCount = (balanceColumns ? columns[0].length : columns.length);
             xml = this.application.writeGridLayout(node, parent, mainData.columnCount);
             node.children.length = 0;

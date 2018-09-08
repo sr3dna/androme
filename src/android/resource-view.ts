@@ -294,10 +294,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                     node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                 }
-                if (node.cssOriginal('marginLeft') === 'auto') {
+                if (node.css('marginLeft') === 'auto') {
                     node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                 }
-                if (node.cssOriginal('marginRight') === 'auto') {
+                if (node.css('marginRight') === 'auto') {
                     node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                 }
             }

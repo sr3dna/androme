@@ -126,8 +126,8 @@ export default abstract class Resource<T extends Node> {
                         result[i] = '';
                     }
                 }
-                if (result.backgroundColor.length > 0 && !node.has('backgroundColor') && (node.cssParent('backgroundColor') === result.backgroundColor[1] || (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
-                    result.backgroundColor = [];
+                if (result.backgroundColor.length > 0 && !node.has('backgroundColor') && (node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] || (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
+                    result.backgroundColor.length = 0;
                 }
                 if (result.borderTop.style !== 'none') {
                     const borderTop = JSON.stringify(result.borderTop);
@@ -143,13 +143,13 @@ export default abstract class Resource<T extends Node> {
     public setFontStyle() {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
-                if (node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && node.element.innerHTML.trim() === '')) {
+                if (node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && node.element.innerHTML.trim() === '' && !['pre', 'pre-wrap'].includes(node.css('whiteSpace')))) {
                     return;
                 }
                 else {
                     const color = parseRGBA(node.css('color'), node.css('opacity'));
                     const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle')) || (node.cssParent('backgroundColor') === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
+                    if (backgroundColor.length > 0 && (this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle')) || (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
                         backgroundColor.length = 0;
                     }
                     let fontWeight = node.css('fontWeight');

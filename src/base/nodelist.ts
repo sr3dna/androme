@@ -24,7 +24,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     public static textBaseline<T extends Node>(list: T[], text = false, parent?: T) {
         const images = (!text ? list.filter(node => node.imageElement && node.baseline) : []);
-        if (parent == null && images.length === 0 && list.every(node => node.lineHeight === list[0].lineHeight && node.css('fontSize') === list[0].css('fontSize'))) {
+        if (parent == null && images.length === 0 && list.filter(node => node.textElement).every(node => node.baseline && node.lineHeight === list[0].lineHeight && node.css('fontSize') === list[0].css('fontSize'))) {
             return null;
         }
         const baseline = (images.length > 0 ? images : list.filter(node => node.textElement && node.baseline && !node.multiLine)).sort((a, b) => {

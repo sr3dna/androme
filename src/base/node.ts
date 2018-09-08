@@ -352,12 +352,15 @@ export default abstract class Node implements BoxModel {
         return this.originalStyleMap[attr] || (complete ? this.css(attr) : '');
     }
 
-    public cssParent(attr: string, includeChild = false) {
+    public cssParent(attr: string, startChild = false, ignoreHidden = false) {
         let result = '';
-        let current = (includeChild ? this : getNodeFromElement(this.element.parentElement));
+        let current = (startChild ? this : getNodeFromElement(this.element.parentElement));
         while (current != null) {
             result = current.originalStyleMap[attr] || '';
             if (current.documentBody || result) {
+                if (ignoreHidden && !current.visible) {
+                    result = '';
+                }
                 break;
             }
             current = getNodeFromElement(current.element.parentElement);
@@ -489,7 +492,7 @@ export default abstract class Node implements BoxModel {
                 case 'IFRAME':
                     return;
                 default:
-                    if (this.viewWidth === 0 && this.inlineElement && !this.floating && this.textElement) {
+                    if (this.viewWidth === 0 && !this.floating && this.inlineElement && this.textElement) {
                         this._multiLine = getRangeClientRect(this.element)[1];
                     }
                     break;
@@ -847,7 +850,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get relativeWrap() {
-        return this.textElement && !this.floating && this.siblingflow && this.alignMargin;
+        return (this.textElement && !this.floating && this.siblingflow && this.alignMargin && this.toInt('verticalAlign') >= 0);
     }
 
     get overflow() {
