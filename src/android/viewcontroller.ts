@@ -144,7 +144,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
         function adjustBaseline(nodes: T[]) {
             if (nodes.length > 1) {
-                const baseline = NodeList.textBaseline(nodes);
+                const baseline = NodeList.textBaseline(nodes, true);
                 if (baseline != null) {
                     for (const node of nodes) {
                         if (node !== baseline && (node.lineHeight === 0 || baseline.lineHeight !== node.lineHeight) && (node.nodeType <= NODE_STANDARD.TEXT || node.linearHorizontal)) {
@@ -247,13 +247,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                 else {
                     mapLayout = MAP_LAYOUT.constraint;
                     if (node.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL)) {
-                        const text =  NodeList.textBaseline(nodes.list, true);
-                        const image =  NodeList.textBaseline(nodes.list);
+                        const text =  NodeList.textBaseline(nodes.list);
+                        const baseline = nodes.list.filter(item => item.textElement && item.baseline);
+                        const image = nodes.list.filter(item => item.imageElement && item.baseline);
                         const highest = nodes.sort((a, b) => a.bounds.top <= b.bounds.top ? -1 : 1).get(0);
                         const lowest = nodes.sort((a, b) => a.bounds.bottom >= b.bounds.bottom ? -1 : 1).get(0);
-                        const baseline = nodes.filter(item => item.textElement && item.baseline);
-                        if (nodes.list.some(item => item.imageElement)) {
-                            nodes.list.filter(item => !item.imageElement && item.baseline).forEach(item => item.app(mapLayout['bottom'], 'parent'));
+                        if (text != null) {
+                            text.app(mapLayout['baseline'], (image.length > 0 ? image[0].stringId : 'parent'));
                         }
                         for (let i = 0; i < nodes.length; i++) {
                             const current = nodes.get(i);
@@ -265,9 +265,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 current.app(mapLayout['leftRight'], previous.stringId);
                                 current.constraint.marginHorizontal = previous.stringId;
                             }
-                            let textTopBottom = text || baseline.get(0);
+                            let textTopBottom = text || baseline[0];
                             if (current === textTopBottom) {
-                                textTopBottom = baseline.get(1);
+                                textTopBottom = baseline[1];
                             }
                             switch (current.css('verticalAlign')) {
                                 case 'text-top':
@@ -284,13 +284,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
                                     break;
                                 case 'baseline':
-                                    if ((text && current.textElement) || current === image) {
-                                        if (text && current !== text && (current.lineHeight === 0 || current.lineHeight !== text.lineHeight)) {
-                                            current.app(mapLayout['baseline'], text.stringId);
-                                        }
-                                    }
-                                    else if (image && current !== image) {
-                                        current.app(mapLayout['baseline'], image.stringId);
+                                    if (text && current !== text) {
+                                        current.app(mapLayout['baseline'], text.stringId);
                                     }
                                     break;
                                 case 'text-bottom':
@@ -1553,13 +1548,13 @@ export default class ViewController<T extends View> extends Controller<T> {
             if (!isNaN(parseInt(width))) {
                 width = delimitDimens(displayName, 'width', width);
             }
-            node.android('layout_width', width);
+            node.android('layout_width', width, false);
         }
         if (hasValue(height)) {
             if (!isNaN(parseInt(height))) {
                 height = delimitDimens(displayName, 'height', height);
             }
-            node.android('layout_height', height);
+            node.android('layout_height', height, false);
         }
         node.renderDepth = renderDepth;
         let output = this.getEnclosingTag((depth === 0 && !node.documentRoot ? -1 : depth), viewName, node.id, (children ? getPlaceholder(node.id) : ''));

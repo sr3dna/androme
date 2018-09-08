@@ -1,7 +1,7 @@
 import Node from './node';
 import { convertInt, convertPX, sortAsc, sortDesc } from '../lib/util';
 import { NODE_STANDARD } from '../lib/constants';
-import { getNodeFromElement, isLineBreak } from '../lib/dom';
+import { isLineBreak } from '../lib/dom';
 
 export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
@@ -22,12 +22,11 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return nodes;
     }
 
-    public static textBaseline<T extends Node>(list: T[], text = false, parent?: T) {
-        const images = (!text ? list.filter(node => node.imageElement && node.baseline) : []);
-        if (parent == null && images.length === 0 && list.filter(node => node.textElement).every(node => node.baseline && node.lineHeight === list[0].lineHeight && node.css('fontSize') === list[0].css('fontSize'))) {
+    public static textBaseline<T extends Node>(list: T[], relative = false, nodeType = false) {
+        if (!list.some(node => !node.baseline) && list.some(node => node.imageElement)) {
             return null;
         }
-        const baseline = (images.length > 0 ? images : list.filter(node => node.textElement && node.baseline && !node.multiLine)).sort((a, b) => {
+        const baseline = list.filter(node => node.textElement && node.baseline && !node.multiLine).sort((a, b) => {
             const fontSizeA = convertInt(convertPX(a.css('fontSize')));
             const fontSizeB = convertInt(convertPX(b.css('fontSize')));
             const heightA = a.bounds.height;
@@ -55,31 +54,24 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             else {
                 return (heightA >= heightB ? -1 : 1);
             }
-        })[0];
-        const nodeType = (text ? NODE_STANDARD.TEXT : NODE_STANDARD.IMAGE);
-        if (baseline == null && parent != null) {
-            const valid = Array.from(parent.element.children).some(element => {
-                const node = getNodeFromElement(element);
-                if (node) {
-                    return ((node.nodeType <= nodeType && node.baseline) || (node.linearHorizontal && node.children.some(item => item.nodeType <= nodeType && item.baseline)));
-                }
-                return false;
-            });
-            if (valid) {
-                return list.filter(node => node.baseline).sort((a, b) => {
-                    let nodeTypeA = a.nodeType;
-                    let nodeTypeB = b.nodeType;
-                    if (a.linearHorizontal) {
-                        nodeTypeA = Math.min.apply(null, a.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
-                    }
-                    if (b.linearHorizontal) {
-                        nodeTypeB = Math.min.apply(null, b.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
-                    }
-                    return (nodeTypeA <= nodeTypeB ? -1 : 1);
-                })[0];
-            }
+        });
+        if (relative) {
+            baseline.reverse();
         }
-        return baseline;
+        if (baseline[0] == null && nodeType) {
+            return list.filter(node => node.baseline).sort((a, b) => {
+                let nodeTypeA = a.nodeType;
+                let nodeTypeB = b.nodeType;
+                if (a.linearHorizontal) {
+                    nodeTypeA = Math.min.apply(null, a.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
+                }
+                if (b.linearHorizontal) {
+                    nodeTypeB = Math.min.apply(null, b.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
+                }
+                return (nodeTypeA <= nodeTypeB ? -1 : 1);
+            })[0];
+        }
+        return baseline[0];
     }
 
     public static linearX<T extends Node>(list: T[]) {

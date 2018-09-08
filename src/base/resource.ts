@@ -352,7 +352,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     protected hasDrawableBackground(object: BoxStyle) {
-        return (object && (this.borderVisible(object.borderTop) || this.borderVisible(object.borderRight) || this.borderVisible(object.borderBottom) || this.borderVisible(object.borderLeft) || object.backgroundImage !== '' || object.borderRadius.length > 0));
+        return (object && (this.borderVisible(object.borderTop) || this.borderVisible(object.borderRight) || this.borderVisible(object.borderBottom) || this.borderVisible(object.borderLeft) || (object.backgroundImage !== '' && object.backgroundImage !== 'none') || object.borderRadius.length > 0));
     }
 
     protected getBorderStyle(border: BorderAttribute) {

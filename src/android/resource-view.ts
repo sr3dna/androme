@@ -608,66 +608,68 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }]
                         };
                         const root = getTemplateLevel(data, '0');
-                        const borders: BorderAttribute[] = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
-                        let valid = true;
-                        let width = '';
-                        let borderStyle = '';
-                        let radiusSize = '';
-                        borders.some((item, index) => {
-                            if (this.borderVisible(item)) {
-                                if ((width !== '' && width !== item.width) || (borderStyle !== '' && borderStyle !== this.getBorderStyle(item)) || (radiusSize !== '' && radiusSize !== stored.borderRadius[index])) {
-                                    valid = false;
-                                    return true;
-                                }
-                                [width, borderStyle, radiusSize] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
-                            }
-                            return false;
-                        });
-                        const borderRadius = {};
-                        if (stored.borderRadius.length > 1) {
-                            Object.assign(borderRadius, {
-                                topLeftRadius: stored.borderRadius[0],
-                                topRightRadius: stored.borderRadius[1],
-                                bottomRightRadius: stored.borderRadius[2],
-                                bottomLeftRadius: stored.borderRadius[3]
-                            });
-                        }
-                        if (valid) {
-                            const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
-                            const layerList: {} = {
-                                'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
-                                'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
-                                'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
-                                'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
-                                '5': [{ width, borderStyle }],
-                                '6': radius,
-                                '7': radiusInit
-                            };
-                            if (stored.borderRadius.length > 1) {
-                                layerList['7'].push(borderRadius);
-                            }
-                            root['4'].push(layerList);
-                        }
-                        else {
-                            borders.forEach((item, index) => {
+                        if (hasBorder) {
+                            const borders: BorderAttribute[] = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
+                            let valid = true;
+                            let width = '';
+                            let borderStyle = '';
+                            let radiusSize = '';
+                            borders.some((item, index) => {
                                 if (this.borderVisible(item)) {
-                                    const hideWidth = `-${item.width}`;
-                                    const layerList: {} = {
-                                        'top': hideWidth,
-                                        'right': hideWidth,
-                                        'bottom': hideWidth,
-                                        'left': hideWidth,
-                                        '5': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
-                                        '6': radius,
-                                        '7': radiusInit
-                                    };
-                                    layerList[['top', 'right', 'bottom', 'left'][index]] = '';
-                                    if (stored.borderRadius.length > 1) {
-                                        layerList['7'].push(borderRadius);
+                                    if ((width !== '' && width !== item.width) || (borderStyle !== '' && borderStyle !== this.getBorderStyle(item)) || (radiusSize !== '' && radiusSize !== stored.borderRadius[index])) {
+                                        valid = false;
+                                        return true;
                                     }
-                                    root['4'].push(layerList);
+                                    [width, borderStyle, radiusSize] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
                                 }
+                                return false;
                             });
+                            const borderRadius = {};
+                            if (stored.borderRadius.length > 1) {
+                                Object.assign(borderRadius, {
+                                    topLeftRadius: stored.borderRadius[0],
+                                    topRightRadius: stored.borderRadius[1],
+                                    bottomRightRadius: stored.borderRadius[2],
+                                    bottomLeftRadius: stored.borderRadius[3]
+                                });
+                            }
+                            if (valid) {
+                                const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
+                                const layerList: {} = {
+                                    'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
+                                    'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
+                                    'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
+                                    'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
+                                    '5': [{ width, borderStyle }],
+                                    '6': radius,
+                                    '7': radiusInit
+                                };
+                                if (stored.borderRadius.length > 1) {
+                                    layerList['7'].push(borderRadius);
+                                }
+                                root['4'].push(layerList);
+                            }
+                            else {
+                                borders.forEach((item, index) => {
+                                    if (this.borderVisible(item)) {
+                                        const hideWidth = `-${item.width}`;
+                                        const layerList: {} = {
+                                            'top': hideWidth,
+                                            'right': hideWidth,
+                                            'bottom': hideWidth,
+                                            'left': hideWidth,
+                                            '5': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
+                                            '6': radius,
+                                            '7': radiusInit
+                                        };
+                                        layerList[['top', 'right', 'bottom', 'left'][index]] = '';
+                                        if (stored.borderRadius.length > 1) {
+                                            layerList['7'].push(borderRadius);
+                                        }
+                                        root['4'].push(layerList);
+                                    }
+                                });
+                            }
                         }
                         if (root['4'].length === 0) {
                             root['4'] = false;

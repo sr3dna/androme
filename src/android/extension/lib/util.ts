@@ -1,7 +1,8 @@
 import { Null, StringMap } from '../../../lib/types';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { formatPX, includes, isNumber, optional } from '../../../lib/util';
+import { formatPX, hasValue, includes, isNumber, optional } from '../../../lib/util';
+import { getNodeFromElement } from '../../../lib/dom';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import parseRTL from '../../localization';
@@ -19,6 +20,19 @@ export function createPlaceholder<T extends View>(nextId: number, node: T, child
 
 export function locateExtension<T extends View>(node: T, extension: string): Null<Element> {
     return <Element> Array.from(node.element.children).find((element: Element) => includes(<string> optional(element, 'dataset.ext'), extension));
+}
+
+export function getTargetDepth(id: string) {
+    const node = getNodeFromElement(document.getElementById(id));
+    if (node != null) {
+        if (hasValue(node.dataset.dataInclude)) {
+            return (hasValue(node.dataset.includeMerge) ? 1 : 0);
+        }
+        else {
+            return node.depth;
+        }
+    }
+    return -1;
 }
 
 export function setPositionIsolated<T extends View>(node: T) {

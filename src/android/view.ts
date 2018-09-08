@@ -52,7 +52,7 @@ export default class View extends Node {
         super.attr(obj, attr, value, overwrite);
     }
 
-    public android(attr: string = '', value: string = '', overwrite = true) {
+    public android(attr: string, value = '', overwrite = true) {
         if (hasValue(value)) {
             this.attr('android', attr, value, overwrite);
         }
@@ -61,7 +61,7 @@ export default class View extends Node {
         }
     }
 
-    public app(attr: string = '', value: string = '', overwrite = true) {
+    public app(attr: string, value = '', overwrite = true) {
         if (hasValue(value)) {
             this.attr('app', attr, value, overwrite);
         }
@@ -442,9 +442,6 @@ export default class View extends Node {
                 this.android('maxWidth', parent.css('maxWidth'), false);
             }
         }
-        if (this.cssParent('display', true) === 'none') {
-            this.android('visibility', 'gone');
-        }
         if (this.cssParent('visibility', true) === 'hidden') {
             this.android('visibility', 'invisible');
         }
@@ -689,11 +686,11 @@ export default class View extends Node {
                 });
             }
             if (this.linearHorizontal) {
-                if (renderChildren.some(node => node.floating || !node.siblingflow) || this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
+                if (renderChildren.some(node => node.floating || !node.siblingflow || (node.imageElement && node.baseline)) || this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
                     this.android('baselineAligned', 'false');
                 }
                 else if ((renderParent.is(NODE_STANDARD.GRID) || renderChildren.some(node => node.toInt('verticalAlign') !== 0 || !node.alignMargin) || renderParent.android('baselineAlignedChildIndex') != null) && renderChildren.some(node => node.nodeType <= NODE_STANDARD.TEXT)) {
-                    const baseline = NodeList.textBaseline(renderChildren, false, renderParent);
+                    const baseline = NodeList.textBaseline(renderChildren, false, (renderParent.is(NODE_STANDARD.GRID) || !renderChildren.some(node => node.textElement)));
                     if (baseline != null) {
                         this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline).toString());
                     }

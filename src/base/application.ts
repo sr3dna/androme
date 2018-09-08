@@ -458,7 +458,7 @@ export default class Application<T extends Node> {
             const partial = new Map<string, Map<number, string>>();
             const external = new Map<string, Map<number, string>>();
             function insertViewTemplate(data: Map<string, Map<number, string>>, node: T, parentId: string, value: string, current: string) {
-                const key = parentId + (current === '' && node.renderIndex !== -1 ? `:${node.renderIndex}` : '');
+                const key = parentId + (current === '' && node.renderPosition !== -1 ? `:${node.renderPosition}` : '');
                 if (!data.has(key)) {
                     data.set(key, new Map<number, string>());
                 }
@@ -818,18 +818,19 @@ export default class Application<T extends Node> {
                                             if (!parentY.flex.enabled && children.every(node => node.pageflow)) {
                                                 const float = new Set(children.map(node => node.float));
                                                 if (linearX) {
+                                                    const floatSingle = (float.size === 1 || !float.has('right'));
                                                     const linearAlignment = children.every(node => ['baseline', 'initial', 'sub', 'sup'].includes(node.css('verticalAlign')) || isUnit(node.css('verticalAlign')));
                                                     if (!linearAlignment && float.size === 1 && float.has('none') && children.some(node => node.hasElement && !['baseline', 'initial', 'top', 'middle', 'bottom', 'sub', 'sup'].includes(node.css('verticalAlign'))) && children.every(node => node.toInt('verticalAlign') >= 0)) {
                                                         xml = this.writeConstraintLayout(nodeY, parentY);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         this.sortByAlignment(children, nodeY, nodeY.alignmentType, true);
                                                     }
-                                                    else if ((float.size === 1 || !float.has('right')) || linearAlignment) {
+                                                    else if (floatSingle || linearAlignment) {
                                                         if ((children.every(node => node.relativeWrap) && new Set(children.map(node => node.lineHeight)).size > 1) || children.some(node => node.textElement && node.multiLine)) {
                                                             xml = this.writeRelativeLayout(nodeY, parentY);
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                                                         }
-                                                        else {
+                                                        else if (floatSingle) {
                                                             xml = this.writeLinearLayout(nodeY, parentY, true);
                                                             if (children.some(node => node.plainText) || linearAlignment) {
                                                                 nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
@@ -889,7 +890,7 @@ export default class Application<T extends Node> {
             }
             for (let [id, views] of partial.entries()) {
                 const content: string[] = [];
-                const [parentId, renderIndex] = id.split(':');
+                const [parentId, renderPosition] = id.split(':');
                 const templates = Array.from(views.values());
                 if (templates.length > 0) {
                     if (this._sorted[parentId] != null) {
@@ -907,7 +908,7 @@ export default class Application<T extends Node> {
                     if (content.length === 0) {
                         content.push(...templates);
                     }
-                    id = parentId + (renderIndex != null ? `:${renderIndex}` : '');
+                    id = parentId + (renderPosition != null ? `:${renderPosition}` : '');
                     const placeholder = getPlaceholder(id);
                     if (output.indexOf(placeholder) !== -1) {
                         output = replacePlaceholder(output, placeholder, content.join(''));
@@ -945,7 +946,6 @@ export default class Application<T extends Node> {
         else if (root.renderExtension.length === 0) {
             root.hide();
         }
-        this.cacheInternal.append(...this.cache);
     }
 
     public writeFrameLayout(node: T, parent: T, children = false) {
@@ -1097,7 +1097,7 @@ export default class Application<T extends Node> {
                         const single = section.list[0];
                         single.alignmentType |= NODE_ALIGNMENT.SINGLE;
                         setAlignment(single, index);
-                        single.renderIndex = index;
+                        single.renderPosition = index;
                         xml = replacePlaceholder(xml, group.id, `{:${group.id}:${index}}`);
                         group.renderAppend(single);
                     }

@@ -16,10 +16,14 @@ export function removePlaceholders(value: string) {
 
 export function modifyIndent(value: string, depth: number) {
     if (depth >= 0) {
+        let indent = -1;
         return value.split('\n').map(line => {
-            const match = /^({.*?})(.*)(<.*)/.exec(line);
+            const match = /^({.*?})(\t*)(<.*)/.exec(line);
             if (match) {
-                return match[1] + repeat(depth) + match[3];
+                if (indent === -1) {
+                    indent = match[2].length;
+                }
+                return match[1] + repeat(depth + (match[2].length - indent)) + match[3];
             }
             return line;
         }).join('\n');

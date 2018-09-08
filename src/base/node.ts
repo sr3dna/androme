@@ -14,8 +14,9 @@ export default abstract class Node implements BoxModel {
     public nodeType = 0;
     public alignmentType = NODE_ALIGNMENT.NONE;
     public depth = -1;
-    public renderIndex = -1;
     public siblingIndex = Number.MAX_VALUE;
+    public renderIndex = Number.MAX_VALUE;
+    public renderPosition = -1;
     public box: ClientRect;
     public bounds: ClientRect;
     public linear: ClientRect;
@@ -543,6 +544,7 @@ export default abstract class Node implements BoxModel {
 
     public renderAppend(node: T) {
         if (this.renderChildren.indexOf(node) === -1) {
+            node.renderIndex = this.renderChildren.length;
             this.renderChildren.push(node);
         }
     }
