@@ -53,7 +53,7 @@ export default class Drawer<T extends View> extends Extension<T> {
         node.rendered = true;
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
-        return { xml };
+        return { xml, complete: true };
     }
 
     public beforeInsert() {

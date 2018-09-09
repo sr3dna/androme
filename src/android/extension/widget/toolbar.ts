@@ -222,16 +222,16 @@ export default class Toolbar<T extends View> extends Extension<T> {
         }
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
-        return { xml };
+        return { xml, complete: false };
     }
 
     public processChild(): ExtensionResult {
         const node = this.node;
         if (node.imageElement && (node.dataset.navigationIcon != null || node.dataset.collapseIcon != null)) {
             node.hide();
-            return { xml: '', proceed: true };
+            return { xml: '', complete: true, next: true };
         }
-        return { xml: '' };
+        return { xml: '', complete: false};
     }
 
     public beforeInsert() {

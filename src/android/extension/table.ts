@@ -92,7 +92,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
                 )
             );
         }
-        return { xml: '' };
+        return { xml: '', complete: true };
     }
 
     public beforeInsert() {

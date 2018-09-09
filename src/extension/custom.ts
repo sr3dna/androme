@@ -32,6 +32,6 @@ export default class Custom<T extends Node> extends Extension<T> {
                 }
             });
         }
-        return { xml };
+        return { xml, complete: false };
     }
 }

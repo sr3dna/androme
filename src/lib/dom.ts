@@ -159,7 +159,7 @@ export function cssFromParent(element: Element, attr: string) {
     return false;
 }
 
-export function hasFreeFormText(element: Element, maxDepth = 0) {
+export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = false) {
     let valid = false;
     let depth = -1;
     function findFreeForm(elements: any[]) {
@@ -168,7 +168,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0) {
         }
         return elements.some((item: Element) => {
             if (item.nodeName === '#text') {
-                if (isPlainText(item) || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap')) {
+                if (isPlainText(item) || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') || (whiteSpace && item.textContent && item.textContent.indexOf(String.fromCharCode(160))) !== -1) {
                     valid = true;
                     return true;
                 }

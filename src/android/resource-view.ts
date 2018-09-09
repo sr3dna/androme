@@ -1,4 +1,4 @@
-import { ArrayIndex, NameValue, BorderAttribute, BoxStyle, FontAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, NameValue, BorderAttribute, BoxStyle, Image, FontAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
@@ -695,40 +695,40 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.formatted(formatString(method['background'], resourceName), (node.renderExtension.length === 0));
-                    if (SETTINGS.autoSizeBackgroundImage && !node.imageElement && node.renderParent.tagName !== 'TABLE' && backgroundImage.length > 0 && !node.documentRoot && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
-                        let current = node;
-                        let resize = true;
-                        while (current != null && !current.documentBody) {
-                            if (current.viewWidth > 0 && current.viewHeight > 0) {
-                                resize = false;
-                                break;
+                    if (SETTINGS.autoSizeBackgroundImage && backgroundImage.length > 0 && !node.documentRoot && !node.imageElement && node.renderParent.tagName !== 'TABLE' && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
+                        const sizeParent: Image = { width: 0, height: 0,  };
+                        backgroundImageUrl.forEach(value => {
+                            const image = this.imageDimensions.get(parseBackgroundUrl(value));
+                            if (image != null) {
+                                sizeParent.width = Math.max(sizeParent.width, image.width);
+                                sizeParent.height = Math.max(sizeParent.height, image.height);
                             }
-                            if (!current.pageflow) {
-                                break;
+                        });
+                        if (sizeParent.width === 0) {
+                            let current = node;
+                            while (current != null && !current.documentBody) {
+                                if (current.viewWidth > 0) {
+                                    sizeParent.width = current.viewWidth;
+                                }
+                                if (current.viewHeight > 0) {
+                                    sizeParent.height = current.viewHeight;
+                                }
+                                if (!current.pageflow || (sizeParent.width > 0 && sizeParent.height > 0)) {
+                                    break;
+                                }
+                                current = current.documentParent as T;
                             }
-                            current = current.documentParent as T;
                         }
-                        if (resize) {
-                            let maxWidth = 0;
-                            let maxHeight = 0;
-                            backgroundImageUrl.forEach(value => {
-                                const image = this.imageDimensions.get(parseBackgroundUrl(value));
-                                if (image != null) {
-                                    maxWidth = Math.max(maxWidth, image.width);
-                                    maxHeight = Math.max(maxHeight, image.height);
-                                }
-                            });
-                            if (!node.has('width') || node.css('width') === 'auto') {
-                                const width = node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
-                                if (maxWidth === 0 || width < maxWidth) {
-                                    node.css('width', formatPX(width));
-                                }
+                        if (!node.has('width')) {
+                            const width = node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
+                            if (sizeParent.width === 0 || width < sizeParent.width) {
+                                node.css('width', formatPX(width));
                             }
-                            if (!node.has('height') || node.css('height') === 'auto') {
-                                const height = node.bounds.height + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
-                                if (maxHeight === 0 || height < maxHeight) {
-                                    node.css('height', formatPX(height));
-                                }
+                        }
+                        if (!node.has('height')) {
+                            const height = node.bounds.height + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
+                            if (sizeParent.height === 0 || height < sizeParent.height) {
+                                node.css('height', formatPX(height));
                             }
                         }
                     }
@@ -904,7 +904,21 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (stored) {
                 if (node.renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
                     if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                        stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
+                        const value = node.element.textContent || '';
+                        let leadingSpace = 0;
+                        for (let i = 0; value.length; i++) {
+                            switch (value.charCodeAt(i)) {
+                                case 32:
+                                    continue;
+                                case 160:
+                                    leadingSpace++;
+                                    continue;
+                            }
+                            break;
+                        }
+                        if (leadingSpace === 0) {
+                            stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
+                        }
                     }
                 }
                 if (node.hasElement && node.is(NODE_STANDARD.TEXT)) {

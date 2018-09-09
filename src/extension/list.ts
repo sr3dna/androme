@@ -13,6 +13,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
 
     public condition() {
         const children = this.node.children;
+
         return (super.condition() && children.length > 0 && (children.every(node => node.inlineElement) || children.every(node => !node.inlineElement || node.display === 'list-item')) && (
                     children.some((node: T) => node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
                     children.every((node: T) => node.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))
@@ -33,7 +34,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
         let i = 0;
         node.each((item: T) => {
             let ordinal: any = '0';
-            if (item.display === 'list-item' || item.has('listStyleType')) {
+            if (item.display === 'list-item' || item.has('listStyleType') || this.hasSingleImage(item)) {
                 let image = item.css('listStyleImage');
                 if (image && image !== 'none') {
                     ordinal = { image, position: '' };
@@ -88,7 +89,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
             }
             item.data(EXT_NAME.LIST, 'listStyleType', ordinal);
         });
-        return { xml };
+        return { xml, complete: true };
     }
 
     public beforeInsert() {

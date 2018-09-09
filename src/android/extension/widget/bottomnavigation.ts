@@ -30,7 +30,7 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ASSET;
         this.createResourceTheme();
-        return { xml };
+        return { xml, complete: true };
     }
 
     public beforeInsert() {

@@ -17,15 +17,13 @@ export default class Grid<T extends Node> extends Extension<T> {
     public condition() {
         const node = this.node;
         return (
-            this.included() ||
+            this.included() || (node.children.length > 1 && (
             (node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))) ||
-            (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) &&
-                (
-                    (node.css('listStyle') === 'none' || node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none')) ||
-                    (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement))
-                )
-            )
-        );
+            (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
+                (node.css('listStyle') === 'none' || node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none')) ||
+                (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement))
+            ))
+        )));
     }
 
     public processNode(mapX: LayoutMapX<T>): ExtensionResult {
@@ -125,7 +123,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                 for (let l = 0; l < nextCoordsX.length; l++) {
                     const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])].filter(item => item.documentParent.documentParent.id === node.id), 'linear.top');
                     if (l === 0 && nextAxisX.length === 0) {
-                        return { xml: '' };
+                        return { xml: '', complete: false };
                     }
                     columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
                     for (let m = 0; m < nextAxisX.length; m++) {
@@ -294,7 +292,7 @@ export default class Grid<T extends Node> extends Extension<T> {
             node.data(EXT_NAME.GRID, 'mainData', mainData);
             node.render(parent);
         }
-        return { xml };
+        return { xml, complete: true };
     }
 
     public processChild(): ExtensionResult {
@@ -320,17 +318,15 @@ export default class Grid<T extends Node> extends Extension<T> {
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 const group = this.application.controllerHandler.createGroup(node, siblings, parent);
                 if (linearX || linearY) {
-                    const horizontal = !(linearY && !linearX);
-                    xml = this.application.writeLinearLayout(group, parent, horizontal);
-                    group.alignmentType |= (horizontal ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
-                    this.application.sortByAlignment(group.children, group, group.alignmentType, true);
+                    xml = this.application.writeLinearLayout(group, parent, linearX);
+                    group.alignmentType |= (linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL);
                 }
                 else {
                     xml = this.application.writeConstraintLayout(group, parent);
                 }
-                return { xml, parent: group };
+                return { xml, parent: group, complete: true };
             }
         }
-        return { xml };
+        return { xml, complete: true };
     }
 }

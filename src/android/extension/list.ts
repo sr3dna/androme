@@ -158,7 +158,7 @@ export default class ListAndroid<T extends View> extends List<T> {
         if (columnCount > 0) {
             node.app('layout_columnWeight', '1');
         }
-        return { xml: '' };
+        return { xml: '', complete: true };
     }
 
     public afterInsert() {

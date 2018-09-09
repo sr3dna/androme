@@ -20,7 +20,6 @@ export default abstract class Controller<T extends Node> {
     public abstract renderInclude(node: T, parent: T, name: string): string;
     public abstract renderMerge(name: string, content: string[]): string;
     public abstract baseRenderDepth(name: string): number;
-    public abstract setNodeType(node: T, nodeType: number): void;
     public abstract setConstraints(): void;
     public abstract setDimensions(data: ViewData<NodeList<T>>): void;
     public abstract finalize(data: ViewData<NodeList<T>>): void;

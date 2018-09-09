@@ -60,7 +60,7 @@ export type NameValue = {
 export type Image = {
     width: number;
     height: number;
-    url: string;
+    url?: string;
 };
 
 export type PlainFile = {
@@ -138,6 +138,12 @@ export type BoxStyle = {
     backgroundSize: string[];
     backgroundRepeat: string;
     backgroundPosition: string;
+};
+
+export type DisplaySettings = {
+    autoSizePaddingAndBorderWidth: boolean;
+    autoSizeBackgroundImage: boolean;
+    ellipsisOnTextOverflow: boolean;
 };
 
 export type ControllerSettings = {

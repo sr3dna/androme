@@ -57,17 +57,17 @@ export default class Menu<T extends View> extends Nav<T> {
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ALL;
         node.excludeProcedure |= NODE_PROCEDURE.ALL;
-        return { xml };
+        return { xml, complete: true };
     }
 
     public processChild(): ExtensionResult {
         let xml = '';
-        let proceed = false;
+        let next = false;
         const node = this.node;
         const parent = this.parent as T;
         if (node.plainText) {
             node.hide();
-            return { xml, proceed: true };
+            return { xml, complete: true, next: true };
         }
         const element = <HTMLElement> node.element;
         const options: ObjectMap<StringMap> = { android: {}, app: {} };
@@ -99,7 +99,7 @@ export default class Menu<T extends View> extends Nav<T> {
             }
             else if (node.tagName === 'NAV') {
                 nodeName = VIEW_NAVIGATION.MENU;
-                proceed = true;
+                next = true;
             }
             else {
                 nodeName = VIEW_NAVIGATION.GROUP;
@@ -164,7 +164,7 @@ export default class Menu<T extends View> extends Nav<T> {
         node.rendered = true;
         node.excludeResource |= NODE_RESOURCE.ALL;
         node.excludeProcedure |= NODE_PROCEDURE.ALL;
-        return { xml, proceed };
+        return { xml, complete: true, next };
     }
 
     public afterRender() {

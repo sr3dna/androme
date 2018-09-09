@@ -31,7 +31,7 @@ export default class Coordinator<T extends View> extends Extension<T> {
                 }
             }
         }
-        return { xml };
+        return { xml, complete: false };
     }
 
     public afterInsert() {

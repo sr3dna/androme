@@ -22,44 +22,50 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return nodes;
     }
 
-    public static textBaseline<T extends Node>(list: T[], relative = false, nodeType = false) {
-        if (!list.some(node => !node.baseline) && list.some(node => node.imageElement)) {
-            return null;
+    public static textBaseline<T extends Node>(list: T[], nodeType = false) {
+        const lineHeight: number = Math.max.apply(null, list.map(node => node.lineHeight));
+        const boundsHeight: number = Math.max.apply(null, list.map(node => node.bounds.height));
+        if (lineHeight > boundsHeight) {
+            const result = list.filter(node => node.lineHeight === lineHeight);
+            return (result.length === list.length ? result.filter(node => node.hasElement) : result);
         }
-        const baseline = list.filter(node => node.textElement && node.baseline && !node.multiLine).sort((a, b) => {
+        let baseline = list.filter(node => node.baseline).sort((a, b) => {
             const fontSizeA = convertInt(convertPX(a.css('fontSize')));
             const fontSizeB = convertInt(convertPX(b.css('fontSize')));
             const heightA = a.bounds.height;
             const heightB = b.bounds.height;
-            if (a.lineHeight > heightB && b.lineHeight === 0) {
-                return -1;
-            }
-            else if (b.lineHeight > heightA && a.lineHeight === 0) {
-                return 1;
-            }
-            else if (fontSizeA === fontSizeB && heightA === heightB) {
-                if (a.hasElement && !b.hasElement) {
-                    return -1;
-                }
-                else if (!a.hasElement && b.hasElement) {
-                    return 1;
-                }
-                else {
-                    return (a.siblingIndex < b.siblingIndex ? -1 : 1);
-                }
-            }
-            else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
-                return (fontSizeA > fontSizeB ? -1 : 1);
-            }
-            else {
+            if (a.imageElement && b.imageElement) {
                 return (heightA >= heightB ? -1 : 1);
             }
+            else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                return -1;
+            }
+            else if ((b.lineHeight > heightA && a.lineHeight === 0 || a.imageElement)) {
+                return 1;
+            }
+            else if (!a.imageElement && !b.imageElement) {
+                if (fontSizeA === fontSizeB && heightA === heightB) {
+                    if (a.hasElement && !b.hasElement) {
+                        return -1;
+                    }
+                    else if (!a.hasElement && b.hasElement) {
+                        return 1;
+                    }
+                    else {
+                        return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                    }
+                }
+                else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
+                    return (fontSizeA > fontSizeB ? -1 : 1);
+                }
+            }
+            return (heightA >= heightB ? -1 : 1);
         });
-        if (relative) {
+        if (list.some(node => node.plainText && node.lineHeight === 0) && new Set(list.map(node => node.bounds.height)).size === 1) {
             baseline.reverse();
         }
-        if (baseline[0] == null && nodeType) {
-            return list.filter(node => node.baseline).sort((a, b) => {
+        if (baseline.length === 0 && nodeType) {
+            baseline = list.filter(node => node.baseline).sort((a, b) => {
                 let nodeTypeA = a.nodeType;
                 let nodeTypeB = b.nodeType;
                 if (a.linearHorizontal) {
@@ -69,9 +75,9 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                     nodeTypeB = Math.min.apply(null, b.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
                 }
                 return (nodeTypeA <= nodeTypeB ? -1 : 1);
-            })[0];
+            });
         }
-        return baseline[0];
+        return baseline.filter((node, index) => index === 0 || (node.baseline === baseline[0].baseline && node.lineHeight === baseline[0].lineHeight && node.nodeName === baseline[0].nodeName));
     }
 
     public static linearX<T extends Node>(list: T[]) {

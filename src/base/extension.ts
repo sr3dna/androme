@@ -13,7 +13,6 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public tagNames: string[] = [];
     public dependencies: ExtensionDependency[] = [];
     public documentRoot = false;
-    public singleRender = true;
 
     constructor(
         public readonly name: string,
@@ -92,11 +91,11 @@ export default abstract class Extension<T extends Node> implements IExtension {
     }
 
     public processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult {
-        return { xml: '' };
+        return { xml: '', complete: false };
     }
 
     public processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult {
-        return { xml: '' };
+        return { xml: '', complete: false };
     }
 
     public afterRender() {

@@ -95,12 +95,12 @@ const API_ANDROID: UserSupport = {
         customizations: {
             SUB: {
                 android: {
-                    layout_marginTop: '4px'
+                    layout_marginTop: '6px'
                 }
             },
             SUP: {
                 android: {
-                    layout_marginTop: '-4px'
+                    layout_marginTop: '-6px'
                 }
             }
         }

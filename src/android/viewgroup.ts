@@ -1,5 +1,5 @@
 import View from './view';
-import { NODE_ALIGNMENT } from '../lib/constants';
+import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/constants';
 
 export default class ViewGroup<T extends View> extends View {
     public baseNode: T;
@@ -32,7 +32,7 @@ export default class ViewGroup<T extends View> extends View {
         this.documentParent = node.documentParent;
         if (this.hasElement) {
             this.nodeName = node.nodeName;
-            this.inherit(node, 'base', 'style', 'styleMap');
+            this.inherit(node, 'base', 'styleMap');
             this.documentRoot = node.documentRoot;
             this.excludeProcedure = node.excludeProcedure;
             this.excludeResource = node.excludeResource;
@@ -41,9 +41,6 @@ export default class ViewGroup<T extends View> extends View {
         else {
             this.nodeName = `${node.nodeName}_GROUP`;
             this.setBounds();
-        }
-        if (this.element == null) {
-            node.hide();
         }
         this.depth = node.depth;
         this.css('direction', this.documentParent.dir);
@@ -92,7 +89,7 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     get display() {
-        return (this.children.some(node => node.block && !node.floating) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
+        return (this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.INLINE_WRAP) || this.children.some(node => (node.block && !node.floating)) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
     }
 
     get inlineElement() {

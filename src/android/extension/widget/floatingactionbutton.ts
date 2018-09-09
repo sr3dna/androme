@@ -70,7 +70,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         else {
             node.render(parent);
         }
-        return { xml };
+        return { xml, complete: true };
     }
 
     public afterInsert() {

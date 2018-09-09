@@ -121,7 +121,7 @@ export default class Table<T extends Node> extends Extension<T> {
                 columnIndex[i] += element.colSpan;
             }
         }
-        const columnCount = Math.max.apply(null, columnIndex);
+        const columnCount: number = Math.max.apply(null, columnIndex);
         let rowCount = table.length;
         let borderInside = false;
         if (mapWidth.every(value => isPercent(value)) && mapWidth.reduce((a, b) => a + parseFloat(b), 0) > 1) {
@@ -154,12 +154,12 @@ export default class Table<T extends Node> extends Extension<T> {
         }
         const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
         const typeWidth = (() => {
-            const everyAuto = mapWidth.every(value => value === 'auto');
-            const everyUndefined = mapWidth.every(value => value === '0px');
-            if ((everyAuto || everyUndefined) && (node.cssOriginal('width') === 'auto' || !node.has('width')) && !multiLine) {
+            const auto = mapWidth.every(value => value === 'auto');
+            const zeroWidth = mapWidth.every(value => value === '0px');
+            if ((auto || zeroWidth) && (node.cssOriginal('width') === 'auto' || !node.has('width')) && !multiLine) {
                 return 0;
             }
-            else if (everyAuto || mapWidth.some(value => isPercent(value))) {
+            else if (auto || mapWidth.some(value => isPercent(value))) {
                 return 3;
             }
             else if (mapWidth.every(value => value === '0px' || mapWidth[0] === value) && (node.viewWidth > 0 || isPercent(node.css('width')) || multiLine)) {
@@ -298,6 +298,6 @@ export default class Table<T extends Node> extends Extension<T> {
         }
         node.data(EXT_NAME.TABLE, 'boundsWidth', mapBounds.reduce((a, b) => a + b, 0));
         xml = this.application.writeGridLayout(node, parent, columnCount, rowCount);
-        return { xml };
+        return { xml, complete: true };
     }
 }

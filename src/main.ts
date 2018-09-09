@@ -218,27 +218,6 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 main.createLayoutXml();
                 main.setConstraints();
                 main.setResources();
-                main.cache.list.sort((a: T, b: T) => {
-                    if (!a.visible) {
-                        return 1;
-                    }
-                    else if (!b.visible) {
-                        return -1;
-                    }
-                    else if (a.renderDepth === 0 && b.renderDepth === 0) {
-                        return (a.id < b.id ? -1 : 1);
-                    }
-                    else if (a.renderDepth !== b.renderDepth) {
-                        return (a.renderDepth < b.renderDepth ? -1 : 1);
-                    }
-                    else if (a.documentParent.renderIndex !== b.documentParent.renderIndex) {
-                        return (a.documentParent.renderIndex < b.documentParent.renderIndex ? -1 : 1);
-                    }
-                    else {
-                        return (a.renderIndex < b.renderIndex ? -1 : 1);
-                    }
-                });
-                main.cacheInternal.list.push(...main.cache.list);
                 ROOT_CACHE.add(element);
             }
         }
@@ -248,7 +227,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     }
     if (SETTINGS.preloadImages && rootElement != null) {
         for (const image of IMAGE_CACHE.values()) {
-            if (image.width === 0 && image.height === 0) {
+            if (image.url && image.width === 0 && image.height === 0) {
                 const imageElement = <HTMLImageElement> document.createElement('IMG');
                 imageElement.src = image.url;
                 if (imageElement.complete && imageElement.naturalWidth > 0 && imageElement.naturalHeight > 0) {
@@ -256,8 +235,8 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                     image.height = imageElement.naturalHeight;
                 }
                 else {
-                    imageElement.style.display = 'none';
                     imageElement.className = 'androme.preload';
+                    imageElement.style.display = 'none';
                     rootElement.appendChild(imageElement);
                 }
             }
