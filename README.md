@@ -350,7 +350,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:inputType="text"
                 android:layout_height="wrap_content"
                 android:layout_width="@dimen/text_width"
-                android:paddingHorizontal="@dimen/text_padding_horizontal"
                 android:paddingVertical="@dimen/text_padding_vertical"
                 style="@style/Text" />
             <Space
@@ -366,9 +365,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_17"
-                    android:layout_alignBaseline="@+id/textview_19"
                     android:layout_alignParentStart="true"
-                    android:layout_alignParentTop="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:text="@string/date"
@@ -386,7 +383,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol3212"
+                    android:text="@string/__symbol43684"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -395,7 +392,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_width="wrap_content">
                 <LinearLayout
                     android:id="@+id/linearlayout_8"
-                    android:layout_alignParentTop="true"
                     style="@style/Relativelayout_2">
                     <Spinner
                         android:id="@+id/month0"
@@ -502,7 +498,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="@dimen/select_width_1"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
@@ -518,9 +513,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_20"
-                    android:layout_alignBaseline="@+id/textview_22"
                     android:layout_alignParentStart="true"
-                    android:layout_alignParentTop="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:text="@string/topic"
@@ -538,7 +531,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol3212"
+                    android:text="@string/__symbol43684"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -554,7 +547,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="@dimen/text_margin_end"
                     android:layout_width="@dimen/text_width_1"
-                    android:paddingHorizontal="@dimen/text_padding_horizontal"
                     android:paddingVertical="@dimen/text_padding_vertical"
                     style="@style/Text" />
                 <Spinner
@@ -565,7 +557,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
             </LinearLayout>
@@ -589,7 +580,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="@dimen/select_width"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
@@ -612,7 +602,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
@@ -635,7 +624,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
         </android.support.v7.widget.GridLayout>
@@ -669,7 +657,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="@dimen/select_width"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
@@ -692,7 +679,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
@@ -721,7 +707,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_width="@dimen/select_width"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
                 <Button
@@ -771,7 +756,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
@@ -794,7 +778,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
@@ -817,7 +800,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:minWidth="@dimen/select_min_width"
-                android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
@@ -846,7 +828,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
                 <Spinner
@@ -857,7 +838,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
                 <Button
@@ -899,7 +879,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
                 <Spinner
@@ -910,7 +889,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
                 <Button
@@ -951,9 +929,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_23"
-                    android:layout_alignBaseline="@+id/textview_25"
                     android:layout_alignParentStart="true"
-                    android:layout_alignParentTop="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:text="@string/custom"
@@ -971,7 +947,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol3212"
+                    android:text="@string/__symbol43684"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -987,7 +963,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="@dimen/text_margin_end"
                     android:layout_width="@dimen/text_width_1"
-                    android:paddingHorizontal="@dimen/text_padding_horizontal"
                     android:paddingVertical="@dimen/text_padding_vertical"
                     style="@style/Text" />
                 <Spinner
@@ -998,7 +973,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
                 <Spinner
@@ -1009,7 +983,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_marginStart="@dimen/select_margin_start"
                     android:layout_width="wrap_content"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
             </LinearLayout>
@@ -1028,7 +1001,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Label" />
             <LinearLayout
                 android:id="@+id/linearlayout_7"
-                android:baselineAlignedChildIndex="0"
+                android:baselineAlignedChildIndex="1"
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:orientation="horizontal">
@@ -1039,19 +1012,17 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_width="@dimen/select_width_2"
                     android:minWidth="@dimen/select_min_width"
-                    android:paddingHorizontal="@dimen/select_padding_horizontal"
                     android:paddingVertical="@dimen/select_padding_vertical"
                     style="@style/Select" />
                 <LinearLayout
                     android:id="@+id/linearlayout_11"
-                    android:baselineAlignedChildIndex="0"
+                    android:baselineAlignedChildIndex="1"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/div_margin_start"
                     android:layout_width="wrap_content"
                     android:orientation="horizontal">
                     <RadioGroup
                         android:id="@+id/radiogroup_1"
-                        android:baselineAlignedChildIndex="1"
                         android:checkedButton="@+id/c2"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
@@ -1100,7 +1071,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol16220">):</string>
+    <string name="__symbol43684">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1153,7 +1124,7 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item>@string/birth</item>
         <item>@string/death</item>
     </string-array>
-    <string-array name="day0_array">
+    <string-array name="customday0_array">
         <item>01</item>
         <item>02</item>
         <item>03</item>
@@ -1185,6 +1156,20 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item>29</item>
         <item>30</item>
         <item>31</item>
+    </string-array>
+    <string-array name="custommonth0_array">
+        <item>01</item>
+        <item>02</item>
+        <item>03</item>
+        <item>04</item>
+        <item>05</item>
+        <item>06</item>
+        <item>07</item>
+        <item>08</item>
+        <item>09</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
     </string-array>
     <string-array name="entryactive_array">
         <item>@string/yes</item>
@@ -1225,20 +1210,6 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string-array name="mode_array">
         <item>@string/variant</item>
         <item>@string/predefined</item>
-    </string-array>
-    <string-array name="month0_array">
-        <item>01</item>
-        <item>02</item>
-        <item>03</item>
-        <item>04</item>
-        <item>05</item>
-        <item>06</item>
-        <item>07</item>
-        <item>08</item>
-        <item>09</item>
-        <item>10</item>
-        <item>11</item>
-        <item>12</item>
     </string-array>
     <string-array name="series_1_array">
         <item>@string/__00_inactive</item>
@@ -1349,7 +1320,7 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item name="android:layout_marginTop">@dimen/radio_margin_top</item>
         <item name="android:layout_width">wrap_content</item>
     </style>
-    <style name="Relativelayout_1">
+    <style name="Relativelayout_2">
         <item name="android:layout_alignParentStart">true</item>
         <item name="android:layout_gravity">start</item>
         <item name="android:layout_height">wrap_content</item>
@@ -1361,12 +1332,11 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item name="android:textColor">@color/black</item>
         <item name="android:textSize">11sp</item>
     </style>
-    <style name="Select.Linearlayout_2">
+    <style name="Select.Linearlayout_1">
         <item name="android:background">@drawable/select_series_1</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:minWidth">@dimen/select_min_width</item>
-        <item name="android:paddingHorizontal">@dimen/select_padding_horizontal</item>
         <item name="android:paddingVertical">@dimen/select_padding_vertical</item>
     </style>
     <style name="Text">
@@ -1400,8 +1370,8 @@ The attributes "include" and "include-end" can only be applied to elements which
 <resources>
     <dimen name="button_height">17dp</dimen>
     <dimen name="button_margin_start">3dp</dimen>
-    <dimen name="button_margin_start_1">4dp</dimen>
-    <dimen name="button_margin_start_2">7dp</dimen>
+    <dimen name="button_margin_start_1">7dp</dimen>
+    <dimen name="button_margin_start_2">4dp</dimen>
     <dimen name="button_min_height">25dp</dimen>
     <dimen name="button_min_width">35dp</dimen>
     <dimen name="button_padding_horizontal">6dp</dimen>
@@ -1425,17 +1395,15 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="select_group_margin_top">13dp</dimen>
     <dimen name="select_margin_start">3dp</dimen>
     <dimen name="select_min_width">37dp</dimen>
-    <dimen name="select_padding_horizontal">1dp</dimen>
-    <dimen name="select_padding_vertical">3dp</dimen>
-    <dimen name="select_width">202dp</dimen>
-    <dimen name="select_width_1">162dp</dimen>
-    <dimen name="select_width_2">102dp</dimen>
+    <dimen name="select_padding_vertical">2dp</dimen>
+    <dimen name="select_width">200dp</dimen>
+    <dimen name="select_width_1">160dp</dimen>
+    <dimen name="select_width_2">100dp</dimen>
     <dimen name="space_height">6dp</dimen>
     <dimen name="text_margin_end">5dp</dimen>
-    <dimen name="text_padding_horizontal">2dp</dimen>
-    <dimen name="text_padding_vertical">3dp</dimen>
-    <dimen name="text_width">44dp</dimen>
-    <dimen name="text_width_1">134dp</dimen>
+    <dimen name="text_padding_vertical">1dp</dimen>
+    <dimen name="text_width">40dp</dimen>
+    <dimen name="text_width_1">130dp</dimen>
     <dimen name="ul_padding_bottom">11dp</dimen>
     <dimen name="ul_padding_horizontal">5dp</dimen>
     <dimen name="ul_padding_top">5dp</dimen>
@@ -1445,7 +1413,7 @@ The attributes "include" and "include-end" can only be applied to elements which
 ### Drawable Resources
 
 ```xml
-<?xml version="1.0" encoding="utf-8"?>
+<<?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <stroke android:width="1dp" android:color="@color/yellow_green" />
     <solid android:color="@color/dark_blue" />
@@ -1461,15 +1429,15 @@ The attributes "include" and "include-end" can only be applied to elements which
 
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <stroke android:width="2dp" android:color="@color/black" />
-</shape>
-<!-- filename: res/drawable/text_order.xml -->
-
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <stroke android:width="1dp" android:color="@color/dark_gray" />
 </shape>
 <!-- filename: res/drawable/select_series_1.xml -->
+
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <stroke android:width="2dp" android:color="@color/black" />
+</shape>
+<!-- filename: res/drawable/text_order.xml -->
 
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">

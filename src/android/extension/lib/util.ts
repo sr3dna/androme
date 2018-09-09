@@ -11,7 +11,9 @@ import SETTINGS from '../../../settings';
 export function createPlaceholder<T extends View>(nextId: number, node: T, children: T[] = []) {
     const placeholder = new View(nextId, node.api, node.element) as T;
     placeholder.parent = node.parent;
-    placeholder.children = children;
+    for (const child of children)  {
+        child.parent = placeholder;
+    }
     placeholder.inherit(node, 'base');
     placeholder.isolated = true;
     placeholder.excludeResource |= NODE_RESOURCE.ALL;
@@ -19,7 +21,7 @@ export function createPlaceholder<T extends View>(nextId: number, node: T, child
 }
 
 export function locateExtension<T extends View>(node: T, extension: string): Null<Element> {
-    return <Element> Array.from(node.element.children).find((element: Element) => includes(<string> optional(element, 'dataset.ext'), extension));
+    return <Element> Array.from(node.element.children).find((element: Element) => includes(optional(element, 'dataset.ext') as string, extension));
 }
 
 export function getTargetDepth(id: string) {

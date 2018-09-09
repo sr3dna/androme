@@ -1,9 +1,9 @@
 import { DisplaySettings, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, indexOf, isPercent, isUnit, lastIndexOf, withinFraction } from '../lib/util';
+import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, isPercent, isUnit, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId, stripId } from './lib/util';
-import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText } from '../lib/dom';
+import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -108,53 +108,55 @@ export default class View extends Node {
         return false;
     }
 
-    public modifyBox(region: number, offset: number | null, negative = false, bounds = false) {
-        const name = convertEnum(region, BOX_STANDARD, BOX_ANDROID);
-        if (name !== '' && offset !== 0) {
-            const attr = name.replace('layout_', '');
-            if (offset == null) {
-                this._boxReset[attr] = 1;
-            }
-            else {
-                this._boxAdjustment[attr] += offset;
-                if (!negative) {
-                    this._boxAdjustment[attr] = Math.max(0, this._boxAdjustment[attr]);
+    public modifyBox(region: number | string, offset: number | null, negative = false, bounds = false) {
+        const name = (typeof region === 'number' ? convertEnum(region, BOX_STANDARD, BOX_ANDROID) : '');
+        if ((name !== '' || (typeof region === 'string' && region !== '')) && offset !== 0) {
+            const attr = (typeof region === 'string' ? region : name.replace('layout_', ''));
+            if (this._boxReset[attr] != null) {
+                if (offset == null) {
+                    this._boxReset[attr] = 1;
                 }
-            }
-            if (bounds && offset) {
-                switch (attr) {
-                    case 'marginTop':
-                        this.linear.top -= offset;
-                        break;
-                    case 'marginRight':
-                        this.linear.right += offset;
-                        break;
-                    case 'marginBottom':
-                        this.linear.bottom += offset;
-                        break;
-                    case 'marginLeft':
-                        this.linear.left -= offset;
-                        break;
-                    case 'paddingTop':
-                        this.box.top += offset;
-                        break;
-                    case 'paddingRight':
-                        this.box.right -= offset;
-                        break;
-                    case 'paddingBottom':
-                        this.box.bottom -= offset;
-                        break;
-                    case 'paddingLeft':
-                        this.box.left += offset;
-                        break;
+                else {
+                    this._boxAdjustment[attr] += offset;
+                    if (!negative) {
+                        this._boxAdjustment[attr] = Math.max(0, this._boxAdjustment[attr]);
+                    }
                 }
-                this.setDimensions([(attr.indexOf('margin') !== -1 ? 'linear' : 'box')]);
+                if (bounds && offset) {
+                    switch (attr) {
+                        case 'marginTop':
+                            this.linear.top -= offset;
+                            break;
+                        case 'marginRight':
+                            this.linear.right += offset;
+                            break;
+                        case 'marginBottom':
+                            this.linear.bottom += offset;
+                            break;
+                        case 'marginLeft':
+                            this.linear.left -= offset;
+                            break;
+                        case 'paddingTop':
+                            this.box.top += offset;
+                            break;
+                        case 'paddingRight':
+                            this.box.right -= offset;
+                            break;
+                        case 'paddingBottom':
+                            this.box.bottom -= offset;
+                            break;
+                        case 'paddingLeft':
+                            this.box.left += offset;
+                            break;
+                    }
+                    this.setDimensions([(attr.indexOf('margin') !== -1 ? 'linear' : 'box')]);
+                }
             }
         }
     }
 
     public valueBox(region: string | number) {
-        const name = convertEnum(parseInt(<string> region), BOX_STANDARD, BOX_ANDROID);
+        const name = convertEnum(parseInt(region as string), BOX_STANDARD, BOX_ANDROID);
         if (name !== '') {
             const attr = parseRTL(name);
             return [attr, this.android(attr) || '0px'];
@@ -346,7 +348,6 @@ export default class View extends Node {
                                 (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((previousSibling == null || !previousSibling.floating) && (nextSibling == null || !nextSibling.floating)))
                             )) ||
                             (!this.hasElement && this.renderChildren.length > 0 && this.renderChildren.some(item => item.linear.width >= this.documentParent.box.width)) ||
-                            (this.renderChildren.some(node => node.hasBit('alignmentType', NODE_ALIGNMENT.INLINE_WRAP))) ||
                             (width >= widthParent && (parent.documentBody || renderParent.documentRoot || this.nodeType < NODE_STANDARD.BLOCK) || this.ascend(true).reduce((a: number, b: T) => Math.max(a, b.toInt('width')), 0) > 0) ||
                             (inlineRight > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(inlineRight, this.box.right))))
                         {
@@ -439,7 +440,6 @@ export default class View extends Node {
 
     public setAlignment() {
         const renderParent = this.renderParent;
-        const gravityParent = renderParent.android('gravity') || '';
         const obj = (this.renderParent.is(NODE_STANDARD.GRID) ? 'app' : 'android');
         const left = parseRTL('left');
         const right = parseRTL('right');
@@ -548,9 +548,7 @@ export default class View extends Node {
                 this[obj]('layout_gravity', right);
             }
             else {
-                if (!setAutoMargin(this) && this.inlineWidth && indexOf(gravityParent, 'center', right) !== -1) {
-                    this[obj]('layout_gravity', left);
-                }
+                setAutoMargin(this);
             }
         }
         let floating = '';
@@ -670,7 +668,7 @@ export default class View extends Node {
         const renderParent = this.renderParent;
         const renderChildren = this.renderChildren;
         const renderEvery = (this.hasElement && Array.from(this.element.children).every(element => renderChildren.includes(getNodeFromElement(element) as T) || element.tagName === 'BR'));
-        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
+        if (this.is(NODE_STANDARD.LINEAR)) {
             if (this.blockWidth && !this.blockStatic) {
                 [[this.linearHorizontal, this.inlineElement, 'width'], [this.linearVertical, true, 'height']].forEach((value: [boolean, boolean, string]) => {
                     const attr = `inline${capitalize(value[2])}`;
@@ -683,10 +681,13 @@ export default class View extends Node {
                 if (renderChildren.some(node => node.floating || !node.siblingflow) || this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
                     this.android('baselineAligned', 'false');
                 }
-                else if ((renderParent.is(NODE_STANDARD.GRID) || renderChildren.some(node => !node.alignMargin) || renderParent.android('baselineAlignedChildIndex') != null) && renderChildren.some(node => node.nodeType <= NODE_STANDARD.TEXT)) {
-                    const baseline = NodeList.textBaseline(renderChildren, (renderParent.is(NODE_STANDARD.GRID) || !renderChildren.some(node => node.textElement)));
-                    if (baseline.length > 0) {
-                        this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
+                else {
+                    const alignInput = renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT);
+                    if (renderChildren.some(node => !node.alignRelative) || renderParent.android('baselineAlignedChildIndex') != null || alignInput) {
+                        const baseline = NodeList.textBaseline(renderChildren, alignInput);
+                        if (baseline.length > 0) {
+                            this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
+                        }
                     }
                 }
                 if (renderEvery) {
@@ -949,7 +950,7 @@ export default class View extends Node {
 
     private bindWhiteSpace() {
         if (this.linearHorizontal || this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
-            if (!this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) && (!this.hasElement || hasFreeFormText(this.element, 0, true))) {
+            if (!this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
                 let left = this.box.left;
                 this.each((node: T) => {
                     if (!node.floating) {

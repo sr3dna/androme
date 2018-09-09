@@ -119,7 +119,7 @@ function setStyleMap() {
                                     case 'paddingRight':
                                     case 'paddingBottom':
                                     case 'paddingLeft':
-                                        styleMap[attr] = (/^[A-Za-z\-]+$/.test(<string> cssStyle) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle));
+                                        styleMap[attr] = (/^[A-Za-z\-]+$/.test(cssStyle as string) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle));
                                         break;
                                     default:
                                         if (styleMap[attr] == null) {

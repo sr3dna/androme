@@ -15,7 +15,7 @@ export default class External<T extends Node> extends Extension<T> {
                     const display: string[] = [];
                     let current: Null<HTMLElement> = <HTMLElement> this.element;
                     while (current != null) {
-                        display.push(<string> getStyle(current).display);
+                        display.push(getStyle(current).display as string);
                         current.style.display = 'block';
                         current = current.parentElement;
                     }

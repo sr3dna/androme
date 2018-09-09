@@ -4,7 +4,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertInt, formatPX, hasBit, isNumber, optional, sortAsc, trim, isPercent, isUnit } from '../lib/util';
+import { convertInt, formatPX, hasBit, hasValue, isNumber, optional, sortAsc, trim, isPercent, isUnit } from '../lib/util';
 import { getPlaceholder, modifyIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache, getElementsBetweenSiblings } from '../lib/dom';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -350,7 +350,7 @@ export default class Application<T extends Node> {
                         const [sectionLeft, sectionRight] = new NodeList<T>(node.children as T[]).partition((item: T) => !marginRight.includes(item));
                         if (sectionLeft.length > 0 && sectionRight.length > 0) {
                             if (node.cssOriginal('marginLeft') === 'auto') {
-                                node.css('marginLeft', <string> node.style.marginLeft);
+                                node.css('marginLeft', node.style.marginLeft as string);
                             }
                             node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                             const widthLeft: number = (node.has('width') ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.linear.width)));
@@ -418,7 +418,7 @@ export default class Application<T extends Node> {
                 sortAsc(node.children, 'siblingIndex');
             }
             this.cache.sortAsc('depth', 'parent.siblingIndex', 'siblingIndex', 'id');
-            this.createLayout(<string> rootElement.dataset.viewName);
+            this.createLayout(rootElement.dataset.viewName as string);
             return true;
         }
         return false;
@@ -454,7 +454,16 @@ export default class Application<T extends Node> {
             setMapY(node.depth, node.id, node);
         }
         this.cache.delegateAppend = (nodes: T[]) => {
-            nodes.forEach(node => setMapY(-2, node.id, node));
+            nodes.forEach(node => {
+                setMapY(-2, node.id, node);
+                node.children.forEach((child: T) => {
+                    const indexY = mapY.get(child.depth);
+                    if (indexY && indexY.has(child.id)) {
+                        indexY.delete(child.id);
+                    }
+                    setMapY(-3, child.id, child);
+                });
+            });
         };
         for (const depth of mapY.values()) {
             const partial = new Map<string, Map<number, string>>();
@@ -494,9 +503,9 @@ export default class Application<T extends Node> {
                     else {
                         if (!application.elements.has(<HTMLElement> node.element)) {
                             if (node.isSet('dataset', 'target')) {
-                                const target = application.findByDomId(<string> node.dataset.target, true);
-                                if (!target || target !== parent) {
-                                    application.addRenderQueue(<string> node.dataset.target, [xml]);
+                                const target = document.getElementById(node.dataset.target as string);
+                                if (target != null && target !== parent.element) {
+                                    application.addRenderQueue(node.dataset.target as string, [xml]);
                                     node.relocated = true;
                                     return;
                                 }
@@ -523,7 +532,7 @@ export default class Application<T extends Node> {
                     if (node.documentRoot) {
                         axisY.push(node);
                     }
-                    else if (node.pageflow || node.alignMargin) {
+                    else if (node.pageflow || node.alignRelative) {
                         middle.push(node);
                     }
                     else {
@@ -542,7 +551,8 @@ export default class Application<T extends Node> {
                 const cleared = NodeList.cleared(axisY);
                 const includes: string[] = [];
                 let current = '';
-                for (let k = 0; k < axisY.length; k++) {
+                let k = -1;
+                while (++k < axisY.length) {
                     let nodeY = axisY[k];
                     if (!nodeY.documentRoot && this.elements.has(<HTMLElement> nodeY.element)) {
                         continue;
@@ -731,7 +741,7 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     else {
-                                        if (floatSize === 1 && horizontal.every(node => isPercent(node.css('width')) || isUnit(node.css('width')))) {
+                                        if (floatSize === 1 && horizontal.some(node => isPercent(node.css('width'))) && horizontal.every(node => isPercent(node.css('width')) || isUnit(node.css('width')))) {
                                             group = this.controllerHandler.createGroup(nodeY, horizontal, parentY);
                                             groupXml = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
@@ -773,48 +783,57 @@ export default class Application<T extends Node> {
                         if (!nodeY.rendered) {
                             let xml = '';
                             if (nodeY.controlName === '') {
-                                const untargeted = nodeY.children.filter(node => !node.isSet('dataset', 'target'));
-                                if (untargeted.length === 0) {
-                                    const freeFormText = hasFreeFormText(nodeY.element, 1);
-                                    if (SETTINGS.collapseUnattributedElements && !freeFormText && Object.keys(nodeY.styleMap).length === 0 && nodeY.viewWidth === 0 && nodeY.viewHeight === 0) {
-                                        parentY.remove(nodeY);
-                                        nodeY.hide();
+                                const borderVisible = (nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0);
+                                const backgroundImage = /url(.*?)/.test(nodeY.css('backgroundImage'));
+                                const backgroundColor = nodeY.has('backgroundColor');
+                                if (nodeY.children.length === 0) {
+                                    const freeFormText = hasFreeFormText(nodeY.element, (SETTINGS.renderInlineText ? 0 : 1));
+                                    if (freeFormText) {
+                                        xml = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
                                     }
-                                    else {
-                                        const backgroundImage = /url(.*?)/.test(nodeY.css('backgroundImage'));
-                                        if ((!nodeY.inlineText || ((nodeY.toInt('textIndent') + nodeY.bounds.width) < 0)) && backgroundImage && nodeY.css('backgroundRepeat') === 'no-repeat' && !nodeY.has('backgroundColor')) {
-                                            nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
-                                            nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
-                                            xml = this.writeNode(nodeY, parentY, NODE_STANDARD.IMAGE);
+                                    else if ((!nodeY.inlineText || (nodeY.toInt('textIndent') + nodeY.bounds.width) < 0) && backgroundImage && nodeY.css('backgroundRepeat') === 'no-repeat') {
+                                        nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
+                                        nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
+                                        xml = this.writeNode(nodeY, parentY, NODE_STANDARD.IMAGE);
+                                    }
+                                    else if ((backgroundColor || backgroundImage) && (borderVisible || (nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingRight + nodeY.paddingLeft) > 0)) {
+                                        xml = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
+                                    }
+                                    else if (!nodeY.documentRoot) {
+                                        if (SETTINGS.collapseUnattributedElements && ((!borderVisible && !backgroundImage && !backgroundColor) || nodeY.bounds.height === 0) && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext)) {
+                                            deleteElementCache(nodeY.element, 'node');
+                                            parentY.remove(nodeY);
+                                            nodeY.hide();
                                         }
-                                        else if (freeFormText || nodeY.inline) {
-                                            xml = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
-                                        }
-                                        else if (!nodeY.inlineElement && ((nodeY.borderTopWidth + nodeY.borderBottomWidth) > 0 || (nodeY.paddingTop + nodeY.paddingBottom) > 0)) {
-                                            xml = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
-                                        }
-                                        else if (!nodeY.documentRoot) {
-                                            if (!backgroundImage && (nodeY.bounds.height === 0 || (nodeY.hasElement && !freeFormText && parentY.linearVertical))) {
-                                                parent.remove(nodeY);
-                                                nodeY.hide();
-                                            }
-                                            else {
-                                                xml = this.writeFrameLayout(nodeY, parentY);
-                                            }
+                                        else {
+                                            xml = this.writeFrameLayout(nodeY, parentY);
                                         }
                                     }
                                 }
                                 else {
-                                    if (nodeY.flex.enabled || untargeted.some(node => !node.pageflow) || nodeY.has('columnCount')) {
+                                    if (nodeY.flex.enabled || nodeY.children.some(node => !node.pageflow) || nodeY.has('columnCount')) {
                                         xml = this.writeConstraintLayout(nodeY, parentY);
                                     }
                                     else {
-                                        if (untargeted.length === 1) {
-                                            if (SETTINGS.collapseUnattributedElements && Object.keys(nodeY.styleMap).length === 0 && !this.controllerHandler.hasAppendProcessing(nodeY.id)) {
-                                                const child = untargeted[0] as T;
+                                        if (nodeY.children.length === 1) {
+                                            const targeted = nodeY.children.filter(node => {
+                                                const element = document.getElementById(node.dataset.target as string);
+                                                return (element != null && hasValue(element.dataset.ext) && element !== parentY.element);
+                                            });
+                                            if ((nodeY.documentRoot && targeted.length === 1) || (SETTINGS.collapseUnattributedElements && !nodeY.documentRoot && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext) && !hasValue(nodeY.dataset.target) && (!borderVisible && !backgroundImage && !backgroundColor) && !nodeY.has('textAlign') && !nodeY.has('verticalAlign') && !nodeY.floating && nodeY.autoMargin && nodeY.alignRelative && !this.controllerHandler.hasAppendProcessing(nodeY.id))) {
+                                                const child = nodeY.children[0];
                                                 child.documentRoot = nodeY.documentRoot;
-                                                child.parent = parentY;
+                                                child.siblingIndex = nodeY.siblingIndex;
+                                                if (parentY.id !== 0) {
+                                                    child.parent = parentY;
+                                                }
+                                                if (targeted.length === 0) {
+                                                    nodeY.resetBox(BOX_STANDARD.MARGIN | BOX_STANDARD.PADDING, child);
+                                                }
                                                 nodeY.hide();
+                                                axisY[k] = child as T;
+                                                k--;
+                                                continue;
                                             }
                                             else {
                                                 xml = this.writeFrameLayout(nodeY, parentY);
@@ -1062,7 +1081,7 @@ export default class Application<T extends Node> {
                     if (section.length > 1) {
                         let content = '';
                         const subgroup = this.controllerHandler.createGroup(section.list[0], section.list, group);
-                        if (index <= 1 && ((section.list.every(node => node.relativeWrap) && new Set(section.list.map(node => node.lineHeight)).size > 1) || section.list.some(node => node.textElement && node.multiLine) || !section.linearX)) {
+                        if (index <= 1 && ((section.list.every(node => this.isRelativeWrap(node)) && new Set(section.list.map(node => node.lineHeight)).size > 1) || section.list.some(node => node.textElement && node.multiLine) || !section.linearX)) {
                             content = this.writeRelativeLayout(subgroup, group);
                             subgroup.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                         }
@@ -1241,8 +1260,8 @@ export default class Application<T extends Node> {
             const [originalId] = id.split(':');
             let replaceId = originalId;
             if (!isNumber(replaceId)) {
-                const target = this.findByDomId(replaceId);
-                if (target) {
+                const target = getNodeFromElement(document.getElementById(replaceId));
+                if (target != null) {
                     replaceId = target.id.toString();
                 }
             }
@@ -1394,10 +1413,6 @@ export default class Application<T extends Node> {
         this.controllerHandler.addXmlNs(name, uri);
     }
 
-    public findByDomId(id: string, current = false) {
-        return (current ? this.cache : this.cacheInternal).locate(node => node.element.id === id || node.nodeId === id);
-    }
-
     public toString() {
         return (this._views.length > 0 ? this._views[0].content : '');
     }
@@ -1470,7 +1485,11 @@ export default class Application<T extends Node> {
     }
 
     private isRelativeHorizontal(nodes: T[]) {
-        return nodes.every(node => node.relativeWrap) || nodes.some(node => node.imageElement || (node.textElement && node.multiLine));
+        return nodes.every(node => this.isRelativeWrap(node)) || nodes.some(node => node.imageElement || (node.textElement && node.multiLine));
+    }
+
+    private isRelativeWrap(node: T) {
+        return (node.textElement && !node.floating && node.alignRelative && node.toInt('verticalAlign') >= 0);
     }
 
     set appName(value) {

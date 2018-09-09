@@ -297,7 +297,10 @@ export default abstract class Resource<T extends Node> {
                     value = element.value.trim();
                 }
                 else if (element instanceof HTMLElement) {
-                    if (node.inlineText) {
+                    if (element.tagName === 'BUTTON') {
+                        value = element.innerText;
+                    }
+                    else if (node.inlineText) {
                         name = (element.innerText || element.textContent || '').trim();
                         value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
                         [value, inlineTrim] = parseWhiteSpace(node, value);
@@ -319,7 +322,7 @@ export default abstract class Resource<T extends Node> {
                         value = value.replace(/^\s+/, '');
                     }
                     else {
-                        previousSpaceEnd = /\s+$/.test(<string> ((<HTMLElement> previousSibling.element).innerText || previousSibling.element.textContent));
+                        previousSpaceEnd = /\s+$/.test(((<HTMLElement> previousSibling.element).innerText || previousSibling.element.textContent) as string);
                     }
                     if (inlineTrim) {
                         const original = value;

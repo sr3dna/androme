@@ -45,7 +45,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
         if (element == null) {
             element = <Element> this.element;
         }
-        return includes(<string> optional(element, 'dataset.ext'), this.name);
+        return includes(optional(element, 'dataset.ext') as string, this.name);
     }
 
     public beforeInit(internal = false) {

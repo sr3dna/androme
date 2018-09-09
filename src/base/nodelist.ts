@@ -22,49 +22,9 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return nodes;
     }
 
-    public static textBaseline<T extends Node>(list: T[], nodeType = false) {
-        const lineHeight: number = Math.max.apply(null, list.map(node => node.lineHeight));
-        const boundsHeight: number = Math.max.apply(null, list.map(node => node.bounds.height));
-        if (lineHeight > boundsHeight) {
-            const result = list.filter(node => node.lineHeight === lineHeight);
-            return (result.length === list.length ? result.filter(node => node.hasElement) : result);
-        }
-        let baseline = list.filter(node => node.baseline).sort((a, b) => {
-            const fontSizeA = convertInt(convertPX(a.css('fontSize')));
-            const fontSizeB = convertInt(convertPX(b.css('fontSize')));
-            const heightA = a.bounds.height;
-            const heightB = b.bounds.height;
-            if (a.imageElement && b.imageElement) {
-                return (heightA >= heightB ? -1 : 1);
-            }
-            else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
-                return -1;
-            }
-            else if ((b.lineHeight > heightA && a.lineHeight === 0 || a.imageElement)) {
-                return 1;
-            }
-            else if (!a.imageElement && !b.imageElement) {
-                if (fontSizeA === fontSizeB && heightA === heightB) {
-                    if (a.hasElement && !b.hasElement) {
-                        return -1;
-                    }
-                    else if (!a.hasElement && b.hasElement) {
-                        return 1;
-                    }
-                    else {
-                        return (a.siblingIndex < b.siblingIndex ? -1 : 1);
-                    }
-                }
-                else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
-                    return (fontSizeA > fontSizeB ? -1 : 1);
-                }
-            }
-            return (heightA >= heightB ? -1 : 1);
-        });
-        if (list.some(node => node.plainText && node.lineHeight === 0) && new Set(list.map(node => node.bounds.height)).size === 1) {
-            baseline.reverse();
-        }
-        if (baseline.length === 0 && nodeType) {
+    public static textBaseline<T extends Node>(list: T[], alignInput = false) {
+        let baseline: T[];
+        if (alignInput) {
             baseline = list.filter(node => node.baseline).sort((a, b) => {
                 let nodeTypeA = a.nodeType;
                 let nodeTypeB = b.nodeType;
@@ -76,6 +36,49 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 }
                 return (nodeTypeA <= nodeTypeB ? -1 : 1);
             });
+        }
+        else {
+            const lineHeight: number = Math.max.apply(null, list.map(node => node.lineHeight));
+            const boundsHeight: number = Math.max.apply(null, list.map(node => node.bounds.height));
+            if (lineHeight > boundsHeight) {
+                const result = list.filter(node => node.lineHeight === lineHeight);
+                return (result.length === list.length ? result.filter(node => node.hasElement) : result);
+            }
+            baseline = list.filter(node => node.baseline).sort((a, b) => {
+                const fontSizeA = convertInt(convertPX(a.css('fontSize')));
+                const fontSizeB = convertInt(convertPX(b.css('fontSize')));
+                const heightA = a.bounds.height;
+                const heightB = b.bounds.height;
+                if (a.imageElement && b.imageElement) {
+                    return (heightA >= heightB ? -1 : 1);
+                }
+                else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                    return -1;
+                }
+                else if ((b.lineHeight > heightA && a.lineHeight === 0 || a.imageElement)) {
+                    return 1;
+                }
+                else if (!a.imageElement && !b.imageElement) {
+                    if (fontSizeA === fontSizeB && heightA === heightB) {
+                        if (a.hasElement && !b.hasElement) {
+                            return -1;
+                        }
+                        else if (!a.hasElement && b.hasElement) {
+                            return 1;
+                        }
+                        else {
+                            return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                        }
+                    }
+                    else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
+                        return (fontSizeA > fontSizeB ? -1 : 1);
+                    }
+                }
+                return (heightA >= heightB ? -1 : 1);
+            });
+            if (list.some(node => node.plainText && node.lineHeight === 0) && new Set(list.map(node => node.bounds.height)).size === 1) {
+                baseline.reverse();
+            }
         }
         return baseline.filter((node, index) => index === 0 || (node.baseline === baseline[0].baseline && node.lineHeight === baseline[0].lineHeight && node.nodeName === baseline[0].nodeName));
     }

@@ -120,7 +120,7 @@ export function convertRoman(value: number) {
                       '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
     let i = 3;
     while (i--) {
-        result = (numerals[parseInt(<string> digits.pop()) + (i * 10)] || '') + result;
+        result = (numerals[parseInt(digits.pop() || '') + (i * 10)] || '') + result;
     }
     return 'M'.repeat(parseInt(digits.join(''))) + result;
 }

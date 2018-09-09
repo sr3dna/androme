@@ -51,14 +51,14 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
             setPositionIsolated(node);
             if (target) {
                 let anchor = parent.stringId;
-                if (parent.nodeName === VIEW_SUPPORT.TOOLBAR) {
+                if (parent.controlName === VIEW_SUPPORT.TOOLBAR) {
                     const outerParent = parent.data(WIDGET_NAME.TOOLBAR, 'outerParent');
                     if (outerParent) {
                         anchor = outerParent;
                     }
                 }
                 node.app('layout_anchor', anchor);
-                node.app('layout_anchorGravity', <string> node.android('layout_gravity'));
+                node.app('layout_anchorGravity', node.android('layout_gravity') as string);
                 node.delete('android', 'layout_gravity');
                 node.excludeProcedure |= NODE_PROCEDURE.ALIGNMENT;
                 node.render(node);

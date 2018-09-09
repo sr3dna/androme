@@ -60,7 +60,7 @@ interface BackgroundImage {
 }
 
 export default class ResourceView<T extends View> extends Resource<T> {
-    public static addString(value = '', name = '') {
+    public static addString(value: string, name = '') {
         if (value !== '') {
             if (name === '') {
                 name = value;
@@ -153,7 +153,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         return src;
     }
 
-    public static addImageURL(value = '', prefix = '') {
+    public static addImageURL(value: string, prefix = '') {
         const url = parseBackgroundUrl(value);
         if (url !== '') {
             return ResourceView.addImage({ 'mdpi': url }, prefix);
@@ -161,7 +161,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         return '';
     }
 
-    public static addColor(value = '', opacity = '1') {
+    public static addColor(value: string, opacity = '1') {
         value = value.toUpperCase().trim();
         const opaque = (parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value);
         if (value !== '') {
@@ -169,7 +169,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (!Resource.STORED.COLORS.has(opaque)) {
                 const color = getColorNearest(value);
                 if (color !== '') {
-                    color.name = cameltoLowerCase(<string> color.name);
+                    color.name = cameltoLowerCase(color.name as string);
                     if (value === color.hex && value === opaque) {
                         colorName = color.name;
                     }
@@ -180,14 +180,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
             }
             else {
-                colorName = <string> Resource.STORED.COLORS.get(opaque);
+                colorName = Resource.STORED.COLORS.get(opaque) as string;
             }
             return colorName;
         }
         return '';
     }
 
-    public static parseBackgroundPosition(value = '') {
+    public static parseBackgroundPosition(value: string) {
         const match = new RegExp(/([0-9]+[a-z]{2}) ([0-9]+[a-z]{2})/).exec(value);
         if (match) {
             return [convertPX(match[1]), convertPX(match[2])];

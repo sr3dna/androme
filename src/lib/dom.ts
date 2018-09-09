@@ -159,7 +159,7 @@ export function cssFromParent(element: Element, attr: string) {
     return false;
 }
 
-export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = false) {
+export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = true) {
     let valid = false;
     let depth = -1;
     function findFreeForm(elements: any[]) {
@@ -259,7 +259,7 @@ export function isElementVisible(element: Element) {
         }
         if (typeof element.getBoundingClientRect === 'function') {
             const bounds = element.getBoundingClientRect();
-            if (bounds.width !== 0 && bounds.height !== 0 || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
+            if ((bounds.width !== 0 && bounds.height !== 0) || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
                 return true;
             }
             else {

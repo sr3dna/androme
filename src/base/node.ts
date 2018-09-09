@@ -92,7 +92,7 @@ export default abstract class Node implements BoxModel {
     public abstract setAccessibility(): void;
     public abstract applyCustomizations(overwrite: boolean): void;
     public abstract applyOptimizations(options: DisplaySettings): void;
-    public abstract modifyBox(region: number, offset: number | null, negative?: boolean, bounds?: boolean): void;
+    public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean, bounds?: boolean): void;
     public abstract valueBox(region: number): string[];
     public abstract clone(id?: number, children?: boolean): T;
 
@@ -591,20 +591,19 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public resetBox(region: number) {
-        switch (region) {
-            case BOX_STANDARD.PADDING:
-                this._boxReset.paddingTop = 1;
-                this._boxReset.paddingRight = 1;
-                this._boxReset.paddingBottom = 1;
-                this._boxReset.paddingLeft = 1;
-                break;
-            case BOX_STANDARD.MARGIN:
-                this._boxReset.marginTop = 1;
-                this._boxReset.marginRight = 1;
-                this._boxReset.marginBottom = 1;
-                this._boxReset.marginLeft = 1;
-                break;
+    public resetBox(region: number, node?: T) {
+        const attrs: string[] = [];
+        if (hasBit(region, BOX_STANDARD.MARGIN)) {
+            attrs.push('marginTop', 'marginRight', 'marginBottom', 'marginLeft');
+        }
+        if (hasBit(region, BOX_STANDARD.PADDING)) {
+            attrs.push('paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft');
+        }
+        for (const attr of attrs) {
+            this._boxReset[attr] = 1;
+            if (node != null) {
+                node.modifyBox(attr, this[attr], true, true);
+            }
         }
     }
 
@@ -728,13 +727,13 @@ export default abstract class Node implements BoxModel {
             const parent = this.documentParent;
             return {
                 enabled: ((style.display as string).indexOf('flex') !== -1),
-                direction: <string> style.flexDirection,
-                basis: <string> style.flexBasis,
+                direction: style.flexDirection as string,
+                basis: style.flexBasis as string,
                 grow: convertInt(style.flexGrow),
                 shrink: convertInt(style.flexShrink),
-                wrap: <string> style.flexWrap,
-                alignSelf: <string> (parent.has('alignItems') && (!this.has('alignSelf') || style.alignSelf === 'auto') ? parent.css('alignItems') : style.alignSelf),
-                justifyContent: <string> style.justifyContent,
+                wrap: style.flexWrap as string,
+                alignSelf: (parent.has('alignItems') && (!this.has('alignSelf') || style.alignSelf === 'auto') ? parent.css('alignItems') : style.alignSelf) as string,
+                justifyContent: style.justifyContent as string,
                 order: convertInt(style.order)
             };
         }
@@ -806,16 +805,20 @@ export default abstract class Node implements BoxModel {
     }
 
     get borderTopWidth() {
-        return (this.css('borderTopStyle') !== 'none' ? convertInt(this.css('borderTopWidth')) : 0);
+        const value = this.css('borderTopStyle');
+        return (value !== 'none' && value !== 'inset' ? this.toInt('borderTopWidth') : 0);
     }
     get borderRightWidth() {
-        return (this.css('borderRightStyle') !== 'none' ? convertInt(this.css('borderRightWidth')) : 0);
+        const value = this.css('borderRightStyle');
+        return (value !== 'none' && value !== 'inset' ? this.toInt('borderRightWidth') : 0);
     }
     get borderBottomWidth() {
-        return (this.css('borderBottomStyle') !== 'none' ? convertInt(this.css('borderBottomWidth')) : 0);
+        const value = this.css('borderBottomStyle');
+        return (value !== 'none' && value !== 'inset' ? this.toInt('borderBottomWidth') : 0);
     }
     get borderLeftWidth() {
-        return (this.css('borderLeftStyle') !== 'none' ? convertInt(this.css('borderLeftWidth')) : 0);
+        const value = this.css('borderLeftStyle');
+        return (value !== 'none' && value !== 'inset' ? this.toInt('borderLeftWidth') : 0);
     }
 
     get paddingTop() {
@@ -837,7 +840,7 @@ export default abstract class Node implements BoxModel {
     get pageflow() {
         if (this._pageflow == null) {
             const value = this.position;
-            return (value === 'static' || value === 'initial' || value === 'relative' || this.alignMargin);
+            return (value === 'static' || value === 'initial' || value === 'relative' || this.alignRelative);
         }
         return this._pageflow;
     }
@@ -855,7 +858,7 @@ export default abstract class Node implements BoxModel {
     get inlineElement() {
         const position = this.position;
         const display = this.display;
-        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignMargin));
+        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignRelative));
     }
 
     get inlineStatic() {
@@ -864,7 +867,18 @@ export default abstract class Node implements BoxModel {
 
     get inlineText() {
         if (this._inlineText == null) {
-            this._inlineText = (this.hasElement && !['INPUT', 'IMG', 'SELECT', 'TEXTAREA'].includes(this.tagName) && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline'))) || (this.element.children.length === 0 && (this.borderTopWidth > 0 || this.borderBottomWidth > 0 || this.borderRightWidth > 0 || this.borderLeftWidth > 0))));
+            switch (this.tagName) {
+                case 'INPUT':
+                case 'BUTTON':
+                case 'IMG':
+                case 'SELECT':
+                case 'TEXTAREA':
+                    this._inlineText = false;
+                    break;
+                default:
+                    this._inlineText = (this.hasElement && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline')))));
+                    break;
+            }
         }
         return this._inlineText;
     }
@@ -890,7 +904,7 @@ export default abstract class Node implements BoxModel {
         return (this.block && this.pageflow && this.siblingflow && (!this.floating || this.cssOriginal('width') === '100%'));
     }
 
-    get alignMargin() {
+    get alignRelative() {
         return (this.top == null && this.right == null && this.bottom == null && this.left == null);
     }
 
@@ -913,10 +927,6 @@ export default abstract class Node implements BoxModel {
 
     get float() {
         return (this.floating ? this.css('cssFloat') : null) || 'none';
-    }
-
-    get relativeWrap() {
-        return (this.textElement && !this.floating && this.alignMargin && this.toInt('verticalAlign') >= 0);
     }
 
     get overflowX() {

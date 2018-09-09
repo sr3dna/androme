@@ -31,12 +31,12 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 return false;
             });
             if (hasValue(element.dataset.target)) {
-                const target = document.getElementById(<string> element.dataset.target);
-                if (target && element.parentElement !== target && !includes(<string> optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR)) {
+                const target = document.getElementById(element.dataset.target as string);
+                if (target && element.parentElement !== target && !includes(optional(target, 'dataset.ext') as string, WIDGET_NAME.COORDINATOR)) {
                     this.application.elements.add(element);
                 }
             }
-            if (includes(<string> optional(element, 'parentElement.dataset.ext'), WIDGET_NAME.COORDINATOR)) {
+            if (includes(optional(element, 'parentElement.dataset.ext') as string, WIDGET_NAME.COORDINATOR)) {
                 setElementCache(element, 'nodeIsolated', true);
             }
         }
@@ -46,6 +46,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
     public processNode(): ExtensionResult {
         const controller = this.application.controllerHandler;
         const node = this.node;
+        const parent = this.parent as T;
         let xml = '';
         const target = node.isSet('dataset', 'target');
         const options = Object.assign({}, this.options[node.element.id]);
@@ -55,7 +56,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
         const hasMenu = (locateExtension(node, WIDGET_NAME.MENU) != null);
-        const backgroundImage = node.css('backgroundImage');
+        const backgroundImage = node.has('backgroundImage');
         let depth = (target ? 0 : node.depth);
         let children = node.children.filter(item => !item.isolated).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
@@ -107,8 +108,8 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 overwriteDefault(optionsToolbar, 'android', 'fitsSystemWindows', 'true');
             }
             overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
-            if (backgroundImage !== 'none') {
-                overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${ResourceView.addImageURL(backgroundImage)}`);
+            if (backgroundImage) {
+                overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${ResourceView.addImageURL(node.css('backgroundImage'))}`);
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
             else {
@@ -130,10 +131,10 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
             }
         }
-        const renderDepth = depth + (appBar ? 1 : 0) + (collapsingToolbar ? 1 : 0);
-        xml = controller.renderNodeStatic(VIEW_SUPPORT.TOOLBAR, renderDepth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
+        const innerDepth = depth + (appBar ? 1 : 0) + (collapsingToolbar ? 1 : 0);
+        xml = controller.renderNodeStatic(VIEW_SUPPORT.TOOLBAR, innerDepth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
         if (collapsingToolbar) {
-            if (backgroundImage !== 'none') {
+            if (backgroundImage) {
                 const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
                 let scaleType = 'center';
                 switch (node.css('backgroundSize')) {
@@ -151,11 +152,11 @@ export default class Toolbar<T extends View> extends Extension<T> {
                         break;
                 }
                 overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
-                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${ResourceView.addImageURL(backgroundImage)}`);
+                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${ResourceView.addImageURL(node.css('backgroundImage'))}`);
                 overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                xml = controller.renderNodeStatic(NODE_ANDROID.IMAGE, renderDepth, optionsBackgroundImage, 'match_parent', 'match_parent') + xml;
+                xml = controller.renderNodeStatic(NODE_ANDROID.IMAGE, innerDepth, optionsBackgroundImage, 'match_parent', 'match_parent') + xml;
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
         }
@@ -178,14 +179,13 @@ export default class Toolbar<T extends View> extends Extension<T> {
             }
             appBarNode = createPlaceholder(this.application.cache.nextId, node, appBarChildren);
             appBarNode.nodeId = stripId(optionsAppBar.android.id);
-            appBarNode.each(item => item.dataset.target = (appBarNode as T).nodeId);
             this.application.cache.append(appBarNode);
             outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
             if (collapsingToolbar) {
                 depth++;
                 overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
                 overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
-                if (backgroundImage === 'none') {
+                if (!backgroundImage) {
                     overwriteDefault(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
                 }
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
@@ -193,32 +193,31 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren);
                 collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
                 this.application.cache.append(collapsingToolbarNode);
-                const content = controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true);
+                const content = controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, (target && !appBar ? -1 : depth), optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true);
                 outer = replacePlaceholder(outer, appBarNode.id, content);
             }
         }
-        if (appBarNode) {
-            xml = (collapsingToolbarNode ? replacePlaceholder(outer, collapsingToolbarNode.id, xml) : replacePlaceholder(outer, appBarNode.id, xml));
+        if (appBarNode != null) {
+            xml = (collapsingToolbarNode != null ? replacePlaceholder(outer, collapsingToolbarNode.id, xml) : replacePlaceholder(outer, appBarNode.id, xml));
+            appBarNode.render((target ? appBarNode : parent));
             if (collapsingToolbarNode == null) {
                 node.parent = appBarNode;
             }
             else {
                 collapsingToolbarNode.parent = appBarNode;
                 collapsingToolbarNode.render(appBarNode);
+                node.parent = collapsingToolbarNode;
             }
-            appBarNode.render(appBarNode);
             node.data(WIDGET_NAME.TOOLBAR, 'outerParent', appBarNode.stringId);
-        }
-        else if (collapsingToolbarNode) {
-            collapsingToolbarNode.render(collapsingToolbarNode);
-            node.parent = collapsingToolbarNode;
-        }
-        if (target) {
             node.render(node.parent);
         }
+        else if (collapsingToolbarNode != null) {
+            collapsingToolbarNode.render((target ? collapsingToolbarNode : parent));
+            node.parent = collapsingToolbarNode;
+            node.render(collapsingToolbarNode);
+        }
         else {
-            node.render(this.parent);
-            node.renderDepth = renderDepth;
+            node.render((target ? node : parent));
         }
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
@@ -227,11 +226,11 @@ export default class Toolbar<T extends View> extends Extension<T> {
 
     public processChild(): ExtensionResult {
         const node = this.node;
-        if (node.imageElement && (node.dataset.navigationIcon != null || node.dataset.collapseIcon != null)) {
+        if (node.imageElement && (node.dataset.navigationIcon || node.dataset.collapseIcon)) {
             node.hide();
             return { xml: '', complete: true, next: true };
         }
-        return { xml: '', complete: false};
+        return { xml: '', complete: false };
     }
 
     public beforeInsert() {
@@ -251,12 +250,12 @@ export default class Toolbar<T extends View> extends Extension<T> {
         overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             '0': [{
-                'appTheme': options.appTheme,
-                'parentTheme': options.parentTheme,
-                'appBarOverlay': appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
-                'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
-                '1': []
-            }]
+                    'appTheme': options.appTheme,
+                    'parentTheme': options.parentTheme,
+                    'appBarOverlay': appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
+                    'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
+                    '1': []
+                }]
         };
         overwriteDefault(options, 'output', 'path', 'res/values');
         overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
