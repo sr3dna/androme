@@ -160,8 +160,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                     mapLayout = MAP_LAYOUT.relative;
                     const rows: T[][] = [];
                     const baseline: T[] = [];
-                    const multiLine = nodes.list.some(item => item.multiLine);
+                    const multiLine = nodes.list.some((item, index) => (index > 0 && node.linear.top >= nodes.get(index - 1).linear.bottom) || item.multiLine);
                     const textIndent = node.toInt('textIndent');
+                    const floatAligned = (node.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) || nodes.list.some((item => item.floating)));
                     let rowPaddingLeft = 0;
                     if (textIndent < 0 && Math.abs(textIndent) <= node.paddingLeft) {
                         rowPaddingLeft = node.paddingLeft;
@@ -208,7 +209,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 current.android(mapLayout['topBottom'], previousRowBottom.stringId);
                                 current.android(relativeParent['left'], 'true');
                                 rowWidth = dimension.width;
-                                if (SETTINGS.ellipsisOnTextOverflow && previous != null && (rows[rows.length - 1].length > 1 || previous.linearHorizontal)) {
+                                if (SETTINGS.ellipsisOnTextOverflow && previous != null && (rows[rows.length - 1].length > 1 || previous.linearHorizontal) && i < nodes.length - 1) {
                                     let lastChild = previous;
                                     if (previous.linearHorizontal) {
                                         lastChild = previous.children[previous.children.length - 1] as T;
@@ -220,8 +221,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 if (rowPaddingLeft > 0) {
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
                                 }
-                                adjustBaseline(baseline);
-                                baseline.length = 0;
+                                if (!floatAligned) {
+                                    adjustBaseline(baseline);
+                                    baseline.length = 0;
+                                }
                                 rows.push([current]);
                             }
                             else {
@@ -233,16 +236,18 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 rows[rows.length - 1].push(current);
                             }
                         }
-                        if (current.alignRelative) {
+                        if (!floatAligned && current.alignRelative) {
                             baseline.push(current);
                         }
                     }
-                    adjustBaseline(baseline);
+                    if (!floatAligned) {
+                        adjustBaseline(baseline);
+                    }
                 }
                 else {
                     mapLayout = MAP_LAYOUT.constraint;
                     if (node.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL)) {
-                        const optimal =  NodeList.textBaseline(nodes.list)[0];
+                        const optimal =  NodeList.textBaseline(nodes.list, false, true)[0];
                         const baseline = nodes.list.filter(item => item.textElement && item.baseline);
                         const image = nodes.list.filter(item => item.imageElement && item.baseline);
                         if (image.length > 0) {
@@ -1506,12 +1511,15 @@ export default class ViewController<T extends View> extends Controller<T> {
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
-                            const result = parent.children.filter(item => {
+                            const result = parent.children.map(item => {
                                 if (item.visible && item.renderAs != null) {
                                     item = item.renderAs as T;
                                 }
-                                return ((<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name);
-                            }) as T[];
+                                if ((<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name) {
+                                    return item;
+                                }
+                                return null;
+                            }).filter(item => item) as T[];
                             if (result.length > 1) {
                                 let xml = '';
                                 const linearX = NodeList.linearX(result);
@@ -1533,7 +1541,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     xml += this.renderNode(item as T, group, NODE_STANDARD.RADIO, true);
                                 }
                                 group.android('orientation', linearX ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
-                                group.alignmentType |= (linearX ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.VERTICAL) | NODE_ALIGNMENT.SEGMENTED;
+                                group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
                                 if (checked !== '') {
                                     group.android('checkedButton', checked);
                                 }

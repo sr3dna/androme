@@ -24,6 +24,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
                 }
                 else {
                     const expand: boolean | null = item.data(EXT_NAME.TABLE, 'expand');
+                    const exceed: boolean = !!item.data(EXT_NAME.TABLE, 'exceed');
                     const downsized: boolean = !!item.data(EXT_NAME.TABLE, 'downsized');
                     if (expand != null) {
                         if (expand) {
@@ -39,8 +40,13 @@ export default class TableAndroid<T extends View> extends Table<T> {
                         }
                     }
                     if (downsized) {
-                        if (item.textElement) {
-                            item.android('maxLines', '1');
+                        if (exceed) {
+                            item.app('layout_columnWeight', '0.01');
+                        }
+                        else {
+                            if (item.textElement) {
+                                item.android('maxLines', '1');
+                            }
                         }
                     }
                 }

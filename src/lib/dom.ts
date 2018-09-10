@@ -163,29 +163,50 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
     let valid = false;
     let depth = -1;
     function findFreeForm(elements: any[]) {
-        if (depth === maxDepth) {
+        if (depth++ === maxDepth) {
             return true;
         }
         return elements.some((item: Element) => {
             if (item.nodeName === '#text') {
-                if (isPlainText(item) || cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') || (whiteSpace && item.textContent && item.textContent.indexOf(String.fromCharCode(160))) !== -1) {
+                if (isPlainText(item, whiteSpace) || (cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') && item.textContent && item.textContent !== '')) {
                     valid = true;
                     return true;
                 }
             }
             else if (item instanceof HTMLElement && item.childNodes.length > 0) {
-                depth++;
                 return findFreeForm(Array.from(item.childNodes));
             }
             return false;
         });
     }
-    findFreeForm(Array.from(element.childNodes));
+    if (element.nodeName === '#text') {
+        maxDepth = 0;
+        findFreeForm([element]);
+    }
+    else {
+        findFreeForm(Array.from(element.childNodes));
+    }
     return valid;
 }
 
-export function isPlainText(element: Null<Element>) {
-    return (element != null && element.nodeName === '#text' && (element.textContent || '').trim() !== '');
+export function isPlainText(element: Null<Element>, whiteSpace = false) {
+    if (element != null && element.nodeName === '#text' && element.textContent) {
+        if (whiteSpace) {
+            const value = element.textContent;
+            let valid = false;
+            for (let i = 0; i < value.length; i++) {
+                if (value.charCodeAt(i) !== 32) {
+                    valid = true;
+                    break;
+                }
+            }
+            return (valid && value !== '');
+        }
+        else {
+            return (element.textContent.trim() !== '');
+        }
+    }
+    return false;
 }
 
 export function hasLineBreak(element: Null<Element>) {

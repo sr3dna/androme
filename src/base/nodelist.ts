@@ -22,9 +22,12 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return nodes;
     }
 
-    public static textBaseline<T extends Node>(list: T[], alignInput = false) {
-        let baseline: T[];
-        if (alignInput) {
+    public static textBaseline<T extends Node>(list: T[], alignInput = false, excludeImage = false) {
+        let baseline: T[] = list.filter(node => node.imageElement && node.baseline);
+        if (!excludeImage && baseline.length > 0) {
+            return baseline;
+        }
+        else if (alignInput) {
             baseline = list.filter(node => node.baseline).sort((a, b) => {
                 let nodeTypeA = a.nodeType;
                 let nodeTypeB = b.nodeType;
@@ -42,7 +45,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             const boundsHeight: number = Math.max.apply(null, list.map(node => node.bounds.height));
             if (lineHeight > boundsHeight) {
                 const result = list.filter(node => node.lineHeight === lineHeight);
-                return (result.length === list.length ? result.filter(node => node.hasElement) : result);
+                return (result.length === list.length ? result.filter(node => node.hasElement) : result).filter(node => node.baseline);
             }
             baseline = list.filter(node => node.baseline).sort((a, b) => {
                 const fontSizeA = convertInt(convertPX(a.css('fontSize')));
@@ -80,7 +83,20 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 baseline.reverse();
             }
         }
-        return baseline.filter((node, index) => index === 0 || (node.baseline === baseline[0].baseline && node.lineHeight === baseline[0].lineHeight && node.nodeName === baseline[0].nodeName));
+        let fontFamily: string;
+        let fontSize: string;
+        let fontWeight: string;
+        return baseline.filter((node, index) => {
+            if (index === 0) {
+                fontFamily = node.css('fontFamily');
+                fontSize = node.css('fontSize');
+                fontWeight = node.css('fontWeight');
+                return true;
+            }
+            else {
+                return (node.css('fontFamily') === fontFamily && node.css('fontSize') === fontSize && node.css('fontWeight') === fontWeight && ((node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) || node.bounds.height === baseline[0].bounds.height) && node.nodeName === baseline[0].nodeName);
+            }
+        });
     }
 
     public static linearX<T extends Node>(list: T[]) {

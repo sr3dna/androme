@@ -357,7 +357,7 @@ export default class Application<T extends Node> {
                             const widthRight: number = Math.max.apply(null, sectionRight.list.map(item => Math.abs(item.toInt('right'))));
                             sectionLeft.each((item: T) => {
                                 if (item.pageflow && item.viewWidth === 0) {
-                                    item.css('width', formatPX(widthLeft));
+                                    item.css((item.inlineStatic || item.textElement ? 'maxWidth' : 'width'), formatPX(widthLeft));
                                 }
                             });
                             node.css('width', formatPX(widthLeft + widthRight));
@@ -624,21 +624,46 @@ export default class Application<T extends Node> {
                         if (nodeY.pageflow && nodeY.alignmentType === NODE_ALIGNMENT.NONE && !parentY.flex.enabled && !parentY.has('columnCount') && parentY.alignmentType === NODE_ALIGNMENT.NONE && (parentY.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical) && current === '') {
                             const horizontal = [nodeY];
                             const vertical = [nodeY];
-                            const floatSize = new Set(axisY.slice(k).map(node => node.float)).size;
-                            const floating = axisY.slice(k).every(node => node.floating);
+                            function getFloatSize(list: T[]) {
+                                return new Set(list.map(node => node.float)).size;
+                            }
+                            function getAlignment(first: T, second: T, advance: boolean) {
+                                return (second.plainText && second.multiLine && !parentY.is(NODE_STANDARD.RELATIVE)) ||
+                                       (horizontal.length > 1 && isLineBreak(<Element> second.element.previousSibling)) ||
+                                       (!first.floating && (!first.inlineElement || first.autoMargin || !second.inlineElement || second.autoMargin)) ||
+                                       (!second.floating && ((!first.inlineElement && !first.floating) || first.autoMargin)) ||
+                                       ((first.blockStatic || cleared.has(first)) && second.blockStatic) ||
+                                       (advance && cleared.has(second)) ||
+                                       (first.floating && second.floating && second.linear.top >= first.linear.bottom);
+                            }
                             for (let l = k + 1; l < axisY.length; l++) {
                                 const adjacent = axisY[l];
                                 if (adjacent.pageflow) {
                                     let lineBreak = false;
-                                    const previous = <Null<T>> (() => {
+                                    const previousSibling = <Null<T>> (() => {
                                         let node = adjacent.previousSibling;
                                         while (node) {
                                             if (isLineBreak(<Element> node.element.nextSibling, 'next')) {
                                                 lineBreak = true;
                                                 break;
                                             }
-                                            if (!node.pageflow) {
+                                            if (!node.siblingflow) {
                                                 node = node.previousSibling;
+                                            }
+                                            else {
+                                                break;
+                                            }
+                                        }
+                                        return node;
+                                    })();
+                                    const nextSibling = <Null<T>> (() => {
+                                        let node = adjacent.nextSibling;
+                                        while (node) {
+                                            if (isLineBreak(<Element> node.element, 'next')) {
+                                                return null;
+                                            }
+                                            if (!node.siblingflow) {
+                                                node = node.nextSibling;
                                             }
                                             else {
                                                 break;
@@ -649,21 +674,16 @@ export default class Application<T extends Node> {
                                     if (lineBreak) {
                                         break;
                                     }
-                                    if (previous) {
-                                        const alignVertical = (adjacent.plainText && adjacent.multiLine && !parentY.is(NODE_STANDARD.RELATIVE)) ||
-                                                              (horizontal.length > 1 && isLineBreak(<Element> adjacent.element.previousSibling)) ||
-                                                              (!previous.floating && (!previous.inlineElement || previous.autoMargin || !adjacent.inlineElement || adjacent.autoMargin)) ||
-                                                              (!adjacent.floating && ((!previous.inlineElement && !previous.floating) || previous.autoMargin)) ||
-                                                              ((previous.blockStatic || cleared.has(previous)) && adjacent.blockStatic) ||
-                                                              ((!floating || (floating && floatSize === 2)) && previous.floating && adjacent.floating && adjacent.linear.top >= previous.linear.bottom);
+                                    if (previousSibling != null) {
+                                        const verticalAlignment = getAlignment(previousSibling, adjacent, false);
                                         if (cleared.has(adjacent)) {
                                             const floated = new Set(['both', ...horizontal.map(item => item.float)]);
-                                            if (horizontal.length >= vertical.length && !floated.has(adjacent.css('clear')) && !alignVertical) {
+                                            if (horizontal.length >= vertical.length && !floated.has(adjacent.css('clear')) && !verticalAlignment) {
                                                 horizontal.push(adjacent);
                                                 continue;
                                             }
                                             if (horizontal.length === 1) {
-                                                if (vertical[vertical.length - 1] !== previous) {
+                                                if (vertical[vertical.length - 1] !== previousSibling) {
                                                     vertical.length = 0;
                                                     break;
                                                 }
@@ -671,7 +691,7 @@ export default class Application<T extends Node> {
                                                 continue;
                                             }
                                         }
-                                        if (cleared.has(adjacent) || alignVertical) {
+                                        if (cleared.has(adjacent) || verticalAlignment) {
                                             if (horizontal.length > 1) {
                                                 if (linearVertical) {
                                                     for (let m = 1; m < horizontal.length; m++) {
@@ -690,11 +710,15 @@ export default class Application<T extends Node> {
                                                     continue;
                                                 }
                                             }
-                                            if (vertical[vertical.length - 1] !== previous) {
+                                            if (vertical[vertical.length - 1] !== previousSibling) {
                                                 vertical.length = 0;
                                                 break;
                                             }
                                             else {
+                                                const verticalNext = (nextSibling != null ? getAlignment(adjacent, nextSibling, true) : true);
+                                                if (!verticalNext && adjacent.inlineElement && nextSibling && nextSibling.linear.top < adjacent.linear.bottom) {
+                                                    break;
+                                                }
                                                 vertical.push(adjacent);
                                                 continue;
                                             }
@@ -706,7 +730,7 @@ export default class Application<T extends Node> {
                                                 break;
                                             }
                                             else {
-                                                if (vertical[vertical.length - 1] !== previous) {
+                                                if (vertical[vertical.length - 1] !== previousSibling) {
                                                     vertical.length = 0;
                                                     break;
                                                 }
@@ -717,7 +741,7 @@ export default class Application<T extends Node> {
                                             }
                                         }
                                     }
-                                    if (horizontal[horizontal.length - 1] !== previous) {
+                                    if (horizontal[horizontal.length - 1] !== previousSibling) {
                                         horizontal.length = 0;
                                         break;
                                     }
@@ -730,7 +754,6 @@ export default class Application<T extends Node> {
                                 if (this.isFrameHorizontal(horizontal, cleared)) {
                                     group = this.controllerHandler.createGroup(nodeY, horizontal, parentY);
                                     groupXml = this.writeFrameLayoutHorizontal(group, parentY, horizontal);
-                                    group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT;
                                 }
                                 else {
                                     if (horizontal.length === axisY.length) {
@@ -741,7 +764,7 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     else {
-                                        if (floatSize === 1 && horizontal.some(node => isPercent(node.css('width'))) && horizontal.every(node => isPercent(node.css('width')) || isUnit(node.css('width')))) {
+                                        if (getFloatSize(horizontal) === 1 && horizontal.some(node => isPercent(node.css('width'))) && horizontal.every(node => isPercent(node.css('width')) || isUnit(node.css('width')))) {
                                             group = this.controllerHandler.createGroup(nodeY, horizontal, parentY);
                                             groupXml = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
@@ -763,7 +786,6 @@ export default class Application<T extends Node> {
                                 if (!parentY.is(NODE_STANDARD.CONSTRAINT) && vertical.some(node => cleared.has(node) && node !== vertical[0]) && !vertical.every((node, index) => index === 0 || cleared.has(node))) {
                                     group = this.controllerHandler.createGroup(nodeY, vertical, parentY);
                                     groupXml = this.writeFrameLayoutVertical(group, parentY, vertical, cleared);
-                                    group.alignmentType |= NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.FLOAT;
                                 }
                                 else {
                                     if (vertical.length === axisY.length) {
@@ -786,9 +808,10 @@ export default class Application<T extends Node> {
                                 const borderVisible = (nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0);
                                 const backgroundImage = /url(.*?)/.test(nodeY.css('backgroundImage'));
                                 const backgroundColor = nodeY.has('backgroundColor');
+                                const backgroundVisible = (borderVisible || backgroundImage || backgroundColor);
                                 if (nodeY.children.length === 0) {
                                     const freeFormText = hasFreeFormText(nodeY.element, (SETTINGS.renderInlineText ? 0 : 1));
-                                    if (freeFormText) {
+                                    if (freeFormText || (borderVisible && nodeY.element.textContent && nodeY.element.textContent.length > 0)) {
                                         xml = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
                                     }
                                     else if ((!nodeY.inlineText || (nodeY.toInt('textIndent') + nodeY.bounds.width) < 0) && backgroundImage && nodeY.css('backgroundRepeat') === 'no-repeat') {
@@ -800,10 +823,13 @@ export default class Application<T extends Node> {
                                         xml = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
                                     }
                                     else if (!nodeY.documentRoot) {
-                                        if (SETTINGS.collapseUnattributedElements && ((!borderVisible && !backgroundImage && !backgroundColor) || nodeY.bounds.height === 0) && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext)) {
+                                        if (SETTINGS.collapseUnattributedElements && ((!backgroundVisible || nodeY.bounds.height === 0) && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext))) {
                                             deleteElementCache(nodeY.element, 'node');
                                             parentY.remove(nodeY);
                                             nodeY.hide();
+                                        }
+                                        else if (backgroundVisible) {
+                                            xml = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
                                         }
                                         else {
                                             xml = this.writeFrameLayout(nodeY, parentY);
@@ -820,7 +846,19 @@ export default class Application<T extends Node> {
                                                 const element = document.getElementById(node.dataset.target as string);
                                                 return (element != null && hasValue(element.dataset.ext) && element !== parentY.element);
                                             });
-                                            if ((nodeY.documentRoot && targeted.length === 1) || (SETTINGS.collapseUnattributedElements && !nodeY.documentRoot && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext) && !hasValue(nodeY.dataset.target) && (!borderVisible && !backgroundImage && !backgroundColor) && !nodeY.has('textAlign') && !nodeY.has('verticalAlign') && !nodeY.floating && nodeY.autoMargin && nodeY.alignRelative && !this.controllerHandler.hasAppendProcessing(nodeY.id))) {
+                                            if ((SETTINGS.collapseUnattributedElements &&
+                                                !nodeY.documentRoot &&
+                                                !hasValue(nodeY.element.id) &&
+                                                !hasValue(nodeY.dataset.ext) &&
+                                                !hasValue(nodeY.dataset.target) &&
+                                                nodeY.toInt('width') === 0 &&
+                                                nodeY.toInt('height') === 0 &&
+                                                !backgroundVisible &&
+                                                !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
+                                                nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignRelative &&
+                                                !this.controllerHandler.hasAppendProcessing(nodeY.id)) ||
+                                                (nodeY.documentRoot && targeted.length === 1))
+                                            {
                                                 const child = nodeY.children[0];
                                                 child.documentRoot = nodeY.documentRoot;
                                                 child.siblingIndex = nodeY.siblingIndex;
@@ -828,7 +866,11 @@ export default class Application<T extends Node> {
                                                     child.parent = parentY;
                                                 }
                                                 if (targeted.length === 0) {
-                                                    nodeY.resetBox(BOX_STANDARD.MARGIN | BOX_STANDARD.PADDING, child);
+                                                    nodeY.resetBox(BOX_STANDARD.MARGIN, child, true);
+                                                    child.modifyBox(BOX_STANDARD.MARGIN_TOP, nodeY.paddingTop);
+                                                    child.modifyBox(BOX_STANDARD.MARGIN_RIGHT, nodeY.paddingRight);
+                                                    child.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, nodeY.paddingBottom);
+                                                    child.modifyBox(BOX_STANDARD.MARGIN_LEFT, nodeY.paddingLeft);
                                                 }
                                                 nodeY.hide();
                                                 axisY[k] = child as T;
@@ -850,7 +892,7 @@ export default class Application<T extends Node> {
                                                             xml = this.writeConstraintLayout(nodeY, parentY);
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         }
-                                                        else if (children.every(node => ['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(node.css('verticalAlign'))) && this.isRelativeHorizontal(children)) {
+                                                        else if (this.isRelativeHorizontal(children) && children.every(node => ['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(node.css('verticalAlign')))) {
                                                             xml = this.writeRelativeLayout(nodeY, parentY);
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                                                         }
@@ -881,7 +923,6 @@ export default class Application<T extends Node> {
                                                 if (children.every(node => node.pageflow && node.inlineElement)) {
                                                     if (this.isFrameHorizontal(children, cleared)) {
                                                         xml = this.writeFrameLayoutHorizontal(nodeY, parentY, children);
-                                                        nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT;
                                                     }
                                                     else {
                                                         xml = this.writeRelativeLayout(nodeY, parentY);
@@ -1041,6 +1082,9 @@ export default class Application<T extends Node> {
         }
         else if (center.length === 0 && right.length === 0) {
             xml = this.writeLinearLayout(group, parent, true);
+            if (left.length > 0) {
+                group.alignmentType |= NODE_ALIGNMENT.FLOAT | NODE_ALIGNMENT.LEFT;
+            }
             layers = [left, inline];
         }
         else {
@@ -1056,7 +1100,9 @@ export default class Application<T extends Node> {
                 sublayer = [left, inline];
             }
             layers = [sublayer, null, center, right];
+            group.alignmentType |= NODE_ALIGNMENT.FLOAT | NODE_ALIGNMENT.LEFT | NODE_ALIGNMENT.RIGHT;
         }
+        group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
         function setAlignment(subgroup: T, index: number) {
             switch (index) {
                 case 0:
@@ -1073,8 +1119,8 @@ export default class Application<T extends Node> {
                 if (Array.isArray(item)) {
                     const layer = [...item[0], ...item[1]];
                     const leftgroup = this.controllerHandler.createGroup(layer[0], layer, group);
-                    leftgroup.alignmentType |= NODE_ALIGNMENT.FLOAT | NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.LEFT;
                     xml = replacePlaceholder(xml, group.id, this.writeLinearLayout(leftgroup, group, true));
+                    leftgroup.alignmentType |= NODE_ALIGNMENT.FLOAT | NODE_ALIGNMENT.LEFT;
                     group = leftgroup;
                 }
                 (Array.isArray(item) ? item : [item]).forEach(section => {
@@ -1087,7 +1133,6 @@ export default class Application<T extends Node> {
                         }
                         else {
                             content = this.writeLinearLayout(subgroup, group, true);
-                            subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                             this.sortByAlignment(subgroup.children, subgroup, NODE_ALIGNMENT.HORIZONTAL, false);
                             if (index === 3) {
                                 if (subgroup.children.some(node => node.marginLeft < 0)) {
@@ -1160,7 +1205,6 @@ export default class Application<T extends Node> {
         const current: T[] = [];
         const floated: T[] = [];
         let leadingMargin = 0;
-        let clearReset = false;
         nodes.some(node => {
             if (!node.floating) {
                 leadingMargin += node.linear.height;
@@ -1170,81 +1214,82 @@ export default class Application<T extends Node> {
         });
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
-            if (i > 0 && cleared.has(node)) {
-                floated.push(node);
-                if (!node.floating) {
-                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
-                    rowsCurrent.push(current.slice());
-                    current.length = 0;
-                }
+            if (i > 0 && cleared.has(node) && !node.floating) {
+                node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
+                rowsCurrent.push(current.slice());
+                current.length = 0;
                 rowsFloated.push(floated.slice());
                 floated.length = 0;
-                clearReset = true;
+            }
+            if (node.floating) {
+                floated.push(node);
             }
             else {
-                if (node.floating) {
-                    if (clearReset) {
-                        rowsCurrent.push(current.slice());
-                        current.length = 0;
-                        clearReset = false;
-                    }
-                    floated.push(node);
-                }
-                else {
-                    current.push(node);
-                }
+                current.push(node);
             }
         }
-        rowsFloated.push(floated);
-        rowsCurrent.push(current);
-        let content = '';
-        for (let i = 0; i < Math.max(rowsFloated.length, rowsCurrent.length); i++) {
-            const floating = rowsFloated[i] || [];
-            const pageflow = rowsCurrent[i] || [];
-            if (pageflow.length > 0 || floating.length > 0) {
-                const baseNode = floating[0] || pageflow[0];
-                const basegroup = this.controllerHandler.createGroup(baseNode, undefined, group);
-                const children: T[] = [];
-                let subgroup: Null<T> = null;
-                if (floating.length > 1) {
-                    subgroup = this.controllerHandler.createGroup(floating[0], floating, basegroup);
-                }
-                else if (floating.length > 0) {
-                    subgroup = floating[0];
-                    subgroup.parent = basegroup;
-                }
-                if (subgroup != null) {
-                    children.push(subgroup);
-                    if (i === 0 && leadingMargin > 0) {
-                        subgroup.modifyBox(BOX_STANDARD.MARGIN_TOP, leadingMargin);
-                    }
-                    subgroup = null;
-                }
-                if (pageflow.length > 1) {
-                    subgroup = this.controllerHandler.createGroup(pageflow[0], pageflow, basegroup);
-                }
-                else if (pageflow.length > 0) {
-                    subgroup = pageflow[0];
-                    subgroup.parent = basegroup;
-                }
-                if (subgroup != null) {
-                    children.push(subgroup);
-                }
-                basegroup.alignmentType |= NODE_ALIGNMENT.VERTICAL;
-                basegroup.init();
-                content += this.writeFrameLayout(basegroup, group, true);
-                children.forEach((node, index) => {
-                    if (nodes.includes(node)) {
-                        content = replacePlaceholder(content, basegroup.id, `{:${basegroup.id}:${index}}`);
-                    }
-                    else {
-                        content = replacePlaceholder(content, basegroup.id, this.writeLinearLayout(node, basegroup, false));
-                        node.alignmentType |= NODE_ALIGNMENT.VERTICAL | NODE_ALIGNMENT.SEGMENTED;
-                    }
-                });
-            }
+        if (floated.length > 0) {
+            rowsFloated.push(floated);
         }
-        xml = replacePlaceholder(xml, group.id, content);
+        if (current.length > 0) {
+            rowsCurrent.push(current);
+        }
+        if (!(!nodes[0].floating && rowsFloated.length === 1)) {
+            let content = '';
+            for (let i = 0; i < Math.max(rowsFloated.length, rowsCurrent.length); i++) {
+                const floating = rowsFloated[i] || [];
+                const pageflow = rowsCurrent[i] || [];
+                if (pageflow.length > 0 || floating.length > 0) {
+                    const baseNode = floating[0] || pageflow[0];
+                    const basegroup = this.controllerHandler.createGroup(baseNode, undefined, group);
+                    const children: T[] = [];
+                    let subgroup: Null<T> = null;
+                    if (floating.length > 1) {
+                        subgroup = this.controllerHandler.createGroup(floating[0], floating, basegroup);
+                        basegroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
+                    }
+                    else if (floating.length > 0) {
+                        subgroup = floating[0];
+                        subgroup.parent = basegroup;
+                        basegroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
+                    }
+                    if (subgroup != null) {
+                        children.push(subgroup);
+                        if (i === 0 && leadingMargin > 0) {
+                            subgroup.modifyBox(BOX_STANDARD.MARGIN_TOP, leadingMargin);
+                        }
+                        subgroup = null;
+                    }
+                    if (pageflow.length > 1) {
+                        subgroup = this.controllerHandler.createGroup(pageflow[0], pageflow, basegroup);
+                    }
+                    else if (pageflow.length > 0) {
+                        subgroup = pageflow[0];
+                        subgroup.parent = basegroup;
+                    }
+                    if (subgroup != null) {
+                        children.push(subgroup);
+                    }
+                    basegroup.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                    basegroup.init();
+                    content += this.writeFrameLayout(basegroup, group, true);
+                    children.forEach((node, index) => {
+                        if (nodes.includes(node)) {
+                            content = replacePlaceholder(content, basegroup.id, `{:${basegroup.id}:${index}}`);
+                        }
+                        else {
+                            content = replacePlaceholder(content, basegroup.id, this.writeLinearLayout(node, basegroup, false));
+                            node.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                        }
+                    });
+                }
+            }
+            xml = replacePlaceholder(xml, group.id, content);
+        }
+        else {
+            xml = this.writeLinearLayout(group, parent, false);
+            group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+        }
         return xml;
     }
 

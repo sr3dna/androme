@@ -275,6 +275,7 @@ export default abstract class Resource<T extends Node> {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
+                let performTrim = true;
                 if (element instanceof HTMLInputElement) {
                     switch (element.type) {
                         case 'text':
@@ -307,6 +308,10 @@ export default abstract class Resource<T extends Node> {
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
+                    else if (element.innerText.trim() === '' && this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'))) {
+                        value = replaceEntity(element.innerText);
+                        performTrim = false;
+                    }
                 }
                 else if (node.plainText) {
                     name = (element.textContent || '').trim();
@@ -315,32 +320,34 @@ export default abstract class Resource<T extends Node> {
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                 }
                 if (value !== '') {
-                    const previousSibling = node.previousSibling;
-                    const nextSibling = node.nextSibling;
-                    let previousSpaceEnd = false;
-                    if (previousSibling == null || previousSibling.multiLine) {
-                        value = value.replace(/^\s+/, '');
-                    }
-                    else {
-                        previousSpaceEnd = /\s+$/.test(((<HTMLElement> previousSibling.element).innerText || previousSibling.element.textContent) as string);
-                    }
-                    if (inlineTrim) {
-                        const original = value;
-                        value = value.trim();
-                        if (previousSibling && previousSibling.display !== 'block' && !previousSpaceEnd && /^\s+/.test(original)) {
-                            value = '&#160;' + value;
+                    if (performTrim) {
+                        const previousSibling = node.previousSibling;
+                        const nextSibling = node.nextSibling;
+                        let previousSpaceEnd = false;
+                        if (previousSibling == null || previousSibling.multiLine) {
+                            value = value.replace(/^\s+/, '');
                         }
-                        if (nextSibling && /\s+$/.test(original)) {
-                            value = value + '&#160;';
+                        else {
+                            previousSpaceEnd = /\s+$/.test(((<HTMLElement> previousSibling.element).innerText || previousSibling.element.textContent) as string);
                         }
-                    }
-                    else {
-                        if (!/^\s+$/.test(value)) {
-                            value = value.replace(/^\s+/, (previousSibling && (previousSibling.block || (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) || (node.multiLine && (hasLineBreak(element) || node.renderParent.renderParent.linearHorizontal))) ? '' : '&#160;'));
-                            value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
+                        if (inlineTrim) {
+                            const original = value;
+                            value = value.trim();
+                            if (previousSibling && previousSibling.display !== 'block' && !previousSpaceEnd && /^\s+/.test(original)) {
+                                value = '&#160;' + value;
+                            }
+                            if (nextSibling && /\s+$/.test(original)) {
+                                value = value + '&#160;';
+                            }
                         }
-                        else if (value.length > 0) {
-                            value = '&#160;' + value.substring(1);
+                        else {
+                            if (!/^\s+$/.test(value)) {
+                                value = value.replace(/^\s+/, (previousSibling && (previousSibling.block || (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) || (node.multiLine && (hasLineBreak(element) || node.renderParent.renderParent.linearHorizontal))) ? '' : '&#160;'));
+                                value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
+                            }
+                            else if (value.length > 0) {
+                                value = '&#160;' + value.substring(1);
+                            }
                         }
                     }
                     if (value !== '') {

@@ -100,7 +100,7 @@ const API_ANDROID: UserSupport = {
             },
             SUP: {
                 android: {
-                    layout_marginTop: '-6px'
+                    layout_marginTop: '-4px'
                 }
             }
         }

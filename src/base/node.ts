@@ -385,6 +385,7 @@ export default abstract class Node implements BoxModel {
                 case '0px':
                 case 'none':
                 case 'auto':
+                case 'transparent':
                     return false;
                 default:
                     return true;
@@ -591,7 +592,7 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public resetBox(region: number, node?: T) {
+    public resetBox(region: number, node?: T, negative = false, bounds = false) {
         const attrs: string[] = [];
         if (hasBit(region, BOX_STANDARD.MARGIN)) {
             attrs.push('marginTop', 'marginRight', 'marginBottom', 'marginLeft');
@@ -602,7 +603,7 @@ export default abstract class Node implements BoxModel {
         for (const attr of attrs) {
             this._boxReset[attr] = 1;
             if (node != null) {
-                node.modifyBox(attr, this[attr], true, true);
+                node.modifyBox(attr, this[attr], negative, bounds);
             }
         }
     }
@@ -876,7 +877,11 @@ export default abstract class Node implements BoxModel {
                     this._inlineText = false;
                     break;
                 default:
-                    this._inlineText = (this.hasElement && this.children.length === 0 && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline')))));
+                    this._inlineText = (this.hasElement && this.children.length === 0 &&
+                        !Array.from(this.element.childNodes).some((element: Element) => {
+                            const node = getNodeFromElement(element);
+                            return (node != null && node.visible);
+                        }) && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline')))));
                     break;
             }
         }
@@ -938,7 +943,7 @@ export default abstract class Node implements BoxModel {
 
     get baseline() {
         const value = this.css('verticalAlign');
-        return (value === 'baseline' || value === 'initial' || value === 'unset');
+        return ((value === 'baseline' || value === 'initial' || value === 'unset') && this.siblingflow);
     }
 
     set multiLine(value) {
@@ -978,10 +983,10 @@ export default abstract class Node implements BoxModel {
             element = <Element> this.element.previousSibling;
         }
         else if (this.children.length > 0) {
-            element = <Element> sortAsc(this.children.slice(), 'siblingIndex')[0].previousSibling;
+            element = <Element> sortAsc(this.children.slice(), 'siblingIndex')[0].element.previousSibling;
         }
         while (element != null) {
-            const node = getNodeFromElement(element);
+            const node: T = <T> getNodeFromElement(element);
             if (node && node.siblingflow) {
                 return node;
             }
@@ -995,10 +1000,10 @@ export default abstract class Node implements BoxModel {
             element = <Element> this.element.nextSibling;
         }
         else if (this.children.length > 0) {
-            element = <Element> sortDesc(this.children.slice(), 'siblingIndex')[0].nextSibling;
+            element = <Element> sortDesc(this.children.slice(), 'siblingIndex')[0].element.nextSibling;
         }
         while (element != null) {
-            const node = getNodeFromElement(element);
+            const node: T = <T> getNodeFromElement(element);
             if (node && node.siblingflow) {
                 return node;
             }

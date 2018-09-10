@@ -191,10 +191,7 @@ export default class Table<T extends Node> extends Extension<T> {
             td.data(EXT_NAME.TABLE, 'expand', true);
         }
         function setBoundsWidth(td: T) {
-            let boundsWidth = td.bounds.width;
-            if (borderCollapse) {
-                boundsWidth -= td.borderLeftWidth + td.borderRightWidth;
-            }
+            const boundsWidth = td.bounds.width - (td.borderLeftWidth + td.borderRightWidth);
             td.css('width', formatPX(boundsWidth));
         }
         for (let i = 0; i < table.length; i++) {
@@ -228,7 +225,8 @@ export default class Table<T extends Node> extends Extension<T> {
                             if (columnWidth === 'auto') {
                                 if (mapPercent >= 1) {
                                     setBoundsWidth(td);
-                                    td.data(EXT_NAME.TABLE, 'expand', false);
+                                    td.data(EXT_NAME.TABLE, 'exceed', true);
+                                    td.data(EXT_NAME.TABLE, 'downsized', true);
                                 }
                                 else {
                                     setAutoWidth(td as T);

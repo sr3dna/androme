@@ -493,11 +493,17 @@ export default class View extends Node {
             else if (node.css('marginLeft') === 'auto') {
                 alignment.push(right);
             }
+            else if (node.css('marginRight') === 'auto') {
+                alignment.push(left);
+            }
             if (node.centerMarginVertical) {
                 alignment.push('center_vertical');
             }
             else if (node.css('marginTop') === 'auto') {
                 alignment.push('bottom');
+            }
+            else if (node.css('marginBottom') === 'auto') {
+                alignment.push('top');
             }
             if (alignment.length > 0) {
                 const gravity = (node.blockWidth ? 'gravity' : 'layout_gravity');
@@ -530,7 +536,7 @@ export default class View extends Node {
                     }
                     break;
                 case 'middle':
-                    if (this.documentParent.css('display') === 'table-cell' || (this.inlineStatic && this.documentParent.lineHeight > 0) || renderParent.of(NODE_STANDARD.LINEAR, NODE_ALIGNMENT.HORIZONTAL)) {
+                    if (this.documentParent.css('display') === 'table-cell' || (this.inlineStatic && this.documentParent.lineHeight > 0) || renderParent.linearHorizontal) {
                         verticalAlign = 'center_vertical';
                     }
                     break;
@@ -683,7 +689,7 @@ export default class View extends Node {
                 }
                 else {
                     const alignInput = renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT);
-                    if (renderChildren.some(node => !node.alignRelative) || renderParent.android('baselineAlignedChildIndex') != null || alignInput) {
+                    if (renderChildren.some(node => !node.alignRelative || !node.baseline) || renderParent.android('baselineAlignedChildIndex') != null || alignInput) {
                         const baseline = NodeList.textBaseline(renderChildren, alignInput);
                         if (baseline.length > 0) {
                             this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
@@ -710,10 +716,8 @@ export default class View extends Node {
                         }
                     }
                 }
-                if (settings.ellipsisOnTextOverflow && renderChildren.every(node => node.textElement && !node.floating)) {
-                    for (let i = 1; i < renderChildren.length; i++) {
-                        renderChildren[i].android('singleLine', 'true');
-                    }
+                if (settings.ellipsisOnTextOverflow && renderChildren.length > 1 && renderChildren.every(node => node.textElement && !node.floating)) {
+                    renderChildren[renderChildren.length - 1].android('singleLine', 'true');
                 }
             }
         }
@@ -729,7 +733,7 @@ export default class View extends Node {
                     }
                 });
             }
-            if (this.blockStatic && renderChildren.every(node => renderChildren[0].documentParent === node.documentParent)) {
+            if (this.blockStatic) {
                 const lastIndex = renderChildren.length - 1;
                 for (let i = 0; i < renderChildren.length; i++) {
                     const current = renderChildren[i];
@@ -950,21 +954,21 @@ export default class View extends Node {
 
     private bindWhiteSpace() {
         if (this.linearHorizontal || this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
-            if (!this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
-                let left = this.box.left;
+            if (!(this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) || this.renderParent.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT))) {
+                let right = this.box.left;
                 this.each((node: T) => {
                     if (!node.floating) {
-                        const width = Math.round(node.linear.left - left);
+                        const width = Math.round(node.linear.left - right);
                         if (width >= 1) {
                             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
                         }
                     }
-                    left = node.linear.right;
+                    right = node.linear.right;
                 }, true);
             }
         }
         else if (this.linearVertical) {
-            let top = this.box.top;
+            let bottom = this.box.top;
             let previous: Null<T> = null;
             const verified = new Set<T>();
             function getMarginBottom(node: T) {
@@ -975,8 +979,9 @@ export default class View extends Node {
             }
             this.each((node: T) => {
                 let valid = false;
-                if (previous && !previous.hasElement && previous.children.includes(node.previousSibling)) {
-                    previous = node.previousSibling;
+                const previousSibling = node.previousSibling as T;
+                if (previous && !previous.hasElement && previousSibling && previous.children.includes(previousSibling)) {
+                    previous = previousSibling;
                 }
                 getElementsBetweenSiblings((previous != null ? previous.element : null), node.element).forEach(element => {
                     const collapsed = getNodeFromElement(element) as T;
@@ -988,12 +993,12 @@ export default class View extends Node {
                     }
                 });
                 if (valid || (!node.hasElement && !node.plainText)) {
-                    const height = Math.round(node.linear.top - top);
+                    const height = Math.round(node.linear.top - bottom);
                     if (height >= 1) {
                         node.modifyBox(BOX_STANDARD.MARGIN_TOP, height);
                     }
                 }
-                top = getMarginBottom(node);
+                bottom = getMarginBottom(node);
                 previous = node;
             }, true);
         }

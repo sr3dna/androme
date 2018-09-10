@@ -214,47 +214,52 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.processFontStyle(viewData);
         const styles: ObjectMap<string[]> = {};
         for (const node of viewData.cache) {
-            const children = node.renderChildren.filter(child => child.visible && !child.isolated && !child.relocated);
+            const children = node.renderChildren.filter(child => child.visible && !child.relocated);
             if (children.length > 1) {
-                const map = {};
+                const map = new Map<string, number>();
                 let style = '';
                 let valid = true;
                 for (let i = 0; i < children.length; i++) {
-                    const child = children[i];
+                    const attrs = children[i].combine('_', 'android');
                     let found = false;
-                    child.combine('_', 'android').forEach(value => {
+                    attrs.some(value => {
                         if (value.startsWith('style=')) {
                             if (i === 0) {
                                 style = value;
                             }
                             else {
-                                if (value !== style) {
+                                if (style === '' || value !== style) {
                                     valid = false;
+                                    return true;
                                 }
                             }
                             found = true;
                         }
-                        if (map[value] == null) {
-                            map[value] = 0;
+                        else {
+                            if (!map.has(value)) {
+                                map.set(value, 0);
+                            }
+                            map.set(value, (map.get(value) as number) + 1);
                         }
-                        map[value]++;
+                        return false;
                     });
-                    if (style !== '' && !found) {
+                    if (!valid || (style !== '' && !found)) {
                         valid = false;
+                        break;
                     }
                 }
                 if (valid) {
-                    for (const attr in map) {
-                        if (map[attr] !== children.length) {
-                            delete map[attr];
+                    for (const attr of map.keys()) {
+                        if (map.get(attr) !== children.length) {
+                            map.delete(attr);
                         }
                     }
-                    if (Object.keys(map).length > 1) {
+                    if (map.size > 1) {
                         if (style !== '') {
                             style = trim(style.substring(style.indexOf('/') + 1), '"');
                         }
                         const common: string[] = [];
-                        for (const attr in map) {
+                        for (const attr of map.keys()) {
                             const match = attr.match(/(\w+):(\w+)="(.*?)"/);
                             if (match) {
                                 children.forEach(child => child.delete(match[1], match[2]));
@@ -278,10 +283,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
             }
         }
-        if (Object.keys(styles).length > 0) {
-            for (const name in styles) {
-                Resource.STORED.STYLES.set(name, { attributes: styles[name].join(';') });
-            }
+        for (const name in styles) {
+            Resource.STORED.STYLES.set(name, { attributes: styles[name].join(';') });
         }
     }
 
@@ -942,7 +945,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const name = ResourceView.addString(stored.value, stored.name);
                 if (name !== '') {
                     const method = METHOD_ANDROID['valueString'];
-                    node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension.length === 0));
+                    if ((node.toInt('textIndent') + node.bounds.width) > 0) {
+                        node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension.length === 0));
+                    }
                 }
             }
         });
