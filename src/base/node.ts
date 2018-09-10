@@ -888,6 +888,14 @@ export default abstract class Node implements BoxModel {
         return (this.originalStyleMap.marginLeft === 'auto' || this.originalStyleMap.marginRight === 'auto');
     }
 
+    get autoLeftMargin() {
+        return (this.originalStyleMap.marginLeft === 'auto' && this.originalStyleMap.marginRight !== 'auto');
+    }
+
+    get autoRightMargin() {
+        return (this.originalStyleMap.marginLeft !== 'auto' && this.originalStyleMap.marginRight === 'auto');
+    }
+
     get centerMarginHorizontal() {
         return (this.originalStyleMap.marginLeft === 'auto' && this.originalStyleMap.marginRight === 'auto');
     }

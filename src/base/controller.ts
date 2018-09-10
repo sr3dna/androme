@@ -22,6 +22,7 @@ export default abstract class Controller<T extends Node> {
     public abstract baseRenderDepth(name: string): number;
     public abstract setConstraints(): void;
     public abstract setDimensions(data: ViewData<NodeList<T>>): void;
+    public abstract getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number): string;
     public abstract finalize(data: ViewData<NodeList<T>>): void;
 
     public abstract get supportInline(): string[];

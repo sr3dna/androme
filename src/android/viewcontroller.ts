@@ -332,7 +332,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                         }
                                         if (current.linear.right >= parent.box.right || withinFraction(current.linear.right, parent.box.right)) {
-                                            current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.cssOriginal('marginLeft') === 'auto' ? AXIS_ANDROID.HORIZONTAL : ''));
+                                            current.anchor(mapLayout['right'], 'parent', (parent.viewWidth > 0 || current.float === 'right' || current.autoLeftMargin ? AXIS_ANDROID.HORIZONTAL : ''));
                                         }
                                     }
                                     if (current.linear.top <= parent.box.top || withinFraction(current.linear.top, parent.box.top)) {
@@ -440,10 +440,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 if (mapParent(current, 'left') && mapParent(current, 'right')) {
                                     if (current.autoMargin) {
-                                        if (current.cssOriginal('marginLeft') === 'auto' && current.cssOriginal('marginRight') !== 'auto') {
+                                        if (current.autoLeftMargin) {
                                             mapDelete(current, 'left');
                                         }
-                                        if (current.cssOriginal('marginLeft') !== 'auto' && current.cssOriginal('marginRight') === 'auto') {
+                                        if (current.autoRightMargin) {
                                             mapDelete(current, 'right');
                                         }
                                         if (current.centerMarginHorizontal) {
@@ -1303,6 +1303,21 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
             }
         }
+    }
+
+    public getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan = 1) {
+        let xml = '';
+        const percent = (width != null && isPercent(width) ? (parseInt(width) / 100).toFixed(2) : '');
+        switch (nodeType) {
+            case NODE_STANDARD.GRID:
+                xml = this.renderNodeStatic(NODE_STANDARD.SPACE, depth, { app: {
+                            layout_columnWeight: percent,
+                            layout_columnSpan: columnSpan
+                        }
+                    }, (percent !== '' ? '0px' : 'wrap_content'), (!height ? 'wrap_content' : formatPX(height)));
+                break;
+        }
+        return xml;
     }
 
     public createGroup(node: T, children?: T[], parent?: T, element?: HTMLElement): T {

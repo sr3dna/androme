@@ -300,80 +300,89 @@ export default class View extends Node {
                     this.android('layout_height', 'match_parent', false);
                 }
             }
-            if (this.android('layout_width') !== '0px') {
-                if (!this.inlineStatic) {
-                    if (this.toInt('width') > 0) {
-                        if (isPercent(styleMap.width)) {
-                            if (styleMap.width === '100%') {
-                                this.android('layout_width', 'match_parent', false);
+            if (this.of(NODE_STANDARD.GRID, NODE_ALIGNMENT.PERCENT)) {
+                this.android('layout_width', 'match_parent');
+            }
+            else {
+                if (this.android('layout_width') !== '0px') {
+                    if (!this.inlineStatic || renderParent.is(NODE_STANDARD.GRID)) {
+                        if (this.toInt('width') > 0) {
+                            if (isPercent(styleMap.width)) {
+                                if (styleMap.width === '100%') {
+                                    this.android('layout_width', 'match_parent', false);
+                                }
+                                else if (renderParent.of(NODE_STANDARD.GRID, NODE_ALIGNMENT.PERCENT)) {
+                                    this.android('layout_width', '0px');
+                                    this.app('layout_columnWeight', (parseInt(styleMap.width) / 100).toFixed(2));
+                                }
+                                else {
+                                    let widthPercent = Math.ceil(this.bounds.width);
+                                    if (!tableElement) {
+                                        widthPercent -= this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
+                                    }
+                                    this.android('layout_width', formatPX(widthPercent), false);
+                                }
                             }
                             else {
-                                let widthPercent = Math.ceil(this.bounds.width);
-                                if (!tableElement) {
-                                    widthPercent -= this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
-                                }
-                                this.android('layout_width', formatPX(widthPercent), false);
+                                this.android('layout_width', styleMap.width);
                             }
+                        }
+                    }
+                    if (constraint.layoutWidth) {
+                        if (constraint.layoutHorizontal) {
+                            this.android('layout_width', (parent.viewWidth > 0 ? 'match_parent' : 'wrap_content'), false);
                         }
                         else {
-                            this.android('layout_width', styleMap.width);
+                            this.android('layout_width', (this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)), false);
                         }
                     }
+                    if (this.has('minWidth') && isUnit(styleMap.minWidth)) {
+                        this.android('layout_width', 'wrap_content', false);
+                        this.android('minWidth', styleMap.minWidth, false);
+                    }
                 }
-                if (constraint.layoutWidth) {
-                    if (constraint.layoutHorizontal) {
-                        this.android('layout_width', (parent.viewWidth > 0 ? 'match_parent' : 'wrap_content'), false);
+                if (this.android('layout_width') == null) {
+                    if (convertFloat(this.app('layout_columnWeight')) > 0) {
+                        this.android('layout_width', '0px');
                     }
                     else {
-                        this.android('layout_width', (this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width)), false);
-                    }
-                }
-                if (this.has('minWidth') && isUnit(styleMap.minWidth)) {
-                    this.android('layout_width', 'wrap_content', false);
-                    this.android('minWidth', styleMap.minWidth, false);
-                }
-            }
-            if (this.android('layout_width') == null) {
-                if (convertFloat(this.app('layout_columnWeight')) > 0) {
-                    this.android('layout_width', '0px');
-                }
-                else {
-                    const wrap = (this.nodeType < NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
-                    if (!wrap || this.blockStatic) {
-                        const inlineRight: number = Math.max.apply(null, this.renderChildren.filter(node => node.inlineElement && node.float !== 'right').map(node => node.linear.right)) || 0;
-                        const previousSibling = this.previousSibling;
-                        const nextSibling = this.nextSibling;
-                        if ((this.hasElement && this.blockStatic && (
-                                this.ascend(true).every(node => node.blockStatic) ||
-                                (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((previousSibling == null || !previousSibling.floating) && (nextSibling == null || !nextSibling.floating)))
-                            )) ||
-                            (!this.hasElement && this.renderChildren.length > 0 && this.renderChildren.some(item => item.linear.width >= this.documentParent.box.width)) ||
-                            (width >= widthParent && (parent.documentBody || renderParent.documentRoot || this.nodeType < NODE_STANDARD.BLOCK) || this.ascend(true).reduce((a: number, b: T) => Math.max(a, b.toInt('width')), 0) > 0) ||
-                            (inlineRight > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(inlineRight, this.box.right))))
-                        {
-                            this.android('layout_width', 'match_parent');
-                        }
-                        else if (renderParent.linearVertical && (!this.inlineElement || this.blockStatic) && (this.is(NODE_STANDARD.TEXT) || renderParent.blockWidth)) {
-                            const widest: T[] = [];
-                            let widestRight = 0;
-                            for (const node of renderParent.children) {
-                                const inside = node.cascade().filter(item => item.visible).reduce((a: number, b: T) => Math.max(a, b.linear.right), 0) + node.paddingRight + node.borderRightWidth + node.marginRight;
-                                if (inside > widestRight) {
-                                    widest.length = 0;
-                                    widest.push(node);
-                                    widestRight = inside;
-                                }
-                                else if (inside === widestRight) {
-                                    widest.push(node);
-                                }
-                            }
-                            if (!widest.includes(this)) {
+                        const wrap = (this.nodeType < NODE_STANDARD.INLINE || this.inlineElement || !this.pageflow || this.display === 'table' || parent.flex.enabled || (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) || renderParent.is(NODE_STANDARD.GRID));
+                        if (!wrap || this.blockStatic) {
+                            const inlineRight: number = Math.max.apply(null, this.renderChildren.filter(node => node.inlineElement && node.float !== 'right').map(node => node.linear.right)) || 0;
+                            const previousSibling = this.previousSibling;
+                            const nextSibling = this.nextSibling;
+                            if ((this.hasElement && this.blockStatic && (
+                                    this.ascend(true).every(node => node.blockStatic) ||
+                                    (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((previousSibling == null || !previousSibling.floating) && (nextSibling == null || !nextSibling.floating)))
+                                )) ||
+                                (!this.hasElement && this.renderChildren.length > 0 && this.renderChildren.some(item => item.linear.width >= this.documentParent.box.width)) ||
+                                (width >= widthParent && (parent.documentBody || renderParent.documentRoot || this.nodeType < NODE_STANDARD.BLOCK) || this.ascend(true).reduce((a: number, b: T) => Math.max(a, b.toInt('width')), 0) > 0) ||
+                                (inlineRight > 0 && ((this.is(NODE_STANDARD.FRAME) || this.linearVertical) && !withinFraction(inlineRight, this.box.right))))
+                            {
                                 this.android('layout_width', 'match_parent');
                             }
+                            else if (renderParent.linearVertical && (!this.inlineElement || this.blockStatic) && (this.is(NODE_STANDARD.TEXT) || renderParent.blockWidth)) {
+                                const widest: T[] = [];
+                                let widestRight = 0;
+                                for (const node of renderParent.children) {
+                                    const inside = node.cascade().filter(item => item.visible).reduce((a: number, b: T) => Math.max(a, b.linear.right), 0) + node.paddingRight + node.borderRightWidth + node.marginRight;
+                                    if (inside > widestRight) {
+                                        widest.length = 0;
+                                        widest.push(node);
+                                        widestRight = inside;
+                                    }
+                                    else if (inside === widestRight) {
+                                        widest.push(node);
+                                    }
+                                }
+                                if (!widest.includes(this)) {
+                                    this.android('layout_width', 'match_parent');
+                                }
+                            }
                         }
-                    }
-                    if (this.android('layout_width') == null) {
-                        this.android('layout_width', 'wrap_content');
+                        if (this.android('layout_width') == null) {
+                            this.android('layout_width', 'wrap_content');
+                        }
                     }
                 }
             }
@@ -894,7 +903,7 @@ export default class View extends Node {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, bottom * -1, true);
             }
             if (left !== 0) {
-                if (this.float === 'right' || (this.position === 'relative' && this.cssOriginal('marginLeft') === 'auto')) {
+                if (this.float === 'right' || (this.position === 'relative' && this.autoLeftMargin)) {
                     this.modifyBox(BOX_STANDARD.MARGIN_RIGHT, left * -1, true);
                 }
                 else {

@@ -349,7 +349,7 @@ export default class Application<T extends Node> {
                     if (marginRight.length > 0) {
                         const [sectionLeft, sectionRight] = new NodeList<T>(node.children as T[]).partition((item: T) => !marginRight.includes(item));
                         if (sectionLeft.length > 0 && sectionRight.length > 0) {
-                            if (node.cssOriginal('marginLeft') === 'auto') {
+                            if (node.autoLeftMargin) {
                                 node.css('marginLeft', node.style.marginLeft as string);
                             }
                             node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
@@ -786,7 +786,7 @@ export default class Application<T extends Node> {
                                         else if (horizontal.some(node => !node.parent.linearHorizontal)) {
                                             group = this.controllerHandler.createGroup(nodeY, horizontal, parentY);
                                             groupXml = this.writeLinearLayout(group, parentY, true);
-                                            group.alignmentType |= (horizontal.every(node => node.float === 'right' || (node.cssOriginal('marginLeft') === 'auto' && node.cssOriginal('marginRight') !== 'auto')) ? NODE_ALIGNMENT.RIGHT : NODE_ALIGNMENT.LEFT);
+                                            group.alignmentType |= (horizontal.every(node => node.float === 'right' || node.autoLeftMargin) ? NODE_ALIGNMENT.RIGHT : NODE_ALIGNMENT.LEFT);
                                         }
                                     }
                                 }
@@ -813,6 +813,15 @@ export default class Application<T extends Node> {
                         }
                         if (!nodeY.rendered) {
                             let xml = '';
+                            const width = nodeY.css('width');
+                            if (parentY.linearVertical && isPercent(width) && width !== '100%') {
+                                const group = this.controllerHandler.createGroup(nodeY, [nodeY], parentY);
+                                const groupXml = this.writeGridLayout(group, parentY, 2, 1);
+                                group.alignmentType |= NODE_ALIGNMENT.PERCENT;
+                                renderXml(group, parentY, groupXml, current);
+                                this.controllerHandler[(nodeY.float === 'right' || nodeY.autoLeftMargin ? 'prependBefore' : 'appendAfter')](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - parseInt(width))}%`));
+                                parentY = group;
+                            }
                             if (nodeY.controlName === '') {
                                 const borderVisible = (nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0);
                                 const backgroundImage = /url(.*?)/.test(nodeY.css('backgroundImage'));
@@ -1077,8 +1086,8 @@ export default class Application<T extends Node> {
         const inline = pageflow.filter(item => !item.autoMargin);
         const center = pageflow.filter(item => item.centerMarginHorizontal);
         const [right, left] = new NodeList(floated.list).partition(item => item.float === 'right');
-        right.list.push(...pageflow.list.filter(item => item.cssOriginal('marginLeft') === 'auto' && item.cssOriginal('marginRight') !== 'auto'));
-        left.list.push(...pageflow.list.filter(item => item.cssOriginal('marginRight') === 'auto' && item.cssOriginal('marginLeft') !== 'auto'));
+        right.list.push(...pageflow.list.filter(item => item.autoLeftMargin));
+        left.list.push(...pageflow.list.filter(item => item.autoRightMargin));
         let layers: Null<NodeList<T> | NodeList<T>[]>[];
         if (inline.length === nodes.length) {
             xml = this.writeLinearLayout(group, parent, true);
@@ -1177,7 +1186,7 @@ export default class Application<T extends Node> {
                                         }
                                     });
                                     subgroup.children = sorted.reverse();
-                                    this.preserveSortOrder(subgroup.id, <T[]> subgroup.children);
+                                    this.saveSortOrder(subgroup.id, <T[]> subgroup.children);
                                 }
                             }
                         }
@@ -1375,6 +1384,10 @@ export default class Application<T extends Node> {
         }
     }
 
+    public getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number) {
+        return this.controllerHandler.getEmptySpacer(nodeType, depth, width, height, columnSpan);
+    }
+
     public createLayout(filename: string) {
         this._currentIndex = this._views.length;
         this._views.push({
@@ -1461,11 +1474,11 @@ export default class Application<T extends Node> {
             }
         }
         if (parent && preserve && sorted) {
-            this.preserveSortOrder(parent.id, children);
+            this.saveSortOrder(parent.id, children);
         }
     }
 
-    public preserveSortOrder<T extends Node>(id: string | number, nodes: T[]) {
+    public saveSortOrder<T extends Node>(id: string | number, nodes: T[]) {
         this._sorted[id.toString()] = nodes.map(node => node.id);
     }
 
