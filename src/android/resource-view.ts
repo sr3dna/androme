@@ -214,15 +214,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.processFontStyle(viewData);
         const styles: ObjectMap<string[]> = {};
         for (const node of viewData.cache) {
-            const children = node.renderChildren.filter(child => child.visible && !child.relocated);
+            const children = node.renderChildren.filter(item => item.auto && item.visible);
             if (children.length > 1) {
                 const map = new Map<string, number>();
                 let style = '';
                 let valid = true;
                 for (let i = 0; i < children.length; i++) {
-                    const attrs = children[i].combine('_', 'android');
                     let found = false;
-                    attrs.some(value => {
+                    children[i].combine('_', 'android').some(value => {
                         if (value.startsWith('style=')) {
                             if (i === 0) {
                                 style = value;
@@ -769,13 +768,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const sorted: StyleList = [];
             for (let node of nodes) {
                 let system = false;
-                let label: Null<T> = null;
-                if (node.companion != null) {
-                    label = node;
+                const nodeId = node.id;
+                if (node.companion != null && (node.companion.textElement || node.companion.tagName === 'LABEL')) {
                     node = node.companion as T;
                 }
                 const element = node.element;
-                const nodeId = (label || node).id;
                 const stored: FontAttribute = Object.assign({}, getElementCache(element, 'fontStyle'));
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = `@color/${ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
@@ -790,7 +787,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     if (SETTINGS.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily] != null) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
-                    if ((FONT_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                    if ((FONT_ANDROID[fontFamily] != null && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] != null && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
                         system = true;
                         stored.fontFamily = fontFamily;
                         if (stored.fontStyle === 'normal') {

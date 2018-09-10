@@ -383,7 +383,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol2043"
+                    android:text="@string/__symbol26860"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -450,7 +450,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 </LinearLayout>
             </RelativeLayout>
             <Space
-                android:id="@+id/space_3"
+                android:id="@+id/space_2"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -501,7 +501,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
-                android:id="@+id/space_5"
+                android:id="@+id/space_3"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -531,7 +531,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol2043"
+                    android:text="@string/__symbol26860"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -561,7 +561,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/Select" />
             </LinearLayout>
             <Space
-                android:id="@+id/space_7"
+                android:id="@+id/space_4"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -583,7 +583,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
-                android:id="@+id/space_9"
+                android:id="@+id/space_5"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -605,7 +605,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
-                android:id="@+id/space_11"
+                android:id="@+id/space_6"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -660,7 +660,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
-                android:id="@+id/space_2"
+                android:id="@+id/space_7"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -682,7 +682,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
-                android:id="@+id/space_4"
+                android:id="@+id/space_8"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -759,7 +759,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
-                android:id="@+id/space_6"
+                android:id="@+id/space_9"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -781,7 +781,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
-                android:id="@+id/space_8"
+                android:id="@+id/space_10"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -803,7 +803,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
             <Space
-                android:id="@+id/space_10"
+                android:id="@+id/space_11"
                 android:layout_height="@dimen/space_height"
                 android:layout_width="match_parent"
                 app:layout_columnSpan="2" />
@@ -844,7 +844,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/button_3"
                     android:background="@drawable/button_button_1"
                     android:layout_height="@dimen/button_height"
-                    android:layout_marginStart="@dimen/button_margin_start_1"
+                    android:layout_marginStart="@dimen/button_margin_start_2"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
                     android:minWidth="@dimen/button_min_width"
@@ -895,7 +895,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/button_4"
                     android:background="@drawable/button_button_1"
                     android:layout_height="@dimen/button_height"
-                    android:layout_marginStart="@dimen/button_margin_start_1"
+                    android:layout_marginStart="@dimen/button_margin_start_2"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
                     android:minWidth="@dimen/button_min_width"
@@ -947,7 +947,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol2043"
+                    android:text="@string/__symbol26860"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1052,7 +1052,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:id="@+id/button_6"
                     android:background="@drawable/button_button_1"
                     android:layout_height="@dimen/button_height"
-                    android:layout_marginStart="@dimen/button_margin_start_2"
+                    android:layout_marginStart="@dimen/button_margin_start_1"
                     android:layout_width="wrap_content"
                     android:minHeight="@dimen/button_min_height"
                     android:minWidth="@dimen/button_min_width"
@@ -1073,7 +1073,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol2043">):</string>
+    <string name="__symbol26860">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1368,18 +1368,19 @@ The attributes "include" and "include-end" can only be applied to elements which
 ### Dimension Resources
 
 ```xml
+
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="button_height">17dp</dimen>
     <dimen name="button_margin_start">3dp</dimen>
-    <dimen name="button_margin_start_1">7dp</dimen>
-    <dimen name="button_margin_start_2">4dp</dimen>
+    <dimen name="button_margin_start_1">4dp</dimen>
+    <dimen name="button_margin_start_2">7dp</dimen>
     <dimen name="button_min_height">25dp</dimen>
     <dimen name="button_min_width">35dp</dimen>
     <dimen name="button_padding_horizontal">6dp</dimen>
     <dimen name="button_padding_vertical">1dp</dimen>
     <dimen name="checkbox_margin_end">3dp</dimen>
-    <dimen name="checkbox_margin_start">5dp</dimen>
+    <dimen name="checkbox_margin_start">7dp</dimen>
     <dimen name="checkbox_margin_vertical">3dp</dimen>
     <dimen name="div_margin_start">3dp</dimen>
     <dimen name="form_padding_horizontal">11dp</dimen>
@@ -1393,7 +1394,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <dimen name="label_width">80dp</dimen>
     <dimen name="radio_margin_end">3dp</dimen>
     <dimen name="radio_margin_start">5dp</dimen>
-    <dimen name="radio_margin_start_1">6dp</dimen>
+    <dimen name="radio_margin_start_1">8dp</dimen>
     <dimen name="radio_margin_top">3dp</dimen>
     <dimen name="select_group_margin_top">13dp</dimen>
     <dimen name="select_margin_start">3dp</dimen>
@@ -1416,7 +1417,7 @@ The attributes "include" and "include-end" can only be applied to elements which
 ### Drawable Resources
 
 ```xml
-<<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <stroke android:width="1dp" android:color="@color/yellow_green" />
     <solid android:color="@color/dark_blue" />

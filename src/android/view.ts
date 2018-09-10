@@ -963,7 +963,7 @@ export default class View extends Node {
                             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
                         }
                     }
-                    right = node.linear.right;
+                    right = (node.companion != null && !node.companion.visible ? Math.max(node.linear.right, node.companion.linear.right) : node.linear.right);
                 }, true);
             }
         }

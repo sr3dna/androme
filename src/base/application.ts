@@ -417,7 +417,7 @@ export default class Application<T extends Node> {
                 });
                 sortAsc(node.children, 'siblingIndex');
             }
-            this.cache.sortAsc('depth', 'parent.siblingIndex', 'siblingIndex', 'id');
+            this.cache.sortAsc('depth', 'id');
             this.createLayout(rootElement.dataset.viewName as string);
             return true;
         }
@@ -506,14 +506,17 @@ export default class Application<T extends Node> {
                                 const target = document.getElementById(node.dataset.target as string);
                                 if (target != null && target !== parent.element) {
                                     application.addRenderQueue(node.dataset.target as string, [xml]);
-                                    node.relocated = true;
+                                    node.auto = false;
                                     return;
                                 }
                             }
                             else if (parent.isSet('dataset', 'target')) {
-                                application.addRenderQueue(parent.nodeId, [xml]);
-                                node.dataset.target = parent.nodeId;
-                                return;
+                                const target = document.getElementById(parent.dataset.target as string);
+                                if (target != null) {
+                                    application.addRenderQueue(parent.nodeId, [xml]);
+                                    node.dataset.target = parent.nodeId;
+                                    return;
+                                }
                             }
                         }
                         insertViewTemplate(partial, node, parent.id.toString(), xml, current);
@@ -521,7 +524,7 @@ export default class Application<T extends Node> {
                 }
             }
             for (const parent of depth.values()) {
-                if (parent.children.length === 0) {
+                if (parent.children.length === 0 || parent.renderAs != null) {
                     continue;
                 }
                 const axisY: T[] = [];
@@ -571,6 +574,12 @@ export default class Application<T extends Node> {
                             nodeY.parent = cloneParent;
                             parentY = cloneParent;
                         }
+                    }
+                    if (nodeY.renderAs != null) {
+                        parentY.remove(nodeY);
+                        nodeY.hide();
+                        nodeY = nodeY.renderAs as T;
+                        nodeY.parent = parentY;
                     }
                     if (!nodeY.rendered) {
                         let next = false;
@@ -1205,6 +1214,8 @@ export default class Application<T extends Node> {
         const current: T[] = [];
         const floated: T[] = [];
         let leadingMargin = 0;
+        let clearReset = false;
+        let linearVertical = true;
         nodes.some(node => {
             if (!node.floating) {
                 leadingMargin += node.linear.height;
@@ -1214,17 +1225,25 @@ export default class Application<T extends Node> {
         });
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
-            if (i > 0 && cleared.has(node) && !node.floating) {
-                node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
-                rowsCurrent.push(current.slice());
-                current.length = 0;
-                rowsFloated.push(floated.slice());
-                floated.length = 0;
+            if (i > 0 && cleared.has(node)) {
+                if (!node.floating) {
+                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
+                    rowsCurrent.push(current.slice());
+                    current.length = 0;
+                    rowsFloated.push(floated.slice());
+                    floated.length = 0;
+                }
+                else {
+                    clearReset = true;
+                }
             }
             if (node.floating) {
                 floated.push(node);
             }
             else {
+                if (clearReset && !cleared.has(node)) {
+                    linearVertical = false;
+                }
                 current.push(node);
             }
         }
@@ -1234,7 +1253,11 @@ export default class Application<T extends Node> {
         if (current.length > 0) {
             rowsCurrent.push(current);
         }
-        if (!(!nodes[0].floating && rowsFloated.length === 1)) {
+        if (linearVertical) {
+            xml = this.writeLinearLayout(group, parent, false);
+            group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+        }
+        else {
             let content = '';
             for (let i = 0; i < Math.max(rowsFloated.length, rowsCurrent.length); i++) {
                 const floating = rowsFloated[i] || [];
@@ -1285,10 +1308,6 @@ export default class Application<T extends Node> {
                 }
             }
             xml = replacePlaceholder(xml, group.id, content);
-        }
-        else {
-            xml = this.writeLinearLayout(group, parent, false);
-            group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
         }
         return xml;
     }
@@ -1486,9 +1505,6 @@ export default class Application<T extends Node> {
         }
         else if (isElementVisible(element)) {
             node = new this._Node(this.cache.nextId, SETTINGS.targetAPI, element);
-            if (getElementCache(element, 'nodeIsolated')) {
-                node.isolated = true;
-            }
             node.setExclusions();
             node.setOverflow();
         }

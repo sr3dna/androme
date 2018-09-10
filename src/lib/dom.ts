@@ -28,7 +28,7 @@ export function getRangeClientRect(element: Element): [ClientRect, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects());
-    const result = assignBounds(<ClientRect> domRect[0]);
+    const result = assignBounds(domRect[0]);
     const top = new Set([result.top]);
     const bottom = new Set([result.bottom]);
     let multiLine = false;
@@ -50,7 +50,7 @@ export function getRangeClientRect(element: Element): [ClientRect, boolean] {
     return [result, multiLine];
 }
 
-export function assignBounds(bounds: ClientRect): ClientRect {
+export function assignBounds(bounds: ClientRect | DOMRect): ClientRect {
     return {
         top: bounds.top,
         right: bounds.right,
@@ -195,9 +195,15 @@ export function isPlainText(element: Null<Element>, whiteSpace = false) {
             const value = element.textContent;
             let valid = false;
             for (let i = 0; i < value.length; i++) {
-                if (value.charCodeAt(i) !== 32) {
-                    valid = true;
-                    break;
+                switch (value.charCodeAt(i)) {
+                    case 9:
+                    case 10:
+                    case 13:
+                    case 32:
+                        continue;
+                    default:
+                        valid = true;
+                        break;
                 }
             }
             return (valid && value !== '');

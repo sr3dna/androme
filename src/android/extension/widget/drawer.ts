@@ -47,7 +47,7 @@ export default class Drawer<T extends View> extends Extension<T> {
             const navView = node.children[node.children.length - 1];
             navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
-            navView.isolated = true;
+            navView.auto = false;
         }
         const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
         node.rendered = true;
@@ -60,7 +60,7 @@ export default class Drawer<T extends View> extends Extension<T> {
         const application = this.application;
         const node = this.node;
         if (application.renderQueue[node.nodeId] != null) {
-            const target = application.cacheInternal.locate(item => item.isolated && item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
+            const target = application.cacheInternal.locate(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
             if (target) {
                 application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
                 delete application.renderQueue[node.nodeId];

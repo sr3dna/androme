@@ -1,21 +1,20 @@
 import { Null, StringMap } from '../../../lib/types';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { formatPX, hasValue, includes, isNumber, optional } from '../../../lib/util';
+import { hasValue, includes, isNumber, optional } from '../../../lib/util';
 import { getNodeFromElement } from '../../../lib/dom';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../lib/constants';
-import parseRTL from '../../localization';
 import SETTINGS from '../../../settings';
 
 export function createPlaceholder<T extends View>(nextId: number, node: T, children: T[] = []) {
     const placeholder = new View(nextId, node.api, node.element) as T;
     placeholder.parent = node.parent;
-    for (const child of children)  {
+    for (const child of children) {
         child.parent = placeholder;
     }
     placeholder.inherit(node, 'base');
-    placeholder.isolated = true;
+    placeholder.auto = false;
     placeholder.excludeResource |= NODE_RESOURCE.ALL;
     return placeholder;
 }
@@ -27,7 +26,7 @@ export function locateExtension<T extends View>(node: T, extension: string): Nul
 export function getTargetDepth(id: string) {
     const node = getNodeFromElement(document.getElementById(id));
     if (node != null) {
-        if (hasValue(node.dataset.dataInclude)) {
+        if (hasValue(node.dataset.include)) {
             return (hasValue(node.dataset.includeMerge) ? 1 : 0);
         }
         else {
@@ -35,49 +34,6 @@ export function getTargetDepth(id: string) {
         }
     }
     return -1;
-}
-
-export function setPositionIsolated<T extends View>(node: T) {
-    const horizontalBias = node.horizontalBias;
-    const verticalBias = node.verticalBias;
-    const gravity: string[] = [];
-    if (horizontalBias < 0.5) {
-        gravity.push(parseRTL('left'));
-    }
-    else if (horizontalBias > 0.5) {
-        gravity.push(parseRTL('right'));
-    }
-    else {
-        gravity.push('center_horizontal');
-    }
-    if (verticalBias < 0.5) {
-        gravity.push('top');
-        node.app('layout_dodgeInsetEdges', 'top');
-    }
-    else if (verticalBias > 0.5) {
-        gravity.push('bottom');
-    }
-    else {
-        gravity.push('center_vertical');
-    }
-    node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
-    const parent = node.documentParent;
-    if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
-        if (horizontalBias < 0.5) {
-            node.css('marginLeft', formatPX(Math.floor(node.bounds.left - parent.box.left)));
-        }
-        else {
-            node.css('marginRight', formatPX(Math.floor(parent.box.right - node.bounds.right)));
-        }
-    }
-    if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
-        if (verticalBias < 0.5) {
-            node.css('marginTop', formatPX(Math.floor(node.bounds.top - parent.box.top)));
-        }
-        else {
-            node.css('marginBottom', formatPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
-        }
-    }
 }
 
 export function formatResource(options: {}) {

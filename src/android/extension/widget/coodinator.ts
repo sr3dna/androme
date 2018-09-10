@@ -19,15 +19,13 @@ export default class Coordinator<T extends View> extends Extension<T> {
         node.apply(this.options[node.element.id]);
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ASSET;
-        if (node.children.filter(item => !item.isolated).length > 0) {
-            const toolbar = getNodeFromElement(locateExtension(node, WIDGET_NAME.TOOLBAR));
-            if (toolbar) {
-                const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
-                if (ext) {
-                    const collapsingToolbar = (ext.options[toolbar.element.id] != null ? ext.options[toolbar.element.id].collapsingToolbar : null);
-                    if (collapsingToolbar != null) {
-                        node.android('fitsSystemWindows', 'true');
-                    }
+        const toolbar = getNodeFromElement(locateExtension(node, WIDGET_NAME.TOOLBAR));
+        if (toolbar) {
+            const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
+            if (ext) {
+                const collapsingToolbar = (ext.options[toolbar.element.id] != null ? ext.options[toolbar.element.id].collapsingToolbar : null);
+                if (collapsingToolbar != null) {
+                    node.android('fitsSystemWindows', 'true');
                 }
             }
         }

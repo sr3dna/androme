@@ -155,7 +155,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             relative = node.is(NODE_STANDARD.RELATIVE);
             const flex = node.flex;
             if (constraint || relative || flex.enabled) {
-                const nodes = new NodeList<T>(node.renderChildren.filter(item => !item.isolated && !item.relocated) as T[], node);
+                const nodes = new NodeList<T>(node.renderChildren.filter(item => item.auto) as T[], node);
                 if (relative) {
                     mapLayout = MAP_LAYOUT.relative;
                     const rows: T[][] = [];
@@ -1399,10 +1399,6 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     public renderNode(node: T, parent: T, nodeName: number | string, recursive = false) {
-        if (node.renderAs != null && !node.renderAs.rendered) {
-            node.hide();
-            node = node.renderAs as T;
-        }
         const target = (node.isSet('dataset', 'target') && !node.isSet('dataset', 'include'));
         if (typeof nodeName === 'number') {
             nodeName = View.getControlName(nodeName);
@@ -1511,15 +1507,16 @@ export default class ViewController<T extends View> extends Controller<T> {
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
-                            const result = parent.children.map(item => {
-                                if (item.visible && item.renderAs != null) {
-                                    item = item.renderAs as T;
-                                }
-                                if ((<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name) {
-                                    return item;
-                                }
-                                return null;
-                            }).filter(item => item) as T[];
+                            const result =
+                                parent.children.map(item => {
+                                    if (item.renderAs != null) {
+                                        item = item.renderAs as T;
+                                    }
+                                    if (item.visible && !item.rendered && (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name) {
+                                        return item;
+                                    }
+                                    return null;
+                                }).filter(item => item) as T[];
                             if (result.length > 1) {
                                 let xml = '';
                                 const linearX = NodeList.linearX(result);

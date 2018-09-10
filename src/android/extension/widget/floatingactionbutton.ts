@@ -2,10 +2,12 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Button from '../../../extension/button';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { overwriteDefault, setPositionIsolated } from '../lib/util';
+import { formatPX } from '../../../lib/util';
+import { overwriteDefault } from '../lib/util';
 import { parseRGBA } from '../../../lib/color';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
+import parseRTL from '../../localization';
 
 export default class FloatingActionButton<T extends View> extends Button<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -47,8 +49,9 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (target ? -1 : parent.renderDepth + 1), options, 'wrap_content', 'wrap_content', node);
         node.nodeType = NODE_STANDARD.BUTTON;
         node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
-        if (node.isolated) {
-            setPositionIsolated(node);
+        if (!node.pageflow || target) {
+            node.auto = false;
+            this.setFrameGravity(node);
             if (target) {
                 let anchor = parent.stringId;
                 if (parent.controlName === VIEW_SUPPORT.TOOLBAR) {
@@ -77,5 +80,48 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         const node = this.node;
         node.android('layout_width', 'wrap_content');
         node.android('layout_height', 'wrap_content');
+    }
+
+    private setFrameGravity<T extends View>(node: T) {
+        const horizontalBias = node.horizontalBias;
+        const verticalBias = node.verticalBias;
+        const gravity: string[] = [];
+        if (horizontalBias < 0.5) {
+            gravity.push(parseRTL('left'));
+        }
+        else if (horizontalBias > 0.5) {
+            gravity.push(parseRTL('right'));
+        }
+        else {
+            gravity.push('center_horizontal');
+        }
+        if (verticalBias < 0.5) {
+            gravity.push('top');
+            node.app('layout_dodgeInsetEdges', 'top');
+        }
+        else if (verticalBias > 0.5) {
+            gravity.push('bottom');
+        }
+        else {
+            gravity.push('center_vertical');
+        }
+        node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
+        const parent = node.documentParent;
+        if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
+            if (horizontalBias < 0.5) {
+                node.css('marginLeft', formatPX(Math.floor(node.bounds.left - parent.box.left)));
+            }
+            else {
+                node.css('marginRight', formatPX(Math.floor(parent.box.right - node.bounds.right)));
+            }
+        }
+        if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
+            if (verticalBias < 0.5) {
+                node.css('marginTop', formatPX(Math.floor(node.bounds.top - parent.box.top)));
+            }
+            else {
+                node.css('marginBottom', formatPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
+            }
+        }
     }
 }

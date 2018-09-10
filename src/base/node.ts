@@ -26,12 +26,10 @@ export default abstract class Node implements BoxModel {
     public renderExtension: IExtension[] = [];
     public renderExtensionChild: IExtension[] = [];
     public documentRoot = false;
-    public renderAs: T;
     public companion: T;
+    public auto = true;
     public visible = true;
     public rendered = false;
-    public isolated = false;
-    public relocated = false;
     public wrapped = false;
 
     public abstract readonly renderChildren: T[];
@@ -67,6 +65,7 @@ export default abstract class Node implements BoxModel {
     private _element: Element;
     private _parent: T;
     private _nodeName: string;
+    private _renderAs: T;
     private _renderDepth: number;
     private _pageflow: boolean;
     private _multiLine: boolean;
@@ -425,7 +424,7 @@ export default abstract class Node implements BoxModel {
         if (!calibrate) {
             let bounds: ClientRect;
             if (this.hasElement) {
-                bounds = assignBounds(<ClientRect> this.element.getBoundingClientRect());
+                bounds = assignBounds(this.element.getBoundingClientRect());
             }
             else {
                 [bounds] = getRangeClientRect(this.element);
@@ -433,13 +432,7 @@ export default abstract class Node implements BoxModel {
             this.bounds = bounds;
         }
         if (this.bounds != null) {
-            if (this.companion != null) {
-                const outerBounds = this.companion.bounds;
-                this.bounds.left = Math.min(this.bounds.left, outerBounds.left);
-                this.bounds.right = Math.max(this.bounds.right, outerBounds.right);
-                this.bounds.width = this.bounds.right - this.bounds.left;
-            }
-            const linear: ClientRect = {
+            this.linear = {
                 top: this.bounds.top - (this.marginTop > 0 ? this.marginTop : 0),
                 right: this.bounds.right + this.marginRight,
                 bottom: this.bounds.bottom + this.marginBottom,
@@ -447,13 +440,7 @@ export default abstract class Node implements BoxModel {
                 width: 0,
                 height: 0
             };
-            if (this.linear != null) {
-                Object.assign(this.linear, linear);
-            }
-            else {
-                this.linear = linear;
-            }
-            const box: ClientRect = {
+            this.box = {
                 top: this.bounds.top + (this.paddingTop + this.borderTopWidth),
                 right: this.bounds.right - (this.paddingRight + this.borderRightWidth),
                 bottom: this.bounds.bottom - (this.paddingBottom + this.borderBottomWidth),
@@ -461,12 +448,6 @@ export default abstract class Node implements BoxModel {
                 width: 0,
                 height: 0
             };
-            if (this.box != null) {
-                Object.assign(this.box, box);
-            }
-            else {
-                this.box = box;
-            }
             this.setDimensions();
         }
     }
@@ -615,28 +596,9 @@ export default abstract class Node implements BoxModel {
     private boxDocument(region: string, direction: string) {
         const attr = region + direction;
         if (this.hasElement) {
-            let node: T = this;
-            const horizontal = (direction === 'Left' || direction === 'Right');
-            if (horizontal) {
-                if (this.companion != null) {
-                    let valid = false;
-                    const side = direction.toLowerCase();
-                    switch (side) {
-                        case 'Left':
-                            valid = (this.companion.linear[side] < this.linear[side]);
-                            break;
-                        case 'Right':
-                            valid = (this.companion.linear[side] > this.linear[side]);
-                            break;
-                    }
-                    if (valid) {
-                        node = this.companion;
-                    }
-                }
-            }
-            const value = node.css(attr);
+            const value = this.css(attr);
             if (isPercent(value)) {
-                return (node.style[attr] ? convertInt(node.style[attr]) : node.documentParent.box[(horizontal ? 'width' : 'height')] * (convertInt(value) / 100));
+                return (this.style[attr] ? convertInt(this.style[attr]) : this.documentParent.box[(direction === 'Left' || direction === 'Right' ? 'width' : 'height')] * (convertInt(value) / 100));
             }
             else {
                 return convertInt(value);
@@ -695,6 +657,15 @@ export default abstract class Node implements BoxModel {
 
     get documentBody() {
         return (this.element === document.body);
+    }
+
+    set renderAs(value) {
+        if (!this.rendered && !value.rendered) {
+            this._renderAs = value;
+        }
+    }
+    get renderAs() {
+        return this._renderAs;
     }
 
     set renderDepth(value) {

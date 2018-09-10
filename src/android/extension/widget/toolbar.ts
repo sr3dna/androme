@@ -6,7 +6,7 @@ import View from '../../view';
 import { formatPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, locateExtension, overwriteDefault } from '../lib/util';
 import { delimitDimens, stripId } from '../../lib/util';
-import { getNodeFromElement, getStyle, setElementCache } from '../../../lib/dom';
+import { getNodeFromElement, getStyle } from '../../../lib/dom';
 import { replacePlaceholder } from '../../../lib/xml';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { NODE_ANDROID } from '../../constants';
@@ -36,9 +36,6 @@ export default class Toolbar<T extends View> extends Extension<T> {
                     this.application.elements.add(element);
                 }
             }
-            if (includes(optional(element, 'parentElement.dataset.ext') as string, WIDGET_NAME.COORDINATOR)) {
-                setElementCache(element, 'nodeIsolated', true);
-            }
         }
         return false;
     }
@@ -58,7 +55,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
         const hasMenu = (locateExtension(node, WIDGET_NAME.MENU) != null);
         const backgroundImage = node.has('backgroundImage');
         let depth = (target ? 0 : node.depth);
-        let children = node.children.filter(item => !item.isolated).length;
+        let children = node.children.filter(item => item.auto).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {
             if (element.tagName === 'IMG') {
                 if (hasValue(element.dataset.navigationIcon)) {
@@ -80,7 +77,10 @@ export default class Toolbar<T extends View> extends Extension<T> {
                     }
                 }
             }
-            if (!hasValue(element.dataset.target)) {
+            if (hasValue(element.dataset.target)) {
+                children--;
+            }
+            else {
                 const targetNode = getNodeFromElement(element) as T;
                 if (targetNode) {
                     switch (element.dataset.targetModule) {
@@ -226,7 +226,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
 
     public processChild(): ExtensionResult {
         const node = this.node;
-        if (node.imageElement && (node.dataset.navigationIcon || node.dataset.collapseIcon)) {
+        if (node.imageElement && (hasValue(node.dataset.navigationIcon) || hasValue(node.dataset.collapseIcon))) {
             node.hide();
             return { xml: '', complete: true, next: true };
         }

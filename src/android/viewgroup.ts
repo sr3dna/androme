@@ -1,5 +1,6 @@
 import View from './view';
 import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/constants';
+import { assignBounds } from '../lib/dom';
 
 export default class ViewGroup<T extends View> extends View {
     public baseNode: T;
@@ -51,8 +52,8 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     public setBounds(calibrate = false) {
-        let nodes = this.outerRegion();
         if (!calibrate) {
+            const nodes = this.outerRegion();
             this.bounds = {
                 top: nodes.top[0].linear.top,
                 right: nodes.right[0].linear.right,
@@ -64,23 +65,8 @@ export default class ViewGroup<T extends View> extends View {
             this.bounds.width = this.bounds.right - this.bounds.left;
             this.bounds.height = this.bounds.bottom - this.bounds.top;
         }
-        this.linear = {
-            top: nodes.top[0].linear.top,
-            right: nodes.right[0].linear.right,
-            bottom: nodes.bottom[0].linear.bottom,
-            left: nodes.left[0].linear.left,
-            width: 0,
-            height: 0
-        };
-        nodes = this.outerRegion('bounds');
-        this.box = {
-            top: nodes.top[0].bounds.top,
-            right: nodes.right[0].bounds.right,
-            bottom: nodes.bottom[0].bounds.bottom,
-            left: nodes.left[0].bounds.left,
-            width: 0,
-            height: 0
-        };
+        this.linear = assignBounds(this.bounds);
+        this.box  = assignBounds(this.bounds);
         this.setDimensions();
     }
 
@@ -115,7 +101,13 @@ export default class ViewGroup<T extends View> extends View {
         let right: T[] = [];
         let bottom: T[] = [];
         let left: T[] = [];
-        this.each((node: T, index: number) => {
+        const nodes = this.children.slice();
+        this.each(node => {
+            if (node.companion != null) {
+                nodes.push(node.companion as T);
+            }
+        });
+        nodes.forEach((node: T, index) => {
             if (index === 0) {
                 top.push(node);
                 right.push(node);
