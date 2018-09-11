@@ -38,7 +38,7 @@ export function stripId(value: Null<string>) {
 }
 
 export function convertDP(value: any, dpi = 160, font = false) {
-    if (value) {
+    if (value != null) {
         value = parseFloat(value);
         if (!isNaN(value)) {
             value /= (dpi / 160);

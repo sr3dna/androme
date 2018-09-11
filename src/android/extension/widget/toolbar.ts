@@ -41,10 +41,10 @@ export default class Toolbar<T extends View> extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
+        let xml = '';
         const controller = this.application.controllerHandler;
         const node = this.node;
         const parent = this.parent as T;
-        let xml = '';
         const target = node.isSet('dataset', 'target');
         const options = Object.assign({}, this.options[node.element.id]);
         const optionsToolbar = Object.assign({}, options.toolbar);
@@ -132,7 +132,16 @@ export default class Toolbar<T extends View> extends Extension<T> {
             }
         }
         const innerDepth = depth + (appBar ? 1 : 0) + (collapsingToolbar ? 1 : 0);
-        xml = controller.renderNodeStatic(VIEW_SUPPORT.TOOLBAR, innerDepth, optionsToolbar, 'match_parent', 'wrap_content', node, (children > 0));
+        xml =
+            controller.renderNodeStatic(
+                VIEW_SUPPORT.TOOLBAR,
+                innerDepth,
+                optionsToolbar,
+                'match_parent',
+                'wrap_content',
+                node,
+                (children > 0)
+            );
         if (collapsingToolbar) {
             if (backgroundImage) {
                 const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
@@ -156,7 +165,15 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                xml = controller.renderNodeStatic(NODE_ANDROID.IMAGE, innerDepth, optionsBackgroundImage, 'match_parent', 'match_parent') + xml;
+                xml =
+                    controller.renderNodeStatic(
+                        NODE_ANDROID.IMAGE,
+                        innerDepth,
+                        optionsBackgroundImage,
+                        'match_parent',
+                        'match_parent'
+                    )
+                    + xml;
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
         }
@@ -180,7 +197,16 @@ export default class Toolbar<T extends View> extends Extension<T> {
             appBarNode = createPlaceholder(this.application.cache.nextId, node, appBarChildren);
             appBarNode.nodeId = stripId(optionsAppBar.android.id);
             this.application.cache.append(appBarNode);
-            outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, (target ? -1 : depth), optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
+            outer =
+                controller.renderNodeStatic(
+                    VIEW_SUPPORT.APPBAR,
+                    (target ? -1 : depth),
+                    optionsAppBar,
+                    'match_parent',
+                    'wrap_content',
+                    appBarNode,
+                    true
+                );
             if (collapsingToolbar) {
                 depth++;
                 overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
@@ -193,7 +219,16 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren);
                 collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
                 this.application.cache.append(collapsingToolbarNode);
-                const content = controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, (target && !appBar ? -1 : depth), optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true);
+                const content =
+                    controller.renderNodeStatic(
+                        VIEW_SUPPORT.COLLAPSING_TOOLBAR,
+                        (target && !appBar ? -1 : depth),
+                        optionsCollapsingToolbar,
+                        'match_parent',
+                        'match_parent',
+                        collapsingToolbarNode,
+                        true
+                    );
                 outer = replacePlaceholder(outer, appBarNode.id, content);
             }
         }

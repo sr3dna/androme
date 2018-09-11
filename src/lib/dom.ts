@@ -226,7 +226,15 @@ export function hasLineBreak(element: Null<Element>) {
     else {
         whiteSpace = getStyle(element).whiteSpace || '';
     }
-    return (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) || (element != null && ((['pre', 'pre-wrap'].includes(whiteSpace) || (!styleMap && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))) && /\n/.test(element.textContent || '')));
+    return (
+        element instanceof HTMLElement &&
+        element.children.length > 0 &&
+        Array.from(element.children).some(item => item.tagName === 'BR')) ||
+        (element != null && /\n/.test(element.textContent || '') && (
+            ['pre', 'pre-wrap'].includes(whiteSpace) ||
+            (!styleMap && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
+        )
+    );
 }
 
 export function isLineBreak(element: Null<Element>, direction = 'previous', includeNode = true) {
@@ -242,7 +250,14 @@ export function isLineBreak(element: Null<Element>, direction = 'previous', incl
         }
         else {
             const styleMap = getElementCache(element, 'styleMap');
-            found = (element.tagName === 'BR' || (includeNode && getStyle(element).display === 'block' && (!getNodeFromElement(element) || (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))));
+            found = (
+                element.tagName === 'BR' ||
+                (includeNode &&
+                getStyle(element).display === 'block' && (
+                    !getNodeFromElement(element) ||
+                    (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))
+                )
+            );
             break;
         }
     }
@@ -253,22 +268,24 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
     if (firstElement == null || firstElement.parentElement === secondElement.parentElement) {
         const parentElement = secondElement.parentElement;
         if (parentElement != null) {
-            const firstIndex = (firstElement != null ? Array.from(parentElement.childNodes).findIndex((element: Element) => element === firstElement) : 0);
-            const secondIndex = Array.from(parentElement.childNodes).findIndex((element: Element) => element === secondElement);
+            const elements = <Element[]> Array.from(parentElement.childNodes);
+            const firstIndex = (firstElement != null ? elements.findIndex(element => element === firstElement) : 0);
+            const secondIndex = elements.findIndex(element => element === secondElement);
             if (firstIndex !== -1 && secondIndex !== -1 && firstIndex !== secondIndex) {
-                let elements = <Element[]> Array.from(parentElement.childNodes).slice(Math.min(firstIndex, secondIndex) + 1, Math.max(firstIndex, secondIndex));
+                let result = elements.slice(Math.min(firstIndex, secondIndex) + 1, Math.max(firstIndex, secondIndex));
                 if (!whiteSpace) {
-                    elements = elements.filter((element: Element) => {
-                        if (element.nodeName.charAt(0) === '#') {
-                            return isPlainText(element);
-                        }
-                        return true;
-                    });
+                    result =
+                        result.filter(element => {
+                            if (element.nodeName.charAt(0) === '#') {
+                                return isPlainText(element);
+                            }
+                            return true;
+                        });
                 }
                 if (cacheNode) {
-                    elements = elements.filter((element: Element) => getNodeFromElement(element));
+                    result = result.filter(element => getNodeFromElement(element));
                 }
-                return elements;
+                return result;
             }
         }
     }

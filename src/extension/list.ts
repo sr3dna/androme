@@ -13,10 +13,15 @@ export default abstract class List<T extends Node> extends Extension<T> {
 
     public condition() {
         const children = this.node.children;
-        return (super.condition() && children.length > 0 && (children.every(node => node.inlineElement) || children.every(node => !node.inlineElement || node.display === 'list-item')) && (
+        return (
+            super.condition() &&
+            children.length > 0 && (
+                children.every(node => node.inlineElement) ||
+                children.every(node => !node.inlineElement || node.display === 'list-item')) && (
                     children.some((node: T) => node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
                     children.every((node: T) => node.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))
-               ));
+                )
+            );
     }
 
     public processNode(): ExtensionResult {

@@ -17,27 +17,29 @@ export default class Grid<T extends Node> extends Extension<T> {
     public condition() {
         const node = this.node;
         return (
-            this.included() || (node.children.length > 1 && (
-            (node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))) ||
-            (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
-                (node.css('listStyle') === 'none' || node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none')) ||
-                (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement))
+            this.included() ||
+            (node.children.length > 1 && (
+                (node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))) ||
+                (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
+                    (node.css('listStyle') === 'none' || node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none')) ||
+                    (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement))
+                ))
             ))
-        )));
+        );
     }
 
     public processNode(mapX: LayoutMapX<T>): ExtensionResult {
         let xml = '';
         const node = this.node;
         const parent = this.parent as T;
-        const balanceColumns = this.options.balanceColumns;
+        const columnBalance = this.options.columnBalance;
         let columns: T[][] = [];
         const mainData: GridData = {
             columnEnd: [],
             columnCount: 0,
             padding: { top: 0, right: 0, bottom: 0, left: 0 }
         };
-        if (balanceColumns) {
+        if (columnBalance) {
             const dimensions: number[][] = [];
             node.each((item: T, index: number) => {
                 const children = item.children as T[];
@@ -145,7 +147,10 @@ export default class Grid<T extends Node> extends Extension<T> {
                             nextX.element.style.cssFloat = 'right';
                         }
                         function findRowIndex() {
-                            return columns[0].findIndex(item => withinFraction(item.linear.top, nextX.linear.top) || (nextX.linear.top >= item.linear.top && nextX.linear.bottom <= item.linear.bottom));
+                            return columns[0].findIndex(item =>
+                                withinFraction(item.linear.top, nextX.linear.top) ||
+                                (nextX.linear.top >= item.linear.top && nextX.linear.bottom <= item.linear.bottom)
+                            );
                         }
                         if (index === 0 || left >= columnRight[index - 1]) {
                             if (columns[index] == null) {
@@ -214,7 +219,7 @@ export default class Grid<T extends Node> extends Extension<T> {
             }
         }
         if (columns.length > 1 && columns[0].length === node.children.length) {
-            mainData.columnCount = (balanceColumns ? columns[0].length : columns.length);
+            mainData.columnCount = (columnBalance ? columns[0].length : columns.length);
             xml = this.application.writeGridLayout(node, parent, mainData.columnCount);
             node.children.length = 0;
             for (let l = 0, count = 0; l < columns.length; l++) {
@@ -234,7 +239,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                             rowEnd: false,
                             rowStart: false
                         };
-                        if (balanceColumns) {
+                        if (columnBalance) {
                             data.rowStart = (m === 0);
                             data.rowEnd = (m === columns[l].length - 1);
                             data.cellFirst = (l === 0 && m === 0);
@@ -303,7 +308,7 @@ export default class Grid<T extends Node> extends Extension<T> {
         const cellData = <GridCellData> node.data(EXT_NAME.GRID, 'cellData');
         if (mainData && cellData) {
             let siblings: T[];
-            if (this.options.balanceColumns) {
+            if (this.options.columnBalance) {
                 siblings = node.data(EXT_NAME.GRID, 'gridSiblings') as T[];
             }
             else {

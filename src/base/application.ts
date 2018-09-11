@@ -12,7 +12,7 @@ import SETTINGS from '../settings';
 
 export default class Application<T extends Node> {
     public readonly cache: NodeList<T> = new NodeList<T>();
-    public readonly cacheInternal: NodeList<T> = new NodeList<T>();
+    public readonly cacheSession: NodeList<T> = new NodeList<T>();
     public readonly elements: Set<HTMLElement> = new Set();
     public readonly extensions: IExtension[] = [];
     public controllerHandler: Controller<T>;
@@ -55,7 +55,7 @@ export default class Application<T extends Node> {
     }
 
     public finalize() {
-        const visible = this.cacheInternal.visible;
+        const visible = this.cacheSession.visible;
         for (const node of visible) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
@@ -74,7 +74,7 @@ export default class Application<T extends Node> {
         }
         this.appendRenderQueue();
         this.controllerHandler.setDimensions(this.viewData);
-        for (const node of this.cacheInternal) {
+        for (const node of this.cacheSession) {
             for (const ext of node.renderExtension) {
                 ext.setTarget(node);
                 ext.finalize();
@@ -86,11 +86,11 @@ export default class Application<T extends Node> {
     }
 
     public reset() {
-        for (const node of this.cacheInternal) {
+        for (const node of this.cacheSession) {
             deleteElementCache(node.element, 'node', 'style', 'styleMap', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
         }
         this.cache.reset();
-        this.cacheInternal.reset();
+        this.cacheSession.reset();
         this.resetController();
         this.resetResource();
         this._views.length = 0;
@@ -304,13 +304,24 @@ export default class Application<T extends Node> {
             for (const node of visible) {
                 if (node.children.length === 1) {
                     const firstChild = node.children[0];
-                    if (!firstChild.pageflow && firstChild.toInt('top') === 0 && firstChild.toInt('right') === 0 && firstChild.toInt('bottom') === 0 && firstChild.toInt('left') === 0) {
+                    if (!firstChild.pageflow &&
+                        firstChild.toInt('top') === 0 &&
+                        firstChild.toInt('right') === 0 &&
+                        firstChild.toInt('bottom') === 0 &&
+                        firstChild.toInt('left') === 0)
+                    {
                         firstChild.pageflow = true;
                     }
                 }
                 if (node.children.some((current: T) => {
                         if (current.pageflow) {
-                            return (current.float !== 'right' && (Math.abs(current.marginLeft) >= current.bounds.width || !['center', 'right', 'end'].includes(current.cssParent('textAlign', true))) && (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)));
+                            return (
+                                current.float !== 'right' &&
+                                (current.marginLeft < 0 && node.marginLeft >= Math.abs(current.marginLeft)) && (
+                                    Math.abs(current.marginLeft) >= current.bounds.width ||
+                                    !['center', 'right', 'end'].includes(current.cssParent('textAlign', true))
+                                )
+                            );
                         }
                         else {
                             const left = current.toInt('left');
@@ -630,7 +641,14 @@ export default class Application<T extends Node> {
                             continue;
                         }
                         const linearVertical = parentY.linearVertical;
-                        if (nodeY.pageflow && nodeY.alignmentType === NODE_ALIGNMENT.NONE && !parentY.flex.enabled && !parentY.has('columnCount') && parentY.alignmentType === NODE_ALIGNMENT.NONE && (parentY.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical) && current === '') {
+                        if (nodeY.pageflow &&
+                            nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
+                            !parentY.flex.enabled &&
+                            !parentY.has('columnCount') &&
+                            parentY.alignmentType === NODE_ALIGNMENT.NONE &&
+                            (parentY.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical) &&
+                            current === '')
+                        {
                             const horizontal = [nodeY];
                             const vertical = [nodeY];
                             function getFloatSize(list: T[]) {
@@ -814,7 +832,7 @@ export default class Application<T extends Node> {
                         if (!nodeY.rendered) {
                             let xml = '';
                             const width = nodeY.css('width');
-                            if (parentY.linearVertical && isPercent(width) && width !== '100%') {
+                            if (nodeY.alignmentType === NODE_ALIGNMENT.NONE && isPercent(width) && width !== '100%' && !nodeY.imageElement && (parentY.linearVertical || (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild))) {
                                 const group = this.controllerHandler.createGroup(nodeY, [nodeY], parentY);
                                 const groupXml = this.writeGridLayout(group, parentY, 2, 1);
                                 group.alignmentType |= NODE_ALIGNMENT.PERCENT;
@@ -841,7 +859,11 @@ export default class Application<T extends Node> {
                                         xml = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
                                     }
                                     else if (!nodeY.documentRoot) {
-                                        if (SETTINGS.collapseUnattributedElements && ((!backgroundVisible || nodeY.bounds.height === 0) && !hasValue(nodeY.element.id) && !hasValue(nodeY.dataset.ext))) {
+                                        if (SETTINGS.collapseUnattributedElements &&
+                                            ((!backgroundVisible || nodeY.bounds.height === 0) &&
+                                            !hasValue(nodeY.element.id) &&
+                                            !hasValue(nodeY.dataset.ext)))
+                                        {
                                             deleteElementCache(nodeY.element, 'node');
                                             parentY.remove(nodeY);
                                             nodeY.hide();
@@ -860,10 +882,11 @@ export default class Application<T extends Node> {
                                     }
                                     else {
                                         if (nodeY.children.length === 1) {
-                                            const targeted = nodeY.children.filter(node => {
-                                                const element = document.getElementById(node.dataset.target as string);
-                                                return (element != null && hasValue(element.dataset.ext) && element !== parentY.element);
-                                            });
+                                            const targeted =
+                                                nodeY.children.filter(node => {
+                                                    const element = document.getElementById(node.dataset.target as string);
+                                                    return (element != null && hasValue(element.dataset.ext) && element !== parentY.element);
+                                                });
                                             if ((SETTINGS.collapseUnattributedElements &&
                                                 !nodeY.documentRoot &&
                                                 !hasValue(nodeY.element.id) &&
@@ -978,7 +1001,7 @@ export default class Application<T extends Node> {
                     if (this._sorted[parentId] != null) {
                         const parsed: string[] = [];
                         this._sorted[parentId].forEach(value => {
-                            const result = templates.find((view: string) => view.indexOf(getPlaceholder(value, '@')) !== -1);
+                            const result = templates.find(view => view.indexOf(getPlaceholder(value, '@')) !== -1);
                             if (result) {
                                 parsed.push(result);
                             }
@@ -1048,7 +1071,7 @@ export default class Application<T extends Node> {
                 return (a.renderIndex < b.renderIndex ? -1 : 1);
             }
         });
-        this.cacheInternal.list.push(...this.cache.list);
+        this.cacheSession.list.push(...this.cache.list);
     }
 
     public writeFrameLayout(node: T, parent: T, children = false) {
@@ -1145,7 +1168,12 @@ export default class Application<T extends Node> {
                     if (section.length > 1) {
                         let content = '';
                         const subgroup = this.controllerHandler.createGroup(section.list[0], section.list, group);
-                        if (index <= 1 && ((section.list.every(node => this.isRelativeWrap(node)) && new Set(section.list.map(node => node.lineHeight)).size > 1) || section.list.some(node => node.textElement && node.multiLine) || !section.linearX)) {
+                        if (index <= 1 && (
+                                (section.list.every(node => this.isRelativeWrap(node)) && new Set(section.list.map(node => node.lineHeight)).size > 1) ||
+                                section.list.some(node => node.textElement && node.multiLine) ||
+                                !section.linearX
+                           ))
+                        {
                             content = this.writeRelativeLayout(subgroup, group);
                             subgroup.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                         }
@@ -1218,6 +1246,9 @@ export default class Application<T extends Node> {
 
     public writeFrameLayoutVertical(group: T, parent: T, nodes: T[], cleared: Set<T>) {
         let xml = this.writeLinearLayout(group, parent, false);
+        if (group.blockStatic) {
+            group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+        }
         const rowsCurrent: T[][] = [];
         const rowsFloated: T[][] = [];
         const current: T[] = [];
@@ -1262,11 +1293,7 @@ export default class Application<T extends Node> {
         if (current.length > 0) {
             rowsCurrent.push(current);
         }
-        if (linearVertical) {
-            xml = this.writeLinearLayout(group, parent, false);
-            group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
-        }
-        else {
+        if (!linearVertical) {
             let content = '';
             for (let i = 0; i < Math.max(rowsFloated.length, rowsCurrent.length); i++) {
                 const floating = rowsFloated[i] || [];
@@ -1302,7 +1329,9 @@ export default class Application<T extends Node> {
                     if (subgroup != null) {
                         children.push(subgroup);
                     }
-                    basegroup.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                    if (group.blockStatic) {
+                        basegroup.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                    }
                     basegroup.init();
                     content += this.writeFrameLayout(basegroup, group, true);
                     children.forEach((node, index) => {
@@ -1312,6 +1341,9 @@ export default class Application<T extends Node> {
                         else {
                             content = replacePlaceholder(content, basegroup.id, this.writeLinearLayout(node, basegroup, false));
                             node.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                            if (group.blockStatic) {
+                                node.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                            }
                         }
                     });
                 }
@@ -1322,7 +1354,7 @@ export default class Application<T extends Node> {
     }
 
     public appendRenderQueue() {
-        for (const node of this.cacheInternal) {
+        for (const node of this.cacheSession) {
             for (const ext of node.renderExtension) {
                 ext.setTarget(node);
                 ext.beforeInsert();
@@ -1340,7 +1372,7 @@ export default class Application<T extends Node> {
             }
             let output = this.renderQueue[id].join('\n');
             if (replaceId !== originalId) {
-                const target = this.cacheInternal.locate('id', parseInt(replaceId));
+                const target = this.cacheSession.locate('id', parseInt(replaceId));
                 if (target) {
                     const depth = target.renderDepth + 1;
                     output = modifyIndent(output, depth);
@@ -1348,7 +1380,7 @@ export default class Application<T extends Node> {
                     let match: Null<RegExpExecArray> = null;
                     let i = 0;
                     while ((match = pattern.exec(output)) != null) {
-                        const node = this.cacheInternal.locate('id', parseInt(match[1]));
+                        const node = this.cacheSession.locate('id', parseInt(match[1]));
                         if (node) {
                             if (i++ === 0) {
                                 node.renderDepth = depth;
@@ -1376,7 +1408,7 @@ export default class Application<T extends Node> {
             }
             value.content = this.controllerHandler.appendRenderQueue(value.content);
         }
-        for (const node of this.cacheInternal) {
+        for (const node of this.cacheSession) {
             for (const ext of node.renderExtension) {
                 ext.setTarget(node);
                 ext.afterInsert();
@@ -1559,7 +1591,7 @@ export default class Application<T extends Node> {
     }
 
     private isRelativeHorizontal(nodes: T[]) {
-        return nodes.every(node => this.isRelativeWrap(node)) || nodes.some(node => node.imageElement || (node.textElement && node.multiLine));
+        return nodes.some(node => node.textElement && node.multiLine) || (nodes.some(node => node.imageElement) && nodes.some(node => node.textElement)) || nodes.every(node => this.isRelativeWrap(node));
     }
 
     private isRelativeWrap(node: T) {
@@ -1587,7 +1619,7 @@ export default class Application<T extends Node> {
     }
 
     get viewData(): ViewData<NodeList<T>> {
-        return { cache: this.cacheInternal, views: this._views, includes: this._includes };
+        return { cache: this.cacheSession, views: this._views, includes: this._includes };
     }
 
     get size() {

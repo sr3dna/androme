@@ -56,7 +56,20 @@ export default class GridAndroid<T extends View> extends Grid<T> {
                                     padding.bottom = heightBottom;
                                 }
                                 else {
-                                    this.application.controllerHandler.appendAfter(node.id, this.application.controllerHandler.renderNodeStatic(NODE_STANDARD.SPACE, node.renderDepth, { app: { layout_columnSpan: mainData.columnCount } }, 'match_parent', formatPX(heightBottom)));
+                                    this.application.controllerHandler.appendAfter(
+                                        node.id,
+                                        this.application.controllerHandler.renderNodeStatic(
+                                            NODE_STANDARD.SPACE,
+                                            node.renderDepth,
+                                            {
+                                                app: {
+                                                    layout_columnSpan: mainData.columnCount
+                                                }
+                                            },
+                                            'match_parent',
+                                            formatPX(heightBottom)
+                                        )
+                                    );
                                 }
                             }
                             padding.right = Math.max(dimensions.marginRight + dimensions.paddingRight, padding.right);

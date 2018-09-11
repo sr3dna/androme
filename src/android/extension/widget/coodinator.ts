@@ -12,10 +12,9 @@ export default class Coordinator<T extends View> extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        let xml = '';
         const node = this.node;
         const parent = this.parent as T;
-        xml = this.application.controllerHandler.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
+        const xml = this.application.controllerHandler.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
         node.apply(this.options[node.element.id]);
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ASSET;

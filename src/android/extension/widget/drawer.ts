@@ -35,7 +35,6 @@ export default class Drawer<T extends View> extends Extension<T> {
 
     public processNode(): ExtensionResult {
         const node = this.node;
-        node.documentRoot = true;
         const options = Object.assign({}, this.options.drawer);
         if (locateExtension(node, WIDGET_NAME.MENU)) {
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
@@ -49,7 +48,17 @@ export default class Drawer<T extends View> extends Extension<T> {
             navView.android('layout_height', 'match_parent');
             navView.auto = false;
         }
-        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
+        const xml =
+            this.application.controllerHandler.renderNodeStatic(
+                VIEW_SUPPORT.DRAWER,
+                node.depth,
+                options,
+                'match_parent',
+                'match_parent',
+                node,
+                true
+            );
+        node.documentRoot = true;
         node.rendered = true;
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
@@ -60,7 +69,7 @@ export default class Drawer<T extends View> extends Extension<T> {
         const application = this.application;
         const node = this.node;
         if (application.renderQueue[node.nodeId] != null) {
-            const target = application.cacheInternal.locate(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
+            const target = application.cacheSession.locate(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
             if (target) {
                 application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
                 delete application.renderQueue[node.nodeId];
@@ -79,7 +88,14 @@ export default class Drawer<T extends View> extends Extension<T> {
             overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
-            const xml = application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');
+            const xml =
+                application.controllerHandler.renderNodeStatic(
+                    VIEW_SUPPORT.NAVIGATION_VIEW,
+                    node.depth + 1,
+                    options,
+                    'wrap_content',
+                    'match_parent'
+                );
             application.addRenderQueue(node.id.toString(), [xml]);
         }
     }

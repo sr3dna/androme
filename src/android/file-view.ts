@@ -162,7 +162,9 @@ export default class FileView<T extends View> extends File<T> {
                     root['1'].push({
                         style,
                         weight,
-                        font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
+                        font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}`
+                                                                                      : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}`
+                                                                                                            : ''))}`
                     });
                 }
                 xml += '\n\n' + insertTemplateData(template, data);

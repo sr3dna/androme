@@ -252,9 +252,9 @@ export default abstract class Node implements BoxModel {
                 case 'base':
                     this.style = node.style;
                 case 'dimensions':
-                    this.bounds = node.bounds;
-                    this.linear = node.linear;
-                    this.box = node.box;
+                    this.bounds = assignBounds(node.bounds);
+                    this.linear = assignBounds(node.linear);
+                    this.box = assignBounds(node.box);
                     break;
                 case 'data':
                     for (const obj in this._data) {
@@ -285,6 +285,20 @@ export default abstract class Node implements BoxModel {
                                 delete this._data[obj][name];
                             }
                         }
+                    }
+                    break;
+                case 'alignment':
+                    ['position', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(attr => {
+                        this.styleMap[attr] = node.css(attr);
+                        this.originalStyleMap[attr] = node.cssOriginal(attr);
+                    });
+                    if (node.css('marginLeft') === 'auto') {
+                        this.styleMap.marginLeft = 'auto';
+                        this.originalStyleMap.marginLeft = 'auto';
+                    }
+                    if (node.css('marginRight') === 'auto') {
+                        this.styleMap.marginRight = 'auto';
+                        this.originalStyleMap.marginRight = 'auto';
                     }
                     break;
                 case 'style':
@@ -384,6 +398,7 @@ export default abstract class Node implements BoxModel {
                 case '0px':
                 case 'none':
                 case 'auto':
+                case 'normal':
                 case 'transparent':
                     return false;
                 default:
@@ -452,7 +467,7 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public setBoundsMin() {
+    public setMinBounds() {
         if (this.element !== document.body) {
             const nodes = this.children.filter(node => !node.pageflow);
             if (nodes.length > 0) {
@@ -517,10 +532,20 @@ export default abstract class Node implements BoxModel {
             this.overflow = 0;
             if (this.hasElement) {
                 const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
-                if (this.toInt('width') > 0 && (overflow === 'scroll' || overflowX === 'scroll' || (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth))) {
+                if (this.toInt('width') > 0 && (
+                        overflow === 'scroll' ||
+                        overflowX === 'scroll' ||
+                        (overflowX === 'auto' && this.element.clientWidth !== this.element.scrollWidth)
+                   ))
+                {
                     this.overflow |= OVERFLOW_ELEMENT.HORIZONTAL;
                 }
-                if (this.toInt('height') > 0 && (overflow === 'scroll' || overflowY === 'scroll' || (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight))) {
+                if (this.toInt('height') > 0 && (
+                        overflow === 'scroll' ||
+                        overflowY === 'scroll' ||
+                        (overflowY === 'auto' && this.element.clientHeight !== this.element.scrollHeight)
+                   ))
+                {
                     this.overflow |= OVERFLOW_ELEMENT.VERTICAL;
                 }
             }
@@ -539,7 +564,11 @@ export default abstract class Node implements BoxModel {
                     if (!['static', 'initial'].includes(parent.position)) {
                         const top = convertInt(this.top);
                         const left = convertInt(this.left);
-                        if ((top >= 0 && left >= 0) || !negative || (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) || this.imageElement) {
+                        if ((top >= 0 && left >= 0) ||
+                            !negative ||
+                            (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) ||
+                            this.imageElement)
+                        {
                             found = true;
                             break;
                         }
@@ -547,7 +576,14 @@ export default abstract class Node implements BoxModel {
                     }
                 }
                 else {
-                    if ((this.withinX(parent.box) && this.withinY(parent.box)) || (previous && ((this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) || (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) || (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) || (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)))) {
+                    if ((previous && (
+                            (this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) ||
+                            (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) ||
+                            (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) ||
+                            (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left))
+                        ) ||
+                        (this.withinX(parent.box) && this.withinY(parent.box)))
+                    {
                         found = true;
                         break;
                     }
@@ -696,7 +732,6 @@ export default abstract class Node implements BoxModel {
     get flex(): Flexbox {
         const style = this.style;
         if (style != null) {
-            const parent = this.documentParent;
             return {
                 enabled: ((style.display as string).indexOf('flex') !== -1),
                 direction: style.flexDirection as string,
@@ -704,7 +739,7 @@ export default abstract class Node implements BoxModel {
                 grow: convertInt(style.flexGrow),
                 shrink: convertInt(style.flexShrink),
                 wrap: style.flexWrap as string,
-                alignSelf: (parent.has('alignItems') && (!this.has('alignSelf') || style.alignSelf === 'auto') ? parent.css('alignItems') : style.alignSelf) as string,
+                alignSelf: (this.documentParent.has('alignItems') && (!this.has('alignSelf') || style.alignSelf === 'auto') ? this.documentParent.css('alignItems') : style.alignSelf) as string,
                 justifyContent: style.justifyContent as string,
                 order: convertInt(style.order)
             };
@@ -848,11 +883,17 @@ export default abstract class Node implements BoxModel {
                     this._inlineText = false;
                     break;
                 default:
-                    this._inlineText = (this.hasElement && this.children.length === 0 &&
+                    this._inlineText = (
+                        this.hasElement &&
+                        this.children.length === 0 &&
                         !Array.from(this.element.childNodes).some((element: Element) => {
                             const node = getNodeFromElement(element);
                             return (node != null && node.visible);
-                        }) && (hasFreeFormText(this.element) || (this.element.children.length > 0 && Array.from(this.element.children).every((item: Element) => getElementCache(item, 'supportInline')))));
+                        }) && (
+                            hasFreeFormText(this.element) ||
+                            (this.element.children.length > 0 && Array.from(this.element.children).every((element: Element) => getElementCache(element, 'supportInline')))
+                        )
+                    );
                     break;
             }
         }

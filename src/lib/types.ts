@@ -85,6 +85,7 @@ export type ObjectIndex<T> = {
 export type ArrayIndex<T> = {
     [key: number]: T;
     length: number;
+    filter<T>(callbackfn: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
 };
 
 export type ViewData<T> = {

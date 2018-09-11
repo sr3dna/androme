@@ -88,7 +88,8 @@ export default class TableAndroid<T extends View> extends Table<T> {
                 node.id,
                 this.application.controllerHandler.renderNodeStatic(
                     NODE_STANDARD.SPACE,
-                    parent.renderDepth + 1, {
+                    parent.renderDepth + 1,
+                    {
                         app: {
                             layout_columnSpan: spaceSpan.toString()
                         }

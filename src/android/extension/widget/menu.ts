@@ -50,27 +50,35 @@ export default class Menu<T extends View> extends Nav<T> {
 
     public processNode(): ExtensionResult {
         const node = this.node;
-        const xml = this.application.controllerHandler.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
+        const xml =
+            this.application.controllerHandler.renderNodeStatic(
+                VIEW_NAVIGATION.MENU,
+                0,
+                {},
+                '',
+                '',
+                node,
+                true
+            );
         node.documentRoot = true;
-        node.rendered = true;
-        node.cascade().forEach(item => item.renderExtensionChild.push(this));
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ALL;
         node.excludeProcedure |= NODE_PROCEDURE.ALL;
+        node.rendered = true;
+        node.cascade().forEach(item => item.renderExtensionChild.push(this));
         return { xml, complete: true };
     }
 
     public processChild(): ExtensionResult {
-        let xml = '';
-        let next = false;
         const node = this.node;
         const parent = this.parent as T;
         if (node.plainText) {
             node.hide();
-            return { xml, complete: true, next: true };
+            return { xml: '', complete: true, next: true };
         }
         const element = <HTMLElement> node.element;
         const options: ObjectMap<StringMap> = { android: {}, app: {} };
+        let next = false;
         let nodeName = VIEW_NAVIGATION.ITEM;
         let title = '';
         let layout = false;
@@ -160,10 +168,19 @@ export default class Menu<T extends View> extends Nav<T> {
         else {
             node.controlName = nodeName;
         }
-        xml = this.application.controllerHandler.renderNodeStatic(nodeName, parent.renderDepth + 1, options, '', '', node, layout);
-        node.rendered = true;
+        const xml =
+            this.application.controllerHandler.renderNodeStatic(
+                nodeName,
+                parent.renderDepth + 1,
+                options,
+                '',
+                '',
+                node,
+                layout
+            );
         node.excludeResource |= NODE_RESOURCE.ALL;
         node.excludeProcedure |= NODE_PROCEDURE.ALL;
+        node.rendered = true;
         return { xml, complete: true, next };
     }
 

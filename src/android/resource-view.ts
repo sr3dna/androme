@@ -335,12 +335,18 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
                 if (companion && !cssFromParent(companion.element, 'backgroundColor')) {
-                     const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
-                     if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
+                    const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
+                    if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
                         stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
-                     }
+                    }
                 }
-                const hasBorder = (this.borderVisible(stored.borderTop) || this.borderVisible(stored.borderRight) || this.borderVisible(stored.borderBottom) || this.borderVisible(stored.borderLeft) || stored.borderRadius.length > 0);
+                const hasBorder = (
+                    this.borderVisible(stored.borderTop) ||
+                    this.borderVisible(stored.borderRight) ||
+                    this.borderVisible(stored.borderBottom) ||
+                    this.borderVisible(stored.borderLeft) ||
+                    stored.borderRadius.length > 0
+                );
                 if (hasBorder || backgroundImage.length > 0) {
                     [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
                         if (this.borderVisible(item) && Array.isArray(item.color) && item.color.length > 0) {
@@ -611,7 +617,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         };
                         const root = getTemplateLevel(data, '0');
                         if (hasBorder) {
-                            const borders: BorderAttribute[] = [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft];
+                            const borders: BorderAttribute[] = [
+                                stored.borderTop,
+                                stored.borderRight,
+                                stored.borderBottom,
+                                stored.borderLeft
+                            ];
                             let valid = true;
                             let width = '';
                             let borderStyle = '';
@@ -697,7 +708,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.formatted(formatString(method['background'], resourceName), (node.renderExtension.length === 0));
-                    if (SETTINGS.autoSizeBackgroundImage && backgroundImage.length > 0 && !node.documentRoot && !node.imageElement && node.renderParent.tagName !== 'TABLE' && !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
+                    if (SETTINGS.autoSizeBackgroundImage &&
+                        backgroundImage.length > 0 &&
+                        !node.documentRoot &&
+                        !node.imageElement &&
+                        node.renderParent.tagName !== 'TABLE' &&
+                        !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT))
+                    {
                         const sizeParent: Image = { width: 0, height: 0,  };
                         backgroundImageUrl.forEach(value => {
                             const image = this.imageDimensions.get(parseBackgroundUrl(value));
@@ -851,7 +868,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public setImageSource() {
-        this.cache.filter(node => node.visible && (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
+        this.cache.filter(node =>
+            node.visible &&
+            (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
+            !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)
+        ).each(node => {
             const element = <HTMLImageElement> node.element;
             if (getElementCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
                 const result = (node.imageElement ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
@@ -866,7 +887,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+        this.cache.filter(node =>
+            node.visible &&
+            node.tagName === 'SELECT' &&
+            !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
+        ).each(node => {
             const stored: ObjectMap<string[]> = getElementCache(node.element, 'optionArray');
             if (stored) {
                 const method = METHOD_ANDROID['optionArray'];
@@ -973,28 +998,29 @@ export default class ResourceView<T extends View> extends Resource<T> {
         for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
-            let sorted: StyleList = (<any> this.tagStyle[tag]).filter(item => Object.keys(item).length > 0).sort((a, b) => {
-                let maxA = 0;
-                let maxB = 0;
-                let countA = 0;
-                let countB = 0;
-                for (const attr in a) {
-                    maxA = Math.max(a[attr].length, maxA);
-                    countA += a[attr].length;
-                }
-                for (const attr in b) {
-                    if (b[attr] != null) {
-                        maxB = Math.max(b[attr].length, maxB);
-                        countB += b[attr].length;
+            let sorted: StyleList =
+                this.tagStyle[tag].filter((item: ObjectMap<number[]>) => Object.keys(item).length > 0).sort((a, b) => {
+                    let maxA = 0;
+                    let maxB = 0;
+                    let countA = 0;
+                    let countB = 0;
+                    for (const attr in a) {
+                        maxA = Math.max(a[attr].length, maxA);
+                        countA += a[attr].length;
                     }
-                }
-                if (maxA !== maxB) {
-                    return (maxA > maxB ? -1 : 1);
-                }
-                else {
-                    return (countA >= countB ? -1 : 1);
-                }
-            });
+                    for (const attr in b) {
+                        if (b[attr] != null) {
+                            maxB = Math.max(b[attr].length, maxB);
+                            countB += b[attr].length;
+                        }
+                    }
+                    if (maxA !== maxB) {
+                        return (maxA > maxB ? -1 : 1);
+                    }
+                    else {
+                        return (countA >= countB ? -1 : 1);
+                    }
+                });
             const count = this.tagCount[tag];
             do {
                 if (sorted.length === 1) {
@@ -1132,33 +1158,33 @@ export default class ResourceView<T extends View> extends Resource<T> {
             resource[tagName] = tagData;
         }
         const inherit = new Set();
-        const map = {};
+        const mapNode = {};
         for (const tagName in resource) {
-            for (const item of resource[tagName] as StyleTag[]) {
-                for (const id of item.ids) {
-                    if (map[id] == null) {
-                        map[id] = { styles: [], attributes: [] };
+            for (const group of resource[tagName]) {
+                for (const id of group.ids) {
+                    if (mapNode[id] == null) {
+                        mapNode[id] = { styles: [], attributes: [] };
                     }
-                    map[id].styles.push(item.name);
+                    mapNode[id].styles.push(group.name);
                 }
             }
             const tagData = layout[tagName];
             if (tagData != null) {
                 for (const attr in tagData) {
                     for (const id of tagData[attr] as number[]) {
-                        if (map[id] == null) {
-                            map[id] = { styles: [], attributes: [] };
+                        if (mapNode[id] == null) {
+                            mapNode[id] = { styles: [], attributes: [] };
                         }
-                        map[id].attributes.push(attr);
+                        mapNode[id].attributes.push(attr);
                     }
                 }
             }
         }
-        for (const id in map) {
+        for (const id in mapNode) {
             const node = viewData.cache.locate('id', parseInt(id));
             if (node) {
-                const styles: string[] = map[id].styles;
-                const attrs: string[] = map[id].attributes;
+                const styles: string[] = mapNode[id].styles;
+                const attrs: string[] = mapNode[id].attributes;
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
                     node.attr('_', 'style', `@style/${styles.pop()}`);

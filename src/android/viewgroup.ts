@@ -75,7 +75,12 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     get display() {
-        return (this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.INLINE_WRAP) || this.children.some(node => (node.block && !node.floating)) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
+        if (this.has('display')) {
+            return this.css('display');
+        }
+        else {
+            return (this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.INLINE_WRAP) || this.children.some(node => (node.block && !node.floating)) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
+        }
     }
 
     get inlineElement() {

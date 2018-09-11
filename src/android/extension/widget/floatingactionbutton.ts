@@ -15,7 +15,6 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
     }
 
     public processNode(): ExtensionResult {
-        let xml =  '';
         const node = this.node;
         const parent = this.parent as T;
         const element = node.element;
@@ -46,7 +45,15 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
             overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         const target = node.isSet('dataset', 'target');
-        xml = this.application.controllerHandler.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, (target ? -1 : parent.renderDepth + 1), options, 'wrap_content', 'wrap_content', node);
+        const xml =
+            this.application.controllerHandler.renderNodeStatic(
+                VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
+                (target ? -1 : parent.renderDepth + 1),
+                options,
+                'wrap_content',
+                'wrap_content',
+                node
+            );
         node.nodeType = NODE_STANDARD.BUTTON;
         node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
         if (!node.pageflow || target) {
@@ -83,6 +90,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
     }
 
     private setFrameGravity<T extends View>(node: T) {
+        const parent = node.documentParent;
         const horizontalBias = node.horizontalBias;
         const verticalBias = node.verticalBias;
         const gravity: string[] = [];
@@ -106,7 +114,6 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
             gravity.push('center_vertical');
         }
         node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
-        const parent = node.documentParent;
         if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
             if (horizontalBias < 0.5) {
                 node.css('marginLeft', formatPX(Math.floor(node.bounds.left - parent.box.left)));

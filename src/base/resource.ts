@@ -144,13 +144,22 @@ export default abstract class Resource<T extends Node> {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
                 const backgroundImage = this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
-                if (node.renderChildren.length > 0 || node.imageElement || node.tagName === 'HR' || (node.inlineText && !backgroundImage && node.element.innerHTML.trim() === '' && !['pre', 'pre-wrap'].includes(node.css('whiteSpace')))) {
+                if (node.renderChildren.length > 0 ||
+                    node.imageElement ||
+                    node.tagName === 'HR' ||
+                    (node.inlineText && !backgroundImage && node.element.innerHTML.trim() === '' && !['pre', 'pre-wrap'].includes(node.css('whiteSpace'))))
+                {
                     return;
                 }
                 else {
                     const color = parseRGBA(node.css('color'), node.css('opacity'));
                     const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                    if (backgroundColor.length > 0 && (backgroundImage || (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) || (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
+                    if (backgroundColor.length > 0 && (
+                            backgroundImage ||
+                            (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
+                            (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor'))
+                       ))
+                    {
                         backgroundColor.length = 0;
                     }
                     let fontWeight = node.css('fontWeight');
@@ -313,9 +322,9 @@ export default abstract class Resource<T extends Node> {
                         performTrim = false;
                     }
                 }
-                else if (node.plainText) {
-                    name = (element.textContent || '').trim();
-                    value = replaceEntity(element.textContent || '');
+                else if (node.plainText && element.textContent) {
+                    name = element.textContent.trim();
+                    value = replaceEntity(element.textContent);
                     value = value.replace(/&[A-Za-z]+;/g, (match => match.replace('&', '&amp;')));
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                 }
@@ -363,7 +372,15 @@ export default abstract class Resource<T extends Node> {
     }
 
     protected hasDrawableBackground(object: BoxStyle) {
-        return (object && (this.borderVisible(object.borderTop) || this.borderVisible(object.borderRight) || this.borderVisible(object.borderBottom) || this.borderVisible(object.borderLeft) || (object.backgroundImage !== '' && object.backgroundImage !== 'none') || object.borderRadius.length > 0));
+        return (object && (
+                this.borderVisible(object.borderTop) ||
+                this.borderVisible(object.borderRight) ||
+                this.borderVisible(object.borderBottom) ||
+                this.borderVisible(object.borderLeft) ||
+                (object.backgroundImage !== '' && object.backgroundImage !== 'none') ||
+                object.borderRadius.length > 0
+            )
+        );
     }
 
     protected getBorderStyle(border: BorderAttribute) {
@@ -390,7 +407,12 @@ export default abstract class Resource<T extends Node> {
     }
 
     private parseBorderRadius(value: string, node: T) {
-        const [top, right, bottom, left] = [node.css('borderTopLeftRadius'), node.css('borderTopRightRadius'), node.css('borderBottomLeftRadius'), node.css('borderBottomRightRadius')];
+        const [top, right, bottom, left] = [
+            node.css('borderTopLeftRadius'),
+            node.css('borderTopRightRadius'),
+            node.css('borderBottomLeftRadius'),
+            node.css('borderBottomRightRadius')
+        ];
         if (top === right && right === bottom && bottom === left) {
             return (top === '' || top === '0px' ? [] : [top]);
         }

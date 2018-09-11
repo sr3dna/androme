@@ -254,7 +254,8 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 }
             });
             return queue;
-        }).reduce((a, b) => a.concat(b), []);
+        })
+        .reduce((a, b) => a.concat(b), []);
     if (images.length === 0) {
         parseResume();
     }

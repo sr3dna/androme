@@ -243,7 +243,7 @@ export function lastIndexOf(value: string, char = '/') {
     return value.substring(value.lastIndexOf(char) + 1);
 }
 
-export function same(obj1: {}, obj2: {}, ...attrs: string[]) {
+export function sameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
     for (const attr of attrs) {
         const result = compare(obj1, obj2, attr);
         if (!result || result[0] !== result[1]) {

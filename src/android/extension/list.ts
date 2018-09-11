@@ -29,7 +29,12 @@ export default class ListAndroid<T extends View> extends List<T> {
         else if (parent.children[0] === node) {
             paddingLeft += parentLeft;
         }
-        const floatItem = node.children.find(item => item.float === 'left' && convertInt(item.cssOriginal('marginLeft', true)) < 0 && Math.abs(convertInt(item.cssOriginal('marginLeft', true))) <= convertInt(item.documentParent.cssOriginal('marginLeft', true))) as T;
+        const floatItem =
+            node.children.find(item =>
+                item.float === 'left' &&
+                convertInt(item.cssOriginal('marginLeft', true)) < 0 &&
+                Math.abs(convertInt(item.cssOriginal('marginLeft', true))) <= convertInt(item.documentParent.cssOriginal('marginLeft', true))
+            ) as T;
         if (floatItem && listStyle === '0') {
             floatItem.parent = parent;
             let xml = '';
@@ -147,7 +152,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 node.id,
                 controller.renderNodeStatic(
                     (image !== '' ? NODE_STANDARD.IMAGE
-                                    : (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE)),
+                                  : (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE)),
                     parent.renderDepth + 1,
                     options,
                     'wrap_content',
