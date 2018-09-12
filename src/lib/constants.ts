@@ -79,6 +79,15 @@ export enum BOX_STANDARD {
     PADDING_HORIZONTAL = 64 | 256
 }
 
+export enum CSS_STANDARD {
+    NONE = 0,
+    UNIT,
+    AUTO,
+    LEFT,
+    BASELINE,
+    PERCENT
+}
+
 export const MAP_ELEMENT = {
     INPUT: NODE_STANDARD.NONE,
     PLAINTEXT: NODE_STANDARD.TEXT,

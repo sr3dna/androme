@@ -1,8 +1,8 @@
 import { BoxModel, ClientRect, DisplaySettings, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, hasBit, isPercent, search, sortAsc, sortDesc } from '../lib/util';
+import { convertCamelCase, convertInt, hasValue, hasBit, isPercent, isUnit, search, sortAsc, sortDesc } from '../lib/util';
 import { assignBounds, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache } from '../lib/dom';
-import { BOX_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
 
@@ -103,6 +103,8 @@ export default abstract class Node implements BoxModel {
     public abstract get renderParent(): T;
     public abstract get linearHorizontal(): boolean;
     public abstract get linearVertical(): boolean;
+    public abstract get layoutHorizontal(): boolean;
+    public abstract get layoutVertical(): boolean;
     public abstract get inlineWidth(): boolean;
     public abstract get inlineHeight(): boolean;
     public abstract get blockWidth(): boolean;
@@ -391,17 +393,40 @@ export default abstract class Node implements BoxModel {
         return result;
     }
 
-    public has(attr: string) {
-        const value = this.styleMap[attr];
+    public has(attr: string, checkType: number = 0, options?: StringMap) {
+        const value = this[(options != null && options.map === 'original' ? 'originalStyleMap' : 'styleMap')][attr];
         if (hasValue(value)) {
             switch (value) {
                 case '0px':
                 case 'none':
+                case 'left':
+                    if (checkType === CSS_STANDARD.LEFT) {
+                        return true;
+                    }
+                case 'baseline':
+                    if (checkType === CSS_STANDARD.BASELINE) {
+                        return true;
+                    }
                 case 'auto':
+                    if (checkType === CSS_STANDARD.AUTO) {
+                        return true;
+                    }
                 case 'normal':
                 case 'transparent':
+                case 'rgba(0, 0, 0, 0)':
                     return false;
                 default:
+                    if (options != null) {
+                        if (value === options.not) {
+                            return false;
+                        }
+                    }
+                    switch (checkType) {
+                        case CSS_STANDARD.UNIT:
+                            return isUnit(value);
+                        case CSS_STANDARD.PERCENT:
+                            return isPercent(value);
+                    }
                     return true;
             }
         }
@@ -416,7 +441,8 @@ export default abstract class Node implements BoxModel {
     }
 
     public toInt(attr: string, defaultValue = 0) {
-        return parseInt(this.styleMap[attr]) || defaultValue;
+        const value = this.styleMap[attr];
+        return parseInt(value) || defaultValue;
     }
 
     public setExclusions() {
@@ -739,7 +765,7 @@ export default abstract class Node implements BoxModel {
                 grow: convertInt(style.flexGrow),
                 shrink: convertInt(style.flexShrink),
                 wrap: style.flexWrap as string,
-                alignSelf: (this.documentParent.has('alignItems') && (!this.has('alignSelf') || style.alignSelf === 'auto') ? this.documentParent.css('alignItems') : style.alignSelf) as string,
+                alignSelf: (!this.has('alignSelf') && this.documentParent.has('alignItems') ? this.documentParent.css('alignItems') : style.alignSelf) as string,
                 justifyContent: style.justifyContent as string,
                 order: convertInt(style.order)
             };

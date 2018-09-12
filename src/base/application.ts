@@ -7,7 +7,7 @@ import NodeList from './nodelist';
 import { convertInt, formatPX, hasBit, hasValue, isNumber, optional, sortAsc, trim, isPercent, isUnit } from '../lib/util';
 import { getPlaceholder, modifyIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache, getElementsBetweenSiblings } from '../lib/dom';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, CSS_STANDARD } from '../lib/constants';
 import SETTINGS from '../settings';
 
 export default class Application<T extends Node> {
@@ -831,13 +831,12 @@ export default class Application<T extends Node> {
                         }
                         if (!nodeY.rendered) {
                             let xml = '';
-                            const width = nodeY.css('width');
-                            if (nodeY.alignmentType === NODE_ALIGNMENT.NONE && isPercent(width) && width !== '100%' && !nodeY.imageElement && (parentY.linearVertical || (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild))) {
+                            if (nodeY.alignmentType === NODE_ALIGNMENT.NONE && nodeY.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) && !nodeY.imageElement && (parentY.linearVertical || (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild))) {
                                 const group = this.controllerHandler.createGroup(nodeY, [nodeY], parentY);
                                 const groupXml = this.writeGridLayout(group, parentY, 2, 1);
                                 group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                                 renderXml(group, parentY, groupXml, current);
-                                this.controllerHandler[(nodeY.float === 'right' || nodeY.autoLeftMargin ? 'prependBefore' : 'appendAfter')](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - parseInt(width))}%`));
+                                this.controllerHandler[(nodeY.float === 'right' || nodeY.autoLeftMargin ? 'prependBefore' : 'appendAfter')](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - nodeY.toInt('width'))}%`));
                                 parentY = group;
                             }
                             if (nodeY.controlName === '') {

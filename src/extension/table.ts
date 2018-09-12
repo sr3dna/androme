@@ -4,7 +4,7 @@ import Node from '../base/node';
 import { convertFloat, convertInt, formatPX, isPercent, isUnit } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 import { cssInherit, getStyle } from '../lib/dom';
-import { BOX_STANDARD } from '../lib/constants';
+import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
 
 export default class Table<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -178,7 +178,7 @@ export default class Table<T extends Node> extends Extension<T> {
         const caption = node.children.find(item => item.tagName === 'CAPTION');
         node.children.length = 0;
         if (caption) {
-            if (!caption.has('textAlign')) {
+            if (!caption.has('textAlign', CSS_STANDARD.LEFT)) {
                 caption.css('textAlign', 'center');
             }
             rowCount++;

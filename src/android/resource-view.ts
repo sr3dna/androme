@@ -8,7 +8,7 @@ import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
 import { getColorNearest, parseHex, parseRGBA } from '../lib/color';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import SETTINGS from '../settings';
 
@@ -647,7 +647,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 });
                             }
                             if (valid) {
-                                const hideWidth = `-${formatPX(parseInt(width) * 2)}`;
+                                const hideWidth = `-${formatPX(width)}`;
                                 const layerList: {} = {
                                     'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
                                     'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
@@ -738,13 +738,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 current = current.documentParent as T;
                             }
                         }
-                        if (!node.has('width')) {
+                        if (!node.has('width', CSS_STANDARD.UNIT)) {
                             const width = node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
                             if (sizeParent.width === 0 || width < sizeParent.width) {
                                 node.css('width', formatPX(width));
                             }
                         }
-                        if (!node.has('height')) {
+                        if (!node.has('height', CSS_STANDARD.UNIT)) {
                             const height = node.bounds.height + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
                             if (sizeParent.height === 0 || height < sizeParent.height) {
                                 node.css('height', formatPX(height));

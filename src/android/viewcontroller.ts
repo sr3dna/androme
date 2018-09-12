@@ -9,7 +9,7 @@ import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/
 import { formatResource } from './extension/lib/util';
 import { hasLineBreak, isLineBreak } from '../lib/dom';
 import { getPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE } from '../lib/constants';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE, CSS_STANDARD } from '../lib/constants';
 import { AXIS_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
@@ -810,13 +810,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                             chain.anchor(mapLayout[BR], 'parent', orientationInverse);
                                                             break;
                                                         case 'baseline':
-                                                            const valid = chainable.list.some(adjacent => {
-                                                                if (adjacent !== chain && adjacent.nodeType <= NODE_STANDARD.TEXT) {
-                                                                    chain.anchor(mapLayout['baseline'], adjacent.stringId);
-                                                                    return true;
-                                                                }
-                                                                return false;
-                                                            });
+                                                            const valid =
+                                                                chainable.list.some(adjacent => {
+                                                                    if (adjacent !== chain && adjacent.nodeType <= NODE_STANDARD.TEXT) {
+                                                                        chain.anchor(mapLayout['baseline'], adjacent.stringId);
+                                                                        return true;
+                                                                    }
+                                                                    return false;
+                                                                });
                                                             if (valid) {
                                                                 mapDelete(chain, 'top', 'bottom');
                                                                 for (const item of chainable) {
@@ -1417,7 +1418,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         container.parent = previous;
                         container.render(previous);
                     }
-                    if (node.has('width')) {
+                    if (node.has('width', CSS_STANDARD.UNIT)) {
                         container.css('width', formatPX(node.toInt('width') + node.paddingLeft + node.paddingRight));
                     }
                 }
@@ -1647,10 +1648,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                 if (scrollbars.length > 0) {
                     node.android('scrollbars', scrollbars.join('|'));
                 }
-                if (node.has('maxWidth') && !isPercent(node.css('maxWidth'))) {
+                if (node.has('maxWidth', CSS_STANDARD.UNIT)) {
                     node.android('maxWidth', node.css('maxWidth'));
                 }
-                if (node.has('maxHeight') && !isPercent(node.css('maxHeight'))) {
+                if (node.has('maxHeight', CSS_STANDARD.UNIT)) {
                     node.android('maxHeight', node.css('maxHeight'));
                 }
                 break;
@@ -2073,17 +2074,18 @@ export default class ViewController<T extends View> extends Controller<T> {
         if (lineHeight > 0) {
             let minHeight = Number.MAX_VALUE;
             let offsetTop = 0;
-            const valid = nodes.every(node => {
-                const offset = lineHeight - node.bounds.height;
-                if (offset > 0) {
-                    minHeight = Math.min(offset, minHeight);
-                    if (lineHeight === node.toInt('lineHeight')) {
-                        offsetTop = Math.max((node.toInt('top') < 0 ? Math.abs(node.toInt('top')) : 0), offsetTop);
+            const valid =
+                nodes.every(node => {
+                    const offset = lineHeight - node.bounds.height;
+                    if (offset > 0) {
+                        minHeight = Math.min(offset, minHeight);
+                        if (lineHeight === node.toInt('lineHeight')) {
+                            offsetTop = Math.max((node.toInt('top') < 0 ? Math.abs(node.toInt('top')) : 0), offsetTop);
+                        }
+                        return true;
                     }
-                    return true;
-                }
-                return false;
-            });
+                    return false;
+                });
             if (valid) {
                 parent.modifyBox(BOX_STANDARD.PADDING_TOP, Math.floor(minHeight / 2));
                 parent.modifyBox(BOX_STANDARD.PADDING_BOTTOM, Math.ceil(minHeight / 2) + offsetTop);

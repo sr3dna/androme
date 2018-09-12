@@ -55,10 +55,10 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 if (a.imageElement && b.imageElement) {
                     return (heightA >= heightB ? -1 : 1);
                 }
-                else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                else if ((!a.multiLine && b.multiLine) || (a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
                     return -1;
                 }
-                else if ((b.lineHeight > heightA && a.lineHeight === 0 || a.imageElement)) {
+                else if ((a.multiLine && !b.multiLine) || (b.lineHeight > heightA && a.lineHeight === 0 || a.imageElement)) {
                     return 1;
                 }
                 else if (!a.imageElement && !b.imageElement) {
