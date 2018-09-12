@@ -3,7 +3,7 @@ import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import NodeList from '../base/nodelist';
-import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, trim } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, partition, trim } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
@@ -548,62 +548,15 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     });
                     const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
                     const radius = this.getShapeAttribute(stored, 'radius');
-                    const radiusInit = this.getShapeAttribute(stored, 'radiusInit');
-                    if (stored.border != null) {
-                        if (backgroundImage.length === 0) {
-                            template = parseTemplate(SHAPERECTANGLE_TMPL);
-                            data = {
-                                '0': [{
-                                    '1': this.getShapeAttribute(stored, 'stroke'),
-                                    '2': (backgroundColor !== false || stored.borderRadius.length > 0 ? [{
-                                        '3': backgroundColor,
-                                        '4': radius,
-                                        '5': radiusInit
-                                    }] : false)
-                                }]
-                            };
-                            if (stored.borderRadius.length > 1) {
-                                const shape = getTemplateLevel(data, '0', '2');
-                                const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                shape['5'].push(borderRadius);
-                            }
-                        }
-                        else if (backgroundImage.length > 0 && (stored.border.style === 'none' || stored.border.width === '0px')) {
-                            template = parseTemplate(LAYERLIST_TMPL);
-                            data = {
-                                '0': [{
-                                    '1': backgroundColor,
-                                    '2': (image2.length > 0 ? image2 : false),
-                                    '3': (image3.length > 0 ? image3 : false),
-                                    '4': (backgroundColor === false ? false
-                                                                    : [{
-                                                                        '5': false,
-                                                                        '6': false,
-                                                                        '7': false
-                                                                    }])
-                                }]
-                            };
-                        }
-                        else {
-                            template = parseTemplate(LAYERLIST_TMPL);
-                            data = {
-                                '0': [{
-                                    '1': backgroundColor,
-                                    '2': (image2.length > 0 ? image2 : false),
-                                    '3': (image3.length > 0 ? image3 : false),
-                                    '4': [{
-                                        '5': this.getShapeAttribute(stored, 'stroke'),
-                                        '6': radius,
-                                        '7': radiusInit
-                                    }]
-                                }]
-                            };
-                            if (stored.borderRadius.length > 1) {
-                                const shape = getTemplateLevel(data, '0', '4');
-                                const borderRadius = this.getShapeAttribute(stored, 'radiusAll');
-                                shape['7'].push(borderRadius);
-                            }
-                        }
+                    if (stored.border != null && backgroundImage.length === 0) {
+                        template = parseTemplate(SHAPERECTANGLE_TMPL);
+                        data = {
+                            '0': [{
+                                '1': this.getShapeAttribute(stored, 'stroke'),
+                                '2': backgroundColor,
+                                '3': radius
+                            }]
+                        };
                     }
                     else {
                         template = parseTemplate(LAYERLIST_TMPL);
@@ -612,86 +565,73 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 '1': backgroundColor,
                                 '2': (image2.length > 0 ? image2 : false),
                                 '3': (image3.length > 0 ? image3 : false),
-                                '4': []
+                                '4': [],
+                                '7': []
                             }]
                         };
                         const root = getTemplateLevel(data, '0');
-                        if (hasBorder) {
+                        if (stored.border && this.borderVisible(stored.border)) {
+                            if (stored.border.style === 'inset') {
+                                root['7'].push({
+                                    '8': this.getShapeAttribute(stored, 'stroke'),
+                                    '9': radius
+                                });
+                            }
+                            else {
+                                root['4'].push({
+                                    '5': this.getShapeAttribute(stored, 'stroke'),
+                                    '6': radius
+                                });
+                            }
+                        }
+                        else {
                             const borders: BorderAttribute[] = [
                                 stored.borderTop,
                                 stored.borderRight,
                                 stored.borderBottom,
                                 stored.borderLeft
                             ];
-                            let valid = true;
-                            let width = '';
-                            let borderStyle = '';
-                            let radiusSize = '';
-                            borders.some((item, index) => {
-                                if (this.borderVisible(item)) {
-                                    if ((width !== '' && width !== item.width) || (borderStyle !== '' && borderStyle !== this.getBorderStyle(item)) || (radiusSize !== '' && radiusSize !== stored.borderRadius[index])) {
-                                        valid = false;
-                                        return true;
-                                    }
-                                    [width, borderStyle, radiusSize] = [item.width, this.getBorderStyle(item), stored.borderRadius[index]];
-                                }
-                                return false;
-                            });
-                            const borderRadius = {};
-                            if (stored.borderRadius.length > 1) {
-                                Object.assign(borderRadius, {
-                                    topLeftRadius: stored.borderRadius[0],
-                                    topRightRadius: stored.borderRadius[1],
-                                    bottomRightRadius: stored.borderRadius[2],
-                                    bottomLeftRadius: stored.borderRadius[3]
-                                });
-                            }
-                            if (valid) {
-                                const hideWidth = `-${formatPX(width)}`;
-                                const layerList: {} = {
-                                    'top': (this.borderVisible(stored.borderTop) ? '' : hideWidth),
+                            const borderVisible = borders.filter(item => this.borderVisible(item));
+                            const borderWidth = new Set(borderVisible.map(item => item.width));
+                            const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
+                            const [borderStandard, borderInset] = partition<BorderAttribute>(borders, (item: BorderAttribute) => item.style !== 'inset');
+                            if (borderWidth.size === 1 && borderStyle.size === 1) {
+                                const width = borderWidth.values().next().value;
+                                const hideWidth = `-${width}`;
+                                root[(borderInset.length > 0 ? '7' : '4')].push({
+                                    'top': (this.borderVisible(stored.borderTop) ? '' : `-${formatPX(parseInt(width) + 1)}`),
                                     'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
                                     'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
                                     'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
-                                    '5': [{ width, borderStyle }],
-                                    '6': radius,
-                                    '7': radiusInit
-                                };
-                                if (stored.borderRadius.length > 1) {
-                                    layerList['7'].push(borderRadius);
-                                }
-                                root['4'].push(layerList);
+                                    [(borderInset.length > 0 ? '8' : '5')]: [{ width, borderStyle: borderStyle.values().next().value }],
+                                    [(borderInset.length > 0 ? '9' : '6')]: radius
+                                });
                             }
                             else {
-                                borders.forEach((item, index) => {
-                                    if (this.borderVisible(item)) {
-                                        const hideWidth = `-${item.width}`;
-                                        const layerList: {} = {
-                                            'top': hideWidth,
-                                            'right': hideWidth,
-                                            'bottom': hideWidth,
-                                            'left': hideWidth,
-                                            '5': [{ width: item.width, borderStyle: this.getBorderStyle(item) }],
-                                            '6': radius,
-                                            '7': radiusInit
-                                        };
-                                        layerList[['top', 'right', 'bottom', 'left'][index]] = '';
-                                        if (stored.borderRadius.length > 1) {
-                                            layerList['7'].push(borderRadius);
+                                [borderStandard, borderInset].forEach((group, index) => {
+                                    group.forEach((border, direction) => {
+                                        if (this.borderVisible(border)) {
+                                            const hideWidth = `-${border.width}`;
+                                            const layer = {
+                                                'top': hideWidth,
+                                                'right': hideWidth,
+                                                'bottom': hideWidth,
+                                                'left': hideWidth,
+                                                [(index === 1 ? '8' : '5')]: [{ width: border.width, borderStyle: this.getBorderStyle(border) }],
+                                                [(index === 1 ? '9' : '6')]: radius
+                                            };
+                                            layer[['top', 'right', 'bottom', 'left'][direction]] = '';
+                                            root[(index === 1 ? '7' : '4')].push(layer);
                                         }
-                                        root['4'].push(layerList);
-                                    }
+                                    });
                                 });
                             }
                         }
                         if (root['4'].length === 0) {
                             root['4'] = false;
                         }
-                        else {
-                            const layer = root['4'][0];
-                            if (layer && layer.top !== '' && layer.right !== '' && layer.bottom === '' && layer.left !== '') {
-                                layer.bottom = formatPX(node.borderBottomWidth);
-                            }
+                        if (root['7'].length === 0) {
+                            root['7'] = false;
                         }
                     }
                     if (template) {
@@ -1233,20 +1173,25 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    private getShapeAttribute(stored: BoxStyle, name: string): any[] | {} | boolean {
+    private getShapeAttribute(stored: BoxStyle, name: string): any[] | boolean {
         switch (name) {
             case 'stroke':
                 return (stored.border && stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);
             case 'backgroundColor':
-                return (stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false);
+                return (stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false);
             case 'radius':
-                return (stored.borderRadius.length === 1 && stored.borderRadius[0] !== '0px' ? [{ radius: stored.borderRadius[0] }] : false);
-            case 'radiusInit':
-                return (stored.borderRadius.length > 1 ? [] : false);
-            case 'radiusAll':
-                const result = {};
-                stored.borderRadius.forEach((value: string, index: number) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
-                return result;
+                if (stored.borderRadius.length === 1) {
+                    if (stored.borderRadius[0] !== '0px') {
+                        return [{ radius: stored.borderRadius[0] }];
+                    }
+                }
+                else if (stored.borderRadius.length > 1) {
+                    const result = {};
+                    stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                    return [result];
+                }
+                return false;
+
         }
         return false;
     }

@@ -353,7 +353,7 @@ export default class View extends Node {
                     }
                 }
                 if (this.android('layout_width') == null) {
-                    const widthDefined = this.renderChildren.filter(node => (node.has('width', CSS_STANDARD.NONE, { map: 'original '}) && !node.has('width', CSS_STANDARD.PERCENT) && !node.autoMargin));
+                    const widthDefined = this.renderChildren.filter(node => (node.has('width', CSS_STANDARD.NONE, { map: 'original' }) && !node.has('width', CSS_STANDARD.PERCENT) && !node.autoMargin));
                     if (convertFloat(this.app('layout_columnWeight')) > 0) {
                         this.android('layout_width', '0px');
                     }
@@ -585,7 +585,7 @@ export default class View extends Node {
                     }
                     break;
                 case 'middle':
-                    if (this.documentParent.css('display') === 'table-cell' || (this.inlineStatic && this.documentParent.lineHeight > 0) || renderParent.linearHorizontal) {
+                    if (this.documentParent.css('display') === 'table-cell' || (this.inlineStatic && this.documentParent.lineHeight > 0) || this.inlineElement) {
                         verticalAlign = 'center_vertical';
                     }
                     break;

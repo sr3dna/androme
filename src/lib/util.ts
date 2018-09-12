@@ -17,6 +17,20 @@ function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     });
 }
 
+export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]] {
+    const valid: T[] = [];
+    const invalid: T[] = [];
+    list.forEach((node: T) => {
+        if (predicate(node)) {
+            valid.push(node);
+        }
+        else {
+            invalid.push(node);
+        }
+    });
+    return [valid, invalid];
+}
+
 export function formatString(value: string, ...params: string[]) {
     for (let i = 0; i < params.length; i++) {
         value = value.replace(`{${i}}`, params[i]);

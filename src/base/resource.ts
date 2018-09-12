@@ -386,6 +386,7 @@ export default abstract class Resource<T extends Node> {
     protected getBorderStyle(border: BorderAttribute) {
         const result = { solid: `android:color="@color/${border.color}"` };
         Object.assign(result, {
+            inset: result.solid,
             dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
             dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
         });

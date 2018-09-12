@@ -1,5 +1,5 @@
 import Node from './node';
-import { convertInt, convertPX, sortAsc, sortDesc } from '../lib/util';
+import { convertInt, convertPX, partition, sortAsc, sortDesc } from '../lib/util';
 import { NODE_STANDARD } from '../lib/constants';
 import { isLineBreak } from '../lib/dom';
 
@@ -234,16 +234,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public partition(predicate: (value: T) => boolean) {
-        const valid: T[] = [];
-        const invalid: T[] = [];
-        this._list.forEach((node: T) => {
-            if (predicate(node)) {
-                valid.push(node);
-            }
-            else {
-                invalid.push(node);
-            }
-        });
+        const [valid, invalid]: T[][] = partition(this._list, predicate);
         return [new NodeList<T>(valid), new NodeList<T>(invalid)];
     }
 
