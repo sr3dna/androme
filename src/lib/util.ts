@@ -76,7 +76,7 @@ export function convertFloat(value: any) {
     return (value && parseFloat(value)) || 0;
 }
 
-export function convertPX(value: any) {
+export function convertPX(value: any, fontSize: string) {
     if (hasValue(value)) {
         if (isNumber(value)) {
             value = `${value}px`;
@@ -89,7 +89,7 @@ export function convertPX(value: any) {
                     value *= (4 / 3);
                     break;
                 case 'em':
-                    value *= 16;
+                    value *= convertInt(fontSize) || 16;
                     break;
             }
         }

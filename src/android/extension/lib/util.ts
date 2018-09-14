@@ -25,7 +25,7 @@ export function locateExtension<T extends View>(node: T, extension: string): Nul
 
 export function getTargetDepth(id: string) {
     const node = getNodeFromElement(document.getElementById(id));
-    if (node != null) {
+    if (node) {
         if (hasValue(node.dataset.include)) {
             return (hasValue(node.dataset.includeMerge) ? 1 : 0);
         }

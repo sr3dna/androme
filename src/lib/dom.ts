@@ -38,11 +38,11 @@ export function getRangeClientRect(element: Element): [ClientRect, boolean] {
         bottom.add(rect.bottom);
         result.width += rect.width;
         result.right = Math.max(rect.right, result.right);
+        result.height = Math.max(rect.height, result.height);
     }
     if (top.size > 1 && bottom.size > 1) {
         result.top = Math.min.apply(null, Array.from(top));
         result.bottom = Math.max.apply(null, Array.from(bottom));
-        result.height = result.bottom - result.top;
         if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
             multiLine = true;
         }
@@ -281,6 +281,9 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
                             }
                             return true;
                         });
+                }
+                else {
+                    result = result.filter(element => element.nodeName !== '#comment');
                 }
                 if (cacheNode) {
                     result = result.filter(element => getNodeFromElement(element));

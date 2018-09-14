@@ -1,7 +1,7 @@
 import { DisplaySettings, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, isPercent, isUnit, lastIndexOf } from '../lib/util';
+import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, isPercent, isUnit, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId, stripId } from './lib/util';
 import { getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
@@ -155,13 +155,13 @@ export default class View extends Node {
         }
     }
 
-    public valueBox(region: string | number) {
-        const name = convertEnum(parseInt(region as string), BOX_STANDARD, BOX_ANDROID);
+    public valueBox(region: number) {
+        const name = convertEnum(region, BOX_STANDARD, BOX_ANDROID);
         if (name !== '') {
-            const attr = parseRTL(name);
-            return [attr, this.android(attr) || '0px'];
+            const attr = name.replace('layout_', '');
+            return [this._boxReset[attr] || 0, this._boxAdjustment[attr] || 0];
         }
-        return ['', '0px'];
+        return [0, 0];
     }
 
     public supported(obj: string, attr: string) {
@@ -313,7 +313,7 @@ export default class View extends Node {
             }
             else {
                 if (this.android('layout_width') !== '0px') {
-                    if (this.toInt('width') > 0 && (!this.inlineStatic || renderParent.is(NODE_STANDARD.GRID))) {
+                    if (this.toInt('width') > 0 && (!this.inlineStatic || renderParent.is(NODE_STANDARD.GRID) || !this.has('width', 0, { map: 'original' }))) {
                         if (isPercent(styleMap.width)) {
                             if (styleMap.width === '100%') {
                                 this.android('layout_width', 'match_parent', false);
@@ -360,7 +360,7 @@ export default class View extends Node {
                     else if (widthDefined.length > 0 && widthDefined.some(node => node.bounds.width >= this.box.width)) {
                         this.android('layout_width', 'wrap_content');
                     }
-                    else if ((this.blockStatic && this.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL)) || this.renderChildren.some(node => node.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL) && !node.has('width'))) {
+                    else if ((this.blockStatic && this.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL)) || (!this.documentRoot && this.renderChildren.some(node => node.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL) && !node.has('width')))) {
                         this.android('layout_width', 'match_parent');
                     }
                     else {
@@ -373,10 +373,12 @@ export default class View extends Node {
                             this.display === 'table' ||
                             parent.flex.enabled ||
                             (renderParent.inlineElement && renderParent.viewWidth === 0 && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) ||
-                            (this.is(NODE_STANDARD.GRID) && inlineRight >= this.box.right) ||
                             renderParent.is(NODE_STANDARD.GRID)
                         );
-                        if (!wrap || (this.blockStatic && !this.has('maxWidth'))) {
+                        if (this.is(NODE_STANDARD.GRID) && withinFraction(inlineRight, this.box.right)) {
+                            this.android('layout_width', 'wrap_content');
+                        }
+                        else if (!wrap || (this.blockStatic && !this.has('maxWidth'))) {
                             const previousSibling = this.previousSibling;
                             const nextSibling = this.nextSibling;
                             if (width >= widthParent ||
@@ -387,27 +389,10 @@ export default class View extends Node {
                                     this.ascend(true).every(node => node.blockStatic) ||
                                     (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((previousSibling == null || !previousSibling.floating) && (nextSibling == null || !nextSibling.floating))))
                                 ) ||
+                                (this.is(NODE_STANDARD.FRAME) && this.renderChildren.some(node => node.blockStatic && (node.centerMarginHorizontal || node.autoLeftMargin))) ||
                                 (!this.hasElement && this.renderChildren.length > 0 && this.renderChildren.some(item => item.linear.width >= this.documentParent.box.width)))
                             {
                                 this.android('layout_width', 'match_parent');
-                            }
-                            else if (renderParent.linearVertical && (!this.inlineElement || this.blockStatic) && (this.is(NODE_STANDARD.TEXT) || renderParent.blockWidth)) {
-                                const widest: T[] = [];
-                                let widestRight = 0;
-                                for (const node of renderParent.children) {
-                                    const inside = node.cascade().filter(item => item.visible).reduce((a: number, b: T) => Math.max(a, b.linear.right), 0) + node.paddingRight + node.borderRightWidth + node.marginRight;
-                                    if (inside > widestRight) {
-                                        widest.length = 0;
-                                        widest.push(node);
-                                        widestRight = inside;
-                                    }
-                                    else if (inside === widestRight) {
-                                        widest.push(node);
-                                    }
-                                }
-                                if (!widest.includes(this)) {
-                                    this.android('layout_width', 'match_parent');
-                                }
                             }
                         }
                         if (this.android('layout_width') == null) {
@@ -417,7 +402,7 @@ export default class View extends Node {
                 }
             }
             if (this.android('layout_height') !== '0px') {
-                if (this.toInt('height') > 0 && !this.inlineStatic) {
+                if (this.toInt('height') > 0 && (!this.inlineStatic || !this.has('height', 0, { map: 'original' }))) {
                     if (isPercent(styleMap.height)) {
                         if (styleMap.height === '100%') {
                             this.android('layout_height', 'match_parent', false);
@@ -443,7 +428,7 @@ export default class View extends Node {
                         this.android('layout_height', (bottomHeight > 0 ? formatPX(bottomHeight + this.paddingBottom + this.borderBottomWidth) : 'match_parent'), false);
                     }
                     else {
-                        this.android('layout_height', (this.bounds.height < heightParent ? formatPX(this.bounds.height) : 'match_parent'), false);
+                        this.android('layout_height', (this.actualHeight < heightParent ? formatPX(this.actualHeight) : 'match_parent'), false);
                     }
                 }
                 if (this.has('minHeight', CSS_STANDARD.UNIT)) {
@@ -468,13 +453,14 @@ export default class View extends Node {
                     this.android('layout_height', 'match_parent');
                 }
                 else {
-                    if (this.inlineElement && this.bounds.height > 0 && this.lineHeight >= this.bounds.height) {
-                        this.android('layout_height', formatPX(this.bounds.height));
+                    const boundsHeight = this.actualHeight;
+                    if (this.inlineElement && boundsHeight > 0 && this.lineHeight >= boundsHeight) {
+                        this.android('layout_height', formatPX(boundsHeight));
                         this.modifyBox(BOX_STANDARD.PADDING_TOP, null);
                         this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, null);
                     }
                     else if (this.block && this.box.height > 0 && this.lineHeight === this.box.height) {
-                        this.android('layout_height', formatPX(this.bounds.height));
+                        this.android('layout_height', formatPX(boundsHeight));
                     }
                     else {
                         this.android('layout_height', 'wrap_content');
@@ -743,7 +729,7 @@ export default class View extends Node {
                 }
                 else {
                     const alignInput = renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT);
-                    if (renderChildren.some(node => !node.alignRelative || !node.baseline) || renderParent.android('baselineAlignedChildIndex') != null || alignInput) {
+                    if (renderChildren.some(node => !node.alignOrigin || !node.baseline) || renderParent.android('baselineAlignedChildIndex') != null || alignInput) {
                         const baseline = NodeList.textBaseline(renderChildren, alignInput);
                         if (baseline.length > 0) {
                             this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
@@ -790,11 +776,11 @@ export default class View extends Node {
                     }
                 });
             }
-            if (this.blockStatic) {
-                const lastIndex = renderChildren.length - 1;
-                for (let i = 0; i < renderChildren.length; i++) {
-                    const node = renderChildren[i];
-                    if (node.blockStatic) {
+            if (this.blockStatic && this.hasElement) {
+                for (let i = 0; i < this.element.children.length; i++) {
+                    const element = this.element.children[i];
+                    const node = getNodeFromElement(element);
+                    if (node && node.blockStatic) {
                         const previous = node.previousSibling;
                         if (previous != null) {
                             const marginTop = convertInt(node.cssOriginal('marginTop', true));
@@ -808,23 +794,23 @@ export default class View extends Node {
                                 }
                             }
                         }
-                    }
-                    [node.element.previousElementSibling, (i === lastIndex ? node.element.nextElementSibling : null)].forEach((item, index) => {
-                        if (!getNodeFromElement(item)) {
-                            const styleMap: StringMap = getElementCache(item, 'styleMap');
-                            if (styleMap) {
-                                const offset = Math.min(convertInt(styleMap.marginTop), convertInt(styleMap.marginBottom));
-                                if (offset < 0) {
-                                    if (index === 0) {
-                                        node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset, true);
-                                    }
-                                    else {
-                                        node.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, offset, true);
+                        [element.previousElementSibling, (i === this.element.children.length - 2 ? element.nextElementSibling : null)].forEach((item, index) => {
+                            if (item && !getNodeFromElement(item)) {
+                                const styleMap: StringMap = getElementCache(item, 'styleMap');
+                                if (styleMap) {
+                                    const offset = Math.min(convertInt(styleMap.marginTop), convertInt(styleMap.marginBottom));
+                                    if (offset < 0) {
+                                        if (index === 0) {
+                                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset, true);
+                                        }
+                                        else {
+                                            node.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, offset, true);
+                                        }
                                     }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }
@@ -894,14 +880,15 @@ export default class View extends Node {
                     const borderCollapse = ((renderParent.display === 'table' || renderParent.tagName === 'TABLE') && renderParent.css('borderCollapse') === 'collapse');
                     let resizedWidth = false;
                     let resizedHeight = false;
-                    if (!(tableElement && isPercent(this.cssOriginal('width')))) {
-                        if (viewWidth > 0 && convertInt(this.cssOriginal('width')) > 0) {
-                            const paddedWidth = this.paddingLeft + this.paddingRight + (!borderCollapse ? this.borderLeftWidth + this.borderRightWidth : 0);
-                            if (!tableElement && paddedWidth > 0) {
-                                this.android('layout_width', formatPX(viewWidth + paddedWidth));
-                            }
-                            resizedWidth = true;
+                    if (viewWidth > 0 &&
+                        convertInt(this.cssOriginal('width')) > 0 &&
+                        !(tableElement && isPercent(this.cssOriginal('width'))))
+                    {
+                        const paddedWidth = this.paddingLeft + this.paddingRight + (!borderCollapse ? this.borderLeftWidth + this.borderRightWidth : 0);
+                        if (!tableElement && paddedWidth > 0) {
+                            this.android('layout_width', formatPX(viewWidth + paddedWidth));
                         }
+                        resizedWidth = true;
                     }
                     const borderLeft = this.borderLeftWidth - (tableElement && resizedWidth ? this.paddingLeft : 0);
                     const borderRight = this.borderRightWidth - (tableElement && resizedWidth ? this.paddingRight : 0);
@@ -911,16 +898,19 @@ export default class View extends Node {
                     if (borderRight > 0) {
                         this.modifyBox(BOX_STANDARD.PADDING_RIGHT, borderRight);
                     }
-                    if (!(tableElement && isPercent(this.cssOriginal('height')))) {
-                        if (viewHeight > 0 && convertInt(this.cssOriginal('height')) > 0) {
-                            if (this.lineHeight === 0 || this.lineHeight < this.box.height || this.lineHeight === this.toInt('height')) {
-                                const paddedHeight = this.paddingTop + this.paddingBottom + (!borderCollapse ? this.borderTopWidth + this.borderBottomWidth : 0);
-                                if (!tableElement) {
-                                    this.android('layout_height', formatPX(viewHeight + paddedHeight));
-                                }
-                                resizedHeight = true;
-                            }
+                    if (viewHeight > 0 &&
+                        convertInt(this.cssOriginal('height')) > 0 &&
+                        !(tableElement && isPercent(this.cssOriginal('height'))) && (
+                            this.lineHeight === 0 ||
+                            this.lineHeight < this.box.height ||
+                            this.lineHeight === this.toInt('height')
+                        ))
+                    {
+                        const paddedHeight = this.paddingTop + this.paddingBottom + (!borderCollapse ? this.borderTopWidth + this.borderBottomWidth : 0);
+                        if (!tableElement && paddedHeight > 0) {
+                            this.android('layout_height', formatPX(viewHeight + paddedHeight));
                         }
+                        resizedHeight = true;
                     }
                     const borderTop = this.borderTopWidth - (tableElement && resizedHeight ? this.paddingTop : 0);
                     const borderBottom = this.borderBottomWidth - (tableElement && resizedHeight ? this.paddingBottom : 0);
@@ -934,7 +924,7 @@ export default class View extends Node {
             }
         }
         if (!renderParent.linearHorizontal) {
-            const offset = this.lineHeight - this.bounds.height;
+            const offset = this.lineHeight - this.actualHeight;
             if (offset > 0) {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
                 this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
@@ -945,7 +935,26 @@ export default class View extends Node {
             const bottom = this.toInt('bottom');
             const left = this.toInt('left');
             if (top !== 0) {
-                this.modifyBox(BOX_STANDARD.MARGIN_TOP, top, true);
+                if (top < 0 && renderParent.is(NODE_STANDARD.RELATIVE) && this.floating && !!this.data('RESOURCE', 'backgroundImage')) {
+                    let found = false;
+                    renderParent.renderChildren.some(node => {
+                        if (node === this) {
+                            found = true;
+                        }
+                        else {
+                            if (node.android('layout_below') != null) {
+                                return true;
+                            }
+                            else if (found) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.abs(top));
+                            }
+                        }
+                        return false;
+                    });
+                }
+                else {
+                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, top, true);
+                }
             }
             else if (bottom !== 0) {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, bottom * -1, true);
@@ -964,7 +973,7 @@ export default class View extends Node {
             if (verticalAlign !== 0) {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, verticalAlign * -1, true);
                 if (verticalAlign < 0 && renderParent.linearHorizontal && renderParent.inlineHeight && renderParent.renderChildren.every(node => node.baseline || node.linearHorizontal)) {
-                    renderParent.android('layout_height', formatPX(renderParent.bounds.height + Math.abs(verticalAlign)));
+                    renderParent.android('layout_height', formatPX(renderParent.bounds.height + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
                 }
             }
         }
@@ -1010,9 +1019,12 @@ export default class View extends Node {
     }
 
     private bindWhiteSpace() {
-        if (this.linearHorizontal || this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
-            if (!(this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) || this.renderParent.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.FLOAT))) {
-                let right = this.box.left;
+        if (this.linearHorizontal || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL)) {
+            if (!(this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) || this.renderParent.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) && Array.from(this.documentParent.element.children).some(element => getStyle(element).cssFloat !== 'none'))) {
+                const textIndent = this.toInt('textIndent');
+                const valueBox = this.valueBox(BOX_STANDARD.PADDING_LEFT);
+                let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
+                                                            : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                 this.each((node: T) => {
                     if (!node.floating) {
                         const width = Math.round(node.linear.left - right);
@@ -1115,10 +1127,10 @@ export default class View extends Node {
     }
 
     get layoutHorizontal() {
-        return this.linearHorizontal || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL);
+        return (this.linearHorizontal || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL) || new Set(this.renderChildren.map(node => node.linear.top)).size === 1);
     }
     get layoutVertical() {
-        return this.linearVertical || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL);
+        return (this.linearVertical || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL));
     }
 
     get linearHorizontal() {

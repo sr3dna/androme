@@ -1,5 +1,5 @@
 import Node from './node';
-import { convertInt, convertPX, partition, sortAsc, sortDesc } from '../lib/util';
+import { convertInt, partition, sortAsc, sortDesc } from '../lib/util';
 import { NODE_STANDARD } from '../lib/constants';
 import { isLineBreak } from '../lib/dom';
 
@@ -48,17 +48,17 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return (result.length === list.length ? result.filter(node => node.hasElement) : result).filter(node => node.baseline);
             }
             baseline = list.filter(node => node.baseline).sort((a, b) => {
-                const fontSizeA = convertInt(convertPX(a.css('fontSize')));
-                const fontSizeB = convertInt(convertPX(b.css('fontSize')));
+                const fontSizeA = convertInt(a.css('fontSize'));
+                const fontSizeB = convertInt(b.css('fontSize'));
                 const heightA = a.bounds.height;
                 const heightB = b.bounds.height;
                 if (a.imageElement && b.imageElement) {
                     return (heightA >= heightB ? -1 : 1);
                 }
-                else if ((!a.multiLine && b.multiLine) || (a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
                     return -1;
                 }
-                else if ((a.multiLine && !b.multiLine) || (b.lineHeight > heightA && a.lineHeight === 0 || a.imageElement)) {
+                else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
                     return 1;
                 }
                 else if (!a.imageElement && !b.imageElement) {
@@ -79,9 +79,6 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 }
                 return (heightA >= heightB ? -1 : 1);
             });
-            if (list.some(node => node.plainText && node.lineHeight === 0) && new Set(list.map(node => node.bounds.height)).size === 1) {
-                baseline.reverse();
-            }
         }
         let fontFamily: string;
         let fontSize: string;

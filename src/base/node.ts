@@ -800,11 +800,11 @@ export default abstract class Node implements BoxModel {
     }
 
     get display() {
-        return this.css('display') || '';
+        return this.css('display');
     }
 
     get position() {
-        return this.css('position') || '';
+        return this.css('position');
     }
 
     get top() {
@@ -873,7 +873,7 @@ export default abstract class Node implements BoxModel {
     get pageflow() {
         if (this._pageflow == null) {
             const value = this.position;
-            return (value === 'static' || value === 'initial' || value === 'relative' || this.alignRelative);
+            return (value === 'static' || value === 'initial' || value === 'relative' || this.alignOrigin);
         }
         return this._pageflow;
     }
@@ -891,7 +891,7 @@ export default abstract class Node implements BoxModel {
     get inlineElement() {
         const position = this.position;
         const display = this.display;
-        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignRelative));
+        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignOrigin));
     }
 
     get inlineStatic() {
@@ -947,7 +947,7 @@ export default abstract class Node implements BoxModel {
         return (this.block && this.pageflow && this.siblingflow && (!this.floating || this.cssOriginal('width') === '100%'));
     }
 
-    get alignRelative() {
+    get alignOrigin() {
         return (this.top == null && this.right == null && this.bottom == null && this.left == null);
     }
 
@@ -1002,6 +1002,10 @@ export default abstract class Node implements BoxModel {
         return this._multiLine;
     }
 
+    get actualHeight() {
+        return (this.plainText ? this.bounds.bottom - this.bounds.top : this.bounds.height);
+    }
+
     get dir() {
         switch (this.css('direction')) {
             case 'unset':
@@ -1025,7 +1029,7 @@ export default abstract class Node implements BoxModel {
 
     get previousSibling() {
         let element: Null<Element> = null;
-        if (this._element != null)  {
+        if (this._element != null) {
             element = <Element> this.element.previousSibling;
         }
         else if (this.children.length > 0) {
@@ -1042,7 +1046,7 @@ export default abstract class Node implements BoxModel {
     }
     get nextSibling() {
         let element: Null<Element> = null;
-        if (this._element != null)  {
+        if (this._element != null) {
             element = <Element> this.element.nextSibling;
         }
         else if (this.children.length > 0) {
@@ -1059,7 +1063,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get previousElementSibling() {
-        if (this._element != null)  {
+        if (this._element != null) {
             let element: Null<Element> = <Element> this.element.previousSibling;
             while (element != null) {
                 if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
@@ -1071,7 +1075,7 @@ export default abstract class Node implements BoxModel {
         return null;
     }
     get nextElementSibling() {
-        if (this._element != null)  {
+        if (this._element != null) {
             let element: Null<Element> = <Element> this.element.nextSibling;
             while (element != null) {
                 if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
@@ -1122,6 +1126,6 @@ export default abstract class Node implements BoxModel {
     }
 
     get center(): Point {
-        return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.bounds.height / 2)};
+        return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.actualHeight / 2)};
     }
 }

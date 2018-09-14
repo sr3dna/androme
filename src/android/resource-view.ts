@@ -187,10 +187,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
         return '';
     }
 
-    public static parseBackgroundPosition(value: string) {
+    public static parseBackgroundPosition(value: string, fontSize: string) {
         const match = new RegExp(/([0-9]+[a-z]{2}) ([0-9]+[a-z]{2})/).exec(value);
         if (match) {
-            return [convertPX(match[1]), convertPX(match[2])];
+            return [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
         }
         return ['', ''];
     }
@@ -311,16 +311,19 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE)).each(node => {
             const stored: BoxStyle = getElementCache(node.element, 'boxStyle');
             if (stored) {
-                if (stored.backgroundColor.length > 0) {
+                if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
                 let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
                 let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
                 let backgroundPosition = stored.backgroundPosition.split(',').map(value => value.trim());
                 const backgroundImageUrl: string[] = [];
+                const backgroundDimensions: Null<Image>[] = [];
                 for (let i = 0; i < backgroundImage.length; i++) {
                     if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
                         backgroundImageUrl.push(backgroundImage[i]);
+                        const image = this.imageDimensions.get(parseBackgroundUrl(backgroundImage[i]));
+                        backgroundDimensions.push(image);
                         backgroundImage[i] = ResourceView.addImageURL(backgroundImage[i]);
                     }
                     else {
@@ -336,7 +339,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const companion = node.companion;
                 if (companion && !cssFromParent(companion.element, 'backgroundColor')) {
                     const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
-                    if (boxStyle && Array.isArray(boxStyle.backgroundColor)) {
+                    if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                     }
                 }
@@ -348,8 +351,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     stored.borderRadius.length > 0
                 );
                 if (hasBorder || backgroundImage.length > 0) {
-                    [stored.borderTop, stored.borderRight, stored.borderBottom, stored.borderLeft].forEach((item: BorderAttribute) => {
-                        if (this.borderVisible(item) && Array.isArray(item.color) && item.color.length > 0) {
+                    const borders: BorderAttribute[] = [
+                        stored.borderTop,
+                        stored.borderRight,
+                        stored.borderBottom,
+                        stored.borderLeft
+                    ];
+                    borders.forEach((item: BorderAttribute) => {
+                        if (Array.isArray(item.color) && item.color.length > 0) {
                             item.color = ResourceView.addColor(item.color[0], item.color[2]);
                         }
                     });
@@ -363,19 +372,26 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         let tileMode = '';
                         let tileModeX = '';
                         let tileModeY = '';
-                        let [left, top] = ResourceView.parseBackgroundPosition(backgroundPosition[i]);
+                        let [left, top] = ResourceView.parseBackgroundPosition(backgroundPosition[i], node.css('fontSize'));
+                        const image = backgroundDimensions[i];
                         switch (backgroundRepeat[i]) {
                             case 'repeat-x':
-                                tileModeX = 'repeat';
+                                if (image == null || image.width < node.bounds.width) {
+                                    tileModeX = 'repeat';
+                                }
                                 break;
                             case 'repeat-y':
-                                tileModeY = 'repeat';
+                                if (image == null || image.height < node.bounds.height) {
+                                    tileModeY = 'repeat';
+                                }
                                 break;
                             case 'no-repeat':
                                 tileMode = 'disabled';
                                 break;
                             case 'repeat':
-                                tileMode = 'repeat';
+                                if (image == null || image.width < node.bounds.width || image.height < node.bounds.height) {
+                                    tileMode = 'repeat';
+                                }
                                 break;
                         }
                         if (left === '') {
@@ -444,7 +460,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                                             gravity = mergeGravity(gravity, 'bottom');
                                                         }
                                                         else {
-                                                            top = formatPX(node.bounds.height * (convertInt(value) / 100));
+                                                            top = formatPX(node.actualHeight * (convertInt(value) / 100));
                                                         }
                                                         break;
                                                 }
@@ -453,7 +469,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                                 gravity = mergeGravity(gravity, value);
                                             }
                                             else {
-                                                const xy = convertPX(value);
+                                                const xy = convertPX(value, node.css('fontSize'));
                                                 if (xy !== '0px') {
                                                     if (index === 0) {
                                                         left = xy;
@@ -585,24 +601,19 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                         }
                         else {
-                            const borders: BorderAttribute[] = [
-                                stored.borderTop,
-                                stored.borderRight,
-                                stored.borderBottom,
-                                stored.borderLeft
-                            ];
                             const borderVisible = borders.filter(item => this.borderVisible(item));
                             const borderWidth = new Set(borderVisible.map(item => item.width));
                             const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
                             const [borderStandard, borderInset] = partition<BorderAttribute>(borders, (item: BorderAttribute) => item.style !== 'inset');
                             if (borderWidth.size === 1 && borderStyle.size === 1) {
                                 const width = borderWidth.values().next().value;
-                                const hideWidth = `-${width}`;
+                                const bottomRight = `-${width}`;
+                                const topLeft = `-${formatPX(parseInt(width) + 1)}`;
                                 root[(borderInset.length > 0 ? '7' : '4')].push({
-                                    'top': (this.borderVisible(stored.borderTop) ? '' : `-${formatPX(parseInt(width) + 1)}`),
-                                    'right': (this.borderVisible(stored.borderRight) ? '' : hideWidth),
-                                    'bottom': (this.borderVisible(stored.borderBottom) ? '' : hideWidth),
-                                    'left': (this.borderVisible(stored.borderLeft) ? '' : hideWidth),
+                                    'top': (this.borderVisible(stored.borderTop) ? '' : topLeft),
+                                    'right': (this.borderVisible(stored.borderRight) ? '' : bottomRight),
+                                    'bottom': (this.borderVisible(stored.borderBottom) ? '' : bottomRight),
+                                    'left': (this.borderVisible(stored.borderLeft) ? '' : topLeft),
                                     [(borderInset.length > 0 ? '8' : '5')]: [{ width, borderStyle: borderStyle.values().next().value }],
                                     [(borderInset.length > 0 ? '9' : '6')]: radius
                                 });
@@ -611,12 +622,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 [borderStandard, borderInset].forEach((group, index) => {
                                     group.forEach((border, direction) => {
                                         if (this.borderVisible(border)) {
-                                            const hideWidth = `-${border.width}`;
+                                            const bottomRight = `-${border.width}`;
+                                            const topLeft = `-${formatPX(parseInt(border.width) + 1)}`;
                                             const layer = {
-                                                'top': hideWidth,
-                                                'right': hideWidth,
-                                                'bottom': hideWidth,
-                                                'left': hideWidth,
+                                                'top': topLeft,
+                                                'right': bottomRight,
+                                                'bottom': bottomRight,
+                                                'left': topLeft,
                                                 [(index === 1 ? '8' : '5')]: [{ width: border.width, borderStyle: this.getBorderStyle(border) }],
                                                 [(index === 1 ? '9' : '6')]: radius
                                             };
@@ -648,46 +660,53 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                     node.formatted(formatString(method['background'], resourceName), (node.renderExtension.length === 0));
-                    if (SETTINGS.autoSizeBackgroundImage &&
-                        backgroundImage.length > 0 &&
-                        !node.documentRoot &&
-                        !node.imageElement &&
-                        node.renderParent.tagName !== 'TABLE' &&
-                        !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT))
-                    {
-                        const sizeParent: Image = { width: 0, height: 0,  };
-                        backgroundImageUrl.forEach(value => {
-                            const image = this.imageDimensions.get(parseBackgroundUrl(value));
-                            if (image != null) {
-                                sizeParent.width = Math.max(sizeParent.width, image.width);
-                                sizeParent.height = Math.max(sizeParent.height, image.height);
-                            }
-                        });
-                        if (sizeParent.width === 0) {
-                            let current = node;
-                            while (current != null && !current.documentBody) {
-                                if (current.viewWidth > 0) {
-                                    sizeParent.width = current.viewWidth;
+                    if (backgroundImage.length > 0) {
+                        node.data('RESOURCE', 'backgroundImage', true);
+                        if (SETTINGS.autoSizeBackgroundImage &&
+                            !node.documentRoot &&
+                            !node.imageElement &&
+                            node.renderParent.tagName !== 'TABLE' &&
+                            !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT))
+                        {
+                            const sizeParent: Image = { width: 0, height: 0 };
+                            backgroundDimensions.forEach(image => {
+                                if (image != null) {
+                                    sizeParent.width = Math.max(sizeParent.width, image.width);
+                                    sizeParent.height = Math.max(sizeParent.height, image.height);
                                 }
-                                if (current.viewHeight > 0) {
-                                    sizeParent.height = current.viewHeight;
+                            });
+                            if (sizeParent.width === 0) {
+                                let current = node;
+                                while (current != null && !current.documentBody) {
+                                    if (current.viewWidth > 0) {
+                                        sizeParent.width = current.viewWidth;
+                                    }
+                                    if (current.viewHeight > 0) {
+                                        sizeParent.height = current.viewHeight;
+                                    }
+                                    if (!current.pageflow || (sizeParent.width > 0 && sizeParent.height > 0)) {
+                                        break;
+                                    }
+                                    current = current.documentParent as T;
                                 }
-                                if (!current.pageflow || (sizeParent.width > 0 && sizeParent.height > 0)) {
-                                    break;
+                            }
+                            if (!node.has('width', CSS_STANDARD.UNIT)) {
+                                const width = node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
+                                if (sizeParent.width === 0 || (width > 0 && width < sizeParent.width)) {
+                                    node.css('width', formatPX(width));
                                 }
-                                current = current.documentParent as T;
                             }
-                        }
-                        if (!node.has('width', CSS_STANDARD.UNIT)) {
-                            const width = node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
-                            if (sizeParent.width === 0 || width < sizeParent.width) {
-                                node.css('width', formatPX(width));
-                            }
-                        }
-                        if (!node.has('height', CSS_STANDARD.UNIT)) {
-                            const height = node.bounds.height + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
-                            if (sizeParent.height === 0 || height < sizeParent.height) {
-                                node.css('height', formatPX(height));
+                            if (!node.has('height', CSS_STANDARD.UNIT)) {
+                                const height = node.actualHeight + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
+                                if (sizeParent.height === 0 || (height > 0 && height < sizeParent.height)) {
+                                    node.css('height', formatPX(height));
+                                    if (node.marginTop < 0) {
+                                        node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
+                                    }
+                                    if (node.marginBottom < 0) {
+                                        node.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, null);
+                                    }
+                                }
                             }
                         }
                     }

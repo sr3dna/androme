@@ -66,7 +66,7 @@ export default class ListAndroid<T extends View> extends List<T> {
             let [left, top] = [0, 0];
             if (typeof listStyle === 'object') {
                 image = ResourceView.addImageURL(listStyle.image);
-                [left, top] = ResourceView.parseBackgroundPosition(listStyle.position).map(value => convertInt(value));
+                [left, top] = ResourceView.parseBackgroundPosition(listStyle.position, node.css('fontSize')).map(value => convertInt(value));
             }
             const gravity = ((image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right');
             if (gravity === '') {

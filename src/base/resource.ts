@@ -91,7 +91,7 @@ export default abstract class Resource<T extends Node> {
                         formatted[attr] = '0px';
                     }
                     else {
-                        formatted[attr] = convertPX(result[attr]);
+                        formatted[attr] = convertPX(result[attr], node.css('fontSize'));
                     }
                 }
                 setElementCache(node.element, 'boxSpacing', formatted);
@@ -426,7 +426,8 @@ export default abstract class Resource<T extends Node> {
         return parseRGBA(value, node.css('opacity'));
     }
 
-    private parseBoxDimensions(value: string) {
+    private parseBoxDimensions(value: string, node: T) {
+        const fontSize = node.css('fontSize');
         if (value !== 'auto' && value !== 'initial') {
             const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
             if (match) {
@@ -434,19 +435,19 @@ export default abstract class Resource<T extends Node> {
                     return [];
                 }
                 if (match[1] === 'auto' || match[2] === 'auto') {
-                    return [(match[1] === 'auto' ? '' : convertPX(match[1])), (match[2] === 'auto' ? '' : convertPX(match[2]))];
+                    return [(match[1] === 'auto' ? '' : convertPX(match[1], fontSize)), (match[2] === 'auto' ? '' : convertPX(match[2], fontSize))];
                 }
                 else if (isPercent(match[1]) && match[3] == null) {
                     return [match[1], match[2]];
                 }
                 else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
-                    return [convertPX(match[1])];
+                    return [convertPX(match[1], fontSize)];
                 }
                 else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
-                    return [convertPX(match[1]), convertPX(match[2])];
+                    return [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
                 }
                 else {
-                    return [convertPX(match[1]), convertPX(match[2]), convertPX(match[3]), convertPX(match[4])];
+                    return [convertPX(match[1], fontSize), convertPX(match[2], fontSize), convertPX(match[3], fontSize), convertPX(match[4], fontSize)];
                 }
             }
         }

@@ -51,7 +51,12 @@ export function replaceTab(value: string, spaces = 4, preserve = false) {
 
 export function replaceEntity(value: string) {
     value = value.replace(/&#([0-9]+);/g, (match, capture) => String.fromCharCode(parseInt(capture)));
-    value = value.replace(/(&nbsp;|\u00A0)/g, '&#160;');
+    value = value.replace(/&nbsp;/g, '&#160;');
+    return replaceWhiteSpace(value);
+}
+
+export function replaceWhiteSpace(value: string) {
+    value = value.replace(/\u00A0/g, '&#160;');
     value = value.replace(/\u2002/g, '&#8194;');
     value = value.replace(/\u2003/g, '&#8195;');
     value = value.replace(/\u2009/g, '&#8201;');

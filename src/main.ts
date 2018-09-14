@@ -1,7 +1,7 @@
 import { Image, Null, ObjectMap } from './lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
-import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, optional  } from './lib/util';
+import { convertCamelCase, convertWord, hasValue, isPercent, optional, convertPX  } from './lib/util';
 import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
 import { convertRGB, getByColorName } from './lib/color';
 import { EXT_NAME } from './extension/lib/constants';
@@ -106,11 +106,17 @@ function setStyleMap() {
                             }
                             else if (cssStyle) {
                                 switch (attr) {
+                                    case 'fontSize':
+                                        styleMap[attr] = style[attr];
+                                        break;
                                     case 'width':
                                     case 'height':
                                     case 'lineHeight':
                                     case 'verticalAlign':
-                                    case 'fontSize':
+                                    case 'top':
+                                    case 'right':
+                                    case 'bottom':
+                                    case 'left':
                                     case 'marginTop':
                                     case 'marginRight':
                                     case 'marginBottom':
@@ -119,7 +125,7 @@ function setStyleMap() {
                                     case 'paddingRight':
                                     case 'paddingBottom':
                                     case 'paddingLeft':
-                                        styleMap[attr] = (/^[A-Za-z\-]+$/.test(cssStyle as string) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle));
+                                        styleMap[attr] = (/^[A-Za-z\-]+$/.test(cssStyle as string) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle, style.fontSize as string));
                                         break;
                                     default:
                                         if (styleMap[attr] == null) {

@@ -91,8 +91,8 @@ androme.settings = {
     renderInlineText: true,
     ellipsisOnTextOverflow: true,
     preloadImages: true,
-    autoSizePaddingAndBorderWidth: true,
     autoSizeBackgroundImage: true,
+    autoSizePaddingAndBorderWidth: true,
     constraintChainDisabled: false,
     constraintWhitespaceHorizontalOffset: 4, // Chrome/Safari: 3.5 | Edge: 3.5 | Firefox: 3
     constraintWhitespaceVerticalOffset: 16,  // 1em
@@ -365,6 +365,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_17"
+                    android:layout_alignBaseline="@+id/textview_18"
                     android:layout_alignParentStart="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
@@ -372,18 +373,20 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/Plaintext" />
                 <TextView
                     android:id="@+id/textview_18"
-                    android:layout_alignBaseline="@+id/textview_19"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_17"
                     android:layout_width="wrap_content"
+                    android:singleLine="true"
                     android:text="@string/add"
                     style="@style/A" />
                 <TextView
                     android:id="@+id/textview_19"
+                    android:layout_alignBaseline="@+id/textview_18"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol26860"
+                    android:singleLine="true"
+                    android:text="@string/__symbol37641"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -513,6 +516,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_20"
+                    android:layout_alignBaseline="@+id/textview_21"
                     android:layout_alignParentStart="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
@@ -520,18 +524,20 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/Plaintext" />
                 <TextView
                     android:id="@+id/textview_21"
-                    android:layout_alignBaseline="@+id/textview_22"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_20"
                     android:layout_width="wrap_content"
+                    android:singleLine="true"
                     android:text="@string/add"
                     style="@style/A" />
                 <TextView
                     android:id="@+id/textview_22"
+                    android:layout_alignBaseline="@+id/textview_21"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol26860"
+                    android:singleLine="true"
+                    android:text="@string/__symbol37641"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -929,6 +935,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingTop="@dimen/label_padding_top">
                 <TextView
                     android:id="@+id/textview_23"
+                    android:layout_alignBaseline="@+id/textview_24"
                     android:layout_alignParentStart="true"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
@@ -936,18 +943,20 @@ The attributes "include" and "include-end" can only be applied to elements which
                     style="@style/Plaintext" />
                 <TextView
                     android:id="@+id/textview_24"
-                    android:layout_alignBaseline="@+id/textview_25"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_23"
                     android:layout_width="wrap_content"
+                    android:singleLine="true"
                     android:text="@string/add"
                     style="@style/A" />
                 <TextView
                     android:id="@+id/textview_25"
+                    android:layout_alignBaseline="@+id/textview_24"
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol26860"
+                    android:singleLine="true"
+                    android:text="@string/__symbol37641"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1073,7 +1082,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol26860">):</string>
+    <string name="__symbol37641">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1368,7 +1377,6 @@ The attributes "include" and "include-end" can only be applied to elements which
 ### Dimension Resources
 
 ```xml
-
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="button_height">17dp</dimen>
