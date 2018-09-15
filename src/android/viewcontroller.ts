@@ -7,7 +7,7 @@ import ViewGroup from './viewgroup';
 import { capitalize, convertInt, convertEnum, convertPX, formatPX, hasValue, indexOf, isPercent, isUnit, optional, repeat, sameValue, search, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
-import { getElementsBetweenSiblings, hasLineBreak, isLineBreak } from '../lib/dom';
+import { getElementsBetweenSiblings, getRangeClientRect, hasLineBreak, isLineBreak } from '../lib/dom';
 import { getPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
 import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
@@ -147,7 +147,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                         if (!baseline.includes(node)) {
                             if (node.baseline && (node.nodeType <= NODE_STANDARD.IMAGE || (node.linearHorizontal && node.renderChildren.some(item => item.nodeType <= NODE_STANDARD.IMAGE)))) {
                                 const alignWith = baseline[0];
-                                node.android(mapLayout[(alignWith.position === 'relative' && !alignWith.alignOrigin ? (convertInt(alignWith.top) > 0 ? 'top' : 'bottom') : 'baseline')], baseline[0].stringId);
+                                if (alignWith.alignOrigin) {
+                                    node.android(mapLayout['baseline'], alignWith.stringId);
+                                }
+                                else {
+                                    if (alignWith.position === 'relative' && node.bounds.height < alignWith.bounds.height && node.lineHeight === 0) {
+                                        node.android(mapLayout[(convertInt(alignWith.top) > 0 ? 'top' : 'bottom')], alignWith.stringId);
+                                    }
+                                }
                             }
                             else {
                                 unaligned.push(node);
@@ -200,17 +207,17 @@ export default class ViewController<T extends View> extends Controller<T> {
                     }
                     for (let i = 0; i < nodes.length; i++) {
                         const current = nodes.get(i);
-                        const dimension = current[(current.multiLine ? 'bounds' : 'linear')];
+                        let dimension = current[(current.multiLine ? 'bounds' : 'linear')];
                         if (i === 0) {
                             current.android(relativeParent['left'], 'true');
                             rowWidth += dimension.width;
                             if (!node.inline && textIndent > 0) {
                                 current.modifyBox(BOX_STANDARD.MARGIN_LEFT, textIndent);
                             }
-                            if (rowPaddingLeft > 0) {
+                            if (SETTINGS.ellipsisOnTextOverflow && rowPaddingLeft > 0) {
                                 current.android('singleLine', 'true');
                             }
-                            if (!current.siblingflow || (current.floating && current.position === 'relative') || textIndent < 0) {
+                            if (current.multiLine && (!current.siblingflow || (current.floating && current.position === 'relative') || textIndent < 0)) {
                                 rowPreviousLeft = current;
                             }
                             rows[rows.length] = [current];
@@ -219,15 +226,18 @@ export default class ViewController<T extends View> extends Controller<T> {
                             const previous = nodes.get(i - 1);
                             const previousViewGroup = (previous instanceof ViewGroup || previous.is(NODE_STANDARD.LINEAR));
                             const viewGroup = (current instanceof ViewGroup || current.is(NODE_STANDARD.LINEAR));
+                            const items = rows[rows.length - 1];
+                            if (current.hasElement && current.multiLine) {
+                                dimension = getRangeClientRect(current.element)[0];
+                            }
                             let connected = false;
                             if (i === 1 && previous.textElement && current.textElement) {
                                 const elements = getElementsBetweenSiblings(previous.element, current.element, false, true);
                                 connected = (elements.length === 0 && !/\s+$/.test(previous.element.textContent || '') && !/^\s+/.test(current.element.textContent || ''));
                             }
-                            const items = rows[rows.length - 1];
                             if ((!connected && (
                                     (multiLine && (!previous.floating || items.length > 1) && (Math.floor(rowWidth - current.marginLeft) + dimension.width > node.box.width)) ||
-                                    (current.multiLine && (hasLineBreak(current.element) || node.renderParent.linearHorizontal))
+                                    (current.multiLine && hasLineBreak(current.element))
                                 )) ||
                                 (!multiLine && (current.linear.top >= previous.linear.bottom || withinFraction(current.linear.left, node.box.left))) ||
                                 viewGroup ||
@@ -244,7 +254,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     current.constraint.marginVertical = rowPreviousBottom.stringId;
                                 }
                                 current.anchor(mapLayout['topBottom'], rowPreviousBottom.stringId);
-                                if (rowPreviousLeft && current.linear.top < rowPreviousLeft.linear.bottom) {
+                                if (rowPreviousLeft && current.linear.top < rowPreviousLeft.linear.bottom && !withinRange(current.linear.top, rowPreviousLeft.linear.top, 1) && !withinRange(current.linear.bottom, rowPreviousLeft.linear.bottom, 1)) {
                                     current.anchor(mapLayout['leftRight'], rowPreviousLeft.stringId);
                                 }
                                 else {
@@ -299,7 +309,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     if (SETTINGS.ellipsisOnTextOverflow && (node.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL) || rows.length === 1)) {
                         for (let i = 1; i < nodes.length; i++) {
                             const item = nodes.get(i);
-                            if (!item.multiLine && !item.floating && (!item.alignParent('left') || rows.length === 1)) {
+                            if (!item.multiLine && !item.floating && (Math.ceil(item.linear.right) >= node.box.right || item.bounds.width >= node.box.width) && (!item.alignParent('left') || rows.length === 1)) {
                                 item.android('singleLine', 'true');
                             }
                         }
@@ -376,7 +386,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                     }
                     else {
-                        const [pageflow, absolute] = nodes.partition(item => item.pageflow);
+                        const [absolute, pageflow] = nodes.partition(item => !item.pageflow || (item.position === 'relative' && item.alignNegative));
                         const columnCount = node.toInt('columnCount');
                         const inlineWrap = node.hasBit('alignmentType', NODE_ALIGNMENT.INLINE_WRAP);
                         if (inlineWrap) {
@@ -1720,11 +1730,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
                 break;
         }
-        node.cascade().forEach(item => {
-            if (!item.isSet('dataset', 'target')) {
-                item.hide();
-            }
-        });
         node.render((target ? node : parent));
         if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
             node.setAccessibility();
@@ -2011,7 +2016,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     node.float === 'right' ||
                     (node.left == null && node.right != null) ||
                     (node.is(NODE_STANDARD.TEXT) && node.css('textAlign') === 'right') ||
-                    node.app(MAP_LAYOUT.constraint['right']) === 'parent'
+                    node.alignParent('right')
                 );
             }
             if (percent == null && opposite === true) {
@@ -2030,43 +2035,50 @@ export default class ViewController<T extends View> extends Controller<T> {
                 let LTRB = '';
                 let RBLT = '';
                 let found = false;
+                let offset = 0;
                 switch (index) {
                     case 0:
                         LT = (!opposite ? 'left' : 'right');
                         RB = (!opposite ? 'right' : 'left');
                         LTRB = (!opposite ? 'leftRight' : 'rightLeft');
                         RBLT = (!opposite ? 'rightLeft' : 'leftRight');
+                        if (node.position === 'relative' && node.toInt('left') < 0) {
+                            offset = node.toInt('left');
+                        }
                         break;
                     case 1:
                         LT = (!opposite ? 'top' : 'bottom');
                         RB = (!opposite ? 'bottom' : 'top');
                         LTRB = (!opposite ? 'topBottom' : 'bottomTop');
                         RBLT = (!opposite ? 'bottomTop' : 'topBottom');
+                        if (node.position === 'relative' && node.toInt('top') < 0) {
+                            offset = node.toInt('top');
+                        }
                         break;
                 }
                 const dimension = (node.pageflow ? 'bounds' : 'linear');
-                const position = (percent ? Math.abs(node[dimension][LT] - (parent.documentBody ? 0 : parent.box[LT])) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
+                const position = (percent ? Math.abs((node[dimension][LT] + offset) - (parent.documentBody ? 0 : parent.box[LT])) / parent.box[(index === 0 ? 'width' : 'height')] : 0);
                 if (!percent) {
                     found = parent.renderChildren.some(item => {
                         if (item.constraint[value] && (!item.constraint[`chain${capitalize(value)}`] || item.constraint[`margin${capitalize(value)}`] != null)) {
-                            if (withinFraction(node.linear[LT], item.linear[RB])) {
+                            if (withinFraction(node.linear[LT] + offset, item.linear[RB])) {
                                 node.anchor(map[LTRB], item.stringId, value, true);
                                 return true;
                             }
-                            else if (withinFraction(node.linear[RB], item.linear[LT])) {
+                            else if (withinFraction(node.linear[RB] + offset, item.linear[LT])) {
                                 node.anchor(map[RBLT], item.stringId, value, true);
                                 return true;
                             }
-                            if (withinFraction(node.bounds[LT], item.bounds[LT])) {
+                            if (withinFraction(node.bounds[LT] + offset, item.bounds[LT])) {
                                 node.anchor(map[(
                                     index === 1 &&
                                     node.is(NODE_STANDARD.TEXT) &&
-                                    node.viewHeight === 0 &&
+                                    node.baseline &&
                                     item.is(NODE_STANDARD.TEXT) &&
-                                    item.viewHeight === 0 ? 'baseline' : LT)], item.stringId, value, true);
+                                    item.baseline ? 'baseline' : LT)], item.stringId, value, true);
                                 return true;
                             }
-                            else if (withinFraction(node.bounds[RB], item.bounds[RB])) {
+                            else if (withinFraction(node.bounds[RB] + offset, item.bounds[RB])) {
                                 node.anchor(map[RB], item.stringId, value, true);
                                 return true;
                             }
@@ -2077,8 +2089,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                 if (!found) {
                     const guideline = parent.constraint.guideline || {};
                     let location = (percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(SETTINGS.constraintPercentAccuracy))
-                                            : (!opposite ? node[dimension][LT] - parent.box[LT]
-                                                         : node[dimension][LT] - parent.box[RB]));
+                                            : (!opposite ? (node[dimension][LT] + offset) - parent.box[LT]
+                                                         : (node[dimension][LT] + offset) - parent.box[RB]));
                     if (!percent && !opposite) {
                         if (location < 0) {
                             const padding = parent[`padding${capitalize(LT)}`];
@@ -2091,7 +2103,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                         else {
                             if (parent.documentBody) {
-                                location = node[dimension][LT];
+                                location = node[dimension][LT] + offset;
                             }
                         }
                     }

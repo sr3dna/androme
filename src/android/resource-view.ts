@@ -292,7 +292,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)).each(node => {
             const stored: StringMap = getElementCache(node.element, 'boxSpacing');
             if (stored) {
-                if (stored.marginLeft === stored.marginRight && node.alignParent('left') && node.alignParent('right') && !node.blockWidth) {
+                if (stored.marginLeft === stored.marginRight && node.alignParent('left') && node.alignParent('right') && !node.blockWidth && !(node.position === 'relative' && node.alignNegative)) {
                     node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                     node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                 }

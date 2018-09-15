@@ -136,29 +136,34 @@ export default class ListAndroid<T extends View> extends List<T> {
                     node.app('layout_columnSpan', '2');
                 }
             }
-            if (image !== '') {
-                Object.assign(options.android, {
-                    src: `@drawable/${image}`,
-                    baselineAlignBottom: 'true',
-                    scaleType: (!positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart')
-                });
+            if (node.tagName === 'DT' && image === '') {
+                node.app('layout_columnSpan', columnCount.toString());
             }
             else {
-                Object.assign(options.android, {
-                    text: (listStyle !== '0' ? listStyle : '')
-                });
+                if (image !== '') {
+                    Object.assign(options.android, {
+                        src: `@drawable/${image}`,
+                        baselineAlignBottom: 'true',
+                        scaleType: (!positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart')
+                    });
+                }
+                else {
+                    Object.assign(options.android, {
+                        text: (listStyle !== '0' ? listStyle : '')
+                    });
+                }
+                controller.prependBefore(
+                    node.id,
+                    controller.renderNodeStatic(
+                        (image !== '' ? NODE_STANDARD.IMAGE
+                                      : (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE)),
+                        parent.renderDepth + 1,
+                        options,
+                        'wrap_content',
+                        'wrap_content'
+                    )
+                );
             }
-            controller.prependBefore(
-                node.id,
-                controller.renderNodeStatic(
-                    (image !== '' ? NODE_STANDARD.IMAGE
-                                  : (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE)),
-                    parent.renderDepth + 1,
-                    options,
-                    'wrap_content',
-                    'wrap_content'
-                )
-            );
         }
         if (columnCount > 0) {
             node.app('layout_columnWeight', '1');

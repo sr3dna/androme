@@ -230,7 +230,7 @@ export function hasLineBreak(element: Null<Element>) {
         element instanceof HTMLElement &&
         element.children.length > 0 &&
         Array.from(element.children).some(item => item.tagName === 'BR')) ||
-        (element != null && /\n/.test(element.textContent || '') && (
+        (element && /\n/.test(element.textContent || '') && (
             ['pre', 'pre-wrap'].includes(whiteSpace) ||
             (!styleMap && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
         )
@@ -249,12 +249,12 @@ export function isLineBreak(element: Null<Element>, direction = 'previous', incl
             }
         }
         else {
+            const node = getNodeFromElement(element);
             const styleMap = getElementCache(element, 'styleMap');
             found = (
                 element.tagName === 'BR' ||
-                (includeNode &&
-                getStyle(element).display === 'block' && (
-                    !getNodeFromElement(element) ||
+                (includeNode && getStyle(element).display === 'block' && (
+                    (node && node.excluded) ||
                     (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))
                 )
             );
@@ -296,44 +296,47 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
 }
 
 export function isElementVisible(element: Element) {
-    if (element instanceof HTMLElement) {
-        switch (element.tagName) {
-            case 'BR':
-            case 'OPTION':
-            case 'MAP':
-            case 'AREA':
-                return false;
-        }
-        if (typeof element.getBoundingClientRect === 'function') {
-            const bounds = element.getBoundingClientRect();
-            if ((bounds.width !== 0 && bounds.height !== 0) || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
-                return true;
+    if (!getElementCache(element, 'supportInline')) {
+        if (element instanceof HTMLElement) {
+            switch (element.tagName) {
+                case 'BR':
+                case 'OPTION':
+                case 'MAP':
+                case 'AREA':
+                    return false;
             }
-            else {
-                let current = element.parentElement;
-                let valid = true;
-                while (current != null) {
-                    if (getStyle(current).display === 'none') {
-                        valid = false;
-                        break;
-                    }
-                    current = current.parentElement;
+            if (typeof element.getBoundingClientRect === 'function') {
+                const bounds = element.getBoundingClientRect();
+                if ((bounds.width !== 0 && bounds.height !== 0) || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
+                    return true;
                 }
-                if (valid) {
-                    if (element.children.length > 0) {
-                        return Array.from(element.children).some((item: Element) => {
-                            const style = getStyle(item);
-                            const float = style.cssFloat;
-                            const position = style.position;
-                            return ((position !== 'static' && position !== 'initial') || float === 'left' || float === 'right');
-                        });
+                else {
+                    let current = element.parentElement;
+                    let valid = true;
+                    while (current != null) {
+                        if (getStyle(current).display === 'none') {
+                            valid = false;
+                            break;
+                        }
+                        current = current.parentElement;
+                    }
+                    if (valid) {
+                        if (element.children.length > 0) {
+                            return Array.from(element.children).some((item: Element) => {
+                                const style = getStyle(item);
+                                const float = style.cssFloat;
+                                const position = style.position;
+                                return ((position !== 'static' && position !== 'initial') || float === 'left' || float === 'right');
+                            });
+                        }
                     }
                 }
             }
+            return false;
         }
-        return false;
+        else {
+            return isPlainText(element);
+        }
     }
-    else {
-        return isPlainText(element);
-    }
+    return false;
 }

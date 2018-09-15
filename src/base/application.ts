@@ -87,7 +87,7 @@ export default class Application<T extends Node> {
 
     public reset() {
         for (const node of this.cacheSession) {
-            deleteElementCache(node.element, 'node', 'style', 'styleMap', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
+            deleteElementCache(node.element, 'node', 'style', 'styleMap', 'supportInline', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
         }
         this.cache.reset();
         this.cacheSession.reset();
@@ -126,7 +126,7 @@ export default class Application<T extends Node> {
     public createNodeCache(rootElement: HTMLElement) {
         let nodeTotal = 0;
         if (rootElement === document.body) {
-            Array.from(document.body.childNodes).some((item: Element) => (isElementVisible(item) && ++nodeTotal > 1));
+            Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item) && ++nodeTotal > 1);
         }
         const elements = (rootElement !== document.body ? rootElement.querySelectorAll('*') : document.querySelectorAll((nodeTotal > 1 ? 'body, body *' : 'body *')));
         this.cache.parent = undefined;
@@ -145,7 +145,7 @@ export default class Application<T extends Node> {
         else {
             return false;
         }
-        const supportInline = (!SETTINGS.renderInlineText ? this.controllerHandler.supportInline : ['BR']);
+        const supportInline = (SETTINGS.renderInlineText ? ['BR'] : this.controllerHandler.supportInline);
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return ((styleMap == null || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0);
@@ -156,7 +156,6 @@ export default class Application<T extends Node> {
                 if (!this.elements.has(element)) {
                     if (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))) {
                         setElementCache(element, 'supportInline', true);
-                        continue;
                     }
                     let valid = true;
                     let current = element.parentElement;
@@ -185,8 +184,11 @@ export default class Application<T extends Node> {
                         text.push(element);
                     }
                 }
-                else if (!supportInline.includes(element.tagName) || getNodeFromElement(element)) {
-                    valid = false;
+                else if (element.tagName !== 'BR') {
+                    const elementNode = getNodeFromElement(element);
+                    if (!supportInline.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
+                        valid = false;
+                    }
                 }
             });
             if (!valid) {
@@ -419,7 +421,7 @@ export default class Application<T extends Node> {
                 let i = 0;
                 Array.from(node.element.childNodes).forEach((element: Element) => {
                     const child = getNodeFromElement(element);
-                    if (child && child.visible && child.pageflow) {
+                    if (child && child.visible && !child.excluded && child.pageflow) {
                         child.siblingIndex = i++;
                     }
                 });
@@ -638,88 +640,28 @@ export default class Application<T extends Node> {
                             continue;
                         }
                         const linearVertical = parentY.linearVertical;
-                        if (nodeY.pageflow &&
-                            nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
+                        if (nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
+                            nodeY.pageflow &&
+                            parentY.alignmentType === NODE_ALIGNMENT.NONE &&
+                            (linearVertical || parentY.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) &&
                             !parentY.flex.enabled &&
                             !parentY.has('columnCount') &&
-                            parentY.alignmentType === NODE_ALIGNMENT.NONE &&
-                            (parentY.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE) || linearVertical) &&
                             current === '')
                         {
-                            const horizontal = [nodeY];
-                            const vertical = [nodeY];
-                            function getFloatSize(list: T[]) {
-                                return new Set(list.map(node => node.float)).size;
-                            }
-                            function getAlignment(first: T, second: T, advance: boolean) {
-                                return (second.plainText && second.multiLine && !parentY.is(NODE_STANDARD.RELATIVE)) ||
-                                       (horizontal.length > 1 && isLineBreak(<Element> second.element.previousSibling)) ||
-                                       (!first.floating && (!first.inlineElement || first.autoMargin || !second.inlineElement || second.autoMargin)) ||
-                                       (!second.floating && ((!first.inlineElement && !first.floating) || first.autoMargin)) ||
-                                       ((first.blockStatic || cleared.has(first)) && second.blockStatic) ||
-                                       (advance && cleared.has(second)) ||
-                                       (first.floating && second.floating && second.linear.top >= first.linear.bottom);
-                            }
+                            const horizontal: T[] = [nodeY];
+                            const vertical: T[] = [nodeY];
+                            let previousNodeSibling = nodeY;
                             for (let l = k + 1; l < axisY.length; l++) {
                                 const adjacent = axisY[l];
                                 if (adjacent.pageflow) {
-                                    let lineBreak = false;
-                                    const previousSibling = <Null<T>> (() => {
-                                        let node = adjacent.previousSibling;
-                                        while (node) {
-                                            if (isLineBreak(<Element> node.element.nextSibling, 'next')) {
-                                                lineBreak = true;
-                                                break;
-                                            }
-                                            if (!node.siblingflow) {
-                                                node = node.previousSibling;
-                                            }
-                                            else {
-                                                break;
-                                            }
-                                        }
-                                        return node;
-                                    })();
-                                    const nextSibling = <Null<T>> (() => {
-                                        let node = adjacent.nextSibling;
-                                        while (node) {
-                                            if (isLineBreak(<Element> node.element, 'next')) {
-                                                return null;
-                                            }
-                                            if (!node.siblingflow) {
-                                                node = node.nextSibling;
-                                            }
-                                            else {
-                                                break;
-                                            }
-                                        }
-                                        return node;
-                                    })();
-                                    if (lineBreak) {
-                                        break;
-                                    }
+                                    const previousSibling = adjacent.previousSibling() as T;
                                     if (previousSibling != null) {
-                                        const verticalAlignment = getAlignment(previousSibling, adjacent, false);
-                                        if (cleared.has(adjacent)) {
-                                            const floated = new Set(['both', ...horizontal.map(item => item.float)]);
-                                            if (horizontal.length >= vertical.length && !floated.has(adjacent.css('clear')) && !verticalAlignment) {
-                                                horizontal.push(adjacent);
-                                                continue;
-                                            }
-                                            if (horizontal.length === 1) {
-                                                if (vertical[vertical.length - 1] !== previousSibling) {
-                                                    vertical.length = 0;
-                                                    break;
-                                                }
-                                                vertical.push(adjacent);
-                                                continue;
-                                            }
-                                        }
-                                        if (cleared.has(adjacent) || verticalAlignment) {
+                                        if (adjacent.alignedVertical(previousSibling, cleared) || (cleared.has(previousSibling) && previousSibling.floating)) {
                                             if (horizontal.length > 1) {
                                                 if (linearVertical) {
                                                     for (let m = 1; m < horizontal.length; m++) {
-                                                        if (isLineBreak(<Element> horizontal[m].element.previousSibling)) {
+                                                        const previous = horizontal[m].previousSibling();
+                                                        if (previous && previous.lineBreak) {
                                                             horizontal.length = m;
                                                             break;
                                                         }
@@ -727,49 +669,48 @@ export default class Application<T extends Node> {
                                                 }
                                                 break;
                                             }
-                                            if (linearVertical) {
+                                            if (linearVertical && vertical.length > 0) {
                                                 const previousAbove = vertical[vertical.length - 1];
                                                 if (previousAbove.linearVertical) {
                                                     adjacent.parent = previousAbove;
                                                     continue;
                                                 }
                                             }
-                                            if (vertical[vertical.length - 1] !== previousSibling) {
+                                            if (vertical.length > 0 && vertical[vertical.length - 1] !== previousNodeSibling) {
                                                 vertical.length = 0;
                                                 break;
                                             }
                                             else {
-                                                const verticalNext = (nextSibling != null ? getAlignment(adjacent, nextSibling, true) : true);
-                                                if (!verticalNext && adjacent.inlineElement && nextSibling && nextSibling.linear.top < adjacent.linear.bottom) {
-                                                    break;
-                                                }
+                                                previousNodeSibling = adjacent;
                                                 vertical.push(adjacent);
                                                 continue;
                                             }
                                         }
-                                    }
-                                    if (isLineBreak(<Element> adjacent.element.previousSibling)) {
-                                        if (!linearVertical) {
-                                            if (horizontal.length > 1) {
-                                                break;
-                                            }
-                                            else {
-                                                if (vertical[vertical.length - 1] !== previousSibling) {
-                                                    vertical.length = 0;
+                                        if (previousSibling.lineBreak) {
+                                            if (!linearVertical) {
+                                                if (horizontal.length > 1) {
                                                     break;
                                                 }
                                                 else {
-                                                    vertical.push(adjacent);
-                                                    continue;
+                                                    if (vertical.length > 0 && vertical[vertical.length - 1] !== previousNodeSibling) {
+                                                        vertical.length = 0;
+                                                        break;
+                                                    }
+                                                    else {
+                                                        previousNodeSibling = adjacent;
+                                                        vertical.push(adjacent);
+                                                        continue;
+                                                    }
                                                 }
                                             }
                                         }
+                                        if (horizontal.length > 0 && horizontal[horizontal.length - 1] !== previousNodeSibling) {
+                                            horizontal.length = 0;
+                                            break;
+                                        }
+                                        previousNodeSibling = adjacent;
+                                        horizontal.push(adjacent);
                                     }
-                                    if (horizontal[horizontal.length - 1] !== previousSibling) {
-                                        horizontal.length = 0;
-                                        break;
-                                    }
-                                    horizontal.push(adjacent);
                                 }
                             }
                             let group: Null<T> = null;
@@ -788,7 +729,7 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     else {
-                                        if (getFloatSize(horizontal) === 1 && horizontal.some(node => isPercent(node.css('width'))) && horizontal.every(node => isPercent(node.css('width')) || isUnit(node.css('width')))) {
+                                        if (new Set(horizontal.map(node => node.float)).size === 1 && horizontal.some(node => isPercent(node.css('width'))) && horizontal.every(node => isPercent(node.css('width')) || isUnit(node.css('width')))) {
                                             group = this.controllerHandler.createGroup(nodeY, horizontal, parentY);
                                             groupXml = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
@@ -815,9 +756,10 @@ export default class Application<T extends Node> {
                                     if (vertical.length === axisY.length) {
                                         parentY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                     }
-                                    else if (vertical.some(node => !node.parent.linearVertical)) {
+                                    else {
                                         group = this.controllerHandler.createGroup(nodeY, vertical, parentY);
                                         groupXml = this.writeLinearLayout(group, parentY, false);
+                                        group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                     }
                                 }
                             }
@@ -856,9 +798,10 @@ export default class Application<T extends Node> {
                                     }
                                     else if (!nodeY.documentRoot) {
                                         if (SETTINGS.collapseUnattributedElements &&
-                                            ((!backgroundVisible || nodeY.bounds.height === 0) &&
+                                            nodeY.bounds.height === 0 &&
+                                            !backgroundVisible &&
                                             !hasValue(nodeY.element.id) &&
-                                            !hasValue(nodeY.dataset.ext)))
+                                            !hasValue(nodeY.dataset.ext))
                                         {
                                             deleteElementCache(nodeY.element, 'node');
                                             parentY.remove(nodeY);
@@ -945,10 +888,7 @@ export default class Application<T extends Node> {
                                                             }
                                                         }
                                                         else if ((float.has('left') || float.has('none')) && float.has('right')) {
-                                                            const group = this.controllerHandler.createGroup(nodeY, children, parentY, <HTMLElement> nodeY.element);
-                                                            const groupXml = this.writeFrameLayoutHorizontal(group, parentY, <T[]> group.children);
-                                                            renderXml(group, parentY, groupXml, current, true);
-                                                            continue;
+                                                            xml = this.writeFrameLayoutHorizontal(nodeY, parentY, nodeY.children as T[]);
                                                         }
                                                     }
                                                 }
@@ -956,7 +896,7 @@ export default class Application<T extends Node> {
                                                     const clearedBlock = NodeList.cleared(children);
                                                     if (linearY || (children.some(node => node.blockStatic || clearedBlock.has(node)) && !children.some(node => node.autoMargin))) {
                                                         xml = this.writeLinearLayout(nodeY, parentY, false);
-                                                        if (children.every(node => node.blockStatic)) {
+                                                        if (linearY) {
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                                         }
                                                     }
@@ -1135,7 +1075,7 @@ export default class Application<T extends Node> {
                 group.alignmentType |= NODE_ALIGNMENT.FLOAT | NODE_ALIGNMENT.LEFT;
             }
             const sorted = this.sortByAlignment([...left.list, ...inline.list], undefined, NODE_ALIGNMENT.HORIZONTAL, false);
-            if (!sorted[sorted.length - 1].blockStatic && this.isRelativeHorizontal(sorted)) {
+            if (left.linearX && inline.linearX && !sorted[sorted.length - 1].blockStatic && this.isRelativeHorizontal(sorted)) {
                 xml = this.writeRelativeLayout(group, parent);
                 group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                 return xml;
@@ -1536,30 +1476,45 @@ export default class Application<T extends Node> {
 
     private insertNode(element: Element, parent?: T) {
         let node: Null<T> = null;
-        if (element.nodeName === '#text') {
-            if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                node = new this._Node(this.cache.nextId, SETTINGS.targetAPI, element);
-                node.nodeName = 'PLAINTEXT';
-                if (parent) {
-                    node.parent = parent;
-                    node.inherit(parent, 'style');
+        if (element.nodeName.charAt(0) === '#') {
+            if (element.nodeName === '#text') {
+                if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                    node = new this._Node(this.cache.nextId, SETTINGS.targetAPI, element);
+                    node.nodeName = 'PLAINTEXT';
+                    if (parent) {
+                        node.parent = parent;
+                        node.inherit(parent, 'style');
+                    }
+                    else {
+                        node.css('whiteSpace', (element.parentElement ? getStyle(element.parentElement).whiteSpace : null) || 'normal');
+                    }
+                    node.css({
+                        position: 'static',
+                        display: 'inline',
+                        clear: 'none',
+                        cssFloat: 'none',
+                        verticalAlign: 'baseline'
+                    });
                 }
-                else {
-                    node.css('whiteSpace', (element.parentElement ? getStyle(element.parentElement).whiteSpace : null) || 'normal');
-                }
-                node.css({
-                    position: 'static',
-                    display: 'inline',
-                    clear: 'none',
-                    cssFloat: 'none',
-                    verticalAlign: 'baseline'
-                });
             }
         }
-        else if (isElementVisible(element)) {
-            node = new this._Node(this.cache.nextId, SETTINGS.targetAPI, element);
-            node.setExclusions();
-            node.setOverflow();
+        else if (element instanceof HTMLElement) {
+            switch (element.tagName) {
+                case 'OPTION':
+                case 'MAP':
+                case 'AREA':
+                    return null;
+            }
+            const elementNode = new this._Node(this.cache.nextId, SETTINGS.targetAPI, element);
+            if (isElementVisible(element)) {
+                node = elementNode;
+                node.setExclusions();
+                node.setOverflow();
+            }
+            else {
+                elementNode.excluded = true;
+                elementNode.visible = false;
+            }
         }
         if (node != null) {
             this.cache.append(node);

@@ -330,10 +330,10 @@ export default abstract class Resource<T extends Node> {
                 }
                 if (value !== '') {
                     if (performTrim) {
-                        const previousSibling = node.previousSibling;
-                        const nextSibling = node.nextSibling;
+                        const previousSibling = node.previousSibling();
+                        const nextSibling = node.nextSibling();
                         let previousSpaceEnd = false;
-                        if (previousSibling == null || previousSibling.multiLine) {
+                        if (previousSibling == null || previousSibling.multiLine || previousSibling.lineBreak) {
                             value = value.replace(/^\s+/, '');
                         }
                         else {
@@ -342,17 +342,25 @@ export default abstract class Resource<T extends Node> {
                         if (inlineTrim) {
                             const original = value;
                             value = value.trim();
-                            if (previousSibling && previousSibling.display !== 'block' && !previousSpaceEnd && /^\s+/.test(original)) {
+                            if (previousSibling && !previousSibling.block && !previousSibling.lineBreak && !previousSpaceEnd && /^\s+/.test(original)) {
                                 value = '&#160;' + value;
                             }
-                            if (nextSibling && /\s+$/.test(original)) {
+                            if (nextSibling && !nextSibling.lineBreak && /\s+$/.test(original)) {
                                 value = value + '&#160;';
                             }
                         }
                         else {
                             if (!/^\s+$/.test(value)) {
-                                value = value.replace(/^\s+/, (previousSibling && (previousSibling.block || (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) || (node.multiLine && (hasLineBreak(element) || node.renderParent.renderParent.linearHorizontal))) ? '' : '&#160;'));
-                                value = value.replace(/\s+$/, (nextSibling == null ? '' : '&#160;'));
+                                value = value.replace(/^\s+/, (previousSibling && (
+                                        previousSibling.block ||
+                                        previousSibling.lineBreak ||
+                                        (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
+                                        (node.multiLine && (
+                                            hasLineBreak(element) ||
+                                            node.renderParent.renderParent.linearHorizontal
+                                        ))) ? '' : '&#160;')
+                                    );
+                                value = value.replace(/\s+$/, (nextSibling == null || nextSibling.lineBreak ? '' : '&#160;'));
                             }
                             else if (value.length > 0) {
                                 value = '&#160;' + value.substring(1);

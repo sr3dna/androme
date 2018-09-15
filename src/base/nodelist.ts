@@ -1,7 +1,7 @@
 import Node from './node';
 import { convertInt, partition, sortAsc, sortDesc } from '../lib/util';
 import { NODE_STANDARD } from '../lib/constants';
-import { isLineBreak } from '../lib/dom';
+import { getNodeFromElement } from '../lib/dom';
 
 export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
@@ -96,6 +96,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         });
     }
 
+    public static documentParent<T extends Node>(nodes: T[]) {
+        for (let i = 0; i < nodes.length; i++) {
+            if (nodes[i].companion == null) {
+                return nodes[i].documentParent;
+            }
+        }
+        return nodes[0].documentParent;
+    }
+
     public static linearX<T extends Node>(list: T[]) {
         const nodes = list.filter(node => node.pageflow);
         switch (nodes.length) {
@@ -104,61 +113,60 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             case 1:
                 return true;
             default:
-                if (NodeList.cleared(nodes).size === 0) {
-                    const horizontal = nodes.filter(node => node.float !== 'left');
-                    let valid = (horizontal.length > 1);
-                    for (let i = 1; i < horizontal.length; i++) {
-                        const previous = horizontal[i - 1];
-                        const current = horizontal[i];
-                        if (!(previous.inlineElement && current.inlineElement && previous.bounds.right <= current.bounds.left) || !previous.inlineElement) {
-                            valid = false;
-                            break;
+                const parent = this.documentParent(nodes);
+                if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
+                    const cleared = NodeList.cleared(Array.from(parent.element.children).map(node => getNodeFromElement(node) as T).filter(node => node));
+                    const horizontal = nodes.slice().sort((a, b) => (a.siblingIndex < b.siblingIndex ? -1 : 1)).every((node, index) => {
+                        if (node.companion && node.companion.documentParent === parent) {
+                            node = node.companion as T;
                         }
-                    }
-                    if (valid) {
+                        const previous = node.previousSibling();
+                        if (previous != null) {
+                            return (index === 0 || !node.alignedVertical(previous, cleared));
+                        }
                         return true;
+                    });
+                    if (horizontal) {
+                        return nodes.every(node => {
+                            return !nodes.some(sibling => {
+                                if (sibling !== node && node.linear.top >= sibling.linear.bottom && node.intersectY(sibling.linear)) {
+                                    return true;
+                                }
+                                return false;
+                            });
+                        });
                     }
-                    const left = Math.min.apply(null, nodes.map(node => node.bounds.left));
-                    const right = Math.min.apply(null, nodes.map(node => node.bounds.right));
-                    if (nodes.filter(node => node.bounds.left === left).length > 1 || nodes.filter(node => node.bounds.right === right).length > 1) {
-                        return false;
-                    }
-                    const bottom = Math.min.apply(null, nodes.map(node => node.bounds.bottom));
-                    return nodes.every(node => node.inlineElement && !node.autoMargin && node.bounds.top < bottom);
                 }
                 return false;
         }
     }
 
     public static linearY<T extends Node>(list: T[]) {
-        let nodes = list.filter(node => node.pageflow);
+        const nodes = list.filter(node => node.pageflow);
         switch (nodes.length) {
             case 0:
                 return false;
             case 1:
                 return true;
             default:
-                if (nodes.every(node => node.block && !node.floating)) {
-                    return true;
-                }
-                if (nodes.every((node, index) => node.inlineElement && (index === 0 || !isLineBreak(node.element.previousElementSibling)))) {
-                    return false;
-                }
-                nodes = nodes.filter(node => !node.floating);
-                const minRight = Math.min.apply(null, nodes.map(node => node.bounds.right));
-                const maxRight = Math.max.apply(null, nodes.map(node => node.bounds.right));
-                return nodes.every((node, index) => {
-                    if (node.bounds.left < minRight) {
-                        return true;
-                    }
-                    else {
-                        const previous = nodes[index - 1];
-                        if ((previous == null || (previous.inlineElement && previous.bounds.right !== maxRight)) && node.inlineElement && node.bounds.right !== maxRight) {
+                const parent = this.documentParent(nodes);
+                if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
+                    const cleared = NodeList.cleared(Array.from(parent.element.children).map(node => getNodeFromElement(node) as T).filter(node => node));
+                    return list.every(node => {
+                        if (node.lineBreak) {
                             return true;
                         }
-                    }
-                    return false;
-                });
+                        if (node.companion && node.companion.documentParent === parent) {
+                            node = node.companion as T;
+                        }
+                        const previous = node.previousSibling();
+                        if (previous != null) {
+                            return node.alignedVertical(previous, cleared);
+                        }
+                        return true;
+                    });
+                }
+                return false;
         }
     }
 

@@ -70,6 +70,14 @@ export default class ViewGroup<T extends View> extends View {
         this.setDimensions();
     }
 
+    public previousSibling(lineBreak = false) {
+        return (this.children.length > 0 ? this.children[0].previousSibling(lineBreak) : null);
+    }
+
+    public nextSibling(lineBreak = false) {
+        return (this.children.length > 0 ? this.children[this.children.length - 1].nextSibling(lineBreak) : null);
+    }
+
     get pageflow() {
         return (this.element != null ? super.pageflow : this.children.some(node => node.pageflow));
     }
@@ -147,13 +155,5 @@ export default class ViewGroup<T extends View> extends View {
             }
         });
         return { top, right, bottom, left };
-    }
-
-    get previousSibling() {
-        return (this.children.length > 0 ? this.children[0].previousSibling : null);
-    }
-
-    get nextSibling() {
-        return (this.children.length > 0 ? this.children[this.children.length - 1].nextSibling : null);
     }
 }
